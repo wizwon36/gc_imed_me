@@ -7,27 +7,42 @@
   <link rel="stylesheet" href="assets/css/common.css" />
 </head>
 <body>
-  <div class="container detail-shell">
-    <div class="detail-hero">
+  <div class="container detail-shell detail-shell-tuned">
+    <section class="top-brand-bar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">+</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">의료장비 관리시스템</strong>
+          <span class="top-brand-sub">장비 상세 · 이력 조회 · QR 확인</span>
+        </div>
+      </div>
+
+      <div class="top-brand-actions">
+        <a class="nav-link" href="index.html">대시보드</a>
+        <a class="nav-link" href="equipment-list.html">장비목록</a>
+        <a class="nav-link btn-primary" href="equipment-form.html">장비등록</a>
+      </div>
+    </section>
+
+    <section class="detail-hero detail-hero-tuned">
       <div class="detail-hero-copy">
         <div class="detail-hero-topline">의료장비 상세정보</div>
         <h1 class="detail-hero-title" id="heroEquipmentName">장비명</h1>
+
         <div class="detail-hero-meta">
           <span class="status-badge" id="heroStatusBadge">상태</span>
           <span class="detail-hero-id" id="heroEquipmentId">관리번호</span>
         </div>
-      </div>
 
-      <div class="detail-hero-actions">
-        <a class="nav-link" href="index.html">홈</a>
-        <a class="nav-link" href="equipment-list.html">장비목록</a>
-        <a class="nav-link btn-primary" href="equipment-form.html">장비등록</a>
+        <p class="detail-hero-desc">
+          기본정보, 수리/점검 이력, 재고조사 결과, QR 라벨 출력을 한 화면에서 확인할 수 있습니다.
+        </p>
       </div>
-    </div>
+    </section>
 
     <div id="messageBox" class="message-box"></div>
 
-    <section class="detail-action-bar card">
+    <section class="detail-action-bar card detail-action-bar-tuned">
       <div class="form-actions detail-action-buttons">
         <button class="btn" id="editEquipmentBtn">장비 수정</button>
         <button class="btn" id="addHistoryBtn">이력 등록</button>
@@ -37,20 +52,20 @@
       </div>
     </section>
 
-    <section class="detail-main-grid">
-      <article class="card detail-info-card">
+    <section class="detail-main-grid detail-main-grid-tuned">
+      <article class="card detail-info-card detail-info-card-tuned">
         <div class="section-head">
           <h2 class="section-title">기본정보</h2>
-          <div class="sub-text">장비의 기본 속성과 현재 상태를 확인할 수 있습니다.</div>
+          <div class="sub-text">장비의 현재 등록 정보와 상태를 확인합니다.</div>
         </div>
 
         <div id="detailInfoGrid" class="detail-info-grid"></div>
       </article>
 
-      <aside class="card detail-qr-card">
+      <aside class="card detail-qr-card detail-qr-card-tuned">
         <div class="section-head">
           <h2 class="section-title">QR 코드</h2>
-          <div class="sub-text">현장에서 스캔하면 장비 상세 페이지로 이동합니다.</div>
+          <div class="sub-text">현장에서 스캔하면 상세 페이지로 이동합니다.</div>
         </div>
 
         <div class="detail-qr-box" id="qrBox"></div>
@@ -59,16 +74,16 @@
     </section>
 
     <section class="detail-history-section">
-      <div class="detail-section-grid">
-        <article class="card detail-list-card">
+      <div class="detail-section-grid detail-section-grid-tuned">
+        <article class="card detail-list-card detail-list-card-tuned">
           <div class="section-head">
-            <h2 class="section-title">수리/점검 이력</h2>
+            <h2 class="section-title">수리 / 점검 이력</h2>
             <div class="sub-text" id="historyCountText">0건</div>
           </div>
           <div id="historyArea" class="detail-timeline-list"></div>
         </article>
 
-        <article class="card detail-list-card">
+        <article class="card detail-list-card detail-list-card-tuned">
           <div class="section-head">
             <h2 class="section-title">재고조사 이력</h2>
             <div class="sub-text" id="inventoryCountText">0건</div>
