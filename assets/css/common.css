@@ -2078,3 +2078,77 @@ button, input, select, textarea {
     min-width: auto;
   }
 }
+
+/* =========================
+   equipment-detail fine tuning
+========================= */
+
+.detail-shell-tuned {
+  padding-top: 20px;
+}
+
+.detail-hero-tuned {
+  margin-bottom: 20px;
+}
+
+.detail-hero-desc {
+  margin: 12px 0 0;
+  max-width: 760px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.detail-action-bar-tuned {
+  margin-bottom: 16px;
+}
+
+.detail-main-grid-tuned {
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.detail-info-card-tuned,
+.detail-qr-card-tuned,
+.detail-list-card-tuned {
+  box-shadow: none;
+}
+
+.detail-qr-card-tuned .detail-qr-box {
+  background: var(--surface-soft);
+}
+
+.detail-qr-card-tuned .detail-qr-url {
+  background: var(--surface-soft);
+  color: var(--text-secondary);
+}
+
+.info-tile {
+  background: var(--surface-soft);
+}
+
+.info-tile-label {
+  color: var(--text-secondary);
+}
+
+.info-tile-value {
+  color: var(--text-primary);
+}
+
+.timeline-card {
+  background: var(--surface-soft);
+}
+
+.timeline-meta-item {
+  background: var(--surface);
+}
+
+.detail-section-grid-tuned {
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .detail-hero-desc {
+    font-size: 15px;
+  }
+}
