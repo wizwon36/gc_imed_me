@@ -3173,3 +3173,120 @@ button, input, select, textarea {
   line-height: 1.5;
   color: #667085;
 }
+
+/* =========================
+   equipment list search grouping
+========================= */
+
+.search-filter-block,
+.search-action-block {
+  margin-top: 18px;
+}
+
+.search-action-block {
+  padding-top: 14px;
+  border-top: 1px dashed #d9e0ea;
+}
+
+.search-block-label {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: #475467;
+  letter-spacing: -0.01em;
+}
+
+.search-chip-row {
+  padding: 12px;
+  border: 1px solid #e4e9f1;
+  border-radius: 16px;
+  background: #f8fbff;
+}
+
+.equipment-search-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e4e9f1;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.equipment-search-actions .btn {
+  min-width: 100px;
+}
+
+#resetBtn {
+  border-color: #d7dbe4;
+  background: #f8fafc;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  padding: 28px 16px;
+  text-align: center;
+  border: 1px dashed #d8dee8;
+  border-radius: 18px;
+  background: #fcfdff;
+}
+
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: #0f172a;
+}
+
+.empty-state-desc {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #667085;
+}
+
+@media (max-width: 768px) {
+  .search-filter-block,
+  .search-action-block {
+    margin-top: 16px;
+  }
+
+  .search-chip-row,
+  .equipment-search-actions {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .equipment-search-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .equipment-search-actions .btn {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+  }
+
+  .search-block-label {
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .equipment-search-actions {
+    gap: 8px;
+  }
+
+  .equipment-search-actions .btn {
+    flex: 1 1 100%;
+  }
+}
