@@ -67,6 +67,29 @@ function safeNumber(value) {
   return formatNumber(value);
 }
 
+function renderDetailSkeleton() {
+  qs('#detailInfoGrid').innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card info-tile-wide"></div>
+  `;
+
+  qs('#qrBox').innerHTML = `<div class="skeleton" style="width:180px;height:180px;border-radius:18px;"></div>`;
+  qs('#qrText').innerHTML = `<div class="skeleton skeleton-text" style="height:36px;"></div>`;
+
+  qs('#historyArea').innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  `;
+
+  qs('#inventoryArea').innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  `;
+}
+
 function renderHero(item) {
   qs('#heroEquipmentName').textContent = item.equipment_name || '장비명';
   qs('#heroEquipmentId').textContent = item.equipment_id || '-';
@@ -199,7 +222,9 @@ function renderInventoryLogs(items) {
 
 async function loadEquipmentDetail() {
   clearMessage();
-
+  renderDetailSkeleton();
+  showGlobalLoading();
+  
   const id = getQueryParam('id');
   currentEquipmentId = id;
 
@@ -224,6 +249,8 @@ async function loadEquipmentDetail() {
     renderInventoryLogs(inventoryResult.data || []);
   } catch (error) {
     showMessage(error.message, 'error');
+  } finally {
+    hideGlobalLoading();
   }
 }
 
