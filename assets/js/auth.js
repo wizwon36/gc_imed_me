@@ -30,13 +30,13 @@
 
   function logout() {
     clearSession();
-    location.href = '/gc_imed_me/index.html';
+    location.href = `${CONFIG.SITE_BASE_URL}/index.html`;
   }
   
   function requireAuth() {
     const user = getSession();
     if (!user) {
-      location.href = '/gc_imed_me/index.html';
+      location.href = `${CONFIG.SITE_BASE_URL}/index.html`;
       return null;
     }
     return user;
@@ -45,7 +45,7 @@
   function redirectIfLoggedIn() {
     const user = getSession();
     if (user) {
-      location.href = '/gc_imed_me/portal.html';
+      location.href = `${CONFIG.SITE_BASE_URL}/portal.html`;
     }
   }
 
@@ -83,7 +83,7 @@
       const result = await apiPost('login', { user_email, password });
       saveSession(result.user);
       setMessage('로그인되었습니다.', 'success');
-      location.href = '/gc_imed_me/portal.html';
+      location.href = `${CONFIG.SITE_BASE_URL}/portal.html`;
     } catch (error) {
       setMessage(error.message || '로그인 중 오류가 발생했습니다.', 'error');
     } finally {
