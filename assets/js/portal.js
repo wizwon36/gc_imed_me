@@ -24,28 +24,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     equipment: {
       title: '의료장비 관리 시스템',
       desc: '장비 등록, 조회, 이력 관리',
-      icon: '🩺',
-      url: `${CONFIG.SITE_BASE_URL}/equipment-dashboard.html`
+      url: `${CONFIG.SITE_BASE_URL}/equipment-dashboard.html`,
+      badgeClass: 'is-equipment'
     },
     logs: {
       title: '시스템 로그',
       desc: '수정 이력 및 로그 확인',
-      icon: '🧾',
-      url: `${CONFIG.SITE_BASE_URL}/admin-logs.html`
+      url: `${CONFIG.SITE_BASE_URL}/admin-logs.html`,
+      badgeClass: 'is-admin'
     },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 및 권한 관리',
-      icon: '👤',
-      url: `${CONFIG.SITE_BASE_URL}/admin-users.html`
+      url: `${CONFIG.SITE_BASE_URL}/admin-users.html`,
+      badgeClass: 'is-admin'
     }
   };
 
   try {
-    const result = await apiGet('getUserPermissions', {
-      user_email: user.email
-    });
-
+    const result = await apiGet('getUserPermissions', { user_email: user.email });
     const permissions = Array.isArray(result.data) ? result.data : [];
 
     if (!permissions.length) {
@@ -54,43 +51,59 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (emptyEl) emptyEl.style.display = 'none';
-
     const cards = permissions
-      .map(p => {
-        const app = APP_MAP[p.app_id];
+      .map(item => {
+        const app = APP_MAP[item.app_id];
         if (!app) return '';
+
+        const permissionText = escapeHtml(item.permission || '');
+        const badgeLabel = getPermissionLabel(item.permission);
 
         return `
           <a class="portal-app-card" href="${app.url}">
-            <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
-            <div>
-              <h3 class="portal-app-title">${app.title}</h3>
-              <p class="portal-app-desc">${app.desc}</p>
+            <div class="portal-app-card__header">
+              <h3 class="portal-app-card__title">${escapeHtml(app.title)}</h3>
+              <span class="portal-app-card__badge ${app.badgeClass}">
+                ${badgeLabel}
+              </span>
             </div>
-            <div class="portal-app-meta">${escapeHtml(p.permission || '')}</div>
+            <p class="portal-app-card__desc">${escapeHtml(app.desc)}</p>
+            <div class="portal-app-card__meta">권한: ${permissionText}</div>
           </a>
         `;
       })
+      .filter(Boolean)
       .join('');
 
     if (gridEl) {
-      gridEl.innerHTML = cards || '';
+      gridEl.innerHTML = cards;
     }
 
-    if (!cards && emptyEl) {
-      emptyEl.style.display = 'block';
+    if (emptyEl) {
+      emptyEl.style.display = cards ? 'none' : 'block';
     }
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
-        <div class="portal-empty">
+        <div class="empty-state">
           ${escapeHtml(error.message || '앱 정보를 불러오지 못했습니다.')}
         </div>
       `;
     }
+    if (emptyEl) {
+      emptyEl.style.display = 'none';
+    }
   }
 });
+
+function getPermissionLabel(permission) {
+  const map = {
+    view: '조회',
+    edit: '수정',
+    admin: '관리자'
+  };
+  return map[permission] || permission || '-';
+}
 
 function escapeHtml(value) {
   return String(value || '')
