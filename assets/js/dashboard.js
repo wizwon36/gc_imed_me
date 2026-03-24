@@ -219,7 +219,9 @@ function renderMaintenanceAlerts(items) {
     <article class="dashboard-list-item">
       <div class="dashboard-list-item__title">
         ${safeText(item.equipment_name)}
-        <span class="status-badge">${item.dday < 0 ? `D+${Math.abs(item.dday)}` : `D-${item.dday}`}</span>
+        <span class="status-badge">
+          ${item.dday < 0 ? `D+${Math.abs(item.dday)}` : `D-${item.dday}`}
+        </span>
       </div>
       <div class="dashboard-list-item__meta">
         ${safeText(item.department)} · ${safeText(item.model_name)}
