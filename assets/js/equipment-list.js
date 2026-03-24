@@ -1,3 +1,17 @@
+let CURRENT_EQUIPMENT_PERMISSION = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = window.auth.requireAuth();
+  if (!user) return;
+
+  const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+  if (!ok) return;
+
+  CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
+
+  initEquipmentListPage();
+});
+
 function statusLabel(status) {
   const map = {
     IN_USE: '사용중',
