@@ -9,35 +9,78 @@ function statusLabel(status) {
   return map[status] || status || '';
 }
 
-function renderEquipmentRows(items) {
-  const tbody = qs('#equipmentTableBody');
+function statusClass(status) {
+  const map = {
+    IN_USE: 'is-in-use',
+    REPAIRING: 'is-repairing',
+    INSPECTING: 'is-inspecting',
+    STORED: 'is-stored',
+    DISPOSED: 'is-disposed'
+  };
+  return map[status] || '';
+}
+
+function safeText(value, fallback = '-') {
+  return escapeHtml(value || fallback);
+}
+
+function updateSummary(items) {
+  qs('#summaryTotal').textContent = formatNumber(items.length);
+  qs('#summaryInUse').textContent = formatNumber(items.filter(item => item.status === 'IN_USE').length);
+  qs('#summaryRepairing').textContent = formatNumber(items.filter(item => item.status === 'REPAIRING').length);
+  qs('#summaryInspecting').textContent = formatNumber(items.filter(item => item.status === 'INSPECTING').length);
+  qs('#resultCountText').textContent = `총 ${formatNumber(items.length)}건`;
+}
+
+function renderEquipmentCards(items) {
+  const list = qs('#equipmentCardList');
 
   if (!items.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="9">
-          <div class="empty-box">조회 결과가 없습니다.</div>
-        </td>
-      </tr>
-    `;
+    list.innerHTML = `<div class="empty-box">조회 결과가 없습니다.</div>`;
+    updateSummary([]);
     return;
   }
 
-  tbody.innerHTML = items.map(item => `
-    <tr>
-      <td>${escapeHtml(item.equipment_id)}</td>
-      <td>${escapeHtml(item.equipment_name)}</td>
-      <td>${escapeHtml(item.model_name)}</td>
-      <td>${escapeHtml(item.department)}</td>
-      <td>${escapeHtml(item.serial_no)}</td>
-      <td>${escapeHtml(item.manufacturer)}</td>
-      <td><span class="badge">${escapeHtml(statusLabel(item.status))}</span></td>
-      <td>${escapeHtml(item.location)}</td>
-      <td>
-        <button class="btn" onclick="goToDetail('${escapeHtml(item.equipment_id)}')">보기</button>
-      </td>
-    </tr>
+  list.innerHTML = items.map(item => `
+    <article class="equipment-item-card" data-id="${escapeHtml(item.equipment_id)}">
+      <div class="equipment-card-top">
+        <div class="equipment-title-block">
+          <h3 class="equipment-title">${safeText(item.equipment_name)}</h3>
+          <div class="equipment-model">${safeText(item.model_name)}</div>
+        </div>
+
+        <div class="equipment-top-right">
+          <span class="status-badge ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
+          <div class="equipment-id">${safeText(item.equipment_id)}</div>
+        </div>
+      </div>
+
+      <div class="equipment-meta-grid">
+        <div class="equipment-meta-item">
+          <span class="equipment-meta-label">사용부서</span>
+          <span class="equipment-meta-value">${safeText(item.department)}</span>
+        </div>
+        <div class="equipment-meta-item">
+          <span class="equipment-meta-label">제조사</span>
+          <span class="equipment-meta-value">${safeText(item.manufacturer)}</span>
+        </div>
+        <div class="equipment-meta-item">
+          <span class="equipment-meta-label">시리얼번호</span>
+          <span class="equipment-meta-value">${safeText(item.serial_no)}</span>
+        </div>
+        <div class="equipment-meta-item">
+          <span class="equipment-meta-label">위치</span>
+          <span class="equipment-meta-value">${safeText(item.location)}</span>
+        </div>
+      </div>
+
+      <div class="equipment-card-actions">
+        <button class="btn btn-primary card-action-btn" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">상세보기</button>
+      </div>
+    </article>
   `).join('');
+
+  updateSummary(items);
 }
 
 async function loadEquipments() {
@@ -50,12 +93,17 @@ async function loadEquipments() {
     manufacturer: qs('#manufacturer').value.trim()
   };
 
+  const searchBtn = qs('#searchBtn');
+
   try {
+    setLoading(searchBtn, true, '조회 중...');
     const result = await apiGet('listEquipments', params);
-    renderEquipmentRows(result.data || []);
+    renderEquipmentCards(result.data || []);
   } catch (error) {
     showMessage(error.message, 'error');
-    renderEquipmentRows([]);
+    renderEquipmentCards([]);
+  } finally {
+    setLoading(searchBtn, false, '조회');
   }
 }
 
@@ -64,11 +112,53 @@ function resetSearchForm() {
   qs('#department').value = '';
   qs('#status').value = '';
   qs('#manufacturer').value = '';
+  setActiveFilterChip('');
   loadEquipments();
+}
+
+function setActiveFilterChip(statusValue) {
+  qsa('.filter-chip').forEach(chip => {
+    if (chip.dataset.status === statusValue) {
+      chip.classList.add('active');
+    } else {
+      chip.classList.remove('active');
+    }
+  });
+}
+
+function bindFilterChips() {
+  qsa('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const statusValue = chip.dataset.status || '';
+      qs('#status').value = statusValue;
+      setActiveFilterChip(statusValue);
+      loadEquipments();
+    });
+  });
+}
+
+function bindEnterSearch() {
+  ['#keyword', '#department', '#manufacturer'].forEach(selector => {
+    const el = qs(selector);
+    if (!el) return;
+    el.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        loadEquipments();
+      }
+    });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   qs('#searchBtn').addEventListener('click', loadEquipments);
   qs('#resetBtn').addEventListener('click', resetSearchForm);
+  qs('#status').addEventListener('change', () => {
+    setActiveFilterChip(qs('#status').value);
+  });
+
+  bindFilterChips();
+  bindEnterSearch();
+  setActiveFilterChip('');
   loadEquipments();
 });
