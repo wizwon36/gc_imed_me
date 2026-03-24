@@ -2210,3 +2210,240 @@ button, input, select, textarea {
     padding-top: 16px;
   }
 }
+
+/* =========================
+   label print fine tuning
+========================= */
+
+.label-shell {
+  padding-top: 20px;
+}
+
+.label-hero {
+  margin-bottom: 18px;
+}
+
+.label-hero-topline {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.label-hero-title {
+  margin: 0 0 10px;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.label-hero-subtext {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.label-preview-wrap {
+  margin-top: 8px;
+}
+
+.label-preview-card {
+  border-radius: 24px;
+  box-shadow: none;
+}
+
+.label-sheet {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18px 0 6px;
+}
+
+.device-label {
+  width: 440px;
+  min-height: 270px;
+  background: #fff;
+  border: 1.5px solid #cfd7e3;
+  border-radius: 24px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 152px;
+  gap: 18px;
+  align-items: center;
+}
+
+.device-label-main {
+  min-width: 0;
+}
+
+.label-hospital {
+  font-size: 15px;
+  font-weight: 800;
+  color: #12305b;
+  margin-bottom: 10px;
+}
+
+.label-title {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+  word-break: break-word;
+}
+
+.label-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.label-key {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-secondary);
+}
+
+.label-value {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.qr-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.label-qr-box {
+  width: 144px;
+  min-height: 144px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  padding: 10px;
+}
+
+.qr-caption {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  text-align: center;
+  word-break: break-all;
+}
+
+@media (max-width: 768px) {
+  .label-hero-title {
+    font-size: 30px;
+  }
+
+  .device-label {
+    width: 100%;
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .qr-panel {
+    align-items: flex-start;
+  }
+
+  .label-qr-box {
+    width: 132px;
+    min-height: 132px;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .no-print,
+  .top-brand-bar,
+  .label-hero,
+  #messageBox {
+    display: none !important;
+  }
+
+  .container.label-shell {
+    max-width: none;
+    padding: 0;
+  }
+
+  .label-preview-wrap {
+    margin: 0;
+  }
+
+  .label-preview-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .label-sheet {
+    padding: 0;
+    justify-content: flex-start;
+  }
+
+  .device-label {
+    width: 90mm;
+    min-height: 55mm;
+    border: 1px solid #111827;
+    border-radius: 5mm;
+    padding: 5mm;
+    box-shadow: none;
+    grid-template-columns: 1fr 32mm;
+    gap: 4mm;
+  }
+
+  .label-hospital {
+    font-size: 10pt;
+    margin-bottom: 2mm;
+  }
+
+  .label-title {
+    font-size: 15pt;
+    margin-bottom: 3mm;
+  }
+
+  .label-row {
+    grid-template-columns: 20mm 1fr;
+    gap: 2mm;
+  }
+
+  .label-key {
+    font-size: 8pt;
+  }
+
+  .label-value {
+    font-size: 8.5pt;
+  }
+
+  .label-qr-box {
+    width: 28mm;
+    min-height: 28mm;
+    padding: 1.5mm;
+    border-radius: 3mm;
+  }
+
+  .qr-caption {
+    font-size: 6pt;
+  }
+}
