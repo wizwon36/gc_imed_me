@@ -3124,3 +3124,52 @@ button, input, select, textarea {
     font-size: 11px;
   }
 }
+
+/* =========================
+   equipment list context
+========================= */
+
+.list-context-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.list-context-chip.is-hidden {
+  display: none;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  padding: 28px 16px;
+  text-align: center;
+  border: 1px dashed #d8dee8;
+  border-radius: 18px;
+  background: #fcfdff;
+}
+
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: #0f172a;
+}
+
+.empty-state-desc {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #667085;
+}
