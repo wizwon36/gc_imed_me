@@ -11,11 +11,14 @@ function statusLabel(status) {
 
 function renderEquipmentListSkeleton() {
   const list = qs('#equipmentCardList');
+  if (!list) return;
+
   list.innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
+    <div class="equipment-card-skeleton-list">
+      <div class="equipment-card-skeleton"></div>
+      <div class="equipment-card-skeleton"></div>
+      <div class="equipment-card-skeleton"></div>
+    </div>
   `;
 }
 
@@ -219,9 +222,6 @@ function applyListViewContext() {
 
 async function loadEquipments() {
   clearMessage();
-  toggleResultsUI(true);
-  renderEquipmentListSkeleton();
-  showGlobalLoading();
 
   const params = {
     keyword: qs('#keyword').value.trim(),
@@ -233,7 +233,11 @@ async function loadEquipments() {
   const searchBtn = qs('#searchBtn');
 
   try {
+    toggleResultsUI(true);
+    renderEquipmentListSkeleton();
+    showGlobalLoading();
     setLoading(searchBtn, true, '조회 중...');
+
     const result = await apiGet('listEquipments', params);
     renderEquipmentCards(result.data || []);
   } catch (error) {
@@ -302,6 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindFilterChips();
   bindEnterSearch();
   setActiveFilterChip('');
+  applyListViewContext();
 
   renderInitialEmptyState(
     '검색 조건을 설정한 뒤 조회해 주세요.',
