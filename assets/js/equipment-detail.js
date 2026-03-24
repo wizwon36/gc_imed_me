@@ -72,6 +72,7 @@ function renderHistories(items) {
       <div class="sub-text">처리일자: ${escapeHtml(item.work_date)}</div>
       <div class="sub-text">처리업체: ${escapeHtml(item.vendor_name)}</div>
       <div class="sub-text">수리금액: ${formatNumber(item.amount)}</div>
+      <div class="sub-text">처리결과: ${escapeHtml(item.result_status || '')}</div>
       <div style="margin-top: 8px;">${nl2br(item.description)}</div>
     </div>
   `).join('');
@@ -142,7 +143,19 @@ async function deleteCurrentEquipment() {
   }
 }
 
+function moveToHistoryForm() {
+  if (!currentEquipmentId) return;
+  location.href = `history-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
+}
+
+function moveToInventoryForm() {
+  if (!currentEquipmentId) return;
+  location.href = `inventory-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
+  qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
+  qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
   loadEquipmentDetail();
 });
