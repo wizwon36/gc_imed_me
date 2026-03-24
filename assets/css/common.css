@@ -3043,3 +3043,128 @@ button, input, select, textarea {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   mobile card separation
+========================= */
+
+@media (max-width: 768px) {
+  .card {
+    border: 1.5px solid #cfd6de;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+  }
+
+  .dashboard-panel,
+  .detail-info-card,
+  .detail-qr-card,
+  .detail-list-card,
+  .form-main-card,
+  .form-side-card,
+  .label-preview-card {
+    border: 1.5px solid #cfd6de;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  }
+
+  .dashboard-section-grid,
+  .detail-section-grid,
+  .form-page-grid {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-head {
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #e3e8ee;
+  }
+
+  .section-title {
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-panel,
+  .detail-info-card,
+  .detail-qr-card,
+  .detail-list-card,
+  .form-main-card,
+  .form-side-card,
+  .label-preview-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dashboard-panel::before,
+  .detail-info-card::before,
+  .detail-qr-card::before,
+  .detail-list-card::before,
+  .form-main-card::before,
+  .form-side-card::before,
+  .label-preview-card::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #0b1630, #3b82f6);
+    opacity: 0.85;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-list-item,
+  .dashboard-status-item,
+  .dashboard-rank-item,
+  .dashboard-action-card {
+    border: 1.5px solid #d8dee6;
+    background: #f8fafc;
+  }
+
+  .dashboard-list-item + .dashboard-list-item,
+  .dashboard-rank-item + .dashboard-rank-item,
+  .dashboard-note-item + .dashboard-note-item {
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 768px) {
+  .info-tile {
+    border: 1.5px solid #d8dee6;
+    background: #f8fafc;
+  }
+
+  .timeline-card {
+    border: 1.5px solid #d8dee6;
+    background: #f8fafc;
+  }
+
+  .timeline-meta-item {
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-kpi-grid,
+  .dashboard-section-grid,
+  .detail-main-grid,
+  .detail-section-grid,
+  .equipment-card-list,
+  .form-page-grid {
+    gap: 16px;
+  }
+
+  .dashboard-panel,
+  .detail-info-card,
+  .detail-qr-card,
+  .detail-list-card,
+  .form-main-card,
+  .form-side-card,
+  .label-preview-card {
+    margin-bottom: 2px;
+  }
+}
