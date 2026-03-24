@@ -34,6 +34,49 @@ function safeText(value, fallback = '-') {
   return escapeHtml(value || fallback);
 }
 
+function toggleResultsUI(show) {
+  const summaryRow = qs('#summaryRow');
+  const resultSection = qs('#resultSection');
+
+  if (summaryRow) {
+    summaryRow.classList.toggle('is-hidden', !show);
+  }
+
+  if (resultSection) {
+    resultSection.classList.toggle('is-hidden', !show);
+  }
+}
+
+function renderInitialEmptyState(message, description = '') {
+  const list = qs('#equipmentCardList');
+  if (!list) return;
+
+  list.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-title">${escapeHtml(message)}</div>
+      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
+    </div>
+  `;
+
+  updateSummary([]);
+  toggleResultsUI(false);
+}
+
+function renderResultEmptyState(message, description = '') {
+  const list = qs('#equipmentCardList');
+  if (!list) return;
+
+  list.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-title">${escapeHtml(message)}</div>
+      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
+    </div>
+  `;
+
+  updateSummary([]);
+  toggleResultsUI(true);
+}
+
 function updateSummary(items) {
   const total = items.length;
   const inUse = items.filter(item => item.status === 'IN_USE').length;
@@ -65,10 +108,14 @@ function renderEquipmentCards(items) {
   const list = qs('#equipmentCardList');
 
   if (!items.length) {
-    list.innerHTML = `<div class="empty-box">조회 결과가 없습니다.</div>`;
-    updateSummary([]);
+    renderResultEmptyState(
+      '조회 결과가 없습니다.',
+      '검색 조건을 변경한 뒤 다시 조회해 주세요.'
+    );
     return;
   }
+
+  toggleResultsUI(true);
 
   list.innerHTML = items.map(item => `
     <article class="equipment-item-card equipment-item-card-tuned" data-id="${escapeHtml(item.equipment_id)}">
@@ -89,14 +136,17 @@ function renderEquipmentCards(items) {
           <span class="equipment-meta-label">사용부서</span>
           <span class="equipment-meta-value">${safeText(item.department)}</span>
         </div>
+
         <div class="equipment-meta-item">
           <span class="equipment-meta-label">제조사</span>
           <span class="equipment-meta-value">${safeText(item.manufacturer)}</span>
         </div>
+
         <div class="equipment-meta-item">
           <span class="equipment-meta-label">시리얼번호</span>
           <span class="equipment-meta-value">${safeText(item.serial_no)}</span>
         </div>
+
         <div class="equipment-meta-item">
           <span class="equipment-meta-label">현재 위치</span>
           <span class="equipment-meta-value">${safeText(item.location)}</span>
@@ -167,9 +217,10 @@ function applyListViewContext() {
 
 async function loadEquipments() {
   clearMessage();
+  toggleResultsUI(true);
   renderEquipmentListSkeleton();
   showGlobalLoading();
-  
+
   const params = {
     keyword: qs('#keyword').value.trim(),
     department: qs('#department').value.trim(),
@@ -185,7 +236,10 @@ async function loadEquipments() {
     renderEquipmentCards(result.data || []);
   } catch (error) {
     showMessage(error.message, 'error');
-    renderEquipmentCards([]);
+    renderResultEmptyState(
+      '조회 중 오류가 발생했습니다.',
+      '잠시 후 다시 시도해 주세요.'
+    );
   } finally {
     setLoading(searchBtn, false, '조회');
     hideGlobalLoading();
@@ -201,7 +255,7 @@ function resetSearchForm() {
 
   renderInitialEmptyState(
     '검색 조건이 초기화되었습니다.',
-    '원하는 조건을 다시 입력한 뒤 조회해 주세요.'
+    '조건을 다시 입력한 뒤 조회 버튼을 눌러 주세요.'
   );
 }
 
@@ -246,10 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
   bindFilterChips();
   bindEnterSearch();
   setActiveFilterChip('');
-  applyListViewContext();
 
   renderInitialEmptyState(
     '검색 조건을 설정한 뒤 조회해 주세요.',
-    '페이지 진입 시 자동 전체조회는 실행하지 않습니다.'
+    '조회 전에는 결과 요약과 결과 목록이 표시되지 않습니다.'
   );
 });
