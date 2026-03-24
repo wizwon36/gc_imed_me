@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>재고조사 등록</title>
+  <link rel="stylesheet" href="assets/css/common.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="page-title">재고조사 등록</h1>
+        <div class="sub-text">QR 확인 또는 현장 점검 결과를 기록합니다.</div>
+      </div>
+      <div class="nav-links">
+        <a class="nav-link" href="index.html">홈</a>
+        <a class="nav-link" href="equipment-list.html">장비목록</a>
+      </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <div class="card">
+      <form id="inventoryForm">
+        <div class="form-section">
+          <h2 class="form-section-title">대상 장비</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">장비번호</label>
+              <input type="text" id="equipment_id" class="form-input" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">장비명</label>
+              <input type="text" id="equipment_name" class="form-input" readonly />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h2 class="form-section-title">재고조사 정보</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">점검일시 <span class="required">*</span></label>
+              <input type="text" id="checked_at" class="form-input" placeholder="2026-03-24 14:00:00" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">점검자 <span class="required">*</span></label>
+              <input type="text" id="checked_by" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">점검 시점 부서</label>
+              <input type="text" id="department_at_check" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">점검 시점 위치</label>
+              <input type="text" id="location_at_check" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">상태 <span class="required">*</span></label>
+              <select id="condition_status" class="form-select">
+                <option value="NORMAL">정상</option>
+                <option value="NEED_REPAIR">수리필요</option>
+                <option value="LOCATION_MISMATCH">위치불일치</option>
+                <option value="MISSING">분실의심</option>
+                <option value="DISPOSAL_TARGET">폐기대상</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">QR 스캔 여부</label>
+              <select id="qr_scan_yn" class="form-select">
+                <option value="Y">Y</option>
+                <option value="N">N</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label">비고</label>
+              <textarea id="memo" class="form-textarea"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn btn-primary">저장</button>
+          <a class="btn" id="backToDetailBtn" href="#">상세로 돌아가기</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/inventory-form.js"></script>
+</body>
+</html>
