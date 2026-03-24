@@ -7,26 +7,36 @@
   <link rel="stylesheet" href="assets/css/common.css" />
 </head>
 <body>
-  <div class="container form-shell">
-    <div class="form-hero">
+  <div class="container form-shell form-shell-tuned">
+    <section class="top-brand-bar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">+</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">의료장비 관리시스템</strong>
+          <span class="top-brand-sub">수리 · 점검 · 검사 이력 등록</span>
+        </div>
+      </div>
+
+      <div class="top-brand-actions">
+        <a class="nav-link" href="index.html">대시보드</a>
+        <a class="nav-link" href="equipment-list.html">장비목록</a>
+      </div>
+    </section>
+
+    <section class="form-hero form-hero-tuned">
       <div class="form-hero-copy">
-        <div class="form-hero-topline">수리/점검 이력 등록</div>
+        <div class="form-hero-topline">수리 / 점검 이력 등록</div>
         <h1 class="form-hero-title">장비 이력 입력</h1>
         <div class="form-hero-subtext">
           수리, 정기점검, 법정검사 등 장비 이력을 기록합니다.
         </div>
       </div>
-
-      <div class="form-hero-actions">
-        <a class="nav-link" href="index.html">홈</a>
-        <a class="nav-link" href="equipment-list.html">장비목록</a>
-      </div>
-    </div>
+    </section>
 
     <div id="messageBox" class="message-box"></div>
 
-    <form id="historyForm" class="form-page-grid">
-      <section class="card form-main-card">
+    <form id="historyForm" class="form-page-grid form-page-grid-tuned">
+      <section class="card form-main-card form-main-card-tuned">
         <div class="section-head">
           <h2 class="section-title">대상 장비</h2>
           <div class="sub-text">현재 선택된 장비 기준으로 이력이 등록됩니다.</div>
@@ -112,7 +122,7 @@
         </div>
       </section>
 
-      <aside class="card form-side-card">
+      <aside class="card form-side-card form-side-card-tuned">
         <div class="section-head">
           <h2 class="section-title">입력 안내</h2>
         </div>
@@ -128,7 +138,7 @@
           </div>
           <div class="guide-item">
             <div class="guide-title">기록 기준</div>
-            <div class="guide-text">현장에서 실제로 수행한 작업 기준으로 간단명료하게 남겨 주세요.</div>
+            <div class="guide-text">현장에서 실제 수행한 작업을 기준으로 간단명료하게 남겨 주세요.</div>
           </div>
         </div>
 
