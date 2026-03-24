@@ -1974,3 +1974,107 @@ button, input, select, textarea {
     font-size: 13px;
   }
 }
+
+/* =========================
+   equipment-list fine tuning
+========================= */
+
+.equipment-list-shell {
+  padding-top: 20px;
+}
+
+.equipment-list-hero {
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.equipment-list-hero-badge {
+  min-width: 180px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.equipment-list-hero-badge-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.equipment-list-hero-badge-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.equipment-search-card-tuned {
+  margin-bottom: 16px;
+  padding: 22px;
+}
+
+.equipment-search-grid-tuned {
+  grid-template-columns: 1.35fr 1fr 1fr 1fr;
+}
+
+.equipment-search-actions {
+  margin-top: 18px;
+}
+
+.equipment-summary-row-tuned {
+  margin-bottom: 22px;
+}
+
+.equipment-card-list-tuned {
+  gap: 18px;
+}
+
+.equipment-item-card-tuned {
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: none;
+}
+
+.equipment-item-card-tuned:hover {
+  transform: translateY(-1px);
+}
+
+.equipment-item-card-tuned .equipment-title {
+  font-size: 22px;
+}
+
+.equipment-item-card-tuned .equipment-model {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.equipment-item-card-tuned .equipment-id {
+  color: var(--text-muted);
+}
+
+.equipment-item-card-tuned .equipment-meta-item {
+  background: var(--surface-soft);
+}
+
+@media (max-width: 1024px) {
+  .equipment-list-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .equipment-list-hero-badge {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .equipment-search-grid-tuned {
+    grid-template-columns: 1fr;
+  }
+
+  .equipment-list-hero-badge {
+    min-width: auto;
+  }
+}
