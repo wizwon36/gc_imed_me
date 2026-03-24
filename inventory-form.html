@@ -7,13 +7,17 @@
   <link rel="stylesheet" href="assets/css/common.css" />
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1 class="page-title">재고조사 등록</h1>
-        <div class="sub-text">QR 확인 또는 현장 점검 결과를 기록합니다.</div>
+  <div class="container form-shell">
+    <div class="form-hero">
+      <div class="form-hero-copy">
+        <div class="form-hero-topline">재고조사 등록</div>
+        <h1 class="form-hero-title">현장 점검 결과 입력</h1>
+        <div class="form-hero-subtext">
+          점검 위치와 상태를 기록해 현장 재고조사 이력을 남깁니다.
+        </div>
       </div>
-      <div class="nav-links">
+
+      <div class="form-hero-actions">
         <a class="nav-link" href="index.html">홈</a>
         <a class="nav-link" href="equipment-list.html">장비목록</a>
       </div>
@@ -21,77 +25,101 @@
 
     <div id="messageBox" class="message-box"></div>
 
-    <div class="card">
-      <form id="inventoryForm">
-        <div class="form-section">
-          <h2 class="form-section-title">대상 장비</h2>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">장비번호</label>
-              <input type="text" id="equipment_id" class="form-input" readonly />
-            </div>
-            <div class="form-group">
-              <label class="form-label">장비명</label>
-              <input type="text" id="equipment_name" class="form-input" readonly />
-            </div>
+    <form id="inventoryForm" class="form-page-grid">
+      <section class="card form-main-card">
+        <div class="section-head">
+          <h2 class="section-title">대상 장비</h2>
+          <div class="sub-text">선택된 장비 기준으로 재고조사 기록이 저장됩니다.</div>
+        </div>
+
+        <div class="form-grid form-grid-modern">
+          <div class="form-group">
+            <label class="form-label">장비번호</label>
+            <input type="text" id="equipment_id" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">장비명</label>
+            <input type="text" id="equipment_name" class="form-input" readonly />
           </div>
         </div>
 
-        <div class="form-section">
-          <h2 class="form-section-title">재고조사 정보</h2>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">점검일시 <span class="required">*</span></label>
-              <input type="text" id="checked_at" class="form-input" placeholder="2026-03-24 14:00:00" />
-            </div>
+        <div class="section-head form-inner-head">
+          <h2 class="section-title">재고조사 정보</h2>
+        </div>
 
-            <div class="form-group">
-              <label class="form-label">점검자 <span class="required">*</span></label>
-              <input type="text" id="checked_by" class="form-input" />
-            </div>
+        <div class="form-grid form-grid-modern">
+          <div class="form-group">
+            <label class="form-label">점검일시 <span class="required">*</span></label>
+            <input type="text" id="checked_at" class="form-input form-input-lg" placeholder="2026-03-24 14:00:00" />
+          </div>
 
-            <div class="form-group">
-              <label class="form-label">점검 시점 부서</label>
-              <input type="text" id="department_at_check" class="form-input" />
-            </div>
+          <div class="form-group">
+            <label class="form-label">점검자 <span class="required">*</span></label>
+            <input type="text" id="checked_by" class="form-input form-input-lg" />
+          </div>
 
-            <div class="form-group">
-              <label class="form-label">점검 시점 위치</label>
-              <input type="text" id="location_at_check" class="form-input" />
-            </div>
+          <div class="form-group">
+            <label class="form-label">점검 시점 부서</label>
+            <input type="text" id="department_at_check" class="form-input" />
+          </div>
 
-            <div class="form-group">
-              <label class="form-label">상태 <span class="required">*</span></label>
-              <select id="condition_status" class="form-select">
-                <option value="NORMAL">정상</option>
-                <option value="NEED_REPAIR">수리필요</option>
-                <option value="LOCATION_MISMATCH">위치불일치</option>
-                <option value="MISSING">분실의심</option>
-                <option value="DISPOSAL_TARGET">폐기대상</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label class="form-label">점검 시점 위치</label>
+            <input type="text" id="location_at_check" class="form-input" />
+          </div>
 
-            <div class="form-group">
-              <label class="form-label">QR 스캔 여부</label>
-              <select id="qr_scan_yn" class="form-select">
-                <option value="Y">Y</option>
-                <option value="N">N</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label class="form-label">상태 <span class="required">*</span></label>
+            <select id="condition_status" class="form-select">
+              <option value="NORMAL">정상</option>
+              <option value="NEED_REPAIR">수리필요</option>
+              <option value="LOCATION_MISMATCH">위치불일치</option>
+              <option value="MISSING">분실의심</option>
+              <option value="DISPOSAL_TARGET">폐기대상</option>
+            </select>
+          </div>
 
-            <div class="form-group full">
-              <label class="form-label">비고</label>
-              <textarea id="memo" class="form-textarea"></textarea>
-            </div>
+          <div class="form-group">
+            <label class="form-label">QR 스캔 여부</label>
+            <select id="qr_scan_yn" class="form-select">
+              <option value="Y">Y</option>
+              <option value="N">N</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">비고</label>
+            <textarea id="memo" class="form-textarea" placeholder="현장 상태, 위치 변경 사항 등을 적어 주세요."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card form-side-card">
+        <div class="section-head">
+          <h2 class="section-title">입력 안내</h2>
+        </div>
+
+        <div class="guide-list">
+          <div class="guide-item">
+            <div class="guide-title">필수 입력</div>
+            <div class="guide-text">점검일시, 점검자, 상태는 반드시 입력해야 합니다.</div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-title">현장 정보</div>
+            <div class="guide-text">점검 당시 실제 위치와 부서를 기준으로 적어 주세요.</div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-title">QR 사용</div>
+            <div class="guide-text">현장에서 QR 스캔 후 등록했다면 QR 스캔 여부를 Y로 유지하면 됩니다.</div>
           </div>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" id="submitBtn" class="btn btn-primary">저장</button>
+        <div class="form-actions form-side-actions">
+          <button type="submit" id="submitBtn" class="btn btn-primary form-submit-btn">저장</button>
           <a class="btn" id="backToDetailBtn" href="#">상세로 돌아가기</a>
         </div>
-      </form>
-    </div>
+      </aside>
+    </form>
   </div>
 
   <script src="assets/js/config.js"></script>
