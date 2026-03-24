@@ -4,108 +4,97 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>장비 상세</title>
+
   <link rel="stylesheet" href="assets/css/common.css" />
+  <link rel="stylesheet" href="assets/css/equipment.css" />
 </head>
 <body>
-  <div class="container detail-shell detail-shell-tuned">
-    <section class="top-brand-bar">
-      <div class="top-brand-left">
-        <div class="top-brand-logo">+</div>
-        <div class="top-brand-texts">
-          <strong class="top-brand-title">의료장비 관리시스템</strong>
-          <span class="top-brand-sub">장비 상세 · 이력 조회 · QR 확인</span>
-        </div>
+  <div class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="page-eyebrow">의료장비 관리시스템</p>
+        <h1 class="page-title">의료장비 상세정보</h1>
+        <p class="page-desc">기본정보, 수리/점검 이력, 재고조사 결과, QR 라벨 출력을 한 화면에서 확인할 수 있습니다.</p>
       </div>
 
-      <div class="top-brand-actions">
-        <a class="nav-link" href="index.html">대시보드</a>
-        <a class="nav-link" href="equipment-list.html">장비목록</a>
-        <a class="nav-link btn-primary" href="equipment-form.html">장비등록</a>
-      </div>
-    </section>
+      <nav class="page-nav">
+        <a href="equipment-dashboard.html">대시보드</a>
+        <a href="equipment-list.html">장비목록</a>
+        <a href="equipment-form.html" class="js-create-equipment-btn">장비등록</a>
+      </nav>
+    </header>
 
-    <section class="detail-hero detail-hero-tuned">
-      <div class="detail-hero-copy">
-        <div class="detail-hero-topline">의료장비 상세정보</div>
-        <h1 class="detail-hero-title" id="heroEquipmentName">장비명</h1>
-
-        <div class="detail-hero-meta">
-          <span class="status-badge" id="heroStatusBadge">상태</span>
-          <span class="detail-hero-id" id="heroEquipmentId">관리번호</span>
-        </div>
-
-        <p class="detail-hero-desc">
-          기본정보, 수리/점검 이력, 재고조사 결과, QR 라벨 출력을 한 화면에서 확인할 수 있습니다.
-        </p>
-      </div>
-    </section>
-
-    <div id="messageBox" class="message-box"></div>
-
-    <section class="detail-action-bar card detail-action-bar-tuned">
-      <div class="form-actions detail-action-buttons">
-        <button class="btn" id="editEquipmentBtn">장비 수정</button>
-        <button class="btn" id="addHistoryBtn">이력 등록</button>
-        <button class="btn" id="addInventoryBtn">재고조사 등록</button>
-        <button class="btn" id="printLabelBtn">라벨 출력</button>
-        <button class="btn btn-danger" id="deleteBtn">장비 삭제</button>
-      </div>
-    </section>
-
-    <section class="detail-main-grid detail-main-grid-tuned">
-      <article class="card detail-info-card detail-info-card-tuned">
-        <div class="section-head">
-          <h2 class="section-title">기본정보</h2>
-          <div class="sub-text">장비의 현재 등록 정보와 상태를 확인합니다.</div>
-        </div>
-
-        <div id="detailInfoGrid" class="detail-info-grid"></div>
-      </article>
-
-      <aside class="card detail-qr-card detail-qr-card-tuned">
-        <div class="section-head">
-          <h2 class="section-title">QR 코드</h2>
-          <div class="sub-text">QR 스캔으로 상세 조회</div>
-        </div>
-
-        <div class="detail-qr-box" id="qrBox"></div>
-        <div class="detail-qr-url" id="qrText"></div>
-      </aside>
-    </section>
-
-    <section class="detail-history-section">
-      <div class="detail-section-grid detail-section-grid-tuned">
-        <article class="card detail-list-card detail-list-card-tuned">
-          <div class="section-head">
-            <h2 class="section-title">수리 / 점검 이력</h2>
-            <div class="sub-text" id="historyCountText">0건</div>
+    <main class="detail-layout">
+      <section class="detail-hero-card">
+        <div class="detail-hero-card__main">
+          <div class="detail-hero-card__topline">의료장비 상세</div>
+          <h2 class="detail-hero-card__title" id="heroEquipmentName">장비명</h2>
+          <div class="detail-hero-card__sub">
+            <span class="status-badge" id="heroStatusBadge">상태</span>
+            <span id="heroEquipmentId">관리번호</span>
           </div>
-          <div id="historyArea" class="detail-timeline-list"></div>
-        </article>
+        </div>
 
-        <article class="card detail-list-card detail-list-card-tuned">
-          <div class="section-head">
-            <h2 class="section-title">재고조사 이력</h2>
-            <div class="sub-text" id="inventoryCountText">0건</div>
+        <div class="detail-action-row">
+          <button type="button" id="editEquipmentBtn">장비 수정</button>
+          <button type="button" id="addHistoryBtn">이력 등록</button>
+          <button type="button" id="addInventoryBtn">재고조사 등록</button>
+          <button type="button" id="printLabelBtn">라벨 출력</button>
+          <button type="button" id="deleteBtn">장비 삭제</button>
+        </div>
+      </section>
+
+      <section class="detail-content-grid">
+        <section class="dashboard-panel">
+          <div class="section-heading">
+            <div>
+              <h2>기본정보</h2>
+              <p>장비의 현재 등록 정보와 상태를 확인합니다.</p>
+            </div>
           </div>
-          <div id="inventoryArea" class="detail-timeline-list"></div>
-        </article>
-      </div>
-    </section>
+          <div class="detail-info-grid" id="detailInfoGrid"></div>
+        </section>
+
+        <section class="dashboard-panel qr-panel">
+          <div class="section-heading">
+            <div>
+              <h2>QR 코드</h2>
+              <p>QR 스캔으로 상세 조회</p>
+            </div>
+          </div>
+          <div class="qr-box" id="qrBox"></div>
+          <div class="qr-text" id="qrText"></div>
+        </section>
+      </section>
+
+      <section class="dashboard-panel">
+        <div class="section-heading">
+          <div>
+            <h2>수리 / 점검 이력</h2>
+          </div>
+          <div class="result-count-text" id="historyCountText">0건</div>
+        </div>
+        <div class="history-list" id="historyArea"></div>
+      </section>
+
+      <section class="dashboard-panel">
+        <div class="section-heading">
+          <div>
+            <h2>재고조사 이력</h2>
+          </div>
+          <div class="result-count-text" id="inventoryCountText">0건</div>
+        </div>
+        <div class="history-list" id="inventoryArea"></div>
+      </section>
+    </main>
   </div>
 
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/auth.js"></script>
-  <script>
-    window.auth.requireAuth();
-  </script>
-  <script src="assets/js/app-permission.js"></script>
   <script src="assets/js/api.js"></script>
-  <script src="assets/js/utils.js"></script>
-  <script src="assets/libs/qrcode.min.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/app-permission.js"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/lib/qrcode.min.js"></script>
   <script src="assets/js/equipment-detail.js"></script>
-
-  <div id="globalLoading" class="global-loading">
-    <div class="spinner"></div>
 </body>
 </html>
