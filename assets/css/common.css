@@ -3565,3 +3565,75 @@ button, input, select, textarea {
     flex: 1 1 100%;
   }
 }
+
+/* =========================
+   equipment list skeleton
+========================= */
+
+.equipment-card-skeleton-list {
+  display: grid;
+  gap: 14px;
+}
+
+.equipment-card-skeleton {
+  position: relative;
+  overflow: hidden;
+  min-height: 180px;
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.equipment-card-skeleton::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  transform: translateX(-100%);
+  animation: equipmentSkeletonShimmer 1.2s infinite;
+}
+
+.equipment-card-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(#eef2f6 0 0) 20px 20px / 180px 18px no-repeat,
+    linear-gradient(#f3f5f8 0 0) 20px 48px / 120px 14px no-repeat,
+    linear-gradient(#eef2f6 0 0) calc(100% - 110px) 24px / 90px 28px no-repeat,
+    linear-gradient(#f3f5f8 0 0) 20px 92px / calc(50% - 30px) 12px no-repeat,
+    linear-gradient(#f3f5f8 0 0) calc(50% + 10px) 92px / calc(50% - 30px) 12px no-repeat,
+    linear-gradient(#f3f5f8 0 0) 20px 122px / calc(50% - 30px) 12px no-repeat,
+    linear-gradient(#f3f5f8 0 0) calc(50% + 10px) 122px / calc(50% - 30px) 12px no-repeat,
+    linear-gradient(#eef2f6 0 0) calc(100% - 110px) calc(100% - 42px) / 88px 32px no-repeat;
+}
+
+@keyframes equipmentSkeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 768px) {
+  .equipment-card-skeleton {
+    min-height: 164px;
+    border-radius: 16px;
+  }
+
+  .equipment-card-skeleton-list {
+    gap: 12px;
+  }
+
+  .equipment-card-skeleton::after {
+    background:
+      linear-gradient(#eef2f6 0 0) 16px 18px / 140px 16px no-repeat,
+      linear-gradient(#f3f5f8 0 0) 16px 42px / 96px 12px no-repeat,
+      linear-gradient(#eef2f6 0 0) calc(100% - 92px) 20px / 76px 24px no-repeat,
+      linear-gradient(#f3f5f8 0 0) 16px 82px / calc(50% - 24px) 11px no-repeat,
+      linear-gradient(#f3f5f8 0 0) calc(50% + 8px) 82px / calc(50% - 24px) 11px no-repeat,
+      linear-gradient(#f3f5f8 0 0) 16px 108px / calc(50% - 24px) 11px no-repeat,
+      linear-gradient(#f3f5f8 0 0) calc(50% + 8px) 108px / calc(50% - 24px) 11px no-repeat,
+      linear-gradient(#eef2f6 0 0) calc(100% - 92px) calc(100% - 36px) / 74px 28px no-repeat;
+  }
+}
