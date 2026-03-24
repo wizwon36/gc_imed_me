@@ -31,7 +31,8 @@ function renderLabelQr(equipmentId) {
 
 async function loadLabelData() {
   clearMessage();
-
+  showGlobalLoading();
+  
   const equipmentId = getQueryParam('equipment_id');
 
   if (!equipmentId) {
@@ -55,6 +56,8 @@ async function loadLabelData() {
     renderLabelQr(item.equipment_id);
   } catch (error) {
     showMessage(error.message, 'error');
+  } finally {
+    hideGlobalLoading();
   }
 }
 
