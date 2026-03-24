@@ -89,49 +89,58 @@
         </div>
       </div>
 
-      <div class="search-chip-row">
-        <button type="button" class="filter-chip" data-status="">전체</button>
-        <button type="button" class="filter-chip" data-status="IN_USE">사용중</button>
-        <button type="button" class="filter-chip" data-status="REPAIRING">수리중</button>
-        <button type="button" class="filter-chip" data-status="INSPECTING">점검중</button>
-        <button type="button" class="filter-chip" data-status="STORED">보관</button>
+      <div class="search-filter-block">
+        <div class="search-block-label">빠른 상태 선택</div>
+        <div class="search-chip-row">
+          <button type="button" class="filter-chip" data-status="">전체</button>
+          <button type="button" class="filter-chip" data-status="IN_USE">사용중</button>
+          <button type="button" class="filter-chip" data-status="REPAIRING">수리중</button>
+          <button type="button" class="filter-chip" data-status="INSPECTING">점검중</button>
+          <button type="button" class="filter-chip" data-status="STORED">보관</button>
+        </div>
       </div>
-
-      <div class="form-actions equipment-search-actions">
-        <button class="btn btn-primary search-submit-btn" id="searchBtn">조회</button>
-        <button class="btn" id="resetBtn">초기화</button>
+      
+      <div class="search-action-block">
+        <div class="search-block-label">실행</div>
+        <div class="form-actions equipment-search-actions">
+          <button class="btn btn-primary search-submit-btn" id="searchBtn">조회</button>
+          <button class="btn" id="resetBtn">초기화</button>
+        </div>
       </div>
     </section>
 
-    <section class="equipment-summary-row equipment-summary-row-tuned" id="summaryRow">
+    <section class="equipment-summary-row equipment-summary-row-tuned is-hidden" id="summaryRow">
       <div class="summary-pill">
         <span class="summary-pill-label">전체</span>
         <strong class="summary-pill-value" id="summaryTotal">0</strong>
       </div>
+    
       <div class="summary-pill">
         <span class="summary-pill-label">사용중</span>
         <strong class="summary-pill-value" id="summaryInUse">0</strong>
       </div>
+    
       <div class="summary-pill">
         <span class="summary-pill-label">수리중</span>
         <strong class="summary-pill-value" id="summaryRepairing">0</strong>
       </div>
+    
       <div class="summary-pill">
         <span class="summary-pill-label">점검중</span>
         <strong class="summary-pill-value" id="summaryInspecting">0</strong>
       </div>
     </section>
-
-    <section class="equipment-list-section">
+    
+    <section class="equipment-list-section is-hidden" id="resultSection">
       <div class="section-head">
         <h2 class="section-title">조회 결과</h2>
         <div class="sub-text">카드를 눌러 장비 상세 화면으로 이동할 수 있습니다.</div>
       </div>
-
+    
       <div id="equipmentCardList" class="equipment-card-list equipment-card-list-tuned">
         <div class="empty-state">
           <div class="empty-state-title">검색 조건을 설정한 뒤 조회해 주세요.</div>
-          <div class="empty-state-desc">페이지 진입 시 자동 전체조회는 실행하지 않습니다.</div>
+          <div class="empty-state-desc">조회 전에는 결과 영역이 표시되지 않습니다.</div>
         </div>
       </div>
     </section>
