@@ -37,13 +37,15 @@ function safeText(value, fallback = '-') {
 function toggleResultsUI(show) {
   const summaryRow = qs('#summaryRow');
   const resultSection = qs('#resultSection');
-
+  const heroResultBadge = qs('#heroResultBadge');
   if (summaryRow) {
     summaryRow.classList.toggle('is-hidden', !show);
   }
-
   if (resultSection) {
     resultSection.classList.toggle('is-hidden', !show);
+  }
+  if (heroResultBadge) {
+    heroResultBadge.classList.toggle('is-hidden', !show);
   }
 }
 
