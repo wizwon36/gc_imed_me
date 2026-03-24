@@ -3226,6 +3226,14 @@ button, input, select, textarea {
   display: none !important;
 }
 
+#heroResultBadge {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#heroResultBadge.is-hidden {
+  display: none !important;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
