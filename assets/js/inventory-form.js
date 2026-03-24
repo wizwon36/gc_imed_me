@@ -1,4 +1,25 @@
+let CURRENT_EQUIPMENT_PERMISSION = null;
 let currentEquipmentId = '';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = window.auth.requireAuth();
+  if (!user) return;
+
+  const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
+  if (!ok) return;
+
+  CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
+
+  initInventoryFormPage();
+});
+
+function getCurrentUser() {
+  return window.auth?.getSession?.() || null;
+}
+
+function canEditEquipment() {
+  return CURRENT_EQUIPMENT_PERMISSION === 'edit' || CURRENT_EQUIPMENT_PERMISSION === 'admin';
+}
 
 function getNowDateTimeString() {
   const now = new Date();
@@ -11,18 +32,50 @@ function getNowDateTimeString() {
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
+function applyInventoryPermission() {
+  const form = qs('#inventoryForm');
+  const submitBtn = qs('#submitBtn');
+
+  if (!form) return;
+
+  if (!canEditEquipment()) {
+    Array.from(form.elements).forEach(el => {
+      if (el.id === 'submitBtn') return;
+      el.disabled = true;
+      if ('readOnly' in el) el.readOnly = true;
+    });
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '권한 없음';
+      submitBtn.title = '권한이 없습니다.';
+    }
+
+    showMessage('재고조사 등록 권한이 없습니다.', 'error');
+  }
+}
+
 async function loadEquipmentInfo() {
   const equipmentId = getQueryParam('equipment_id');
   currentEquipmentId = equipmentId;
+
   showGlobalLoading();
 
   if (!equipmentId) {
     showMessage('equipment_id가 없습니다.', 'error');
+    hideGlobalLoading();
     return;
   }
 
   qs('#backToDetailBtn').href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
   qs('#checked_at').value = getNowDateTimeString();
+
+  const user = getCurrentUser();
+  if (user?.name) {
+    qs('#checked_by').value = user.name;
+  } else if (user?.email) {
+    qs('#checked_by').value = user.email;
+  }
 
   try {
     const result = await apiGet('getEquipment', { id: equipmentId });
@@ -39,13 +92,8 @@ async function loadEquipmentInfo() {
   }
 }
 
-async function handleSubmitInventory(event) {
-  event.preventDefault();
-  clearMessage();
-
-  const submitBtn = qs('#submitBtn');
-
-  const payload = {
+function buildInventoryPayload() {
+  return {
     equipment_id: qs('#equipment_id').value.trim(),
     checked_at: qs('#checked_at').value.trim(),
     checked_by: qs('#checked_by').value.trim(),
@@ -55,23 +103,42 @@ async function handleSubmitInventory(event) {
     qr_scan_yn: qs('#qr_scan_yn').value,
     memo: qs('#memo').value.trim()
   };
+}
 
+function validateInventoryPayload(payload) {
   if (!payload.equipment_id) {
     showMessage('장비번호가 없습니다.', 'error');
-    return;
+    return false;
   }
 
   if (!payload.checked_at) {
     showMessage('점검일시를 입력하세요.', 'error');
     qs('#checked_at').focus();
-    return;
+    return false;
   }
 
   if (!payload.checked_by) {
     showMessage('점검자를 입력하세요.', 'error');
     qs('#checked_by').focus();
+    return false;
+  }
+
+  return true;
+}
+
+async function handleSubmitInventory(event) {
+  event.preventDefault();
+  clearMessage();
+
+  if (!canEditEquipment()) {
+    showMessage('재고조사 등록 권한이 없습니다.', 'error');
     return;
   }
+
+  const submitBtn = qs('#submitBtn');
+  const payload = buildInventoryPayload();
+
+  if (!validateInventoryPayload(payload)) return;
 
   try {
     setLoading(submitBtn, true, '저장 중...');
@@ -85,7 +152,8 @@ async function handleSubmitInventory(event) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  qs('#inventoryForm').addEventListener('submit', handleSubmitInventory);
+function initInventoryFormPage() {
+  qs('#inventoryForm')?.addEventListener('submit', handleSubmitInventory);
+  applyInventoryPermission();
   loadEquipmentInfo();
-});
+}
