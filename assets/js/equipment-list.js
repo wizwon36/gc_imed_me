@@ -9,14 +9,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
 
-  await window.appPermission.toggleByPermission(
-    'equipment',
-    '.js-create-equipment-btn',
-    ['edit', 'admin']
-  );
+  if (window.appPermission.toggleByPermission) {
+    await window.appPermission.toggleByPermission(
+      'equipment',
+      '.js-create-equipment-btn',
+      ['edit', 'admin']
+    );
+  } else if (window.appPermission.disableByPermission) {
+    window.appPermission.disableByPermission(
+      'equipment',
+      '.js-create-equipment-btn',
+      ['edit', 'admin']
+    );
+  }
 
   initEquipmentListPage();
 });
+
+function canEditEquipment() {
+  return CURRENT_EQUIPMENT_PERMISSION === 'edit' || CURRENT_EQUIPMENT_PERMISSION === 'admin';
+}
 
 function statusLabel(status) {
   const map = {
@@ -32,14 +44,7 @@ function statusLabel(status) {
 function renderEquipmentListSkeleton() {
   const list = qs('#equipmentCardList');
   if (!list) return;
-
-  list.innerHTML = `
-    <div class="equipment-card-skeleton-list">
-      <div class="equipment-card-skeleton"></div>
-      <div class="equipment-card-skeleton"></div>
-      <div class="equipment-card-skeleton"></div>
-    </div>
-  `;
+  list.innerHTML = ``;
 }
 
 function statusClass(status) {
@@ -61,15 +66,10 @@ function toggleResultsUI(show) {
   const summaryRow = qs('#summaryRow');
   const resultSection = qs('#resultSection');
   const heroResultBadge = qs('#heroResultBadge');
-  if (summaryRow) {
-    summaryRow.classList.toggle('is-hidden', !show);
-  }
-  if (resultSection) {
-    resultSection.classList.toggle('is-hidden', !show);
-  }
-  if (heroResultBadge) {
-    heroResultBadge.classList.toggle('is-hidden', !show);
-  }
+
+  if (summaryRow) summaryRow.classList.toggle('is-hidden', !show);
+  if (resultSection) resultSection.classList.toggle('is-hidden', !show);
+  if (heroResultBadge) heroResultBadge.classList.toggle('is-hidden', !show);
 }
 
 function renderInitialEmptyState(message, description = '') {
@@ -78,8 +78,8 @@ function renderInitialEmptyState(message, description = '') {
 
   list.innerHTML = `
     <div class="empty-state">
-      <div class="empty-state-title">${escapeHtml(message)}</div>
-      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
+      <strong>${escapeHtml(message)}</strong>
+      ${description ? `<p>${escapeHtml(description)}</p>` : ''}
     </div>
   `;
 
@@ -93,8 +93,8 @@ function renderResultEmptyState(message, description = '') {
 
   list.innerHTML = `
     <div class="empty-state">
-      <div class="empty-state-title">${escapeHtml(message)}</div>
-      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
+      <strong>${escapeHtml(message)}</strong>
+      ${description ? `<p>${escapeHtml(description)}</p>` : ''}
     </div>
   `;
 
@@ -115,20 +115,6 @@ function updateSummary(items) {
   qs('#resultCountText').textContent = `총 ${formatNumber(total)}건`;
 }
 
-function renderInitialEmptyState(message, description = '') {
-  const list = qs('#equipmentCardList');
-  if (!list) return;
-
-  list.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-state-title">${escapeHtml(message)}</div>
-      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
-    </div>
-  `;
-
-  updateSummary([]);
-}
-
 function renderEquipmentCards(items) {
   const list = qs('#equipmentCardList');
 
@@ -142,49 +128,70 @@ function renderEquipmentCards(items) {
 
   toggleResultsUI(true);
 
-  list.innerHTML = items.map(item => `
-    <article class="equipment-item-card equipment-item-card-tuned" data-id="${escapeHtml(item.equipment_id)}">
-      <div class="equipment-card-top">
-        <div class="equipment-title-block">
-          <h3 class="equipment-title">${safeText(item.equipment_name)}</h3>
-          <div class="equipment-model">${safeText(item.model_name)}</div>
+  list.innerHTML = items.map(item => {
+    const editButtonHtml = canEditEquipment()
+      ? `
+        <button
+          type="button"
+          class="card-action-btn is-edit"
+          onclick="moveToEditForm('${escapeHtml(item.equipment_id || '')}')"
+        >
+          수정
+        </button>
+      `
+      : '';
+
+    return `
+      <article class="equipment-card">
+        <div class="equipment-card__head">
+          <div>
+            <h3 class="equipment-card__title">${safeText(item.equipment_name)}</h3>
+            <p class="equipment-card__model">${safeText(item.model_name)}</p>
+          </div>
+          <span class="status-badge ${statusClass(item.status)}">
+            ${escapeHtml(statusLabel(item.status))}
+          </span>
         </div>
 
-        <div class="equipment-top-right">
-          <span class="status-badge ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
-          <div class="equipment-id">${safeText(item.equipment_id)}</div>
-        </div>
-      </div>
-
-      <div class="equipment-meta-grid">
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">사용부서</span>
-          <span class="equipment-meta-value">${safeText(item.department)}</span>
+        <div class="equipment-card__meta">
+          <div><strong>장비번호</strong> ${safeText(item.equipment_id)}</div>
+          <div><strong>사용부서</strong> ${safeText(item.department)}</div>
+          <div><strong>제조사</strong> ${safeText(item.manufacturer)}</div>
+          <div><strong>시리얼번호</strong> ${safeText(item.serial_no)}</div>
+          <div><strong>현재 위치</strong> ${safeText(item.location)}</div>
         </div>
 
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">제조사</span>
-          <span class="equipment-meta-value">${safeText(item.manufacturer)}</span>
+        <div class="equipment-card__actions">
+          <button
+            type="button"
+            class="card-action-btn"
+            onclick="moveToDetail('${escapeHtml(item.equipment_id || '')}')"
+          >
+            상세보기
+          </button>
+          ${editButtonHtml}
         </div>
-
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">시리얼번호</span>
-          <span class="equipment-meta-value">${safeText(item.serial_no)}</span>
-        </div>
-
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">현재 위치</span>
-          <span class="equipment-meta-value">${safeText(item.location)}</span>
-        </div>
-      </div>
-
-      <div class="equipment-card-actions">
-        <button class="btn btn-primary card-action-btn" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">상세보기</button>
-      </div>
-    </article>
-  `).join('');
+      </article>
+    `;
+  }).join('');
 
   updateSummary(items);
+}
+
+function moveToDetail(equipmentId) {
+  if (!equipmentId) return;
+  location.href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+}
+
+function moveToEditForm(equipmentId) {
+  if (!equipmentId) return;
+
+  if (!canEditEquipment()) {
+    showMessage('수정 권한이 없습니다.', 'error');
+    return;
+  }
+
+  location.href = `equipment-form.html?id=${encodeURIComponent(equipmentId)}&mode=edit`;
 }
 
 function getListViewType() {
@@ -194,11 +201,9 @@ function getListViewType() {
 
 function applyListViewContext() {
   const view = getListViewType();
-
   const titleEl = qs('#listPageTitle');
   const descEl = qs('#listPageDesc');
   const chipEl = qs('#listContextChip');
-
   if (!titleEl || !descEl || !chipEl) return view;
 
   const viewMap = {
@@ -225,7 +230,6 @@ function applyListViewContext() {
   };
 
   const config = viewMap[view] || viewMap.default;
-
   titleEl.textContent = config.title;
   descEl.textContent = config.desc;
 
@@ -278,7 +282,6 @@ function resetSearchForm() {
   qs('#status').value = '';
   qs('#manufacturer').value = '';
   setActiveFilterChip('');
-
   renderInitialEmptyState(
     '검색 조건이 초기화되었습니다.',
     '조건을 다시 입력한 뒤 조회 버튼을 눌러 주세요.'
@@ -316,7 +319,7 @@ function bindEnterSearch() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initEquipmentListPage() {
   qs('#searchBtn').addEventListener('click', loadEquipments);
   qs('#resetBtn').addEventListener('click', resetSearchForm);
   qs('#status').addEventListener('change', () => {
@@ -332,4 +335,4 @@ document.addEventListener('DOMContentLoaded', () => {
     '검색 조건을 설정한 뒤 조회해 주세요.',
     '조회 전에는 결과 요약과 결과 목록이 표시되지 않습니다.'
   );
-});
+}
