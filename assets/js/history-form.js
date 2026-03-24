@@ -3,6 +3,7 @@ let currentEquipmentId = '';
 async function loadEquipmentInfo() {
   const equipmentId = getQueryParam('equipment_id');
   currentEquipmentId = equipmentId;
+  showGlobalLoading();
 
   if (!equipmentId) {
     showMessage('equipment_id가 없습니다.', 'error');
@@ -19,6 +20,8 @@ async function loadEquipmentInfo() {
     qs('#equipment_name').value = item.equipment_name || '';
   } catch (error) {
     showMessage(error.message, 'error');
+  } finally {
+    hideGlobalLoading();
   }
 }
 
