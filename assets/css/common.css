@@ -1847,3 +1847,130 @@ button, input, select, textarea {
     font-size: 16px;
   }
 }
+
+/* =========================
+   dashboard fine tuning
+========================= */
+
+.top-brand-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+}
+
+.top-brand-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-brand-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffb800, #22c55e, #2563eb);
+  color: #fff;
+  font-weight: 800;
+}
+
+.top-brand-texts {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.top-brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #12305b;
+}
+
+.top-brand-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.top-brand-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-hero-simple {
+  margin-bottom: 22px;
+}
+
+.dashboard-main-title {
+  margin-bottom: 10px;
+}
+
+.dashboard-main-desc {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.dashboard-list-side-sub {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.dashboard-mini-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  border: 1px solid #cfe0ff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 768px) {
+  .top-brand-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .top-brand-actions {
+    width: 100%;
+  }
+
+  .top-brand-actions .nav-link {
+    flex: 1 1 calc(50% - 5px);
+  }
+
+  .top-brand-title {
+    font-size: 17px;
+  }
+
+  .dashboard-main-desc {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-brand-texts {
+    gap: 6px;
+  }
+
+  .top-brand-sub {
+    width: 100%;
+    font-size: 13px;
+  }
+}
