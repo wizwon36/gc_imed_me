@@ -9,6 +9,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
 
+  await window.appPermission.toggleByPermission(
+    'equipment',
+    '.js-create-equipment-btn',
+    ['edit', 'admin']
+  );
+
   initEquipmentListPage();
 });
 
