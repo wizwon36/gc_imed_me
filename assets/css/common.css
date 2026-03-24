@@ -4001,3 +4001,242 @@ button, input, select, textarea {
 .search-form-grid {
   gap: 12px;
 }
+
+/* =========================
+   equipment list compact tune
+========================= */
+
+/* 검색 카드 전체 높이 압축 */
+.equipment-search-card .card-body,
+.search-panel .card-body,
+.search-form-card .card-body {
+  padding: 20px;
+}
+
+/* 제목/설명 간격 더 조밀하게 */
+.equipment-search-card .section-title,
+.search-panel .section-title,
+.search-form-card .section-title {
+  margin-bottom: 4px;
+}
+
+.equipment-search-card .sub-text,
+.search-panel .sub-text,
+.search-form-card .sub-text {
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 검색 폼 행 간격 축소 */
+.equipment-search-form,
+.search-form-grid {
+  gap: 12px;
+}
+
+/* 라벨 아래 간격 조금 축소 */
+.equipment-search-card label,
+.search-panel label,
+.search-form-card label,
+.search-block-label {
+  margin-bottom: 6px;
+}
+
+/* 검색어 입력 높이 약간 축소 */
+#keyword {
+  min-height: 54px;
+  border-radius: 16px;
+}
+
+/* 일반 입력 높이 정리 */
+#department,
+#status,
+#manufacturer {
+  min-height: 50px;
+  border-radius: 14px;
+}
+
+/* 빠른 상태 / 실행 영역 간격 압축 */
+.search-filter-block,
+.search-action-block {
+  margin-top: 14px;
+}
+
+.search-action-block {
+  padding-top: 12px;
+}
+
+/* 칩 그룹 박스 */
+.search-chip-row {
+  padding: 10px 12px;
+  gap: 8px;
+  border-radius: 16px;
+}
+
+/* 칩 높이 살짝 축소 */
+.filter-chip {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+/* 실행 버튼 그룹도 조금 압축 */
+.equipment-search-actions {
+  padding: 10px 12px;
+  gap: 8px;
+  border-radius: 16px;
+}
+
+/* 버튼 높이 살짝 줄임 */
+.equipment-search-actions .btn,
+.search-submit-btn,
+#resetBtn {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+/* 검색 카드와 아래 영역 간격도 약간 정리 */
+#summaryRow {
+  margin-top: 14px;
+}
+
+#resultSection {
+  margin-top: 16px;
+}
+
+/* =========================
+   mobile compact tune
+========================= */
+
+@media (max-width: 768px) {
+  .equipment-search-card .card-body,
+  .search-panel .card-body,
+  .search-form-card .card-body {
+    padding: 16px;
+  }
+
+  .equipment-search-card .section-title,
+  .search-panel .section-title,
+  .search-form-card .section-title {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  .equipment-search-card .sub-text,
+  .search-panel .sub-text,
+  .search-form-card .sub-text {
+    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .equipment-search-form,
+  .search-form-grid {
+    gap: 10px;
+  }
+
+  .equipment-search-card label,
+  .search-panel label,
+  .search-form-card label,
+  .search-block-label {
+    margin-bottom: 5px;
+    font-size: 11px;
+  }
+
+  #keyword {
+    min-height: 50px;
+    padding: 0 14px;
+    font-size: 14px;
+    border-radius: 14px;
+  }
+
+  #department,
+  #status,
+  #manufacturer {
+    min-height: 46px;
+    padding: 0 14px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+
+  .search-filter-block,
+  .search-action-block {
+    margin-top: 12px;
+  }
+
+  .search-action-block {
+    padding-top: 10px;
+  }
+
+  .search-chip-row {
+    padding: 8px;
+    gap: 6px;
+    border-radius: 14px;
+  }
+
+  .filter-chip {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .equipment-search-actions {
+    padding: 8px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  .equipment-search-actions .btn,
+  .search-submit-btn,
+  #resetBtn {
+    min-height: 40px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  #summaryRow {
+    margin-top: 12px;
+  }
+
+  #resultSection {
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .equipment-search-card .card-body,
+  .search-panel .card-body,
+  .search-form-card .card-body {
+    padding: 14px;
+  }
+
+  .equipment-search-form,
+  .search-form-grid {
+    gap: 9px;
+  }
+
+  #keyword {
+    min-height: 48px;
+  }
+
+  #department,
+  #status,
+  #manufacturer {
+    min-height: 44px;
+  }
+
+  .filter-chip {
+    min-height: 32px;
+    padding: 0 11px;
+    font-size: 11px;
+  }
+
+  .equipment-search-actions .btn,
+  .search-submit-btn,
+  #resetBtn {
+    min-height: 38px;
+    font-size: 13px;
+  }
+}
