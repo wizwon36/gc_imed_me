@@ -24,30 +24,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const BASE_PATH = '/gc_imed_me/';
+
   const appList = [
     {
       id: 'equipment',
       title: '의료장비 관리 시스템',
       desc: '장비 등록, 조회, 이력 관리, 라벨 출력 기능을 사용할 수 있습니다.',
-      href: 'equipment-dashboard.html',
+      href: `${BASE_PATH}equipment-dashboard.html`,
       icon: '🩺',
-      roles: ['admin', 'manager', 'user']
+      roles: ['admin', 'manager', 'user'],
+      enabled: true
     },
     {
       id: 'admin-users',
       title: '사용자 관리',
       desc: '사용자 등록, 권한 설정, 활성 여부를 관리합니다.',
-      href: 'admin-users.html',
+      href: `${BASE_PATH}admin-users.html`,
       icon: '👤',
-      roles: ['admin']
+      roles: ['admin'],
+      enabled: false
     },
     {
       id: 'admin-logs',
       title: '시스템 로그',
       desc: '수정 이력 및 시스템 작업 로그를 확인합니다.',
-      href: 'admin-logs.html',
+      href: `${BASE_PATH}admin-logs.html`,
       icon: '🧾',
-      roles: ['admin', 'manager']
+      roles: ['admin', 'manager'],
+      enabled: false
     }
   ];
 
@@ -63,15 +68,30 @@ document.addEventListener('DOMContentLoaded', () => {
   if (emptyEl) emptyEl.style.display = 'none';
 
   if (gridEl) {
-    gridEl.innerHTML = availableApps.map(app => `
-      <a class="portal-app-card" href="${app.href}">
-        <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
-        <div>
-          <h3 class="portal-app-title">${app.title}</h3>
-          <p class="portal-app-desc">${app.desc}</p>
-        </div>
-        <div class="portal-app-meta">앱 열기</div>
-      </a>
-    `).join('');
+    gridEl.innerHTML = availableApps.map(app => {
+      if (!app.enabled) {
+        return `
+          <div class="portal-app-card is-disabled" aria-disabled="true">
+            <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
+            <div>
+              <h3 class="portal-app-title">${app.title}</h3>
+              <p class="portal-app-desc">${app.desc}</p>
+            </div>
+            <div class="portal-app-meta">준비중</div>
+          </div>
+        `;
+      }
+
+      return `
+        <a class="portal-app-card" href="${app.href}">
+          <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
+          <div>
+            <h3 class="portal-app-title">${app.title}</h3>
+            <p class="portal-app-desc">${app.desc}</p>
+          </div>
+          <div class="portal-app-meta">앱 열기</div>
+        </a>
+      `;
+    }).join('');
   }
 });
