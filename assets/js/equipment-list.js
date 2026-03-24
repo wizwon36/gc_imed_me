@@ -25,11 +25,16 @@ function safeText(value, fallback = '-') {
 }
 
 function updateSummary(items) {
-  qs('#summaryTotal').textContent = formatNumber(items.length);
-  qs('#summaryInUse').textContent = formatNumber(items.filter(item => item.status === 'IN_USE').length);
-  qs('#summaryRepairing').textContent = formatNumber(items.filter(item => item.status === 'REPAIRING').length);
-  qs('#summaryInspecting').textContent = formatNumber(items.filter(item => item.status === 'INSPECTING').length);
-  qs('#resultCountText').textContent = `총 ${formatNumber(items.length)}건`;
+  const total = items.length;
+  const inUse = items.filter(item => item.status === 'IN_USE').length;
+  const repairing = items.filter(item => item.status === 'REPAIRING').length;
+  const inspecting = items.filter(item => item.status === 'INSPECTING').length;
+
+  qs('#summaryTotal').textContent = formatNumber(total);
+  qs('#summaryInUse').textContent = formatNumber(inUse);
+  qs('#summaryRepairing').textContent = formatNumber(repairing);
+  qs('#summaryInspecting').textContent = formatNumber(inspecting);
+  qs('#resultCountText').textContent = `총 ${formatNumber(total)}건`;
 }
 
 function renderEquipmentCards(items) {
@@ -42,7 +47,7 @@ function renderEquipmentCards(items) {
   }
 
   list.innerHTML = items.map(item => `
-    <article class="equipment-item-card" data-id="${escapeHtml(item.equipment_id)}">
+    <article class="equipment-item-card equipment-item-card-tuned" data-id="${escapeHtml(item.equipment_id)}">
       <div class="equipment-card-top">
         <div class="equipment-title-block">
           <h3 class="equipment-title">${safeText(item.equipment_name)}</h3>
@@ -69,7 +74,7 @@ function renderEquipmentCards(items) {
           <span class="equipment-meta-value">${safeText(item.serial_no)}</span>
         </div>
         <div class="equipment-meta-item">
-          <span class="equipment-meta-label">위치</span>
+          <span class="equipment-meta-label">현재 위치</span>
           <span class="equipment-meta-value">${safeText(item.location)}</span>
         </div>
       </div>
@@ -118,11 +123,7 @@ function resetSearchForm() {
 
 function setActiveFilterChip(statusValue) {
   qsa('.filter-chip').forEach(chip => {
-    if (chip.dataset.status === statusValue) {
-      chip.classList.add('active');
-    } else {
-      chip.classList.remove('active');
-    }
+    chip.classList.toggle('active', chip.dataset.status === statusValue);
   });
 }
 
@@ -141,6 +142,7 @@ function bindEnterSearch() {
   ['#keyword', '#department', '#manufacturer'].forEach(selector => {
     const el = qs(selector);
     if (!el) return;
+
     el.addEventListener('keydown', event => {
       if (event.key === 'Enter') {
         event.preventDefault();
