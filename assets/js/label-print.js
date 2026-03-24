@@ -24,8 +24,8 @@ function renderLabelQr(equipmentId) {
 
   new QRCode(qrArea, {
     text: qrValue,
-    width: 120,
-    height: 120
+    width: 128,
+    height: 128
   });
 }
 
