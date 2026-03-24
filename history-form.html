@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>이력 등록</title>
+  <link rel="stylesheet" href="assets/css/common.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="page-title">수리/점검 이력 등록</h1>
+        <div class="sub-text">장비별 수리, 점검, 검사 이력을 등록합니다.</div>
+      </div>
+      <div class="nav-links">
+        <a class="nav-link" href="index.html">홈</a>
+        <a class="nav-link" href="equipment-list.html">장비목록</a>
+      </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <div class="card">
+      <form id="historyForm">
+        <div class="form-section">
+          <h2 class="form-section-title">대상 장비</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">장비번호</label>
+              <input type="text" id="equipment_id" class="form-input" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">장비명</label>
+              <input type="text" id="equipment_name" class="form-input" readonly />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h2 class="form-section-title">이력 정보</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">이력구분 <span class="required">*</span></label>
+              <select id="history_type" class="form-select">
+                <option value="REPAIR">수리</option>
+                <option value="REGULAR_CHECK">정기점검</option>
+                <option value="LEGAL_INSPECTION">법정검사</option>
+                <option value="PREVENTIVE">예방점검</option>
+                <option value="ETC">기타</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">처리일자 <span class="required">*</span></label>
+              <input type="date" id="work_date" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">요청부서</label>
+              <input type="text" id="request_department" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">요청자</label>
+              <input type="text" id="requester" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">처리업체</label>
+              <input type="text" id="vendor_name" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">수리금액</label>
+              <input type="number" id="amount" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">처리결과</label>
+              <select id="result_status" class="form-select">
+                <option value="DONE">완료</option>
+                <option value="IN_PROGRESS">진행중</option>
+                <option value="HOLD">보류</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">장비 상태 변경</label>
+              <select id="update_equipment_status" class="form-select">
+                <option value="">변경 안함</option>
+                <option value="IN_USE">사용중</option>
+                <option value="REPAIRING">수리중</option>
+                <option value="INSPECTING">점검중</option>
+                <option value="STORED">보관</option>
+                <option value="DISPOSED">폐기</option>
+              </select>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label">처리내용 <span class="required">*</span></label>
+              <textarea id="description" class="form-textarea"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn btn-primary">저장</button>
+          <a class="btn" id="backToDetailBtn" href="#">상세로 돌아가기</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/history-form.js"></script>
+</body>
+</html>
