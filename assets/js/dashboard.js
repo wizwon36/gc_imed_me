@@ -1,3 +1,23 @@
+let CURRENT_EQUIPMENT_PERMISSION = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = window.auth.requireAuth();
+  if (!user) return;
+
+  const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+  if (!ok) return;
+
+  CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
+
+  await window.appPermission.toggleByPermission(
+    'equipment',
+    '.js-create-equipment-btn',
+    ['edit', 'admin']
+  );
+
+  initDashboardPage();
+});
+
 function formatDateOnly(date) {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -281,6 +301,8 @@ async function loadDashboard() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadDashboard();
-});
+async function initDashboardPage() {
+  document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+  });
+}
