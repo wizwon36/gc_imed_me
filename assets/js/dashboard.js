@@ -24,6 +24,18 @@ function safeText(value, fallback = '-') {
   return escapeHtml(value || fallback);
 }
 
+function compactDateText(value) {
+  if (!value) return '-';
+
+  const text = String(value);
+
+  if (text.length >= 10) {
+    return text.slice(0, 10);
+  }
+
+  return text;
+}
+
 function renderDashboardSkeleton() {
   qs('#recentEquipmentList').innerHTML = `
     <div class="skeleton skeleton-card"></div>
@@ -120,17 +132,20 @@ function renderRecentEquipments(items) {
   }
 
   container.innerHTML = recentItems.map(item => `
-    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+    <button class="dashboard-list-item dashboard-list-item-compact" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
       <div class="dashboard-list-main">
         <div class="dashboard-list-title-row">
           <strong class="dashboard-list-title">${safeText(item.equipment_name)}</strong>
           <span class="status-badge ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
         </div>
-        <div class="dashboard-list-desc">
-          ${safeText(item.model_name)} · ${safeText(item.department)} · ${safeText(item.equipment_id)}
+        <div class="dashboard-list-desc dashboard-list-desc-compact">
+          ${safeText(item.department)} · ${safeText(item.model_name)}
+        </div>
+        <div class="dashboard-list-meta-compact">
+          ${safeText(item.equipment_id)}
         </div>
       </div>
-      <div class="dashboard-list-side">${safeText(item.created_at)}</div>
+      <div class="dashboard-list-side">${compactDateText(item.created_at)}</div>
     </button>
   `).join('');
 }
@@ -144,18 +159,21 @@ function renderRecentHistories(items) {
   }
 
   container.innerHTML = items.map(item => `
-    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+    <button class="dashboard-list-item dashboard-list-item-compact" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
       <div class="dashboard-list-main">
         <div class="dashboard-list-title-row">
           <strong class="dashboard-list-title">${safeText(item.equipment_name)}</strong>
           <span class="dashboard-mini-chip">${escapeHtml(historyTypeLabel(item.history_type))}</span>
         </div>
-        <div class="dashboard-list-desc">
-          ${safeText(item.department)} · ${safeText(item.model_name)} · ${safeText(item.description, '설명 없음')}
+        <div class="dashboard-list-desc dashboard-list-desc-compact">
+          ${safeText(item.department)} · ${safeText(item.model_name)}
+        </div>
+        <div class="dashboard-list-meta-compact">
+          ${safeText(item.description, '설명 없음')}
         </div>
       </div>
       <div class="dashboard-list-side">
-        <div>${safeText(item.work_date)}</div>
+        <div>${compactDateText(item.work_date)}</div>
         <div class="dashboard-list-side-sub">${escapeHtml(resultStatusLabel(item.result_status))}</div>
       </div>
     </button>
