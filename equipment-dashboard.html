@@ -189,20 +189,19 @@
     </section>
   </div>
 
-  <script src="assets/js/config.js"></script>
+  <script src="assets/js/config.js"></script>  
+  <script src="assets/js/auth.js"></script>
+  <script>
+    window.auth.requireAuth();
+  </script>
+  <script src="assets/js/app-permission.js"></script>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/utils.js"></script>
   <script src="assets/js/dashboard.js"></script>
 
   <div id="globalLoading" class="global-loading">
     <div class="spinner"></div>
-</div>
-
-<script src="assets/js/config.js"></script>  
-<script src="assets/js/auth.js"></script>
-<script>
-  window.auth.requireAuth();
-</script>
+  </div>
 
 </body>
 </html>
