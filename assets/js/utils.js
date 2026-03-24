@@ -66,3 +66,11 @@ function setLoading(button, isLoading, loadingText = '처리 중...') {
 function goToDetail(equipmentId) {
   location.href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
+
+function showGlobalLoading() {
+  qs('#globalLoading')?.classList.add('active');
+}
+
+function hideGlobalLoading() {
+  qs('#globalLoading')?.classList.remove('active');
+}
