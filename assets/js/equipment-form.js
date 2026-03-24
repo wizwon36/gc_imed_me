@@ -1,152 +1,62 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>장비 등록</title>
-  <link rel="stylesheet" href="assets/css/common.css" />
-</head>
-<body>
-  <div class="container form-shell">
-    <div class="form-hero">
-      <div class="form-hero-copy">
-        <div class="form-hero-topline">의료장비 등록</div>
-        <h1 class="form-hero-title">장비 기본정보 입력</h1>
-        <div class="form-hero-subtext">
-          장비명, 모델명, 시리얼번호를 기준으로 기본 정보를 등록합니다.
-        </div>
-      </div>
+async function handleSubmitEquipment(event) {
+  event.preventDefault();
+  clearMessage();
 
-      <div class="form-hero-actions">
-        <a class="nav-link" href="index.html">홈</a>
-        <a class="nav-link" href="equipment-list.html">장비목록</a>
-      </div>
-    </div>
+  const submitBtn = qs('#submitBtn');
 
-    <div id="messageBox" class="message-box"></div>
+  const payload = {
+    equipment_name: qs('#equipment_name').value.trim(),
+    model_name: qs('#model_name').value.trim(),
+    department: qs('#department').value.trim(),
+    manufacturer: qs('#manufacturer').value.trim(),
+    manufacture_date: qs('#manufacture_date').value,
+    serial_no: qs('#serial_no').value.trim(),
+    vendor: qs('#vendor').value.trim(),
+    manager_name: qs('#manager_name').value.trim(),
+    manager_phone: qs('#manager_phone').value.trim(),
+    acquisition_cost: qs('#acquisition_cost').value,
+    maintenance_end_date: qs('#maintenance_end_date').value,
+    status: qs('#status').value,
+    location: qs('#location').value.trim(),
+    current_user: qs('#current_user').value.trim(),
+    memo: qs('#memo').value.trim(),
+    created_by: 'admin@hospital.com'
+  };
 
-    <form id="equipmentForm" class="form-page-grid">
-      <section class="card form-main-card">
-        <div class="section-head">
-          <h2 class="section-title">기본정보</h2>
-          <div class="sub-text">필수 항목은 반드시 입력해 주세요.</div>
-        </div>
+  if (!payload.equipment_name) {
+    showMessage('장비명을 입력하세요.', 'error');
+    qs('#equipment_name').focus();
+    return;
+  }
 
-        <div class="form-grid form-grid-modern">
-          <div class="form-group">
-            <label class="form-label">장비명 <span class="required">*</span></label>
-            <input type="text" id="equipment_name" class="form-input form-input-lg" placeholder="예: 환자감시장치" />
-          </div>
+  if (!payload.model_name) {
+    showMessage('모델명을 입력하세요.', 'error');
+    qs('#model_name').focus();
+    return;
+  }
 
-          <div class="form-group">
-            <label class="form-label">모델명 <span class="required">*</span></label>
-            <input type="text" id="model_name" class="form-input form-input-lg" placeholder="예: PM-900" />
-          </div>
+  if (!payload.serial_no) {
+    showMessage('시리얼번호를 입력하세요.', 'error');
+    qs('#serial_no').focus();
+    return;
+  }
 
-          <div class="form-group">
-            <label class="form-label">사용부서</label>
-            <input type="text" id="department" class="form-input" placeholder="예: 중환자실" />
-          </div>
+  try {
+    setLoading(submitBtn, true, '저장 중...');
+    const result = await apiPost('createEquipment', payload);
 
-          <div class="form-group">
-            <label class="form-label">제조사</label>
-            <input type="text" id="manufacturer" class="form-input" placeholder="예: GE" />
-          </div>
+    showMessage(`${result.message} (${result.data.equipment_id})`, 'success');
 
-          <div class="form-group">
-            <label class="form-label">제조일자</label>
-            <input type="date" id="manufacture_date" class="form-input" />
-          </div>
+    setTimeout(() => {
+      goToDetail(result.data.equipment_id);
+    }, 500);
+  } catch (error) {
+    showMessage(error.message, 'error');
+  } finally {
+    setLoading(submitBtn, false);
+  }
+}
 
-          <div class="form-group">
-            <label class="form-label">시리얼번호 <span class="required">*</span></label>
-            <input type="text" id="serial_no" class="form-input form-input-lg" placeholder="예: SN123456" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">구매처</label>
-            <input type="text" id="vendor" class="form-input" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">담당자</label>
-            <input type="text" id="manager_name" class="form-input" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">연락처</label>
-            <input type="text" id="manager_phone" class="form-input" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">취득가액</label>
-            <input type="number" id="acquisition_cost" class="form-input" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">유지보수 종료일</label>
-            <input type="date" id="maintenance_end_date" class="form-input" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">상태</label>
-            <select id="status" class="form-select">
-              <option value="IN_USE">사용중</option>
-              <option value="REPAIRING">수리중</option>
-              <option value="INSPECTING">점검중</option>
-              <option value="STORED">보관</option>
-              <option value="DISPOSED">폐기</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">현재 위치</label>
-            <input type="text" id="location" class="form-input" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">현재 사용자</label>
-            <input type="text" id="current_user" class="form-input" />
-          </div>
-
-          <div class="form-group full">
-            <label class="form-label">비고</label>
-            <textarea id="memo" class="form-textarea" placeholder="필요한 메모를 입력하세요."></textarea>
-          </div>
-        </div>
-      </section>
-
-      <aside class="card form-side-card">
-        <div class="section-head">
-          <h2 class="section-title">입력 안내</h2>
-        </div>
-
-        <div class="guide-list">
-          <div class="guide-item">
-            <div class="guide-title">필수 입력</div>
-            <div class="guide-text">장비명, 모델명, 시리얼번호는 반드시 입력해야 합니다.</div>
-          </div>
-          <div class="guide-item">
-            <div class="guide-title">중복 주의</div>
-            <div class="guide-text">시리얼번호는 중복 등록되지 않도록 확인해 주세요.</div>
-          </div>
-          <div class="guide-item">
-            <div class="guide-title">상태값</div>
-            <div class="guide-text">초기 등록 시 기본 상태는 사용중으로 두는 것을 권장합니다.</div>
-          </div>
-        </div>
-
-        <div class="form-actions form-side-actions">
-          <button type="submit" id="submitBtn" class="btn btn-primary form-submit-btn">저장</button>
-          <a class="btn" href="equipment-list.html">목록으로</a>
-        </div>
-      </aside>
-    </form>
-  </div>
-
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/utils.js"></script>
-  <script src="assets/js/equipment-form.js"></script>
-</body>
-</html>
+document.addEventListener('DOMContentLoaded', () => {
+  qs('#equipmentForm').addEventListener('submit', handleSubmitEquipment);
+});
