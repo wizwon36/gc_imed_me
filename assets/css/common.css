@@ -2819,3 +2819,31 @@ button, input, select, textarea {
     font-size: 11px;
   }
 }
+
+/* =========================
+   dashboard status number align
+========================= */
+
+@media (max-width: 768px) {
+  .dashboard-status-item {
+    position: relative;
+  }
+
+  .dashboard-status-count {
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    text-align: right;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-status-count {
+    right: 12px;
+    bottom: 10px;
+    font-size: 30px;
+  }
+}
