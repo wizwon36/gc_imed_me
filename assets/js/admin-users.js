@@ -1,12 +1,13 @@
+let CURRENT_USERS_ADMIN_PERMISSION = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
-  if (user.role !== 'admin') {
-    alert('관리자만 접근할 수 있습니다.');
-    location.replace(`${CONFIG.SITE_BASE_URL}/portal.html`);
-    return;
-  }
+  const ok = await window.appPermission.requirePermission('users_admin', ['admin']);
+  if (!ok) return;
+
+  CURRENT_USERS_ADMIN_PERMISSION = await window.appPermission.getPermission('users_admin');
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
     window.auth.logout();
@@ -14,8 +15,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('createUserBtn')?.addEventListener('click', createUser);
 
+  applyAdminUsersPermission();
   await loadUsers();
 });
+
+function isUsersAdmin() {
+  return CURRENT_USERS_ADMIN_PERMISSION === 'admin';
+}
+
+function applyAdminUsersPermission() {
+  const createBtn = document.getElementById('createUserBtn');
+  const form = document.getElementById('adminUserForm') || document.querySelector('.admin-user-form');
+
+  if (!isUsersAdmin()) {
+    if (form) {
+      Array.from(form.querySelectorAll('input, select, textarea, button')).forEach(el => {
+        if (el.id === 'logoutBtn') return;
+        el.disabled = true;
+        if ('readOnly' in el) el.readOnly = true;
+      });
+    }
+
+    if (createBtn) {
+      createBtn.disabled = true;
+      createBtn.textContent = '권한 없음';
+      createBtn.title = '관리자 권한이 없습니다.';
+    }
+
+    setAdminMessage('관리자만 사용자 등록/수정이 가능합니다.', 'error');
+    return;
+  }
+
+  window.appPermission.disableByPermission('users_admin', '#createUserBtn', ['admin']);
+}
 
 function setAdminMessage(message, type = '') {
   const el = document.getElementById('adminUserMessage');
@@ -23,6 +55,7 @@ function setAdminMessage(message, type = '') {
 
   el.textContent = message || '';
   el.className = 'message-box';
+
   if (type) {
     el.classList.add(type);
   }
@@ -31,8 +64,8 @@ function setAdminMessage(message, type = '') {
 function collectPermissions() {
   const permissionEls = document.querySelectorAll('.app-permission');
   const activeEls = document.querySelectorAll('.app-active');
-
   const activeMap = {};
+
   activeEls.forEach(el => {
     activeMap[el.dataset.appId] = el.value;
   });
@@ -44,11 +77,7 @@ function collectPermissions() {
     const active = activeMap[appId] || 'Y';
 
     if (permission) {
-      permissions.push({
-        app_id: appId,
-        permission,
-        active
-      });
+      permissions.push({ app_id: appId, permission, active });
     }
   });
 
@@ -56,6 +85,11 @@ function collectPermissions() {
 }
 
 async function createUser() {
+  if (!isUsersAdmin()) {
+    setAdminMessage('사용자 등록 권한이 없습니다.', 'error');
+    return;
+  }
+
   const user_email = document.getElementById('userEmail')?.value.trim();
   const user_name = document.getElementById('userName')?.value.trim();
   const password = document.getElementById('userPassword')?.value.trim();
@@ -125,20 +159,32 @@ async function loadUsers() {
     const users = result.data || [];
 
     if (!users.length) {
-      listEl.innerHTML = '<div class="user-item"><span>등록된 사용자가 없습니다.</span></div>';
+      listEl.innerHTML = `
+        <div class="empty-state">등록된 사용자가 없습니다.</div>
+      `;
       return;
     }
 
     listEl.innerHTML = users.map(user => `
-      <div class="user-item">
-        <strong>${escapeHtml(user.user_name || '')}</strong>
-        <span>${escapeHtml(user.user_email || '')}</span>
-        <span>${escapeHtml(user.department || '')} / ${escapeHtml(user.role || '')}</span>
-        <span>상태: ${escapeHtml(user.active || '')}</span>
-      </div>
+      <article class="user-card">
+        <div class="user-card__title">
+          ${escapeHtml(user.user_name || '')}
+        </div>
+        <div class="user-card__meta">
+          ${escapeHtml(user.user_email || '')}
+        </div>
+        <div class="user-card__meta">
+          ${escapeHtml(user.department || '')} / ${escapeHtml(user.role || '')}
+        </div>
+        <div class="user-card__meta">
+          상태: ${escapeHtml(user.active || '')}
+        </div>
+      </article>
     `).join('');
   } catch (error) {
-    listEl.innerHTML = `<div class="user-item"><span>${escapeHtml(error.message)}</span></div>`;
+    listEl.innerHTML = `
+      <div class="empty-state">${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}</div>
+    `;
   }
 }
 
