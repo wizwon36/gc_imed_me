@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>장비 목록</title>
+  <link rel="stylesheet" href="css/common.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="page-title">장비 목록</h1>
+        <div class="sub-text">등록된 의료장비를 검색하고 조회합니다.</div>
+      </div>
+      <div class="nav-links">
+        <a class="nav-link" href="index.html">홈</a>
+        <a class="nav-link btn-primary" href="equipment-form.html">장비등록</a>
+      </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="search-bar">
+        <input type="text" id="keyword" class="form-input" placeholder="장비번호 / 장비명 / 모델명 / 시리얼 검색" />
+        <input type="text" id="department" class="form-input" placeholder="부서" />
+        <select id="status" class="form-select">
+          <option value="">전체 상태</option>
+          <option value="IN_USE">사용중</option>
+          <option value="REPAIRING">수리중</option>
+          <option value="INSPECTING">점검중</option>
+          <option value="STORED">보관</option>
+          <option value="DISPOSED">폐기</option>
+        </select>
+        <input type="text" id="manufacturer" class="form-input" placeholder="제조사" />
+        <button class="btn btn-primary" id="searchBtn">조회</button>
+        <button class="btn" id="resetBtn">초기화</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>장비번호</th>
+              <th>장비명</th>
+              <th>모델명</th>
+              <th>부서</th>
+              <th>시리얼번호</th>
+              <th>제조사</th>
+              <th>상태</th>
+              <th>위치</th>
+              <th>상세</th>
+            </tr>
+          </thead>
+          <tbody id="equipmentTableBody">
+            <tr>
+              <td colspan="9">불러오는 중...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/equipment-list.js"></script>
+</body>
+</html>
