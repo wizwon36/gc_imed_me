@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.auth.logout();
   });
 
-  // 🔥 앱 정의 (중앙 관리)
   const APP_MAP = {
     equipment: {
       title: '의료장비 관리 시스템',
@@ -47,38 +46,49 @@ document.addEventListener('DOMContentLoaded', async () => {
       user_email: user.email
     });
 
-    const permissions = result.data || [];
+    const permissions = Array.isArray(result.data) ? result.data : [];
 
     if (!permissions.length) {
-      gridEl.innerHTML = '';
-      emptyEl.style.display = 'block';
+      if (gridEl) gridEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
       return;
     }
 
-    emptyEl.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'none';
 
-    gridEl.innerHTML = permissions.map(p => {
-      const app = APP_MAP[p.app_id];
-      if (!app) return '';
+    const cards = permissions
+      .map(p => {
+        const app = APP_MAP[p.app_id];
+        if (!app) return '';
 
-      return `
-        <a class="portal-app-card" href="${app.url}">
-          <div class="portal-app-icon">${app.icon}</div>
-          <div>
-            <h3 class="portal-app-title">${app.title}</h3>
-            <p class="portal-app-desc">${app.desc}</p>
-          </div>
-          <div class="portal-app-meta">${p.permission}</div>
-        </a>
-      `;
-    }).join('');
+        return `
+          <a class="portal-app-card" href="${app.url}">
+            <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
+            <div>
+              <h3 class="portal-app-title">${app.title}</h3>
+              <p class="portal-app-desc">${app.desc}</p>
+            </div>
+            <div class="portal-app-meta">${escapeHtml(p.permission || '')}</div>
+          </a>
+        `;
+      })
+      .join('');
 
+    if (gridEl) {
+      gridEl.innerHTML = cards || '';
+    }
+
+    if (!cards && emptyEl) {
+      emptyEl.style.display = 'block';
+    }
   } catch (error) {
-    gridEl.innerHTML = `
-      <div class="portal-empty">
-        ${escapeHtml(error.message || '앱 정보를 불러오지 못했습니다.')}
-      </div>
-    `;
+    if (gridEl) {
+      gridEl.innerHTML = `
+        <div class="portal-empty">
+          ${escapeHtml(error.message || '앱 정보를 불러오지 못했습니다.')}
+        </div>
+      `;
+    }
   }
 });
 
