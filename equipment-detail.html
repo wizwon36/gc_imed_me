@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>장비 상세</title>
+  <link rel="stylesheet" href="css/common.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="page-title">장비 상세</h1>
+        <div class="sub-text">장비 기본정보와 이력 정보를 확인합니다.</div>
+      </div>
+      <div class="nav-links">
+        <a class="nav-link" href="index.html">홈</a>
+        <a class="nav-link" href="equipment-list.html">장비목록</a>
+        <a class="nav-link btn-primary" href="equipment-form.html">장비등록</a>
+      </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="form-actions">
+        <button class="btn btn-danger" id="deleteBtn">장비 삭제</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 16px;">
+      <h2 class="section-title">기본정보</h2>
+      <div id="detailArea" class="detail-grid"></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2 class="section-title">수리/점검 이력</h2>
+        <div id="historyArea"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">재고조사 이력</h2>
+        <div id="inventoryArea"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/equipment-detail.js"></script>
+</body>
+</html>
