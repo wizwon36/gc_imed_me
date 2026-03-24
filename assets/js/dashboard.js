@@ -55,6 +55,26 @@ function statusClass(status) {
   return map[status] || '';
 }
 
+function historyTypeLabel(type) {
+  const map = {
+    REPAIR: '수리',
+    REGULAR_CHECK: '정기점검',
+    LEGAL_INSPECTION: '법정검사',
+    PREVENTIVE: '예방점검',
+    ETC: '기타'
+  };
+  return map[type] || type || '';
+}
+
+function resultStatusLabel(type) {
+  const map = {
+    DONE: '완료',
+    IN_PROGRESS: '진행중',
+    HOLD: '보류'
+  };
+  return map[type] || type || '';
+}
+
 function sortByCreatedDesc(items) {
   return [...items].sort((a, b) => {
     return String(b.created_at || '').localeCompare(String(a.created_at || ''));
@@ -197,24 +217,64 @@ function renderDepartmentSummary(items) {
   `).join('');
 }
 
+function renderRecentHistories(items) {
+  const container = qs('#recentHistoryList');
+
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-box">최근 등록된 이력이 없습니다.</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+      <div class="dashboard-list-main">
+        <div class="dashboard-list-title-row">
+          <strong class="dashboard-list-title">${safeText(item.equipment_name)}</strong>
+          <span class="dashboard-dday-badge is-normal">${escapeHtml(historyTypeLabel(item.history_type))}</span>
+        </div>
+        <div class="dashboard-list-desc">
+          ${safeText(item.department)} · ${safeText(item.model_name)} · ${safeText(item.description, '설명 없음')}
+        </div>
+      </div>
+      <div class="dashboard-list-side">
+        <div>${safeText(item.work_date)}</div>
+        <div style="margin-top:4px;">${escapeHtml(resultStatusLabel(item.result_status))}</div>
+      </div>
+    </button>
+  `).join('');
+}
+
 async function loadDashboard() {
   clearMessage();
 
   try {
-    const result = await apiGet('listEquipments');
-    const items = result.data || [];
+    const [equipmentResult, historyResult] = await Promise.all([
+      apiGet('listEquipments'),
+      apiGet('listRecentHistories', { limit: 5 })
+    ]);
+
+    const items = equipmentResult.data || [];
+    const histories = historyResult.data || [];
 
     setSystemTexts(items);
     renderKpis(items);
     renderRecentEquipments(items);
     renderMaintenanceAlerts(items);
     renderDepartmentSummary(items);
+    renderRecentHistories(histories);
   } catch (error) {
     showMessage(error.message, 'error');
 
     qs('#recentEquipmentList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
     qs('#maintenanceAlertList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
     qs('#departmentSummaryList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
+
+    const recentHistoryList = qs('#recentHistoryList');
+    if (recentHistoryList) {
+      recentHistoryList.innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
+    }
   }
 }
 
