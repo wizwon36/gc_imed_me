@@ -1,130 +1,88 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>재고조사 등록</title>
-  <link rel="stylesheet" href="assets/css/common.css" />
-</head>
-<body>
-  <div class="container form-shell">
-    <div class="form-hero">
-      <div class="form-hero-copy">
-        <div class="form-hero-topline">재고조사 등록</div>
-        <h1 class="form-hero-title">현장 점검 결과 입력</h1>
-        <div class="form-hero-subtext">
-          점검 위치와 상태를 기록해 현장 재고조사 이력을 남깁니다.
-        </div>
-      </div>
+let currentEquipmentId = '';
 
-      <div class="form-hero-actions">
-        <a class="nav-link" href="index.html">홈</a>
-        <a class="nav-link" href="equipment-list.html">장비목록</a>
-      </div>
-    </div>
+function getNowDateTimeString() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mi = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
 
-    <div id="messageBox" class="message-box"></div>
+async function loadEquipmentInfo() {
+  const equipmentId = getQueryParam('equipment_id');
+  currentEquipmentId = equipmentId;
 
-    <form id="inventoryForm" class="form-page-grid">
-      <section class="card form-main-card">
-        <div class="section-head">
-          <h2 class="section-title">대상 장비</h2>
-          <div class="sub-text">선택된 장비 기준으로 재고조사 기록이 저장됩니다.</div>
-        </div>
+  if (!equipmentId) {
+    showMessage('equipment_id가 없습니다.', 'error');
+    return;
+  }
 
-        <div class="form-grid form-grid-modern">
-          <div class="form-group">
-            <label class="form-label">장비번호</label>
-            <input type="text" id="equipment_id" class="form-input" readonly />
-          </div>
-          <div class="form-group">
-            <label class="form-label">장비명</label>
-            <input type="text" id="equipment_name" class="form-input" readonly />
-          </div>
-        </div>
+  qs('#backToDetailBtn').href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+  qs('#checked_at').value = getNowDateTimeString();
 
-        <div class="section-head form-inner-head">
-          <h2 class="section-title">재고조사 정보</h2>
-        </div>
+  try {
+    const result = await apiGet('getEquipment', { id: equipmentId });
+    const item = result.data;
 
-        <div class="form-grid form-grid-modern">
-          <div class="form-group">
-            <label class="form-label">점검일시 <span class="required">*</span></label>
-            <input type="text" id="checked_at" class="form-input form-input-lg" placeholder="2026-03-24 14:00:00" />
-          </div>
+    qs('#equipment_id').value = item.equipment_id || '';
+    qs('#equipment_name').value = item.equipment_name || '';
+    qs('#department_at_check').value = item.department || '';
+    qs('#location_at_check').value = item.location || '';
+  } catch (error) {
+    showMessage(error.message, 'error');
+  }
+}
 
-          <div class="form-group">
-            <label class="form-label">점검자 <span class="required">*</span></label>
-            <input type="text" id="checked_by" class="form-input form-input-lg" />
-          </div>
+async function handleSubmitInventory(event) {
+  event.preventDefault();
+  clearMessage();
 
-          <div class="form-group">
-            <label class="form-label">점검 시점 부서</label>
-            <input type="text" id="department_at_check" class="form-input" />
-          </div>
+  const submitBtn = qs('#submitBtn');
 
-          <div class="form-group">
-            <label class="form-label">점검 시점 위치</label>
-            <input type="text" id="location_at_check" class="form-input" />
-          </div>
+  const payload = {
+    equipment_id: qs('#equipment_id').value.trim(),
+    checked_at: qs('#checked_at').value.trim(),
+    checked_by: qs('#checked_by').value.trim(),
+    department_at_check: qs('#department_at_check').value.trim(),
+    location_at_check: qs('#location_at_check').value.trim(),
+    condition_status: qs('#condition_status').value,
+    qr_scan_yn: qs('#qr_scan_yn').value,
+    memo: qs('#memo').value.trim()
+  };
 
-          <div class="form-group">
-            <label class="form-label">상태 <span class="required">*</span></label>
-            <select id="condition_status" class="form-select">
-              <option value="NORMAL">정상</option>
-              <option value="NEED_REPAIR">수리필요</option>
-              <option value="LOCATION_MISMATCH">위치불일치</option>
-              <option value="MISSING">분실의심</option>
-              <option value="DISPOSAL_TARGET">폐기대상</option>
-            </select>
-          </div>
+  if (!payload.equipment_id) {
+    showMessage('장비번호가 없습니다.', 'error');
+    return;
+  }
 
-          <div class="form-group">
-            <label class="form-label">QR 스캔 여부</label>
-            <select id="qr_scan_yn" class="form-select">
-              <option value="Y">Y</option>
-              <option value="N">N</option>
-            </select>
-          </div>
+  if (!payload.checked_at) {
+    showMessage('점검일시를 입력하세요.', 'error');
+    qs('#checked_at').focus();
+    return;
+  }
 
-          <div class="form-group full">
-            <label class="form-label">비고</label>
-            <textarea id="memo" class="form-textarea" placeholder="현장 상태, 위치 변경 사항 등을 적어 주세요."></textarea>
-          </div>
-        </div>
-      </section>
+  if (!payload.checked_by) {
+    showMessage('점검자를 입력하세요.', 'error');
+    qs('#checked_by').focus();
+    return;
+  }
 
-      <aside class="card form-side-card">
-        <div class="section-head">
-          <h2 class="section-title">입력 안내</h2>
-        </div>
+  try {
+    setLoading(submitBtn, true, '저장 중...');
+    await apiPost('createInventoryLog', payload);
+    alert('재고조사 이력이 등록되었습니다.');
+    location.href = `equipment-detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
+  } catch (error) {
+    showMessage(error.message, 'error');
+  } finally {
+    setLoading(submitBtn, false);
+  }
+}
 
-        <div class="guide-list">
-          <div class="guide-item">
-            <div class="guide-title">필수 입력</div>
-            <div class="guide-text">점검일시, 점검자, 상태는 반드시 입력해야 합니다.</div>
-          </div>
-          <div class="guide-item">
-            <div class="guide-title">현장 정보</div>
-            <div class="guide-text">점검 당시 실제 위치와 부서를 기준으로 적어 주세요.</div>
-          </div>
-          <div class="guide-item">
-            <div class="guide-title">QR 사용</div>
-            <div class="guide-text">현장에서 QR 스캔 후 등록했다면 QR 스캔 여부를 Y로 유지하면 됩니다.</div>
-          </div>
-        </div>
-
-        <div class="form-actions form-side-actions">
-          <button type="submit" id="submitBtn" class="btn btn-primary form-submit-btn">저장</button>
-          <a class="btn" id="backToDetailBtn" href="#">상세로 돌아가기</a>
-        </div>
-      </aside>
-    </form>
-  </div>
-
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/utils.js"></script>
-  <script src="assets/js/inventory-form.js"></script>
-</body>
-</html>
+document.addEventListener('DOMContentLoaded', () => {
+  qs('#inventoryForm').addEventListener('submit', handleSubmitInventory);
+  loadEquipmentInfo();
+});
