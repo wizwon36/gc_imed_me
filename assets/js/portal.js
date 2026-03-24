@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
@@ -9,89 +9,84 @@ document.addEventListener('DOMContentLoaded', () => {
   const emptyEl = document.getElementById('portalEmpty');
 
   if (nameEl) {
-    nameEl.textContent = user.name || user.user_name || user.email || '사용자';
+    nameEl.textContent = user.name || user.email || '사용자';
   }
 
   if (subEl) {
-    const dept = user.department || '부서 미지정';
-    const role = user.role || 'user';
-    subEl.textContent = `${dept} / ${role}`;
+    subEl.textContent = `${user.department || '부서 없음'} / ${user.role || 'user'}`;
   }
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      window.auth.logout();
-    });
-  }
+  logoutBtn?.addEventListener('click', () => {
+    window.auth.logout();
+  });
 
-  const BASE_PATH = '/gc_imed_me/';
-
-  const appList = [
-    {
-      id: 'equipment',
+  // 🔥 앱 정의 (중앙 관리)
+  const APP_MAP = {
+    equipment: {
       title: '의료장비 관리 시스템',
-      desc: '장비 등록, 조회, 이력 관리, 라벨 출력 기능을 사용할 수 있습니다.',
-      href: `${BASE_PATH}equipment-dashboard.html`,
+      desc: '장비 등록, 조회, 이력 관리',
       icon: '🩺',
-      roles: ['admin', 'manager', 'user'],
-      enabled: true
+      url: `${CONFIG.SITE_BASE_URL}/equipment-dashboard.html`
     },
-    {
-      id: 'admin-users',
-      title: '사용자 관리',
-      desc: '사용자 등록, 권한 설정, 활성 여부를 관리합니다.',
-      href: `${BASE_PATH}admin-users.html`,
-      icon: '👤',
-      roles: ['admin'],
-      enabled: false
-    },
-    {
-      id: 'admin-logs',
+    logs: {
       title: '시스템 로그',
-      desc: '수정 이력 및 시스템 작업 로그를 확인합니다.',
-      href: `${BASE_PATH}admin-logs.html`,
+      desc: '수정 이력 및 로그 확인',
       icon: '🧾',
-      roles: ['admin', 'manager'],
-      enabled: false
+      url: `${CONFIG.SITE_BASE_URL}/admin-logs.html`
+    },
+    users_admin: {
+      title: '사용자 관리',
+      desc: '사용자 및 권한 관리',
+      icon: '👤',
+      url: `${CONFIG.SITE_BASE_URL}/admin-users.html`
     }
-  ];
+  };
 
-  const currentRole = user.role || 'user';
-  const availableApps = appList.filter(app => app.roles.includes(currentRole));
+  try {
+    const result = await apiGet('getUserPermissions', {
+      user_email: user.email
+    });
 
-  if (!availableApps.length) {
-    if (gridEl) gridEl.innerHTML = '';
-    if (emptyEl) emptyEl.style.display = 'block';
-    return;
-  }
+    const permissions = result.data || [];
 
-  if (emptyEl) emptyEl.style.display = 'none';
+    if (!permissions.length) {
+      gridEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
 
-  if (gridEl) {
-    gridEl.innerHTML = availableApps.map(app => {
-      if (!app.enabled) {
-        return `
-          <div class="portal-app-card is-disabled" aria-disabled="true">
-            <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
-            <div>
-              <h3 class="portal-app-title">${app.title}</h3>
-              <p class="portal-app-desc">${app.desc}</p>
-            </div>
-            <div class="portal-app-meta">준비중</div>
-          </div>
-        `;
-      }
+    emptyEl.style.display = 'none';
+
+    gridEl.innerHTML = permissions.map(p => {
+      const app = APP_MAP[p.app_id];
+      if (!app) return '';
 
       return `
-        <a class="portal-app-card" href="${app.href}">
-          <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
+        <a class="portal-app-card" href="${app.url}">
+          <div class="portal-app-icon">${app.icon}</div>
           <div>
             <h3 class="portal-app-title">${app.title}</h3>
             <p class="portal-app-desc">${app.desc}</p>
           </div>
-          <div class="portal-app-meta">앱 열기</div>
+          <div class="portal-app-meta">${p.permission}</div>
         </a>
       `;
     }).join('');
+
+  } catch (error) {
+    gridEl.innerHTML = `
+      <div class="portal-empty">
+        ${escapeHtml(error.message || '앱 정보를 불러오지 못했습니다.')}
+      </div>
+    `;
   }
 });
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
