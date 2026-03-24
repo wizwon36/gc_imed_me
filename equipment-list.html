@@ -7,30 +7,45 @@
   <link rel="stylesheet" href="assets/css/common.css" />
 </head>
 <body>
-  <div class="container app-shell">
-    <div class="hero-panel">
-      <div class="hero-copy">
-        <h1 class="page-title hero-title">장비 목록</h1>
-        <div class="hero-subtext">
-          등록된 의료장비를 빠르게 검색하고 상태를 확인할 수 있습니다.
+  <div class="container app-shell equipment-list-shell">
+    <section class="top-brand-bar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">+</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">의료장비 관리시스템</strong>
+          <span class="top-brand-sub">장비 검색 · 상태 조회 · 상세 확인</span>
         </div>
       </div>
 
-      <div class="hero-actions">
-        <a class="nav-link" href="index.html">홈</a>
+      <div class="top-brand-actions">
+        <a class="nav-link" href="index.html">대시보드</a>
         <a class="nav-link btn-primary" href="equipment-form.html">장비등록</a>
       </div>
-    </div>
+    </section>
+
+    <section class="hero-panel equipment-list-hero">
+      <div class="hero-copy">
+        <h1 class="page-title hero-title">장비 목록</h1>
+        <div class="hero-subtext">
+          장비번호, 장비명, 모델명, 부서, 상태 기준으로 빠르게 검색할 수 있습니다.
+        </div>
+      </div>
+
+      <div class="equipment-list-hero-badge">
+        <span class="equipment-list-hero-badge-label">조회 기준</span>
+        <strong class="equipment-list-hero-badge-value" id="resultCountText">총 0건</strong>
+      </div>
+    </section>
 
     <div id="messageBox" class="message-box"></div>
 
-    <section class="card equipment-search-card">
+    <section class="card equipment-search-card equipment-search-card-tuned">
       <div class="section-head">
         <h2 class="section-title">장비 검색</h2>
-        <div class="sub-text">장비번호, 장비명, 모델명, 시리얼번호로 검색할 수 있습니다.</div>
+        <div class="sub-text">검색어와 조건을 조합해 원하는 장비를 찾으세요.</div>
       </div>
 
-      <div class="equipment-search-grid">
+      <div class="equipment-search-grid equipment-search-grid-tuned">
         <div class="form-group equipment-search-main">
           <label class="form-label" for="keyword">검색어</label>
           <input
@@ -82,13 +97,13 @@
         <button type="button" class="filter-chip" data-status="STORED">보관</button>
       </div>
 
-      <div class="form-actions">
+      <div class="form-actions equipment-search-actions">
         <button class="btn btn-primary search-submit-btn" id="searchBtn">조회</button>
         <button class="btn" id="resetBtn">초기화</button>
       </div>
     </section>
 
-    <section class="equipment-summary-row" id="summaryRow">
+    <section class="equipment-summary-row equipment-summary-row-tuned" id="summaryRow">
       <div class="summary-pill">
         <span class="summary-pill-label">전체</span>
         <strong class="summary-pill-value" id="summaryTotal">0</strong>
@@ -110,10 +125,10 @@
     <section class="equipment-list-section">
       <div class="section-head">
         <h2 class="section-title">조회 결과</h2>
-        <div class="sub-text" id="resultCountText">총 0건</div>
+        <div class="sub-text">카드를 눌러 장비 상세 화면으로 이동할 수 있습니다.</div>
       </div>
 
-      <div id="equipmentCardList" class="equipment-card-list">
+      <div id="equipmentCardList" class="equipment-card-list equipment-card-list-tuned">
         <div class="empty-box">불러오는 중...</div>
       </div>
     </section>
