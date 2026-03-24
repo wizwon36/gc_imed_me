@@ -203,5 +203,15 @@
     <div class="spinner"></div>
   </div>
 
+  <script>
+    (async function () {
+      const user = window.auth.requireAuth();
+      if (!user) return;
+  
+      const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+      if (!ok) return;
+    })();
+  </script>
+  
 </body>
 </html>
