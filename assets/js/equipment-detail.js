@@ -1,5 +1,32 @@
+let CURRENT_EQUIPMENT_PERMISSION = null;
 let currentEquipmentId = '';
 let currentEquipmentData = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = window.auth.requireAuth();
+  if (!user) return;
+
+  const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+  if (!ok) return;
+
+  CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
+
+  bindDetailEvents();
+  applyDetailPermission();
+  loadEquipmentDetail();
+});
+
+function getCurrentUser() {
+  return window.auth?.getSession?.() || null;
+}
+
+function canEditEquipment() {
+  return CURRENT_EQUIPMENT_PERMISSION === 'edit' || CURRENT_EQUIPMENT_PERMISSION === 'admin';
+}
+
+function isAdminEquipment() {
+  return CURRENT_EQUIPMENT_PERMISSION === 'admin';
+}
 
 function statusLabel(status) {
   const map = {
@@ -67,27 +94,32 @@ function safeNumber(value) {
   return formatNumber(value);
 }
 
+function applyDetailPermission() {
+  const editBtn = qs('#editEquipmentBtn');
+  const deleteBtn = qs('#deleteBtn');
+  const addHistoryBtn = qs('#addHistoryBtn');
+  const addInventoryBtn = qs('#addInventoryBtn');
+  const printLabelBtn = qs('#printLabelBtn');
+
+  if (editBtn) editBtn.classList.toggle('is-hidden', !canEditEquipment());
+  if (addHistoryBtn) addHistoryBtn.classList.toggle('is-hidden', !canEditEquipment());
+  if (addInventoryBtn) addInventoryBtn.classList.toggle('is-hidden', !canEditEquipment());
+
+  if (deleteBtn) {
+    deleteBtn.classList.toggle('is-hidden', !isAdminEquipment());
+  }
+
+  if (printLabelBtn) {
+    printLabelBtn.classList.remove('is-hidden');
+  }
+}
+
 function renderDetailSkeleton() {
-  qs('#detailInfoGrid').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card info-tile-wide"></div>
-  `;
-
-  qs('#qrBox').innerHTML = `<div class="skeleton" style="width:180px;height:180px;border-radius:18px;"></div>`;
-  qs('#qrText').innerHTML = `<div class="skeleton skeleton-text" style="height:36px;"></div>`;
-
-  qs('#historyArea').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
-
-  qs('#inventoryArea').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
+  qs('#detailInfoGrid').innerHTML = ``;
+  qs('#qrBox').innerHTML = ``;
+  qs('#qrText').innerHTML = ``;
+  qs('#historyArea').innerHTML = ``;
+  qs('#inventoryArea').innerHTML = ``;
 }
 
 function renderHero(item) {
@@ -102,11 +134,9 @@ function renderHero(item) {
 function renderQrCode(equipmentId) {
   const qrBox = qs('#qrBox');
   const qrText = qs('#qrText');
-
   if (!qrBox || !qrText) return;
 
   const qrValue = buildEquipmentDetailUrl(equipmentId);
-
   qrBox.innerHTML = '';
   qrText.textContent = 'QR 스캔 시 장비 상세 페이지로 이동';
   qrText.title = qrValue;
@@ -143,9 +173,9 @@ function renderDetailInfo(item) {
   ];
 
   detailInfoGrid.innerHTML = fields.map(field => `
-    <div class="info-tile ${field.label === '비고' ? 'info-tile-wide' : ''}">
-      <div class="info-tile-label">${escapeHtml(field.label)}</div>
-      <div class="info-tile-value">${field.isHtml ? field.value : nl2br(field.value)}</div>
+    <div class="detail-field">
+      <div class="detail-field__label">${escapeHtml(field.label)}</div>
+      <div class="detail-field__value">${field.isHtml ? field.value : nl2br(field.value)}</div>
     </div>
   `).join('');
 }
@@ -155,32 +185,18 @@ function renderHistories(items) {
   qs('#historyCountText').textContent = `${formatNumber(items.length)}건`;
 
   if (!items.length) {
-    area.innerHTML = `<div class="empty-box">등록된 이력이 없습니다.</div>`;
+    area.innerHTML = `<div class="empty-state">등록된 이력이 없습니다.</div>`;
     return;
   }
 
   area.innerHTML = items.map(item => `
-    <article class="timeline-card">
-      <div class="timeline-card-head">
-        <div>
-          <div class="timeline-title">${escapeHtml(historyTypeLabel(item.history_type))}</div>
-          <div class="timeline-date">${safeValue(item.work_date)}</div>
-        </div>
-        <div class="timeline-badge">${escapeHtml(resultStatusLabel(item.result_status))}</div>
-      </div>
-
-      <div class="timeline-meta">
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">처리업체</span>
-          <span class="timeline-meta-value">${safeValue(item.vendor_name)}</span>
-        </div>
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">수리금액</span>
-          <span class="timeline-meta-value">${safeNumber(item.amount)}</span>
-        </div>
-      </div>
-
-      <div class="timeline-desc">${nl2br(item.description || '-')}</div>
+    <article class="history-card">
+      <div class="history-card__title">${escapeHtml(historyTypeLabel(item.history_type))}</div>
+      <div class="history-card__meta">${safeValue(item.work_date)}</div>
+      <div class="history-card__meta">${escapeHtml(resultStatusLabel(item.result_status))}</div>
+      <div class="history-card__meta">처리업체 ${safeValue(item.vendor_name)}</div>
+      <div class="history-card__meta">수리금액 ${safeNumber(item.amount)}</div>
+      <div class="history-card__desc">${nl2br(item.description || '-')}</div>
     </article>
   `).join('');
 }
@@ -190,32 +206,18 @@ function renderInventoryLogs(items) {
   qs('#inventoryCountText').textContent = `${formatNumber(items.length)}건`;
 
   if (!items.length) {
-    area.innerHTML = `<div class="empty-box">등록된 재고조사 이력이 없습니다.</div>`;
+    area.innerHTML = `<div class="empty-state">등록된 재고조사 이력이 없습니다.</div>`;
     return;
   }
 
   area.innerHTML = items.map(item => `
-    <article class="timeline-card">
-      <div class="timeline-card-head">
-        <div>
-          <div class="timeline-title">${escapeHtml(conditionStatusLabel(item.condition_status))}</div>
-          <div class="timeline-date">${safeValue(item.checked_at)}</div>
-        </div>
-        <div class="timeline-badge">${safeValue(item.checked_by)}</div>
-      </div>
-
-      <div class="timeline-meta">
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">부서</span>
-          <span class="timeline-meta-value">${safeValue(item.department_at_check)}</span>
-        </div>
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">위치</span>
-          <span class="timeline-meta-value">${safeValue(item.location_at_check)}</span>
-        </div>
-      </div>
-
-      <div class="timeline-desc">${nl2br(item.memo || '-')}</div>
+    <article class="history-card">
+      <div class="history-card__title">${escapeHtml(conditionStatusLabel(item.condition_status))}</div>
+      <div class="history-card__meta">${safeValue(item.checked_at)}</div>
+      <div class="history-card__meta">${safeValue(item.checked_by)}</div>
+      <div class="history-card__meta">부서 ${safeValue(item.department_at_check)}</div>
+      <div class="history-card__meta">위치 ${safeValue(item.location_at_check)}</div>
+      <div class="history-card__desc">${nl2br(item.memo || '-')}</div>
     </article>
   `).join('');
 }
@@ -224,12 +226,13 @@ async function loadEquipmentDetail() {
   clearMessage();
   renderDetailSkeleton();
   showGlobalLoading();
-  
+
   const id = getQueryParam('id');
   currentEquipmentId = id;
 
   if (!id) {
     showMessage('장비 ID가 없습니다.', 'error');
+    hideGlobalLoading();
     return;
   }
 
@@ -257,13 +260,20 @@ async function loadEquipmentDetail() {
 async function deleteCurrentEquipment() {
   if (!currentEquipmentId) return;
 
+  if (!isAdminEquipment()) {
+    showMessage('삭제 권한이 없습니다.', 'error');
+    return;
+  }
+
   const confirmed = confirm('이 장비를 삭제하시겠습니까?');
   if (!confirmed) return;
 
   try {
+    const user = getCurrentUser();
+
     await apiPost('deleteEquipment', {
       equipment_id: currentEquipmentId,
-      deleted_by: 'admin@hospital.com'
+      deleted_by: user?.email || ''
     });
 
     alert('삭제되었습니다.');
@@ -275,16 +285,34 @@ async function deleteCurrentEquipment() {
 
 function moveToEditForm() {
   if (!currentEquipmentId) return;
+
+  if (!canEditEquipment()) {
+    showMessage('수정 권한이 없습니다.', 'error');
+    return;
+  }
+
   location.href = `equipment-form.html?id=${encodeURIComponent(currentEquipmentId)}&mode=edit`;
 }
 
 function moveToHistoryForm() {
   if (!currentEquipmentId) return;
+
+  if (!canEditEquipment()) {
+    showMessage('이력 등록 권한이 없습니다.', 'error');
+    return;
+  }
+
   location.href = `history-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
 function moveToInventoryForm() {
   if (!currentEquipmentId) return;
+
+  if (!canEditEquipment()) {
+    showMessage('재고조사 등록 권한이 없습니다.', 'error');
+    return;
+  }
+
   location.href = `inventory-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
@@ -293,11 +321,10 @@ function moveToLabelPrint() {
   location.href = `label-print.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  qs('#editEquipmentBtn').addEventListener('click', moveToEditForm);
-  qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
-  qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
-  qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
-  qs('#printLabelBtn').addEventListener('click', moveToLabelPrint);
-  loadEquipmentDetail();
-});
+function bindDetailEvents() {
+  qs('#editEquipmentBtn')?.addEventListener('click', moveToEditForm);
+  qs('#deleteBtn')?.addEventListener('click', deleteCurrentEquipment);
+  qs('#addHistoryBtn')?.addEventListener('click', moveToHistoryForm);
+  qs('#addInventoryBtn')?.addEventListener('click', moveToInventoryForm);
+  qs('#printLabelBtn')?.addEventListener('click', moveToLabelPrint);
+}
