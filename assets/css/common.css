@@ -2682,3 +2682,66 @@ button, input, select, textarea {
     font-size: 17px;
   }
 }
+
+/* =========================
+   dashboard mobile polish
+========================= */
+
+@media (max-width: 768px) {
+  .dashboard-status-item {
+    min-height: 112px;
+    padding: 14px 14px 12px;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-status-left {
+    gap: 0;
+  }
+
+  .dashboard-status-count {
+    margin-top: 0;
+    font-size: 34px;
+    line-height: 1;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-status-item {
+    min-height: 104px;
+    padding: 13px 12px 12px;
+    border-radius: 18px;
+  }
+
+  .dashboard-status-count {
+    font-size: 30px;
+  }
+
+  .dashboard-status-list .status-badge {
+    min-height: 34px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 768px) {
+  #maintenanceAlertList .empty-box {
+    padding: 22px 18px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  #maintenanceAlertList .empty-box br {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  #maintenanceAlertList .empty-box {
+    padding: 20px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+}
