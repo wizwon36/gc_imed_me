@@ -12,6 +12,17 @@ function statusLabel(status) {
   return map[status] || status || '';
 }
 
+function statusClass(status) {
+  const map = {
+    IN_USE: 'is-in-use',
+    REPAIRING: 'is-repairing',
+    INSPECTING: 'is-inspecting',
+    STORED: 'is-stored',
+    DISPOSED: 'is-disposed'
+  };
+  return map[status] || '';
+}
+
 function historyTypeLabel(type) {
   const map = {
     REPAIR: '수리',
@@ -19,6 +30,15 @@ function historyTypeLabel(type) {
     LEGAL_INSPECTION: '법정검사',
     PREVENTIVE: '예방점검',
     ETC: '기타'
+  };
+  return map[type] || type || '';
+}
+
+function resultStatusLabel(type) {
+  const map = {
+    DONE: '완료',
+    IN_PROGRESS: '진행중',
+    HOLD: '보류'
   };
   return map[type] || type || '';
 }
@@ -38,9 +58,28 @@ function buildEquipmentDetailUrl(equipmentId) {
   return `${CONFIG.SITE_BASE_URL}/equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
 
+function safeValue(value) {
+  return escapeHtml(value || '-');
+}
+
+function safeNumber(value) {
+  if (value === null || value === undefined || value === '') return '-';
+  return formatNumber(value);
+}
+
+function renderHero(item) {
+  qs('#heroEquipmentName').textContent = item.equipment_name || '장비명';
+  qs('#heroEquipmentId').textContent = item.equipment_id || '-';
+
+  const badge = qs('#heroStatusBadge');
+  badge.textContent = statusLabel(item.status);
+  badge.className = `status-badge ${statusClass(item.status)}`;
+}
+
 function renderQrCode(equipmentId) {
   const qrBox = qs('#qrBox');
   const qrText = qs('#qrText');
+
   if (!qrBox || !qrText) return;
 
   const qrValue = buildEquipmentDetailUrl(equipmentId);
@@ -50,38 +89,46 @@ function renderQrCode(equipmentId) {
 
   new QRCode(qrBox, {
     text: qrValue,
-    width: 160,
-    height: 160
+    width: 180,
+    height: 180
   });
 }
 
-function renderDetail(item) {
-  const detailArea = qs('#detailArea');
+function renderDetailInfo(item) {
+  const detailInfoGrid = qs('#detailInfoGrid');
 
-  detailArea.innerHTML = `
-    <div class="detail-label">장비번호</div><div class="detail-value">${escapeHtml(item.equipment_id)}</div>
-    <div class="detail-label">장비명</div><div class="detail-value">${escapeHtml(item.equipment_name)}</div>
-    <div class="detail-label">모델명</div><div class="detail-value">${escapeHtml(item.model_name)}</div>
-    <div class="detail-label">사용부서</div><div class="detail-value">${escapeHtml(item.department)}</div>
-    <div class="detail-label">제조사</div><div class="detail-value">${escapeHtml(item.manufacturer)}</div>
-    <div class="detail-label">제조일자</div><div class="detail-value">${escapeHtml(item.manufacture_date)}</div>
-    <div class="detail-label">시리얼번호</div><div class="detail-value">${escapeHtml(item.serial_no)}</div>
-    <div class="detail-label">구매처</div><div class="detail-value">${escapeHtml(item.vendor)}</div>
-    <div class="detail-label">담당자</div><div class="detail-value">${escapeHtml(item.manager_name)}</div>
-    <div class="detail-label">연락처</div><div class="detail-value">${escapeHtml(item.manager_phone)}</div>
-    <div class="detail-label">취득가액</div><div class="detail-value">${formatNumber(item.acquisition_cost)}</div>
-    <div class="detail-label">유지보수 종료일</div><div class="detail-value">${escapeHtml(item.maintenance_end_date)}</div>
-    <div class="detail-label">상태</div><div class="detail-value"><span class="badge">${escapeHtml(statusLabel(item.status))}</span></div>
-    <div class="detail-label">위치</div><div class="detail-value">${escapeHtml(item.location)}</div>
-    <div class="detail-label">현재 사용자</div><div class="detail-value">${escapeHtml(item.current_user)}</div>
-    <div class="detail-label">비고</div><div class="detail-value">${nl2br(item.memo)}</div>
-    <div class="detail-label">등록일시</div><div class="detail-value">${escapeHtml(item.created_at)}</div>
-    <div class="detail-label">수정일시</div><div class="detail-value">${escapeHtml(item.updated_at)}</div>
-  `;
+  const fields = [
+    { label: '장비번호', value: item.equipment_id },
+    { label: '장비명', value: item.equipment_name },
+    { label: '모델명', value: item.model_name },
+    { label: '사용부서', value: item.department },
+    { label: '제조사', value: item.manufacturer },
+    { label: '제조일자', value: item.manufacture_date },
+    { label: '시리얼번호', value: item.serial_no },
+    { label: '구매처', value: item.vendor },
+    { label: '담당자', value: item.manager_name },
+    { label: '연락처', value: item.manager_phone },
+    { label: '취득가액', value: safeNumber(item.acquisition_cost), isHtml: true },
+    { label: '유지보수 종료일', value: item.maintenance_end_date },
+    { label: '현재 상태', value: statusLabel(item.status) },
+    { label: '현재 위치', value: item.location },
+    { label: '현재 사용자', value: item.current_user },
+    { label: '등록일시', value: item.created_at },
+    { label: '수정일시', value: item.updated_at },
+    { label: '비고', value: item.memo || '-' }
+  ];
+
+  detailInfoGrid.innerHTML = fields.map(field => `
+    <div class="info-tile ${field.label === '비고' ? 'info-tile-wide' : ''}">
+      <div class="info-tile-label">${escapeHtml(field.label)}</div>
+      <div class="info-tile-value">${field.isHtml ? field.value : nl2br(field.value)}</div>
+    </div>
+  `).join('');
 }
 
 function renderHistories(items) {
   const area = qs('#historyArea');
+  qs('#historyCountText').textContent = `${formatNumber(items.length)}건`;
 
   if (!items.length) {
     area.innerHTML = `<div class="empty-box">등록된 이력이 없습니다.</div>`;
@@ -89,19 +136,34 @@ function renderHistories(items) {
   }
 
   area.innerHTML = items.map(item => `
-    <div style="padding: 14px 0; border-bottom: 1px solid #e5e7eb;">
-      <div style="font-weight: 700; margin-bottom: 6px;">${escapeHtml(historyTypeLabel(item.history_type))}</div>
-      <div class="sub-text">처리일자: ${escapeHtml(item.work_date)}</div>
-      <div class="sub-text">처리업체: ${escapeHtml(item.vendor_name)}</div>
-      <div class="sub-text">수리금액: ${formatNumber(item.amount)}</div>
-      <div class="sub-text">처리결과: ${escapeHtml(item.result_status || '')}</div>
-      <div style="margin-top: 8px;">${nl2br(item.description)}</div>
-    </div>
+    <article class="timeline-card">
+      <div class="timeline-card-head">
+        <div>
+          <div class="timeline-title">${escapeHtml(historyTypeLabel(item.history_type))}</div>
+          <div class="timeline-date">${safeValue(item.work_date)}</div>
+        </div>
+        <div class="timeline-badge">${escapeHtml(resultStatusLabel(item.result_status))}</div>
+      </div>
+
+      <div class="timeline-meta">
+        <div class="timeline-meta-item">
+          <span class="timeline-meta-label">처리업체</span>
+          <span class="timeline-meta-value">${safeValue(item.vendor_name)}</span>
+        </div>
+        <div class="timeline-meta-item">
+          <span class="timeline-meta-label">수리금액</span>
+          <span class="timeline-meta-value">${safeNumber(item.amount)}</span>
+        </div>
+      </div>
+
+      <div class="timeline-desc">${nl2br(item.description || '-')}</div>
+    </article>
   `).join('');
 }
 
 function renderInventoryLogs(items) {
   const area = qs('#inventoryArea');
+  qs('#inventoryCountText').textContent = `${formatNumber(items.length)}건`;
 
   if (!items.length) {
     area.innerHTML = `<div class="empty-box">등록된 재고조사 이력이 없습니다.</div>`;
@@ -109,14 +171,28 @@ function renderInventoryLogs(items) {
   }
 
   area.innerHTML = items.map(item => `
-    <div style="padding: 14px 0; border-bottom: 1px solid #e5e7eb;">
-      <div style="font-weight: 700; margin-bottom: 6px;">${escapeHtml(conditionStatusLabel(item.condition_status))}</div>
-      <div class="sub-text">점검일시: ${escapeHtml(item.checked_at)}</div>
-      <div class="sub-text">점검자: ${escapeHtml(item.checked_by)}</div>
-      <div class="sub-text">부서: ${escapeHtml(item.department_at_check)}</div>
-      <div class="sub-text">위치: ${escapeHtml(item.location_at_check)}</div>
-      <div style="margin-top: 8px;">${nl2br(item.memo)}</div>
-    </div>
+    <article class="timeline-card">
+      <div class="timeline-card-head">
+        <div>
+          <div class="timeline-title">${escapeHtml(conditionStatusLabel(item.condition_status))}</div>
+          <div class="timeline-date">${safeValue(item.checked_at)}</div>
+        </div>
+        <div class="timeline-badge">${safeValue(item.checked_by)}</div>
+      </div>
+
+      <div class="timeline-meta">
+        <div class="timeline-meta-item">
+          <span class="timeline-meta-label">부서</span>
+          <span class="timeline-meta-value">${safeValue(item.department_at_check)}</span>
+        </div>
+        <div class="timeline-meta-item">
+          <span class="timeline-meta-label">위치</span>
+          <span class="timeline-meta-value">${safeValue(item.location_at_check)}</span>
+        </div>
+      </div>
+
+      <div class="timeline-desc">${nl2br(item.memo || '-')}</div>
+    </article>
   `).join('');
 }
 
@@ -139,7 +215,9 @@ async function loadEquipmentDetail() {
     ]);
 
     currentEquipmentData = detailResult.data;
-    renderDetail(detailResult.data);
+
+    renderHero(detailResult.data);
+    renderDetailInfo(detailResult.data);
     renderQrCode(detailResult.data.equipment_id);
     renderHistories(historyResult.data || []);
     renderInventoryLogs(inventoryResult.data || []);
