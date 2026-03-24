@@ -1,4 +1,5 @@
 let currentEquipmentId = '';
+let currentEquipmentData = null;
 
 function statusLabel(status) {
   const map = {
@@ -31,6 +32,27 @@ function conditionStatusLabel(type) {
     DISPOSAL_TARGET: '폐기대상'
   };
   return map[type] || type || '';
+}
+
+function buildEquipmentDetailUrl(equipmentId) {
+  return `${CONFIG.SITE_BASE_URL}/equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+}
+
+function renderQrCode(equipmentId) {
+  const qrBox = qs('#qrBox');
+  const qrText = qs('#qrText');
+  if (!qrBox || !qrText) return;
+
+  const qrValue = buildEquipmentDetailUrl(equipmentId);
+
+  qrBox.innerHTML = '';
+  qrText.textContent = qrValue;
+
+  new QRCode(qrBox, {
+    text: qrValue,
+    width: 160,
+    height: 160
+  });
 }
 
 function renderDetail(item) {
@@ -116,7 +138,9 @@ async function loadEquipmentDetail() {
       apiGet('listInventoryLogs', { equipment_id: id })
     ]);
 
+    currentEquipmentData = detailResult.data;
     renderDetail(detailResult.data);
+    renderQrCode(detailResult.data.equipment_id);
     renderHistories(historyResult.data || []);
     renderInventoryLogs(inventoryResult.data || []);
   } catch (error) {
@@ -153,9 +177,15 @@ function moveToInventoryForm() {
   location.href = `inventory-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
+function moveToLabelPrint() {
+  if (!currentEquipmentId) return;
+  location.href = `label-print.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
   qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
   qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
+  qs('#printLabelBtn').addEventListener('click', moveToLabelPrint);
   loadEquipmentDetail();
 });
