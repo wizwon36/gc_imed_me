@@ -1,4 +1,4 @@
-async function apiGet(action, params = {}) {
+function buildApiUrl(action, params = {}) {
   const url = new URL(CONFIG.API_BASE_URL);
   url.searchParams.set('action', action);
 
@@ -8,11 +8,21 @@ async function apiGet(action, params = {}) {
     }
   });
 
-  const response = await fetch(url.toString(), {
-    method: 'GET'
-  });
+  return url.toString();
+}
 
-  const data = await response.json();
+async function parseApiResponse(response) {
+  let data;
+
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error('서버 응답을 해석하지 못했습니다.');
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.message || '서버 요청에 실패했습니다.');
+  }
 
   if (!data.success) {
     throw new Error(data.message || '요청 처리 중 오류가 발생했습니다.');
@@ -21,8 +31,18 @@ async function apiGet(action, params = {}) {
   return data;
 }
 
+async function apiGet(action, params = {}) {
+  const url = buildApiUrl(action, params);
+
+  const response = await fetch(url, {
+    method: 'GET'
+  });
+
+  return await parseApiResponse(response);
+}
+
 async function apiPost(action, payload = {}) {
-  const url = `${CONFIG.API_BASE_URL}?action=${encodeURIComponent(action)}`;
+  const url = buildApiUrl(action);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -32,11 +52,5 @@ async function apiPost(action, payload = {}) {
     body: JSON.stringify(payload)
   });
 
-  const data = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.message || '요청 처리 중 오류가 발생했습니다.');
-  }
-
-  return data;
+  return await parseApiResponse(response);
 }
