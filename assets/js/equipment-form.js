@@ -1,4 +1,6 @@
 let CURRENT_EQUIPMENT_PERMISSION = null;
+let formMode = 'create';
+let currentEquipmentId = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth.requireAuth();
@@ -8,12 +10,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!ok) return;
 
   CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
-
-  initEquipmentFormPage();
+  await initEquipmentFormPage();
 });
 
-let formMode = 'create';
-let currentEquipmentId = '';
+function getCurrentUser() {
+  return window.auth?.getSession?.() || null;
+}
+
+function canEditEquipment() {
+  return CURRENT_EQUIPMENT_PERMISSION === 'edit' || CURRENT_EQUIPMENT_PERMISSION === 'admin';
+}
+
+function applyPermissionToForm() {
+  const canEdit = canEditEquipment();
+
+  const form = qs('#equipmentForm');
+  const submitBtn = qs('#submitBtn');
+
+  if (!form) return;
+
+  if (!canEdit) {
+    Array.from(form.elements).forEach(el => {
+      if (el.id === 'submitBtn') return;
+      el.disabled = true;
+      if ('readOnly' in el) el.readOnly = true;
+    });
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '권한 없음';
+      submitBtn.title = '권한이 없습니다.';
+    }
+
+    showMessage('이 페이지는 조회만 가능합니다.', 'error');
+    return;
+  }
+
+  window.appPermission.disableByPermission('equipment', '#submitBtn', ['edit', 'admin']);
+}
 
 function fillEquipmentForm(item) {
   qs('#equipment_name').value = item.equipment_name || '';
@@ -52,8 +86,8 @@ async function loadEditDataIfNeeded() {
   formMode = 'edit';
   currentEquipmentId = id;
   applyEditModeUi();
-  showGlobalLoading();
 
+  showGlobalLoading();
   try {
     const result = await apiGet('getEquipment', { id });
     fillEquipmentForm(result.data);
@@ -107,9 +141,11 @@ function validateEquipmentForm(payload) {
 }
 
 async function handleCreate(payload) {
+  const user = getCurrentUser();
+
   const result = await apiPost('createEquipment', {
     ...payload,
-    created_by: 'admin@hospital.com'
+    created_by: user?.email || ''
   });
 
   showMessage(`${result.message} (${result.data.equipment_id})`, 'success');
@@ -120,10 +156,12 @@ async function handleCreate(payload) {
 }
 
 async function handleUpdate(payload) {
+  const user = getCurrentUser();
+
   await apiPost('updateEquipment', {
     equipment_id: currentEquipmentId,
     ...payload,
-    updated_by: 'admin@hospital.com'
+    updated_by: user?.email || ''
   });
 
   showMessage('장비 정보가 수정되었습니다.', 'success');
@@ -136,6 +174,11 @@ async function handleUpdate(payload) {
 async function handleSubmitEquipment(event) {
   event.preventDefault();
   clearMessage();
+
+  if (!canEditEquipment()) {
+    showMessage('저장 권한이 없습니다.', 'error');
+    return;
+  }
 
   const submitBtn = qs('#submitBtn');
   const payload = buildPayload();
@@ -154,6 +197,7 @@ async function handleSubmitEquipment(event) {
     showMessage(error.message, 'error');
   } finally {
     setLoading(submitBtn, false);
+
     if (formMode === 'edit') {
       qs('#submitBtn').textContent = '수정 저장';
     }
@@ -161,8 +205,7 @@ async function handleSubmitEquipment(event) {
 }
 
 async function initEquipmentFormPage() {
-  document.addEventListener('DOMContentLoaded', async () => {
   qs('#equipmentForm').addEventListener('submit', handleSubmitEquipment);
   await loadEditDataIfNeeded();
-  });
+  applyPermissionToForm();
 }
