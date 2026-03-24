@@ -180,7 +180,7 @@ function renderMaintenanceAlerts(items) {
     .slice(0, 5);
 
   if (!alertItems.length) {
-    container.innerHTML = `<div class="empty-box">90일 이내 유지보수 종료 예정 장비가 없습니다.</div>`;
+    container.innerHTML = `<div class="empty-box">90일 이내 종료 예정 장비가 없습니다.</div>`;
     return;
   }
 
