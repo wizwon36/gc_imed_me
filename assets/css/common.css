@@ -2447,3 +2447,52 @@ button, input, select, textarea {
     font-size: 6pt;
   }
 }
+
+/* =========================
+   detail layout optimization
+========================= */
+
+.detail-main-grid,
+.detail-main-grid-tuned {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) 320px;
+  gap: 16px;
+  align-items: start; /* 핵심 */
+}
+
+.detail-info-card,
+.detail-info-card-tuned {
+  min-width: 0;
+}
+
+.detail-qr-card,
+.detail-qr-card-tuned {
+  align-self: start;   /* 핵심 */
+  height: auto;        /* 핵심 */
+  min-width: 0;
+  position: sticky;
+  top: 20px;
+}
+
+.detail-qr-card-tuned .detail-qr-box {
+  min-height: 220px;
+}
+
+.detail-qr-card-tuned .detail-qr-url {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+@media (max-width: 1024px) {
+  .detail-main-grid,
+  .detail-main-grid-tuned {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-qr-card,
+  .detail-qr-card-tuned {
+    position: static;
+  }
+}
