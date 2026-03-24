@@ -3290,3 +3290,270 @@ button, input, select, textarea {
     flex: 1 1 100%;
   }
 }
+
+/* =========================
+   equipment list search polish
+========================= */
+
+.equipment-search-card,
+.search-panel,
+.search-form-card {
+  border-radius: 22px;
+}
+
+.equipment-search-card .card-body,
+.search-panel .card-body,
+.search-form-card .card-body {
+  padding: 24px;
+}
+
+.equipment-search-card .section-title,
+.search-panel .section-title,
+.search-form-card .section-title {
+  margin-bottom: 6px;
+}
+
+.equipment-search-card .sub-text,
+.search-panel .sub-text,
+.search-form-card .sub-text {
+  margin-bottom: 18px;
+}
+
+/* 입력 필드 묶음 간격 */
+.equipment-search-form,
+.search-form-grid {
+  gap: 14px;
+}
+
+/* 검색어 입력 강조 */
+#keyword {
+  min-height: 60px;
+  font-size: 16px;
+  border-radius: 18px;
+}
+
+/* 일반 입력/셀렉트 */
+#department,
+#manufacturer,
+#status {
+  min-height: 56px;
+  border-radius: 16px;
+}
+
+/* label 간격 */
+.field-group label,
+.form-field label,
+.search-field label {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #344054;
+}
+
+.search-filter-block {
+  margin-top: 20px;
+}
+
+.search-action-block {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed #d9e0ea;
+}
+
+.search-block-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-bottom: 10px;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #475467;
+  letter-spacing: -0.01em;
+}
+
+/* 상태칩 박스 */
+.search-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f4f8fd 100%);
+}
+
+/* 실행버튼 박스 */
+.equipment-search-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* 칩 스타일 미세 조정 */
+.filter-chip {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.filter-chip.active {
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+}
+
+/* 버튼 높이 통일 */
+.equipment-search-actions .btn,
+.search-submit-btn,
+#resetBtn {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.search-submit-btn {
+  min-width: 110px;
+}
+
+#resetBtn {
+  min-width: 96px;
+}
+
+#summaryRow {
+  margin-top: 16px;
+}
+
+#resultSection {
+  margin-top: 18px;
+}
+
+#resultSection .section-head {
+  margin-bottom: 14px;
+}
+
+#resultSection .section-title {
+  margin-bottom: 4px;
+}
+
+.equipment-card-list-tuned {
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .equipment-search-card .card-body,
+  .search-panel .card-body,
+  .search-form-card .card-body {
+    padding: 18px;
+  }
+
+  .equipment-search-card,
+  .search-panel,
+  .search-form-card {
+    border-radius: 18px;
+  }
+
+  .equipment-search-form,
+  .search-form-grid {
+    gap: 12px;
+  }
+
+  #keyword {
+    min-height: 54px;
+    font-size: 15px;
+    border-radius: 16px;
+  }
+
+  #department,
+  #manufacturer,
+  #status {
+    min-height: 50px;
+    border-radius: 14px;
+  }
+
+  .field-group label,
+  .form-field label,
+  .search-field label {
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  .search-filter-block {
+    margin-top: 16px;
+  }
+
+  .search-action-block {
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  .search-chip-row {
+    gap: 8px;
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .filter-chip {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .equipment-search-actions {
+    gap: 8px;
+    padding: 10px;
+    border-radius: 14px;
+    flex-wrap: wrap;
+  }
+
+  .equipment-search-actions .btn,
+  .search-submit-btn,
+  #resetBtn {
+    min-height: 44px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+
+  .equipment-search-actions .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+
+  #summaryRow {
+    margin-top: 14px;
+  }
+
+  #resultSection {
+    margin-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .equipment-search-card .card-body,
+  .search-panel .card-body,
+  .search-form-card .card-body {
+    padding: 16px;
+  }
+
+  .search-chip-row {
+    gap: 6px;
+  }
+
+  .filter-chip {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .equipment-search-actions .btn {
+    flex: 1 1 100%;
+  }
+}
