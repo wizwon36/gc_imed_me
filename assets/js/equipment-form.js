@@ -1,3 +1,17 @@
+let CURRENT_EQUIPMENT_PERMISSION = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = window.auth.requireAuth();
+  if (!user) return;
+
+  const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
+  if (!ok) return;
+
+  CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
+
+  initEquipmentFormPage();
+});
+
 let formMode = 'create';
 let currentEquipmentId = '';
 
@@ -146,7 +160,9 @@ async function handleSubmitEquipment(event) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initEquipmentFormPage() {
+  document.addEventListener('DOMContentLoaded', async () => {
   qs('#equipmentForm').addEventListener('submit', handleSubmitEquipment);
   await loadEditDataIfNeeded();
-});
+  });
+}
