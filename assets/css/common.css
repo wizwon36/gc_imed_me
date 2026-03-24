@@ -4240,3 +4240,319 @@ button, input, select, textarea {
     font-size: 13px;
   }
 }
+
+/* =========================
+   equipment list field balance + result compact
+========================= */
+
+/* ---------------------------------
+   1) 검색 3필드 가로 폭 균형 조정
+--------------------------------- */
+
+/* 사용부서 / 상태 / 제조사 3필드 행 정렬 */
+.equipment-search-form .three-col-row,
+.search-form-grid.three-col-row,
+.equipment-search-grid--triple {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(0, 0.95fr);
+  gap: 12px;
+  align-items: end;
+}
+
+/* 만약 기존 구조가 단순 3컬럼 grid라면 이것도 같이 커버 */
+.equipment-search-form > .grid-3,
+.search-form-grid.grid-3,
+.search-fields-3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(0, 0.95fr);
+  gap: 12px;
+  align-items: end;
+}
+
+/* 검색 카드 안 필드 공통 정렬 */
+.equipment-search-form .field-group,
+.search-form-grid .field-group,
+.equipment-search-form .form-field,
+.search-form-grid .form-field,
+.equipment-search-form .search-field,
+.search-form-grid .search-field {
+  min-width: 0;
+}
+
+/* 상태 select는 글자 길이가 짧아서 너무 넓지 않게 보정 */
+.equipment-search-form .field-group--status,
+.search-form-grid .field-group--status,
+.search-field--status {
+  min-width: 0;
+}
+
+/* 제조사 placeholder 길이 고려 */
+.equipment-search-form .field-group--manufacturer,
+.search-form-grid .field-group--manufacturer,
+.search-field--manufacturer {
+  min-width: 0;
+}
+
+/* ---------------------------------
+   2) 조회 결과 카드 compact 정리
+--------------------------------- */
+
+/* 카드 리스트 간격 축소 */
+.equipment-card-list,
+.equipment-card-list-tuned {
+  gap: 12px;
+}
+
+/* 결과 카드 전체 */
+.equipment-item-card,
+.equipment-item-card-tuned,
+.equipment-card {
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 6px 16px rgba(16, 24, 40, 0.04);
+}
+
+/* 카드 상단 */
+.equipment-card-top,
+.equipment-card-head {
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+/* 장비명 */
+.equipment-title,
+.equipment-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+/* 모델명 */
+.equipment-model,
+.equipment-card-model {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #667085;
+}
+
+/* 우측 상태/장비번호 블록 */
+.equipment-top-right {
+  gap: 6px;
+}
+
+.equipment-id {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #667085;
+}
+
+/* 상태 배지 미세 조정 */
+.status-badge {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* 메타 정보 그리드 */
+.equipment-meta-grid,
+.equipment-card-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin-bottom: 12px;
+}
+
+/* 메타 정보 박스 */
+.equipment-meta-item {
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+
+/* 메타 라벨 */
+.equipment-meta-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #667085;
+}
+
+/* 메타 값 */
+.equipment-meta-value {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #111827;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* 카드 하단 버튼 영역 */
+.equipment-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.card-action-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* ---------------------------------
+   3) tablet
+--------------------------------- */
+@media (max-width: 960px) {
+  .equipment-search-form .three-col-row,
+  .search-form-grid.three-col-row,
+  .equipment-search-grid--triple,
+  .equipment-search-form > .grid-3,
+  .search-form-grid.grid-3,
+  .search-fields-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .equipment-meta-grid,
+  .equipment-card-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+  }
+}
+
+/* ---------------------------------
+   4) mobile
+--------------------------------- */
+@media (max-width: 768px) {
+  /* 검색 3필드는 모바일에서 1열 */
+  .equipment-search-form .three-col-row,
+  .search-form-grid.three-col-row,
+  .equipment-search-grid--triple,
+  .equipment-search-form > .grid-3,
+  .search-form-grid.grid-3,
+  .search-fields-3 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* 결과 카드 더 compact */
+  .equipment-card-list,
+  .equipment-card-list-tuned {
+    gap: 10px;
+  }
+
+  .equipment-item-card,
+  .equipment-item-card-tuned,
+  .equipment-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .equipment-card-top,
+  .equipment-card-head {
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .equipment-title,
+  .equipment-card-title {
+    font-size: 15px;
+  }
+
+  .equipment-model,
+  .equipment-card-model {
+    font-size: 12px;
+  }
+
+  .status-badge {
+    min-height: 28px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .equipment-id {
+    font-size: 11px;
+  }
+
+  .equipment-meta-grid,
+  .equipment-card-meta {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .equipment-meta-item {
+    padding: 9px 10px;
+    border-radius: 12px;
+  }
+
+  .equipment-meta-label {
+    margin-bottom: 3px;
+    font-size: 10px;
+  }
+
+  .equipment-meta-value {
+    font-size: 12px;
+  }
+
+  .card-action-btn {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+}
+
+/* ---------------------------------
+   5) very small mobile
+--------------------------------- */
+@media (max-width: 480px) {
+  .equipment-item-card,
+  .equipment-item-card-tuned,
+  .equipment-card {
+    padding: 12px;
+  }
+
+  .equipment-title,
+  .equipment-card-title {
+    font-size: 14px;
+  }
+
+  .equipment-model,
+  .equipment-card-model,
+  .equipment-id {
+    font-size: 11px;
+  }
+
+  .equipment-meta-item {
+    padding: 8px 9px;
+  }
+
+  .equipment-meta-value {
+    font-size: 11px;
+  }
+
+  .card-action-btn {
+    width: 100%;
+  }
+
+  .equipment-card-actions {
+    justify-content: stretch;
+  }
+}
