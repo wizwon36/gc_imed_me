@@ -67,25 +67,37 @@
           <div class="sub-text">자주 사용하는 화면으로 바로 이동합니다.</div>
         </div>
 
-        <div class="dashboard-action-grid">
-          <a class="dashboard-action-card" href="equipment-form.html">
-            <div class="dashboard-action-title">장비 등록</div>
-            <div class="dashboard-action-desc">신규 장비 정보를 등록합니다.</div>
+        <div class="dashboard-action-grid dashboard-action-grid--enhanced">
+          <a class="dashboard-action-card dashboard-action-card--primary" href="equipment-form.html">
+            <span class="dashboard-action-icon" aria-hidden="true">＋</span>
+            <div class="dashboard-action-body">
+              <div class="dashboard-action-title">장비 등록</div>
+              <div class="dashboard-action-desc">신규 장비 정보를 등록합니다.</div>
+            </div>
           </a>
-
-          <a class="dashboard-action-card" href="equipment-list.html">
-            <div class="dashboard-action-title">장비 조회</div>
-            <div class="dashboard-action-desc">장비 검색과 상세 확인을 진행합니다.</div>
+        
+          <a class="dashboard-action-card" href="equipment-list.html?view=all">
+            <span class="dashboard-action-icon" aria-hidden="true">📋</span>
+            <div class="dashboard-action-body">
+              <div class="dashboard-action-title">전체 장비</div>
+              <div class="dashboard-action-desc">등록된 전체 장비를 조회합니다.</div>
+            </div>
           </a>
-
-          <a class="dashboard-action-card" href="equipment-list.html">
-            <div class="dashboard-action-title">이력 확인</div>
-            <div class="dashboard-action-desc">수리/점검/재고조사 이력을 확인합니다.</div>
+        
+          <a class="dashboard-action-card" href="equipment-list.html?view=history">
+            <span class="dashboard-action-icon" aria-hidden="true">🕘</span>
+            <div class="dashboard-action-body">
+              <div class="dashboard-action-title">이력 확인</div>
+              <div class="dashboard-action-desc">수리·점검·재고조사 이력을 빠르게 확인합니다.</div>
+            </div>
           </a>
-
-          <a class="dashboard-action-card" href="equipment-list.html">
-            <div class="dashboard-action-title">라벨 출력</div>
-            <div class="dashboard-action-desc">상세화면에서 QR 라벨을 출력합니다.</div>
+        
+          <a class="dashboard-action-card" href="equipment-list.html?view=label">
+            <span class="dashboard-action-icon" aria-hidden="true">🏷</span>
+            <div class="dashboard-action-body">
+              <div class="dashboard-action-title">라벨 출력</div>
+              <div class="dashboard-action-desc">라벨 출력 대상 장비를 바로 찾습니다.</div>
+            </div>
           </a>
         </div>
       </article>
