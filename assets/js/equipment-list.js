@@ -47,6 +47,20 @@ function updateSummary(items) {
   qs('#resultCountText').textContent = `총 ${formatNumber(total)}건`;
 }
 
+function renderInitialEmptyState(message, description = '') {
+  const list = qs('#equipmentCardList');
+  if (!list) return;
+
+  list.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-state-title">${escapeHtml(message)}</div>
+      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
+    </div>
+  `;
+
+  updateSummary([]);
+}
+
 function renderEquipmentCards(items) {
   const list = qs('#equipmentCardList');
 
@@ -98,6 +112,59 @@ function renderEquipmentCards(items) {
   updateSummary(items);
 }
 
+function getListViewType() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('view') || 'default';
+}
+
+function applyListViewContext() {
+  const view = getListViewType();
+
+  const titleEl = qs('#listPageTitle');
+  const descEl = qs('#listPageDesc');
+  const chipEl = qs('#listContextChip');
+
+  if (!titleEl || !descEl || !chipEl) return view;
+
+  const viewMap = {
+    all: {
+      title: '전체 장비 목록',
+      desc: '등록된 전체 장비를 조건에 맞게 검색할 수 있습니다.',
+      chip: '빠른 진입 · 전체 장비'
+    },
+    history: {
+      title: '장비 이력 확인',
+      desc: '수리, 점검, 관리 이력을 확인할 장비를 검색하세요.',
+      chip: '빠른 진입 · 이력 확인'
+    },
+    label: {
+      title: '라벨 출력 대상 조회',
+      desc: '라벨 출력이 필요한 장비를 검색하고 선택할 수 있습니다.',
+      chip: '빠른 진입 · 라벨 출력'
+    },
+    default: {
+      title: '장비 목록',
+      desc: '장비번호, 장비명, 모델명, 부서, 상태 기준으로 빠르게 검색할 수 있습니다.',
+      chip: ''
+    }
+  };
+
+  const config = viewMap[view] || viewMap.default;
+
+  titleEl.textContent = config.title;
+  descEl.textContent = config.desc;
+
+  if (config.chip) {
+    chipEl.textContent = config.chip;
+    chipEl.classList.remove('is-hidden');
+  } else {
+    chipEl.textContent = '';
+    chipEl.classList.add('is-hidden');
+  }
+
+  return view;
+}
+
 async function loadEquipments() {
   clearMessage();
   renderEquipmentListSkeleton();
@@ -131,7 +198,11 @@ function resetSearchForm() {
   qs('#status').value = '';
   qs('#manufacturer').value = '';
   setActiveFilterChip('');
-  loadEquipments();
+
+  renderInitialEmptyState(
+    '검색 조건이 초기화되었습니다.',
+    '원하는 조건을 다시 입력한 뒤 조회해 주세요.'
+  );
 }
 
 function setActiveFilterChip(statusValue) {
@@ -175,5 +246,10 @@ document.addEventListener('DOMContentLoaded', () => {
   bindFilterChips();
   bindEnterSearch();
   setActiveFilterChip('');
-  loadEquipments();
+  applyListViewContext();
+
+  renderInitialEmptyState(
+    '검색 조건을 설정한 뒤 조회해 주세요.',
+    '페이지 진입 시 자동 전체조회는 실행하지 않습니다.'
+  );
 });
