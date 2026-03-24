@@ -14,6 +14,7 @@ function getNowDateTimeString() {
 async function loadEquipmentInfo() {
   const equipmentId = getQueryParam('equipment_id');
   currentEquipmentId = equipmentId;
+  showGlobalLoading();
 
   if (!equipmentId) {
     showMessage('equipment_id가 없습니다.', 'error');
@@ -33,6 +34,8 @@ async function loadEquipmentInfo() {
     qs('#location_at_check').value = item.location || '';
   } catch (error) {
     showMessage(error.message, 'error');
+  } finally {
+    hideGlobalLoading();
   }
 }
 
