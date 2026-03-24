@@ -24,6 +24,28 @@ function safeText(value, fallback = '-') {
   return escapeHtml(value || fallback);
 }
 
+function renderDashboardSkeleton() {
+  qs('#recentEquipmentList').innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  `;
+
+  qs('#recentHistoryList').innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  `;
+
+  qs('#maintenanceAlertList').innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  `;
+
+  qs('#departmentSummaryList').innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  `;
+}
+
 function statusLabel(status) {
   const map = {
     IN_USE: '사용중',
@@ -212,7 +234,9 @@ function renderDepartmentSummary(items) {
 
 async function loadDashboard() {
   clearMessage();
-
+  renderDashboardSkeleton();
+  showGlobalLoading();
+  
   try {
     const [equipmentResult, historyResult] = await Promise.all([
       apiGet('listEquipments'),
@@ -234,6 +258,8 @@ async function loadDashboard() {
     qs('#recentHistoryList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
     qs('#maintenanceAlertList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
     qs('#departmentSummaryList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
+  } finally {
+    hideGlobalLoading();
   }
 }
 
