@@ -245,6 +245,11 @@ async function deleteCurrentEquipment() {
   }
 }
 
+function moveToEditForm() {
+  if (!currentEquipmentId) return;
+  location.href = `equipment-form.html?id=${encodeURIComponent(currentEquipmentId)}&mode=edit`;
+}
+
 function moveToHistoryForm() {
   if (!currentEquipmentId) return;
   location.href = `history-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
@@ -261,6 +266,7 @@ function moveToLabelPrint() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  qs('#editEquipmentBtn').addEventListener('click', moveToEditForm);
   qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
   qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
   qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
