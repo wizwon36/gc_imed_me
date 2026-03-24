@@ -29,7 +29,6 @@ function applyEditModeUi() {
 async function loadEditDataIfNeeded() {
   const mode = getQueryParam('mode');
   const id = getQueryParam('id');
-  showGlobalLoading();
 
   if (mode !== 'edit' || !id) {
     formMode = 'create';
@@ -39,6 +38,7 @@ async function loadEditDataIfNeeded() {
   formMode = 'edit';
   currentEquipmentId = id;
   applyEditModeUi();
+  showGlobalLoading();
 
   try {
     const result = await apiGet('getEquipment', { id });
