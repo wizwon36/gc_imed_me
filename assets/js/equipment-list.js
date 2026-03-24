@@ -9,6 +9,16 @@ function statusLabel(status) {
   return map[status] || status || '';
 }
 
+function renderEquipmentListSkeleton() {
+  const list = qs('#equipmentCardList');
+  list.innerHTML = `
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  `;
+}
+
 function statusClass(status) {
   const map = {
     IN_USE: 'is-in-use',
@@ -90,7 +100,9 @@ function renderEquipmentCards(items) {
 
 async function loadEquipments() {
   clearMessage();
-
+  renderEquipmentListSkeleton();
+  showGlobalLoading();
+  
   const params = {
     keyword: qs('#keyword').value.trim(),
     department: qs('#department').value.trim(),
@@ -109,6 +121,7 @@ async function loadEquipments() {
     renderEquipmentCards([]);
   } finally {
     setLoading(searchBtn, false, '조회');
+    hideGlobalLoading();
   }
 }
 
