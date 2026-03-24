@@ -1,77 +1,148 @@
-let currentEquipmentId = '';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>이력 등록</title>
+  <link rel="stylesheet" href="assets/css/common.css" />
+</head>
+<body>
+  <div class="container form-shell">
+    <div class="form-hero">
+      <div class="form-hero-copy">
+        <div class="form-hero-topline">수리/점검 이력 등록</div>
+        <h1 class="form-hero-title">장비 이력 입력</h1>
+        <div class="form-hero-subtext">
+          수리, 정기점검, 법정검사 등 장비 이력을 기록합니다.
+        </div>
+      </div>
 
-async function loadEquipmentInfo() {
-  const equipmentId = getQueryParam('equipment_id');
-  currentEquipmentId = equipmentId;
+      <div class="form-hero-actions">
+        <a class="nav-link" href="index.html">홈</a>
+        <a class="nav-link" href="equipment-list.html">장비목록</a>
+      </div>
+    </div>
 
-  if (!equipmentId) {
-    showMessage('equipment_id가 없습니다.', 'error');
-    return;
-  }
+    <div id="messageBox" class="message-box"></div>
 
-  qs('#backToDetailBtn').href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+    <form id="historyForm" class="form-page-grid">
+      <section class="card form-main-card">
+        <div class="section-head">
+          <h2 class="section-title">대상 장비</h2>
+          <div class="sub-text">현재 선택된 장비 기준으로 이력이 등록됩니다.</div>
+        </div>
 
-  try {
-    const result = await apiGet('getEquipment', { id: equipmentId });
-    const item = result.data;
+        <div class="form-grid form-grid-modern">
+          <div class="form-group">
+            <label class="form-label">장비번호</label>
+            <input type="text" id="equipment_id" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">장비명</label>
+            <input type="text" id="equipment_name" class="form-input" readonly />
+          </div>
+        </div>
 
-    qs('#equipment_id').value = item.equipment_id || '';
-    qs('#equipment_name').value = item.equipment_name || '';
-  } catch (error) {
-    showMessage(error.message, 'error');
-  }
-}
+        <div class="section-head form-inner-head">
+          <h2 class="section-title">이력 정보</h2>
+        </div>
 
-async function handleSubmitHistory(event) {
-  event.preventDefault();
-  clearMessage();
+        <div class="form-grid form-grid-modern">
+          <div class="form-group">
+            <label class="form-label">이력구분 <span class="required">*</span></label>
+            <select id="history_type" class="form-select">
+              <option value="REPAIR">수리</option>
+              <option value="REGULAR_CHECK">정기점검</option>
+              <option value="LEGAL_INSPECTION">법정검사</option>
+              <option value="PREVENTIVE">예방점검</option>
+              <option value="ETC">기타</option>
+            </select>
+          </div>
 
-  const submitBtn = qs('#submitBtn');
+          <div class="form-group">
+            <label class="form-label">처리일자 <span class="required">*</span></label>
+            <input type="date" id="work_date" class="form-input form-input-lg" />
+          </div>
 
-  const payload = {
-    equipment_id: qs('#equipment_id').value.trim(),
-    history_type: qs('#history_type').value,
-    request_department: qs('#request_department').value.trim(),
-    requester: qs('#requester').value.trim(),
-    work_date: qs('#work_date').value,
-    amount: qs('#amount').value,
-    vendor_name: qs('#vendor_name').value.trim(),
-    description: qs('#description').value.trim(),
-    result_status: qs('#result_status').value,
-    created_by: 'admin@hospital.com',
-    update_equipment_status: qs('#update_equipment_status').value
-  };
+          <div class="form-group">
+            <label class="form-label">요청부서</label>
+            <input type="text" id="request_department" class="form-input" />
+          </div>
 
-  if (!payload.equipment_id) {
-    showMessage('장비번호가 없습니다.', 'error');
-    return;
-  }
+          <div class="form-group">
+            <label class="form-label">요청자</label>
+            <input type="text" id="requester" class="form-input" />
+          </div>
 
-  if (!payload.work_date) {
-    showMessage('처리일자를 입력하세요.', 'error');
-    qs('#work_date').focus();
-    return;
-  }
+          <div class="form-group">
+            <label class="form-label">처리업체</label>
+            <input type="text" id="vendor_name" class="form-input" />
+          </div>
 
-  if (!payload.description) {
-    showMessage('처리내용을 입력하세요.', 'error');
-    qs('#description').focus();
-    return;
-  }
+          <div class="form-group">
+            <label class="form-label">수리금액</label>
+            <input type="number" id="amount" class="form-input" />
+          </div>
 
-  try {
-    setLoading(submitBtn, true, '저장 중...');
-    await apiPost('createHistory', payload);
-    alert('이력이 등록되었습니다.');
-    location.href = `equipment-detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
-  } catch (error) {
-    showMessage(error.message, 'error');
-  } finally {
-    setLoading(submitBtn, false);
-  }
-}
+          <div class="form-group">
+            <label class="form-label">처리결과</label>
+            <select id="result_status" class="form-select">
+              <option value="DONE">완료</option>
+              <option value="IN_PROGRESS">진행중</option>
+              <option value="HOLD">보류</option>
+            </select>
+          </div>
 
-document.addEventListener('DOMContentLoaded', () => {
-  qs('#historyForm').addEventListener('submit', handleSubmitHistory);
-  loadEquipmentInfo();
-});
+          <div class="form-group">
+            <label class="form-label">장비 상태 변경</label>
+            <select id="update_equipment_status" class="form-select">
+              <option value="">변경 안함</option>
+              <option value="IN_USE">사용중</option>
+              <option value="REPAIRING">수리중</option>
+              <option value="INSPECTING">점검중</option>
+              <option value="STORED">보관</option>
+              <option value="DISPOSED">폐기</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">처리내용 <span class="required">*</span></label>
+            <textarea id="description" class="form-textarea" placeholder="작업 내용, 증상, 처리 결과 등을 입력하세요."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card form-side-card">
+        <div class="section-head">
+          <h2 class="section-title">입력 안내</h2>
+        </div>
+
+        <div class="guide-list">
+          <div class="guide-item">
+            <div class="guide-title">필수 입력</div>
+            <div class="guide-text">처리일자와 처리내용은 반드시 입력해야 합니다.</div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-title">상태 변경</div>
+            <div class="guide-text">수리 진행 중이면 장비 상태를 수리중으로 함께 변경하는 것이 좋습니다.</div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-title">기록 기준</div>
+            <div class="guide-text">현장에서 실제로 수행한 작업 기준으로 간단명료하게 남겨 주세요.</div>
+          </div>
+        </div>
+
+        <div class="form-actions form-side-actions">
+          <button type="submit" id="submitBtn" class="btn btn-primary form-submit-btn">저장</button>
+          <a class="btn" id="backToDetailBtn" href="#">상세로 돌아가기</a>
+        </div>
+      </aside>
+    </form>
+  </div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/history-form.js"></script>
+</body>
+</html>
