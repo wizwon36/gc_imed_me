@@ -7,13 +7,16 @@
   <link rel="stylesheet" href="assets/css/common.css" />
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1 class="page-title">장비 목록</h1>
-        <div class="sub-text">등록된 의료장비를 검색하고 조회합니다.</div>
+  <div class="container app-shell">
+    <div class="hero-panel">
+      <div class="hero-copy">
+        <h1 class="page-title hero-title">장비 목록</h1>
+        <div class="hero-subtext">
+          등록된 의료장비를 빠르게 검색하고 상태를 확인할 수 있습니다.
+        </div>
       </div>
-      <div class="nav-links">
+
+      <div class="hero-actions">
         <a class="nav-link" href="index.html">홈</a>
         <a class="nav-link btn-primary" href="equipment-form.html">장비등록</a>
       </div>
@@ -21,48 +24,99 @@
 
     <div id="messageBox" class="message-box"></div>
 
-    <div class="card" style="margin-bottom: 16px;">
-      <div class="search-bar">
-        <input type="text" id="keyword" class="form-input" placeholder="장비번호 / 장비명 / 모델명 / 시리얼 검색" />
-        <input type="text" id="department" class="form-input" placeholder="부서" />
-        <select id="status" class="form-select">
-          <option value="">전체 상태</option>
-          <option value="IN_USE">사용중</option>
-          <option value="REPAIRING">수리중</option>
-          <option value="INSPECTING">점검중</option>
-          <option value="STORED">보관</option>
-          <option value="DISPOSED">폐기</option>
-        </select>
-        <input type="text" id="manufacturer" class="form-input" placeholder="제조사" />
-        <button class="btn btn-primary" id="searchBtn">조회</button>
+    <section class="card equipment-search-card">
+      <div class="section-head">
+        <h2 class="section-title">장비 검색</h2>
+        <div class="sub-text">장비번호, 장비명, 모델명, 시리얼번호로 검색할 수 있습니다.</div>
+      </div>
+
+      <div class="equipment-search-grid">
+        <div class="form-group equipment-search-main">
+          <label class="form-label" for="keyword">검색어</label>
+          <input
+            type="text"
+            id="keyword"
+            class="form-input search-input-lg"
+            placeholder="장비번호 / 장비명 / 모델명 / 시리얼번호"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="department">사용부서</label>
+          <input
+            type="text"
+            id="department"
+            class="form-input"
+            placeholder="예: 중환자실"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="status">상태</label>
+          <select id="status" class="form-select">
+            <option value="">전체 상태</option>
+            <option value="IN_USE">사용중</option>
+            <option value="REPAIRING">수리중</option>
+            <option value="INSPECTING">점검중</option>
+            <option value="STORED">보관</option>
+            <option value="DISPOSED">폐기</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manufacturer">제조사</label>
+          <input
+            type="text"
+            id="manufacturer"
+            class="form-input"
+            placeholder="예: GE"
+          />
+        </div>
+      </div>
+
+      <div class="search-chip-row">
+        <button type="button" class="filter-chip" data-status="">전체</button>
+        <button type="button" class="filter-chip" data-status="IN_USE">사용중</button>
+        <button type="button" class="filter-chip" data-status="REPAIRING">수리중</button>
+        <button type="button" class="filter-chip" data-status="INSPECTING">점검중</button>
+        <button type="button" class="filter-chip" data-status="STORED">보관</button>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary search-submit-btn" id="searchBtn">조회</button>
         <button class="btn" id="resetBtn">초기화</button>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>장비번호</th>
-              <th>장비명</th>
-              <th>모델명</th>
-              <th>부서</th>
-              <th>시리얼번호</th>
-              <th>제조사</th>
-              <th>상태</th>
-              <th>위치</th>
-              <th>상세</th>
-            </tr>
-          </thead>
-          <tbody id="equipmentTableBody">
-            <tr>
-              <td colspan="9">불러오는 중...</td>
-            </tr>
-          </tbody>
-        </table>
+    <section class="equipment-summary-row" id="summaryRow">
+      <div class="summary-pill">
+        <span class="summary-pill-label">전체</span>
+        <strong class="summary-pill-value" id="summaryTotal">0</strong>
       </div>
-    </div>
+      <div class="summary-pill">
+        <span class="summary-pill-label">사용중</span>
+        <strong class="summary-pill-value" id="summaryInUse">0</strong>
+      </div>
+      <div class="summary-pill">
+        <span class="summary-pill-label">수리중</span>
+        <strong class="summary-pill-value" id="summaryRepairing">0</strong>
+      </div>
+      <div class="summary-pill">
+        <span class="summary-pill-label">점검중</span>
+        <strong class="summary-pill-value" id="summaryInspecting">0</strong>
+      </div>
+    </section>
+
+    <section class="equipment-list-section">
+      <div class="section-head">
+        <h2 class="section-title">조회 결과</h2>
+        <div class="sub-text" id="resultCountText">총 0건</div>
+      </div>
+
+      <div id="equipmentCardList" class="equipment-card-list">
+        <div class="empty-box">불러오는 중...</div>
+      </div>
+    </section>
   </div>
 
   <script src="assets/js/config.js"></script>
