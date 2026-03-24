@@ -85,7 +85,8 @@ function renderQrCode(equipmentId) {
   const qrValue = buildEquipmentDetailUrl(equipmentId);
 
   qrBox.innerHTML = '';
-  qrText.textContent = qrValue;
+  qrText.textContent = 'QR 스캔 시 장비 상세 페이지로 이동';
+  qrText.title = qrValue;
 
   new QRCode(qrBox, {
     text: qrValue,
