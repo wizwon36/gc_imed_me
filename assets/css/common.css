@@ -4556,3 +4556,57 @@ button, input, select, textarea {
     justify-content: stretch;
   }
 }
+
+/* =========================
+   Global page loading
+========================= */
+.page-global-loading {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.22);
+  z-index: 9999;
+}
+
+.page-global-loading.is-active {
+  display: flex;
+}
+
+.page-global-loading__box {
+  min-width: 160px;
+  max-width: 220px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.page-global-loading__spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(37, 99, 235, 0.16);
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: pageGlobalSpinnerRotate 0.8s linear infinite;
+}
+
+.page-global-loading__text {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #334155;
+}
+
+@keyframes pageGlobalSpinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
