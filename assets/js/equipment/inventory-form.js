@@ -21,7 +21,7 @@ async function loadEquipmentInfo() {
     return;
   }
 
-  qs('#backToDetailBtn').href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+  qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
   qs('#checked_at').value = getNowDateTimeString();
 
   try {
@@ -77,7 +77,7 @@ async function handleSubmitInventory(event) {
     setLoading(submitBtn, true, '저장 중...');
     await apiPost('createInventoryLog', payload);
     alert('재고조사 이력이 등록되었습니다.');
-    location.href = `equipment-detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
+    location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
     showMessage(error.message, 'error');
   } finally {
