@@ -30,7 +30,6 @@ async function handleSubmitHistory(event) {
   clearMessage();
 
   const submitBtn = qs('#submitBtn');
-
   const payload = {
     equipment_id: qs('#equipment_id').value.trim(),
     history_type: qs('#history_type').value,
@@ -49,13 +48,11 @@ async function handleSubmitHistory(event) {
     showMessage('장비번호가 없습니다.', 'error');
     return;
   }
-
   if (!payload.work_date) {
     showMessage('처리일자를 입력하세요.', 'error');
     qs('#work_date').focus();
     return;
   }
-
   if (!payload.description) {
     showMessage('처리내용을 입력하세요.', 'error');
     qs('#description').focus();
@@ -64,10 +61,13 @@ async function handleSubmitHistory(event) {
 
   try {
     setLoading(submitBtn, true, '저장 중...');
+    showGlobalLoading('이력을 저장하는 중...');
+
     await apiPost('createHistory', payload);
     alert('이력이 등록되었습니다.');
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
+    hideGlobalLoading();
     showMessage(error.message, 'error');
   } finally {
     setLoading(submitBtn, false);
