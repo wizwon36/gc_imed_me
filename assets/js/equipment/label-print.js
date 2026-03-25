@@ -10,7 +10,7 @@ function statusLabel(status) {
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
-  return `${CONFIG.SITE_BASE_URL}/equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+  return `${CONFIG.SITE_BASE_URL}/pages/equipment/detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
 
 function renderLabelQr(equipmentId) {
@@ -40,7 +40,7 @@ async function loadLabelData() {
     return;
   }
 
-  qs('#backToDetailBtn').href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+  qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
 
   try {
     const result = await apiGet('getEquipment', { id: equipmentId });
