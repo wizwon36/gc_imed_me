@@ -64,22 +64,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (emptyEl) emptyEl.style.display = 'none';
 
-    const cards = permissions.map((p) => {
-      const app = APP_MAP[p.app_id];
-      if (!app) return '';
+    const cards = permissions
+      .map((p) => {
+        const app = APP_MAP[p.app_id];
+        if (!app) return '';
 
-      const permissionLabel =
-        p.permission === 'admin' ? '관리자' : (p.permission || '');
+        const permissionLabel =
+          p.permission === 'admin' ? '관리자' : (p.permission || '');
 
-      return `
-        <a class="portal-app-card" href="${app.url}">
-          <div class="portal-app-icon">${app.icon}</div>
-          <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
-          <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
-          <div class="portal-app-meta">${escapeHtml(permissionLabel)}</div>
-        </a>
-      `;
-    }).join('');
+        return `
+          <a class="portal-app-card" href="${app.url}">
+            <div class="portal-app-icon">${app.icon}</div>
+            <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
+            <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
+            <div class="portal-app-meta">${escapeHtml(permissionLabel)}</div>
+          </a>
+        `;
+      })
+      .join('');
 
     if (gridEl) {
       gridEl.innerHTML = cards;
