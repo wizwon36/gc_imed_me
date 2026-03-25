@@ -24,19 +24,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     equipment: {
       title: '의료장비 관리 시스템',
       desc: '장비 등록, 조회, 이력 관리',
-      icon: '',
+      icon: '🩺',
       url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
     },
     logs: {
       title: '시스템 로그',
       desc: '수정 이력 및 로그 확인',
-      icon: '',
+      icon: '📋',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 및 권한 관리',
-      icon: '',
+      icon: '👤',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`
     }
   };
@@ -59,12 +59,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       .map(p => {
         const app = APP_MAP[p.app_id];
         if (!app) return '';
+
         return `
           <a class="portal-app-card" href="${app.url}">
             <div class="portal-app-icon">${app.icon}</div>
-            <h3>${app.title}</h3>
-            <p>${app.desc}</p>
-            <span class="portal-app-permission">${escapeHtml(p.permission || '')}</span>
+            <h3>${escapeHtml(app.title)}</h3>
+            <p>${escapeHtml(app.desc)}</p>
+            <span class="portal-app-permission">
+              ${escapeHtml(p.permission || '')}
+            </span>
           </a>
         `;
       })
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!cards && emptyEl) {
       emptyEl.style.display = 'block';
     }
+
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
@@ -90,6 +94,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+/* =========================
+   Global Loading
+========================= */
 function showGlobalLoading(text = '불러오는 중...') {
   const el = document.getElementById('globalLoading');
   if (!el) return;
@@ -109,6 +116,9 @@ function hideGlobalLoading() {
   el.setAttribute('aria-hidden', 'true');
 }
 
+/* =========================
+   HTML Escape
+========================= */
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -116,23 +126,4 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
-}
-
-function showGlobalLoading(text = '불러오는 중...') {
-  const el = document.getElementById('globalLoading');
-  if (!el) return;
-
-  const textEl = document.getElementById('globalLoadingText');
-  if (textEl) textEl.textContent = text;
-
-  el.classList.add('is-active');
-  el.setAttribute('aria-hidden', 'false');
-}
-
-function hideGlobalLoading() {
-  const el = document.getElementById('globalLoading');
-  if (!el) return;
-
-  el.classList.remove('is-active');
-  el.setAttribute('aria-hidden', 'true');
 }
