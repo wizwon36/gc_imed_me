@@ -13,25 +13,25 @@
       el.classList.add(`is-${type}`);
     }
   }
-
+  
   function showGlobalLoading(text = '처리 중...') {
-    const el = document.getElementById('globalLoading');
-    if (!el) return;
+    const overlay = document.getElementById('globalLoading');
+    if (!overlay) return;
   
     const textEl = document.getElementById('globalLoadingText');
     if (textEl) textEl.textContent = text;
   
-    el.classList.add('active');
-    el.setAttribute('aria-hidden', 'false');
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
   }
-
-function hideGlobalLoading() {
-  const el = document.getElementById('globalLoading');
-  if (!el) return;
-
-  el.classList.remove('active');
-  el.setAttribute('aria-hidden', 'true');
-}
+  
+  function hideGlobalLoading() {
+    const overlay = document.getElementById('globalLoading');
+    if (!overlay) return;
+  
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+  }
   
   function getLoginUrl() {
     return `${CONFIG.SITE_BASE_URL}/index.html`;
