@@ -30,24 +30,17 @@ function setAdminMessage(message, type = '') {
 
 function collectPermissions() {
   const permissionEls = document.querySelectorAll('.app-permission');
-  const activeEls = document.querySelectorAll('.app-active');
-
-  const activeMap = {};
-  activeEls.forEach((el) => {
-    activeMap[el.dataset.appId] = el.value;
-  });
-
   const permissions = [];
+
   permissionEls.forEach((el) => {
     const appId = el.dataset.appId;
     const permission = el.value;
-    const active = activeMap[appId] || 'Y';
 
     if (permission) {
       permissions.push({
         app_id: appId,
         permission,
-        active
+        active: 'Y'
       });
     }
   });
@@ -102,10 +95,6 @@ function clearUserForm() {
 
   document.querySelectorAll('.app-permission').forEach((el) => {
     el.value = '';
-  });
-
-  document.querySelectorAll('.app-active').forEach((el) => {
-    el.value = 'Y';
   });
 }
 
