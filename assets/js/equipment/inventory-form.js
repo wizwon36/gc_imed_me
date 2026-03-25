@@ -44,7 +44,6 @@ async function handleSubmitInventory(event) {
   clearMessage();
 
   const submitBtn = qs('#submitBtn');
-
   const payload = {
     equipment_id: qs('#equipment_id').value.trim(),
     checked_at: qs('#checked_at').value.trim(),
@@ -60,13 +59,11 @@ async function handleSubmitInventory(event) {
     showMessage('장비번호가 없습니다.', 'error');
     return;
   }
-
   if (!payload.checked_at) {
     showMessage('점검일시를 입력하세요.', 'error');
     qs('#checked_at').focus();
     return;
   }
-
   if (!payload.checked_by) {
     showMessage('점검자를 입력하세요.', 'error');
     qs('#checked_by').focus();
@@ -75,10 +72,13 @@ async function handleSubmitInventory(event) {
 
   try {
     setLoading(submitBtn, true, '저장 중...');
+    showGlobalLoading('재고조사 이력을 저장하는 중...');
+
     await apiPost('createInventoryLog', payload);
     alert('재고조사 이력이 등록되었습니다.');
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
+    hideGlobalLoading();
     showMessage(error.message, 'error');
   } finally {
     setLoading(submitBtn, false);
