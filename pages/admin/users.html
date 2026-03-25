@@ -50,6 +50,9 @@
     }
 
     .admin-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       min-height: 42px;
       padding: 0 16px;
       border: 1px solid #d0d5dd;
@@ -77,6 +80,7 @@
       border-radius: 20px;
       background: #fff;
       box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+      min-width: 0;
     }
 
     .admin-card h2 {
@@ -90,30 +94,44 @@
       color: #667085;
     }
 
-    .form-grid {
+    .admin-form-grid {
       display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
 
-    .field-group {
+    .admin-field {
       display: grid;
       gap: 6px;
+      min-width: 0;
     }
 
-    .field-group label {
+    .admin-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .admin-field label {
       font-size: 13px;
       font-weight: 800;
       color: #344054;
     }
 
-    .field-group input,
-    .field-group select {
+    .admin-field input,
+    .admin-field select {
+      width: 100%;
       min-height: 48px;
       padding: 0 14px;
       border: 1px solid #d0d5dd;
       border-radius: 14px;
       font-size: 14px;
       box-sizing: border-box;
+      background: #fff;
+    }
+
+    .admin-input-hint {
+      font-size: 12px;
+      color: #667085;
+      margin-top: -2px;
     }
 
     .permission-box {
@@ -127,7 +145,7 @@
 
     .permission-row {
       display: grid;
-      grid-template-columns: 1fr 110px 70px;
+      grid-template-columns: minmax(0, 1fr) 120px 80px;
       gap: 8px;
       align-items: center;
     }
@@ -136,12 +154,31 @@
       font-size: 13px;
       font-weight: 700;
       color: #344054;
+      line-height: 1.4;
+      word-break: keep-all;
+    }
+
+    .permission-row select {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .admin-submit-wrap {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 10px;
+    }
+
+    .admin-submit-wrap .admin-btn {
+      width: 100%;
+      min-height: 52px;
+      border-radius: 16px;
+      font-size: 15px;
     }
 
     .message-box {
       min-height: 20px;
       font-size: 13px;
-      margin-top: 8px;
     }
 
     .message-box.error {
@@ -182,6 +219,34 @@
         grid-template-columns: 1fr;
       }
     }
+
+    @media (max-width: 640px) {
+      .admin-topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .admin-actions {
+        width: 100%;
+      }
+
+      .admin-actions .admin-btn {
+        flex: 1;
+      }
+
+      .admin-form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-field.full,
+      .admin-submit-wrap {
+        grid-column: auto;
+      }
+
+      .permission-row {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -202,33 +267,28 @@
         <h2>사용자 등록</h2>
         <p>신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
 
-        <div class="form-grid">
-          <div class="field-group">
+        <div class="admin-form-grid">
+          <div class="admin-field">
             <label for="userEmail">이메일</label>
             <input type="email" id="userEmail" placeholder="example@hospital.com">
           </div>
 
-          <div class="field-group">
+          <div class="admin-field">
             <label for="userName">이름</label>
             <input type="text" id="userName" placeholder="사용자 이름">
           </div>
 
-          <div class="field-group">
-            <label for="userPassword">초기 비밀번호</label>
-            <input type="password" id="userPassword" placeholder="초기 비밀번호">
-          </div>
-
-          <div class="field-group">
+          <div class="admin-field">
             <label for="department">부서</label>
             <input type="text" id="department" placeholder="예: 운영팀">
           </div>
 
-          <div class="field-group">
+          <div class="admin-field">
             <label for="phone">연락처</label>
             <input type="text" id="phone" placeholder="예: 010-0000-0000">
           </div>
 
-          <div class="field-group">
+          <div class="admin-field full">
             <label for="globalRole">기본 역할</label>
             <select id="globalRole">
               <option value="user">user</option>
@@ -237,7 +297,12 @@
             </select>
           </div>
 
-          <div class="field-group">
+          <div class="admin-field full">
+            <label>초기 비밀번호</label>
+            <div class="admin-input-hint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</div>
+          </div>
+
+          <div class="admin-field full">
             <label>앱별 권한</label>
             <div class="permission-box">
               <div class="permission-row">
@@ -284,8 +349,10 @@
             </div>
           </div>
 
-          <button type="button" class="admin-btn primary" id="createUserBtn">사용자 등록</button>
-          <div id="adminUserMessage" class="message-box"></div>
+          <div class="admin-submit-wrap">
+            <button type="button" class="admin-btn primary" id="createUserBtn">사용자 등록</button>
+            <div id="adminUserMessage" class="message-box"></div>
+          </div>
         </div>
       </div>
 
