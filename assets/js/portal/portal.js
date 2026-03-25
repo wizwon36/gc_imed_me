@@ -94,6 +94,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('.portal-app-card');
+  if (!link) return;
+
+  showGlobalLoading('이동 중...');
+});
+
 /* =========================
    Global Loading
 ========================= */
