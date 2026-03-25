@@ -25,19 +25,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       title: '의료장비 관리 시스템',
       desc: '장비 등록, 조회, 이력 관리',
       icon: '🩺',
-      url: `${CONFIG.SITE_BASE_URL}/equipment-dashboard.html`
+      url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
     },
     logs: {
       title: '시스템 로그',
       desc: '수정 이력 및 로그 확인',
       icon: '🧾',
-      url: `${CONFIG.SITE_BASE_URL}/admin-logs.html`
+      url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 및 권한 관리',
       icon: '👤',
-      url: `${CONFIG.SITE_BASE_URL}/admin-users.html`
+      url: `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`
     }
   };
 
