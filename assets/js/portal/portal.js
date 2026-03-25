@@ -57,35 +57,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     const permissions = Array.isArray(result.data) ? result.data : [];
 
     if (!permissions.length) {
-      gridEl.innerHTML = '';
-      emptyEl.style.display = 'block';
+      if (gridEl) gridEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
       return;
     }
 
-    emptyEl.style.display = 'none';
-    
-    gridEl.innerHTML = permissions.map((p) => {
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const cards = permissions.map((p) => {
       const app = APP_MAP[p.app_id];
       if (!app) return '';
-    
-      const permissionLabel = p.permission === 'admin' ? '관리자' : (p.permission || '');
-    
+
+      const permissionLabel =
+        p.permission === 'admin' ? '관리자' : (p.permission || '');
+
       return `
         <a class="portal-app-card" href="${app.url}">
           <div class="portal-app-icon">${app.icon}</div>
-          <div class="portal-app-body">
-            <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
-            <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
-          </div>
-          <div class="portal-app-footer">
-            <span class="portal-app-permission">${escapeHtml(permissionLabel)}</span>
-          </div>
+          <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
+          <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
+          <div class="portal-app-meta">${escapeHtml(permissionLabel)}</div>
         </a>
       `;
     }).join('');
 
+    if (gridEl) {
+      gridEl.innerHTML = cards;
+    }
+
+    if (!cards && emptyEl) {
+      emptyEl.style.display = 'block';
+    }
   } catch (error) {
-    gridEl.innerHTML = `<div class="portal-error">${escapeHtml(error.message || '불러오기 실패')}</div>`;
+    if (gridEl) {
+      gridEl.innerHTML = `
+        <div class="portal-error">
+          ${escapeHtml(error.message || '불러오기 실패')}
+        </div>
+      `;
+    }
   } finally {
     hideGlobalLoading();
   }
@@ -99,6 +109,7 @@ function showGlobalLoading(text = '불러오는 중...') {
   if (textEl) textEl.textContent = text;
 
   overlay.classList.add('is-open');
+  overlay.setAttribute('aria-hidden', 'false');
 }
 
 function hideGlobalLoading() {
@@ -106,6 +117,7 @@ function hideGlobalLoading() {
   if (!overlay) return;
 
   overlay.classList.remove('is-open');
+  overlay.setAttribute('aria-hidden', 'true');
 }
 
 function escapeHtml(value) {
