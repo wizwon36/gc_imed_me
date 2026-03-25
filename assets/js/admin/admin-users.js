@@ -33,12 +33,12 @@ function collectPermissions() {
   const activeEls = document.querySelectorAll('.app-active');
 
   const activeMap = {};
-  activeEls.forEach(el => {
+  activeEls.forEach((el) => {
     activeMap[el.dataset.appId] = el.value;
   });
 
   const permissions = [];
-  permissionEls.forEach(el => {
+  permissionEls.forEach((el) => {
     const appId = el.dataset.appId;
     const permission = el.value;
     const active = activeMap[appId] || 'Y';
@@ -58,7 +58,6 @@ function collectPermissions() {
 async function createUser() {
   const user_email = document.getElementById('userEmail')?.value.trim();
   const user_name = document.getElementById('userName')?.value.trim();
-  const password = document.getElementById('userPassword')?.value.trim();
   const department = document.getElementById('department')?.value.trim();
   const phone = document.getElementById('phone')?.value.trim();
   const role = document.getElementById('globalRole')?.value;
@@ -74,23 +73,17 @@ async function createUser() {
     return;
   }
 
-  if (!password) {
-    setAdminMessage('초기 비밀번호를 입력해 주세요.', 'error');
-    return;
-  }
-
   try {
     const result = await apiPost('createUser', {
       user_email,
       user_name,
-      password,
       department,
       phone,
       role,
       permissions
     });
 
-    setAdminMessage(result.message || '사용자가 등록되었습니다.', 'success');
+    setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
     clearUserForm();
     await loadUsers();
   } catch (error) {
@@ -99,7 +92,7 @@ async function createUser() {
 }
 
 function clearUserForm() {
-  ['userEmail', 'userName', 'userPassword', 'department', 'phone'].forEach(id => {
+  ['userEmail', 'userName', 'department', 'phone'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -107,11 +100,11 @@ function clearUserForm() {
   const roleEl = document.getElementById('globalRole');
   if (roleEl) roleEl.value = 'user';
 
-  document.querySelectorAll('.app-permission').forEach(el => {
+  document.querySelectorAll('.app-permission').forEach((el) => {
     el.value = '';
   });
 
-  document.querySelectorAll('.app-active').forEach(el => {
+  document.querySelectorAll('.app-active').forEach((el) => {
     el.value = 'Y';
   });
 }
@@ -122,23 +115,23 @@ async function loadUsers() {
 
   try {
     const result = await apiGet('listUsers');
-    const users = result.data || [];
+    const users = Array.isArray(result.data) ? result.data : [];
 
     if (!users.length) {
       listEl.innerHTML = '<div class="user-item"><span>등록된 사용자가 없습니다.</span></div>';
       return;
     }
 
-    listEl.innerHTML = users.map(user => `
+    listEl.innerHTML = users.map((user) => `
       <div class="user-item">
         <strong>${escapeHtml(user.user_name || '')}</strong>
         <span>${escapeHtml(user.user_email || '')}</span>
         <span>${escapeHtml(user.department || '')} / ${escapeHtml(user.role || '')}</span>
-        <span>상태: ${escapeHtml(user.active || '')}</span>
+        <span>상태: ${escapeHtml(user.active || '')} / 첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
       </div>
     `).join('');
   } catch (error) {
-    listEl.innerHTML = `<div class="user-item"><span>${escapeHtml(error.message)}</span></div>`;
+    listEl.innerHTML = `<div class="user-item"><span>${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}</span></div>`;
   }
 }
 
