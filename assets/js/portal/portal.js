@@ -63,13 +63,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     emptyEl.style.display = 'none';
-
+    
     gridEl.innerHTML = permissions.map((p) => {
       const app = APP_MAP[p.app_id];
       if (!app) return '';
-
+    
       const permissionLabel = p.permission === 'admin' ? '관리자' : (p.permission || '');
-
+    
       return `
         <a class="portal-app-card" href="${app.url}">
           <div class="portal-app-icon">${app.icon}</div>
