@@ -41,10 +41,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  showGlobalLoading('앱 목록 불러오는 중...');
-
   try {
-    const result = await apiGet('getUserPermissions', { user_email: user.email });
+    const result = await apiGet('getUserPermissions', {
+      user_email: user.email
+    });
+
     const permissions = Array.isArray(result.data) ? result.data : [];
 
     if (!permissions.length) {
@@ -59,12 +60,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       .map(p => {
         const app = APP_MAP[p.app_id];
         if (!app) return '';
+
         return `
           <a class="portal-app-card" href="${app.url}">
-            <div class="portal-app-icon">${app.icon}</div>
-            <h3>${app.title}</h3>
-            <p>${app.desc}</p>
-            <span class="portal-app-permission">${escapeHtml(p.permission || '')}</span>
+            <div class="portal-app-icon" aria-hidden="true">${app.icon}</div>
+            <div>
+              <h3 class="portal-app-title">${app.title}</h3>
+              <p class="portal-app-desc">${app.desc}</p>
+            </div>
+            <div class="portal-app-meta">${escapeHtml(p.permission || '')}</div>
           </a>
         `;
       })
@@ -80,34 +84,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
-        <div class="portal-error">
+        <div class="portal-empty">
           ${escapeHtml(error.message || '앱 정보를 불러오지 못했습니다.')}
         </div>
       `;
     }
-  } finally {
-    hideGlobalLoading();
   }
 });
-
-function showGlobalLoading(text = '불러오는 중...') {
-  const el = document.getElementById('globalLoading');
-  if (!el) return;
-
-  const textEl = document.getElementById('globalLoadingText');
-  if (textEl) textEl.textContent = text;
-
-  el.classList.add('is-active');
-  el.setAttribute('aria-hidden', 'false');
-}
-
-function hideGlobalLoading() {
-  const el = document.getElementById('globalLoading');
-  if (!el) return;
-
-  el.classList.remove('is-active');
-  el.setAttribute('aria-hidden', 'true');
-}
 
 function escapeHtml(value) {
   return String(value || '')
@@ -116,23 +99,4 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
-}
-
-function showGlobalLoading(text = '불러오는 중...') {
-  const el = document.getElementById('globalLoading');
-  if (!el) return;
-
-  const textEl = document.getElementById('globalLoadingText');
-  if (textEl) textEl.textContent = text;
-
-  el.classList.add('is-active');
-  el.setAttribute('aria-hidden', 'false');
-}
-
-function hideGlobalLoading() {
-  const el = document.getElementById('globalLoading');
-  if (!el) return;
-
-  el.classList.remove('is-active');
-  el.setAttribute('aria-hidden', 'true');
 }
