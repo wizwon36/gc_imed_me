@@ -21,7 +21,7 @@
     const textEl = document.getElementById('globalLoadingText');
     if (textEl) textEl.textContent = text;
   
-    el.classList.add('is-active');
+    el.classList.add('active');
     el.setAttribute('aria-hidden', 'false');
   }
 
@@ -29,7 +29,7 @@ function hideGlobalLoading() {
   const el = document.getElementById('globalLoading');
   if (!el) return;
 
-  el.classList.remove('is-active');
+  el.classList.remove('active');
   el.setAttribute('aria-hidden', 'true');
 }
   
