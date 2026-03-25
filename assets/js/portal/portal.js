@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const gridEl = document.getElementById('portalAppGrid');
   const emptyEl = document.getElementById('portalEmpty');
   const logoutBtn = document.getElementById('logoutBtn');
+  const adminPageBtn = document.getElementById('adminPageBtn');
 
   if (nameEl) {
     nameEl.textContent = user.name || user.email || '사용자';
@@ -18,6 +19,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     subEl.textContent = `${dept} / ${role}`;
   }
 
+  const isAdmin = String(user.role || '').toLowerCase() === 'admin';
+  
+  if (adminPageBtn && isAdmin) {
+    adminPageBtn.style.display = 'inline-flex';
+  
+    adminPageBtn.addEventListener('click', () => {
+      showGlobalLoading('관리자 페이지로 이동 중...');
+    });
+  }
+  
   logoutBtn?.addEventListener('click', () => {
     showGlobalLoading('로그아웃 중...');
     window.auth.logout();
