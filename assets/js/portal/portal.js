@@ -20,15 +20,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const isAdmin = String(user.role || '').toLowerCase() === 'admin';
-  
+
   if (adminPageBtn && isAdmin) {
     adminPageBtn.style.display = 'inline-flex';
-  
+
     adminPageBtn.addEventListener('click', () => {
       showGlobalLoading('관리자 페이지로 이동 중...');
     });
   }
-  
+
   logoutBtn?.addEventListener('click', () => {
     showGlobalLoading('로그아웃 중...');
     window.auth.logout();
