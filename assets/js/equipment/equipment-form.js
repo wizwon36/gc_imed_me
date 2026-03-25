@@ -130,6 +130,7 @@ async function handleSubmitEquipment(event) {
 
   try {
     setLoading(submitBtn, true, formMode === 'edit' ? '수정 중...' : '저장 중...');
+    showGlobalLoading(formMode === 'edit' ? '장비 정보를 수정하는 중...' : '장비를 등록하는 중...');
 
     if (formMode === 'edit') {
       await handleUpdate(payload);
@@ -137,6 +138,7 @@ async function handleSubmitEquipment(event) {
       await handleCreate(payload);
     }
   } catch (error) {
+    hideGlobalLoading();
     showMessage(error.message, 'error');
   } finally {
     setLoading(submitBtn, false);
