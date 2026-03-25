@@ -14,6 +14,25 @@
     }
   }
 
+  function showGlobalLoading(text = '처리 중...') {
+    const el = document.getElementById('globalLoading');
+    if (!el) return;
+  
+    const textEl = document.getElementById('globalLoadingText');
+    if (textEl) textEl.textContent = text;
+  
+    el.classList.add('is-active');
+    el.setAttribute('aria-hidden', 'false');
+  }
+
+function hideGlobalLoading() {
+  const el = document.getElementById('globalLoading');
+  if (!el) return;
+
+  el.classList.remove('is-active');
+  el.setAttribute('aria-hidden', 'true');
+}
+  
   function getLoginUrl() {
     return `${CONFIG.SITE_BASE_URL}/index.html`;
   }
@@ -96,21 +115,22 @@
       return;
     }
 
-    setMessage('');
+   setMessage('');
     loginBtn.disabled = true;
     loginBtn.textContent = '로그인 중...';
-
+    showGlobalLoading('로그인 중...');
+    
     try {
       if (typeof apiPost !== 'function') {
         throw new Error('apiPost 함수가 연결되지 않았습니다.');
       }
-
+    
       const result = await apiPost('login', { user_email, password });
-
       saveSession(result.user);
       setMessage('로그인되었습니다.', 'success');
       location.replace(getPortalUrl());
     } catch (error) {
+      hideGlobalLoading();
       setMessage(error.message || '로그인 중 오류가 발생했습니다.', 'error');
     } finally {
       loginBtn.disabled = false;
