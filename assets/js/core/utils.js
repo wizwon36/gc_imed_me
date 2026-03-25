@@ -67,10 +67,21 @@ function goToDetail(equipmentId) {
   location.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
 
-function showGlobalLoading() {
-  qs('#globalLoading')?.classList.add('active');
+function showGlobalLoading(text = '불러오는 중...') {
+  const overlay = qs('#globalLoading');
+  if (!overlay) return;
+
+  const textEl = qs('#globalLoadingText');
+  if (textEl) textEl.textContent = text;
+
+  overlay.classList.add('is-open');
+  overlay.setAttribute('aria-hidden', 'false');
 }
 
 function hideGlobalLoading() {
-  qs('#globalLoading')?.classList.remove('active');
+  const overlay = qs('#globalLoading');
+  if (!overlay) return;
+
+  overlay.classList.remove('is-open');
+  overlay.setAttribute('aria-hidden', 'true');
 }
