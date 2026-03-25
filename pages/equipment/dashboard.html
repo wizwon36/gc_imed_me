@@ -201,13 +201,23 @@
   <script src="../../assets/js/equipment/dashboard.js"></script>
 
   <script>
-    (async function () {
-      const user = window.auth.requireAuth();
+    window.addEventListener('DOMContentLoaded', async () => {
+      const user = window.auth?.requireAuth?.();
       if (!user) return;
   
-      const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-      if (!ok) return;
-    })();
+      console.log('[equipment] session user:', user);
+  
+      try {
+        const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+        console.log('[equipment] permission check result:', ok);
+  
+        if (!ok) return;
+      } catch (error) {
+        console.error('[equipment] permission check failed:', error);
+        alert('권한 확인 중 오류가 발생했습니다.');
+        location.replace(`${CONFIG.SITE_BASE_URL}/portal.html`);
+      }
+    });
   </script>
   
   <div id="globalLoading" aria-hidden="true">
