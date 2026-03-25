@@ -1,6 +1,8 @@
 window.appPermission = (function () {
   let cachedPermissions = null;
 
+
+  /*
   async function loadPermissions() {
     if (cachedPermissions) {
       return cachedPermissions;
@@ -18,6 +20,40 @@ window.appPermission = (function () {
       });
 
       cachedPermissions = Array.isArray(result.data) ? result.data : [];
+      return cachedPermissions;
+    } catch (error) {
+      console.error('권한 정보를 불러오지 못했습니다.', error);
+      cachedPermissions = [];
+      return cachedPermissions;
+    }
+  }
+  */
+
+    async function loadPermissions() {
+    if (cachedPermissions) {
+      console.log('[permission] cached permissions:', cachedPermissions);
+      return cachedPermissions;
+    }
+  
+    const user = window.auth?.getSession?.();
+    console.log('[permission] session user:', user);
+  
+    if (!user || !user.email) {
+      console.warn('[permission] no session user or email');
+      cachedPermissions = [];
+      return cachedPermissions;
+    }
+  
+    try {
+      const result = await apiGet('getUserPermissions', {
+        user_email: user.email
+      });
+  
+      console.log('[permission] api result:', result);
+  
+      cachedPermissions = Array.isArray(result.data) ? result.data : [];
+      console.log('[permission] normalized permissions:', cachedPermissions);
+  
       return cachedPermissions;
     } catch (error) {
       console.error('권한 정보를 불러오지 못했습니다.', error);
@@ -43,6 +79,7 @@ window.appPermission = (function () {
     return allowedPermissions.includes(permission);
   }
 
+  /*
   async function requirePermission(appId, allowedPermissions = []) {
     const ok = await hasPermission(appId, allowedPermissions);
 
@@ -52,6 +89,25 @@ window.appPermission = (function () {
       return false;
     }
 
+    return true;
+  }
+  */
+  
+    async function requirePermission(appId, allowedPermissions = []) {
+    const ok = await hasPermission(appId, allowedPermissions);
+  
+    console.log('[permission] requirePermission:', {
+      appId,
+      allowedPermissions,
+      ok
+    });
+  
+    if (!ok) {
+      alert('이 앱에 접근할 권한이 없습니다.');
+      location.replace(`${CONFIG.SITE_BASE_URL}/portal.html`);
+      return false;
+    }
+  
     return true;
   }
 
