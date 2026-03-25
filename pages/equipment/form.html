@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>장비 등록 / 수정</title>
-  <link rel="stylesheet" href="assets/css/common.css" />
+  <link rel="stylesheet" href="../../assets/css/common.css">
 </head>
 <body>
   <div class="container form-shell form-shell-tuned">
@@ -18,8 +18,8 @@
       </div>
 
       <div class="top-brand-actions">
-        <a class="nav-link" href="index.html">대시보드</a>
-        <a class="nav-link" href="equipment-list.html">장비목록</a>
+        <a class="nav-link" href="dashboard.html">대시보드</a>
+        <a class="nav-link" href="list.html">장비목록</a>
       </div>
     </section>
 
@@ -148,21 +148,21 @@
 
         <div class="form-actions form-side-actions">
           <button type="submit" id="submitBtn" class="btn btn-primary form-submit-btn">저장</button>
-          <a class="btn" href="equipment-list.html">목록으로</a>
+          <a class="btn" href="list.html">목록으로</a>
         </div>
       </aside>
     </form>
   </div>
 
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/auth.js"></script>
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
   <script>
     window.auth.requireAuth();
   </script>
-  <script src="assets/js/app-permission.js"></script>
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/utils.js"></script>
-  <script src="assets/js/equipment-form.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/equipment/equipment-form.js"></script>
 
   <div id="globalLoading" class="global-loading">
     <div class="spinner"></div>
