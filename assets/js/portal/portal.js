@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showGlobalLoading('로그아웃 중...');
     window.auth.logout();
   });
-  
+
   const APP_MAP = {
     equipment: {
       title: '의료장비 관리',
@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // 카드 클릭 시 스피너
   document.addEventListener('click', (e) => {
     const link = e.target.closest('.portal-app-card');
     if (!link) return;
@@ -65,10 +64,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     emptyEl.style.display = 'none';
 
-    gridEl.innerHTML = permissions.map(p => {
+    gridEl.innerHTML = permissions.map((p) => {
       const app = APP_MAP[p.app_id];
       if (!app) return '';
-    
+
+      const permissionLabel = p.permission === 'admin' ? '관리자' : (p.permission || '');
+
       return `
         <a class="portal-app-card" href="${app.url}">
           <div class="portal-app-icon">${app.icon}</div>
@@ -77,14 +78,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
           </div>
           <div class="portal-app-footer">
-            <span class="portal-app-permission">${escapeHtml(p.permission || '')}</span>
+            <span class="portal-app-permission">${escapeHtml(permissionLabel)}</span>
           </div>
         </a>
       `;
     }).join('');
 
   } catch (error) {
-    gridEl.innerHTML = `<div>불러오기 실패</div>`;
+    gridEl.innerHTML = `<div class="portal-error">${escapeHtml(error.message || '불러오기 실패')}</div>`;
   } finally {
     hideGlobalLoading();
   }
