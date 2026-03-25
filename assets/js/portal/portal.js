@@ -2,15 +2,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
+  const nameEl = document.getElementById('portalUserName');
+  const subEl = document.getElementById('portalUserSub');
   const gridEl = document.getElementById('portalAppGrid');
   const emptyEl = document.getElementById('portalEmpty');
   const logoutBtn = document.getElementById('logoutBtn');
+
+  if (nameEl) {
+    nameEl.textContent = user.name || user.email || '사용자';
+  }
+
+  if (subEl) {
+    const dept = user.department || '부서 없음';
+    const role = user.role || user.permission || 'user';
+    subEl.textContent = `${dept} / ${role}`;
+  }
 
   logoutBtn?.addEventListener('click', () => {
     showGlobalLoading('로그아웃 중...');
     window.auth.logout();
   });
-
+  
   const APP_MAP = {
     equipment: {
       title: '의료장비 관리',
