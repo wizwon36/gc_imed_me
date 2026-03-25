@@ -56,13 +56,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     gridEl.innerHTML = permissions.map(p => {
       const app = APP_MAP[p.app_id];
       if (!app) return '';
-
+    
       return `
         <a class="portal-app-card" href="${app.url}">
           <div class="portal-app-icon">${app.icon}</div>
-          <h3>${escapeHtml(app.title)}</h3>
-          <p>${escapeHtml(app.desc)}</p>
-          <span>${escapeHtml(p.permission || '')}</span>
+          <div class="portal-app-body">
+            <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
+            <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
+          </div>
+          <div class="portal-app-footer">
+            <span class="portal-app-permission">${escapeHtml(p.permission || '')}</span>
+          </div>
         </a>
       `;
     }).join('');
