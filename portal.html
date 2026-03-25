@@ -55,6 +55,34 @@
       justify-content: flex-end;
     }
 
+    .portal-action-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .portal-admin-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid #2563eb;
+      border-radius: 14px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    .portal-admin-btn:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+    }
+   
     .portal-user-meta {
       text-align: right;
     }
@@ -219,6 +247,17 @@
         justify-content: space-between;
       }
 
+      .portal-action-group {
+        width: 100%;
+        justify-content: space-between;
+      }
+    
+      .portal-admin-btn,
+      .portal-logout-btn {
+        flex: 1;
+        justify-content: center;
+      }
+      
       .portal-user-meta {
         text-align: left;
       }
@@ -253,7 +292,18 @@
           <span class="portal-user-name" id="portalUserName">사용자</span>
           <span class="portal-user-sub" id="portalUserSub">부서 / 권한</span>
         </div>
-        <button type="button" class="portal-logout-btn" id="logoutBtn">로그아웃</button>
+      
+        <div class="portal-action-group">
+          <a
+            href="pages/admin/users.html"
+            class="portal-admin-btn"
+            id="adminPageBtn"
+            style="display:none;"
+          >
+            관리자 페이지
+          </a>
+          <button type="button" class="portal-logout-btn" id="logoutBtn">로그아웃</button>
+        </div>
       </div>
     </section>
 
