@@ -55,7 +55,7 @@ function conditionStatusLabel(type) {
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
-  return `${CONFIG.SITE_BASE_URL}/equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+  return `${CONFIG.SITE_BASE_URL}/pages/equipment/detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
 
 function safeValue(value) {
@@ -267,7 +267,7 @@ async function deleteCurrentEquipment() {
     });
 
     alert('삭제되었습니다.');
-    location.href = 'equipment-list.html';
+    location.href = 'list.html';
   } catch (error) {
     showMessage(error.message, 'error');
   }
@@ -275,7 +275,7 @@ async function deleteCurrentEquipment() {
 
 function moveToEditForm() {
   if (!currentEquipmentId) return;
-  location.href = `equipment-form.html?id=${encodeURIComponent(currentEquipmentId)}&mode=edit`;
+  location.href = `form.html?id=${encodeURIComponent(currentEquipmentId)}&mode=edit`;
 }
 
 function moveToHistoryForm() {
