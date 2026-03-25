@@ -10,7 +10,7 @@ async function loadEquipmentInfo() {
     return;
   }
 
-  qs('#backToDetailBtn').href = `equipment-detail.html?id=${encodeURIComponent(equipmentId)}`;
+  qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
 
   try {
     const result = await apiGet('getEquipment', { id: equipmentId });
@@ -66,7 +66,7 @@ async function handleSubmitHistory(event) {
     setLoading(submitBtn, true, '저장 중...');
     await apiPost('createHistory', payload);
     alert('이력이 등록되었습니다.');
-    location.href = `equipment-detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
+    location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
     showMessage(error.message, 'error');
   } finally {
