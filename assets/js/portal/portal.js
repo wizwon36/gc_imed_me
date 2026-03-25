@@ -92,6 +92,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function showGlobalLoading(text = '처리 중...') {
+  const overlay = document.getElementById('globalLoading');
+  if (!overlay) return;
+
+  const textEl = document.getElementById('globalLoadingText');
+  if (textEl) textEl.textContent = text;
+
+  overlay.classList.add('is-open');
+  overlay.setAttribute('aria-hidden', 'false');
+}
+
+function hideGlobalLoading() {
+  const overlay = document.getElementById('globalLoading');
+  if (!overlay) return;
+
+  overlay.classList.remove('is-open');
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
