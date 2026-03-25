@@ -115,23 +115,18 @@
       return;
     }
 
-   setMessage('');
+    setMessage('');
     loginBtn.disabled = true;
     loginBtn.textContent = '로그인 중...';
     showGlobalLoading('로그인 중...');
     
     try {
-      if (typeof apiPost !== 'function') {
-        throw new Error('apiPost 함수가 연결되지 않았습니다.');
-      }
-    
       const result = await apiPost('login', { user_email, password });
       saveSession(result.user);
-      setMessage('로그인되었습니다.', 'success');
       location.replace(getPortalUrl());
     } catch (error) {
       hideGlobalLoading();
-      setMessage(error.message || '로그인 중 오류가 발생했습니다.', 'error');
+      setMessage(error.message || '로그인 실패', 'error');
     } finally {
       loginBtn.disabled = false;
       loginBtn.textContent = '로그인';
