@@ -31,30 +31,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const isAdmin = String(user.role || '').toLowerCase() === 'admin';
 
-  if (adminPageBtn && isAdmin) {
-    adminPageBtn.style.display = 'inline-flex';
-    adminPageBtn.addEventListener('click', () => {
-      showGlobalLoading('관리자 페이지로 이동 중...');
-    });
+  if (adminPageBtn) {
+    adminPageBtn.style.display = 'none';
   }
 
   const APP_MAP = {
     equipment: {
       title: '의료장비 관리',
       desc: '장비 등록 및 이력 관리',
-      icon: '🩺',
+      icon: '',
       url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
     },
     logs: {
       title: '시스템 로그',
       desc: '작업 이력 조회',
-      icon: '📋',
+      icon: '',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     },
     users_admin: {
       title: '사용자 관리',
-      desc: '권한 및 사용자 관리',
-      icon: '👤',
+      desc: '사용자 등록 및 권한 관리',
+      icon: '',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`
     }
   };
@@ -66,15 +63,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   showGlobalLoading('앱 목록 불러오는 중...');
-  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await waitForPaint();
 
   try {
     const result = await apiGet('getUserPermissions', { user_email: user.email });
-    const permissions = Array.isArray(result.data) ? result.data : [];
+    const permissions = Array.isArray(result.data) ? [...result.data] : [];
 
-    if (!permissions.length) {
+    if (isAdmin && !permissions.some((p) => p.app_id === 'users_admin')) {
+      permissions.push({
+        app_id: 'users_admin',
+        permission: 'admin',
+        active: 'Y'
+      });
+    }
+
+    const visiblePermissions = permissions.filter((p) => {
+      return p && p.app_id && APP_MAP[p.app_id];
+    });
+
+    if (!visiblePermissions.length) {
       if (gridEl) gridEl.innerHTML = '';
       if (emptyEl) emptyEl.style.display = 'block';
+      await waitForPaint();
       return;
     }
 
@@ -82,11 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       emptyEl.style.display = 'none';
     }
 
-    const cards = permissions
+    const cards = visiblePermissions
       .map((p) => {
         const app = APP_MAP[p.app_id];
-        if (!app) return '';
-
         const permissionLabel = p.permission === 'admin' ? '관리자' : (p.permission || '');
 
         return `
@@ -107,6 +115,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!cards && emptyEl) {
       emptyEl.style.display = 'block';
     }
+
+    await waitForPaint();
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
@@ -115,10 +125,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     }
+    await waitForPaint();
   } finally {
-    setTimeout(() => {
-      hideGlobalLoading();
-    }, 120);
+    hideGlobalLoading();
   }
 });
 
@@ -150,6 +159,14 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function waitForPaint() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(resolve);
+    });
+  });
 }
 
 window.addEventListener('pageshow', () => {
