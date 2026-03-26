@@ -4513,6 +4513,7 @@ button, input, select, textarea {
     justify-content: stretch;
   }
 }
+
 /* =========================
    Unified global loading
 ========================= */
@@ -4562,4 +4563,29 @@ button, input, select, textarea {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ===== 장비 검색 하단 버튼 영역 정리 ===== */
+.search-action-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #d9e0ea;
+}
+
+.search-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  /* 기존 박스 스타일 제거 */
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.search-action-row .btn {
+  min-width: 92px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
 }
