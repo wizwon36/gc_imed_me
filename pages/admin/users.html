@@ -252,6 +252,54 @@
         grid-template-columns: 1fr;
       }
     }
+      #globalLoading {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.22);
+    backdrop-filter: blur(2px);
+  }
+  
+    #globalLoading.is-open {
+      display: flex;
+    }
+    
+    .global-loading__dialog {
+      min-width: 200px;
+      max-width: calc(100vw - 48px);
+      padding: 20px 24px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .global-loading__spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #d0d5dd;
+      border-top-color: #0b1b46;
+      border-radius: 50%;
+      animation: globalLoadingSpin 0.8s linear infinite;
+      flex: 0 0 auto;
+    }
+    
+    .global-loading__text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    
+    @keyframes globalLoadingSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
 <body>
@@ -360,55 +408,6 @@
       </div>
     </section>
   </main>
-
-  #globalLoading {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: rgba(15, 23, 42, 0.22);
-    backdrop-filter: blur(2px);
-  }
-  
-  #globalLoading.is-open {
-    display: flex;
-  }
-  
-  .global-loading__dialog {
-    min-width: 200px;
-    max-width: calc(100vw - 48px);
-    padding: 20px 24px;
-    border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .global-loading__spinner {
-    width: 24px;
-    height: 24px;
-    border: 3px solid #d0d5dd;
-    border-top-color: #0b1b46;
-    border-radius: 50%;
-    animation: globalLoadingSpin 0.8s linear infinite;
-    flex: 0 0 auto;
-  }
-  
-  .global-loading__text {
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f172a;
-  }
-  
-  @keyframes globalLoadingSpin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
   
   <script src="../../assets/js/core/config.js"></script>
   <script src="../../assets/js/core/api.js"></script>
