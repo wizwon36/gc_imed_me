@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const logoutBtn = document.getElementById('logoutBtn');
   const nameEl = document.getElementById('portalUserName');
   const subEl = document.getElementById('portalUserSub');
   const gridEl = document.getElementById('portalAppGrid');
   const emptyEl = document.getElementById('portalEmpty');
-  const logoutBtn = document.getElementById('logoutBtn');
   const adminPageBtn = document.getElementById('adminPageBtn');
 
   logoutBtn?.addEventListener('click', () => {
@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (adminPageBtn && isAdmin) {
     adminPageBtn.style.display = 'inline-flex';
-
     adminPageBtn.addEventListener('click', () => {
       showGlobalLoading('관리자 페이지로 이동 중...');
     });
@@ -60,74 +59,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-document.addEventListener('click', (e) => {
-  const link = e.target.closest('.portal-app-card');
-  if (!link) return;
-  showGlobalLoading('이동 중...');
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('.portal-app-card');
+    if (!link) return;
+    showGlobalLoading('이동 중...');
+  });
+
+  showGlobalLoading('앱 목록 불러오는 중...');
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+
+  try {
+    const result = await apiGet('getUserPermissions', { user_email: user.email });
+    const permissions = Array.isArray(result.data) ? result.data : [];
+
+    if (!permissions.length) {
+      if (gridEl) gridEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+
+    if (emptyEl) {
+      emptyEl.style.display = 'none';
+    }
+
+    const cards = permissions
+      .map((p) => {
+        const app = APP_MAP[p.app_id];
+        if (!app) return '';
+
+        const permissionLabel = p.permission === 'admin' ? '관리자' : (p.permission || '');
+
+        return `
+          <a class="portal-app-card" href="${app.url}">
+            <div class="portal-app-icon">${app.icon}</div>
+            <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
+            <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
+            <div class="portal-app-meta">${escapeHtml(permissionLabel)}</div>
+          </a>
+        `;
+      })
+      .join('');
+
+    if (gridEl) {
+      gridEl.innerHTML = cards;
+    }
+
+    if (!cards && emptyEl) {
+      emptyEl.style.display = 'block';
+    }
+  } catch (error) {
+    if (gridEl) {
+      gridEl.innerHTML = `
+        <div class="portal-error">
+          ${escapeHtml(error.message || '불러오기 실패')}
+        </div>
+      `;
+    }
+  } finally {
+    setTimeout(() => {
+      hideGlobalLoading();
+    }, 120);
+  }
 });
 
-showGlobalLoading('앱 목록 불러오는 중...');
-
-await new Promise((resolve) => requestAnimationFrame(resolve));
-
-try {
-  const result = await apiGet('getUserPermissions', { user_email: user.email });
-  const permissions = Array.isArray(result.data) ? result.data : [];
-
-  if (!permissions.length) {
-    if (gridEl) gridEl.innerHTML = '';
-    if (emptyEl) emptyEl.style.display = 'block';
-    return;
-  }
-
-  if (emptyEl) emptyEl.style.display = 'none';
-
-  const cards = permissions
-    .map((p) => {
-      const app = APP_MAP[p.app_id];
-      if (!app) return '';
-
-      const permissionLabel =
-        p.permission === 'admin' ? '관리자' : (p.permission || '');
-
-      return `
-        <a class="portal-app-card" href="${app.url}">
-          <div class="portal-app-icon">${app.icon}</div>
-          <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
-          <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
-          <div class="portal-app-meta">${escapeHtml(permissionLabel)}</div>
-        </a>
-      `;
-    })
-    .join('');
-
-  if (gridEl) {
-    gridEl.innerHTML = cards;
-  }
-
-  if (!cards && emptyEl) {
-    emptyEl.style.display = 'block';
-  }
-} catch (error) {
-  if (gridEl) {
-    gridEl.innerHTML = `
-      <div class="portal-error">
-        ${escapeHtml(error.message || '불러오기 실패')}
-      </div>
-    `;
-  }
-} finally {
-  setTimeout(() => {
-    hideGlobalLoading();
-  }, 120);
-}
-  
 function showGlobalLoading(text = '불러오는 중...') {
   const overlay = document.getElementById('globalLoading');
   if (!overlay) return;
 
   const textEl = document.getElementById('globalLoadingText');
-  if (textEl) textEl.textContent = text;
+  if (textEl) {
+    textEl.textContent = text;
+  }
 
   overlay.classList.add('is-open');
   overlay.setAttribute('aria-hidden', 'false');
