@@ -123,6 +123,12 @@
     try {
       const result = await apiPost('login', { user_email, password });
       saveSession(result.user);
+      
+      if (String(result.user?.first_login || 'N').toUpperCase() === 'Y') {
+        location.replace(`${CONFIG.SITE_BASE_URL}/pages/auth/change-password.html`);
+        return;
+      }
+      
       location.replace(getPortalUrl());
     } catch (error) {
       hideGlobalLoading();
