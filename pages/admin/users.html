@@ -320,14 +320,21 @@
 
     .user-filter-bar {
       display: grid;
-      grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(140px, 0.6fr));
+      grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(140px, 0.6fr)) 110px;
       gap: 12px;
       margin-bottom: 14px;
+      align-items: end;
     }
     
     .user-filter-search,
-    .user-filter-select {
+    .user-filter-select,
+    .user-filter-button {
       min-width: 0;
+    }
+    
+    .user-filter-button .admin-btn {
+      width: 100%;
+      min-height: 48px;
     }
     
     .user-list-count {
@@ -542,7 +549,7 @@
               placeholder="이름, 이메일, 부서 검색"
             >
           </div>
-      
+        
           <div class="admin-field user-filter-select">
             <label for="userFilterActive">상태</label>
             <select id="userFilterActive">
@@ -551,7 +558,7 @@
               <option value="N">비활성</option>
             </select>
           </div>
-      
+        
           <div class="admin-field user-filter-select">
             <label for="userFilterRole">역할</label>
             <select id="userFilterRole">
@@ -560,6 +567,18 @@
               <option value="manager">manager</option>
               <option value="admin">admin</option>
             </select>
+          </div>
+        
+          <div class="admin-field user-filter-button">
+            <label>&nbsp;</label>
+            <button type="button" class="admin-btn primary" id="searchUsersBtn">조회</button>
+          </div>
+        </div>
+        
+        <div id="userListCount" class="user-list-count"></div>
+        <div id="userList" class="user-list">
+          <div class="user-item">
+            <span>검색 조건을 입력하거나 필터를 선택한 뒤 조회 버튼을 눌러주세요.</span>
           </div>
         </div>
       
