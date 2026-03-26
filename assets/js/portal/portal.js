@@ -39,19 +39,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     equipment: {
       title: '의료장비 관리',
       desc: '장비 등록 및 이력 관리',
-      icon: '',
+      icon: '🩺',
       url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
     },
     logs: {
       title: '시스템 로그',
       desc: '작업 이력 조회',
-      icon: '',
+      icon: '📋',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 등록 및 권한 관리',
-      icon: '',
+      icon: '👤',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`
     }
   };
