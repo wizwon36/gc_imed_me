@@ -19,18 +19,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
   document.getElementById('cancelEditBtn')?.addEventListener('click', resetEditMode);
-  document.getElementById('userSearchKeyword')?.addEventListener('input', renderUserList);
-  document.getElementById('userFilterActive')?.addEventListener('change', renderUserList);
-  document.getElementById('userFilterRole')?.addEventListener('change', renderUserList);
+  document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
 
-  showGlobalLoading('사용자 목록 불러오는 중...');
-  await waitForPaint();
+  document.getElementById('userSearchKeyword')?.addEventListener('input', () => {
+    if (hasLoadedUsers) {
+      renderUserList();
+    }
+  });
 
-  try {
-    await loadUsers();
-  } finally {
-    hideGlobalLoading();
-  }
+  document.getElementById('userFilterActive')?.addEventListener('change', () => {
+    if (hasLoadedUsers) {
+      renderUserList();
+    }
+  });
+
+  document.getElementById('userFilterRole')?.addEventListener('change', () => {
+    if (hasLoadedUsers) {
+      renderUserList();
+    }
+  });
 });
 
 function setAdminMessage(message, type = '') {
@@ -105,11 +112,18 @@ async function createUser() {
       permissions
     });
 
-    setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
+    setAdminMessage(
+      result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.',
+      'success'
+    );
+
     clearUserForm();
     resetEditMode(false);
-    await loadUsers();
-    await waitForPaint();
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+      await waitForPaint();
+    }
   } catch (error) {
     setAdminMessage(error.message || '사용자 등록 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -153,8 +167,11 @@ async function updateUser() {
     setAdminMessage(result.message || '사용자 정보가 수정되었습니다.', 'success');
     clearUserForm();
     resetEditMode(false);
-    await loadUsers();
-    await waitForPaint();
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+      await waitForPaint();
+    }
   } catch (error) {
     setAdminMessage(error.message || '사용자 수정 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -162,80 +179,16 @@ async function updateUser() {
   }
 }
 
-function clearUserForm() {
-  ['userEmail', 'userName', 'department', 'phone'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
+async function searchUsers() {
+  showGlobalLoading('사용자 목록 조회 중...');
+  await waitForPaint();
 
-  const roleEl = document.getElementById('globalRole');
-  if (roleEl) roleEl.value = 'user';
-
-  const activeEl = document.getElementById('userActive');
-  if (activeEl) activeEl.value = 'Y';
-
-  document.querySelectorAll('.app-permission').forEach((el) => {
-    el.value = '';
-  });
-}
-
-function setPermissionValues(permissions = []) {
-  const permissionMap = {};
-  permissions.forEach((item) => {
-    if (item?.app_id) {
-      permissionMap[item.app_id] = item.permission || '';
-    }
-  });
-
-  document.querySelectorAll('.app-permission').forEach((el) => {
-    const appId = el.dataset.appId;
-    el.value = permissionMap[appId] || '';
-  });
-}
-
-function setEditMode(user) {
-  editingUserEmail = user.user_email || '';
-
-  const formTitle = document.getElementById('formTitle');
-  const formDesc = document.getElementById('formDesc');
-  const saveBtn = document.getElementById('saveUserBtn');
-  const cancelBtn = document.getElementById('cancelEditBtn');
-  const emailInput = document.getElementById('userEmail');
-  const passwordHint = document.getElementById('passwordHint');
-
-  if (formTitle) formTitle.textContent = '사용자 수정';
-  if (formDesc) formDesc.textContent = '기존 사용자 정보를 수정하고 권한을 다시 저장합니다.';
-  if (saveBtn) saveBtn.textContent = '사용자 수정';
-  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
-  if (emailInput) emailInput.disabled = true;
-  if (passwordHint) {
-    passwordHint.innerHTML = '수정 모드에서는 이메일을 변경할 수 없습니다. 비밀번호 초기화는 추후 별도 기능으로 추가할 수 있습니다.';
-  }
-}
-
-function resetEditMode(clearMessage = true) {
-  editingUserEmail = '';
-
-  const formTitle = document.getElementById('formTitle');
-  const formDesc = document.getElementById('formDesc');
-  const saveBtn = document.getElementById('saveUserBtn');
-  const cancelBtn = document.getElementById('cancelEditBtn');
-  const emailInput = document.getElementById('userEmail');
-  const passwordHint = document.getElementById('passwordHint');
-
-  if (formTitle) formTitle.textContent = '사용자 등록';
-  if (formDesc) formDesc.textContent = '신규 사용자를 등록하고 앱별 권한을 부여합니다.';
-  if (saveBtn) saveBtn.textContent = '사용자 등록';
-  if (cancelBtn) cancelBtn.style.display = 'none';
-  if (emailInput) emailInput.disabled = false;
-  if (passwordHint) {
-    passwordHint.innerHTML = '신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.';
-  }
-
-  clearUserForm();
-
-  if (clearMessage) {
-    setAdminMessage('', '');
+  try {
+    await loadUsers();
+    hasLoadedUsers = true;
+    await waitForPaint();
+  } finally {
+    hideGlobalLoading();
   }
 }
 
@@ -273,6 +226,66 @@ async function editUser(userEmail) {
   }
 }
 
+async function resetUserPassword(userEmail) {
+  if (!userEmail) return;
+
+  const confirmed = confirm(`"${userEmail}" 사용자의 비밀번호를 1111로 초기화할까요?`);
+  if (!confirmed) return;
+
+  showGlobalLoading('비밀번호 초기화 중...');
+  await waitForPaint();
+
+  try {
+    const result = await apiPost('resetUserPassword', {
+      user_email: userEmail
+    });
+
+    setAdminMessage(result.message || '비밀번호가 초기화되었습니다.', 'success');
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+      await waitForPaint();
+    }
+  } catch (error) {
+    setAdminMessage(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+async function setUserActive(userEmail, active) {
+  if (!userEmail) return;
+
+  const actionLabel = active === 'Y' ? '활성화' : '비활성화';
+  const confirmed = confirm(`"${userEmail}" 사용자를 ${actionLabel}할까요?`);
+  if (!confirmed) return;
+
+  showGlobalLoading(`사용자 ${actionLabel} 처리 중...`);
+  await waitForPaint();
+
+  try {
+    const result = await apiPost('setUserActive', {
+      user_email: userEmail,
+      active
+    });
+
+    setAdminMessage(result.message || `사용자 ${actionLabel} 처리가 완료되었습니다.`, 'success');
+
+    if (editingUserEmail && editingUserEmail === userEmail && active === 'N') {
+      resetEditMode(false);
+    }
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+      await waitForPaint();
+    }
+  } catch (error) {
+    setAdminMessage(error.message || `사용자 ${actionLabel} 중 오류가 발생했습니다.`, 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
 async function loadUsers() {
   try {
     const result = await apiGet('listUsers');
@@ -287,7 +300,11 @@ async function loadUsers() {
     }
 
     if (listEl) {
-      listEl.innerHTML = `<div class="user-item"><span>${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}</span></div>`;
+      listEl.innerHTML = `
+        <div class="user-item">
+          <span>${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}</span>
+        </div>
+      `;
     }
   }
 }
@@ -323,11 +340,8 @@ function renderUserList() {
       email.includes(keyword) ||
       department.includes(keyword);
 
-    const matchesActive =
-      !activeFilter || active === activeFilter;
-
-    const matchesRole =
-      !roleFilter || role === roleFilter;
+    const matchesActive = !activeFilter || active === activeFilter;
+    const matchesRole = !roleFilter || role === roleFilter;
 
     return matchesKeyword && matchesActive && matchesRole;
   });
@@ -382,6 +396,83 @@ function renderUserList() {
   }).join('');
 }
 
+function clearUserForm() {
+  ['userEmail', 'userName', 'department', 'phone'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const roleEl = document.getElementById('globalRole');
+  if (roleEl) roleEl.value = 'user';
+
+  const activeEl = document.getElementById('userActive');
+  if (activeEl) activeEl.value = 'Y';
+
+  document.querySelectorAll('.app-permission').forEach((el) => {
+    el.value = '';
+  });
+}
+
+function setPermissionValues(permissions = []) {
+  const permissionMap = {};
+  permissions.forEach((item) => {
+    if (item?.app_id) {
+      permissionMap[item.app_id] = item.permission || '';
+    }
+  });
+
+  document.querySelectorAll('.app-permission').forEach((el) => {
+    const appId = el.dataset.appId;
+    el.value = permissionMap[appId] || '';
+  });
+}
+
+function setEditMode(user) {
+  editingUserEmail = user.user_email || '';
+
+  const formTitle = document.getElementById('formTitle');
+  const formDesc = document.getElementById('formDesc');
+  const saveBtn = document.getElementById('saveUserBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const emailInput = document.getElementById('userEmail');
+  const passwordHint = document.getElementById('passwordHint');
+
+  if (formTitle) formTitle.textContent = '사용자 수정';
+  if (formDesc) formDesc.textContent = '기존 사용자 정보를 수정하고 권한을 다시 저장합니다.';
+  if (saveBtn) saveBtn.textContent = '사용자 수정';
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  if (emailInput) emailInput.disabled = true;
+  if (passwordHint) {
+    passwordHint.innerHTML = '수정 모드에서는 이메일을 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
+  }
+}
+
+function resetEditMode(clearMessage = true) {
+  editingUserEmail = '';
+
+  const formTitle = document.getElementById('formTitle');
+  const formDesc = document.getElementById('formDesc');
+  const saveBtn = document.getElementById('saveUserBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const emailInput = document.getElementById('userEmail');
+  const passwordHint = document.getElementById('passwordHint');
+
+  if (formTitle) formTitle.textContent = '사용자 등록';
+  if (formDesc) formDesc.textContent = '신규 사용자를 등록하고 앱별 권한을 부여합니다.';
+  if (saveBtn) saveBtn.textContent = '사용자 등록';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (emailInput) emailInput.disabled = false;
+  if (passwordHint) {
+    passwordHint.innerHTML = '신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.';
+  }
+
+  clearUserForm();
+
+  if (clearMessage) {
+    setAdminMessage('', '');
+  }
+}
+
 function showGlobalLoading(text = '처리 중...') {
   const overlay = document.getElementById('globalLoading');
   if (!overlay) return;
@@ -424,61 +515,6 @@ function escapeJs(value) {
   return String(value || '')
     .replaceAll('\\', '\\\\')
     .replaceAll("'", "\\'");
-}
-
-async function resetUserPassword(userEmail) {
-  if (!userEmail) return;
-
-  const confirmed = confirm(`"${userEmail}" 사용자의 비밀번호를 1111로 초기화할까요?`);
-  if (!confirmed) return;
-
-  showGlobalLoading('비밀번호 초기화 중...');
-  await waitForPaint();
-
-  try {
-    const result = await apiPost('resetUserPassword', {
-      user_email: userEmail
-    });
-
-    setAdminMessage(result.message || '비밀번호가 초기화되었습니다.', 'success');
-    await loadUsers();
-    await waitForPaint();
-  } catch (error) {
-    setAdminMessage(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
-  } finally {
-    hideGlobalLoading();
-  }
-}
-
-async function setUserActive(userEmail, active) {
-  if (!userEmail) return;
-
-  const actionLabel = active === 'Y' ? '활성화' : '비활성화';
-  const confirmed = confirm(`"${userEmail}" 사용자를 ${actionLabel}할까요?`);
-  if (!confirmed) return;
-
-  showGlobalLoading(`사용자 ${actionLabel} 처리 중...`);
-  await waitForPaint();
-
-  try {
-    const result = await apiPost('setUserActive', {
-      user_email: userEmail,
-      active
-    });
-
-    setAdminMessage(result.message || `사용자 ${actionLabel} 처리가 완료되었습니다.`, 'success');
-
-    if (editingUserEmail && editingUserEmail === userEmail && active === 'N') {
-      resetEditMode(false);
-    }
-
-    await loadUsers();
-    await waitForPaint();
-  } catch (error) {
-    setAdminMessage(error.message || `사용자 ${actionLabel} 중 오류가 발생했습니다.`, 'error');
-  } finally {
-    hideGlobalLoading();
-  }
 }
 
 window.editUser = editUser;
