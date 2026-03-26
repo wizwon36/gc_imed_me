@@ -66,6 +66,9 @@ async function createUser() {
     return;
   }
 
+  showGlobalLoading('사용자 등록 중...');
+  await waitForPaint();
+
   try {
     const result = await apiPost('createUser', {
       user_email,
@@ -79,8 +82,11 @@ async function createUser() {
     setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
     clearUserForm();
     await loadUsers();
+    await waitForPaint();
   } catch (error) {
     setAdminMessage(error.message || '사용자 등록 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
   }
 }
 
@@ -131,4 +137,33 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function showGlobalLoading(text = '처리 중...') {
+  const overlay = document.getElementById('globalLoading');
+  if (!overlay) return;
+
+  const textEl = document.getElementById('globalLoadingText');
+  if (textEl) {
+    textEl.textContent = text;
+  }
+
+  overlay.classList.add('is-open');
+  overlay.setAttribute('aria-hidden', 'false');
+}
+
+function hideGlobalLoading() {
+  const overlay = document.getElementById('globalLoading');
+  if (!overlay) return;
+
+  overlay.classList.remove('is-open');
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
+function waitForPaint() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(resolve);
+    });
+  });
 }
