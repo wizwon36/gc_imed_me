@@ -1,5 +1,6 @@
 let editingUserEmail = '';
 let allUsers = [];
+let hasLoadedUsers = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
