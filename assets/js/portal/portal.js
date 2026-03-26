@@ -196,6 +196,8 @@ async function delayUntilMinimum(startedAt, minimumMs) {
   }
 }
 
-window.addEventListener('pageshow', () => {
-  hideGlobalLoading();
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    hideGlobalLoading();
+  }
 });
