@@ -141,3 +141,7 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 }
+
+window.addEventListener('pageshow', () => {
+  hideGlobalLoading();
+});
