@@ -240,7 +240,7 @@ async function loadEquipments() {
   const params = {
     keyword: qs('#keyword').value.trim(),
     department: qs('#department').value.trim(),
-    status: qs('#status').value,
+    status: getSelectedStatus(),
     manufacturer: qs('#manufacturer').value.trim()
   };
 
@@ -269,7 +269,6 @@ async function loadEquipments() {
 function resetSearchForm() {
   qs('#keyword').value = '';
   qs('#department').value = '';
-  qs('#status').value = '';
   qs('#manufacturer').value = '';
   setActiveFilterChip('');
 
@@ -277,6 +276,11 @@ function resetSearchForm() {
     '검색 조건이 초기화되었습니다.',
     '조건을 다시 입력한 뒤 조회 버튼을 눌러 주세요.'
   );
+}
+
+function getSelectedStatus() {
+  const activeChip = document.querySelector('.filter-chip.active');
+  return activeChip ? (activeChip.dataset.status || '') : '';
 }
 
 function setActiveFilterChip(statusValue) {
@@ -289,7 +293,6 @@ function bindFilterChips() {
   qsa('.filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const statusValue = chip.dataset.status || '';
-      qs('#status').value = statusValue;
       setActiveFilterChip(statusValue);
       loadEquipments();
     });
@@ -313,9 +316,6 @@ function bindEnterSearch() {
 document.addEventListener('DOMContentLoaded', () => {
   qs('#searchBtn').addEventListener('click', loadEquipments);
   qs('#resetBtn').addEventListener('click', resetSearchForm);
-  qs('#status').addEventListener('change', () => {
-    setActiveFilterChip(qs('#status').value);
-  });
 
   bindFilterChips();
   bindEnterSearch();
