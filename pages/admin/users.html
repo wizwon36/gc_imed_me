@@ -317,7 +317,63 @@
       color: #027a48;
       border-color: #abefc6;
     }
+
+    .user-filter-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(140px, 0.6fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
     
+    .user-filter-search,
+    .user-filter-select {
+      min-width: 0;
+    }
+    
+    .user-list-count {
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #667085;
+    }
+    
+    .user-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    
+    .user-status-badge.active {
+      background: #ecfdf3;
+      color: #027a48;
+      border: 1px solid #abefc6;
+    }
+    
+    .user-status-badge.inactive {
+      background: #fef2f2;
+      color: #b42318;
+      border: 1px solid #fecaca;
+    }
+    
+    .user-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    
+    @media (max-width: 640px) {
+      .user-filter-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @keyframes globalLoadingSpin {
       to {
         transform: rotate(360deg);
@@ -475,7 +531,39 @@
 
       <div class="admin-card user-list-card">
         <h2>등록 사용자</h2>
-        <p>등록된 사용자를 선택해서 수정할 수 있습니다.</p>
+        <p>등록된 사용자를 검색하거나 상태별로 필터링할 수 있습니다.</p>
+      
+        <div class="user-filter-bar">
+          <div class="admin-field user-filter-search">
+            <label for="userSearchKeyword">검색</label>
+            <input
+              type="text"
+              id="userSearchKeyword"
+              placeholder="이름, 이메일, 부서 검색"
+            >
+          </div>
+      
+          <div class="admin-field user-filter-select">
+            <label for="userFilterActive">상태</label>
+            <select id="userFilterActive">
+              <option value="">전체</option>
+              <option value="Y">활성</option>
+              <option value="N">비활성</option>
+            </select>
+          </div>
+      
+          <div class="admin-field user-filter-select">
+            <label for="userFilterRole">역할</label>
+            <select id="userFilterRole">
+              <option value="">전체</option>
+              <option value="user">user</option>
+              <option value="manager">manager</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+        </div>
+      
+        <div id="userListCount" class="user-list-count"></div>
         <div id="userList" class="user-list"></div>
       </div>
     </section>
