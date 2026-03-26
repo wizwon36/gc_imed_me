@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const nameEl = document.getElementById('portalUserName');
+  const subEl = document.getElementById('portalUserSub');
+  const gridEl = document.getElementById('portalAppGrid');
+  const emptyEl = document.getElementById('portalEmpty');
   const logoutBtn = document.getElementById('logoutBtn');
+  const adminPageBtn = document.getElementById('adminPageBtn');
 
   logoutBtn?.addEventListener('click', () => {
     showGlobalLoading('로그아웃 중...');
@@ -13,13 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
     return;
   }
-
-  const nameEl = document.getElementById('portalUserName');
-  const subEl = document.getElementById('portalUserSub');
-  const gridEl = document.getElementById('portalAppGrid');
-  const emptyEl = document.getElementById('portalEmpty');
-  //const logoutBtn = document.getElementById('logoutBtn');
-  const adminPageBtn = document.getElementById('adminPageBtn');
 
   if (nameEl) {
     nameEl.textContent = user.name || user.email || '사용자';
