@@ -230,18 +230,22 @@
 
     .user-filter-bar {
       display: grid;
-      grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(140px, 0.6fr)) 110px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 14px;
       align-items: end;
     }
-
-    .user-filter-search,
+    
+    .user-filter-search {
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
+    
     .user-filter-select,
     .user-filter-button {
       min-width: 0;
     }
-
+    
     .user-filter-button .admin-btn {
       width: 100%;
       min-height: 48px;
@@ -414,12 +418,12 @@
         grid-template-columns: 1fr;
       }
 
-      .admin-submit-actions {
-        flex-direction: column;
-      }
-
       .user-filter-bar {
         grid-template-columns: 1fr;
+      }
+    
+      .user-filter-search {
+        grid-column: auto;
       }
     }
   </style>
@@ -536,7 +540,7 @@
 
       <div class="admin-card user-list-card">
         <h2>등록 사용자</h2>
-        <p>검색 조건을 입력하거나 필터를 선택한 뒤 조회 버튼을 눌러 목록을 불러옵니다.</p>
+        <p>조건을 입력한 뒤 조회 버튼으로 목록을 불러옵니다..</p>
 
         <div class="user-filter-bar">
           <div class="admin-field user-filter-search">
