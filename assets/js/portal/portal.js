@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loadingStartedAt = Date.now();
   showGlobalLoading('앱 목록 불러오는 중...');
   await waitForPaint();
+  await delay(120);
 
   try {
     const result = await apiGet('getUserPermissions', { user_email: user.email });
