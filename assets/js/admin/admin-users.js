@@ -293,6 +293,7 @@ async function loadUsers() {
         <span>상태: ${escapeHtml(user.active || '')} / 첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
         <div class="user-item-actions">
           <button type="button" class="admin-btn secondary" onclick="editUser('${escapeJs(user.user_email || '')}')">수정</button>
+          <button type="button" class="admin-btn warning" onclick="resetUserPassword('${escapeJs(user.user_email || '')}')">비밀번호 초기화</button>
         </div>
       </div>
     `).join('');
@@ -345,4 +346,29 @@ function escapeJs(value) {
     .replaceAll("'", "\\'");
 }
 
+async function resetUserPassword(userEmail) {
+  if (!userEmail) return;
+
+  const confirmed = confirm(`"${userEmail}" 사용자의 비밀번호를 1111로 초기화할까요?`);
+  if (!confirmed) return;
+
+  showGlobalLoading('비밀번호 초기화 중...');
+  await waitForPaint();
+
+  try {
+    const result = await apiPost('resetUserPassword', {
+      user_email: userEmail
+    });
+
+    setAdminMessage(result.message || '비밀번호가 초기화되었습니다.', 'success');
+    await loadUsers();
+    await waitForPaint();
+  } catch (error) {
+    setAdminMessage(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
 window.editUser = editUser;
+window.resetUserPassword = resetUserPassword;
