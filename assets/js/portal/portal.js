@@ -1,6 +1,18 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const user = window.auth?.requireAuth?.();
-  if (!user) return;
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  logoutBtn?.addEventListener('click', () => {
+    showGlobalLoading('로그아웃 중...');
+    window.auth.logout();
+  });
+
+  const user = window.auth?.getSession?.();
+
+  if (!user) {
+    alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+    location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
+    return;
+  }
 
   const nameEl = document.getElementById('portalUserName');
   const subEl = document.getElementById('portalUserSub');
@@ -28,11 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       showGlobalLoading('관리자 페이지로 이동 중...');
     });
   }
-
-  logoutBtn?.addEventListener('click', () => {
-    showGlobalLoading('로그아웃 중...');
-    window.auth.logout();
-  });
 
   const APP_MAP = {
     equipment: {
