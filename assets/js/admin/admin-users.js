@@ -1,3 +1,5 @@
+let editingUserEmail = '';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
@@ -9,12 +11,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    showGlobalLoading('로그아웃 중...');
     window.auth.logout();
   });
 
-  document.getElementById('createUserBtn')?.addEventListener('click', createUser);
+  document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
+  document.getElementById('cancelEditBtn')?.addEventListener('click', resetEditMode);
 
-  await loadUsers();
+  showGlobalLoading('사용자 목록 불러오는 중...');
+  await waitForPaint();
+
+  try {
+    await loadUsers();
+  } finally {
+    hideGlobalLoading();
+  }
 });
 
 function setAdminMessage(message, type = '') {
@@ -48,12 +59,21 @@ function collectPermissions() {
   return permissions;
 }
 
+async function handleSaveUser() {
+  if (editingUserEmail) {
+    await updateUser();
+  } else {
+    await createUser();
+  }
+}
+
 async function createUser() {
   const user_email = document.getElementById('userEmail')?.value.trim();
   const user_name = document.getElementById('userName')?.value.trim();
   const department = document.getElementById('department')?.value.trim();
   const phone = document.getElementById('phone')?.value.trim();
   const role = document.getElementById('globalRole')?.value;
+  const active = document.getElementById('userActive')?.value || 'Y';
   const permissions = collectPermissions();
 
   if (!user_email) {
@@ -76,15 +96,62 @@ async function createUser() {
       department,
       phone,
       role,
+      active,
       permissions
     });
 
     setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
     clearUserForm();
+    resetEditMode(false);
     await loadUsers();
     await waitForPaint();
   } catch (error) {
     setAdminMessage(error.message || '사용자 등록 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+async function updateUser() {
+  const user_email = editingUserEmail;
+  const user_name = document.getElementById('userName')?.value.trim();
+  const department = document.getElementById('department')?.value.trim();
+  const phone = document.getElementById('phone')?.value.trim();
+  const role = document.getElementById('globalRole')?.value;
+  const active = document.getElementById('userActive')?.value || 'Y';
+  const permissions = collectPermissions();
+
+  if (!user_email) {
+    setAdminMessage('수정할 사용자 정보가 없습니다.', 'error');
+    return;
+  }
+
+  if (!user_name) {
+    setAdminMessage('이름을 입력해 주세요.', 'error');
+    return;
+  }
+
+  showGlobalLoading('사용자 정보 수정 중...');
+  await waitForPaint();
+
+  try {
+    const result = await apiPost('updateUser', {
+      user_email,
+      user_name,
+      department,
+      phone,
+      role,
+      active,
+      permissions
+    });
+
+    setAdminMessage(result.message || '사용자 정보가 수정되었습니다.', 'success');
+    clearUserForm();
+    resetEditMode(false);
+    await loadUsers();
+    await waitForPaint();
+  } catch (error) {
+    setAdminMessage(error.message || '사용자 수정 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
   }
@@ -99,9 +166,106 @@ function clearUserForm() {
   const roleEl = document.getElementById('globalRole');
   if (roleEl) roleEl.value = 'user';
 
+  const activeEl = document.getElementById('userActive');
+  if (activeEl) activeEl.value = 'Y';
+
   document.querySelectorAll('.app-permission').forEach((el) => {
     el.value = '';
   });
+}
+
+function setPermissionValues(permissions = []) {
+  const permissionMap = {};
+  permissions.forEach((item) => {
+    if (item?.app_id) {
+      permissionMap[item.app_id] = item.permission || '';
+    }
+  });
+
+  document.querySelectorAll('.app-permission').forEach((el) => {
+    const appId = el.dataset.appId;
+    el.value = permissionMap[appId] || '';
+  });
+}
+
+function setEditMode(user) {
+  editingUserEmail = user.user_email || '';
+
+  const formTitle = document.getElementById('formTitle');
+  const formDesc = document.getElementById('formDesc');
+  const saveBtn = document.getElementById('saveUserBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const emailInput = document.getElementById('userEmail');
+  const passwordHint = document.getElementById('passwordHint');
+
+  if (formTitle) formTitle.textContent = '사용자 수정';
+  if (formDesc) formDesc.textContent = '기존 사용자 정보를 수정하고 권한을 다시 저장합니다.';
+  if (saveBtn) saveBtn.textContent = '사용자 수정';
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  if (emailInput) emailInput.disabled = true;
+  if (passwordHint) {
+    passwordHint.innerHTML = '수정 모드에서는 이메일을 변경할 수 없습니다. 비밀번호 초기화는 추후 별도 기능으로 추가할 수 있습니다.';
+  }
+}
+
+function resetEditMode(clearMessage = true) {
+  editingUserEmail = '';
+
+  const formTitle = document.getElementById('formTitle');
+  const formDesc = document.getElementById('formDesc');
+  const saveBtn = document.getElementById('saveUserBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const emailInput = document.getElementById('userEmail');
+  const passwordHint = document.getElementById('passwordHint');
+
+  if (formTitle) formTitle.textContent = '사용자 등록';
+  if (formDesc) formDesc.textContent = '신규 사용자를 등록하고 앱별 권한을 부여합니다.';
+  if (saveBtn) saveBtn.textContent = '사용자 등록';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (emailInput) emailInput.disabled = false;
+  if (passwordHint) {
+    passwordHint.innerHTML = '신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.';
+  }
+
+  clearUserForm();
+
+  if (clearMessage) {
+    setAdminMessage('', '');
+  }
+}
+
+async function editUser(userEmail) {
+  if (!userEmail) return;
+
+  showGlobalLoading('사용자 정보 불러오는 중...');
+  await waitForPaint();
+
+  try {
+    const result = await apiGet('getUserDetail', {
+      user_email: userEmail
+    });
+
+    const data = result.data || {};
+    const user = data.user || {};
+    const permissions = Array.isArray(data.permissions) ? data.permissions : [];
+
+    document.getElementById('userEmail').value = user.user_email || '';
+    document.getElementById('userName').value = user.user_name || '';
+    document.getElementById('department').value = user.department || '';
+    document.getElementById('phone').value = user.phone || '';
+    document.getElementById('globalRole').value = user.role || 'user';
+    document.getElementById('userActive').value = user.active || 'Y';
+
+    setPermissionValues(permissions);
+    setEditMode(user);
+    setAdminMessage(`사용자 ${user.user_name || user.user_email} 정보를 불러왔습니다.`, 'success');
+
+    await waitForPaint();
+  } catch (error) {
+    setAdminMessage(error.message || '사용자 정보를 불러오지 못했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 }
 
 async function loadUsers() {
@@ -119,24 +283,22 @@ async function loadUsers() {
 
     listEl.innerHTML = users.map((user) => `
       <div class="user-item">
-        <strong>${escapeHtml(user.user_name || '')}</strong>
-        <span>${escapeHtml(user.user_email || '')}</span>
+        <div class="user-item-top">
+          <div>
+            <strong>${escapeHtml(user.user_name || '')}</strong>
+            <span>${escapeHtml(user.user_email || '')}</span>
+          </div>
+        </div>
         <span>${escapeHtml(user.department || '')} / ${escapeHtml(user.role || '')}</span>
         <span>상태: ${escapeHtml(user.active || '')} / 첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
+        <div class="user-item-actions">
+          <button type="button" class="admin-btn secondary" onclick="editUser('${escapeJs(user.user_email || '')}')">수정</button>
+        </div>
       </div>
     `).join('');
   } catch (error) {
     listEl.innerHTML = `<div class="user-item"><span>${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}</span></div>`;
   }
-}
-
-function escapeHtml(value) {
-  return String(value || '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function showGlobalLoading(text = '처리 중...') {
@@ -167,3 +329,20 @@ function waitForPaint() {
     });
   });
 }
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function escapeJs(value) {
+  return String(value || '')
+    .replaceAll('\\', '\\\\')
+    .replaceAll("'", "\\'");
+}
+
+window.editUser = editUser;
