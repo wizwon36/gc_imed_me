@@ -294,6 +294,11 @@ async function loadUsers() {
         <div class="user-item-actions">
           <button type="button" class="admin-btn secondary" onclick="editUser('${escapeJs(user.user_email || '')}')">수정</button>
           <button type="button" class="admin-btn warning" onclick="resetUserPassword('${escapeJs(user.user_email || '')}')">비밀번호 초기화</button>
+          ${
+            String(user.active || 'Y').toUpperCase() === 'Y'
+              ? `<button type="button" class="admin-btn danger" onclick="setUserActive('${escapeJs(user.user_email || '')}', 'N')">비활성화</button>`
+              : `<button type="button" class="admin-btn success" onclick="setUserActive('${escapeJs(user.user_email || '')}', 'Y')">활성화</button>`
+          }
         </div>
       </div>
     `).join('');
@@ -370,5 +375,37 @@ async function resetUserPassword(userEmail) {
   }
 }
 
+async function setUserActive(userEmail, active) {
+  if (!userEmail) return;
+
+  const actionLabel = active === 'Y' ? '활성화' : '비활성화';
+  const confirmed = confirm(`"${userEmail}" 사용자를 ${actionLabel}할까요?`);
+  if (!confirmed) return;
+
+  showGlobalLoading(`사용자 ${actionLabel} 처리 중...`);
+  await waitForPaint();
+
+  try {
+    const result = await apiPost('setUserActive', {
+      user_email: userEmail,
+      active
+    });
+
+    setAdminMessage(result.message || `사용자 ${actionLabel} 처리가 완료되었습니다.`, 'success');
+
+    if (editingUserEmail && editingUserEmail === userEmail && active === 'N') {
+      resetEditMode(false);
+    }
+
+    await loadUsers();
+    await waitForPaint();
+  } catch (error) {
+    setAdminMessage(error.message || `사용자 ${actionLabel} 중 오류가 발생했습니다.`, 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
 window.editUser = editUser;
 window.resetUserPassword = resetUserPassword;
+window.setUserActive = setUserActive;
