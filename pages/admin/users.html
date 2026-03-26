@@ -13,7 +13,7 @@
     }
 
     .admin-shell {
-      max-width: 1100px;
+      max-width: 1280px;
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
@@ -60,12 +60,20 @@
       background: #fff;
       font-weight: 800;
       cursor: pointer;
+      text-decoration: none;
+      color: inherit;
     }
 
     .admin-btn.primary {
       background: #0b1b46;
       color: #fff;
       border-color: #0b1b46;
+    }
+
+    .admin-btn.secondary {
+      background: #eef2ff;
+      color: #1d4ed8;
+      border-color: #c7d2fe;
     }
 
     .admin-grid {
@@ -133,6 +141,7 @@
       font-size: 12px;
       color: #667085;
       margin-top: -2px;
+      line-height: 1.5;
     }
 
     .permission-box {
@@ -150,7 +159,7 @@
       gap: 12px;
       align-items: center;
     }
-    
+
     .permission-row span {
       display: flex;
       align-items: center;
@@ -161,7 +170,7 @@
       line-height: 1.4;
       word-break: keep-all;
     }
-    
+
     .permission-row select {
       width: 100%;
       min-width: 0;
@@ -174,8 +183,14 @@
       gap: 10px;
     }
 
-    .admin-submit-wrap .admin-btn {
-      width: 100%;
+    .admin-submit-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .admin-submit-actions .admin-btn {
+      flex: 1;
       min-height: 52px;
       border-radius: 16px;
       font-size: 15px;
@@ -184,6 +199,7 @@
     .message-box {
       min-height: 20px;
       font-size: 13px;
+      line-height: 1.5;
     }
 
     .message-box.error {
@@ -206,6 +222,14 @@
       background: #fff;
     }
 
+    .user-item-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
     .user-item strong {
       display: block;
       font-size: 15px;
@@ -217,6 +241,69 @@
       font-size: 12px;
       color: #667085;
       line-height: 1.5;
+    }
+
+    .user-item-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .user-item-actions .admin-btn {
+      min-height: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
+    #globalLoading {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.22);
+      backdrop-filter: blur(2px);
+    }
+
+    #globalLoading.is-open {
+      display: flex;
+    }
+
+    .global-loading__dialog {
+      min-width: 200px;
+      max-width: calc(100vw - 48px);
+      padding: 20px 24px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .global-loading__spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #d0d5dd;
+      border-top-color: #0b1b46;
+      border-radius: 50%;
+      animation: globalLoadingSpin 0.8s linear infinite;
+      flex: 0 0 auto;
+    }
+
+    .global-loading__text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    @keyframes globalLoadingSpin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     @media (max-width: 900px) {
@@ -251,53 +338,9 @@
       .permission-row {
         grid-template-columns: 1fr;
       }
-    }
-      #globalLoading {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: rgba(15, 23, 42, 0.22);
-    backdrop-filter: blur(2px);
-  }
-  
-    #globalLoading.is-open {
-      display: flex;
-    }
-    
-    .global-loading__dialog {
-      min-width: 200px;
-      max-width: calc(100vw - 48px);
-      padding: 20px 24px;
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .global-loading__spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid #d0d5dd;
-      border-top-color: #0b1b46;
-      border-radius: 50%;
-      animation: globalLoadingSpin 0.8s linear infinite;
-      flex: 0 0 auto;
-    }
-    
-    .global-loading__text {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-    
-    @keyframes globalLoadingSpin {
-      to {
-        transform: rotate(360deg);
+
+      .admin-submit-actions {
+        flex-direction: column;
       }
     }
   </style>
@@ -307,18 +350,18 @@
     <section class="admin-topbar">
       <div>
         <h1 class="admin-title">사용자 관리</h1>
-        <p class="admin-desc">사용자 등록과 앱별 권한을 관리합니다.</p>
+        <p class="admin-desc">사용자 등록, 수정, 앱별 권한 관리를 진행합니다.</p>
       </div>
       <div class="admin-actions">
-        <button class="admin-btn" type="button" onclick="location.href='../../portal.html'">HOME</button>
+        <button class="admin-btn" type="button" onclick="location.href='../../portal.html'">포털로</button>
         <button class="admin-btn" type="button" id="logoutBtn">로그아웃</button>
       </div>
     </section>
 
     <section class="admin-grid">
       <div class="admin-card">
-        <h2>사용자 등록</h2>
-        <p>신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
+        <h2 id="formTitle">사용자 등록</h2>
+        <p id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
 
         <div class="admin-form-grid">
           <div class="admin-field">
@@ -341,7 +384,7 @@
             <input type="text" id="phone" placeholder="예: 010-0000-0000">
           </div>
 
-          <div class="admin-field full">
+          <div class="admin-field">
             <label for="globalRole">기본 역할</label>
             <select id="globalRole">
               <option value="user">user</option>
@@ -350,17 +393,26 @@
             </select>
           </div>
 
+          <div class="admin-field">
+            <label for="userActive">사용 여부</label>
+            <select id="userActive">
+              <option value="Y">Y</option>
+              <option value="N">N</option>
+            </select>
+          </div>
+
           <div class="admin-field full">
             <label>초기 비밀번호</label>
-            <div class="admin-input-hint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</div>
+            <div class="admin-input-hint" id="passwordHint">
+              신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.
+            </div>
           </div>
 
           <div class="admin-field full">
             <label>앱별 권한</label>
-            <div class="admin-input-hint">권한을 선택한 앱만 등록됩니다.</div>
-          
+            <div class="admin-input-hint">권한을 선택한 앱만 저장됩니다.</div>
+
             <div class="permission-box">
-          
               <div class="permission-row">
                 <span>의료장비 관리</span>
                 <select data-app-id="equipment" class="app-permission">
@@ -370,7 +422,7 @@
                   <option value="admin">admin</option>
                 </select>
               </div>
-          
+
               <div class="permission-row">
                 <span>시스템 로그</span>
                 <select data-app-id="logs" class="app-permission">
@@ -380,7 +432,7 @@
                   <option value="admin">admin</option>
                 </select>
               </div>
-          
+
               <div class="permission-row">
                 <span>사용자 관리</span>
                 <select data-app-id="users_admin" class="app-permission">
@@ -390,35 +442,37 @@
                   <option value="admin">admin</option>
                 </select>
               </div>
-          
             </div>
           </div>
 
           <div class="admin-submit-wrap">
-            <button type="button" class="admin-btn primary" id="createUserBtn">사용자 등록</button>
+            <div class="admin-submit-actions">
+              <button type="button" class="admin-btn primary" id="saveUserBtn">사용자 등록</button>
+              <button type="button" class="admin-btn secondary" id="cancelEditBtn" style="display:none;">수정 취소</button>
+            </div>
             <div id="adminUserMessage" class="message-box"></div>
           </div>
         </div>
       </div>
 
-      <div class="admin-card">
+      <div class="admin-card user-list-card">
         <h2>등록 사용자</h2>
-        <p>최근 사용자 목록입니다.</p>
+        <p>등록된 사용자를 선택해서 수정할 수 있습니다.</p>
         <div id="userList" class="user-list"></div>
       </div>
     </section>
   </main>
-  
-  <script src="../../assets/js/core/config.js"></script>
-  <script src="../../assets/js/core/api.js"></script>
-  <script src="../../assets/js/core/auth.js"></script>
-  <script src="../../assets/js/admin/admin-users.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog" role="status" aria-live="polite">
       <div class="global-loading__spinner" aria-hidden="true"></div>
       <div class="global-loading__text" id="globalLoadingText">처리 중...</div>
+    </div>
   </div>
-</div>
+
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/admin/admin-users.js"></script>
 </body>
 </html>
