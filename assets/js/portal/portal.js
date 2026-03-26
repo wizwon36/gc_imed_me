@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showGlobalLoading('이동 중...');
   });
 
+  const loadingStartedAt = Date.now();
   showGlobalLoading('앱 목록 불러오는 중...');
   await waitForPaint();
 
@@ -126,9 +127,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
     }
     await waitForPaint();
-  } finally {
-    hideGlobalLoading();
-  }
+    } finally {
+      await waitForPaint();
+    
+      const minVisibleMs = 450;
+      const elapsed = Date.now() - loadingStartedAt;
+      const remain = Math.max(0, minVisibleMs - elapsed);
+    
+      if (remain > 0) {
+        await delay(remain);
+      }
+    
+      hideGlobalLoading();
+    }
 });
 
 function showGlobalLoading(text = '불러오는 중...') {
@@ -167,6 +178,10 @@ function waitForPaint() {
       requestAnimationFrame(resolve);
     });
   });
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 window.addEventListener('pageshow', () => {
