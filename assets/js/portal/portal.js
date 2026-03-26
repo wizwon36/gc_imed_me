@@ -63,6 +63,8 @@ document.addEventListener('click', (e) => {
 
 showGlobalLoading('앱 목록 불러오는 중...');
 
+await new Promise((resolve) => requestAnimationFrame(resolve));
+
 try {
   const result = await apiGet('getUserPermissions', { user_email: user.email });
   const permissions = Array.isArray(result.data) ? result.data : [];
@@ -110,7 +112,9 @@ try {
     `;
   }
 } finally {
-  hideGlobalLoading();
+  setTimeout(() => {
+    hideGlobalLoading();
+  }, 120);
 }
   
 function showGlobalLoading(text = '불러오는 중...') {
