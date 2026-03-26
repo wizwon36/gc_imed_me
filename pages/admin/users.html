@@ -76,6 +76,24 @@
       border-color: #c7d2fe;
     }
 
+    .admin-btn.warning {
+      background: #fff7ed;
+      color: #c2410c;
+      border-color: #fdba74;
+    }
+
+    .admin-btn.danger {
+      background: #fef2f2;
+      color: #b42318;
+      border-color: #fecaca;
+    }
+
+    .admin-btn.success {
+      background: #ecfdf3;
+      color: #027a48;
+      border-color: #abefc6;
+    }
+
     .admin-grid {
       display: grid;
       grid-template-columns: minmax(560px, 1.5fr) minmax(300px, 0.8fr);
@@ -210,6 +228,31 @@
       color: #027a48;
     }
 
+    .user-filter-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(140px, 0.6fr)) 110px;
+      gap: 12px;
+      margin-bottom: 14px;
+      align-items: end;
+    }
+
+    .user-filter-search,
+    .user-filter-select,
+    .user-filter-button {
+      min-width: 0;
+    }
+
+    .user-filter-button .admin-btn {
+      width: 100%;
+      min-height: 48px;
+    }
+
+    .user-list-count {
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #667085;
+    }
+
     .user-list {
       display: grid;
       gap: 10px;
@@ -241,6 +284,38 @@
       font-size: 12px;
       color: #667085;
       line-height: 1.5;
+    }
+
+    .user-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .user-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .user-status-badge.active {
+      background: #ecfdf3;
+      color: #027a48;
+      border: 1px solid #abefc6;
+    }
+
+    .user-status-badge.inactive {
+      background: #fef2f2;
+      color: #b42318;
+      border: 1px solid #fecaca;
     }
 
     .user-item-actions {
@@ -300,87 +375,6 @@
       color: #0f172a;
     }
 
-    .admin-btn.warning {
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #fdba74;
-    }
-    
-    .admin-btn.danger {
-      background: #fef2f2;
-      color: #b42318;
-      border-color: #fecaca;
-    }
-    
-    .admin-btn.success {
-      background: #ecfdf3;
-      color: #027a48;
-      border-color: #abefc6;
-    }
-
-    .user-filter-bar {
-      display: grid;
-      grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(140px, 0.6fr)) 110px;
-      gap: 12px;
-      margin-bottom: 14px;
-      align-items: end;
-    }
-    
-    .user-filter-search,
-    .user-filter-select,
-    .user-filter-button {
-      min-width: 0;
-    }
-    
-    .user-filter-button .admin-btn {
-      width: 100%;
-      min-height: 48px;
-    }
-    
-    .user-list-count {
-      margin-bottom: 12px;
-      font-size: 12px;
-      color: #667085;
-    }
-    
-    .user-status-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 24px;
-      padding: 0 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1;
-    }
-    
-    .user-status-badge.active {
-      background: #ecfdf3;
-      color: #027a48;
-      border: 1px solid #abefc6;
-    }
-    
-    .user-status-badge.inactive {
-      background: #fef2f2;
-      color: #b42318;
-      border: 1px solid #fecaca;
-    }
-    
-    .user-meta-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 6px;
-    }
-    
-    @media (max-width: 640px) {
-      .user-filter-bar {
-        grid-template-columns: 1fr;
-      }
-    }
-
     @keyframes globalLoadingSpin {
       to {
         transform: rotate(360deg);
@@ -423,6 +417,10 @@
       .admin-submit-actions {
         flex-direction: column;
       }
+
+      .user-filter-bar {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -434,7 +432,7 @@
         <p class="admin-desc">사용자 등록, 수정, 앱별 권한 관리를 진행합니다.</p>
       </div>
       <div class="admin-actions">
-        <button class="admin-btn" type="button" onclick="location.href='../../portal.html'">HOME</button>
+        <button class="admin-btn" type="button" onclick="location.href='../../portal.html'">포털로</button>
         <button class="admin-btn" type="button" id="logoutBtn">로그아웃</button>
       </div>
     </section>
@@ -538,18 +536,14 @@
 
       <div class="admin-card user-list-card">
         <h2>등록 사용자</h2>
-        <p>등록된 사용자를 검색하거나 상태별로 필터링할 수 있습니다.</p>
-      
+        <p>검색 조건을 입력하거나 필터를 선택한 뒤 조회 버튼을 눌러 목록을 불러옵니다.</p>
+
         <div class="user-filter-bar">
           <div class="admin-field user-filter-search">
             <label for="userSearchKeyword">검색</label>
-            <input
-              type="text"
-              id="userSearchKeyword"
-              placeholder="이름, 이메일, 부서 검색"
-            >
+            <input type="text" id="userSearchKeyword" placeholder="이름, 이메일, 부서 검색">
           </div>
-        
+
           <div class="admin-field user-filter-select">
             <label for="userFilterActive">상태</label>
             <select id="userFilterActive">
@@ -558,7 +552,7 @@
               <option value="N">비활성</option>
             </select>
           </div>
-        
+
           <div class="admin-field user-filter-select">
             <label for="userFilterRole">역할</label>
             <select id="userFilterRole">
@@ -568,22 +562,19 @@
               <option value="admin">admin</option>
             </select>
           </div>
-        
+
           <div class="admin-field user-filter-button">
             <label>&nbsp;</label>
             <button type="button" class="admin-btn primary" id="searchUsersBtn">조회</button>
           </div>
         </div>
-        
+
         <div id="userListCount" class="user-list-count"></div>
         <div id="userList" class="user-list">
           <div class="user-item">
             <span>검색 조건을 입력하거나 필터를 선택한 뒤 조회 버튼을 눌러주세요.</span>
           </div>
         </div>
-      
-        <div id="userListCount" class="user-list-count"></div>
-        <div id="userList" class="user-list"></div>
       </div>
     </section>
   </main>
