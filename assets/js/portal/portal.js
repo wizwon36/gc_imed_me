@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const logoutBtn = document.getElementById('logoutBtn');
   const nameEl = document.getElementById('portalUserName');
   const subEl = document.getElementById('portalUserSub');
   const gridEl = document.getElementById('portalAppGrid');
   const emptyEl = document.getElementById('portalEmpty');
+  const logoutBtn = document.getElementById('logoutBtn');
   const adminPageBtn = document.getElementById('adminPageBtn');
 
   logoutBtn?.addEventListener('click', () => {
@@ -39,19 +39,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     equipment: {
       title: '의료장비 관리',
       desc: '장비 등록 및 이력 관리',
-      icon: '🩺',
+      icon: '',
       url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
     },
     logs: {
       title: '시스템 로그',
       desc: '작업 이력 조회',
-      icon: '📋',
+      icon: '',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 등록 및 권한 관리',
-      icon: '👤',
+      icon: '',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`
     }
   };
@@ -78,14 +78,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    const visiblePermissions = permissions.filter((p) => {
-      return p && p.app_id && APP_MAP[p.app_id];
-    });
+    const visiblePermissions = permissions.filter((p) => p && p.app_id && APP_MAP[p.app_id]);
 
     if (!visiblePermissions.length) {
-      if (gridEl) gridEl.innerHTML = '';
-      if (emptyEl) emptyEl.style.display = 'block';
+      if (gridEl) {
+        gridEl.innerHTML = '';
+      }
+      if (emptyEl) {
+        emptyEl.style.display = 'block';
+      }
+
       await waitForPaint();
+      await delayUntilMinimum(loadingStartedAt, 700);
       return;
     }
 
@@ -113,11 +117,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       gridEl.innerHTML = cards;
     }
 
-    if (!cards && emptyEl) {
-      emptyEl.style.display = 'block';
+    await waitForPaint();
+
+    if (document.fonts && document.fonts.ready) {
+      try {
+        await document.fonts.ready;
+      } catch (e) {
+        // ignore
+      }
     }
 
     await waitForPaint();
+    await delayUntilMinimum(loadingStartedAt, 700);
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
@@ -126,20 +137,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     }
+
     await waitForPaint();
-    } finally {
-      await waitForPaint();
-    
-      const minVisibleMs = 450;
-      const elapsed = Date.now() - loadingStartedAt;
-      const remain = Math.max(0, minVisibleMs - elapsed);
-    
-      if (remain > 0) {
-        await delay(remain);
-      }
-    
-      hideGlobalLoading();
-    }
+    await delayUntilMinimum(loadingStartedAt, 500);
+  } finally {
+    hideGlobalLoading();
+  }
 });
 
 function showGlobalLoading(text = '불러오는 중...') {
@@ -182,6 +185,15 @@ function waitForPaint() {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function delayUntilMinimum(startedAt, minimumMs) {
+  const elapsed = Date.now() - startedAt;
+  const remain = Math.max(0, minimumMs - elapsed);
+
+  if (remain > 0) {
+    await delay(remain);
+  }
 }
 
 window.addEventListener('pageshow', () => {
