@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const subEl = document.getElementById('portalUserSub');
   const gridEl = document.getElementById('portalAppGrid');
   const emptyEl = document.getElementById('portalEmpty');
-  const logoutBtn = document.getElementById('logoutBtn');
+  //const logoutBtn = document.getElementById('logoutBtn');
   const adminPageBtn = document.getElementById('adminPageBtn');
 
   if (nameEl) {
