@@ -1,4 +1,5 @@
 let editingUserEmail = '';
+let allUsers = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
@@ -17,6 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
   document.getElementById('cancelEditBtn')?.addEventListener('click', resetEditMode);
+  document.getElementById('userSearchKeyword')?.addEventListener('input', renderUserList);
+  document.getElementById('userFilterActive')?.addEventListener('change', renderUserList);
+  document.getElementById('userFilterRole')?.addEventListener('change', renderUserList);
 
   showGlobalLoading('사용자 목록 불러오는 중...');
   await waitForPaint();
@@ -269,19 +273,84 @@ async function editUser(userEmail) {
 }
 
 async function loadUsers() {
-  const listEl = document.getElementById('userList');
-  if (!listEl) return;
-
   try {
     const result = await apiGet('listUsers');
-    const users = Array.isArray(result.data) ? result.data : [];
+    allUsers = Array.isArray(result.data) ? result.data : [];
+    renderUserList();
+  } catch (error) {
+    const listEl = document.getElementById('userList');
+    const countEl = document.getElementById('userListCount');
 
-    if (!users.length) {
-      listEl.innerHTML = '<div class="user-item"><span>등록된 사용자가 없습니다.</span></div>';
-      return;
+    if (countEl) {
+      countEl.textContent = '';
     }
 
-    listEl.innerHTML = users.map((user) => `
+    if (listEl) {
+      listEl.innerHTML = `<div class="user-item"><span>${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}</span></div>`;
+    }
+  }
+}
+
+function renderUserList() {
+  const listEl = document.getElementById('userList');
+  const countEl = document.getElementById('userListCount');
+
+  if (!listEl) return;
+
+  const keyword = String(document.getElementById('userSearchKeyword')?.value || '')
+    .trim()
+    .toLowerCase();
+
+  const activeFilter = String(document.getElementById('userFilterActive')?.value || '')
+    .trim()
+    .toUpperCase();
+
+  const roleFilter = String(document.getElementById('userFilterRole')?.value || '')
+    .trim()
+    .toLowerCase();
+
+  const filteredUsers = allUsers.filter((user) => {
+    const name = String(user.user_name || '').toLowerCase();
+    const email = String(user.user_email || '').toLowerCase();
+    const department = String(user.department || '').toLowerCase();
+    const active = String(user.active || '').toUpperCase();
+    const role = String(user.role || '').toLowerCase();
+
+    const matchesKeyword =
+      !keyword ||
+      name.includes(keyword) ||
+      email.includes(keyword) ||
+      department.includes(keyword);
+
+    const matchesActive =
+      !activeFilter || active === activeFilter;
+
+    const matchesRole =
+      !roleFilter || role === roleFilter;
+
+    return matchesKeyword && matchesActive && matchesRole;
+  });
+
+  if (countEl) {
+    countEl.textContent = `총 ${filteredUsers.length}명 / 전체 ${allUsers.length}명`;
+  }
+
+  if (!filteredUsers.length) {
+    listEl.innerHTML = `
+      <div class="user-item">
+        <span>조건에 맞는 사용자가 없습니다.</span>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = filteredUsers.map((user) => {
+    const isActive = String(user.active || 'Y').toUpperCase() === 'Y';
+    const statusBadge = isActive
+      ? '<span class="user-status-badge active">활성</span>'
+      : '<span class="user-status-badge inactive">비활성</span>';
+
+    return `
       <div class="user-item">
         <div class="user-item-top">
           <div>
@@ -289,22 +358,27 @@ async function loadUsers() {
             <span>${escapeHtml(user.user_email || '')}</span>
           </div>
         </div>
-        <span>${escapeHtml(user.department || '')} / ${escapeHtml(user.role || '')}</span>
-        <span>상태: ${escapeHtml(user.active || '')} / 첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
+
+        <div class="user-meta-row">
+          ${statusBadge}
+          <span>${escapeHtml(user.role || '')}</span>
+        </div>
+
+        <span>${escapeHtml(user.department || '')} / ${escapeHtml(user.phone || '')}</span>
+        <span>첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
+
         <div class="user-item-actions">
           <button type="button" class="admin-btn secondary" onclick="editUser('${escapeJs(user.user_email || '')}')">수정</button>
           <button type="button" class="admin-btn warning" onclick="resetUserPassword('${escapeJs(user.user_email || '')}')">비밀번호 초기화</button>
           ${
-            String(user.active || 'Y').toUpperCase() === 'Y'
+            isActive
               ? `<button type="button" class="admin-btn danger" onclick="setUserActive('${escapeJs(user.user_email || '')}', 'N')">비활성화</button>`
               : `<button type="button" class="admin-btn success" onclick="setUserActive('${escapeJs(user.user_email || '')}', 'Y')">활성화</button>`
           }
         </div>
       </div>
-    `).join('');
-  } catch (error) {
-    listEl.innerHTML = `<div class="user-item"><span>${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}</span></div>`;
-  }
+    `;
+  }).join('');
 }
 
 function showGlobalLoading(text = '처리 중...') {
