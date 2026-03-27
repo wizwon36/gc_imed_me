@@ -3,6 +3,7 @@ window.ORG_CONFIG = {
   TEAM_GROUP: 'ORG_TEAM',
   cache: {
     loaded: false,
+    loadingPromise: null,
     clinics: [],
     teams: []
   }
@@ -14,19 +15,31 @@ window.OrgService = {
       return window.ORG_CONFIG.cache;
     }
 
-    const [clinicRes, teamRes] = await Promise.all([
-      window.apiGet('getCodes', { code_group: window.ORG_CONFIG.CLINIC_GROUP }),
-      window.apiGet('getCodes', { code_group: window.ORG_CONFIG.TEAM_GROUP })
-    ]);
+    if (window.ORG_CONFIG.cache.loadingPromise) {
+      return window.ORG_CONFIG.cache.loadingPromise;
+    }
 
-    const clinics = Array.isArray(clinicRes.data) ? clinicRes.data : [];
-    const teams = Array.isArray(teamRes.data) ? teamRes.data : [];
+    window.ORG_CONFIG.cache.loadingPromise = (async () => {
+      const [clinicRes, teamRes] = await Promise.all([
+        window.apiGet('getCodes', { code_group: window.ORG_CONFIG.CLINIC_GROUP }),
+        window.apiGet('getCodes', { code_group: window.ORG_CONFIG.TEAM_GROUP })
+      ]);
 
-    window.ORG_CONFIG.cache.loaded = true;
-    window.ORG_CONFIG.cache.clinics = clinics;
-    window.ORG_CONFIG.cache.teams = teams;
+      const clinics = Array.isArray(clinicRes.data) ? clinicRes.data : [];
+      const teams = Array.isArray(teamRes.data) ? teamRes.data : [];
 
-    return window.ORG_CONFIG.cache;
+      window.ORG_CONFIG.cache.loaded = true;
+      window.ORG_CONFIG.cache.clinics = clinics;
+      window.ORG_CONFIG.cache.teams = teams;
+
+      return window.ORG_CONFIG.cache;
+    })();
+
+    try {
+      return await window.ORG_CONFIG.cache.loadingPromise;
+    } finally {
+      window.ORG_CONFIG.cache.loadingPromise = null;
+    }
   },
 
   async getClinics() {
@@ -56,6 +69,18 @@ window.OrgService = {
     return found ? String(found.code_name || '').trim() : '';
   },
 
+  setLoadingState(clinicEl, teamEl) {
+    if (clinicEl) {
+      clinicEl.innerHTML = '<option value="">의원 불러오는 중...</option>';
+      clinicEl.disabled = true;
+    }
+
+    if (teamEl) {
+      teamEl.innerHTML = '<option value="">팀 불러오는 중...</option>';
+      teamEl.disabled = true;
+    }
+  },
+
   async fillClinicSelect(selectEl, options = {}) {
     if (!selectEl) return;
 
@@ -79,6 +104,7 @@ window.OrgService = {
     }).join('');
 
     selectEl.innerHTML = html;
+    selectEl.disabled = false;
     selectEl.value = selectedValue || '';
   },
 
@@ -116,6 +142,8 @@ window.OrgService = {
       initialClinicCode = '',
       initialTeamCode = ''
     } = options;
+
+    this.setLoadingState(clinicEl, teamEl);
 
     await this.fillClinicSelect(clinicEl, {
       includeEmpty: true,
