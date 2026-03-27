@@ -232,62 +232,93 @@
     .message-box.success {
       color: #027a48;
     }
-
+    
     .user-filter-wrap {
       display: grid;
       gap: 12px;
       margin-bottom: 14px;
     }
-
+    
     .user-filter-search {
       display: grid;
       gap: 6px;
     }
-
+    
     .user-filter-search label,
     .user-filter-row .admin-field label {
       font-size: 13px;
       font-weight: 800;
       color: #344054;
     }
-
+    
+    .user-filter-search input,
+    .user-filter-row select {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 14px;
+      border: 1px solid #d0d5dd;
+      border-radius: 14px;
+      font-size: 14px;
+      box-sizing: border-box;
+      background: #fff;
+      box-shadow: none;
+      outline: none;
+    }
+    
+    .user-filter-search input:focus,
+    .user-filter-row select:focus {
+      border-color: #98a2b3;
+      outline: none;
+    }
+    
     .user-filter-row {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr)) 140px;
       gap: 12px;
       align-items: end;
     }
-
+    
     .user-filter-row .admin-field {
       min-width: 0;
     }
-
+    
     #searchUsersBtn {
       width: 100%;
       min-height: 48px;
+      padding: 0 16px;
       border-radius: 14px;
+      box-sizing: border-box;
       white-space: nowrap;
       writing-mode: horizontal-tb;
+      font-size: 14px;
+      font-weight: 800;
+      background: #eef2ff;
+      color: #1d4ed8;
+      border: 1px solid #c7d2fe;
     }
-
+    
+    #searchUsersBtn:hover {
+      background: #e0e7ff;
+    }
+    
     .user-list-count {
       margin-bottom: 12px;
       font-size: 12px;
       color: #667085;
     }
-
+    
     .user-list {
       display: grid;
       gap: 12px;
     }
-
+    
     .user-item {
       padding: 16px;
       border: 1px solid #e4e7ec;
       border-radius: 16px;
       background: #fff;
     }
-
+    
     .user-item-top {
       display: flex;
       align-items: flex-start;
@@ -295,11 +326,11 @@
       gap: 12px;
       margin-bottom: 8px;
     }
-
+    
     .user-item-title {
       min-width: 0;
     }
-
+    
     .user-item-title strong {
       display: block;
       font-size: 16px;
@@ -307,7 +338,7 @@
       color: #101828;
       line-height: 1.35;
     }
-
+    
     .user-item-email {
       display: block;
       font-size: 13px;
@@ -315,7 +346,7 @@
       line-height: 1.5;
       word-break: break-all;
     }
-
+    
     .user-meta-row {
       display: flex;
       align-items: center;
@@ -323,7 +354,7 @@
       flex-wrap: wrap;
       margin-bottom: 10px;
     }
-
+    
     .user-status-badge {
       display: inline-flex;
       align-items: center;
@@ -335,19 +366,19 @@
       font-weight: 800;
       line-height: 1;
     }
-
+    
     .user-status-badge.active {
       background: #ecfdf3;
       color: #027a48;
       border: 1px solid #abefc6;
     }
-
+    
     .user-status-badge.inactive {
       background: #fef2f2;
       color: #b42318;
       border: 1px solid #fecaca;
     }
-
+    
     .user-role-badge {
       display: inline-flex;
       align-items: center;
@@ -362,14 +393,14 @@
       color: #1d4ed8;
       border: 1px solid #c7d2fe;
     }
-
+    
     .user-info-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 8px;
     }
-
+    
     .user-info-chip {
       display: inline-flex;
       align-items: center;
@@ -382,27 +413,47 @@
       color: #475467;
       border: 1px solid #e4e7ec;
     }
-
+    
     .user-sub-line {
       font-size: 12px;
       color: #667085;
       line-height: 1.5;
     }
-
+    
     .user-item-actions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       margin-top: 12px;
     }
-
+    
     .user-item-actions .admin-btn {
       min-height: 36px;
       padding: 0 12px;
       border-radius: 10px;
       font-size: 13px;
     }
-
+    
+    @media (max-width: 900px) {
+      .user-filter-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    
+      .user-filter-row .admin-field:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .user-filter-row {
+        grid-template-columns: 1fr;
+      }
+    
+      #searchUsersBtn {
+        width: 100%;
+      }
+    }
+    
     #globalLoading {
       position: fixed;
       inset: 0;
