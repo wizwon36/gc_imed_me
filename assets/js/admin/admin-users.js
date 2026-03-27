@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  showGlobalLoading('조직 정보를 불러오는 중...');
+
+  try {
+    await OrgService.preload();
+    await initUserOrgSelectors();
+    initUserFilterClinic();
+  } catch (error) {
+    setAdminMessage(error.message || '조직 정보를 불러오지 못했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
     showGlobalLoading('로그아웃 중...');
     window.auth.logout();
@@ -22,23 +34,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
 
   document.getElementById('userSearchKeyword')?.addEventListener('input', () => {
-    if (hasLoadedUsers) {
-      renderUserList();
-    }
+    if (hasLoadedUsers) renderUserList();
   });
 
   document.getElementById('userFilterActive')?.addEventListener('change', () => {
-    if (hasLoadedUsers) {
-      renderUserList();
-    }
+    if (hasLoadedUsers) renderUserList();
   });
 
   document.getElementById('userFilterRole')?.addEventListener('change', () => {
-    if (hasLoadedUsers) {
-      renderUserList();
-    }
+    if (hasLoadedUsers) renderUserList();
+  });
+
+  document.getElementById('userFilterClinic')?.addEventListener('change', () => {
+    if (hasLoadedUsers) renderUserList();
   });
 });
+
+async function initUserOrgSelectors(user = {}) {
+  await OrgService.bindClinicTeam(
+    document.getElementById('clinic_code'),
+    document.getElementById('team_code'),
+    {
+      initialClinicCode: user.clinic_code || '',
+      initialTeamCode: user.team_code || '',
+      clinicEmptyLabel: '의원을 선택하세요',
+      teamEmptyLabel: '팀을 선택하세요'
+    }
+  );
+}
+
+async function initUserFilterClinic() {
+  await OrgService.fillClinicSelect(document.getElementById('userFilterClinic'), {
+    includeEmpty: true,
+    emptyLabel: '전체 의원',
+    selectedValue: ''
+  });
+}
 
 function setAdminMessage(message, type = '') {
   const el = document.getElementById('adminUserMessage');
@@ -71,6 +102,13 @@ function collectPermissions() {
   return permissions;
 }
 
+async function buildUserOrgPayload() {
+  const clinicCode = document.getElementById('clinic_code')?.value || '';
+  const teamCode = document.getElementById('team_code')?.value || '';
+
+  return await OrgService.buildOrgPayload(clinicCode, teamCode);
+}
+
 async function handleSaveUser() {
   if (editingUserEmail) {
     await updateUser();
@@ -82,11 +120,11 @@ async function handleSaveUser() {
 async function createUser() {
   const user_email = document.getElementById('userEmail')?.value.trim();
   const user_name = document.getElementById('userName')?.value.trim();
-  const department = document.getElementById('department')?.value.trim();
   const phone = document.getElementById('phone')?.value.trim();
   const role = document.getElementById('globalRole')?.value;
   const active = document.getElementById('userActive')?.value || 'Y';
   const permissions = collectPermissions();
+  const org = await buildUserOrgPayload();
 
   if (!user_email) {
     setAdminMessage('이메일을 입력해 주세요.', 'error');
@@ -98,6 +136,16 @@ async function createUser() {
     return;
   }
 
+  if (!org.clinic_code) {
+    setAdminMessage('의원을 선택해 주세요.', 'error');
+    return;
+  }
+
+  if (!org.team_code) {
+    setAdminMessage('팀을 선택해 주세요.', 'error');
+    return;
+  }
+
   showGlobalLoading('사용자 등록 중...');
   await waitForPaint();
 
@@ -105,11 +153,11 @@ async function createUser() {
     const result = await apiPost('createUser', {
       user_email,
       user_name,
-      department,
       phone,
       role,
       active,
-      permissions
+      permissions,
+      ...org
     });
 
     setAdminMessage(
@@ -134,11 +182,11 @@ async function createUser() {
 async function updateUser() {
   const user_email = editingUserEmail;
   const user_name = document.getElementById('userName')?.value.trim();
-  const department = document.getElementById('department')?.value.trim();
   const phone = document.getElementById('phone')?.value.trim();
   const role = document.getElementById('globalRole')?.value;
   const active = document.getElementById('userActive')?.value || 'Y';
   const permissions = collectPermissions();
+  const org = await buildUserOrgPayload();
 
   if (!user_email) {
     setAdminMessage('수정할 사용자 정보가 없습니다.', 'error');
@@ -150,6 +198,16 @@ async function updateUser() {
     return;
   }
 
+  if (!org.clinic_code) {
+    setAdminMessage('의원을 선택해 주세요.', 'error');
+    return;
+  }
+
+  if (!org.team_code) {
+    setAdminMessage('팀을 선택해 주세요.', 'error');
+    return;
+  }
+
   showGlobalLoading('사용자 정보 수정 중...');
   await waitForPaint();
 
@@ -157,11 +215,11 @@ async function updateUser() {
     const result = await apiPost('updateUser', {
       user_email,
       user_name,
-      department,
       phone,
       role,
       active,
-      permissions
+      permissions,
+      ...org
     });
 
     setAdminMessage(result.message || '사용자 정보가 수정되었습니다.', 'success');
@@ -199,20 +257,18 @@ async function editUser(userEmail) {
   await waitForPaint();
 
   try {
-    const result = await apiGet('getUserDetail', {
-      user_email: userEmail
-    });
-
+    const result = await apiGet('getUserDetail', { user_email: userEmail });
     const data = result.data || {};
     const user = data.user || {};
     const permissions = Array.isArray(data.permissions) ? data.permissions : [];
 
     document.getElementById('userEmail').value = user.user_email || '';
     document.getElementById('userName').value = user.user_name || '';
-    document.getElementById('department').value = user.department || '';
     document.getElementById('phone').value = user.phone || '';
     document.getElementById('globalRole').value = user.role || 'user';
     document.getElementById('userActive').value = user.active || 'Y';
+
+    await initUserOrgSelectors(user);
 
     setPermissionValues(permissions);
     setEditMode(user);
@@ -236,10 +292,7 @@ async function resetUserPassword(userEmail) {
   await waitForPaint();
 
   try {
-    const result = await apiPost('resetUserPassword', {
-      user_email: userEmail
-    });
-
+    const result = await apiPost('resetUserPassword', { user_email: userEmail });
     setAdminMessage(result.message || '비밀번호가 초기화되었습니다.', 'success');
 
     if (hasLoadedUsers) {
@@ -264,11 +317,7 @@ async function setUserActive(userEmail, active) {
   await waitForPaint();
 
   try {
-    const result = await apiPost('setUserActive', {
-      user_email: userEmail,
-      active
-    });
-
+    const result = await apiPost('setUserActive', { user_email: userEmail, active });
     setAdminMessage(result.message || `사용자 ${actionLabel} 처리가 완료되었습니다.`, 'success');
 
     if (editingUserEmail && editingUserEmail === userEmail && active === 'N') {
@@ -295,10 +344,7 @@ async function loadUsers() {
     const listEl = document.getElementById('userList');
     const countEl = document.getElementById('userListCount');
 
-    if (countEl) {
-      countEl.textContent = '';
-    }
-
+    if (countEl) countEl.textContent = '';
     if (listEl) {
       listEl.innerHTML = `
         <div class="user-item">
@@ -315,35 +361,34 @@ function renderUserList() {
 
   if (!listEl) return;
 
-  const keyword = String(document.getElementById('userSearchKeyword')?.value || '')
-    .trim()
-    .toLowerCase();
-
-  const activeFilter = String(document.getElementById('userFilterActive')?.value || '')
-    .trim()
-    .toUpperCase();
-
-  const roleFilter = String(document.getElementById('userFilterRole')?.value || '')
-    .trim()
-    .toLowerCase();
+  const keyword = String(document.getElementById('userSearchKeyword')?.value || '').trim().toLowerCase();
+  const activeFilter = String(document.getElementById('userFilterActive')?.value || '').trim().toUpperCase();
+  const roleFilter = String(document.getElementById('userFilterRole')?.value || '').trim().toLowerCase();
+  const clinicFilter = String(document.getElementById('userFilterClinic')?.value || '').trim();
 
   const filteredUsers = allUsers.filter((user) => {
     const name = String(user.user_name || '').toLowerCase();
     const email = String(user.user_email || '').toLowerCase();
     const department = String(user.department || '').toLowerCase();
+    const clinicName = String(user.clinic_name || '').toLowerCase();
+    const teamName = String(user.team_name || '').toLowerCase();
     const active = String(user.active || '').toUpperCase();
     const role = String(user.role || '').toLowerCase();
+    const clinicCode = String(user.clinic_code || '').trim();
 
     const matchesKeyword =
       !keyword ||
       name.includes(keyword) ||
       email.includes(keyword) ||
-      department.includes(keyword);
+      department.includes(keyword) ||
+      clinicName.includes(keyword) ||
+      teamName.includes(keyword);
 
     const matchesActive = !activeFilter || active === activeFilter;
     const matchesRole = !roleFilter || role === roleFilter;
+    const matchesClinic = !clinicFilter || clinicCode === clinicFilter;
 
-    return matchesKeyword && matchesActive && matchesRole;
+    return matchesKeyword && matchesActive && matchesRole && matchesClinic;
   });
 
   if (countEl) {
@@ -365,6 +410,12 @@ function renderUserList() {
       ? '<span class="user-status-badge active">활성</span>'
       : '<span class="user-status-badge inactive">비활성</span>';
 
+    const orgText = user.department || (
+      (user.clinic_name || '') && (user.team_name || '')
+        ? `${user.clinic_name} / ${user.team_name}`
+        : ''
+    );
+
     return `
       <div class="user-item">
         <div class="user-item-top">
@@ -379,7 +430,7 @@ function renderUserList() {
           <span>${escapeHtml(user.role || '')}</span>
         </div>
 
-        <span>${escapeHtml(user.department || '')} / ${escapeHtml(user.phone || '')}</span>
+        <span>${escapeHtml(orgText || '-')} / ${escapeHtml(user.phone || '-')}</span>
         <span>첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
 
         <div class="user-item-actions">
@@ -397,10 +448,18 @@ function renderUserList() {
 }
 
 function clearUserForm() {
-  ['userEmail', 'userName', 'department', 'phone'].forEach((id) => {
+  ['userEmail', 'userName', 'phone'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+
+  const clinicEl = document.getElementById('clinic_code');
+  const teamEl = document.getElementById('team_code');
+  if (clinicEl) clinicEl.value = '';
+  if (teamEl) {
+    teamEl.innerHTML = '<option value="">팀을 선택하세요</option>';
+    teamEl.disabled = true;
+  }
 
   const roleEl = document.getElementById('globalRole');
   if (roleEl) roleEl.value = 'user';
@@ -467,6 +526,7 @@ function resetEditMode(clearMessage = true) {
   }
 
   clearUserForm();
+  initUserOrgSelectors();
 
   if (clearMessage) {
     setAdminMessage('', '');
@@ -478,9 +538,7 @@ function showGlobalLoading(text = '처리 중...') {
   if (!overlay) return;
 
   const textEl = document.getElementById('globalLoadingText');
-  if (textEl) {
-    textEl.textContent = text;
-  }
+  if (textEl) textEl.textContent = text;
 
   overlay.classList.add('is-open');
   overlay.setAttribute('aria-hidden', 'false');
