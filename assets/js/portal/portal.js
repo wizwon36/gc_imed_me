@@ -24,7 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (subEl) {
-    const dept = user.department || '부서 없음';
+    const clinicName = user.clinic_name || '';
+    const teamName = user.team_name || '';
+    const dept = user.department || ((clinicName && teamName) ? `${clinicName} / ${teamName}` : '소속 없음');
     const role = user.role || user.permission || 'user';
     subEl.textContent = `${dept} / ${role}`;
   }
