@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await OrgService.preload();
     await initUserOrgSelectors();
-    initUserFilterClinic();
+    await initUserFilterClinic();
   } catch (error) {
     setAdminMessage(error.message || '조직 정보를 불러오지 못했습니다.', 'error');
   } finally {
@@ -77,6 +77,7 @@ function setAdminMessage(message, type = '') {
 
   el.textContent = message || '';
   el.className = 'message-box';
+
   if (type) {
     el.classList.add(type);
   }
@@ -269,11 +270,10 @@ async function editUser(userEmail) {
     document.getElementById('userActive').value = user.active || 'Y';
 
     await initUserOrgSelectors(user);
-
     setPermissionValues(permissions);
     setEditMode(user);
-    setAdminMessage(`사용자 ${user.user_name || user.user_email} 정보를 불러왔습니다.`, 'success');
 
+    setAdminMessage(`사용자 ${user.user_name || user.user_email} 정보를 불러왔습니다.`, 'success');
     await waitForPaint();
   } catch (error) {
     setAdminMessage(error.message || '사용자 정보를 불러오지 못했습니다.', 'error');
@@ -419,19 +419,25 @@ function renderUserList() {
     return `
       <div class="user-item">
         <div class="user-item-top">
-          <div>
+          <div class="user-item-title">
             <strong>${escapeHtml(user.user_name || '')}</strong>
-            <span>${escapeHtml(user.user_email || '')}</span>
+            <span class="user-item-email">${escapeHtml(user.user_email || '')}</span>
           </div>
         </div>
 
         <div class="user-meta-row">
           ${statusBadge}
-          <span>${escapeHtml(user.role || '')}</span>
+          <span class="user-role-badge">${escapeHtml(user.role || '')}</span>
         </div>
 
-        <span>${escapeHtml(orgText || '-')} / ${escapeHtml(user.phone || '-')}</span>
-        <span>첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
+        <div class="user-info-chips">
+          <span class="user-info-chip">${escapeHtml(orgText || '소속 없음')}</span>
+          <span class="user-info-chip">${escapeHtml(user.phone || '연락처 없음')}</span>
+        </div>
+
+        <div class="user-sub-line">
+          첫 로그인: ${escapeHtml(user.first_login || 'N')}
+        </div>
 
         <div class="user-item-actions">
           <button type="button" class="admin-btn secondary" onclick="editUser('${escapeJs(user.user_email || '')}')">수정</button>
@@ -455,6 +461,7 @@ function clearUserForm() {
 
   const clinicEl = document.getElementById('clinic_code');
   const teamEl = document.getElementById('team_code');
+
   if (clinicEl) clinicEl.value = '';
   if (teamEl) {
     teamEl.innerHTML = '<option value="">팀을 선택하세요</option>';
@@ -474,6 +481,7 @@ function clearUserForm() {
 
 function setPermissionValues(permissions = []) {
   const permissionMap = {};
+
   permissions.forEach((item) => {
     if (item?.app_id) {
       permissionMap[item.app_id] = item.permission || '';
@@ -501,6 +509,7 @@ function setEditMode(user) {
   if (saveBtn) saveBtn.textContent = '사용자 수정';
   if (cancelBtn) cancelBtn.style.display = 'inline-flex';
   if (emailInput) emailInput.disabled = true;
+
   if (passwordHint) {
     passwordHint.innerHTML = '수정 모드에서는 이메일을 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
   }
@@ -521,6 +530,7 @@ function resetEditMode(clearMessage = true) {
   if (saveBtn) saveBtn.textContent = '사용자 등록';
   if (cancelBtn) cancelBtn.style.display = 'none';
   if (emailInput) emailInput.disabled = false;
+
   if (passwordHint) {
     passwordHint.innerHTML = '신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.';
   }
