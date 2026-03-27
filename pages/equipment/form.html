@@ -55,8 +55,17 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">사용부서</label>
-            <input type="text" id="department" class="form-input" placeholder="예: 검진팀" />
+            <label class="form-label">의원 <span class="required">*</span></label>
+            <select id="clinic_code" class="form-select">
+              <option value="">의원을 선택하세요</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">팀 <span class="required">*</span></label>
+            <select id="team_code" class="form-select" disabled>
+              <option value="">팀을 선택하세요</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -135,11 +144,11 @@
         <div class="guide-list">
           <div class="guide-item">
             <div class="guide-title">필수 입력</div>
-            <div class="guide-text">장비명, 모델명, 시리얼번호는 반드시 입력해야 합니다.</div>
+            <div class="guide-text">장비명, 모델명, 의원, 팀, 시리얼번호는 반드시 입력해야 합니다.</div>
           </div>
           <div class="guide-item">
-            <div class="guide-title">중복 주의</div>
-            <div class="guide-text">시리얼번호는 중복 등록되지 않도록 확인해 주세요.</div>
+            <div class="guide-title">조직 선택</div>
+            <div class="guide-text">의원을 먼저 선택하면 해당 의원에 속한 팀만 선택할 수 있습니다.</div>
           </div>
           <div class="guide-item">
             <div class="guide-title">상태값</div>
@@ -163,6 +172,7 @@
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/org-config.js"></script>
   <script src="../../assets/js/equipment/equipment-form.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
