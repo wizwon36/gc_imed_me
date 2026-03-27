@@ -188,6 +188,14 @@ async function handleSubmitEquipment(event) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  qs('#equipmentForm').addEventListener('submit', handleSubmitEquipment);
-  await loadEditDataIfNeeded();
+  showGlobalLoading('조직 정보를 불러오는 중...');
+
+  try {
+    qs('#equipmentForm').addEventListener('submit', handleSubmitEquipment);
+    await loadEditDataIfNeeded();
+  } catch (error) {
+    showMessage(error.message || '초기 화면을 불러오는 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 });
