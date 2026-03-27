@@ -4589,3 +4589,52 @@ button, input, select, textarea {
   padding: 0 18px;
   border-radius: 14px;
 }
+
+.form-side-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.form-side-actions .btn,
+.form-side-actions .form-submit-btn {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 18px;
+  border-radius: 16px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.form-side-actions .form-submit-btn,
+.form-side-actions .btn.btn-primary {
+  background: #0b1b46;
+  color: #fff;
+  border: 1px solid #0b1b46;
+}
+
+.form-side-actions .form-submit-btn:hover,
+.form-side-actions .btn.btn-primary:hover {
+  background: #08173d;
+  border-color: #08173d;
+}
+
+.form-side-actions .btn:not(.btn-primary) {
+  background: #fff;
+  color: #344054;
+  border: 1px solid #d0d5dd;
+}
+
+.form-side-actions .btn:not(.btn-primary):hover {
+  background: #f8fafc;
+}
+
+.form-side-card .guide-list {
+  margin-bottom: 6px;
+}
