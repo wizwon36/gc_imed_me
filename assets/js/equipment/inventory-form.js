@@ -137,7 +137,15 @@ async function handleSubmitInventory(event) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  qs('#inventoryForm').addEventListener('submit', handleSubmitInventory);
-  await OrgService.preload();
-  await loadEquipmentInfo();
+  showGlobalLoading('재고조사 화면을 준비하는 중...');
+
+  try {
+    qs('#inventoryForm').addEventListener('submit', handleSubmitInventory);
+    await OrgService.preload();
+    await loadEquipmentInfo();
+  } catch (error) {
+    showMessage(error.message || '재고조사 화면을 불러오는 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 });
