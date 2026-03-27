@@ -9,8 +9,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
 
-  initEquipmentListPage();
+  showGlobalLoading('조직 정보를 불러오는 중...');
+
+  try {
+    await OrgService.preload();
+    await initEquipmentListPage();
+  } catch (error) {
+    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 });
+
+async function initEquipmentListPage() {
+  await initListOrgFilters();
+
+  qs('#searchBtn').addEventListener('click', loadEquipments);
+  qs('#resetBtn').addEventListener('click', resetSearchForm);
+
+  bindFilterChips();
+  bindEnterSearch();
+  setActiveFilterChip('');
+  applyListViewContext();
+
+  renderInitialEmptyState(
+    '검색 조건을 설정한 뒤 조회해 주세요.',
+    '조회 전에는 결과 요약과 결과 목록이 표시되지 않습니다.'
+  );
+}
 
 function statusLabel(status) {
   const map = {
@@ -55,6 +81,7 @@ function toggleResultsUI(show) {
   const summaryRow = qs('#summaryRow');
   const resultSection = qs('#resultSection');
   const heroResultBadge = qs('#heroResultBadge');
+
   if (summaryRow) {
     summaryRow.classList.toggle('is-hidden', !show);
   }
@@ -109,20 +136,6 @@ function updateSummary(items) {
   qs('#resultCountText').textContent = `총 ${formatNumber(total)}건`;
 }
 
-function renderInitialEmptyState(message, description = '') {
-  const list = qs('#equipmentCardList');
-  if (!list) return;
-
-  list.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-state-title">${escapeHtml(message)}</div>
-      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
-    </div>
-  `;
-
-  updateSummary([]);
-}
-
 function renderEquipmentCards(items) {
   const list = qs('#equipmentCardList');
 
@@ -152,7 +165,7 @@ function renderEquipmentCards(items) {
 
       <div class="equipment-meta-grid">
         <div class="equipment-meta-item">
-          <span class="equipment-meta-label">사용부서</span>
+          <span class="equipment-meta-label">의원 / 팀</span>
           <span class="equipment-meta-value">${safeText(item.department)}</span>
         </div>
 
@@ -213,7 +226,7 @@ function applyListViewContext() {
     },
     default: {
       title: '장비 목록',
-      desc: '장비번호, 장비명, 모델명, 부서, 상태 기준으로 빠르게 검색할 수 있습니다.',
+      desc: '장비번호, 장비명, 모델명, 의원, 팀, 상태 기준으로 빠르게 검색할 수 있습니다.',
       chip: ''
     }
   };
@@ -234,12 +247,20 @@ function applyListViewContext() {
   return view;
 }
 
+async function initListOrgFilters() {
+  await OrgService.bindClinicTeam(qs('#clinic_code'), qs('#team_code'), {
+    clinicEmptyLabel: '전체 의원',
+    teamEmptyLabel: '전체 팀'
+  });
+}
+
 async function loadEquipments() {
   clearMessage();
 
   const params = {
     keyword: qs('#keyword').value.trim(),
-    department: qs('#department').value.trim(),
+    clinic_code: qs('#clinic_code').value,
+    team_code: qs('#team_code').value,
     status: getSelectedStatus(),
     manufacturer: qs('#manufacturer').value.trim()
   };
@@ -249,7 +270,7 @@ async function loadEquipments() {
   try {
     toggleResultsUI(true);
     renderEquipmentListSkeleton();
-    showGlobalLoading();
+    showGlobalLoading('장비를 조회하는 중...');    
     setLoading(searchBtn, true, '조회 중...');
 
     const result = await apiGet('listEquipments', params);
@@ -268,8 +289,12 @@ async function loadEquipments() {
 
 function resetSearchForm() {
   qs('#keyword').value = '';
-  qs('#department').value = '';
+  qs('#clinic_code').value = '';
+
+  qs('#team_code').innerHTML = '<option value="">전체 팀</option>';
+  qs('#team_code').disabled = true;
   qs('#manufacturer').value = '';
+
   setActiveFilterChip('');
 
   renderInitialEmptyState(
@@ -300,7 +325,7 @@ function bindFilterChips() {
 }
 
 function bindEnterSearch() {
-  ['#keyword', '#department', '#manufacturer'].forEach(selector => {
+  ['#keyword', '#clinic_code', '#team_code', '#manufacturer'].forEach(selector => {
     const el = qs(selector);
     if (!el) return;
 
@@ -312,18 +337,3 @@ function bindEnterSearch() {
     });
   });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  qs('#searchBtn').addEventListener('click', loadEquipments);
-  qs('#resetBtn').addEventListener('click', resetSearchForm);
-
-  bindFilterChips();
-  bindEnterSearch();
-  setActiveFilterChip('');
-  applyListViewContext();
-
-  renderInitialEmptyState(
-    '검색 조건을 설정한 뒤 조회해 주세요.',
-    '조회 전에는 결과 요약과 결과 목록이 표시되지 않습니다.'
-  );
-});
