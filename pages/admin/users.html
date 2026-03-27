@@ -6,445 +6,87 @@
   <title>사용자 관리</title>
   <link rel="stylesheet" href="../../assets/css/common.css">
   <style>
-    body {
-      margin: 0;
-      background: #f5f7fb;
-      color: #0f172a;
-    }
-
-    .admin-shell {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
-
-    .admin-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 20px;
-      padding: 18px 20px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      border-radius: 20px;
-      background: #fff;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-    }
-
-    .admin-title {
-      margin: 0;
-      font-size: 26px;
-      line-height: 1.25;
-    }
-
-    .admin-desc {
-      margin: 6px 0 0;
-      font-size: 14px;
-      color: #667085;
-    }
-
-    .admin-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .admin-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 42px;
-      padding: 0 16px;
-      border: 1px solid #d0d5dd;
-      border-radius: 12px;
-      background: #fff;
-      font-weight: 800;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .admin-btn.primary {
-      background: #0b1b46;
-      color: #fff;
-      border-color: #0b1b46;
-    }
-
-    .admin-btn.secondary {
-      background: #eef2ff;
-      color: #1d4ed8;
-      border-color: #c7d2fe;
-    }
-
-    .admin-btn.warning {
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #fdba74;
-    }
-
-    .admin-btn.danger {
-      background: #fef2f2;
-      color: #b42318;
-      border-color: #fecaca;
-    }
-
-    .admin-btn.success {
-      background: #ecfdf3;
-      color: #027a48;
-      border-color: #abefc6;
-    }
-
-    .admin-grid {
-      display: grid;
-      grid-template-columns: minmax(560px, 1.5fr) minmax(300px, 0.8fr);
-      gap: 16px;
-      align-items: start;
-    }
-
-    .admin-card {
-      padding: 20px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      border-radius: 20px;
-      background: #fff;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-      min-width: 0;
-    }
-
-    .admin-card h2 {
-      margin: 0 0 6px;
-      font-size: 18px;
-    }
-
-    .admin-card p {
-      margin: 0 0 16px;
-      font-size: 13px;
-      color: #667085;
-    }
-
-    .admin-form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .admin-field {
-      display: grid;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .admin-field.full {
-      grid-column: 1 / -1;
-    }
-
-    .admin-field label {
-      font-size: 13px;
-      font-weight: 800;
-      color: #344054;
-    }
-
-    .admin-field input,
-    .admin-field select {
-      width: 100%;
-      min-height: 48px;
-      padding: 0 14px;
-      border: 1px solid #d0d5dd;
-      border-radius: 14px;
-      font-size: 14px;
-      box-sizing: border-box;
-      background: #fff;
-    }
-
-    .admin-input-hint {
-      font-size: 12px;
-      color: #667085;
-      margin-top: -2px;
-      line-height: 1.5;
-    }
-
-    .permission-box {
-      display: grid;
-      gap: 10px;
-      padding: 14px;
-      border: 1px solid #e4e7ec;
-      border-radius: 14px;
-      background: #f8fafc;
-    }
-
-    .permission-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 180px;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .permission-row span {
-      display: flex;
-      align-items: center;
-      min-height: 44px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #344054;
-      line-height: 1.4;
-      word-break: keep-all;
-    }
-
-    .permission-row select {
-      width: 100%;
-      min-width: 0;
-      min-height: 44px;
-    }
-
-    .admin-submit-wrap {
-      grid-column: 1 / -1;
-      display: grid;
-      gap: 10px;
-    }
-
-    .admin-submit-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .admin-submit-actions .admin-btn {
-      flex: 1;
-      min-height: 52px;
-      border-radius: 16px;
-      font-size: 15px;
-    }
-
-    .message-box {
-      min-height: 20px;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .message-box.error {
-      color: #b42318;
-    }
-
-    .message-box.success {
-      color: #027a48;
-    }
-
-    .user-filter-bar {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-      align-items: end;
-    }
-    
-    .user-filter-search {
-      grid-column: 1 / -1;
-      min-width: 0;
-    }
-    
-    .user-filter-select,
-    .user-filter-button {
-      min-width: 0;
-    }
-    
-    .user-filter-button .admin-btn {
-      width: 100%;
-      min-height: 48px;
-    }
-
-    .user-list-count {
-      margin-bottom: 12px;
-      font-size: 12px;
-      color: #667085;
-    }
-
-    .user-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .user-item {
-      padding: 14px;
-      border: 1px solid #e4e7ec;
-      border-radius: 14px;
-      background: #fff;
-    }
-
-    .user-item-top {
-      display: flex;
-      align-items: start;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .user-item strong {
-      display: block;
-      font-size: 15px;
-      margin-bottom: 4px;
-    }
-
-    .user-item span {
-      display: block;
-      font-size: 12px;
-      color: #667085;
-      line-height: 1.5;
-    }
-
-    .user-meta-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 6px;
-    }
-
-    .user-status-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 24px;
-      padding: 0 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .user-status-badge.active {
-      background: #ecfdf3;
-      color: #027a48;
-      border: 1px solid #abefc6;
-    }
-
-    .user-status-badge.inactive {
-      background: #fef2f2;
-      color: #b42318;
-      border: 1px solid #fecaca;
-    }
-
-    .user-item-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .user-item-actions .admin-btn {
-      min-height: 36px;
-      padding: 0 12px;
-      border-radius: 10px;
-      font-size: 13px;
-    }
-
-    #globalLoading {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 23, 42, 0.22);
-      backdrop-filter: blur(2px);
-    }
-
-    #globalLoading.is-open {
-      display: flex;
-    }
-
-    .global-loading__dialog {
-      min-width: 200px;
-      max-width: calc(100vw - 48px);
-      padding: 20px 24px;
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .global-loading__spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid #d0d5dd;
-      border-top-color: #0b1b46;
-      border-radius: 50%;
-      animation: globalLoadingSpin 0.8s linear infinite;
-      flex: 0 0 auto;
-    }
-
-    .global-loading__text {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    @keyframes globalLoadingSpin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @media (max-width: 900px) {
-      .admin-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
+    body { margin: 0; background: #f5f7fb; color: #0f172a; }
+    .admin-shell { max-width: 1280px; margin: 0 auto; padding: 24px 16px 40px; }
+    .admin-topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; padding:18px 20px; border:1px solid rgba(15,23,42,.08); border-radius:20px; background:#fff; box-shadow:0 6px 20px rgba(15,23,42,.05); }
+    .admin-title { margin:0; font-size:26px; line-height:1.25; }
+    .admin-desc { margin:6px 0 0; font-size:14px; color:#667085; }
+    .admin-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .admin-btn { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 16px; border:1px solid #d0d5dd; border-radius:12px; background:#fff; font-weight:800; cursor:pointer; text-decoration:none; color:inherit; }
+    .admin-btn.primary { background:#0b1b46; color:#fff; border-color:#0b1b46; }
+    .admin-btn.secondary { background:#eef2ff; color:#1d4ed8; border-color:#c7d2fe; }
+    .admin-btn.warning { background:#fff7ed; color:#c2410c; border-color:#fdba74; }
+    .admin-btn.danger { background:#fef2f2; color:#b42318; border-color:#fecaca; }
+    .admin-btn.success { background:#ecfdf3; color:#027a48; border-color:#abefc6; }
+    .admin-grid { display:grid; grid-template-columns:minmax(560px,1.5fr) minmax(300px,.8fr); gap:16px; align-items:start; }
+    .admin-card { padding:20px; border:1px solid rgba(15,23,42,.08); border-radius:20px; background:#fff; box-shadow:0 6px 20px rgba(15,23,42,.05); min-width:0; }
+    .admin-card h2 { margin:0 0 6px; font-size:18px; }
+    .admin-card p { margin:0 0 16px; font-size:13px; color:#667085; }
+    .admin-form-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+    .admin-field { display:grid; gap:6px; min-width:0; }
+    .admin-field.full { grid-column:1 / -1; }
+    .admin-field label { font-size:13px; font-weight:800; color:#344054; }
+    .admin-field input, .admin-field select { width:100%; min-height:48px; padding:0 14px; border:1px solid #d0d5dd; border-radius:14px; font-size:14px; box-sizing:border-box; background:#fff; }
+    .admin-input-hint { font-size:12px; color:#667085; margin-top:-2px; line-height:1.5; }
+    .permission-box { display:grid; gap:10px; padding:14px; border:1px solid #e4e7ec; border-radius:14px; background:#f8fafc; }
+    .permission-row { display:grid; grid-template-columns:minmax(0,1fr) 180px; gap:12px; align-items:center; }
+    .permission-row span { display:flex; align-items:center; min-height:44px; font-size:14px; font-weight:700; color:#344054; line-height:1.4; word-break:keep-all; }
+    .permission-row select { width:100%; min-width:0; min-height:44px; }
+    .admin-submit-wrap { grid-column:1 / -1; display:grid; gap:10px; }
+    .admin-submit-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .admin-submit-actions .admin-btn { flex:1; min-height:52px; border-radius:16px; font-size:15px; }
+    .message-box { min-height:20px; font-size:13px; line-height:1.5; }
+    .message-box.error { color:#b42318; }
+    .message-box.success { color:#027a48; }
+    .user-filter-bar { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:14px; align-items:end; }
+    .user-filter-search { grid-column:1 / -1; min-width:0; }
+    .user-list-count { margin-bottom:12px; font-size:12px; color:#667085; }
+    .user-list { display:grid; gap:10px; }
+    .user-item { padding:14px; border:1px solid #e4e7ec; border-radius:14px; background:#fff; }
+    .user-item-top { display:flex; align-items:start; justify-content:space-between; gap:12px; margin-bottom:8px; }
+    .user-item strong { display:block; font-size:15px; margin-bottom:4px; }
+    .user-item span { display:block; font-size:12px; color:#667085; line-height:1.5; }
+    .user-meta-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+    .user-status-badge { display:inline-flex; align-items:center; justify-content:center; min-height:24px; padding:0 10px; border-radius:999px; font-size:11px; font-weight:800; line-height:1; }
+    .user-status-badge.active { background:#ecfdf3; color:#027a48; border:1px solid #abefc6; }
+    .user-status-badge.inactive { background:#fef2f2; color:#b42318; border:1px solid #fecaca; }
+    .user-item-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .user-item-actions .admin-btn { min-height:36px; padding:0 12px; border-radius:10px; font-size:13px; }
+    #globalLoading { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; background:rgba(15,23,42,.22); backdrop-filter:blur(2px); }
+    #globalLoading.is-open { display:flex; }
+    .global-loading__dialog { min-width:200px; max-width:calc(100vw - 48px); padding:20px 24px; border-radius:18px; background:#fff; box-shadow:0 16px 40px rgba(15,23,42,.18); display:flex; align-items:center; gap:12px; }
+    .global-loading__spinner { width:24px; height:24px; border:3px solid #d0d5dd; border-top-color:#0b1b46; border-radius:50%; animation:globalLoadingSpin .8s linear infinite; flex:0 0 auto; }
+    .global-loading__text { font-size:14px; font-weight:700; color:#0f172a; }
+    @keyframes globalLoadingSpin { to { transform:rotate(360deg); } }
+    @media (max-width: 900px) { .admin-grid { grid-template-columns:1fr; } }
     @media (max-width: 640px) {
-      .admin-topbar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .admin-actions {
-        width: 100%;
-      }
-
-      .admin-actions .admin-btn {
-        flex: 1;
-      }
-
-      .admin-form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .admin-field.full,
-      .admin-submit-wrap {
-        grid-column: auto;
-      }
-
-      .permission-row {
-        grid-template-columns: 1fr;
-      }
-
-      .user-filter-bar {
-        grid-template-columns: 1fr;
-      }
-    
-      .user-filter-search {
-        grid-column: auto;
-      }
+      .admin-topbar { flex-direction:column; align-items:stretch; }
+      .admin-actions { width:100%; }
+      .admin-actions .admin-btn { flex:1; }
+      .admin-form-grid, .user-filter-bar, .permission-row { grid-template-columns:1fr; }
+      .admin-field.full, .admin-submit-wrap { grid-column:auto; }
     }
   </style>
 </head>
 <body>
-  <main class="admin-shell">
-    <section class="admin-topbar">
+  <div class="admin-shell">
+    <div class="admin-topbar">
       <div>
         <h1 class="admin-title">사용자 관리</h1>
-        <p class="admin-desc">사용자 등록, 수정, 앱별 권한 관리를 진행합니다.</p>
+        <p class="admin-desc">사용자 등록, 권한 관리, 비밀번호 초기화, 활성 여부를 관리합니다.</p>
       </div>
       <div class="admin-actions">
-        <button class="admin-btn" type="button" onclick="location.href='../../portal.html'">HOME</button>
-        <button class="admin-btn" type="button" id="logoutBtn">로그아웃</button>
+        <a class="admin-btn" href="../../portal.html">포털로 이동</a>
+        <button type="button" class="admin-btn danger" id="logoutBtn">로그아웃</button>
       </div>
-    </section>
+    </div>
 
-    <section class="admin-grid">
-      <div class="admin-card">
+    <div class="admin-grid">
+      <section class="admin-card">
         <h2 id="formTitle">사용자 등록</h2>
         <p id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
+
+        <div id="adminUserMessage" class="message-box"></div>
 
         <div class="admin-form-grid">
           <div class="admin-field">
@@ -454,17 +96,26 @@
 
           <div class="admin-field">
             <label for="userName">이름</label>
-            <input type="text" id="userName" placeholder="사용자 이름">
+            <input type="text" id="userName" placeholder="홍길동">
           </div>
 
           <div class="admin-field">
-            <label for="department">부서</label>
-            <input type="text" id="department" placeholder="예: 운영팀">
+            <label for="clinic_code">의원</label>
+            <select id="clinic_code" disabled>
+              <option value="">의원 불러오는 중...</option>
+            </select>
+          </div>
+
+          <div class="admin-field">
+            <label for="team_code">팀</label>
+            <select id="team_code" disabled>
+              <option value="">팀 불러오는 중...</option>
+            </select>
           </div>
 
           <div class="admin-field">
             <label for="phone">연락처</label>
-            <input type="text" id="phone" placeholder="예: 010-0000-0000">
+            <input type="text" id="phone" placeholder="010-0000-0000">
           </div>
 
           <div class="admin-field">
@@ -479,13 +130,12 @@
           <div class="admin-field">
             <label for="userActive">사용 여부</label>
             <select id="userActive">
-              <option value="Y">Y</option>
-              <option value="N">N</option>
+              <option value="Y">활성</option>
+              <option value="N">비활성</option>
             </select>
           </div>
 
           <div class="admin-field full">
-            <label>초기 비밀번호</label>
             <div class="admin-input-hint" id="passwordHint">
               신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.
             </div>
@@ -493,8 +143,6 @@
 
           <div class="admin-field full">
             <label>앱별 권한</label>
-            <div class="admin-input-hint">권한을 선택한 앱만 저장됩니다.</div>
-
             <div class="permission-box">
               <div class="permission-row">
                 <span>의료장비 관리</span>
@@ -511,7 +159,6 @@
                 <select data-app-id="logs" class="app-permission">
                   <option value="">권한 없음</option>
                   <option value="view">view</option>
-                  <option value="edit">edit</option>
                   <option value="admin">admin</option>
                 </select>
               </div>
@@ -531,24 +178,23 @@
           <div class="admin-submit-wrap">
             <div class="admin-submit-actions">
               <button type="button" class="admin-btn primary" id="saveUserBtn">사용자 등록</button>
-              <button type="button" class="admin-btn secondary" id="cancelEditBtn" style="display:none;">수정 취소</button>
+              <button type="button" class="admin-btn" id="cancelEditBtn" style="display:none;">수정 취소</button>
             </div>
-            <div id="adminUserMessage" class="message-box"></div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="admin-card user-list-card">
-        <h2>등록 사용자</h2>
-        <p>조건을 입력한 뒤 조회 버튼으로 목록을 불러옵니다..</p>
+      <section class="admin-card">
+        <h2>사용자 목록</h2>
+        <p>조회 후 조건에 맞는 사용자를 찾고 수정하거나 상태를 변경할 수 있습니다.</p>
 
         <div class="user-filter-bar">
           <div class="admin-field user-filter-search">
             <label for="userSearchKeyword">검색</label>
-            <input type="text" id="userSearchKeyword" placeholder="이름, 이메일, 부서 검색">
+            <input type="text" id="userSearchKeyword" placeholder="이름, 이메일, 의원, 팀 검색">
           </div>
 
-          <div class="admin-field user-filter-select">
+          <div class="admin-field">
             <label for="userFilterActive">상태</label>
             <select id="userFilterActive">
               <option value="">전체</option>
@@ -557,7 +203,7 @@
             </select>
           </div>
 
-          <div class="admin-field user-filter-select">
+          <div class="admin-field">
             <label for="userFilterRole">역할</label>
             <select id="userFilterRole">
               <option value="">전체</option>
@@ -567,32 +213,43 @@
             </select>
           </div>
 
-          <div class="admin-field user-filter-button">
-            <label>&nbsp;</label>
-            <button type="button" class="admin-btn primary" id="searchUsersBtn">조회</button>
+          <div class="admin-field">
+            <label for="userFilterClinic">의원</label>
+            <select id="userFilterClinic" disabled>
+              <option value="">의원 불러오는 중...</option>
+            </select>
+          </div>
+
+          <div class="admin-field">
+            <button type="button" class="admin-btn secondary" id="searchUsersBtn">사용자 조회</button>
           </div>
         </div>
 
         <div id="userListCount" class="user-list-count"></div>
         <div id="userList" class="user-list">
           <div class="user-item">
-            <span>검색 조건을 입력하거나 필터를 선택한 뒤 조회 버튼을 눌러주세요.</span>
+            <span>조회 버튼을 눌러 사용자 목록을 불러오세요.</span>
           </div>
         </div>
-      </div>
-    </section>
-  </main>
-
-  <div id="globalLoading" aria-hidden="true">
-    <div class="global-loading__dialog" role="status" aria-live="polite">
-      <div class="global-loading__spinner" aria-hidden="true"></div>
-      <div class="global-loading__text" id="globalLoadingText">처리 중...</div>
+      </section>
     </div>
   </div>
 
   <script src="../../assets/js/core/config.js"></script>
-  <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
+  <script>
+    window.auth.requireAuth();
+  </script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/org-config.js"></script>
   <script src="../../assets/js/admin/admin-users.js"></script>
+
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
+    </div>
+  </div>
 </body>
 </html>
