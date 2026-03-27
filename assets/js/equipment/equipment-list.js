@@ -1,17 +1,17 @@
 let CURRENT_EQUIPMENT_PERMISSION = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const user = window.auth.requireAuth();
-  if (!user) return;
-
-  const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-  if (!ok) return;
-
-  CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
-
-  showGlobalLoading('조직 정보를 불러오는 중...');
+  showGlobalLoading('목록 화면을 준비하는 중...');
 
   try {
+    const user = window.auth.requireAuth();
+    if (!user) return;
+
+    const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    if (!ok) return;
+
+    CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
+
     await OrgService.preload();
     await initEquipmentListPage();
   } catch (error) {
