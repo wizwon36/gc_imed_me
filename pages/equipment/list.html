@@ -28,7 +28,7 @@
       <div class="hero-copy">
         <h1 class="page-title hero-title" id="listPageTitle">장비 목록</h1>
         <div class="hero-subtext" id="listPageDesc">
-          장비번호, 장비명, 모델명, 부서, 상태 기준으로 빠르게 검색할 수 있습니다.
+          장비번호, 장비명, 모델명, 의원, 팀, 상태 기준으로 빠르게 검색할 수 있습니다.
         </div>
         <div id="listContextChip" class="list-context-chip is-hidden"></div>
       </div>
@@ -58,13 +58,17 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="department">사용부서</label>
-          <input
-            type="text"
-            id="department"
-            class="form-input"
-            placeholder="예: 검진팀"
-          />
+          <label class="form-label" for="clinic_code">의원</label>
+          <select id="clinic_code" class="form-select" disabled>
+            <option value="">의원 불러오는 중...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="team_code">팀</label>
+          <select id="team_code" class="form-select" disabled>
+            <option value="">팀 불러오는 중...</option>
+          </select>
         </div>
         
         <div class="form-group">
@@ -142,6 +146,7 @@
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/org-config.js"></script>
   <script src="../../assets/js/equipment/equipment-list.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
