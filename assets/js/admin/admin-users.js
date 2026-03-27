@@ -66,7 +66,7 @@ async function initUserOrgSelectors(user = {}) {
 async function initUserFilterClinic() {
   await OrgService.fillClinicSelect(document.getElementById('userFilterClinic'), {
     includeEmpty: true,
-    emptyLabel: '전체 의원',
+    emptyLabel: '전체',
     selectedValue: ''
   });
 }
