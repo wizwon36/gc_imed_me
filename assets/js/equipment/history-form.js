@@ -129,7 +129,15 @@ async function handleSubmitHistory(event) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  qs('#historyForm').addEventListener('submit', handleSubmitHistory);
-  await OrgService.preload();
-  await loadEquipmentInfo();
+  showGlobalLoading('이력 등록 화면을 준비하는 중...');
+
+  try {
+    qs('#historyForm').addEventListener('submit', handleSubmitHistory);
+    await OrgService.preload();
+    await loadEquipmentInfo();
+  } catch (error) {
+    showMessage(error.message || '이력 등록 화면을 불러오는 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 });
