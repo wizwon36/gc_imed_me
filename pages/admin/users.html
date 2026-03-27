@@ -63,6 +63,9 @@
       text-decoration: none;
       color: inherit;
       box-sizing: border-box;
+      white-space: nowrap;
+      word-break: keep-all;
+      line-break: strict;
     }
 
     .admin-btn.primary {
@@ -97,7 +100,7 @@
 
     .admin-grid {
       display: grid;
-      grid-template-columns: minmax(560px, 1.5fr) minmax(300px, .8fr);
+      grid-template-columns: minmax(560px, 1.5fr) minmax(320px, .9fr);
       gap: 16px;
       align-items: start;
     }
@@ -230,17 +233,41 @@
       color: #027a48;
     }
 
-    .user-filter-bar {
+    .user-filter-wrap {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr)) 140px;
       gap: 12px;
       margin-bottom: 14px;
-      align-items: end;
     }
 
     .user-filter-search {
-      grid-column: 1 / -1;
+      display: grid;
+      gap: 6px;
+    }
+
+    .user-filter-search label,
+    .user-filter-row .admin-field label {
+      font-size: 13px;
+      font-weight: 800;
+      color: #344054;
+    }
+
+    .user-filter-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) 140px;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .user-filter-row .admin-field {
       min-width: 0;
+    }
+
+    #searchUsersBtn {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 14px;
+      white-space: nowrap;
+      writing-mode: horizontal-tb;
     }
 
     .user-list-count {
@@ -376,12 +403,6 @@
       font-size: 13px;
     }
 
-    #searchUsersBtn {
-      width: 100%;
-      min-height: 48px;
-      border-radius: 14px;
-    }
-
     #globalLoading {
       position: fixed;
       inset: 0;
@@ -426,9 +447,7 @@
     }
 
     @keyframes globalLoadingSpin {
-      to {
-        transform: rotate(360deg);
-      }
+      to { transform: rotate(360deg); }
     }
 
     @media (max-width: 900px) {
@@ -436,11 +455,11 @@
         grid-template-columns: 1fr;
       }
 
-      .user-filter-bar {
+      .user-filter-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .user-filter-search {
+      .user-filter-row .admin-field:last-child {
         grid-column: 1 / -1;
       }
     }
@@ -461,7 +480,7 @@
 
       .admin-form-grid,
       .permission-row,
-      .user-filter-bar {
+      .user-filter-row {
         grid-template-columns: 1fr;
       }
 
@@ -470,10 +489,11 @@
         grid-column: auto;
       }
 
-      .user-filter-search {
-        grid-column: auto;
+      .admin-submit-actions {
+        flex-direction: column;
       }
 
+      .admin-submit-actions .admin-btn,
       #searchUsersBtn {
         width: 100%;
       }
@@ -600,40 +620,42 @@
         <h2>사용자 목록</h2>
         <p>조회 후 조건에 맞는 사용자를 찾고 수정하거나 상태를 변경할 수 있습니다.</p>
 
-        <div class="user-filter-bar">
-          <div class="admin-field user-filter-search">
+        <div class="user-filter-wrap">
+          <div class="user-filter-search">
             <label for="userSearchKeyword">검색</label>
             <input type="text" id="userSearchKeyword" placeholder="이름, 이메일, 의원, 팀 검색">
           </div>
 
-          <div class="admin-field">
-            <label for="userFilterActive">상태</label>
-            <select id="userFilterActive">
-              <option value="">전체</option>
-              <option value="Y">활성</option>
-              <option value="N">비활성</option>
-            </select>
-          </div>
+          <div class="user-filter-row">
+            <div class="admin-field">
+              <label for="userFilterActive">상태</label>
+              <select id="userFilterActive">
+                <option value="">전체</option>
+                <option value="Y">활성</option>
+                <option value="N">비활성</option>
+              </select>
+            </div>
 
-          <div class="admin-field">
-            <label for="userFilterRole">역할</label>
-            <select id="userFilterRole">
-              <option value="">전체</option>
-              <option value="user">user</option>
-              <option value="manager">manager</option>
-              <option value="admin">admin</option>
-            </select>
-          </div>
+            <div class="admin-field">
+              <label for="userFilterRole">역할</label>
+              <select id="userFilterRole">
+                <option value="">전체</option>
+                <option value="user">user</option>
+                <option value="manager">manager</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
 
-          <div class="admin-field">
-            <label for="userFilterClinic">의원</label>
-            <select id="userFilterClinic" disabled>
-              <option value="">의원 불러오는 중...</option>
-            </select>
-          </div>
+            <div class="admin-field">
+              <label for="userFilterClinic">의원</label>
+              <select id="userFilterClinic" disabled>
+                <option value="">의원 불러오는 중...</option>
+              </select>
+            </div>
 
-          <div class="admin-field">
-            <button type="button" class="admin-btn secondary" id="searchUsersBtn">사용자 조회</button>
+            <div class="admin-field">
+              <button type="button" class="admin-btn secondary" id="searchUsersBtn">사용자 조회</button>
+            </div>
           </div>
         </div>
 
