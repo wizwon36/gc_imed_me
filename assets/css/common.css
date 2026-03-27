@@ -1,4 +1,4 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 
 :root {
   --bg: #f3f5f7;
@@ -394,29 +394,29 @@ button, input, select, textarea {
   .grid-3,
   .form-grid,
   .kpi-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .search-bar {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .detail-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .container {
-    padding: 16px 12px 28px;
+  padding: 16px 12px 28px;
   }
 
   .page-title {
-    font-size: 32px;
+  font-size: 32px;
   }
 
   .section-title {
-    font-size: 20px;
+  font-size: 20px;
   }
 
   .nav-link,
@@ -424,30 +424,25 @@ button, input, select, textarea {
   .form-input,
   .form-select,
   .form-textarea {
-    min-height: 52px;
+  min-height: 52px;
   }
 
   .card {
-    border-radius: 22px;
-    padding: 18px;
+  border-radius: 22px;
+  padding: 18px;
   }
 }
 
 @media (max-width: 480px) {
   .page-title {
-    font-size: 28px;
+  font-size: 28px;
   }
 
   .card {
-    border-radius: 18px;
-    padding: 16px;
+  border-radius: 18px;
+  padding: 16px;
   }
 }
-
-
-/* =========================
-   equipment-list redesign
-========================= */
 
 .app-shell {
   padding-top: 28px;
@@ -717,73 +712,73 @@ button, input, select, textarea {
 
 @media (max-width: 1024px) {
   .hero-title {
-    font-size: 40px;
+  font-size: 40px;
   }
 
   .equipment-card-list {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .equipment-summary-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .container.app-shell {
-    padding-top: 20px;
+  padding-top: 20px;
   }
 
   .hero-panel {
-    flex-direction: column;
-    gap: 16px;
+  flex-direction: column;
+  gap: 16px;
   }
 
   .hero-title {
-    font-size: 34px;
+  font-size: 34px;
   }
 
   .hero-subtext {
-    font-size: 16px;
+  font-size: 16px;
   }
 
   .hero-actions {
-    width: 100%;
+  width: 100%;
   }
 
   .hero-actions .nav-link {
-    flex: 1 1 calc(50% - 5px);
-    min-height: 52px;
+  flex: 1 1 calc(50% - 5px);
+  min-height: 52px;
   }
 
   .equipment-search-card {
-    border-radius: 22px;
-    padding: 18px;
+  border-radius: 22px;
+  padding: 18px;
   }
 
   .equipment-search-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .equipment-summary-row {
-    grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   }
 
   .equipment-card-top {
-    flex-direction: column;
-    align-items: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
   }
 
   .equipment-top-right {
-    align-items: flex-start;
+  align-items: flex-start;
   }
 
   .equipment-id {
-    text-align: left;
+  text-align: left;
   }
 
   .equipment-meta-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .search-input-lg,
@@ -792,36 +787,32 @@ button, input, select, textarea {
   .nav-link,
   .form-input,
   .form-select {
-    min-height: 52px;
+  min-height: 52px;
   }
 }
 
 @media (max-width: 480px) {
   .hero-title {
-    font-size: 30px;
+  font-size: 30px;
   }
 
   .equipment-summary-row {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .equipment-item-card {
-    padding: 18px;
-    border-radius: 20px;
+  padding: 18px;
+  border-radius: 20px;
   }
 
   .equipment-title {
-    font-size: 21px;
+  font-size: 21px;
   }
 
   .summary-pill-value {
-    font-size: 24px;
+  font-size: 24px;
   }
 }
-
-/* =========================
-   equipment-detail redesign
-========================= */
 
 .detail-shell {
   padding-top: 28px;
@@ -1041,81 +1032,77 @@ button, input, select, textarea {
 
 @media (max-width: 1024px) {
   .detail-hero-title {
-    font-size: 38px;
+  font-size: 38px;
   }
 
   .detail-main-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .detail-section-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .detail-shell {
-    padding-top: 20px;
+  padding-top: 20px;
   }
 
   .detail-hero {
-    flex-direction: column;
-    gap: 16px;
+  flex-direction: column;
+  gap: 16px;
   }
 
   .detail-hero-title {
-    font-size: 32px;
+  font-size: 32px;
   }
 
   .detail-hero-actions {
-    width: 100%;
+  width: 100%;
   }
 
   .detail-hero-actions .nav-link {
-    flex: 1 1 calc(50% - 5px);
-    min-height: 52px;
+  flex: 1 1 calc(50% - 5px);
+  min-height: 52px;
   }
 
   .detail-info-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .timeline-card-head {
-    flex-direction: column;
-    align-items: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
   }
 
   .timeline-meta {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .detail-action-buttons .btn,
   .detail-hero-actions .nav-link {
-    min-height: 52px;
+  min-height: 52px;
   }
 }
 
 @media (max-width: 480px) {
   .detail-hero-title {
-    font-size: 28px;
+  font-size: 28px;
   }
 
   .detail-info-card,
   .detail-qr-card,
   .detail-list-card,
   .detail-action-bar {
-    border-radius: 22px;
+  border-radius: 22px;
   }
 
   .info-tile,
   .timeline-card {
-    border-radius: 16px;
+  border-radius: 16px;
   }
 }
-
-/* =========================
-   form pages redesign
-========================= */
 
 .form-shell {
   padding-top: 28px;
@@ -1227,52 +1214,52 @@ button, input, select, textarea {
 
 @media (max-width: 1024px) {
   .form-hero-title {
-    font-size: 38px;
+  font-size: 38px;
   }
 
   .form-page-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .form-side-card {
-    position: static;
+  position: static;
   }
 }
 
 @media (max-width: 768px) {
   .form-shell {
-    padding-top: 20px;
+  padding-top: 20px;
   }
 
   .form-hero {
-    flex-direction: column;
-    gap: 16px;
+  flex-direction: column;
+  gap: 16px;
   }
 
   .form-hero-title {
-    font-size: 32px;
+  font-size: 32px;
   }
 
   .form-hero-subtext {
-    font-size: 16px;
+  font-size: 16px;
   }
 
   .form-hero-actions {
-    width: 100%;
+  width: 100%;
   }
 
   .form-hero-actions .nav-link {
-    flex: 1 1 calc(50% - 5px);
-    min-height: 52px;
+  flex: 1 1 calc(50% - 5px);
+  min-height: 52px;
   }
 
   .form-grid-modern {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .form-main-card,
   .form-side-card {
-    border-radius: 22px;
+  border-radius: 22px;
   }
 
   .form-input,
@@ -1280,23 +1267,19 @@ button, input, select, textarea {
   .form-textarea,
   .btn,
   .nav-link {
-    min-height: 52px;
+  min-height: 52px;
   }
 }
 
 @media (max-width: 480px) {
   .form-hero-title {
-    font-size: 28px;
+  font-size: 28px;
   }
 
   .guide-item {
-    border-radius: 16px;
+  border-radius: 16px;
   }
 }
-
-/* =========================
-   dashboard redesign
-========================= */
 
 .dashboard-shell {
   padding-top: 28px;
@@ -1665,73 +1648,73 @@ button, input, select, textarea {
 
 @media (max-width: 1024px) {
   .dashboard-hero {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .dashboard-hero-title {
-    font-size: 40px;
+  font-size: 40px;
   }
 
   .dashboard-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-section-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard-shell {
-    padding-top: 20px;
+  padding-top: 20px;
   }
 
   .dashboard-hero-title {
-    font-size: 32px;
+  font-size: 32px;
   }
 
   .dashboard-hero-subtext {
-    font-size: 16px;
+  font-size: 16px;
   }
 
   .dashboard-kpi-grid {
-    grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   }
 
   .dashboard-action-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .dashboard-list-item,
   .dashboard-status-item,
   .dashboard-rank-item {
-    flex-direction: column;
-    align-items: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
   }
 
   .dashboard-list-side {
-    text-align: left;
-    max-width: none;
+  text-align: left;
+  max-width: none;
   }
 
   .dashboard-hero-btn {
-    width: 100%;
+  width: 100%;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-hero-title {
-    font-size: 28px;
+  font-size: 28px;
   }
 
   .dashboard-kpi-grid {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .dashboard-kpi-card,
   .dashboard-panel,
   .dashboard-hero-side {
-    border-radius: 22px;
+  border-radius: 22px;
   }
 
   .dashboard-list-item,
@@ -1739,14 +1722,9 @@ button, input, select, textarea {
   .dashboard-rank-item,
   .dashboard-status-item,
   .dashboard-action-card {
-    border-radius: 16px;
+  border-radius: 16px;
   }
 }
-
-
-/* =========================
-   global tone overrides
-========================= */
 
 .hero-subtext,
 .dashboard-hero-subtext,
@@ -1838,19 +1816,15 @@ button, input, select, textarea {
   .detail-hero-title,
   .form-hero-title,
   .dashboard-hero-title {
-    font-size: 32px;
+  font-size: 32px;
   }
 
   .hero-subtext,
   .dashboard-hero-subtext,
   .form-hero-subtext {
-    font-size: 16px;
+  font-size: 16px;
   }
 }
-
-/* =========================
-   dashboard fine tuning
-========================= */
 
 .top-brand-bar {
   display: flex;
@@ -1943,41 +1917,37 @@ button, input, select, textarea {
 
 @media (max-width: 768px) {
   .top-brand-bar {
-    flex-direction: column;
-    align-items: stretch;
+  flex-direction: column;
+  align-items: stretch;
   }
 
   .top-brand-actions {
-    width: 100%;
+  width: 100%;
   }
 
   .top-brand-actions .nav-link {
-    flex: 1 1 calc(50% - 5px);
+  flex: 1 1 calc(50% - 5px);
   }
 
   .top-brand-title {
-    font-size: 17px;
+  font-size: 17px;
   }
 
   .dashboard-main-desc {
-    font-size: 16px;
+  font-size: 16px;
   }
 }
 
 @media (max-width: 480px) {
   .top-brand-texts {
-    gap: 6px;
+  gap: 6px;
   }
 
   .top-brand-sub {
-    width: 100%;
-    font-size: 13px;
+  width: 100%;
+  font-size: 13px;
   }
 }
-
-/* =========================
-   equipment-list fine tuning
-========================= */
 
 .equipment-list-shell {
   padding-top: 20px;
@@ -2060,28 +2030,24 @@ button, input, select, textarea {
 
 @media (max-width: 1024px) {
   .equipment-list-hero {
-    flex-direction: column;
-    align-items: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
   }
 
   .equipment-list-hero-badge {
-    width: 100%;
+  width: 100%;
   }
 }
 
 @media (max-width: 768px) {
   .equipment-search-grid-tuned {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .equipment-list-hero-badge {
-    min-width: auto;
+  min-width: auto;
   }
 }
-
-/* =========================
-   equipment-detail fine tuning
-========================= */
 
 .detail-shell-tuned {
   padding-top: 20px;
@@ -2149,13 +2115,9 @@ button, input, select, textarea {
 
 @media (max-width: 768px) {
   .detail-hero-desc {
-    font-size: 15px;
+  font-size: 15px;
   }
 }
-
-/* =========================
-   form pages fine tuning
-========================= */
 
 .form-shell-tuned {
   padding-top: 20px;
@@ -2207,13 +2169,9 @@ button, input, select, textarea {
 
 @media (max-width: 768px) {
   .form-shell-tuned {
-    padding-top: 16px;
+  padding-top: 16px;
   }
 }
-
-/* =========================
-   label print fine tuning
-========================= */
 
 .label-shell {
   padding-top: 20px;
@@ -2350,107 +2308,103 @@ button, input, select, textarea {
 
 @media (max-width: 768px) {
   .label-hero-title {
-    font-size: 30px;
+  font-size: 30px;
   }
 
   .device-label {
-    width: 100%;
-    grid-template-columns: 1fr;
-    min-height: auto;
+  width: 100%;
+  grid-template-columns: 1fr;
+  min-height: auto;
   }
 
   .qr-panel {
-    align-items: flex-start;
+  align-items: flex-start;
   }
 
   .label-qr-box {
-    width: 132px;
-    min-height: 132px;
+  width: 132px;
+  min-height: 132px;
   }
 }
 
 @media print {
   body {
-    background: #fff;
+  background: #fff;
   }
 
   .no-print,
   .top-brand-bar,
   .label-hero,
   #messageBox {
-    display: none !important;
+  display: none !important;
   }
 
   .container.label-shell {
-    max-width: none;
-    padding: 0;
+  max-width: none;
+  padding: 0;
   }
 
   .label-preview-wrap {
-    margin: 0;
+  margin: 0;
   }
 
   .label-preview-card {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  background: transparent !important;
   }
 
   .label-sheet {
-    padding: 0;
-    justify-content: flex-start;
+  padding: 0;
+  justify-content: flex-start;
   }
 
   .device-label {
-    width: 90mm;
-    min-height: 55mm;
-    border: 1px solid #111827;
-    border-radius: 5mm;
-    padding: 5mm;
-    box-shadow: none;
-    grid-template-columns: 1fr 32mm;
-    gap: 4mm;
+  width: 90mm;
+  min-height: 55mm;
+  border: 1px solid #111827;
+  border-radius: 5mm;
+  padding: 5mm;
+  box-shadow: none;
+  grid-template-columns: 1fr 32mm;
+  gap: 4mm;
   }
 
   .label-hospital {
-    font-size: 10pt;
-    margin-bottom: 2mm;
+  font-size: 10pt;
+  margin-bottom: 2mm;
   }
 
   .label-title {
-    font-size: 15pt;
-    margin-bottom: 3mm;
+  font-size: 15pt;
+  margin-bottom: 3mm;
   }
 
   .label-row {
-    grid-template-columns: 20mm 1fr;
-    gap: 2mm;
+  grid-template-columns: 20mm 1fr;
+  gap: 2mm;
   }
 
   .label-key {
-    font-size: 8pt;
+  font-size: 8pt;
   }
 
   .label-value {
-    font-size: 8.5pt;
+  font-size: 8.5pt;
   }
 
   .label-qr-box {
-    width: 28mm;
-    min-height: 28mm;
-    padding: 1.5mm;
-    border-radius: 3mm;
+  width: 28mm;
+  min-height: 28mm;
+  padding: 1.5mm;
+  border-radius: 3mm;
   }
 
   .qr-caption {
-    font-size: 6pt;
+  font-size: 6pt;
   }
 }
-
-/* =========================
-   detail layout optimization
-========================= */
 
 .detail-main-grid,
 .detail-main-grid-tuned {
@@ -2488,18 +2442,14 @@ button, input, select, textarea {
 @media (max-width: 1024px) {
   .detail-main-grid,
   .detail-main-grid-tuned {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 
   .detail-qr-card,
   .detail-qr-card-tuned {
-    position: static;
+  position: static;
   }
 }
-
-/* =========================
-   skeleton
-========================= */
 
 .skeleton {
   position: relative;
@@ -2509,42 +2459,36 @@ button, input, select, textarea {
 }
 
 .skeleton::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -150%;
   width: 150%;
   height: 100%;
   background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.6),
-    transparent
+  90deg,
+  transparent,
+  rgba(255,255,255,0.6),
+  transparent
   );
   animation: skeleton-loading 1.2s infinite;
 }
 
 @keyframes skeleton-loading {
   100% {
-    left: 100%;
+  left: 100%;
   }
 }
 
-/* 텍스트용 */
 .skeleton-text {
   height: 14px;
   margin-bottom: 8px;
 }
 
-/* 카드용 */
 .skeleton-card {
   height: 120px;
   border-radius: 16px;
 }
-
-/* =========================
-   unified mobile overrides
-========================= */
 
 @media (max-width: 768px) {
   /* global cards */
@@ -2556,8 +2500,8 @@ button, input, select, textarea {
   .form-main-card,
   .form-side-card,
   .label-preview-card {
-    border: 1.5px solid #cfd6de;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  border: 1.5px solid #cfd6de;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
   }
 
   .dashboard-panel,
@@ -2567,8 +2511,8 @@ button, input, select, textarea {
   .form-main-card,
   .form-side-card,
   .label-preview-card {
-    position: relative;
-    overflow: hidden;
+  position: relative;
+  overflow: hidden;
   }
 
   .dashboard-panel::before,
@@ -2578,393 +2522,389 @@ button, input, select, textarea {
   .form-main-card::before,
   .form-side-card::before,
   .label-preview-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #0b1630, #3b82f6);
-    opacity: 0.85;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #0b1630, #3b82f6);
+  opacity: 0.85;
   }
 
   .section-head {
-    padding-bottom: 12px;
-    margin-bottom: 14px;
-    border-bottom: 1px solid #e3e8ee;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #e3e8ee;
   }
 
   .dashboard-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   }
 
   .dashboard-kpi-card {
-    min-height: 170px;
-    padding: 18px;
+  min-height: 170px;
+  padding: 18px;
   }
 
   .dashboard-kpi-label {
-    font-size: 14px;
-    margin-bottom: 10px;
+  font-size: 14px;
+  margin-bottom: 10px;
   }
 
   .dashboard-kpi-value {
-    font-size: 56px;
-    line-height: 1;
-    margin-bottom: 12px;
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 12px;
   }
 
   .dashboard-kpi-sub {
-    font-size: 13px;
-    line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.45;
   }
 
   .dashboard-status-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   }
 
   .dashboard-status-item {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    min-height: 112px;
-    padding: 14px 14px 12px;
-    gap: 10px;
-    border: 1.5px solid #d8dee6;
-    background: #f8fafc;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: 112px;
+  padding: 14px 14px 12px;
+  gap: 10px;
+  border: 1.5px solid #d8dee6;
+  background: #f8fafc;
   }
 
   .dashboard-status-left {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  width: 100%;
   }
 
   .dashboard-status-desc {
-    display: none;
+  display: none;
   }
 
   .dashboard-status-count {
-    position: absolute;
-    right: 14px;
-    bottom: 12px;
-    margin-top: 0;
-    font-size: 34px;
-    line-height: 1;
-    font-weight: 800;
-    text-align: right;
-    letter-spacing: -0.02em;
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  margin-top: 0;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
+  text-align: right;
+  letter-spacing: -0.02em;
   }
 
   .dashboard-list-item,
   .dashboard-rank-item,
   .dashboard-action-card {
-    border: 1.5px solid #d8dee6;
-    background: #f8fafc;
+  border: 1.5px solid #d8dee6;
+  background: #f8fafc;
   }
 
   .dashboard-list-item-compact {
-    padding: 14px;
-    border-radius: 18px;
-    gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  gap: 10px;
   }
 
   .dashboard-list-item-compact .dashboard-list-title {
-    font-size: 15px;
-    line-height: 1.3;
+  font-size: 15px;
+  line-height: 1.3;
   }
 
   .dashboard-list-item-compact .dashboard-list-desc {
-    font-size: 13px;
-    line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.45;
   }
 
   .dashboard-list-item-compact .dashboard-list-meta-compact {
-    margin-top: 6px;
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--text-muted);
-    word-break: break-word;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+  word-break: break-word;
   }
 
   .dashboard-list-item-compact .dashboard-list-side,
   .dashboard-list-item-compact .dashboard-list-side-sub {
-    font-size: 11px;
-    color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-muted);
   }
 
   .dashboard-list-item-compact .status-badge,
   .dashboard-list-item-compact .dashboard-mini-chip {
-    min-height: 28px;
-    padding: 0 10px;
-    font-size: 12px;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
   }
 
   #maintenanceAlertList .empty-box {
-    padding: 22px 18px;
-    font-size: 15px;
-    line-height: 1.55;
-    word-break: keep-all;
+  padding: 22px 18px;
+  font-size: 15px;
+  line-height: 1.55;
+  word-break: keep-all;
   }
 
   #maintenanceAlertList .empty-box br {
-    display: none;
+  display: none;
   }
 
   /* detail page */
   .detail-shell-tuned {
-    padding-top: 16px;
+  padding-top: 16px;
   }
 
   .detail-hero-tuned {
-    margin-bottom: 16px;
+  margin-bottom: 16px;
   }
 
   .detail-hero-title {
-    font-size: 32px;
-    line-height: 1.12;
-    margin-bottom: 8px;
+  font-size: 32px;
+  line-height: 1.12;
+  margin-bottom: 8px;
   }
 
   .detail-hero-meta {
-    gap: 8px;
+  gap: 8px;
   }
 
   .detail-hero-id {
-    font-size: 13px;
+  font-size: 13px;
   }
 
   .detail-hero-desc {
-    margin-top: 10px;
-    font-size: 15px;
-    line-height: 1.55;
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.55;
   }
 
   .detail-action-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   }
 
   .detail-action-buttons .btn {
-    width: 100%;
-    min-height: 50px;
-    padding: 0 12px;
-    font-size: 14px;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 12px;
+  font-size: 14px;
   }
 
   .detail-main-grid,
   .detail-main-grid-tuned,
   .detail-section-grid,
   .detail-section-grid-tuned {
-    grid-template-columns: 1fr;
-    gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 14px;
   }
 
   .detail-qr-card,
   .detail-qr-card-tuned {
-    position: static;
+  position: static;
   }
 
   .detail-qr-card-tuned .detail-qr-box,
   .detail-qr-box {
-    min-height: 160px;
-    padding: 14px;
+  min-height: 160px;
+  padding: 14px;
   }
 
   .detail-qr-card-tuned .detail-qr-box img,
   .detail-qr-box img {
-    max-width: 150px !important;
-    height: auto !important;
+  max-width: 150px !important;
+  height: auto !important;
   }
 
   .detail-qr-url {
-    font-size: 11px;
-    line-height: 1.45;
-    padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 10px 12px;
   }
 
   .detail-info-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 10px;
   }
 
   .info-tile {
-    padding: 14px;
-    border-radius: 16px;
-    border: 1.5px solid #d8dee6;
-    background: #f8fafc;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid #d8dee6;
+  background: #f8fafc;
   }
 
   .info-tile-label {
-    margin-bottom: 6px;
-    font-size: 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
   }
 
   .info-tile-value {
-    font-size: 14px;
-    line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.5;
   }
 
   .detail-timeline-list {
-    gap: 10px;
+  gap: 10px;
   }
 
   .timeline-card {
-    padding: 14px;
-    border-radius: 16px;
-    border: 1.5px solid #d8dee6;
-    background: #f8fafc;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid #d8dee6;
+  background: #f8fafc;
   }
 
   .timeline-card-head {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
   }
 
   .timeline-title {
-    font-size: 16px;
-    margin-bottom: 2px;
+  font-size: 16px;
+  margin-bottom: 2px;
   }
 
   .timeline-date {
-    font-size: 12px;
+  font-size: 12px;
   }
 
   .timeline-badge {
-    min-height: 28px;
-    padding: 4px 10px;
-    font-size: 11px;
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 11px;
   }
 
   .timeline-meta {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
   }
 
   .timeline-meta-item {
-    padding: 10px;
-    border-radius: 12px;
-    border: 1px solid #dbe2ea;
-    background: #ffffff;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #dbe2ea;
+  background: #ffffff;
   }
 
   .timeline-meta-label {
-    font-size: 11px;
-    margin-bottom: 4px;
+  font-size: 11px;
+  margin-bottom: 4px;
   }
 
   .timeline-meta-value {
-    font-size: 13px;
+  font-size: 13px;
   }
 
   .timeline-desc {
-    font-size: 13px;
-    line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.55;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   }
 
   .dashboard-kpi-card {
-    min-height: 150px;
-    padding: 16px;
+  min-height: 150px;
+  padding: 16px;
   }
 
   .dashboard-kpi-value {
-    font-size: 48px;
+  font-size: 48px;
   }
 
   .dashboard-status-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   }
 
   .dashboard-status-item {
-    min-height: 104px;
-    padding: 13px 12px 12px;
-    border-radius: 18px;
+  min-height: 104px;
+  padding: 13px 12px 12px;
+  border-radius: 18px;
   }
 
   .dashboard-status-count {
-    right: 12px;
-    bottom: 10px;
-    font-size: 30px;
+  right: 12px;
+  bottom: 10px;
+  font-size: 30px;
   }
 
   .dashboard-status-list .status-badge {
-    min-height: 34px;
-    padding: 0 14px;
-    font-size: 13px;
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
   }
 
   .dashboard-list-item-compact {
-    padding: 12px;
-    border-radius: 16px;
+  padding: 12px;
+  border-radius: 16px;
   }
 
   .dashboard-list-item-compact .dashboard-list-title {
-    font-size: 14px;
+  font-size: 14px;
   }
 
   .dashboard-list-item-compact .dashboard-list-desc {
-    font-size: 12px;
+  font-size: 12px;
   }
 
   .dashboard-list-item-compact .dashboard-list-meta-compact {
-    font-size: 11px;
+  font-size: 11px;
   }
 
   #maintenanceAlertList .empty-box {
-    padding: 20px 16px;
-    font-size: 14px;
-    line-height: 1.5;
+  padding: 20px 16px;
+  font-size: 14px;
+  line-height: 1.5;
   }
 
   .detail-hero-title {
-    font-size: 28px;
+  font-size: 28px;
   }
 
   .detail-action-buttons {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   }
 
   .detail-action-buttons .btn {
-    min-height: 48px;
-    font-size: 13px;
-    border-radius: 14px;
+  min-height: 48px;
+  font-size: 13px;
+  border-radius: 14px;
   }
 
   .detail-qr-card-tuned .detail-qr-box,
   .detail-qr-box {
-    min-height: 144px;
+  min-height: 144px;
   }
 
   .detail-qr-card-tuned .detail-qr-box img,
   .detail-qr-box img {
-    max-width: 136px !important;
+  max-width: 136px !important;
   }
 
   .timeline-meta {
-    grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
   }
 }
-
-/* =========================
-   dashboard quick actions tuning
-========================= */
 
 .dashboard-action-grid--enhanced {
   display: grid;
@@ -3050,41 +2990,37 @@ button, input, select, textarea {
 
 @media (min-width: 769px) {
   .dashboard-action-grid--enhanced {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-action-card--primary {
-    grid-column: 1 / -1;
+  grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard-action-card {
-    min-height: 76px;
-    padding: 14px;
-    border-radius: 16px;
-    gap: 10px;
+  min-height: 76px;
+  padding: 14px;
+  border-radius: 16px;
+  gap: 10px;
   }
 
   .dashboard-action-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    font-size: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 16px;
   }
 
   .dashboard-action-title {
-    font-size: 14px;
+  font-size: 14px;
   }
 
   .dashboard-action-desc {
-    font-size: 11px;
+  font-size: 11px;
   }
 }
-
-/* =========================
-   equipment list context
-========================= */
 
 .list-context-chip {
   display: inline-flex;
@@ -3130,10 +3066,6 @@ button, input, select, textarea {
   line-height: 1.5;
   color: #667085;
 }
-
-/* =========================
-   equipment list search grouping
-========================= */
 
 .search-filter-block,
 .search-action-block {
@@ -3191,74 +3123,43 @@ button, input, select, textarea {
   display: none !important;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 220px;
-  padding: 28px 16px;
-  text-align: center;
-  border: 1px dashed #d8dee8;
-  border-radius: 18px;
-  background: #fcfdff;
-}
-
-.empty-state-title {
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1.4;
-  color: #0f172a;
-}
-
-.empty-state-desc {
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #667085;
-}
-
 @media (max-width: 768px) {
   .search-filter-block,
   .search-action-block {
-    margin-top: 16px;
+  margin-top: 16px;
   }
 
   .search-chip-row,
   .equipment-search-actions {
-    padding: 10px;
-    border-radius: 14px;
+  padding: 10px;
+  border-radius: 14px;
   }
 
   .equipment-search-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
+  flex-direction: row;
+  flex-wrap: wrap;
   }
 
   .equipment-search-actions .btn {
-    flex: 1 1 calc(50% - 5px);
-    min-width: 0;
+  flex: 1 1 calc(50% - 5px);
+  min-width: 0;
   }
 
   .search-block-label {
-    margin-bottom: 8px;
-    font-size: 11px;
+  margin-bottom: 8px;
+  font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
   .equipment-search-actions {
-    gap: 8px;
+  gap: 8px;
   }
 
   .equipment-search-actions .btn {
-    flex: 1 1 100%;
+  flex: 1 1 100%;
   }
 }
-
-/* =========================
-   equipment list search polish
-========================= */
 
 .equipment-search-card,
 .search-panel,
@@ -3284,20 +3185,17 @@ button, input, select, textarea {
   margin-bottom: 18px;
 }
 
-/* 입력 필드 묶음 간격 */
 .equipment-search-form,
 .search-form-grid {
   gap: 14px;
 }
 
-/* 검색어 입력 강조 */
 #keyword {
   min-height: 60px;
   font-size: 16px;
   border-radius: 18px;
 }
 
-/* 일반 입력/셀렉트 */
 #department,
 #manufacturer,
 #status {
@@ -3305,7 +3203,6 @@ button, input, select, textarea {
   border-radius: 16px;
 }
 
-/* label 간격 */
 .field-group label,
 .form-field label,
 .search-field label {
@@ -3338,7 +3235,6 @@ button, input, select, textarea {
   letter-spacing: -0.01em;
 }
 
-/* 상태칩 박스 */
 .search-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -3349,7 +3245,6 @@ button, input, select, textarea {
   background: linear-gradient(180deg, #f8fbff 0%, #f4f8fd 100%);
 }
 
-/* 실행버튼 박스 */
 .equipment-search-actions {
   display: flex;
   align-items: center;
@@ -3361,7 +3256,6 @@ button, input, select, textarea {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-/* 칩 스타일 미세 조정 */
 .filter-chip {
   min-height: 42px;
   padding: 0 18px;
@@ -3374,7 +3268,6 @@ button, input, select, textarea {
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
 }
 
-/* 버튼 높이 통일 */
 .equipment-search-actions .btn,
 .search-submit-btn,
 #resetBtn {
@@ -3416,87 +3309,87 @@ button, input, select, textarea {
   .equipment-search-card .card-body,
   .search-panel .card-body,
   .search-form-card .card-body {
-    padding: 18px;
+  padding: 18px;
   }
 
   .equipment-search-card,
   .search-panel,
   .search-form-card {
-    border-radius: 18px;
+  border-radius: 18px;
   }
 
   .equipment-search-form,
   .search-form-grid {
-    gap: 12px;
+  gap: 12px;
   }
 
   #keyword {
-    min-height: 54px;
-    font-size: 15px;
-    border-radius: 16px;
+  min-height: 54px;
+  font-size: 15px;
+  border-radius: 16px;
   }
 
   #department,
   #manufacturer,
   #status {
-    min-height: 50px;
-    border-radius: 14px;
+  min-height: 50px;
+  border-radius: 14px;
   }
 
   .field-group label,
   .form-field label,
   .search-field label {
-    margin-bottom: 6px;
-    font-size: 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
   }
 
   .search-filter-block {
-    margin-top: 16px;
+  margin-top: 16px;
   }
 
   .search-action-block {
-    margin-top: 14px;
-    padding-top: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
   }
 
   .search-chip-row {
-    gap: 8px;
-    padding: 10px;
-    border-radius: 14px;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
   }
 
   .filter-chip {
-    min-height: 38px;
-    padding: 0 14px;
-    font-size: 13px;
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
   }
 
   .equipment-search-actions {
-    gap: 8px;
-    padding: 10px;
-    border-radius: 14px;
-    flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  flex-wrap: wrap;
   }
 
   .equipment-search-actions .btn,
   .search-submit-btn,
   #resetBtn {
-    min-height: 44px;
-    border-radius: 12px;
-    font-size: 14px;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
   }
 
   .equipment-search-actions .btn {
-    flex: 1 1 calc(50% - 4px);
-    min-width: 0;
+  flex: 1 1 calc(50% - 4px);
+  min-width: 0;
   }
 
   #summaryRow {
-    margin-top: 14px;
+  margin-top: 14px;
   }
 
   #resultSection {
-    margin-top: 16px;
+  margin-top: 16px;
   }
 }
 
@@ -3504,28 +3397,24 @@ button, input, select, textarea {
   .equipment-search-card .card-body,
   .search-panel .card-body,
   .search-form-card .card-body {
-    padding: 16px;
+  padding: 16px;
   }
 
   .search-chip-row {
-    gap: 6px;
+  gap: 6px;
   }
 
   .filter-chip {
-    flex: 0 0 auto;
-    min-height: 36px;
-    padding: 0 12px;
-    font-size: 12px;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
   }
 
   .equipment-search-actions .btn {
-    flex: 1 1 100%;
+  flex: 1 1 100%;
   }
 }
-
-/* =========================
-   equipment list skeleton
-========================= */
 
 .equipment-card-skeleton-list {
   display: grid;
@@ -3546,7 +3435,7 @@ button, input, select, textarea {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
   transform: translateX(-100%);
   animation: equipmentSkeletonShimmer 1.2s infinite;
 }
@@ -3556,63 +3445,45 @@ button, input, select, textarea {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(#eef2f6 0 0) 20px 20px / 180px 18px no-repeat,
-    linear-gradient(#f3f5f8 0 0) 20px 48px / 120px 14px no-repeat,
-    linear-gradient(#eef2f6 0 0) calc(100% - 110px) 24px / 90px 28px no-repeat,
-    linear-gradient(#f3f5f8 0 0) 20px 92px / calc(50% - 30px) 12px no-repeat,
-    linear-gradient(#f3f5f8 0 0) calc(50% + 10px) 92px / calc(50% - 30px) 12px no-repeat,
-    linear-gradient(#f3f5f8 0 0) 20px 122px / calc(50% - 30px) 12px no-repeat,
-    linear-gradient(#f3f5f8 0 0) calc(50% + 10px) 122px / calc(50% - 30px) 12px no-repeat,
-    linear-gradient(#eef2f6 0 0) calc(100% - 110px) calc(100% - 42px) / 88px 32px no-repeat;
+  linear-gradient(#eef2f6 0 0) 20px 20px / 180px 18px no-repeat,
+  linear-gradient(#f3f5f8 0 0) 20px 48px / 120px 14px no-repeat,
+  linear-gradient(#eef2f6 0 0) calc(100% - 110px) 24px / 90px 28px no-repeat,
+  linear-gradient(#f3f5f8 0 0) 20px 92px / calc(50% - 30px) 12px no-repeat,
+  linear-gradient(#f3f5f8 0 0) calc(50% + 10px) 92px / calc(50% - 30px) 12px no-repeat,
+  linear-gradient(#f3f5f8 0 0) 20px 122px / calc(50% - 30px) 12px no-repeat,
+  linear-gradient(#f3f5f8 0 0) calc(50% + 10px) 122px / calc(50% - 30px) 12px no-repeat,
+  linear-gradient(#eef2f6 0 0) calc(100% - 110px) calc(100% - 42px) / 88px 32px no-repeat;
 }
 
 @keyframes equipmentSkeletonShimmer {
   100% {
-    transform: translateX(100%);
+  transform: translateX(100%);
   }
 }
 
 @media (max-width: 768px) {
   .equipment-card-skeleton {
-    min-height: 164px;
-    border-radius: 16px;
+  min-height: 164px;
+  border-radius: 16px;
   }
 
   .equipment-card-skeleton-list {
-    gap: 12px;
+  gap: 12px;
   }
 
   .equipment-card-skeleton::after {
-    background:
-      linear-gradient(#eef2f6 0 0) 16px 18px / 140px 16px no-repeat,
-      linear-gradient(#f3f5f8 0 0) 16px 42px / 96px 12px no-repeat,
-      linear-gradient(#eef2f6 0 0) calc(100% - 92px) 20px / 76px 24px no-repeat,
-      linear-gradient(#f3f5f8 0 0) 16px 82px / calc(50% - 24px) 11px no-repeat,
-      linear-gradient(#f3f5f8 0 0) calc(50% + 8px) 82px / calc(50% - 24px) 11px no-repeat,
-      linear-gradient(#f3f5f8 0 0) 16px 108px / calc(50% - 24px) 11px no-repeat,
-      linear-gradient(#f3f5f8 0 0) calc(50% + 8px) 108px / calc(50% - 24px) 11px no-repeat,
-      linear-gradient(#eef2f6 0 0) calc(100% - 92px) calc(100% - 36px) / 74px 28px no-repeat;
+  background:
+  linear-gradient(#eef2f6 0 0) 16px 18px / 140px 16px no-repeat,
+  linear-gradient(#f3f5f8 0 0) 16px 42px / 96px 12px no-repeat,
+  linear-gradient(#eef2f6 0 0) calc(100% - 92px) 20px / 76px 24px no-repeat,
+  linear-gradient(#f3f5f8 0 0) 16px 82px / calc(50% - 24px) 11px no-repeat,
+  linear-gradient(#f3f5f8 0 0) calc(50% + 8px) 82px / calc(50% - 24px) 11px no-repeat,
+  linear-gradient(#f3f5f8 0 0) 16px 108px / calc(50% - 24px) 11px no-repeat,
+  linear-gradient(#f3f5f8 0 0) calc(50% + 8px) 108px / calc(50% - 24px) 11px no-repeat,
+  linear-gradient(#eef2f6 0 0) calc(100% - 92px) calc(100% - 36px) / 74px 28px no-repeat;
   }
 }
 
-/* =========================
-   equipment list label + spacing system
-========================= */
-
-/* 검색 카드 전체 리듬 통일 */
-.equipment-search-card,
-.search-panel,
-.search-form-card {
-  border-radius: 22px;
-}
-
-.equipment-search-card .card-body,
-.search-panel .card-body,
-.search-form-card .card-body {
-  padding: 24px;
-}
-
-/* 상단 제목/설명 */
 .equipment-search-card .section-title,
 .search-panel .section-title,
 .search-form-card .section-title {
@@ -3632,13 +3503,11 @@ button, input, select, textarea {
   color: #667085;
 }
 
-/* 입력 필드 공통 그룹 간격 */
 .equipment-search-form,
 .search-form-grid {
   gap: 16px;
 }
 
-/* 검색 카드 내부 모든 라벨 통일 */
 .equipment-search-card label,
 .search-panel label,
 .search-form-card label,
@@ -3654,14 +3523,12 @@ button, input, select, textarea {
   color: #344054;
 }
 
-/* 검색어 단독행 */
 .equipment-search-card .field-group--keyword,
 .search-panel .field-group--keyword,
 .search-form-card .field-group--keyword {
   margin-bottom: 2px;
 }
 
-/* 인풋 높이 통일 */
 #keyword,
 #department,
 #status,
@@ -3686,7 +3553,6 @@ button, input, select, textarea {
   border-radius: 16px;
 }
 
-/* placeholder 톤 통일 */
 #keyword::placeholder,
 #department::placeholder,
 #manufacturer::placeholder {
@@ -3694,22 +3560,14 @@ button, input, select, textarea {
   opacity: 1;
 }
 
-/* 셀렉트 텍스트 높이 안정화 */
 #status {
   line-height: 1.2;
 }
 
-/* 필드 블록 위아래 간격 통일 */
 .field-group,
 .form-field,
 .search-field {
   margin: 0;
-}
-
-/* 빠른 상태 선택 / 실행 블록 공통 리듬 */
-.search-filter-block,
-.search-action-block {
-  margin-top: 18px;
 }
 
 .search-action-block {
@@ -3717,12 +3575,10 @@ button, input, select, textarea {
   border-top: 1px dashed #d9e0ea;
 }
 
-/* 블록 라벨 통일 */
 .search-block-label {
   margin-bottom: 10px;
 }
 
-/* 상태칩 그룹 */
 .search-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -3733,7 +3589,6 @@ button, input, select, textarea {
   background: #f8fbff;
 }
 
-/* 칩 버튼 높이 통일 */
 .filter-chip {
   min-height: 40px;
   padding: 0 16px;
@@ -3743,7 +3598,6 @@ button, input, select, textarea {
   line-height: 1;
 }
 
-/* 실행 버튼 그룹 */
 .equipment-search-actions {
   display: flex;
   align-items: center;
@@ -3754,7 +3608,6 @@ button, input, select, textarea {
   background: #fff;
 }
 
-/* 버튼 높이 통일 */
 .equipment-search-actions .btn,
 .search-submit-btn,
 #resetBtn {
@@ -3770,134 +3623,116 @@ button, input, select, textarea {
   min-width: 108px;
 }
 
-#resetBtn {
-  min-width: 96px;
-}
-
-/* 검색어 1행 + 하단 3필드 정렬 리듬 */
 .equipment-search-form > .field-group:first-child,
 .search-form-grid > .field-group:first-child {
   margin-bottom: 2px;
 }
 
-/* 결과 영역과 검색 카드 사이 간격도 통일 */
-#summaryRow {
-  margin-top: 16px;
-}
-
-#resultSection {
-  margin-top: 18px;
-}
-
-/* =========================
-   tablet / mobile
-========================= */
-
 @media (max-width: 768px) {
   .equipment-search-card,
   .search-panel,
   .search-form-card {
-    border-radius: 18px;
+  border-radius: 18px;
   }
 
   .equipment-search-card .card-body,
   .search-panel .card-body,
   .search-form-card .card-body {
-    padding: 18px;
+  padding: 18px;
   }
 
   .equipment-search-card .section-title,
   .search-panel .section-title,
   .search-form-card .section-title {
-    margin-bottom: 5px;
-    font-size: 17px;
+  margin-bottom: 5px;
+  font-size: 17px;
   }
 
   .equipment-search-card .sub-text,
   .search-panel .sub-text,
   .search-form-card .sub-text {
-    margin-bottom: 16px;
-    font-size: 13px;
-    line-height: 1.5;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
   }
 
   .equipment-search-form,
   .search-form-grid {
-    gap: 14px;
+  gap: 14px;
   }
 
   .equipment-search-card label,
   .search-panel label,
   .search-form-card label,
   .search-block-label {
-    min-height: 18px;
-    margin-bottom: 7px;
-    font-size: 12px;
+  min-height: 18px;
+  margin-bottom: 7px;
+  font-size: 12px;
   }
 
   #keyword {
-    min-height: 54px;
-    padding: 0 14px;
-    font-size: 15px;
-    border-radius: 16px;
+  min-height: 54px;
+  padding: 0 14px;
+  font-size: 15px;
+  border-radius: 16px;
   }
 
   #department,
   #status,
   #manufacturer {
-    min-height: 50px;
-    padding: 0 14px;
-    font-size: 14px;
-    border-radius: 14px;
+  min-height: 50px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 14px;
   }
 
   .search-filter-block,
   .search-action-block {
-    margin-top: 16px;
+  margin-top: 16px;
   }
 
   .search-action-block {
-    padding-top: 14px;
+  padding-top: 14px;
   }
 
   .search-chip-row {
-    gap: 8px;
-    padding: 10px;
-    border-radius: 14px;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
   }
 
   .filter-chip {
-    min-height: 38px;
-    padding: 0 14px;
-    font-size: 13px;
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
   }
 
   .equipment-search-actions {
-    gap: 8px;
-    padding: 10px;
-    border-radius: 14px;
-    flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  flex-wrap: wrap;
   }
 
   .equipment-search-actions .btn,
   .search-submit-btn,
   #resetBtn {
-    min-height: 44px;
-    border-radius: 12px;
-    font-size: 14px;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
   }
 
   .equipment-search-actions .btn {
-    flex: 1 1 calc(50% - 4px);
-    min-width: 0;
+  flex: 1 1 calc(50% - 4px);
+  min-width: 0;
   }
 
   #summaryRow {
-    margin-top: 14px;
+  margin-top: 14px;
   }
 
   #resultSection {
-    margin-top: 16px;
+  margin-top: 16px;
   }
 }
 
@@ -3905,46 +3740,46 @@ button, input, select, textarea {
   .equipment-search-card .card-body,
   .search-panel .card-body,
   .search-form-card .card-body {
-    padding: 16px;
+  padding: 16px;
   }
 
   .equipment-search-form,
   .search-form-grid {
-    gap: 12px;
+  gap: 12px;
   }
 
   .equipment-search-card label,
   .search-panel label,
   .search-form-card label,
   .search-block-label {
-    margin-bottom: 6px;
-    font-size: 11px;
+  margin-bottom: 6px;
+  font-size: 11px;
   }
 
   #keyword {
-    min-height: 52px;
-    font-size: 14px;
+  min-height: 52px;
+  font-size: 14px;
   }
 
   #department,
   #status,
   #manufacturer {
-    min-height: 48px;
-    font-size: 14px;
+  min-height: 48px;
+  font-size: 14px;
   }
 
   .search-chip-row {
-    gap: 6px;
+  gap: 6px;
   }
 
   .filter-chip {
-    min-height: 36px;
-    padding: 0 12px;
-    font-size: 12px;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
   }
 
   .equipment-search-actions .btn {
-    flex: 1 1 100%;
+  flex: 1 1 100%;
   }
 }
 
@@ -3959,18 +3794,12 @@ button, input, select, textarea {
   gap: 12px;
 }
 
-/* =========================
-   equipment list compact tune
-========================= */
-
-/* 검색 카드 전체 높이 압축 */
 .equipment-search-card .card-body,
 .search-panel .card-body,
 .search-form-card .card-body {
   padding: 20px;
 }
 
-/* 제목/설명 간격 더 조밀하게 */
 .equipment-search-card .section-title,
 .search-panel .section-title,
 .search-form-card .section-title {
@@ -3985,13 +3814,6 @@ button, input, select, textarea {
   line-height: 1.5;
 }
 
-/* 검색 폼 행 간격 축소 */
-.equipment-search-form,
-.search-form-grid {
-  gap: 12px;
-}
-
-/* 라벨 아래 간격 조금 축소 */
 .equipment-search-card label,
 .search-panel label,
 .search-form-card label,
@@ -3999,13 +3821,11 @@ button, input, select, textarea {
   margin-bottom: 6px;
 }
 
-/* 검색어 입력 높이 약간 축소 */
 #keyword {
   min-height: 54px;
   border-radius: 16px;
 }
 
-/* 일반 입력 높이 정리 */
 #department,
 #status,
 #manufacturer {
@@ -4013,7 +3833,6 @@ button, input, select, textarea {
   border-radius: 14px;
 }
 
-/* 빠른 상태 / 실행 영역 간격 압축 */
 .search-filter-block,
 .search-action-block {
   margin-top: 14px;
@@ -4023,28 +3842,24 @@ button, input, select, textarea {
   padding-top: 12px;
 }
 
-/* 칩 그룹 박스 */
 .search-chip-row {
   padding: 10px 12px;
   gap: 8px;
   border-radius: 16px;
 }
 
-/* 칩 높이 살짝 축소 */
 .filter-chip {
   min-height: 38px;
   padding: 0 14px;
   font-size: 13px;
 }
 
-/* 실행 버튼 그룹도 조금 압축 */
 .equipment-search-actions {
   padding: 10px 12px;
   gap: 8px;
   border-radius: 16px;
 }
 
-/* 버튼 높이 살짝 줄임 */
 .equipment-search-actions .btn,
 .search-submit-btn,
 #resetBtn {
@@ -4054,7 +3869,6 @@ button, input, select, textarea {
   font-size: 14px;
 }
 
-/* 검색 카드와 아래 영역 간격도 약간 정리 */
 #summaryRow {
   margin-top: 14px;
 }
@@ -4063,102 +3877,98 @@ button, input, select, textarea {
   margin-top: 16px;
 }
 
-/* =========================
-   mobile compact tune
-========================= */
-
 @media (max-width: 768px) {
   .equipment-search-card .card-body,
   .search-panel .card-body,
   .search-form-card .card-body {
-    padding: 16px;
+  padding: 16px;
   }
 
   .equipment-search-card .section-title,
   .search-panel .section-title,
   .search-form-card .section-title {
-    font-size: 16px;
-    margin-bottom: 4px;
+  font-size: 16px;
+  margin-bottom: 4px;
   }
 
   .equipment-search-card .sub-text,
   .search-panel .sub-text,
   .search-form-card .sub-text {
-    margin-bottom: 12px;
-    font-size: 12px;
-    line-height: 1.45;
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.45;
   }
 
   .equipment-search-form,
   .search-form-grid {
-    gap: 10px;
+  gap: 10px;
   }
 
   .equipment-search-card label,
   .search-panel label,
   .search-form-card label,
   .search-block-label {
-    margin-bottom: 5px;
-    font-size: 11px;
+  margin-bottom: 5px;
+  font-size: 11px;
   }
 
   #keyword {
-    min-height: 50px;
-    padding: 0 14px;
-    font-size: 14px;
-    border-radius: 14px;
+  min-height: 50px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 14px;
   }
 
   #department,
   #status,
   #manufacturer {
-    min-height: 46px;
-    padding: 0 14px;
-    font-size: 14px;
-    border-radius: 12px;
+  min-height: 46px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 12px;
   }
 
   .search-filter-block,
   .search-action-block {
-    margin-top: 12px;
+  margin-top: 12px;
   }
 
   .search-action-block {
-    padding-top: 10px;
+  padding-top: 10px;
   }
 
   .search-chip-row {
-    padding: 8px;
-    gap: 6px;
-    border-radius: 14px;
+  padding: 8px;
+  gap: 6px;
+  border-radius: 14px;
   }
 
   .filter-chip {
-    min-height: 34px;
-    padding: 0 12px;
-    font-size: 12px;
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
   }
 
   .equipment-search-actions {
-    padding: 8px;
-    gap: 8px;
-    border-radius: 14px;
+  padding: 8px;
+  gap: 8px;
+  border-radius: 14px;
   }
 
   .equipment-search-actions .btn,
   .search-submit-btn,
   #resetBtn {
-    min-height: 40px;
-    font-size: 13px;
-    border-radius: 10px;
+  min-height: 40px;
+  font-size: 13px;
+  border-radius: 10px;
   }
 
   #summaryRow {
-    margin-top: 12px;
+  margin-top: 12px;
   }
 
   #resultSection {
-    margin-top: 14px;
+  margin-top: 14px;
   }
 }
 
@@ -4166,47 +3976,38 @@ button, input, select, textarea {
   .equipment-search-card .card-body,
   .search-panel .card-body,
   .search-form-card .card-body {
-    padding: 14px;
+  padding: 14px;
   }
 
   .equipment-search-form,
   .search-form-grid {
-    gap: 9px;
+  gap: 9px;
   }
 
   #keyword {
-    min-height: 48px;
+  min-height: 48px;
   }
 
   #department,
   #status,
   #manufacturer {
-    min-height: 44px;
+  min-height: 44px;
   }
 
   .filter-chip {
-    min-height: 32px;
-    padding: 0 11px;
-    font-size: 11px;
+  min-height: 32px;
+  padding: 0 11px;
+  font-size: 11px;
   }
 
   .equipment-search-actions .btn,
   .search-submit-btn,
   #resetBtn {
-    min-height: 38px;
-    font-size: 13px;
+  min-height: 38px;
+  font-size: 13px;
   }
 }
 
-/* =========================
-   equipment list field balance + result compact
-========================= */
-
-/* ---------------------------------
-   1) 검색 3필드 가로 폭 균형 조정
---------------------------------- */
-
-/* 사용부서 / 상태 / 제조사 3필드 행 정렬 */
 .equipment-search-form .three-col-row,
 .search-form-grid.three-col-row,
 .equipment-search-grid--triple {
@@ -4216,7 +4017,6 @@ button, input, select, textarea {
   align-items: end;
 }
 
-/* 만약 기존 구조가 단순 3컬럼 grid라면 이것도 같이 커버 */
 .equipment-search-form > .grid-3,
 .search-form-grid.grid-3,
 .search-fields-3 {
@@ -4226,7 +4026,6 @@ button, input, select, textarea {
   align-items: end;
 }
 
-/* 검색 카드 안 필드 공통 정렬 */
 .equipment-search-form .field-group,
 .search-form-grid .field-group,
 .equipment-search-form .form-field,
@@ -4236,42 +4035,33 @@ button, input, select, textarea {
   min-width: 0;
 }
 
-/* 상태 select는 글자 길이가 짧아서 너무 넓지 않게 보정 */
 .equipment-search-form .field-group--status,
 .search-form-grid .field-group--status,
 .search-field--status {
   min-width: 0;
 }
 
-/* 제조사 placeholder 길이 고려 */
 .equipment-search-form .field-group--manufacturer,
 .search-form-grid .field-group--manufacturer,
 .search-field--manufacturer {
   min-width: 0;
 }
 
-/* ---------------------------------
-   2) 조회 결과 카드 compact 정리
---------------------------------- */
-
-/* 카드 리스트 간격 축소 */
 .equipment-card-list,
 .equipment-card-list-tuned {
   gap: 12px;
 }
 
-/* 결과 카드 전체 */
 .equipment-item-card,
 .equipment-item-card-tuned,
 .equipment-card {
   border-radius: 18px;
   padding: 16px;
   box-shadow:
-    0 1px 2px rgba(16, 24, 40, 0.04),
-    0 6px 16px rgba(16, 24, 40, 0.04);
+  0 1px 2px rgba(16, 24, 40, 0.04),
+  0 6px 16px rgba(16, 24, 40, 0.04);
 }
 
-/* 카드 상단 */
 .equipment-card-top,
 .equipment-card-head {
   gap: 10px;
@@ -4279,7 +4069,6 @@ button, input, select, textarea {
   align-items: flex-start;
 }
 
-/* 장비명 */
 .equipment-title,
 .equipment-card-title {
   margin: 0;
@@ -4290,7 +4079,6 @@ button, input, select, textarea {
   color: #0f172a;
 }
 
-/* 모델명 */
 .equipment-model,
 .equipment-card-model {
   margin-top: 2px;
@@ -4299,7 +4087,6 @@ button, input, select, textarea {
   color: #667085;
 }
 
-/* 우측 상태/장비번호 블록 */
 .equipment-top-right {
   gap: 6px;
 }
@@ -4310,7 +4097,6 @@ button, input, select, textarea {
   color: #667085;
 }
 
-/* 상태 배지 미세 조정 */
 .status-badge {
   min-height: 30px;
   padding: 0 10px;
@@ -4320,7 +4106,6 @@ button, input, select, textarea {
   line-height: 1;
 }
 
-/* 메타 정보 그리드 */
 .equipment-meta-grid,
 .equipment-card-meta {
   display: grid;
@@ -4329,7 +4114,6 @@ button, input, select, textarea {
   margin-bottom: 12px;
 }
 
-/* 메타 정보 박스 */
 .equipment-meta-item {
   padding: 10px 12px;
   border: 1px solid rgba(15, 23, 42, 0.06);
@@ -4337,7 +4121,6 @@ button, input, select, textarea {
   background: #fbfcfe;
 }
 
-/* 메타 라벨 */
 .equipment-meta-label {
   display: block;
   margin-bottom: 4px;
@@ -4347,7 +4130,6 @@ button, input, select, textarea {
   color: #667085;
 }
 
-/* 메타 값 */
 .equipment-meta-value {
   display: block;
   font-size: 13px;
@@ -4358,7 +4140,6 @@ button, input, select, textarea {
   overflow-wrap: anywhere;
 }
 
-/* 카드 하단 버튼 영역 */
 .equipment-card-actions {
   display: flex;
   justify-content: flex-end;
@@ -4373,9 +4154,6 @@ button, input, select, textarea {
   font-weight: 800;
 }
 
-/* ---------------------------------
-   3) tablet
---------------------------------- */
 @media (max-width: 960px) {
   .equipment-search-form .three-col-row,
   .search-form-grid.three-col-row,
@@ -4383,19 +4161,16 @@ button, input, select, textarea {
   .equipment-search-form > .grid-3,
   .search-form-grid.grid-3,
   .search-fields-3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .equipment-meta-grid,
   .equipment-card-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
   }
 }
 
-/* ---------------------------------
-   4) mobile
---------------------------------- */
 @media (max-width: 768px) {
   /* 검색 3필드는 모바일에서 1열 */
   .equipment-search-form .three-col-row,
@@ -4404,119 +4179,113 @@ button, input, select, textarea {
   .equipment-search-form > .grid-3,
   .search-form-grid.grid-3,
   .search-fields-3 {
-    grid-template-columns: 1fr;
-    gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 10px;
   }
 
   /* 결과 카드 더 compact */
   .equipment-card-list,
   .equipment-card-list-tuned {
-    gap: 10px;
+  gap: 10px;
   }
 
   .equipment-item-card,
   .equipment-item-card-tuned,
   .equipment-card {
-    padding: 14px;
-    border-radius: 16px;
+  padding: 14px;
+  border-radius: 16px;
   }
 
   .equipment-card-top,
   .equipment-card-head {
-    margin-bottom: 10px;
-    gap: 8px;
+  margin-bottom: 10px;
+  gap: 8px;
   }
 
   .equipment-title,
   .equipment-card-title {
-    font-size: 15px;
+  font-size: 15px;
   }
 
   .equipment-model,
   .equipment-card-model {
-    font-size: 12px;
+  font-size: 12px;
   }
 
   .status-badge {
-    min-height: 28px;
-    padding: 0 9px;
-    font-size: 11px;
+  min-height: 28px;
+  padding: 0 9px;
+  font-size: 11px;
   }
 
   .equipment-id {
-    font-size: 11px;
+  font-size: 11px;
   }
 
   .equipment-meta-grid,
   .equipment-card-meta {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    margin-bottom: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
   }
 
   .equipment-meta-item {
-    padding: 9px 10px;
-    border-radius: 12px;
+  padding: 9px 10px;
+  border-radius: 12px;
   }
 
   .equipment-meta-label {
-    margin-bottom: 3px;
-    font-size: 10px;
+  margin-bottom: 3px;
+  font-size: 10px;
   }
 
   .equipment-meta-value {
-    font-size: 12px;
+  font-size: 12px;
   }
 
   .card-action-btn {
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 10px;
-    font-size: 12px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 12px;
   }
 }
 
-/* ---------------------------------
-   5) very small mobile
---------------------------------- */
 @media (max-width: 480px) {
   .equipment-item-card,
   .equipment-item-card-tuned,
   .equipment-card {
-    padding: 12px;
+  padding: 12px;
   }
 
   .equipment-title,
   .equipment-card-title {
-    font-size: 14px;
+  font-size: 14px;
   }
 
   .equipment-model,
   .equipment-card-model,
   .equipment-id {
-    font-size: 11px;
+  font-size: 11px;
   }
 
   .equipment-meta-item {
-    padding: 8px 9px;
+  padding: 8px 9px;
   }
 
   .equipment-meta-value {
-    font-size: 11px;
+  font-size: 11px;
   }
 
   .card-action-btn {
-    width: 100%;
+  width: 100%;
   }
 
   .equipment-card-actions {
-    justify-content: stretch;
+  justify-content: stretch;
   }
 }
 
-/* =========================
-   Unified global loading
-========================= */
 #globalLoading {
   position: fixed;
   inset: 0;
@@ -4561,11 +4330,10 @@ button, input, select, textarea {
 
 @keyframes globalLoadingSpin {
   to {
-    transform: rotate(360deg);
+  transform: rotate(360deg);
   }
 }
 
-/* ===== 장비 검색 하단 버튼 영역 정리 ===== */
 .search-action-block {
   margin-top: 14px;
   padding-top: 14px;
@@ -4588,53 +4356,4 @@ button, input, select, textarea {
   height: 44px;
   padding: 0 18px;
   border-radius: 14px;
-}
-
-.form-side-actions {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.form-side-actions .btn,
-.form-side-actions .form-submit-btn {
-  width: 100%;
-  min-height: 54px;
-  padding: 0 18px;
-  border-radius: 16px;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 800;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.form-side-actions .form-submit-btn,
-.form-side-actions .btn.btn-primary {
-  background: #0b1b46;
-  color: #fff;
-  border: 1px solid #0b1b46;
-}
-
-.form-side-actions .form-submit-btn:hover,
-.form-side-actions .btn.btn-primary:hover {
-  background: #08173d;
-  border-color: #08173d;
-}
-
-.form-side-actions .btn:not(.btn-primary) {
-  background: #fff;
-  color: #344054;
-  border: 1px solid #d0d5dd;
-}
-
-.form-side-actions .btn:not(.btn-primary):hover {
-  background: #f8fafc;
-}
-
-.form-side-card .guide-list {
-  margin-bottom: 6px;
 }
