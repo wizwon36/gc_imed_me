@@ -1,6 +1,6 @@
 window.ORG_CONFIG = {
-  CLINIC_GROUP: 'ORG_CLINIC',
-  TEAM_GROUP: 'ORG_TEAM',
+  CACHE_KEY: 'gc_imed_me_org_data_v1',
+  CACHE_TTL: 1000 * 60 * 30, // 30분
   cache: {
     loaded: false,
     loadingPromise: null,
@@ -10,8 +10,47 @@ window.ORG_CONFIG = {
 };
 
 window.OrgService = {
+  getCachedData() {
+    try {
+      const raw = sessionStorage.getItem(window.ORG_CONFIG.CACHE_KEY);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.savedAt || !parsed.data) return null;
+
+      const isExpired = (Date.now() - parsed.savedAt) > window.ORG_CONFIG.CACHE_TTL;
+      if (isExpired) return null;
+
+      return parsed.data;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  setCachedData(data) {
+    try {
+      sessionStorage.setItem(
+        window.ORG_CONFIG.CACHE_KEY,
+        JSON.stringify({
+          savedAt: Date.now(),
+          data
+        })
+      );
+    } catch (error) {
+      // 저장 실패해도 무시
+    }
+  },
+
   async load() {
     if (window.ORG_CONFIG.cache.loaded) {
+      return window.ORG_CONFIG.cache;
+    }
+
+    const cached = this.getCachedData();
+    if (cached) {
+      window.ORG_CONFIG.cache.loaded = true;
+      window.ORG_CONFIG.cache.clinics = Array.isArray(cached.clinics) ? cached.clinics : [];
+      window.ORG_CONFIG.cache.teams = Array.isArray(cached.teams) ? cached.teams : [];
       return window.ORG_CONFIG.cache;
     }
 
@@ -20,17 +59,17 @@ window.OrgService = {
     }
 
     window.ORG_CONFIG.cache.loadingPromise = (async () => {
-      const [clinicRes, teamRes] = await Promise.all([
-        window.apiGet('getCodes', { code_group: window.ORG_CONFIG.CLINIC_GROUP }),
-        window.apiGet('getCodes', { code_group: window.ORG_CONFIG.TEAM_GROUP })
-      ]);
+      const result = await window.apiGet('getOrgData');
+      const data = result.data || {};
 
-      const clinics = Array.isArray(clinicRes.data) ? clinicRes.data : [];
-      const teams = Array.isArray(teamRes.data) ? teamRes.data : [];
+      const clinics = Array.isArray(data.clinics) ? data.clinics : [];
+      const teams = Array.isArray(data.teams) ? data.teams : [];
 
       window.ORG_CONFIG.cache.loaded = true;
       window.ORG_CONFIG.cache.clinics = clinics;
       window.ORG_CONFIG.cache.teams = teams;
+
+      this.setCachedData({ clinics, teams });
 
       return window.ORG_CONFIG.cache;
     })();
@@ -40,6 +79,10 @@ window.OrgService = {
     } finally {
       window.ORG_CONFIG.cache.loadingPromise = null;
     }
+  },
+
+  async preload() {
+    await this.load();
   },
 
   async getClinics() {
