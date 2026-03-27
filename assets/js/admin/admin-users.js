@@ -77,10 +77,7 @@ function setAdminMessage(message, type = '') {
 
   el.textContent = message || '';
   el.className = 'message-box';
-
-  if (type) {
-    el.classList.add(type);
-  }
+  if (type) el.classList.add(type);
 }
 
 function collectPermissions() {
@@ -106,7 +103,6 @@ function collectPermissions() {
 async function buildUserOrgPayload() {
   const clinicCode = document.getElementById('clinic_code')?.value || '';
   const teamCode = document.getElementById('team_code')?.value || '';
-
   return await OrgService.buildOrgPayload(clinicCode, teamCode);
 }
 
@@ -161,11 +157,7 @@ async function createUser() {
       ...org
     });
 
-    setAdminMessage(
-      result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.',
-      'success'
-    );
-
+    setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
     clearUserForm();
     resetEditMode(false);
 
@@ -481,7 +473,6 @@ function clearUserForm() {
 
 function setPermissionValues(permissions = []) {
   const permissionMap = {};
-
   permissions.forEach((item) => {
     if (item?.app_id) {
       permissionMap[item.app_id] = item.permission || '';
@@ -509,7 +500,6 @@ function setEditMode(user) {
   if (saveBtn) saveBtn.textContent = '사용자 수정';
   if (cancelBtn) cancelBtn.style.display = 'inline-flex';
   if (emailInput) emailInput.disabled = true;
-
   if (passwordHint) {
     passwordHint.innerHTML = '수정 모드에서는 이메일을 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
   }
@@ -530,7 +520,6 @@ function resetEditMode(clearMessage = true) {
   if (saveBtn) saveBtn.textContent = '사용자 등록';
   if (cancelBtn) cancelBtn.style.display = 'none';
   if (emailInput) emailInput.disabled = false;
-
   if (passwordHint) {
     passwordHint.innerHTML = '신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.';
   }
@@ -538,18 +527,14 @@ function resetEditMode(clearMessage = true) {
   clearUserForm();
   initUserOrgSelectors();
 
-  if (clearMessage) {
-    setAdminMessage('', '');
-  }
+  if (clearMessage) setAdminMessage('', '');
 }
 
 function showGlobalLoading(text = '처리 중...') {
   const overlay = document.getElementById('globalLoading');
   if (!overlay) return;
-
   const textEl = document.getElementById('globalLoadingText');
   if (textEl) textEl.textContent = text;
-
   overlay.classList.add('is-open');
   overlay.setAttribute('aria-hidden', 'false');
 }
@@ -557,7 +542,6 @@ function showGlobalLoading(text = '처리 중...') {
 function hideGlobalLoading() {
   const overlay = document.getElementById('globalLoading');
   if (!overlay) return;
-
   overlay.classList.remove('is-open');
   overlay.setAttribute('aria-hidden', 'true');
 }
