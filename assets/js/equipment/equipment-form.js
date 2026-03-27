@@ -4,7 +4,6 @@ let currentEquipmentId = '';
 function fillEquipmentForm(item) {
   qs('#equipment_name').value = item.equipment_name || '';
   qs('#model_name').value = item.model_name || '';
-  qs('#department').value = item.department || '';
   qs('#manufacturer').value = item.manufacturer || '';
   qs('#manufacture_date').value = item.manufacture_date || '';
   qs('#serial_no').value = item.serial_no || '';
@@ -26,23 +25,36 @@ function applyEditModeUi() {
   qs('#submitBtn').textContent = '수정 저장';
 }
 
+async function initOrgSelectors(item = {}) {
+  await OrgService.bindClinicTeam(qs('#clinic_code'), qs('#team_code'), {
+    initialClinicCode: item.clinic_code || '',
+    initialTeamCode: item.team_code || '',
+    clinicEmptyLabel: '의원을 선택하세요',
+    teamEmptyLabel: '팀을 선택하세요'
+  });
+}
+
 async function loadEditDataIfNeeded() {
   const mode = getQueryParam('mode');
   const id = getQueryParam('id');
 
   if (mode !== 'edit' || !id) {
     formMode = 'create';
+    await initOrgSelectors();
     return;
   }
 
   formMode = 'edit';
   currentEquipmentId = id;
   applyEditModeUi();
-  showGlobalLoading();
+  showGlobalLoading('장비 정보를 불러오는 중...');
 
   try {
     const result = await apiGet('getEquipment', { id });
-    fillEquipmentForm(result.data);
+    const item = result.data || {};
+
+    fillEquipmentForm(item);
+    await initOrgSelectors(item);
   } catch (error) {
     showMessage(error.message, 'error');
   } finally {
@@ -50,11 +62,21 @@ async function loadEditDataIfNeeded() {
   }
 }
 
-function buildPayload() {
+async function buildPayload() {
+  const clinicCode = qs('#clinic_code').value;
+  const teamCode = qs('#team_code').value;
+  const org = await OrgService.buildOrgPayload(clinicCode, teamCode);
+
   return {
     equipment_name: qs('#equipment_name').value.trim(),
     model_name: qs('#model_name').value.trim(),
-    department: qs('#department').value.trim(),
+
+    clinic_code: org.clinic_code,
+    clinic_name: org.clinic_name,
+    team_code: org.team_code,
+    team_name: org.team_name,
+    department: org.department,
+
     manufacturer: qs('#manufacturer').value.trim(),
     manufacture_date: qs('#manufacture_date').value,
     serial_no: qs('#serial_no').value.trim(),
@@ -83,6 +105,18 @@ function validateEquipmentForm(payload) {
     return false;
   }
 
+  if (!payload.clinic_code) {
+    showMessage('의원을 선택하세요.', 'error');
+    qs('#clinic_code').focus();
+    return false;
+  }
+
+  if (!payload.team_code) {
+    showMessage('팀을 선택하세요.', 'error');
+    qs('#team_code').focus();
+    return false;
+  }
+
   if (!payload.serial_no) {
     showMessage('시리얼번호를 입력하세요.', 'error');
     qs('#serial_no').focus();
@@ -92,10 +126,15 @@ function validateEquipmentForm(payload) {
   return true;
 }
 
+function getCurrentUserId() {
+  const user = window.auth?.getSession?.() || {};
+  return user.email || user.user_email || user.name || 'system';
+}
+
 async function handleCreate(payload) {
   const result = await apiPost('createEquipment', {
     ...payload,
-    created_by: 'admin@hospital.com'
+    created_by: getCurrentUserId()
   });
 
   showMessage(`${result.message} (${result.data.equipment_id})`, 'success');
@@ -109,7 +148,7 @@ async function handleUpdate(payload) {
   await apiPost('updateEquipment', {
     equipment_id: currentEquipmentId,
     ...payload,
-    updated_by: 'admin@hospital.com'
+    updated_by: getCurrentUserId()
   });
 
   showMessage('장비 정보가 수정되었습니다.', 'success');
@@ -124,7 +163,7 @@ async function handleSubmitEquipment(event) {
   clearMessage();
 
   const submitBtn = qs('#submitBtn');
-  const payload = buildPayload();
+  const payload = await buildPayload();
 
   if (!validateEquipmentForm(payload)) return;
 
