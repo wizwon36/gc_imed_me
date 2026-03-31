@@ -255,6 +255,7 @@ function setUserListLoading(isLoading, text = '사용자 목록을 불러오는 
   }
 
   loadingEl.hidden = !isLoading;
+  loadingEl.style.display = isLoading ? 'flex' : 'none';
 }
 
 function showGlobalLoading(text = '처리 중...') {
