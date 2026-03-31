@@ -71,6 +71,18 @@ function applyActionVisibility() {
   if (deleteBtn) {
     deleteBtn.style.display = isAdminUser() ? '' : 'none';
   }
+
+  const isDeleted = String(currentEquipmentData?.deleted_yn || 'N') === 'Y';
+
+  const editBtn = qs('#editEquipmentBtn');
+  const addHistoryBtn = qs('#addHistoryBtn');
+  const addInventoryBtn = qs('#addInventoryBtn');
+
+  if (isDeleted) {
+    if (editBtn) editBtn.style.display = 'none';
+    if (addHistoryBtn) addHistoryBtn.style.display = 'none';
+    if (addInventoryBtn) addInventoryBtn.style.display = 'none';
+  }
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
@@ -243,7 +255,7 @@ async function loadEquipmentDetail() {
   clearMessage();
   renderDetailSkeleton();
   showGlobalLoading();
-  
+
   const id = getQueryParam('id');
   currentEquipmentId = id;
 
@@ -252,15 +264,20 @@ async function loadEquipmentDetail() {
     return;
   }
 
+  const user = getCurrentUser();
+
   try {
     const [detailResult, historyResult, inventoryResult] = await Promise.all([
-      apiGet('getEquipment', { id }),
+      apiGet('getEquipment', {
+        id,
+        request_user_email: user?.email || ''
+      }),
       apiGet('listHistories', { equipment_id: id }),
       apiGet('listInventoryLogs', { equipment_id: id })
     ]);
 
     currentEquipmentData = detailResult.data;
-
+    applyActionVisibility();
     renderHero(detailResult.data);
     renderDetailInfo(detailResult.data);
     renderQrCode(detailResult.data.equipment_id);
