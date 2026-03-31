@@ -54,6 +54,25 @@ function conditionStatusLabel(type) {
   return map[type] || type || '';
 }
 
+function getCurrentUser() {
+  if (window.auth && typeof window.auth.getSession === 'function') {
+    return window.auth.getSession() || null;
+  }
+  return null;
+}
+
+function isAdminUser() {
+  const user = getCurrentUser();
+  return String(user?.role || '').trim().toLowerCase() === 'admin';
+}
+
+function applyActionVisibility() {
+  const deleteBtn = qs('#deleteBtn');
+  if (deleteBtn) {
+    deleteBtn.style.display = isAdminUser() ? '' : 'none';
+  }
+}
+
 function buildEquipmentDetailUrl(equipmentId) {
   return `${CONFIG.SITE_BASE_URL}/pages/equipment/detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
@@ -257,13 +276,20 @@ async function loadEquipmentDetail() {
 async function deleteCurrentEquipment() {
   if (!currentEquipmentId) return;
 
+  const user = getCurrentUser();
+  if (!isAdminUser()) {
+    showMessage('관리자만 장비를 삭제할 수 있습니다.', 'error');
+    return;
+  }
+
   const confirmed = confirm('이 장비를 삭제하시겠습니까?');
   if (!confirmed) return;
 
   try {
     await apiPost('deleteEquipment', {
       equipment_id: currentEquipmentId,
-      deleted_by: 'admin@hospital.com'
+      request_user_email: user?.email || '',
+      deleted_by: user?.email || ''
     });
 
     alert('삭제되었습니다.');
@@ -294,10 +320,13 @@ function moveToLabelPrint() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  applyActionVisibility();
+
   qs('#editEquipmentBtn').addEventListener('click', moveToEditForm);
   qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
   qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
   qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
   qs('#printLabelBtn').addEventListener('click', moveToLabelPrint);
+
   loadEquipmentDetail();
 });
