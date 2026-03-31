@@ -484,6 +484,7 @@ async function loadUsers(isInitialLoad = false) {
 
     allUsers = Array.isArray(result.data) ? result.data : [];
     renderUserList();
+    setUserListLoading(false);
   } catch (error) {
     if (countEl) countEl.textContent = '';
     if (listEl) {
