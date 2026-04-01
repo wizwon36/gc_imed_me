@@ -317,7 +317,7 @@
 
     .filter-row {
       display: grid;
-      grid-template-columns: minmax(220px, 1.2fr) 140px 140px 170px 110px;
+      grid-template-columns: minmax(220px, 1.2fr) 140px 140px 170px 130px;
       gap: 10px;
       align-items: end;
       margin-bottom: 16px;
@@ -437,6 +437,57 @@
     .user-list-empty strong {
       font-weight: 800;
       color: var(--text-strong);
+    }
+
+    #globalLoading {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.26);
+      backdrop-filter: blur(3px);
+      padding: 20px;
+    }
+
+    #globalLoading[aria-hidden="false"] {
+      display: flex;
+    }
+
+    .global-loading__dialog {
+      min-width: 240px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 24px 28px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      text-align: center;
+    }
+
+    .global-loading__spinner {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 3px solid rgba(148, 163, 184, 0.28);
+      border-top-color: #2563eb;
+      animation: global-loading-spin 0.8s linear infinite;
+    }
+
+    .global-loading__text {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-strong);
+      line-height: 1.5;
+    }
+
+    @keyframes global-loading-spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     @media (max-width: 1180px) {
@@ -630,14 +681,9 @@
           <div class="filter-row">
             <div class="form-group">
               <label for="userSearchKeyword" class="form-label">검색어</label>
-              <input
-                type="text"
-                id="userSearchKeyword"
-                class="input"
-                placeholder="이름, 이메일, 부서, 의원, 팀으로 검색"
-              />
+              <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 이메일, 부서, 의원, 팀으로 검색" />
             </div>
-          
+
             <div class="form-group">
               <label for="userFilterActive" class="form-label">상태</label>
               <select id="userFilterActive" class="select">
@@ -646,7 +692,7 @@
                 <option value="N">비활성</option>
               </select>
             </div>
-          
+
             <div class="form-group">
               <label for="userFilterRole" class="form-label">역할</label>
               <select id="userFilterRole" class="select">
@@ -655,19 +701,17 @@
                 <option value="admin">admin</option>
               </select>
             </div>
-          
+
             <div class="form-group">
               <label for="userFilterClinic" class="form-label">의원</label>
               <select id="userFilterClinic" class="select">
                 <option value="">전체 의원</option>
               </select>
             </div>
-          
+
             <div class="form-group">
               <label class="form-label">&nbsp;</label>
-              <button type="button" id="searchUsersBtn" class="admin-btn secondary">
-                사용자 조회
-              </button>
+              <button type="button" id="searchUsersBtn" class="admin-btn secondary">사용자 조회</button>
             </div>
           </div>
 
