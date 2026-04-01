@@ -1,13 +1,3 @@
-function statusLabel(status) {
-  const map = {
-    IN_USE: '사용중',
-    REPAIRING: '수리중',
-    INSPECTING: '점검중',
-    STORED: '보관',
-    DISPOSED: '폐기'
-  };
-  return map[status] || status || '';
-}
 
 function buildEquipmentDetailUrl(equipmentId) {
   return `${CONFIG.SITE_BASE_URL}/pages/equipment/detail.html?id=${encodeURIComponent(equipmentId)}`;

@@ -38,16 +38,6 @@ async function initEquipmentListPage() {
   );
 }
 
-function statusLabel(status) {
-  const map = {
-    IN_USE: '사용중',
-    REPAIRING: '수리중',
-    INSPECTING: '점검중',
-    STORED: '보관',
-    DISPOSED: '폐기'
-  };
-  return map[status] || status || '';
-}
 
 function renderEquipmentListSkeleton() {
   const list = qs('#equipmentCardList');
@@ -62,20 +52,7 @@ function renderEquipmentListSkeleton() {
   `;
 }
 
-function statusClass(status) {
-  const map = {
-    IN_USE: 'is-in-use',
-    REPAIRING: 'is-repairing',
-    INSPECTING: 'is-inspecting',
-    STORED: 'is-stored',
-    DISPOSED: 'is-disposed'
-  };
-  return map[status] || '';
-}
 
-function safeText(value, fallback = '-') {
-  return escapeHtml(value || fallback);
-}
 
 function toggleResultsUI(show) {
   const summaryRow = qs('#summaryRow');

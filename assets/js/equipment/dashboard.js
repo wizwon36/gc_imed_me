@@ -20,9 +20,6 @@ function daysBetweenToday(targetDate) {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
-function safeText(value, fallback = '-') {
-  return escapeHtml(value || fallback);
-}
 
 function compactDateText(value) {
   if (!value) return '-';
@@ -58,47 +55,9 @@ function renderDashboardSkeleton() {
   `;
 }
 
-function statusLabel(status) {
-  const map = {
-    IN_USE: '사용중',
-    REPAIRING: '수리중',
-    INSPECTING: '점검중',
-    STORED: '보관',
-    DISPOSED: '폐기'
-  };
-  return map[status] || status || '';
-}
 
-function statusClass(status) {
-  const map = {
-    IN_USE: 'is-in-use',
-    REPAIRING: 'is-repairing',
-    INSPECTING: 'is-inspecting',
-    STORED: 'is-stored',
-    DISPOSED: 'is-disposed'
-  };
-  return map[status] || '';
-}
 
-function historyTypeLabel(type) {
-  const map = {
-    REPAIR: '수리',
-    REGULAR_CHECK: '정기점검',
-    LEGAL_INSPECTION: '법정검사',
-    PREVENTIVE: '예방점검',
-    ETC: '기타'
-  };
-  return map[type] || type || '';
-}
 
-function resultStatusLabel(type) {
-  const map = {
-    DONE: '완료',
-    IN_PROGRESS: '진행중',
-    HOLD: '보류'
-  };
-  return map[type] || type || '';
-}
 
 function sortByCreatedDesc(items) {
   return [...items].sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
