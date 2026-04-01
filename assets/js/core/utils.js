@@ -85,3 +85,64 @@ function hideGlobalLoading() {
   overlay.classList.remove('is-open');
   overlay.setAttribute('aria-hidden', 'true');
 }
+
+// ============================
+// 상태 레이블 / 클래스 (공통)
+// ============================
+
+function statusLabel(status) {
+  const map = {
+    IN_USE: '사용중',
+    REPAIRING: '수리중',
+    INSPECTING: '점검중',
+    STORED: '보관',
+    DISPOSED: '폐기'
+  };
+  return map[status] || status || '';
+}
+
+function statusClass(status) {
+  const map = {
+    IN_USE: 'is-in-use',
+    REPAIRING: 'is-repairing',
+    INSPECTING: 'is-inspecting',
+    STORED: 'is-stored',
+    DISPOSED: 'is-disposed'
+  };
+  return map[status] || '';
+}
+
+function historyTypeLabel(type) {
+  const map = {
+    REPAIR: '수리',
+    REGULAR_CHECK: '정기점검',
+    LEGAL_INSPECTION: '법정검사',
+    PREVENTIVE: '예방점검',
+    ETC: '기타'
+  };
+  return map[type] || type || '';
+}
+
+function resultStatusLabel(type) {
+  const map = {
+    DONE: '완료',
+    IN_PROGRESS: '진행중',
+    HOLD: '보류'
+  };
+  return map[type] || type || '';
+}
+
+function conditionStatusLabel(type) {
+  const map = {
+    NORMAL: '정상',
+    NEED_REPAIR: '수리필요',
+    LOCATION_MISMATCH: '위치불일치',
+    MISSING: '분실의심',
+    DISPOSAL_TARGET: '폐기대상'
+  };
+  return map[type] || type || '';
+}
+
+function safeText(value, fallback = '-') {
+  return escapeHtml(value || fallback);
+}
