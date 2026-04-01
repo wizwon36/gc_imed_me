@@ -18,14 +18,10 @@
       --bg-soft: #f8fafc;
       --bg-panel: #ffffff;
       --line-soft: rgba(148, 163, 184, 0.22);
-      --primary-soft: rgba(37, 99, 235, 0.08);
       --danger-soft: rgba(220, 38, 38, 0.08);
       --success-soft: rgba(22, 163, 74, 0.08);
-      --warning-soft: rgba(245, 158, 11, 0.10);
       --primary-color: #2563eb;
       --danger-color: #dc2626;
-      --success-color: #16a34a;
-      --warning-color: #d97706;
     }
 
     * {
@@ -87,13 +83,20 @@
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, opacity 0.15s ease;
       text-decoration: none;
     }
 
     .admin-btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .admin-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     .admin-btn.primary {
@@ -118,11 +121,6 @@
       border-radius: 10px;
     }
 
-    .admin-btn.is-loading {
-      pointer-events: none;
-      opacity: 0.82;
-    }
-    
     .page-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -243,14 +241,6 @@
       background: rgba(254, 242, 242, 0.72);
     }
 
-    .inline-loading[hidden] {
-      display: none !important;
-    }
-
-   .global-loading[aria-hidden="true"] {
-    display: none !important;
-    }   
-    
     .form-help {
       margin: 0;
       color: var(--text-subtle);
@@ -273,7 +263,7 @@
       grid-template-columns: minmax(0, 1fr) 140px;
       gap: 12px;
       align-items: center;
-      padding: 14px 14px;
+      padding: 14px;
       border-radius: 16px;
       border: 1px solid rgba(148, 163, 184, 0.18);
       background: var(--bg-soft);
@@ -347,36 +337,6 @@
       font-size: 14px;
       font-weight: 700;
       color: var(--text-subtle);
-    }
-
-    .inline-loading {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 22px;
-      margin-bottom: 14px;
-      font-size: 14px;
-      color: var(--text-subtle);
-    }
-
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      border: 2px solid rgba(148, 163, 184, 0.35);
-      border-top-color: #475569;
-      animation: spin 0.7s linear infinite;
-      flex: 0 0 auto;
-    }
-
-    .spinner.small {
-      width: 14px;
-      height: 14px;
-      border-width: 2px;
-    }
-
-    .btn-spinner[hidden] {
-      display: none;
     }
 
     .user-list {
@@ -473,6 +433,16 @@
       border-color: rgba(220, 38, 38, 0.24);
       background: rgba(254, 242, 242, 0.8);
       color: #b91c1c;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(148, 163, 184, 0.35);
+      border-top-color: #475569;
+      animation: spin 0.7s linear infinite;
+      flex: 0 0 auto;
     }
 
     .global-loading {
@@ -712,14 +682,8 @@
             </p>
 
             <div class="form-actions">
-              <button type="button" id="saveUserBtn" class="admin-btn primary">
-                <span class="btn-spinner spinner small" hidden aria-hidden="true"></span>
-                <span class="btn-text">사용자 등록</span>
-              </button>
-
-              <button type="button" id="cancelEditBtn" class="admin-btn secondary" style="display:none;">
-                취소
-              </button>
+              <button type="button" id="saveUserBtn" class="admin-btn primary">사용자 등록</button>
+              <button type="button" id="cancelEditBtn" class="admin-btn secondary" style="display:none;">취소</button>
             </div>
           </div>
         </div>
@@ -770,10 +734,7 @@
 
             <div class="form-group">
               <label class="form-label">&nbsp;</label>
-              <button type="button" id="searchUsersBtn" class="admin-btn secondary">
-                <span class="btn-spinner spinner small" hidden aria-hidden="true"></span>
-                <span class="btn-text">사용자 조회</span>
-              </button>
+              <button type="button" id="searchUsersBtn" class="admin-btn secondary">사용자 조회</button>
             </div>
           </div>
 
@@ -781,15 +742,9 @@
             <div id="userListCount" class="list-count">총 0명</div>
           </div>
 
-          <div id="userListLoading" class="inline-loading" hidden>
-            <span class="spinner small" aria-hidden="true"></span>
-            <span>사용자 목록을 불러오는 중입니다...</span>
-          </div>
-
           <div id="userList" class="user-list">
             <div class="user-list-empty">
-              <span class="spinner small" aria-hidden="true"></span>
-              <span>초기 사용자 목록을 준비하는 중입니다...</span>
+              사용자 목록을 불러오면 여기에 표시됩니다.
             </div>
           </div>
         </div>
