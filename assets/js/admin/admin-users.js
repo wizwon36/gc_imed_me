@@ -218,6 +218,7 @@ function showGlobalLoading(text = '로딩 중...') {
     textEl.textContent = text;
   }
 
+  overlay.classList.add('is-open');
   overlay.setAttribute('aria-hidden', 'false');
 }
 
@@ -225,6 +226,7 @@ function hideGlobalLoading() {
   const overlay = document.getElementById('globalLoading');
   if (!overlay) return;
 
+  overlay.classList.remove('is-open');
   overlay.setAttribute('aria-hidden', 'true');
 }
 
