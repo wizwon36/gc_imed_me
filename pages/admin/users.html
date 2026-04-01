@@ -317,14 +317,18 @@
 
     .filter-row {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) 110px 110px 130px 110px;
-      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
       align-items: end;
       margin-bottom: 16px;
     }
-
+    
     .filter-row > .form-group {
       min-width: 0;
+    }
+    
+    .filter-row > .form-group:first-child {
+      grid-column: 1 / -1;
     }
     
     .filter-row .admin-btn {
