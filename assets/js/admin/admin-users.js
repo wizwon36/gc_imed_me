@@ -172,21 +172,13 @@ function syncTeamSelectByClinic(selectedTeamCode = '') {
   const clinicCode = normalize(clinicSelect.value);
   const teams = getTeamsByClinicCode(clinicCode);
 
-  populateTeamSelect(
-    teamSelect,
-    teams,
-    '팀을 선택하세요',
-    selectedTeamCode
-  );
+  populateTeamSelect(teamSelect, teams, '팀을 선택하세요', selectedTeamCode);
 }
 
 function buildDepartmentText(clinicName, teamName) {
   const clinic = normalize(clinicName);
   const team = normalize(teamName);
-
-  if (clinic && team) {
-    return `${clinic} / ${team}`;
-  }
+  if (clinic && team) return `${clinic} / ${team}`;
   return '';
 }
 
@@ -217,45 +209,6 @@ function markFieldInvalid(fieldId) {
   if (!el) return;
   el.classList.add('is-invalid');
   el.focus();
-}
-
-function setButtonLoading(buttonId, isLoading, loadingText) {
-  const btn = document.getElementById(buttonId);
-  if (!btn) return;
-
-  const spinner = btn.querySelector('.btn-spinner');
-  const textEl = btn.querySelector('.btn-text');
-
-  if (!btn.dataset.originalText && textEl) {
-    btn.dataset.originalText = textEl.textContent;
-  }
-
-  btn.disabled = !!isLoading;
-
-  if (spinner) {
-    spinner.hidden = !isLoading;
-  }
-
-  if (textEl) {
-    textEl.textContent = isLoading
-      ? (loadingText || '처리 중...')
-      : (btn.dataset.originalText || textEl.textContent);
-  }
-
-  btn.classList.toggle('is-loading', !!isLoading);
-}
-
-function setUserListLoading(isLoading, text = '사용자 목록을 불러오는 중입니다...') {
-  const loadingEl = document.getElementById('userListLoading');
-  if (!loadingEl) return;
-
-  const textNode = loadingEl.querySelector('span:last-child');
-  if (textNode) {
-    textNode.textContent = text;
-  }
-
-  loadingEl.hidden = !isLoading;
-  loadingEl.style.display = isLoading ? 'flex' : 'none';
 }
 
 function showGlobalLoading(text = '처리 중...') {
@@ -362,7 +315,6 @@ function validateUserForm(data) {
 
 async function handleSaveUser() {
   clearAdminMessage();
-  setButtonLoading('saveUserBtn', true, editingUserEmail ? '수정 중...' : '등록 중...');
 
   try {
     if (editingUserEmail) {
@@ -372,8 +324,6 @@ async function handleSaveUser() {
     }
   } catch (error) {
     setAdminMessage(error.message || '사용자 저장 중 오류가 발생했습니다.', 'error');
-  } finally {
-    setButtonLoading('saveUserBtn', false);
   }
 }
 
@@ -396,6 +346,9 @@ async function createUser() {
 
   validateUserForm(payload);
 
+  const saveBtn = document.getElementById('saveUserBtn');
+  if (saveBtn) saveBtn.disabled = true;
+
   showGlobalLoading('사용자 등록 중...');
   try {
     const result = await apiPost('createUser', payload);
@@ -408,6 +361,7 @@ async function createUser() {
     await loadUsers();
     hasLoadedUsers = true;
   } finally {
+    if (saveBtn) saveBtn.disabled = false;
     hideGlobalLoading();
   }
 }
@@ -431,6 +385,9 @@ async function updateUser() {
 
   validateUserForm(payload);
 
+  const saveBtn = document.getElementById('saveUserBtn');
+  if (saveBtn) saveBtn.disabled = true;
+
   showGlobalLoading('사용자 정보 수정 중...');
   try {
     const result = await apiPost('updateUser', payload);
@@ -440,13 +397,14 @@ async function updateUser() {
     await loadUsers();
     hasLoadedUsers = true;
   } finally {
+    if (saveBtn) saveBtn.disabled = false;
     hideGlobalLoading();
   }
 }
 
 async function searchUsers() {
-  setButtonLoading('searchUsersBtn', true, '조회 중...');
-  setUserListLoading(true, '사용자 목록을 불러오는 중입니다...');
+  const searchBtn = document.getElementById('searchUsersBtn');
+  if (searchBtn) searchBtn.disabled = true;
 
   try {
     await loadUsers();
@@ -454,8 +412,7 @@ async function searchUsers() {
   } catch (error) {
     setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
   } finally {
-    setUserListLoading(false);
-    setButtonLoading('searchUsersBtn', false);
+    if (searchBtn) searchBtn.disabled = false;
   }
 }
 
@@ -463,18 +420,10 @@ async function loadUsers(isInitialLoad = false) {
   const listEl = document.getElementById('userList');
   const countEl = document.getElementById('userListCount');
 
-  if (isInitialLoad && listEl) {
-    listEl.innerHTML = `
-      <div class="user-list-empty">
-        <span class="spinner small" aria-hidden="true"></span>
-        <span>초기 사용자 목록을 준비하는 중입니다...</span>
-      </div>
-    `;
-  }
-
-  setUserListLoading(
-    true,
-    isInitialLoad ? '초기 사용자 목록을 불러오는 중입니다...' : '사용자 목록을 불러오는 중입니다...'
+  showGlobalLoading(
+    isInitialLoad
+      ? '초기 사용자 목록을 불러오는 중입니다...'
+      : '사용자 목록을 불러오는 중입니다...'
   );
 
   try {
@@ -484,9 +433,9 @@ async function loadUsers(isInitialLoad = false) {
 
     allUsers = Array.isArray(result.data) ? result.data : [];
     renderUserList();
-    setUserListLoading(false);
   } catch (error) {
     if (countEl) countEl.textContent = '';
+
     if (listEl) {
       listEl.innerHTML = `
         <div class="user-list-empty error">
@@ -494,9 +443,8 @@ async function loadUsers(isInitialLoad = false) {
         </div>
       `;
     }
-    throw error;
   } finally {
-    setUserListLoading(false);
+    hideGlobalLoading();
   }
 }
 
@@ -638,7 +586,6 @@ async function editUser(userEmail) {
     );
 
     syncTeamSelectByClinic(user.team_code || '');
-
     setPermissionValues(permissions);
     setEditMode(user);
 
@@ -764,17 +711,13 @@ function setEditMode(user) {
   const formTitle = document.getElementById('formTitle');
   const formDesc = document.getElementById('formDesc');
   const saveBtn = document.getElementById('saveUserBtn');
-  const saveText = saveBtn?.querySelector('.btn-text');
   const cancelBtn = document.getElementById('cancelEditBtn');
   const emailInput = document.getElementById('userEmail');
   const passwordHint = document.getElementById('passwordHint');
 
   if (formTitle) formTitle.textContent = '사용자 수정';
   if (formDesc) formDesc.textContent = '기존 사용자 정보를 수정하고 권한을 다시 저장합니다.';
-  if (saveText) {
-    saveText.textContent = '사용자 수정';
-    saveBtn.dataset.originalText = '사용자 수정';
-  }
+  if (saveBtn) saveBtn.textContent = '사용자 수정';
   if (cancelBtn) cancelBtn.style.display = 'inline-flex';
   if (emailInput) emailInput.disabled = true;
   if (passwordHint) {
@@ -790,17 +733,13 @@ function resetEditMode(clearMessage = true) {
   const formTitle = document.getElementById('formTitle');
   const formDesc = document.getElementById('formDesc');
   const saveBtn = document.getElementById('saveUserBtn');
-  const saveText = saveBtn?.querySelector('.btn-text');
   const cancelBtn = document.getElementById('cancelEditBtn');
   const emailInput = document.getElementById('userEmail');
   const passwordHint = document.getElementById('passwordHint');
 
   if (formTitle) formTitle.textContent = '사용자 등록';
   if (formDesc) formDesc.textContent = '신규 사용자를 등록하고 앱별 권한을 부여합니다.';
-  if (saveText) {
-    saveText.textContent = '사용자 등록';
-    saveBtn.dataset.originalText = '사용자 등록';
-  }
+  if (saveBtn) saveBtn.textContent = '사용자 등록';
   if (cancelBtn) cancelBtn.style.display = 'none';
   if (emailInput) emailInput.disabled = false;
   if (passwordHint) {
