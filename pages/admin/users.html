@@ -24,9 +24,7 @@
       --danger-color: #dc2626;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -427,12 +425,18 @@
       background: #fff;
       color: var(--text-subtle);
       font-size: 14px;
+      line-height: 1.6;
     }
 
     .user-list-empty.error {
       border-color: rgba(220, 38, 38, 0.24);
       background: rgba(254, 242, 242, 0.8);
       color: #b91c1c;
+    }
+
+    .user-list-empty strong {
+      font-weight: 800;
+      color: var(--text-strong);
     }
 
     @media (max-width: 1180px) {
@@ -511,47 +515,32 @@
 
           <div class="form-grid">
             <div class="form-group">
-              <label for="userEmail" class="form-label">
-                이메일
-                <span class="field-badge required">필수</span>
-              </label>
+              <label for="userEmail" class="form-label">이메일 <span class="field-badge required">필수</span></label>
               <input type="email" id="userEmail" class="input" placeholder="example@company.com" />
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="userName" class="form-label">
-                  이름
-                  <span class="field-badge required">필수</span>
-                </label>
+                <label for="userName" class="form-label">이름 <span class="field-badge required">필수</span></label>
                 <input type="text" id="userName" class="input" placeholder="사용자 이름" />
               </div>
 
               <div class="form-group">
-                <label for="phone" class="form-label">
-                  연락처
-                  <span class="field-badge optional">선택</span>
-                </label>
+                <label for="phone" class="form-label">연락처 <span class="field-badge optional">선택</span></label>
                 <input type="text" id="phone" class="input" placeholder="연락처" />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="clinic_code" class="form-label">
-                  의원
-                  <span class="field-badge required">필수</span>
-                </label>
+                <label for="clinic_code" class="form-label">의원 <span class="field-badge required">필수</span></label>
                 <select id="clinic_code" class="select">
                   <option value="">의원을 선택하세요</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="team_code" class="form-label">
-                  팀
-                  <span class="field-badge required">필수</span>
-                </label>
+                <label for="team_code" class="form-label">팀 <span class="field-badge required">필수</span></label>
                 <select id="team_code" class="select" disabled>
                   <option value="">팀을 선택하세요</option>
                 </select>
@@ -560,10 +549,7 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label for="globalRole" class="form-label">
-                  기본 역할
-                  <span class="field-badge optional">선택</span>
-                </label>
+                <label for="globalRole" class="form-label">기본 역할 <span class="field-badge optional">선택</span></label>
                 <select id="globalRole" class="select">
                   <option value="user">user</option>
                   <option value="admin">admin</option>
@@ -571,10 +557,7 @@
               </div>
 
               <div class="form-group">
-                <label for="userActive" class="form-label">
-                  사용 여부
-                  <span class="field-badge optional">선택</span>
-                </label>
+                <label for="userActive" class="form-label">사용 여부 <span class="field-badge optional">선택</span></label>
                 <select id="userActive" class="select">
                   <option value="Y">활성</option>
                   <option value="N">비활성</option>
@@ -583,10 +566,7 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">
-                앱별 권한
-                <span class="field-badge optional">선택</span>
-              </label>
+              <label class="form-label">앱별 권한 <span class="field-badge optional">선택</span></label>
               <p class="form-help">권한을 선택하지 않으면 해당 앱에 접근할 수 없습니다.</p>
 
               <div class="permission-grid">
@@ -629,12 +609,8 @@
               </div>
             </div>
 
-            <p class="form-help" id="passwordHint">
-              신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.
-            </p>
-            <p class="form-help required-guide">
-              <span class="field-badge required">필수</span> 항목을 먼저 입력한 뒤 저장해 주세요.
-            </p>
+            <p class="form-help" id="passwordHint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</p>
+            <p class="form-help required-guide"><span class="field-badge required">필수</span> 항목을 먼저 입력한 뒤 저장해 주세요.</p>
 
             <div class="form-actions">
               <button type="button" id="saveUserBtn" class="admin-btn primary">사용자 등록</button>
@@ -647,19 +623,14 @@
       <section class="panel-card">
         <div class="panel-header">
           <h2 class="panel-title">사용자 목록</h2>
-          <p class="panel-desc">등록된 사용자를 검색하고 수정, 비밀번호 초기화, 활성 상태 변경을 할 수 있습니다.</p>
+          <p class="panel-desc">처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 조회 버튼을 눌러 주세요.</p>
         </div>
 
         <div class="panel-body">
           <div class="filter-row">
             <div class="form-group">
               <label for="userSearchKeyword" class="form-label">검색어</label>
-              <input
-                type="text"
-                id="userSearchKeyword"
-                class="input"
-                placeholder="이름, 이메일, 부서, 의원, 팀으로 검색"
-              />
+              <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 이메일, 부서, 의원, 팀으로 검색" />
             </div>
 
             <div class="form-group">
@@ -694,12 +665,12 @@
           </div>
 
           <div class="list-topbar">
-            <div id="userListCount" class="list-count">총 0명</div>
+            <div id="userListCount" class="list-count">아직 조회하지 않았습니다.</div>
           </div>
 
           <div id="userList" class="user-list">
             <div class="user-list-empty">
-              사용자 목록을 불러오면 여기에 표시됩니다.
+              처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 <strong>사용자 조회</strong>를 눌러 주세요.
             </div>
           </div>
         </div>
