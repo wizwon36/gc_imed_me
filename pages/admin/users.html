@@ -506,9 +506,13 @@
       .page-grid {
         grid-template-columns: 1fr;
       }
-
+    
       .filter-row {
         grid-template-columns: 1fr 1fr;
+      }
+    
+      .filter-row > .form-group:first-child {
+        grid-column: 1 / -1;
       }
     }
 
@@ -548,6 +552,14 @@
 
       .user-item__actions {
         justify-content: flex-start;
+      }
+      
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+    
+      .filter-row > .form-group:first-child {
+        grid-column: auto;
       }
     }
   </style>
