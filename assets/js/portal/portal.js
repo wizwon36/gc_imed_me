@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const isAdmin = String(user.role || '').toLowerCase() === 'admin';
 
   if (adminPageBtn) {
-    adminPageBtn.style.display = 'none';
+    adminPageBtn.style.display = isAdmin ? '' : 'none';
   }
 
   const APP_MAP = {
