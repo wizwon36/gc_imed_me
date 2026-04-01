@@ -435,51 +435,6 @@
       color: #b91c1c;
     }
 
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      border: 2px solid rgba(148, 163, 184, 0.35);
-      border-top-color: #475569;
-      animation: spin 0.7s linear infinite;
-      flex: 0 0 auto;
-    }
-
-    .global-loading {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 23, 42, 0.26);
-      backdrop-filter: blur(3px);
-      z-index: 9999;
-      padding: 20px;
-    }
-
-    .global-loading.is-open {
-      display: flex;
-    }
-
-    .global-loading__box {
-      min-width: 240px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 18px 20px;
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-      font-weight: 700;
-      color: var(--text-strong);
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
     @media (max-width: 1180px) {
       .page-grid {
         grid-template-columns: 1fr;
