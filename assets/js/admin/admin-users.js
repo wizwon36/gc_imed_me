@@ -24,8 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   showGlobalLoading('초기 정보를 불러오는 중...');
   try {
     await loadOrgData();
-    await loadUsers(true);
-    hasLoadedUsers = true;
   } catch (error) {
     setAdminMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -211,7 +209,7 @@ function markFieldInvalid(fieldId) {
   el.focus();
 }
 
-function showGlobalLoading(text = '처리 중...') {
+function showGlobalLoading(text = '로딩 중...') {
   const overlay = document.getElementById('globalLoading');
   if (!overlay) return;
 
@@ -220,7 +218,6 @@ function showGlobalLoading(text = '처리 중...') {
     textEl.textContent = text;
   }
 
-  overlay.classList.add('is-open');
   overlay.setAttribute('aria-hidden', 'false');
 }
 
@@ -228,7 +225,6 @@ function hideGlobalLoading() {
   const overlay = document.getElementById('globalLoading');
   if (!overlay) return;
 
-  overlay.classList.remove('is-open');
   overlay.setAttribute('aria-hidden', 'true');
 }
 
@@ -352,14 +348,18 @@ async function createUser() {
   showGlobalLoading('사용자 등록 중...');
   try {
     const result = await apiPost('createUser', payload);
-    setAdminMessage(
-      result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.',
-      'success'
-    );
+    setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
 
     resetEditMode(false);
-    await loadUsers();
-    hasLoadedUsers = true;
+
+    hasLoadedUsers = false;
+    allUsers = [];
+    document.getElementById('userListCount').textContent = '아직 조회하지 않았습니다.';
+    document.getElementById('userList').innerHTML = `
+      <div class="user-list-empty">
+        등록이 완료되었습니다. 필요하면 <strong>사용자 조회</strong>를 눌러 목록을 다시 불러와 주세요.
+      </div>
+    `;
   } finally {
     if (saveBtn) saveBtn.disabled = false;
     hideGlobalLoading();
@@ -394,8 +394,10 @@ async function updateUser() {
     setAdminMessage(result.message || '사용자 정보가 수정되었습니다.', 'success');
 
     resetEditMode(false);
-    await loadUsers();
-    hasLoadedUsers = true;
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+    }
   } finally {
     if (saveBtn) saveBtn.disabled = false;
     hideGlobalLoading();
@@ -416,15 +418,11 @@ async function searchUsers() {
   }
 }
 
-async function loadUsers(isInitialLoad = false) {
+async function loadUsers() {
   const listEl = document.getElementById('userList');
   const countEl = document.getElementById('userListCount');
 
-  showGlobalLoading(
-    isInitialLoad
-      ? '초기 사용자 목록을 불러오는 중입니다...'
-      : '사용자 목록을 불러오는 중입니다...'
-  );
+  showGlobalLoading('사용자 목록을 불러오는 중입니다...');
 
   try {
     const result = await apiGet('listUsers', {
@@ -434,6 +432,7 @@ async function loadUsers(isInitialLoad = false) {
     allUsers = Array.isArray(result.data) ? result.data : [];
     renderUserList();
   } catch (error) {
+    allUsers = [];
     if (countEl) countEl.textContent = '';
 
     if (listEl) {
@@ -443,6 +442,7 @@ async function loadUsers(isInitialLoad = false) {
         </div>
       `;
     }
+    throw error;
   } finally {
     hideGlobalLoading();
   }
@@ -528,25 +528,9 @@ function renderUserList() {
         </div>
 
         <div class="user-item__actions">
-          <button
-            type="button"
-            class="admin-btn small js-edit-user"
-            data-email="${escapeHtml(user.user_email || '')}">
-            수정
-          </button>
-
-          <button
-            type="button"
-            class="admin-btn small js-reset-password"
-            data-email="${escapeHtml(user.user_email || '')}">
-            비밀번호 초기화
-          </button>
-
-          <button
-            type="button"
-            class="admin-btn small ${isActive ? 'danger' : 'secondary'} js-toggle-active"
-            data-email="${escapeHtml(user.user_email || '')}"
-            data-active="${isActive ? 'N' : 'Y'}">
+          <button type="button" class="admin-btn small js-edit-user" data-email="${escapeHtml(user.user_email || '')}">수정</button>
+          <button type="button" class="admin-btn small js-reset-password" data-email="${escapeHtml(user.user_email || '')}">비밀번호 초기화</button>
+          <button type="button" class="admin-btn small ${isActive ? 'danger' : 'secondary'} js-toggle-active" data-email="${escapeHtml(user.user_email || '')}" data-active="${isActive ? 'N' : 'Y'}">
             ${isActive ? '비활성화' : '활성화'}
           </button>
         </div>
@@ -560,7 +544,6 @@ async function editUser(userEmail) {
 
   clearAdminMessage();
   showGlobalLoading('사용자 정보를 불러오는 중...');
-  setAdminMessage(`"${userEmail}" 사용자 정보를 불러오는 중입니다...`, 'success');
 
   try {
     const result = await apiGet('getUserDetail', {
@@ -604,7 +587,6 @@ async function resetUserPassword(userEmail) {
   if (!confirmed) return;
 
   showGlobalLoading('비밀번호를 초기화하는 중...');
-  setAdminMessage(`"${userEmail}" 계정 비밀번호를 초기화하는 중입니다...`, 'success');
 
   try {
     const result = await apiPost('resetUserPassword', {
@@ -632,7 +614,6 @@ async function setUserActive(userEmail, active) {
   if (!confirmed) return;
 
   showGlobalLoading(`사용자 ${actionLabel} 처리 중...`);
-  setAdminMessage(`"${userEmail}" 계정을 ${actionLabel}하는 중입니다...`, 'success');
 
   try {
     const result = await apiPost('setUserActive', {
