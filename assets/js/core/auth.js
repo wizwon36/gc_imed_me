@@ -13,26 +13,7 @@
       el.classList.add(`is-${type}`);
     }
   }
-  
-  function showGlobalLoading(text = '처리 중...') {
-    const overlay = document.getElementById('globalLoading');
-    if (!overlay) return;
-  
-    const textEl = document.getElementById('globalLoadingText');
-    if (textEl) textEl.textContent = text;
-  
-    overlay.classList.add('is-open');
-    overlay.setAttribute('aria-hidden', 'false');
-  }
-  
-  function hideGlobalLoading() {
-    const overlay = document.getElementById('globalLoading');
-    if (!overlay) return;
-  
-    overlay.classList.remove('is-open');
-    overlay.setAttribute('aria-hidden', 'true');
-  }
-  
+
   function getLoginUrl() {
     return `${CONFIG.SITE_BASE_URL}/index.html`;
   }
@@ -42,10 +23,13 @@
   }
 
   function saveSession(user) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      ...user,
-      loginAt: Date.now()
-    }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...user,
+        loginAt: Date.now()
+      })
+    );
   }
 
   function getSession() {
@@ -76,18 +60,15 @@
 
   function requireAuth() {
     const user = getSession();
-
     if (!user) {
       location.replace(getLoginUrl());
       return null;
     }
-
     return user;
   }
 
   function redirectIfLoggedIn() {
     const user = getSession();
-
     if (user) {
       location.replace(getPortalUrl());
     }
@@ -119,19 +100,14 @@
     loginBtn.disabled = true;
     loginBtn.textContent = '로그인 중...';
     showGlobalLoading('로그인 중...');
-    
+
     try {
       const result = await apiPost('login', { user_email, password });
       saveSession(result.user);
-      
-      if (String(result.user?.first_login || 'N').toUpperCase() === 'Y') {
-        location.replace(`${CONFIG.SITE_BASE_URL}/pages/auth/change-password.html`);
-        return;
-      }
-      
       location.replace(getPortalUrl());
+      return;
     } catch (error) {
-      hideGlobalLoading();
+      await hideGlobalLoading(true);
       setMessage(error.message || '로그인 실패', 'error');
     } finally {
       loginBtn.disabled = false;
@@ -163,6 +139,7 @@
   function bindHistoryGuard() {
     const normalizedPath = location.pathname.replace(/\/+$/, '');
     const siteBasePath = CONFIG.SITE_BASE_URL.replace(/\/+$/, '');
+
     const isLoginPage =
       normalizedPath === '' ||
       normalizedPath === '/' ||
