@@ -174,9 +174,9 @@ function buildEquipmentCard(item) {
           <span class="equipment-card-value">${escapeHtml(item.maintenance_end_date || '-')}</span>
         </div>
       </div>
-
+      
       <div class="equipment-card-actions">
-        <a class="btn-secondary" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세보기</a>
+        <a class="btn-secondary" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세</a>
         <a class="btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id || '')}">수정</a>
       </div>
     </article>
