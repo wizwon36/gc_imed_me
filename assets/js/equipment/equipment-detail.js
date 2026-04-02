@@ -111,6 +111,7 @@ function renderDetailInfo(item) {
     { label: '사용부서', value: item.department },
     { label: '제조사', value: item.manufacturer },
     { label: '제조일자', value: item.manufacture_date },
+    { label: '구매일자', value: item.purchase_date },
     { label: '시리얼번호', value: item.serial_no },
     { label: '구매처', value: item.vendor },
     { label: '담당자', value: item.manager_name },

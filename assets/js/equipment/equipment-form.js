@@ -6,6 +6,7 @@ function fillEquipmentForm(item) {
   qs('#model_name').value = item.model_name || '';
   qs('#manufacturer').value = item.manufacturer || '';
   qs('#manufacture_date').value = item.manufacture_date || '';
+  qs('#purchase_date').value = item.purchase_date || '';
   qs('#serial_no').value = item.serial_no || '';
   qs('#vendor').value = item.vendor || '';
   qs('#manager_name').value = item.manager_name || '';
@@ -79,6 +80,7 @@ async function buildPayload() {
 
     manufacturer: qs('#manufacturer').value.trim(),
     manufacture_date: qs('#manufacture_date').value,
+    purchase_date: qs('#purchase_date').value,
     serial_no: qs('#serial_no').value.trim(),
     vendor: qs('#vendor').value.trim(),
     manager_name: qs('#manager_name').value.trim(),
