@@ -3,337 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>앱 선택</title>
-  <link rel="stylesheet" href="assets/css/common.css" />
-  <style>
-    body.portal-page {
-      margin: 0;
-      min-height: 100vh;
-      background: #f5f7fb;
-      color: #0f172a;
-    }
-
-    .portal-shell {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 32px 20px 40px;
-    }
-
-    .portal-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 22px;
-      padding: 18px 20px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      border-radius: 22px;
-      background: #fff;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-    }
-
-    .portal-title {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.2;
-      color: #0f172a;
-      letter-spacing: -0.02em;
-    }
-
-    .portal-desc {
-      margin: 6px 0 0;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #667085;
-    }
-
-    .portal-user-box {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .portal-action-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    
-    .portal-admin-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 42px;
-      padding: 0 16px;
-      border: 1px solid #2563eb;
-      border-radius: 14px;
-      background: #2563eb;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 800;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    
-    .portal-admin-btn:hover {
-      background: #1d4ed8;
-      border-color: #1d4ed8;
-    }
-   
-    .portal-user-meta {
-      text-align: right;
-    }
-
-    .portal-user-name {
-      display: block;
-      font-size: 15px;
-      font-weight: 800;
-      color: #111827;
-    }
-
-    .portal-user-sub {
-      display: block;
-      margin-top: 2px;
-      font-size: 12px;
-      line-height: 1.4;
-      color: #667085;
-    }
-
-    .portal-logout-btn {
-      min-height: 42px;
-      padding: 0 16px;
-      border: 1px solid #d0d5dd;
-      border-radius: 14px;
-      background: #fff;
-      color: #111827;
-      font-size: 14px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .portal-section {
-      margin-top: 24px;
-    }
-
-    .portal-section-title {
-      margin: 0 0 8px;
-      font-size: 20px;
-      line-height: 1.35;
-      color: #0f172a;
-      letter-spacing: -0.02em;
-    }
-
-    .portal-section-desc {
-      margin: 0 0 18px;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #667085;
-    }
-
-    .portal-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 20px;
-      align-items: stretch;
-    }
-
-    .portal-app-card {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-height: 160px;
-      height: 100%;
-      padding: 16px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      border-radius: 20px;
-      background: #fff;
-      box-shadow:
-        0 1px 2px rgba(16, 24, 40, 0.04),
-        0 8px 24px rgba(16, 24, 40, 0.05);
-      text-decoration: none;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    }
-
-    .portal-app-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(37, 99, 235, 0.2);
-      box-shadow:
-        0 2px 6px rgba(16, 24, 40, 0.06),
-        0 12px 28px rgba(16, 24, 40, 0.08);
-    }
-
-    .portal-app-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
-      background: linear-gradient(135deg, #2563eb, #22c55e);
-    }
-
-    .portal-app-title {
-      margin: 0;
-      font-size: 16px;
-      line-height: 1.35;
-      color: #0f172a;
-      letter-spacing: -0.02em;
-    }
-
-    .portal-app-desc {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.55;
-      color: #667085;
-    }
-
-    .portal-app-meta {
-      margin-top: auto;
-      width: fit-content;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: #eff6ff;
-      color: #2563eb;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .portal-empty {
-      padding: 28px 20px;
-      border: 1px dashed #d0d5dd;
-      border-radius: 20px;
-      background: #fff;
-      text-align: center;
-      color: #667085;
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    .portal-error {
-      padding: 16px 18px;
-      border-radius: 16px;
-      background: #fff1f2;
-      border: 1px solid #fecdd3;
-      color: #be123c;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    @media (max-width: 1024px) {
-      .portal-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-    
-    @media (max-width: 768px) {
-      .portal-shell {
-        padding: 20px 16px 28px;
-      }
-    
-      .portal-topbar {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 16px;
-        border-radius: 18px;
-      }
-    
-      .portal-user-box {
-        width: 100%;
-        justify-content: space-between;
-      }
-    
-      .portal-action-group {
-        width: 100%;
-        justify-content: space-between;
-      }
-    
-      .portal-admin-btn,
-      .portal-logout-btn {
-        flex: 1;
-        justify-content: center;
-      }
-    
-      .portal-user-meta {
-        text-align: left;
-      }
-    
-      .portal-title {
-        font-size: 24px;
-      }
-    
-      .portal-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-    
-      .portal-app-card {
-        min-height: 150px;
-        padding: 14px;
-        border-radius: 18px;
-      }
-    }
-  </style>
+  <title>MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="./assets/css/common.css" />
 </head>
-<body class="portal-page">
-  <main class="portal-shell">
-    <section class="portal-topbar">
+<body>
+  <div class="container page-shell">
+    <section class="top-brand-bar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">+</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">의료장비 관리시스템</strong>
+          <span class="top-brand-sub">앱 선택 · 권한 기반 포털</span>
+        </div>
+      </div>
+
+      <div class="top-brand-actions">
+        <button type="button" id="adminPageBtn" class="btn-primary" style="display:none;">
+          관리자 페이지
+        </button>
+        <button type="button" id="logoutBtn" class="btn-secondary">
+          로그아웃
+        </button>
+      </div>
+    </section>
+
+    <section class="page-hero-simple">
       <div>
-        <h1 class="portal-title">앱 선택</h1>
-        <p class="portal-desc">권한에 맞는 시스템을 선택해 이용할 수 있습니다.</p>
+        <h1 class="page-title">앱 선택</h1>
+        <p class="page-desc">권한에 맞는 시스템을 선택해 이용할 수 있습니다.</p>
       </div>
 
       <div class="portal-user-box">
-        <div class="portal-user-meta">
-          <span class="portal-user-name" id="portalUserName">사용자</span>
-          <span class="portal-user-sub" id="portalUserSub">부서 / 권한</span>
-        </div>
-      
-        <div class="portal-action-group">
-          <a
-            href="pages/admin/users.html"
-            class="portal-admin-btn"
-            id="adminPageBtn"
-            style="display:none;"
-          >
-            관리자 페이지
-          </a>
-          <button type="button" class="portal-logout-btn" id="logoutBtn">로그아웃</button>
-        </div>
+        <div class="portal-user-name" id="portalUserName">사용자</div>
+        <div class="portal-user-sub" id="portalUserSub">소속 없음 / user</div>
       </div>
     </section>
 
     <section class="portal-section">
-      <h2 class="portal-section-title">사용 가능한 앱</h2>
-      <p class="portal-section-desc">접근 권한이 있는 앱만 표시됩니다.</p>
+      <div class="section-head">
+        <h2 class="section-title">사용 가능한 앱</h2>
+        <div class="sub-text">접근 권한이 있는 앱만 표시됩니다.</div>
+      </div>
 
-      <div class="portal-grid" id="portalAppGrid"></div>
+      <div id="portalAppGrid" class="portal-app-grid"></div>
 
-      <div class="portal-empty" id="portalEmpty" style="display:none;">
-        현재 접근 가능한 앱이 없습니다.
+      <div id="portalEmpty" class="empty-box" style="display:none;">
+        사용 가능한 앱이 없습니다.
       </div>
     </section>
-  </main>
+  </div>
+
+  <script src="./assets/js/core/config.js"></script>
+  <script src="./assets/js/core/api.js"></script>
+  <script src="./assets/js/core/utils.js"></script>
+  <script src="./assets/js/core/auth.js"></script>
+  <script src="./assets/js/core/app-permission.js"></script>
+  <script src="./assets/js/portal/portal.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
       <div class="global-loading__spinner" aria-hidden="true"></div>
-      <div class="global-loading__text" id="globalLoadingText">로딩 중...</div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
     </div>
   </div>
-
-  <script src="assets/js/core/config.js"></script>
-  <script src="assets/js/core/api.js"></script>
-  <script src="assets/js/core/auth.js"></script>
-  <script src="assets/js/core/utils.js"></script>
-  <script>
-    window.auth.requireAuth();
-  </script>
-  <script src="assets/js/portal/portal.js"></script>
 </body>
 </html>
