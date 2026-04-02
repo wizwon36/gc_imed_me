@@ -121,8 +121,8 @@ function renderDetailInfo(item) {
     { label: '현재 상태', value: statusLabel(item.status) },
     { label: '현재 위치', value: item.location },
     { label: '현재 사용자', value: item.current_user },
-    { label: '등록일시', value: item.created_at },
-    { label: '수정일시', value: item.updated_at },
+    { label: '등록일시', value: formatDateTimeKR(item.created_at) },
+    { label: '수정일시', value: formatDateTimeKR(item.updated_at) },
     { label: '비고', value: item.memo || '-' }
   ];
 
