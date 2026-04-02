@@ -1,318 +1,319 @@
-let CURRENT_EQUIPMENT_PERMISSION = null;
+const equipmentListState = {
+  user: null,
+  page: 1,
+  pageSize: 20,
+  totalCount: 0,
+  totalPages: 1,
+  loading: false
+};
 
-document.addEventListener('DOMContentLoaded', async () => {
-  showGlobalLoading('목록 화면을 준비하는 중...');
+function getListQueryParams() {
+  const params = new URLSearchParams(location.search);
 
-  try {
-    const user = window.auth.requireAuth();
-    if (!user) return;
-
-    const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-    if (!ok) return;
-
-    CURRENT_EQUIPMENT_PERMISSION = await window.appPermission.getPermission('equipment');
-
-    await OrgService.preload();
-    await initEquipmentListPage();
-  } catch (error) {
-    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
-  } finally {
-    hideGlobalLoading();
-  }
-});
-
-async function initEquipmentListPage() {
-  await initListOrgFilters();
-
-  qs('#searchBtn').addEventListener('click', loadEquipments);
-  qs('#resetBtn').addEventListener('click', resetSearchForm);
-
-  bindFilterChips();
-  bindEnterSearch();
-  setActiveFilterChip('');
-  applyListViewContext();
-
-  renderInitialEmptyState(
-    '검색 조건을 설정한 뒤 조회해 주세요.',
-    '조회 전에는 결과 요약과 결과 목록이 표시되지 않습니다.'
-  );
+  return {
+    keyword: params.get('keyword') || '',
+    clinic_code: params.get('clinic_code') || '',
+    team_code: params.get('team_code') || '',
+    status: params.get('status') || '',
+    manufacturer: params.get('manufacturer') || '',
+    page: Number(params.get('page') || 1) || 1,
+    page_size: Number(params.get('page_size') || 20) || 20
+  };
 }
 
+function setListQueryParams(next) {
+  const url = new URL(location.href);
 
-function renderEquipmentListSkeleton() {
-  const list = qs('#equipmentCardList');
-  if (!list) return;
+  Object.entries(next).forEach(([key, value]) => {
+    if (value === '' || value === null || value === undefined) {
+      url.searchParams.delete(key);
+    } else {
+      url.searchParams.set(key, String(value));
+    }
+  });
 
-  list.innerHTML = `
-    <div class="equipment-card-skeleton-list">
-      <div class="equipment-card-skeleton"></div>
-      <div class="equipment-card-skeleton"></div>
-      <div class="equipment-card-skeleton"></div>
-    </div>
+  history.replaceState({}, '', url.toString());
+}
+
+function syncFilterInputsFromState() {
+  setFormValueSafe('keyword', getCurrentFilters().keyword);
+  setFormValueSafe('clinic_code', getCurrentFilters().clinic_code);
+  setFormValueSafe('status', getCurrentFilters().status);
+  setFormValueSafe('manufacturer', getCurrentFilters().manufacturer);
+}
+
+function setFormValueSafe(id, value) {
+  const el = qs(`#${id}`);
+  if (!el) return;
+  el.value = value == null ? '' : value;
+}
+
+function getCurrentFilters() {
+  return {
+    keyword: getFormValueSafe('keyword'),
+    clinic_code: getFormValueSafe('clinic_code'),
+    team_code: getFormValueSafe('team_code'),
+    status: getFormValueSafe('status'),
+    manufacturer: getFormValueSafe('manufacturer')
+  };
+}
+
+function getFormValueSafe(id) {
+  const el = qs(`#${id}`);
+  return el ? String(el.value || '').trim() : '';
+}
+
+function fillStatusFilterOptions() {
+  const el = qs('#status');
+  if (!el) return;
+
+  el.innerHTML = `
+    <option value="">전체 상태</option>
+    <option value="IN_USE">사용중</option>
+    <option value="REPAIRING">수리중</option>
+    <option value="INSPECTING">점검중</option>
+    <option value="STORED">보관</option>
+    <option value="DISPOSED">폐기</option>
   `;
 }
 
+function fillPageSizeOptions() {
+  const el = qs('#page_size');
+  if (!el) return;
 
-
-function toggleResultsUI(show) {
-  const summaryRow = qs('#summaryRow');
-  const resultSection = qs('#resultSection');
-  const heroResultBadge = qs('#heroResultBadge');
-
-  if (summaryRow) {
-    summaryRow.classList.toggle('is-hidden', !show);
-  }
-  if (resultSection) {
-    resultSection.classList.toggle('is-hidden', !show);
-  }
-  if (heroResultBadge) {
-    heroResultBadge.classList.toggle('is-hidden', !show);
-  }
-}
-
-function renderInitialEmptyState(message, description = '') {
-  const list = qs('#equipmentCardList');
-  if (!list) return;
-
-  list.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-state-title">${escapeHtml(message)}</div>
-      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
-    </div>
+  el.innerHTML = `
+    <option value="10">10개</option>
+    <option value="20">20개</option>
+    <option value="50">50개</option>
+    <option value="100">100개</option>
   `;
 
-  updateSummary([]);
-  toggleResultsUI(false);
+  el.value = String(equipmentListState.pageSize);
 }
 
-function renderResultEmptyState(message, description = '') {
-  const list = qs('#equipmentCardList');
-  if (!list) return;
+function renderListSummary() {
+  const summaryEl = qs('#listSummary');
+  if (!summaryEl) return;
 
-  list.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-state-title">${escapeHtml(message)}</div>
-      ${description ? `<div class="empty-state-desc">${escapeHtml(description)}</div>` : ''}
-    </div>
-  `;
+  const total = formatNumber(equipmentListState.totalCount || 0);
+  const page = formatNumber(equipmentListState.page || 1);
+  const totalPages = formatNumber(equipmentListState.totalPages || 1);
 
-  updateSummary([]);
-  toggleResultsUI(true);
+  summaryEl.textContent = `총 ${total}건 · ${page} / ${totalPages} 페이지`;
 }
 
-function updateSummary(items) {
-  const total = items.length;
-  const inUse = items.filter(item => item.status === 'IN_USE').length;
-  const repairing = items.filter(item => item.status === 'REPAIRING').length;
-  const inspecting = items.filter(item => item.status === 'INSPECTING').length;
-
-  qs('#summaryTotal').textContent = formatNumber(total);
-  qs('#summaryInUse').textContent = formatNumber(inUse);
-  qs('#summaryRepairing').textContent = formatNumber(repairing);
-  qs('#summaryInspecting').textContent = formatNumber(inspecting);
-  qs('#resultCountText').textContent = `총 ${formatNumber(total)}건`;
-}
-
-function renderEquipmentCards(items) {
-  const list = qs('#equipmentCardList');
-
-  if (!items.length) {
-    renderResultEmptyState(
-      '조회 결과가 없습니다.',
-      '검색 조건을 변경한 뒤 다시 조회해 주세요.'
-    );
-    return;
-  }
-
-  toggleResultsUI(true);
-
-  list.innerHTML = items.map(item => `
-    <article class="equipment-item-card equipment-item-card-tuned" data-id="${escapeHtml(item.equipment_id)}">
-      <div class="equipment-card-top">
-        <div class="equipment-title-block">
-          <h3 class="equipment-title">${safeText(item.equipment_name)}</h3>
-          <div class="equipment-model">${safeText(item.model_name)}</div>
+function buildEquipmentCard(item) {
+  return `
+    <article class="equipment-card">
+      <div class="equipment-card-head">
+        <div class="equipment-card-title-wrap">
+          <h3 class="equipment-card-title">${safeText(item.equipment_name || '-')}</h3>
+          <div class="equipment-card-sub">${safeText(item.equipment_id || '')}</div>
         </div>
-
-        <div class="equipment-top-right">
-          <span class="status-badge ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
-          <div class="equipment-id">${safeText(item.equipment_id)}</div>
-        </div>
+        <span class="status-badge ${statusClass(item.status || '')}">
+          ${statusLabel(item.status || '')}
+        </span>
       </div>
 
-      <div class="equipment-meta-grid">
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">의원 / 팀</span>
-          <span class="equipment-meta-value">${safeText(item.department)}</span>
+      <div class="equipment-card-grid">
+        <div class="equipment-card-row">
+          <span class="equipment-card-label">모델명</span>
+          <span class="equipment-card-value">${safeText(item.model_name || '-')}</span>
         </div>
-
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">제조사</span>
-          <span class="equipment-meta-value">${safeText(item.manufacturer)}</span>
+        <div class="equipment-card-row">
+          <span class="equipment-card-label">부서</span>
+          <span class="equipment-card-value">${safeText(item.department || '-')}</span>
         </div>
-
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">시리얼번호</span>
-          <span class="equipment-meta-value">${safeText(item.serial_no)}</span>
+        <div class="equipment-card-row">
+          <span class="equipment-card-label">제조사</span>
+          <span class="equipment-card-value">${safeText(item.manufacturer || '-')}</span>
         </div>
-
-        <div class="equipment-meta-item">
-          <span class="equipment-meta-label">현재 위치</span>
-          <span class="equipment-meta-value">${safeText(item.location)}</span>
+        <div class="equipment-card-row">
+          <span class="equipment-card-label">시리얼</span>
+          <span class="equipment-card-value">${safeText(item.serial_no || '-')}</span>
+        </div>
+        <div class="equipment-card-row">
+          <span class="equipment-card-label">위치</span>
+          <span class="equipment-card-value">${safeText(item.location || '-')}</span>
+        </div>
+        <div class="equipment-card-row">
+          <span class="equipment-card-label">유지보수 종료</span>
+          <span class="equipment-card-value">${safeText(item.maintenance_end_date || '-')}</span>
         </div>
       </div>
 
       <div class="equipment-card-actions">
-        <button class="btn btn-primary card-action-btn" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">상세보기</button>
+        <a class="btn-secondary" href="detail.html?id=${encodeURIComponent(item.equipment_id)}">상세보기</a>
+        <a class="btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id)}">수정</a>
       </div>
     </article>
-  `).join('');
-
-  updateSummary(items);
+  `;
 }
 
-function getListViewType() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('view') || 'default';
-}
+function renderEquipmentList(items = []) {
+  const container = qs('#equipmentList');
+  if (!container) return;
 
-function applyListViewContext() {
-  const view = getListViewType();
-
-  const titleEl = qs('#listPageTitle');
-  const descEl = qs('#listPageDesc');
-  const chipEl = qs('#listContextChip');
-
-  if (!titleEl || !descEl || !chipEl) return view;
-
-  const viewMap = {
-    all: {
-      title: '전체 장비 목록',
-      desc: '등록된 전체 장비를 조건에 맞게 검색할 수 있습니다.',
-      chip: '빠른 진입 · 전체 장비'
-    },
-    history: {
-      title: '장비 이력 확인',
-      desc: '수리, 점검, 관리 이력을 확인할 장비를 검색하세요.',
-      chip: '빠른 진입 · 이력 확인'
-    },
-    label: {
-      title: '라벨 출력 대상 조회',
-      desc: '라벨 출력이 필요한 장비를 검색하고 선택할 수 있습니다.',
-      chip: '빠른 진입 · 라벨 출력'
-    },
-    default: {
-      title: '장비 목록',
-      desc: '장비번호, 장비명, 모델명, 의원, 팀, 상태 기준으로 빠르게 검색할 수 있습니다.',
-      chip: ''
-    }
-  };
-
-  const config = viewMap[view] || viewMap.default;
-
-  titleEl.textContent = config.title;
-  descEl.textContent = config.desc;
-
-  if (config.chip) {
-    chipEl.textContent = config.chip;
-    chipEl.classList.remove('is-hidden');
-  } else {
-    chipEl.textContent = '';
-    chipEl.classList.add('is-hidden');
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-box">조회된 장비가 없습니다.</div>`;
+    return;
   }
 
-  return view;
+  container.innerHTML = items.map(buildEquipmentCard).join('');
 }
 
-async function initListOrgFilters() {
-  await OrgService.bindClinicTeam(qs('#clinic_code'), qs('#team_code'), {
-    clinicEmptyLabel: '전체 의원',
-    teamEmptyLabel: '전체 팀'
+function renderPagination() {
+  const container = qs('#paginationArea');
+  if (!container) return;
+
+  const page = equipmentListState.page;
+  const totalPages = equipmentListState.totalPages;
+
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const pages = [];
+  const start = Math.max(1, page - 2);
+  const end = Math.min(totalPages, page + 2);
+
+  for (let i = start; i <= end; i += 1) {
+    pages.push(`
+      <button type="button" class="pagination-btn ${i === page ? 'is-active' : ''}" data-page="${i}">
+        ${i}
+      </button>
+    `);
+  }
+
+  container.innerHTML = `
+    <button type="button" class="pagination-btn" data-page="${Math.max(1, page - 1)}" ${page <= 1 ? 'disabled' : ''}>이전</button>
+    ${pages.join('')}
+    <button type="button" class="pagination-btn" data-page="${Math.min(totalPages, page + 1)}" ${page >= totalPages ? 'disabled' : ''}>다음</button>
+  `;
+
+  qsa('#paginationArea .pagination-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const nextPage = Number(btn.dataset.page || page);
+      if (!nextPage || nextPage === equipmentListState.page) return;
+      loadEquipmentList(nextPage);
+    });
   });
 }
 
-async function loadEquipments() {
+async function loadEquipmentList(nextPage = equipmentListState.page) {
+  if (equipmentListState.loading) return;
+
+  equipmentListState.loading = true;
   clearMessage();
 
-  const params = {
-    keyword: qs('#keyword').value.trim(),
-    clinic_code: qs('#clinic_code').value,
-    team_code: qs('#team_code').value,
-    status: getSelectedStatus(),
-    manufacturer: qs('#manufacturer').value.trim()
-  };
-
-  const searchBtn = qs('#searchBtn');
-
   try {
-    toggleResultsUI(true);
-    renderEquipmentListSkeleton();
-    showGlobalLoading('장비를 조회하는 중...');    
-    setLoading(searchBtn, true, '조회 중...');
+    showGlobalLoading('장비 목록을 불러오는 중...');
 
-    const user = window.auth?.getSession?.() || {};
-    params.request_user_email = user.email || '';
-    const result = await apiGet('listEquipments', params);
-    renderEquipmentCards(result.data || []);
+    const filters = getCurrentFilters();
+    equipmentListState.page = nextPage;
+
+    const result = await apiGet('listEquipments', {
+      request_user_email: equipmentListState.user.email || '',
+      keyword: filters.keyword,
+      clinic_code: filters.clinic_code,
+      team_code: filters.team_code,
+      status: filters.status,
+      manufacturer: filters.manufacturer,
+      page: equipmentListState.page,
+      page_size: equipmentListState.pageSize
+    });
+
+    equipmentListState.totalCount = Number(result.total_count || result.count || 0);
+    equipmentListState.totalPages = Number(result.total_pages || 1);
+    equipmentListState.page = Number(result.page || 1);
+
+    renderEquipmentList(Array.isArray(result.data) ? result.data : []);
+    renderListSummary();
+    renderPagination();
+
+    setListQueryParams({
+      ...filters,
+      page: equipmentListState.page,
+      page_size: equipmentListState.pageSize
+    });
   } catch (error) {
-    showMessage(error.message, 'error');
-    renderResultEmptyState(
-      '조회 중 오류가 발생했습니다.',
-      '잠시 후 다시 시도해 주세요.'
-    );
+    showMessage(error.message || '장비 목록을 불러오는 중 오류가 발생했습니다.', 'error');
   } finally {
-    setLoading(searchBtn, false, '조회');
-    hideGlobalLoading();
+    equipmentListState.loading = false;
+    await hideGlobalLoading(true);
   }
 }
 
-function resetSearchForm() {
-  qs('#keyword').value = '';
-  qs('#clinic_code').value = '';
+async function initListFilters() {
+  const query = getListQueryParams();
 
-  qs('#team_code').innerHTML = '<option value="">전체 팀</option>';
-  qs('#team_code').disabled = true;
-  qs('#manufacturer').value = '';
+  equipmentListState.page = query.page > 0 ? query.page : 1;
+  equipmentListState.pageSize = query.page_size > 0 ? query.page_size : 20;
 
-  setActiveFilterChip('');
+  fillStatusFilterOptions();
+  fillPageSizeOptions();
 
-  renderInitialEmptyState(
-    '검색 조건이 초기화되었습니다.',
-    '조건을 다시 입력한 뒤 조회 버튼을 눌러 주세요.'
-  );
-}
-
-function getSelectedStatus() {
-  const activeChip = document.querySelector('.filter-chip.active');
-  return activeChip ? (activeChip.dataset.status || '') : '';
-}
-
-function setActiveFilterChip(statusValue) {
-  qsa('.filter-chip').forEach(chip => {
-    chip.classList.toggle('active', chip.dataset.status === statusValue);
+  await window.OrgService.bindClinicTeam(qs('#clinic_code'), qs('#team_code'), {
+    initialClinicCode: query.clinic_code || '',
+    initialTeamCode: query.team_code || ''
   });
+
+  setFormValueSafe('keyword', query.keyword || '');
+  setFormValueSafe('status', query.status || '');
+  setFormValueSafe('manufacturer', query.manufacturer || '');
+  setFormValueSafe('page_size', String(equipmentListState.pageSize));
 }
 
-function bindFilterChips() {
-  qsa('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const statusValue = chip.dataset.status || '';
-      setActiveFilterChip(statusValue);
-      loadEquipments();
+function bindListEvents() {
+  const searchForm = qs('#searchForm');
+  if (searchForm) {
+    searchForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await loadEquipmentList(1);
     });
-  });
-}
+  }
 
-function bindEnterSearch() {
-  ['#keyword', '#clinic_code', '#team_code', '#manufacturer'].forEach(selector => {
-    const el = qs(selector);
-    if (!el) return;
-
-    el.addEventListener('keydown', event => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        loadEquipments();
-      }
+  const resetBtn = qs('#resetFilterBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      setFormValueSafe('keyword', '');
+      setFormValueSafe('clinic_code', '');
+      setFormValueSafe('team_code', '');
+      setFormValueSafe('status', '');
+      setFormValueSafe('manufacturer', '');
+      await window.OrgService.fillTeamSelect(qs('#team_code'), '', {
+        includeEmpty: true,
+        emptyLabel: '전체 팀',
+        selectedValue: ''
+      });
+      await loadEquipmentList(1);
     });
-  });
+  }
+
+  const pageSizeEl = qs('#page_size');
+  if (pageSizeEl) {
+    pageSizeEl.addEventListener('change', async () => {
+      equipmentListState.pageSize = Number(pageSizeEl.value || 20) || 20;
+      await loadEquipmentList(1);
+    });
+  }
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  showGlobalLoading('장비 목록 화면을 준비하는 중...');
+
+  try {
+    equipmentListState.user = window.auth.requireAuth();
+    if (!equipmentListState.user) return;
+
+    await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    await initListFilters();
+    bindListEvents();
+    await loadEquipmentList(equipmentListState.page);
+  } catch (error) {
+    showMessage(error.message || '화면 초기화 중 오류가 발생했습니다.', 'error');
+  } finally {
+    await hideGlobalLoading(true);
+  }
+});
