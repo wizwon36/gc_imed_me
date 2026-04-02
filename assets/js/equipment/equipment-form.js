@@ -50,13 +50,8 @@ async function loadEditDataIfNeeded() {
   applyEditModeUi();
   showGlobalLoading('장비 정보를 불러오는 중...');
 
-  const user = window.auth?.getSession?.() || {};
-
   try {
-    const result = await apiGet('getEquipment', {
-      id,
-      request_user_email: user.email || ''
-    });
+    const result = await apiGet('getEquipment', { id });
     const item = result.data || {};
 
     fillEquipmentForm(item);
@@ -144,6 +139,7 @@ async function handleCreate(payload) {
     created_by: getCurrentUserId()
   });
 
+  invalidateDashboardSessionCache();
   showMessage(`${result.message} (${result.data.equipment_id})`, 'success');
 
   setTimeout(() => {
@@ -158,6 +154,7 @@ async function handleUpdate(payload) {
     updated_by: getCurrentUserId()
   });
 
+  invalidateDashboardSessionCache();
   showMessage('장비 정보가 수정되었습니다.', 'success');
 
   setTimeout(() => {

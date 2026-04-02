@@ -110,19 +110,18 @@ function renderDetailInfo(item) {
     { label: '모델명', value: item.model_name },
     { label: '사용부서', value: item.department },
     { label: '제조사', value: item.manufacturer },
-    { label: '제조일자', value: String(item.manufacture_date || '').slice(0, 10) || '-' },
-    { label: '구매일자', value: String(item.purchase_date || '').slice(0, 10) || '-' },
+    { label: '제조일자', value: item.manufacture_date },
     { label: '시리얼번호', value: item.serial_no },
     { label: '구매처', value: item.vendor },
     { label: '담당자', value: item.manager_name },
     { label: '연락처', value: item.manager_phone },
     { label: '취득가액', value: safeNumber(item.acquisition_cost), isHtml: true },
-    { label: '유지보수 종료일', value: String(item.maintenance_end_date || '').slice(0, 10) || '-' },
+    { label: '유지보수 종료일', value: item.maintenance_end_date },
     { label: '현재 상태', value: statusLabel(item.status) },
     { label: '현재 위치', value: item.location },
     { label: '현재 사용자', value: item.current_user },
-    { label: '등록일시', value: formatDateTimeKR(item.created_at) },
-    { label: '수정일시', value: formatDateTimeKR(item.updated_at) },
+    { label: '등록일시', value: item.created_at },
+    { label: '수정일시', value: item.updated_at },
     { label: '비고', value: item.memo || '-' }
   ];
 
@@ -262,6 +261,7 @@ async function deleteCurrentEquipment() {
       deleted_by: user?.email || ''
     });
 
+    invalidateDashboardSessionCache();
     alert('삭제되었습니다.');
     location.href = 'list.html';
   } catch (error) {

@@ -1,3 +1,34 @@
+// =====================================================
+// 대시보드 sessionStorage 캐시
+// =====================================================
+const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v1';
+const DASHBOARD_SESSION_TTL = 1000 * 60 * 5; // 5분
+
+function getDashboardSessionCache() {
+  try {
+    const raw = sessionStorage.getItem(DASHBOARD_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.savedAt > DASHBOARD_SESSION_TTL) return null;
+    return parsed.data;
+  } catch { return null; }
+}
+
+function setDashboardSessionCache(data) {
+  try {
+    sessionStorage.setItem(DASHBOARD_SESSION_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      data
+    }));
+  } catch {}
+}
+
+function invalidateDashboardSessionCache() {
+  try {
+    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+  } catch {}
+}
+
 function compactDateText(value) {
   if (!value) return '-';
   const text = String(value);
@@ -119,8 +150,18 @@ async function loadDashboard() {
   const user = window.auth?.getSession?.() || {};
 
   try {
-    console.time('dashboard_total');
+    // 1. sessionStorage 캐시 확인 (GAS 호출 없이 즉시 렌더링)
+    const sessionCached = getDashboardSessionCache();
+    if (sessionCached) {
+      renderKpis(sessionCached.kpis || {});
+      renderRecentEquipments(sessionCached.recent_equipments || []);
+      renderMaintenanceAlerts(sessionCached.maintenance_alerts || []);
+      renderDepartmentSummary(sessionCached.department_summary || []);
+      renderRecentHistories(sessionCached.recent_histories || []);
+      return;
+    }
 
+    // 2. GAS 호출 (CacheService로 시트 읽기 절감)
     const [summaryResult, historyResult] = await Promise.all([
       apiGet('getEquipmentDashboardSummary', {
         request_user_email: user.email || ''
@@ -131,15 +172,20 @@ async function loadDashboard() {
       })
     ]);
 
-    console.timeEnd('dashboard_total');
-
     const summary = summaryResult.data || {};
+    const histories = historyResult.data || [];
 
     renderKpis(summary.kpis || {});
     renderRecentEquipments(summary.recent_equipments || []);
     renderMaintenanceAlerts(summary.maintenance_alerts || []);
     renderDepartmentSummary(summary.department_summary || []);
-    renderRecentHistories(historyResult.data || []);
+    renderRecentHistories(histories);
+
+    // 3. sessionStorage에 저장 (다음 방문 시 즉시 렌더링)
+    setDashboardSessionCache({
+      ...summary,
+      recent_histories: histories
+    });
 
   } catch (error) {
     showMessage(error.message, 'error');
