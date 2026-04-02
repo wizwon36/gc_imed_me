@@ -76,7 +76,7 @@
               <div class="dashboard-action-desc">신규 장비 정보를 등록합니다.</div>
             </div>
           </a>
-        
+
           <a class="dashboard-action-card" href="list.html?view=all">
             <span class="dashboard-action-icon" aria-hidden="true">📋</span>
             <div class="dashboard-action-body">
@@ -84,7 +84,7 @@
               <div class="dashboard-action-desc">등록된 전체 장비를 조회합니다.</div>
             </div>
           </a>
-        
+
           <a class="dashboard-action-card" href="list.html?view=history">
             <span class="dashboard-action-icon" aria-hidden="true">🕘</span>
             <div class="dashboard-action-body">
@@ -92,7 +92,7 @@
               <div class="dashboard-action-desc">수리·점검·재고조사 이력을 빠르게 확인합니다.</div>
             </div>
           </a>
-        
+
           <a class="dashboard-action-card" href="list.html?view=label">
             <span class="dashboard-action-icon" aria-hidden="true">🏷</span>
             <div class="dashboard-action-body">
@@ -191,41 +191,17 @@
   </div>
 
   <script src="../../assets/js/core/config.js"></script>
-  <script src="../../assets/js/core/auth.js"></script>
-  <script>
-    window.auth.requireAuth();
-  </script>
-  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
 
-  <script>
-    window.addEventListener('DOMContentLoaded', async () => {
-      const user = window.auth?.requireAuth?.();
-      if (!user) return;
-  
-      console.log('[equipment] session user:', user);
-  
-      try {
-        const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-        console.log('[equipment] permission check result:', ok);
-  
-        if (!ok) return;
-      } catch (error) {
-        console.error('[equipment] permission check failed:', error);
-        alert('권한 확인 중 오류가 발생했습니다.');
-        location.replace(`${CONFIG.SITE_BASE_URL}/portal.html`);
-      }
-    });
-  </script>
-  
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
       <div class="global-loading__spinner" aria-hidden="true"></div>
       <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
     </div>
   </div>
-  
 </body>
 </html>
