@@ -40,9 +40,9 @@ async function loadEquipmentInfo() {
   qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
   qs('#checked_at').value = getNowDateTimeString();
 
+  const user = window.auth?.getSession?.() || {};
+
   try {
-    const user = window.auth?.getSession?.() || {};
-    
     const result = await apiGet('getEquipment', {
       id: equipmentId,
       request_user_email: user.email || ''
