@@ -158,3 +158,14 @@ if (typeof window.statusClass !== 'function') {
     }
   };
 }
+
+if (typeof window.safeText !== 'function') {
+  window.safeText = function (value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  };
+}
