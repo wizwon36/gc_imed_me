@@ -37,7 +37,7 @@ window.OrgService = {
         })
       );
     } catch (error) {
-      // 무시
+      // ignore
     }
   },
 
@@ -179,6 +179,10 @@ window.OrgService = {
   },
 
   async bindClinicTeam(clinicEl, teamEl, options = {}) {
+    if (!clinicEl || !teamEl) {
+      return;
+    }
+
     const {
       clinicEmptyLabel = '의원을 선택하세요',
       teamEmptyLabel = '팀을 선택하세요',
@@ -200,6 +204,10 @@ window.OrgService = {
       selectedValue: initialTeamCode
     });
 
+    if (clinicEl.dataset.orgBound === 'Y') {
+      return;
+    }
+
     clinicEl.addEventListener('change', async () => {
       await this.fillTeamSelect(teamEl, clinicEl.value, {
         includeEmpty: true,
@@ -207,6 +215,8 @@ window.OrgService = {
         selectedValue: ''
       });
     });
+
+    clinicEl.dataset.orgBound = 'Y';
   },
 
   async buildOrgPayload(clinicCode, teamCode) {
