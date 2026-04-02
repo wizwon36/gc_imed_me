@@ -111,7 +111,6 @@ function renderDetailInfo(item) {
     { label: '사용부서', value: item.department },
     { label: '제조사', value: item.manufacturer },
     { label: '제조일자', value: item.manufacture_date },
-    { label: '구매일자', value: item.purchase_date },
     { label: '시리얼번호', value: item.serial_no },
     { label: '구매처', value: item.vendor },
     { label: '담당자', value: item.manager_name },
@@ -289,14 +288,28 @@ function moveToLabelPrint() {
   location.href = `label-print.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  applyActionVisibility();
+document.addEventListener('DOMContentLoaded', async () => {
+  showGlobalLoading('장비 정보를 불러오는 중...');
 
-  qs('#editEquipmentBtn').addEventListener('click', moveToEditForm);
-  qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
-  qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
-  qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
-  qs('#printLabelBtn').addEventListener('click', moveToLabelPrint);
+  try {
+    const user = window.auth.requireAuth();
+    if (!user) return;
 
-  loadEquipmentDetail();
+    const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    if (!ok) return;
+
+    applyActionVisibility();
+
+    qs('#editEquipmentBtn').addEventListener('click', moveToEditForm);
+    qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
+    qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
+    qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
+    qs('#printLabelBtn').addEventListener('click', moveToLabelPrint);
+
+    loadEquipmentDetail();
+  } catch (error) {
+    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 });

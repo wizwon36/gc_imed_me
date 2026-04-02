@@ -132,6 +132,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   showGlobalLoading('이력 등록 화면을 준비하는 중...');
 
   try {
+    const user = window.auth.requireAuth();
+    if (!user) return;
+
+    const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
+    if (!ok) return;
+
     qs('#historyForm').addEventListener('submit', handleSubmitHistory);
     await OrgService.preload();
     await loadEquipmentInfo();

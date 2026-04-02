@@ -51,7 +51,21 @@ async function loadLabelData() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  qs('#printBtn').addEventListener('click', () => window.print());
-  loadLabelData();
+document.addEventListener('DOMContentLoaded', async () => {
+  showGlobalLoading('라벨 출력 화면을 준비하는 중...');
+
+  try {
+    const user = window.auth.requireAuth();
+    if (!user) return;
+
+    const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    if (!ok) return;
+
+    qs('#printBtn').addEventListener('click', () => window.print());
+    await loadLabelData();
+  } catch (error) {
+    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 });

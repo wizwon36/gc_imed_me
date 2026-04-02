@@ -240,6 +240,20 @@ async function loadDashboard() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  loadDashboard();
+document.addEventListener('DOMContentLoaded', async () => {
+  showGlobalLoading('대시보드를 준비하는 중...');
+
+  try {
+    const user = window.auth.requireAuth();
+    if (!user) return;
+
+    const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    if (!ok) return;
+
+    loadDashboard();
+  } catch (error) {
+    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
 });

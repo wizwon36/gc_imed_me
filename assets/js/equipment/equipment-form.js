@@ -193,6 +193,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   showGlobalLoading('조직 정보를 불러오는 중...');
 
   try {
+    const user = window.auth.requireAuth();
+    if (!user) return;
+
+    const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
+    if (!ok) return;
+
     await OrgService.preload();
     qs('#equipmentForm').addEventListener('submit', handleSubmitEquipment);
     await loadEditDataIfNeeded();
