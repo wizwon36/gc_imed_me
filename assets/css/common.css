@@ -4625,14 +4625,16 @@ select.input {
 
 .equipment-card-row {
   display: grid;
-  grid-template-columns: 110px 1fr;
+  grid-template-columns: 110px 1fr; /* 74px → 110px */
   gap: 10px;
   align-items: start;
 }
 
 .equipment-card-label {
-  color: var(--text-muted, #667085);
   font-size: 14px;
+  line-height: 1.45;
+  color: #7a8699;
+  white-space: nowrap; /* 줄바꿈 방지 */
 }
 
 .equipment-card-value {
