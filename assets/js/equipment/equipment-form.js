@@ -50,9 +50,9 @@ async function loadEditDataIfNeeded() {
   applyEditModeUi();
   showGlobalLoading('장비 정보를 불러오는 중...');
 
+  const user = window.auth?.getSession?.() || {};
+
   try {
-    const user = window.auth?.getSession?.() || {};
-    
     const result = await apiGet('getEquipment', {
       id,
       request_user_email: user.email || ''
