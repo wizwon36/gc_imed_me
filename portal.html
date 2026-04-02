@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="./assets/css/common.css" />
 </head>
 <body>
-  <div class="container page-shell">
-    <section class="top-brand-bar">
+  <div class="container page-shell portal-page">
+    <section class="top-brand-bar portal-topbar">
       <div class="top-brand-left">
         <div class="top-brand-logo">+</div>
         <div class="top-brand-texts">
@@ -17,17 +17,26 @@
         </div>
       </div>
 
-      <div class="top-brand-actions">
-        <button type="button" id="adminPageBtn" class="btn-primary" style="display:none;">
+      <div class="top-brand-actions portal-top-actions">
+        <button
+          type="button"
+          id="adminPageBtn"
+          class="portal-header-btn portal-header-btn--primary"
+          style="display:none;">
           관리자 페이지
         </button>
-        <button type="button" id="logoutBtn" class="btn-secondary">
+
+        <button
+          type="button"
+          id="logoutBtn"
+          class="portal-header-btn portal-header-btn--secondary"
+        >
           로그아웃
         </button>
       </div>
     </section>
 
-    <section class="page-hero-simple">
+    <section class="page-hero-simple portal-hero">
       <div>
         <h1 class="page-title">앱 선택</h1>
         <p class="page-desc">권한에 맞는 시스템을 선택해 이용할 수 있습니다.</p>
