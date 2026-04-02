@@ -4,16 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>장비 목록</title>
-  <link rel="stylesheet" href="../../assets/css/common.css">
+  <link rel="stylesheet" href="../../assets/css/common.css" />
 </head>
 <body>
-  <div class="container app-shell equipment-list-shell">
+  <div class="container page-shell">
     <section class="top-brand-bar">
       <div class="top-brand-left">
         <div class="top-brand-logo">+</div>
         <div class="top-brand-texts">
           <strong class="top-brand-title">의료장비 관리시스템</strong>
-          <span class="top-brand-sub">장비 검색 · 상태 조회 · 상세 확인</span>
+          <span class="top-brand-sub">장비 조회 · 검색 · 수정</span>
         </div>
       </div>
 
@@ -24,128 +24,77 @@
       </div>
     </section>
 
-    <section class="hero-panel equipment-list-hero">
-      <div class="hero-copy">
-        <h1 class="page-title hero-title" id="listPageTitle">장비 목록</h1>
-        <div class="hero-subtext" id="listPageDesc">
-          장비번호, 장비명, 모델명, 의원, 팀, 상태 기준으로 빠르게 검색할 수 있습니다.
-        </div>
-        <div id="listContextChip" class="list-context-chip is-hidden"></div>
-      </div>
-      <div class="equipment-list-hero-badge is-hidden" id="heroResultBadge">
-        <span class="equipment-list-hero-badge-label">조회 기준</span>
-        <strong class="equipment-list-hero-badge-value" id="resultCountText">총 0건</strong>
+    <section class="page-hero-simple">
+      <div>
+        <h1 class="page-title">장비 목록</h1>
+        <p class="page-desc">장비 검색, 필터링, 상세조회 및 수정이 가능합니다.</p>
       </div>
     </section>
 
     <div id="messageBox" class="message-box"></div>
 
-    <section class="card equipment-search-card equipment-search-card-tuned">
+    <form id="searchForm" class="card filter-card">
       <div class="section-head">
-        <h2 class="section-title">장비 검색</h2>
-        <div class="sub-text">검색어와 조건을 조합해 원하는 장비를 찾으세요.</div>
+        <h2 class="section-title">검색 조건</h2>
+        <div class="sub-text" id="listSummary">총 0건 · 1 / 1 페이지</div>
       </div>
 
-      <div class="equipment-search-grid equipment-search-grid-tuned">
-        <div class="form-group equipment-search-main">
-          <label class="form-label" for="keyword">검색어</label>
-          <input
-            type="text"
-            id="keyword"
-            class="form-input search-input-lg"
-            placeholder="장비번호 / 장비명 / 모델명 / 시리얼번호"
-          />
-        </div>
+      <div class="form-grid two-col">
+        <label class="form-field full-col">
+          <span class="form-label">검색어</span>
+          <input type="text" id="keyword" class="input" placeholder="장비명, 모델명, 시리얼, 부서 등" />
+        </label>
 
-        <div class="form-group">
-          <label class="form-label" for="clinic_code">의원</label>
-          <select id="clinic_code" class="form-select" disabled>
-            <option value="">의원 불러오는 중...</option>
-          </select>
-        </div>
+        <label class="form-field">
+          <span class="form-label">의원</span>
+          <select id="clinic_code" class="input"></select>
+        </label>
 
-        <div class="form-group">
-          <label class="form-label" for="team_code">팀</label>
-          <select id="team_code" class="form-select" disabled>
-            <option value="">팀 불러오는 중...</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="manufacturer">제조사</label>
-          <input
-            type="text"
-            id="manufacturer"
-            class="form-input"
-            placeholder="예: GE"
-          />
-        </div>
+        <label class="form-field">
+          <span class="form-label">팀</span>
+          <select id="team_code" class="input"></select>
+        </label>
+
+        <label class="form-field">
+          <span class="form-label">상태</span>
+          <select id="status" class="input"></select>
+        </label>
+
+        <label class="form-field">
+          <span class="form-label">제조사</span>
+          <input type="text" id="manufacturer" class="input" />
+        </label>
       </div>
 
-      <div class="search-filter-block">
-        <div class="search-block-label">장비 상태</div>
-        <div class="search-chip-row">
-          <button type="button" class="filter-chip" data-status="">전체</button>
-          <button type="button" class="filter-chip" data-status="IN_USE">사용중</button>
-          <button type="button" class="filter-chip" data-status="REPAIRING">수리중</button>
-          <button type="button" class="filter-chip" data-status="INSPECTING">점검중</button>
-          <button type="button" class="filter-chip" data-status="STORED">보관</button>
+      <div class="filter-actions">
+        <div class="filter-actions-left">
+          <label class="inline-field">
+            <span class="form-label">페이지당</span>
+            <select id="page_size" class="input input-sm"></select>
+          </label>
         </div>
-      </div>
-      
-      <div class="search-action-block">
-        <div class="search-action-row">
-          <button type="button" id="searchBtn" class="btn btn-primary">조회</button>
-          <button type="button" id="resetBtn" class="btn btn-secondary">초기화</button>
-        </div>
-      </div>
-    </section>
 
-    <section class="equipment-summary-row equipment-summary-row-tuned is-hidden" id="summaryRow">
-      <div class="summary-pill">
-        <span class="summary-pill-label">전체</span>
-        <strong class="summary-pill-value" id="summaryTotal">0</strong>
-      </div>
-    
-      <div class="summary-pill">
-        <span class="summary-pill-label">사용중</span>
-        <strong class="summary-pill-value" id="summaryInUse">0</strong>
-      </div>
-    
-      <div class="summary-pill">
-        <span class="summary-pill-label">수리중</span>
-        <strong class="summary-pill-value" id="summaryRepairing">0</strong>
-      </div>
-    
-      <div class="summary-pill">
-        <span class="summary-pill-label">점검중</span>
-        <strong class="summary-pill-value" id="summaryInspecting">0</strong>
-      </div>
-    </section>
-    
-    <section class="equipment-list-section is-hidden" id="resultSection">
-      <div class="section-head">
-        <h2 class="section-title">조회 결과</h2>
-        <div class="sub-text">카드를 눌러 장비 상세 화면으로 이동할 수 있습니다.</div>
-      </div>
-    
-      <div id="equipmentCardList" class="equipment-card-list equipment-card-list-tuned">
-        <div class="empty-state">
-          <div class="empty-state-title">검색 조건을 설정한 뒤 조회해 주세요.</div>
-          <div class="empty-state-desc">조회 전에는 결과 영역이 표시되지 않습니다.</div>
+        <div class="filter-actions-right">
+          <button type="button" id="resetFilterBtn" class="btn-secondary">초기화</button>
+          <button type="submit" class="btn-primary">조회</button>
         </div>
       </div>
+    </form>
+
+    <section class="equipment-list-wrap">
+      <div id="equipmentList" class="equipment-list-grid">
+        <div class="empty-box">불러오는 중...</div>
+      </div>
+
+      <div id="paginationArea" class="pagination-area"></div>
     </section>
   </div>
 
   <script src="../../assets/js/core/config.js"></script>
-  <script src="../../assets/js/core/auth.js"></script>
-  <script>
-    window.auth.requireAuth();
-  </script>
-  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/org-config.js"></script>
   <script src="../../assets/js/equipment/equipment-list.js"></script>
 
