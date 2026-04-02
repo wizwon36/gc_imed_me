@@ -1,6 +1,6 @@
 window.ORG_CONFIG = {
   CACHE_KEY: 'gc_imed_me_org_data_v1',
-  CACHE_TTL: 1000 * 60 * 30, // 30분
+  CACHE_TTL: 1000 * 60 * 30,
   cache: {
     loaded: false,
     loadingPromise: null,
@@ -37,7 +37,7 @@ window.OrgService = {
         })
       );
     } catch (error) {
-      // 저장 실패해도 무시
+      // 무시
     }
   },
 
@@ -59,7 +59,7 @@ window.OrgService = {
     }
 
     window.ORG_CONFIG.cache.loadingPromise = (async () => {
-      const result = await window.apiGet('getOrgData');
+      const result = await apiGet('getOrgData');
       const data = result.data || {};
 
       const clinics = Array.isArray(data.clinics) ? data.clinics : [];
