@@ -20,10 +20,17 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function safeText(value, fallback = '-') {
+  const normalized = value === null || value === undefined || value === '' ? fallback : value;
+  return escapeHtml(normalized);
+}
+
 function formatNumber(value) {
   if (value === null || value === undefined || value === '') return '';
+
   const num = Number(value);
   if (Number.isNaN(num)) return value;
+
   return num.toLocaleString('ko-KR');
 }
 
@@ -33,6 +40,7 @@ function nl2br(value) {
 
 function showMessage(message, type = 'info') {
   const box = qs('#messageBox');
+
   if (!box) {
     alert(message);
     return;
@@ -59,15 +67,20 @@ function setLoading(button, isLoading, loadingText = '처리 중...') {
     button.dataset.originalText = button.textContent;
     button.disabled = true;
     button.textContent = loadingText;
-  } else {
-    button.disabled = false;
-    button.textContent = button.dataset.originalText || '저장';
+    return;
   }
+
+  button.disabled = false;
+  button.textContent = button.dataset.originalText || '저장';
 }
 
 function goToDetail(equipmentId) {
   location.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
+
+// ============================
+// 전역 로딩
+// ============================
 
 let GLOBAL_LOADING_COUNT = 0;
 let GLOBAL_LOADING_OPENED_AT = 0;
@@ -101,9 +114,7 @@ async function hideGlobalLoading(force = false) {
     GLOBAL_LOADING_COUNT = Math.max(0, GLOBAL_LOADING_COUNT - 1);
   }
 
-  if (GLOBAL_LOADING_COUNT > 0) {
-    return;
-  }
+  if (GLOBAL_LOADING_COUNT > 0) return;
 
   const elapsed = Date.now() - GLOBAL_LOADING_OPENED_AT;
   const remaining = Math.max(0, GLOBAL_LOADING_MIN_MS - elapsed);
@@ -118,6 +129,7 @@ async function hideGlobalLoading(force = false) {
 
 async function withGlobalLoading(task, text = '불러오는 중...') {
   showGlobalLoading(text);
+
   try {
     return await task();
   } finally {
@@ -125,47 +137,64 @@ async function withGlobalLoading(task, text = '불러오는 중...') {
   }
 }
 
-if (typeof window.statusLabel !== 'function') {
-  window.statusLabel = function (status) {
-    const map = {
-      IN_USE: '사용중',
-      REPAIRING: '수리중',
-      INSPECTING: '점검중',
-      STORED: '보관중',
-      DISPOSED: '폐기'
-    };
-    return map[String(status || '').trim()] || String(status || '-') || '-';
+// ============================
+// 상태 / 이력 / 재고 레이블
+// ============================
+
+function statusLabel(status) {
+  const map = {
+    IN_USE: '사용중',
+    REPAIRING: '수리중',
+    INSPECTING: '점검중',
+    STORED: '보관',
+    DISPOSED: '폐기'
   };
+
+  return map[String(status || '').trim()] || String(status || '');
 }
 
-if (typeof window.statusClass !== 'function') {
-  window.statusClass = function (status) {
-    const value = String(status || '').trim().toUpperCase();
-
-    switch (value) {
-      case 'IN_USE':
-        return 'is-in-use';
-      case 'REPAIRING':
-        return 'is-repairing';
-      case 'INSPECTING':
-        return 'is-inspecting';
-      case 'STORED':
-        return 'is-stored';
-      case 'DISPOSED':
-        return 'is-disposed';
-      default:
-        return '';
-    }
+function statusClass(status) {
+  const map = {
+    IN_USE: 'is-in-use',
+    REPAIRING: 'is-repairing',
+    INSPECTING: 'is-inspecting',
+    STORED: 'is-stored',
+    DISPOSED: 'is-disposed'
   };
+
+  return map[String(status || '').trim()] || '';
 }
 
-if (typeof window.safeText !== 'function') {
-  window.safeText = function (value) {
-    return String(value ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
+function historyTypeLabel(type) {
+  const map = {
+    REPAIR: '수리',
+    REGULAR_CHECK: '정기점검',
+    LEGAL_INSPECTION: '법정검사',
+    PREVENTIVE: '예방점검',
+    ETC: '기타'
   };
+
+  return map[String(type || '').trim()] || String(type || '');
+}
+
+function resultStatusLabel(type) {
+  const map = {
+    DONE: '완료',
+    IN_PROGRESS: '진행중',
+    HOLD: '보류'
+  };
+
+  return map[String(type || '').trim()] || String(type || '');
+}
+
+function conditionStatusLabel(type) {
+  const map = {
+    NORMAL: '정상',
+    NEED_REPAIR: '수리필요',
+    LOCATION_MISMATCH: '위치불일치',
+    MISSING: '분실의심',
+    DISPOSAL_TARGET: '폐기대상'
+  };
+
+  return map[String(type || '').trim()] || String(type || '');
 }
