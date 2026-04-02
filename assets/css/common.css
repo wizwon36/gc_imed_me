@@ -4398,3 +4398,88 @@ button, input, select, textarea {
 .form-side-actions > .btn:not(.btn-primary):hover {
   background: #f8fafc;
 }
+
+/* =========================
+   Dashboard hotfix
+   ========================= */
+
+.dashboard-list-item {
+  position: relative;
+  align-items: stretch;
+}
+
+.dashboard-list-item .dashboard-list-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dashboard-list-item .dashboard-list-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 4px;
+  min-width: 92px;
+  max-width: 120px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dashboard-list-item .dashboard-list-desc,
+.dashboard-list-item .dashboard-list-side-sub,
+.dashboard-rank-title,
+.dashboard-rank-desc {
+  word-break: keep-all;
+}
+
+.dashboard-rank-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dashboard-rank-count {
+  flex-shrink: 0;
+}
+
+#maintenanceAlertList .dashboard-list-item {
+  padding-right: 72px;
+}
+
+#maintenanceAlertList .dashboard-dday-badge {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+}
+
+.dashboard-list-block > * + * {
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-list-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-list-item .dashboard-list-side {
+    min-width: 0;
+    max-width: none;
+    align-items: flex-start;
+    text-align: left;
+    white-space: normal;
+  }
+
+  #maintenanceAlertList .dashboard-list-item {
+    padding-right: 16px;
+    padding-top: 54px;
+  }
+
+  #maintenanceAlertList .dashboard-dday-badge {
+    top: 14px;
+    right: 14px;
+  }
+
+  .dashboard-main-desc {
+    word-break: keep-all;
+  }
+}
