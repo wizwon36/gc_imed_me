@@ -4702,3 +4702,276 @@ select.input {
     text-align: center;
   }
 }
+
+/* =========================
+   Equipment list UI hotfix
+   ========================= */
+
+.filter-card .section-head {
+  margin-bottom: 16px;
+}
+
+.filter-card .sub-text {
+  margin-top: 4px;
+}
+
+.filter-card .form-grid.two-col {
+  gap: 14px 16px;
+}
+
+.filter-actions {
+  margin-top: 16px;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.filter-actions-left {
+  align-items: flex-end;
+}
+
+.filter-actions-right {
+  align-items: flex-end;
+}
+
+.inline-field .form-label {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted, #667085);
+}
+
+.inline-field select.input-sm {
+  width: 110px;
+}
+
+.equipment-list-wrap {
+  margin-top: 16px;
+}
+
+.equipment-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.equipment-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  border: 1px solid #d9dee7;
+  border-radius: 22px;
+  background: #fff;
+  padding: 18px 18px 16px;
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+}
+
+.equipment-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.equipment-card-title-wrap {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.equipment-card-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 800;
+  color: #0b1f44;
+  word-break: keep-all;
+}
+
+.equipment-card-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #7a8699;
+}
+
+.equipment-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.equipment-card-row {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.equipment-card-label {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #7a8699;
+}
+
+.equipment-card-value {
+  font-size: 14px;
+  line-height: 1.45;
+  color: #101828;
+  word-break: break-word;
+}
+
+.equipment-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.equipment-card-actions .btn-primary,
+.equipment-card-actions .btn-secondary,
+.filter-actions-right .btn-primary,
+.filter-actions-right .btn-secondary {
+  appearance: none;
+  border: 1px solid #cfd6e4;
+  border-radius: 12px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.equipment-card-actions .btn-primary,
+.filter-actions-right .btn-primary {
+  background: #0b1f44;
+  border-color: #0b1f44;
+  color: #fff;
+}
+
+.equipment-card-actions .btn-secondary,
+.filter-actions-right .btn-secondary {
+  background: #fff;
+  color: #0b1f44;
+}
+
+.equipment-card .status-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-badge.is-in-use {
+  background: #e8f7ec;
+  color: #138a4b;
+  border: 1px solid #b7e4c7;
+}
+
+.status-badge.is-repairing {
+  background: #fff1e8;
+  color: #c25b18;
+  border: 1px solid #f7c59f;
+}
+
+.status-badge.is-inspecting {
+  background: #eef4ff;
+  color: #3559c7;
+  border: 1px solid #c7d7fe;
+}
+
+.status-badge.is-stored {
+  background: #f2f4f7;
+  color: #475467;
+  border: 1px solid #d0d5dd;
+}
+
+.status-badge.is-disposed {
+  background: #fef3f2;
+  color: #b42318;
+  border: 1px solid #fecdca;
+}
+
+.pagination-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  appearance: none;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  border-radius: 12px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #344054;
+  cursor: pointer;
+}
+
+.pagination-btn.is-active {
+  background: #eff4ff;
+  border-color: #b2ccff;
+  color: #1d4ed8;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 960px) {
+  .equipment-list-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-actions {
+    align-items: stretch;
+  }
+
+  .filter-actions-left,
+  .filter-actions-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .equipment-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .equipment-card-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .equipment-card-actions {
+    flex-direction: column;
+  }
+
+  .equipment-card-actions .btn-primary,
+  .equipment-card-actions .btn-secondary {
+    width: 100%;
+  }
+}
