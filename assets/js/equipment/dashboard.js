@@ -1,36 +1,7 @@
-function formatDateOnly(date) {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function parseDateSafe(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date;
-}
-
-function daysBetweenToday(targetDate) {
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const end = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-  const diffMs = end.getTime() - start.getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-}
-
-
 function compactDateText(value) {
   if (!value) return '-';
-
   const text = String(value);
-
-  if (text.length >= 10) {
-    return text.slice(0, 10);
-  }
-
-  return text;
+  return text.length >= 10 ? text.slice(0, 10) : text;
 }
 
 function renderDashboardSkeleton() {
@@ -55,56 +26,33 @@ function renderDashboardSkeleton() {
   `;
 }
 
+function renderKpis(kpis) {
+  qs('#totalCount').textContent = formatNumber(kpis.total || 0);
+  qs('#inUseCount').textContent = formatNumber(kpis.in_use || 0);
+  qs('#repairingCount').textContent = formatNumber(kpis.repairing || 0);
+  qs('#inspectingCount').textContent = formatNumber(kpis.inspecting || 0);
 
-
-
-
-function sortByCreatedDesc(items) {
-  return [...items].sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
-}
-
-function renderKpis(items) {
-  const total = items.length;
-  const inUse = items.filter(item => item.status === 'IN_USE').length;
-  const repairing = items.filter(item => item.status === 'REPAIRING').length;
-  const inspecting = items.filter(item => item.status === 'INSPECTING').length;
-  const stored = items.filter(item => item.status === 'STORED').length;
-
-  qs('#totalCount').textContent = formatNumber(total);
-  qs('#inUseCount').textContent = formatNumber(inUse);
-  qs('#repairingCount').textContent = formatNumber(repairing);
-  qs('#inspectingCount').textContent = formatNumber(inspecting);
-
-  qs('#statusInUseText').textContent = `${formatNumber(inUse)}대`;
-  qs('#statusRepairingText').textContent = `${formatNumber(repairing)}대`;
-  qs('#statusInspectingText').textContent = `${formatNumber(inspecting)}대`;
-  qs('#statusStoredText').textContent = `${formatNumber(stored)}대`;
+  qs('#statusInUseText').textContent = `${formatNumber(kpis.in_use || 0)}대`;
+  qs('#statusRepairingText').textContent = `${formatNumber(kpis.repairing || 0)}대`;
+  qs('#statusInspectingText').textContent = `${formatNumber(kpis.inspecting || 0)}대`;
+  qs('#statusStoredText').textContent = `${formatNumber(kpis.stored || 0)}대`;
 }
 
 function renderRecentEquipments(items) {
   const container = qs('#recentEquipmentList');
-  const recentItems = sortByCreatedDesc(items).slice(0, 5);
 
-  if (!recentItems.length) {
+  if (!items.length) {
     container.innerHTML = `<div class="empty-box">최근 등록 장비가 없습니다.</div>`;
     return;
   }
 
-  container.innerHTML = recentItems.map(item => `
-    <button class="dashboard-list-item dashboard-list-item-compact" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
-      <div class="dashboard-list-main">
-        <div class="dashboard-list-title-row">
-          <strong class="dashboard-list-title">${safeText(item.equipment_name)}</strong>
-          <span class="status-badge ${statusClass(item.status)}">${escapeHtml(statusLabel(item.status))}</span>
-        </div>
-        <div class="dashboard-list-desc dashboard-list-desc-compact">
-          ${safeText(item.department)} · ${safeText(item.model_name)}
-        </div>
-        <div class="dashboard-list-meta-compact">
-          ${safeText(item.equipment_id)}
-        </div>
+  container.innerHTML = items.map(item => `
+    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+      <div>
+        <strong>${safeText(item.equipment_name)}</strong>
+        <div>${safeText(item.department)} · ${safeText(item.model_name)}</div>
       </div>
-      <div class="dashboard-list-side">${compactDateText(item.created_at)}</div>
+      <div>${compactDateText(item.created_at)}</div>
     </button>
   `).join('');
 }
@@ -113,28 +61,17 @@ function renderRecentHistories(items) {
   const container = qs('#recentHistoryList');
 
   if (!items.length) {
-    container.innerHTML = `<div class="empty-box">최근 등록된 이력이 없습니다.</div>`;
+    container.innerHTML = `<div class="empty-box">최근 이력이 없습니다.</div>`;
     return;
   }
 
   container.innerHTML = items.map(item => `
-    <button class="dashboard-list-item dashboard-list-item-compact" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
-      <div class="dashboard-list-main">
-        <div class="dashboard-list-title-row">
-          <strong class="dashboard-list-title">${safeText(item.equipment_name)}</strong>
-          <span class="dashboard-mini-chip">${escapeHtml(historyTypeLabel(item.history_type))}</span>
-        </div>
-        <div class="dashboard-list-desc dashboard-list-desc-compact">
-          ${safeText(item.department)} · ${safeText(item.model_name)}
-        </div>
-        <div class="dashboard-list-meta-compact">
-          ${safeText(item.description, '설명 없음')}
-        </div>
+    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+      <div>
+        <strong>${safeText(item.equipment_name)}</strong>
+        <div>${safeText(item.description)}</div>
       </div>
-      <div class="dashboard-list-side">
-        <div>${compactDateText(item.work_date)}</div>
-        <div class="dashboard-list-side-sub">${escapeHtml(resultStatusLabel(item.result_status))}</div>
-      </div>
+      <div>${compactDateText(item.work_date)}</div>
     </button>
   `).join('');
 }
@@ -142,69 +79,34 @@ function renderRecentHistories(items) {
 function renderMaintenanceAlerts(items) {
   const container = qs('#maintenanceAlertList');
 
-  const alertItems = items
-    .map(item => {
-      const date = parseDateSafe(item.maintenance_end_date);
-      if (!date) return null;
-      return {
-        ...item,
-        dday: daysBetweenToday(date)
-      };
-    })
-    .filter(Boolean)
-    .filter(item => item.dday <= 90)
-    .sort((a, b) => a.dday - b.dday)
-    .slice(0, 5);
-
-  if (!alertItems.length) {
-    container.innerHTML = `<div class="empty-box">90일 이내 종료 예정 장비가 없습니다.</div>`;
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-box">유지보수 예정 없음</div>`;
     return;
   }
 
-  container.innerHTML = alertItems.map(item => `
+  container.innerHTML = items.map(item => `
     <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
-      <div class="dashboard-list-main">
-        <div class="dashboard-list-title-row">
-          <strong class="dashboard-list-title">${safeText(item.equipment_name)}</strong>
-          <span class="dashboard-dday-badge ${item.dday < 0 ? 'is-over' : item.dday <= 30 ? 'is-soon' : 'is-normal'}">
-            ${item.dday < 0 ? `D+${Math.abs(item.dday)}` : `D-${item.dday}`}
-          </span>
-        </div>
-        <div class="dashboard-list-desc">
-          ${safeText(item.department)} · ${safeText(item.model_name)}
-        </div>
+      <div>
+        <strong>${safeText(item.equipment_name)}</strong>
+        <div>${safeText(item.department)}</div>
       </div>
-      <div class="dashboard-list-side">${safeText(item.maintenance_end_date)}</div>
+      <div>D-${item.dday}</div>
     </button>
   `).join('');
 }
 
 function renderDepartmentSummary(items) {
   const container = qs('#departmentSummaryList');
-  const map = {};
 
-  items.forEach(item => {
-    const key = (item.department || '미지정').trim() || '미지정';
-    map[key] = (map[key] || 0) + 1;
-  });
-
-  const sorted = Object.entries(map)
-    .map(([department, count]) => ({ department, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 6);
-
-  if (!sorted.length) {
-    container.innerHTML = `<div class="empty-box">부서별 데이터가 없습니다.</div>`;
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-box">데이터 없음</div>`;
     return;
   }
 
-  container.innerHTML = sorted.map(item => `
+  container.innerHTML = items.map(item => `
     <div class="dashboard-rank-item">
-      <div class="dashboard-rank-left">
-        <div class="dashboard-rank-title">${escapeHtml(item.department)}</div>
-        <div class="dashboard-rank-desc">등록 장비 수</div>
-      </div>
-      <div class="dashboard-rank-count">${formatNumber(item.count)}대</div>
+      <span>${safeText(item.department)}</span>
+      <strong>${formatNumber(item.count)}대</strong>
     </div>
   `).join('');
 }
@@ -217,44 +119,47 @@ async function loadDashboard() {
   const user = window.auth?.getSession?.() || {};
 
   try {
-    const [equipmentResult, historyResult] = await Promise.all([
-      apiGet('listEquipments', { request_user_email: user?.email || '' }),
-      apiGet('listRecentHistories', { limit: 5, request_user_email: user?.email || '' })
+    console.time('dashboard_total');
+
+    const [summaryResult, historyResult] = await Promise.all([
+      apiGet('getEquipmentDashboardSummary', {
+        request_user_email: user.email || ''
+      }),
+      apiGet('listRecentHistories', {
+        limit: 5,
+        request_user_email: user.email || ''
+      })
     ]);
 
-    const items = equipmentResult.data || [];
-    const histories = historyResult.data || [];
+    console.timeEnd('dashboard_total');
 
-    renderKpis(items);
-    renderRecentEquipments(items);
-    renderRecentHistories(histories);
-    renderMaintenanceAlerts(items);
-    renderDepartmentSummary(items);
+    const summary = summaryResult.data || {};
+
+    renderKpis(summary.kpis || {});
+    renderRecentEquipments(summary.recent_equipments || []);
+    renderMaintenanceAlerts(summary.maintenance_alerts || []);
+    renderDepartmentSummary(summary.department_summary || []);
+    renderRecentHistories(historyResult.data || []);
+
   } catch (error) {
     showMessage(error.message, 'error');
-
-    qs('#recentEquipmentList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
-    qs('#recentHistoryList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
-    qs('#maintenanceAlertList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
-    qs('#departmentSummaryList').innerHTML = `<div class="empty-box">데이터를 불러오지 못했습니다.</div>`;
   } finally {
     hideGlobalLoading();
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  showGlobalLoading('대시보드를 준비하는 중...');
+  showGlobalLoading();
 
   try {
     const user = window.auth.requireAuth();
     if (!user) return;
 
-    const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-    if (!ok) return;
+    await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
 
-    loadDashboard();
+    await loadDashboard();
   } catch (error) {
-    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
+    showMessage(error.message, 'error');
   } finally {
     hideGlobalLoading();
   }
