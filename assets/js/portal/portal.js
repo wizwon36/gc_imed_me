@@ -7,8 +7,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const adminPageBtn = document.getElementById('adminPageBtn');
 
   logoutBtn?.addEventListener('click', () => {
-    showGlobalLoading('로그아웃 중...');
+    try {
+      showGlobalLoading('로그아웃 중...');
+    } catch (e) {}
     window.auth.logout();
+  });
+
+  adminPageBtn?.addEventListener('click', () => {
+    location.href = `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`;
   });
 
   const user = window.auth?.getSession?.();
@@ -25,15 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (subEl) {
     const clinicName = user.clinic_name || '';
     const teamName = user.team_name || '';
-    const dept =
-      user.department ||
-      ((clinicName && teamName) ? `${clinicName} / ${teamName}` : '소속 없음');
-    const role = user.role || user.permission || 'user';
+    const dept = user.department || ((clinicName && teamName) ? `${clinicName} / ${teamName}` : '소속 없음');
+    const role = user.role || 'user';
     subEl.textContent = `${dept} / ${role}`;
   }
 
   const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
-
   if (adminPageBtn) {
     adminPageBtn.style.display = isAdmin ? '' : 'none';
   }
@@ -41,37 +44,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   const APP_MAP = {
     equipment: {
       title: '의료장비 관리',
-      desc: '장비 등록 및 이력 관리',
+      desc: '장비 등록, 조회, 이력 관리',
       icon: '🩺',
       url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
-    },
-    logs: {
-      title: '시스템 로그',
-      desc: '작업 이력 조회',
-      icon: '🧾',
-      url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 등록 및 권한 관리',
       icon: '👤',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`
+    },
+    logs: {
+      title: '시스템 로그',
+      desc: '작업 이력과 기록 조회',
+      icon: '🧾',
+      url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     }
   };
 
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('.portal-app-card');
-    if (!link) return;
-    showGlobalLoading('이동 중...');
-  });
-
-  const loadingStartedAt = Date.now();
-  showGlobalLoading('앱 목록 불러오는 중...');
-
-  await waitForPaint();
-  await delay(120);
+  const startedAt = Date.now();
 
   try {
+    showGlobalLoading('앱 목록 불러오는 중...');
+
     const result = await apiGet('getUserPermissions', {
       user_email: user.email,
       request_user_email: user.email
@@ -79,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const permissions = Array.isArray(result.data) ? [...result.data] : [];
 
-    if (isAdmin && !permissions.some((p) => p.app_id === 'users_admin')) {
+    if (isAdmin && !permissions.some(item => item.app_id === 'users_admin')) {
       permissions.push({
         app_id: 'users_admin',
         permission: 'admin',
@@ -87,39 +82,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    const visiblePermissions = permissions.filter((p) => {
-      if (!p || !p.app_id) return false;
-      if (String(p.active || 'Y').trim().toUpperCase() !== 'Y') return false;
-      return !!APP_MAP[p.app_id];
+    const visiblePermissions = permissions.filter(item => {
+      if (!item || !item.app_id) return false;
+      if (String(item.active || 'Y').trim().toUpperCase() !== 'Y') return false;
+      return !!APP_MAP[item.app_id];
     });
 
     if (!visiblePermissions.length) {
-      if (gridEl) {
-        gridEl.innerHTML = '';
-      }
-      if (emptyEl) {
-        emptyEl.style.display = 'block';
-      }
-      await waitForPaint();
-      await delayUntilMinimum(loadingStartedAt, 700);
+      if (gridEl) gridEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
+      await delayUntilMinimum(startedAt, 400);
       return;
     }
 
-    if (emptyEl) {
-      emptyEl.style.display = 'none';
-    }
+    if (emptyEl) emptyEl.style.display = 'none';
 
-    const cards = visiblePermissions
-      .map((p) => {
-        const app = APP_MAP[p.app_id];
+    if (gridEl) {
+      gridEl.innerHTML = visiblePermissions.map(item => {
+        const app = APP_MAP[item.app_id];
         const permissionLabel =
-          p.permission === 'admin'
-            ? '관리자'
-            : p.permission === 'edit'
-              ? '편집'
-              : p.permission === 'view'
-                ? '조회'
-                : (p.permission || '');
+          item.permission === 'admin' ? '관리자' :
+          item.permission === 'edit' ? '편집' :
+          item.permission === 'view' ? '조회' :
+          (item.permission || '');
 
         return `
           <a class="portal-app-card" href="${app.url}">
@@ -133,50 +118,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </a>
         `;
-      })
-      .join('');
-
-    if (gridEl) {
-      gridEl.innerHTML = cards;
+      }).join('');
     }
 
-    await waitForPaint();
-
-    if (document.fonts && document.fonts.ready) {
-      try {
-        await document.fonts.ready;
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    await waitForPaint();
-    await delayUntilMinimum(loadingStartedAt, 700);
+    await delayUntilMinimum(startedAt, 400);
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
         <div class="portal-error-box">
-          ${escapeHtml(error.message || '불러오기 실패')}
+          ${escapeHtml(error.message || '앱 목록을 불러오지 못했습니다.')}
         </div>
       `;
     }
-    await waitForPaint();
-    await delayUntilMinimum(loadingStartedAt, 500);
   } finally {
-    hideGlobalLoading();
+    try {
+      hideGlobalLoading();
+    } catch (e) {}
   }
 });
 
-function waitForPaint() {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(resolve);
-    });
-  });
-}
-
 function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function delayUntilMinimum(startedAt, minimumMs) {
@@ -187,8 +149,19 @@ async function delayUntilMinimum(startedAt, minimumMs) {
   }
 }
 
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) {
-    hideGlobalLoading();
+    try {
+      hideGlobalLoading();
+    } catch (e) {}
   }
 });
