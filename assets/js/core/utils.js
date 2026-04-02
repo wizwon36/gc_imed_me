@@ -124,3 +124,37 @@ async function withGlobalLoading(task, text = '불러오는 중...') {
     await hideGlobalLoading();
   }
 }
+
+if (typeof window.statusLabel !== 'function') {
+  window.statusLabel = function (status) {
+    const map = {
+      IN_USE: '사용중',
+      REPAIRING: '수리중',
+      INSPECTING: '점검중',
+      STORED: '보관중',
+      DISPOSED: '폐기'
+    };
+    return map[String(status || '').trim()] || String(status || '-') || '-';
+  };
+}
+
+if (typeof window.statusClass !== 'function') {
+  window.statusClass = function (status) {
+    const value = String(status || '').trim().toUpperCase();
+
+    switch (value) {
+      case 'IN_USE':
+        return 'is-in-use';
+      case 'REPAIRING':
+        return 'is-repairing';
+      case 'INSPECTING':
+        return 'is-inspecting';
+      case 'STORED':
+        return 'is-stored';
+      case 'DISPOSED':
+        return 'is-disposed';
+      default:
+        return '';
+    }
+  };
+}
