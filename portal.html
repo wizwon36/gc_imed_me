@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="container page-shell portal-page">
-    <section class="top-brand-bar portal-topbar">
+    <section class="top-brand-bar portal-topbar portal-hero-card">
       <div class="top-brand-left">
         <div class="top-brand-logo">+</div>
         <div class="top-brand-texts">
@@ -22,7 +22,8 @@
           type="button"
           id="adminPageBtn"
           class="portal-header-btn portal-header-btn--primary"
-          style="display:none;">
+          style="display:none;"
+        >
           관리자 페이지
         </button>
 
@@ -36,22 +37,27 @@
       </div>
     </section>
 
-    <section class="page-hero-simple portal-hero">
-      <div>
-        <h1 class="page-title">앱 선택</h1>
-        <p class="page-desc">권한에 맞는 시스템을 선택해 이용할 수 있습니다.</p>
+    <section class="portal-intro">
+      <div class="portal-intro-main">
+        <span class="portal-section-kicker">PORTAL</span>
+        <h1 class="page-title portal-page-title">앱 선택</h1>
+        <p class="page-desc portal-page-desc">권한에 맞는 시스템을 선택해 이용할 수 있습니다.</p>
       </div>
 
-      <div class="portal-user-box">
+      <div class="portal-profile-card">
+        <div class="portal-profile-label">현재 사용자</div>
         <div class="portal-user-name" id="portalUserName">사용자</div>
         <div class="portal-user-sub" id="portalUserSub">소속 없음 / user</div>
       </div>
     </section>
 
     <section class="portal-section">
-      <div class="section-head">
-        <h2 class="section-title">사용 가능한 앱</h2>
-        <div class="sub-text">접근 권한이 있는 앱만 표시됩니다.</div>
+      <div class="portal-section-head">
+        <div>
+          <span class="portal-section-kicker">AVAILABLE APPS</span>
+          <h2 class="section-title portal-section-title">사용 가능한 앱</h2>
+          <div class="sub-text portal-section-desc">접근 권한이 있는 앱만 표시됩니다.</div>
+        </div>
       </div>
 
       <div id="portalAppGrid" class="portal-app-grid"></div>
