@@ -51,7 +51,12 @@ async function loadEditDataIfNeeded() {
   showGlobalLoading('장비 정보를 불러오는 중...');
 
   try {
-    const result = await apiGet('getEquipment', { id });
+    const user = window.auth?.getSession?.() || {};
+    
+    const result = await apiGet('getEquipment', {
+      id,
+      request_user_email: user.email || ''
+    });
     const item = result.data || {};
 
     fillEquipmentForm(item);
