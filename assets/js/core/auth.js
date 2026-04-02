@@ -22,6 +22,10 @@
     return `${CONFIG.SITE_BASE_URL}/portal.html`;
   }
 
+  function getChangePasswordUrl() {
+    return `${CONFIG.SITE_BASE_URL}/pages/auth/change-password.html`;
+  }
+
   function saveSession(user) {
     localStorage.setItem(
       STORAGE_KEY,
@@ -69,9 +73,14 @@
 
   function redirectIfLoggedIn() {
     const user = getSession();
-    if (user) {
-      location.replace(getPortalUrl());
+    if (!user) return;
+
+    if (String(user.first_login || 'N').toUpperCase() === 'Y') {
+      location.replace(getChangePasswordUrl());
+      return;
     }
+
+    location.replace(getPortalUrl());
   }
 
   async function login() {
@@ -103,9 +112,19 @@
 
     try {
       const result = await apiPost('login', { user_email, password });
-      saveSession(result.user);
+
+      if (!result?.success) {
+        throw new Error(result?.message || '로그인에 실패했습니다.');
+      }
+
+      saveSession(result.user || {});
+
+      if (String(result.user?.first_login || 'N').toUpperCase() === 'Y') {
+        location.replace(getChangePasswordUrl());
+        return;
+      }
+
       location.replace(getPortalUrl());
-      return;
     } catch (error) {
       await hideGlobalLoading(true);
       setMessage(error.message || '로그인 실패', 'error');
@@ -137,14 +156,14 @@
   }
 
   function bindHistoryGuard() {
-    const normalizedPath = location.pathname.replace(/\/+$/, '');
-    const siteBasePath = CONFIG.SITE_BASE_URL.replace(/\/+$/, '');
+    const path = location.pathname.replace(/\/+$/, '');
+    const siteBasePath = new URL(CONFIG.SITE_BASE_URL, location.origin).pathname.replace(/\/+$/, '');
 
     const isLoginPage =
-      normalizedPath === '' ||
-      normalizedPath === '/' ||
-      normalizedPath === siteBasePath ||
-      normalizedPath === `${siteBasePath}/index.html` ||
+      path === '' ||
+      path === '/' ||
+      path === siteBasePath ||
+      path === `${siteBasePath}/index.html` ||
       location.pathname.endsWith('/index.html');
 
     window.addEventListener('pageshow', () => {
@@ -152,6 +171,10 @@
 
       if (isLoginPage) {
         if (user) {
+          if (String(user.first_login || 'N').toUpperCase() === 'Y') {
+            location.replace(getChangePasswordUrl());
+            return;
+          }
           location.replace(getPortalUrl());
         }
         return;
@@ -159,6 +182,12 @@
 
       if (!user) {
         location.replace(getLoginUrl());
+        return;
+      }
+
+      const isChangePasswordPage = location.pathname.includes('/pages/auth/change-password.html');
+      if (!isChangePasswordPage && String(user.first_login || 'N').toUpperCase() === 'Y') {
+        location.replace(getChangePasswordUrl());
       }
     });
 
@@ -169,6 +198,10 @@
 
       if (isLoginPage) {
         if (user) {
+          if (String(user.first_login || 'N').toUpperCase() === 'Y') {
+            location.replace(getChangePasswordUrl());
+            return;
+          }
           location.replace(getPortalUrl());
         }
         return;
@@ -176,6 +209,12 @@
 
       if (!user) {
         location.replace(getLoginUrl());
+        return;
+      }
+
+      const isChangePasswordPage = location.pathname.includes('/pages/auth/change-password.html');
+      if (!isChangePasswordPage && String(user.first_login || 'N').toUpperCase() === 'Y') {
+        location.replace(getChangePasswordUrl());
       }
     });
   }
