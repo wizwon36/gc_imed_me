@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>장비 등록 / 수정</title>
-  <link rel="stylesheet" href="../../assets/css/common.css">
+  <title>장비 등록/수정</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
 </head>
 <body>
-  <div class="container form-shell form-shell-tuned">
+  <div class="container page-shell">
     <section class="top-brand-bar">
       <div class="top-brand-left">
         <div class="top-brand-logo">+</div>
         <div class="top-brand-texts">
           <strong class="top-brand-title">의료장비 관리시스템</strong>
-          <span class="top-brand-sub">장비 등록 · 수정 · 기본정보 관리</span>
+          <span class="top-brand-sub">장비 등록 · 수정</span>
         </div>
       </div>
 
@@ -24,159 +24,121 @@
       </div>
     </section>
 
-    <section class="form-hero form-hero-tuned">
-      <div class="form-hero-copy">
-        <div class="form-hero-topline" id="formTopline">의료장비 등록</div>
-        <h1 class="form-hero-title" id="formTitle">장비 기본정보 입력</h1>
-        <div class="form-hero-subtext" id="formSubtext">
-          장비명, 모델명, 시리얼번호를 기준으로 기본 정보를 등록합니다.
-        </div>
+    <section class="page-hero-simple">
+      <div>
+        <h1 class="page-title" id="pageTitle">장비 등록</h1>
+        <p class="page-desc" id="pageDesc">신규 의료장비 정보를 등록합니다.</p>
       </div>
     </section>
 
     <div id="messageBox" class="message-box"></div>
 
-    <form id="equipmentForm" class="form-page-grid form-page-grid-tuned">
-      <section class="card form-main-card form-main-card-tuned">
-        <div class="section-head">
-          <h2 class="section-title">기본정보</h2>
-          <div class="sub-text">필수 항목은 반드시 입력해 주세요.</div>
-        </div>
+    <form id="equipmentForm" class="card form-card">
+      <div class="section-head">
+        <h2 class="section-title">기본 정보</h2>
+      </div>
 
-        <div class="form-grid form-grid-modern">
-          <div class="form-group">
-            <label class="form-label">장비명 <span class="required">*</span></label>
-            <input type="text" id="equipment_name" class="form-input form-input-lg" placeholder="예: 환자감시장치" />
-          </div>
+      <div class="form-grid two-col">
+        <label class="form-field">
+          <span class="form-label required">장비명</span>
+          <input type="text" id="equipment_name" class="input" required />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">모델명 <span class="required">*</span></label>
-            <input type="text" id="model_name" class="form-input form-input-lg" placeholder="예: PM-900" />
-          </div>
+        <label class="form-field">
+          <span class="form-label required">모델명</span>
+          <input type="text" id="model_name" class="input" required />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">의원 <span class="required">*</span></label>
-            <select id="clinic_code" class="form-select" disabled>
-              <option value="">의원 불러오는 중...</option>
-            </select>
-          </div>
+        <label class="form-field">
+          <span class="form-label required">의원</span>
+          <select id="clinic_code" class="input" required></select>
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">팀 <span class="required">*</span></label>
-            <select id="team_code" class="form-select" disabled>
-              <option value="">팀 불러오는 중...</option>
-            </select>
-          </div>
+        <label class="form-field">
+          <span class="form-label required">팀</span>
+          <select id="team_code" class="input" required></select>
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">제조사</label>
-            <input type="text" id="manufacturer" class="form-input" placeholder="예: GE" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">제조사</span>
+          <input type="text" id="manufacturer" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">시리얼번호 <span class="required">*</span></label>
-            <input type="text" id="serial_no" class="form-input" placeholder="예: SN123456" />
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">제조일자</label>
-            <input type="date" id="manufacture_date" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">제조일자</span>
+          <input type="date" id="manufacture_date" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">구매일자</label>
-            <input type="date" id="purchase_date" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">취득일자</span>
+          <input type="date" id="purchase_date" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">구매처</label>
-            <input type="text" id="vendor" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label required">시리얼번호</span>
+          <input type="text" id="serial_no" class="input" required />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">담당자</label>
-            <input type="text" id="manager_name" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">구매처</span>
+          <input type="text" id="vendor" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">연락처</label>
-            <input type="text" id="manager_phone" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">취득가액</span>
+          <input type="number" id="acquisition_cost" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">취득가액</label>
-            <input type="number" id="acquisition_cost" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">담당자</span>
+          <input type="text" id="manager_name" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">유지보수 종료일</label>
-            <input type="date" id="maintenance_end_date" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">담당자 연락처</span>
+          <input type="text" id="manager_phone" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">상태</label>
-            <select id="status" class="form-select">
-              <option value="IN_USE">사용중</option>
-              <option value="REPAIRING">수리중</option>
-              <option value="INSPECTING">점검중</option>
-              <option value="STORED">보관</option>
-              <option value="DISPOSED">폐기</option>
-            </select>
-          </div>
+        <label class="form-field">
+          <span class="form-label">유지보수 종료일</span>
+          <input type="date" id="maintenance_end_date" class="input" />
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">현재 위치</label>
-            <input type="text" id="location" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">상태</span>
+          <select id="status" class="input"></select>
+        </label>
 
-          <div class="form-group">
-            <label class="form-label">부서 담당자</label>
-            <input type="text" id="current_user" class="form-input" />
-          </div>
+        <label class="form-field">
+          <span class="form-label">위치</span>
+          <input type="text" id="location" class="input" />
+        </label>
 
-          <div class="form-group full">
-            <label class="form-label">비고</label>
-            <textarea id="memo" class="form-textarea" placeholder="필요한 메모를 입력하세요."></textarea>
-          </div>
-        </div>
-      </section>
+        <label class="form-field">
+          <span class="form-label">현재 사용자</span>
+          <input type="text" id="current_user" class="input" />
+        </label>
 
-      <aside class="card form-side-card form-side-card-tuned">
-        <div class="section-head">
-          <h2 class="section-title">입력 안내</h2>
-        </div>
+        <label class="form-field full-col">
+          <span class="form-label">메모</span>
+          <textarea id="memo" class="textarea" rows="5"></textarea>
+        </label>
+      </div>
 
-        <div class="guide-list">
-          <div class="guide-item">
-            <div class="guide-title">필수 입력</div>
-            <div class="guide-text">장비명, 모델명, 의원, 팀, 시리얼번호는 반드시 입력해야 합니다.</div>
-          </div>
-          <div class="guide-item">
-            <div class="guide-title">조직 선택</div>
-            <div class="guide-text">의원을 먼저 선택하면 해당 의원에 속한 팀만 선택할 수 있습니다.</div>
-          </div>
-          <div class="guide-item">
-            <div class="guide-title">상태값</div>
-            <div class="guide-text">초기 등록 시 기본 상태는 사용중으로 두는 것을 권장합니다.</div>
-          </div>
-        </div>
-
-        <div class="form-actions form-side-actions">
-          <button type="submit" id="submitBtn" class="btn btn-primary form-submit-btn">저장</button>
-          <a class="btn" href="list.html">목록으로</a>
-        </div>
-      </aside>
+      <div class="form-actions">
+        <a href="list.html" class="btn-secondary">목록으로</a>
+        <button type="submit" class="btn-primary">
+          <span id="submitButtonText">장비 등록</span>
+        </button>
+      </div>
     </form>
   </div>
 
   <script src="../../assets/js/core/config.js"></script>
-  <script src="../../assets/js/core/auth.js"></script>
-  <script>
-    window.auth.requireAuth();
-  </script>
-  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/org-config.js"></script>
   <script src="../../assets/js/equipment/equipment-form.js"></script>
 
