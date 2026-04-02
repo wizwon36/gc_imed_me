@@ -35,7 +35,8 @@ async function apiGet(action, params = {}) {
   const url = buildApiUrl(action, params);
 
   const response = await fetch(url, {
-    method: 'GET'
+    method: 'GET',
+    cache: 'no-store'
   });
 
   return await parseApiResponse(response);
@@ -54,3 +55,7 @@ async function apiPost(action, payload = {}) {
 
   return await parseApiResponse(response);
 }
+
+window.buildApiUrl = buildApiUrl;
+window.apiGet = apiGet;
+window.apiPost = apiPost;
