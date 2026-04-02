@@ -5352,3 +5352,222 @@ select.input {
     line-height: 1.55;
   }
 }
+
+/* =========================
+   Portal mobile final override
+   ========================= */
+
+@media (max-width: 768px) {
+  .portal-page {
+    padding-bottom: 32px;
+  }
+
+  .portal-page .container,
+  .portal-page.container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .portal-page .portal-topbar {
+    display: block;
+    padding: 18px 18px 20px;
+    border-radius: 24px;
+  }
+
+  .portal-page .top-brand-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .portal-page .top-brand-logo {
+    flex-shrink: 0;
+  }
+
+  .portal-page .top-brand-texts {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .portal-page .top-brand-title {
+    display: block;
+    font-size: 18px;
+    line-height: 1.25;
+    word-break: keep-all;
+  }
+
+  .portal-page .top-brand-sub {
+    display: block;
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #667085;
+    white-space: normal;
+  }
+
+  .portal-page .portal-top-actions {
+    width: 100%;
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .portal-page .portal-header-btn {
+    width: 100%;
+    min-height: 50px;
+    padding: 0 14px;
+    border-radius: 18px;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .portal-page .portal-intro {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .portal-page .portal-intro-main,
+  .portal-page .portal-profile-card {
+    display: block;
+    padding: 20px 18px;
+    border: 1px solid #d9dee7;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+  }
+
+  .portal-page .portal-intro-main {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  }
+
+  .portal-page .portal-profile-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  }
+
+  .portal-page .portal-section-kicker {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #6b7a90;
+  }
+
+  .portal-page .portal-page-title {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.15;
+  }
+
+  .portal-page .portal-page-desc {
+    margin-top: 10px;
+    font-size: 16px;
+    line-height: 1.55;
+    color: #667085;
+    word-break: keep-all;
+  }
+
+  .portal-page .portal-profile-label {
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #6b7a90;
+  }
+
+  .portal-page .portal-user-name {
+    font-size: 24px;
+    line-height: 1.2;
+    font-weight: 800;
+  }
+
+  .portal-page .portal-user-sub {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #667085;
+  }
+
+  .portal-page .portal-section {
+    margin-top: 22px;
+  }
+
+  .portal-page .portal-section-head {
+    margin-bottom: 14px;
+  }
+
+  .portal-page .portal-section-title {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .portal-page .portal-section-desc {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #667085;
+    word-break: keep-all;
+  }
+
+  .portal-page .portal-app-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .portal-page .portal-app-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 14px;
+    align-items: center;
+    min-height: 0;
+    padding: 18px 18px;
+    border-radius: 22px;
+  }
+
+  .portal-page .portal-app-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    font-size: 28px;
+  }
+
+  .portal-page .portal-app-body {
+    min-width: 0;
+  }
+
+  .portal-page .portal-app-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding-right: 92px;
+  }
+
+  .portal-page .portal-app-title {
+    font-size: 17px;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+
+  .portal-page .portal-app-badge {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    min-height: 30px;
+    padding: 0 11px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+
+  .portal-page .portal-app-desc {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #667085;
+  }
+}
