@@ -5571,3 +5571,110 @@ select.input {
     color: #667085;
   }
 }
+
+/* =========================
+   Portal section separation
+   ========================= */
+
+.portal-page .portal-intro {
+  position: relative;
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+  border: 1px solid #dbe7ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.portal-page .portal-intro::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: -12px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(11,31,68,0) 0%, rgba(11,31,68,0.14) 20%, rgba(11,31,68,0.14) 80%, rgba(11,31,68,0) 100%);
+}
+
+.portal-page .portal-intro-main,
+.portal-page .portal-profile-card {
+  border: 1px solid #d9e4f5;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.05);
+}
+
+.portal-page .portal-section {
+  margin-top: 30px;
+  padding-top: 26px;
+  border-top: 1px solid #d6dde8;
+}
+
+.portal-page .portal-section-head {
+  margin-bottom: 18px;
+}
+
+.portal-page .portal-section-head > div {
+  position: relative;
+  padding-left: 16px;
+}
+
+.portal-page .portal-section-head > div::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 100%);
+}
+
+.portal-page .portal-section-kicker {
+  color: #4f6486;
+}
+
+.portal-page .portal-section-title {
+  margin-top: 2px;
+}
+
+.portal-page .portal-app-grid {
+  margin-top: 6px;
+}
+
+.portal-page .portal-app-card {
+  border: 1px solid #d5ddeb;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.05);
+}
+
+.portal-page .portal-app-card:hover {
+  border-color: #bfd0ea;
+  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+}
+
+@media (max-width: 768px) {
+  .portal-page .portal-intro {
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .portal-page .portal-intro::before {
+    left: 14px;
+    right: 14px;
+    top: -10px;
+  }
+
+  .portal-page .portal-section {
+    margin-top: 24px;
+    padding-top: 22px;
+  }
+
+  .portal-page .portal-section-head > div {
+    padding-left: 14px;
+  }
+
+  .portal-page .portal-app-grid {
+    margin-top: 4px;
+  }
+}
