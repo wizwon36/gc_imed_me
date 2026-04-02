@@ -7,6 +7,10 @@ const equipmentListState = {
   loading: false
 };
 
+function el(selector) {
+  return document.querySelector(selector);
+}
+
 function getListQueryParams() {
   const params = new URLSearchParams(location.search);
 
@@ -35,39 +39,68 @@ function setListQueryParams(next) {
   history.replaceState({}, '', url.toString());
 }
 
-function syncFilterInputsFromState() {
-  setFormValueSafe('keyword', getCurrentFilters().keyword);
-  setFormValueSafe('clinic_code', getCurrentFilters().clinic_code);
-  setFormValueSafe('status', getCurrentFilters().status);
-  setFormValueSafe('manufacturer', getCurrentFilters().manufacturer);
+function setValue(id, value) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  target.value = value == null ? '' : value;
 }
 
-function setFormValueSafe(id, value) {
-  const el = qs(`#${id}`);
-  if (!el) return;
-  el.value = value == null ? '' : value;
+function getValue(id) {
+  const target = document.getElementById(id);
+  return target ? String(target.value || '').trim() : '';
+}
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatNumberLocal(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num.toLocaleString('ko-KR') : '0';
+}
+
+function statusLabelLocal(value) {
+  const map = {
+    IN_USE: '사용중',
+    REPAIRING: '수리중',
+    INSPECTING: '점검중',
+    STORED: '보관',
+    DISPOSED: '폐기'
+  };
+  return map[String(value || '').trim()] || (value || '-');
+}
+
+function statusClassLocal(value) {
+  const map = {
+    IN_USE: 'is-in-use',
+    REPAIRING: 'is-repairing',
+    INSPECTING: 'is-inspecting',
+    STORED: 'is-stored',
+    DISPOSED: 'is-disposed'
+  };
+  return map[String(value || '').trim()] || '';
 }
 
 function getCurrentFilters() {
   return {
-    keyword: getFormValueSafe('keyword'),
-    clinic_code: getFormValueSafe('clinic_code'),
-    team_code: getFormValueSafe('team_code'),
-    status: getFormValueSafe('status'),
-    manufacturer: getFormValueSafe('manufacturer')
+    keyword: getValue('keyword'),
+    clinic_code: getValue('clinic_code'),
+    team_code: getValue('team_code'),
+    status: getValue('status'),
+    manufacturer: getValue('manufacturer')
   };
 }
 
-function getFormValueSafe(id) {
-  const el = qs(`#${id}`);
-  return el ? String(el.value || '').trim() : '';
-}
-
 function fillStatusFilterOptions() {
-  const el = qs('#status');
-  if (!el) return;
+  const target = document.getElementById('status');
+  if (!target) return;
 
-  el.innerHTML = `
+  target.innerHTML = `
     <option value="">전체 상태</option>
     <option value="IN_USE">사용중</option>
     <option value="REPAIRING">수리중</option>
@@ -78,26 +111,26 @@ function fillStatusFilterOptions() {
 }
 
 function fillPageSizeOptions() {
-  const el = qs('#page_size');
-  if (!el) return;
+  const target = document.getElementById('page_size');
+  if (!target) return;
 
-  el.innerHTML = `
+  target.innerHTML = `
     <option value="10">10개</option>
     <option value="20">20개</option>
     <option value="50">50개</option>
     <option value="100">100개</option>
   `;
 
-  el.value = String(equipmentListState.pageSize);
+  target.value = String(equipmentListState.pageSize);
 }
 
 function renderListSummary() {
-  const summaryEl = qs('#listSummary');
+  const summaryEl = document.getElementById('listSummary');
   if (!summaryEl) return;
 
-  const total = formatNumber(equipmentListState.totalCount || 0);
-  const page = formatNumber(equipmentListState.page || 1);
-  const totalPages = formatNumber(equipmentListState.totalPages || 1);
+  const total = formatNumberLocal(equipmentListState.totalCount || 0);
+  const page = formatNumberLocal(equipmentListState.page || 1);
+  const totalPages = formatNumberLocal(equipmentListState.totalPages || 1);
 
   summaryEl.textContent = `총 ${total}건 · ${page} / ${totalPages} 페이지`;
 }
@@ -107,51 +140,51 @@ function buildEquipmentCard(item) {
     <article class="equipment-card">
       <div class="equipment-card-head">
         <div class="equipment-card-title-wrap">
-          <h3 class="equipment-card-title">${safeText(item.equipment_name || '-')}</h3>
-          <div class="equipment-card-sub">${safeText(item.equipment_id || '')}</div>
+          <h3 class="equipment-card-title">${escapeHtml(item.equipment_name || '-')}</h3>
+          <div class="equipment-card-sub">${escapeHtml(item.equipment_id || '')}</div>
         </div>
-        <span class="status-badge ${statusClass(item.status || '')}">
-          ${statusLabel(item.status || '')}
+        <span class="status-badge ${statusClassLocal(item.status || '')}">
+          ${escapeHtml(statusLabelLocal(item.status || ''))}
         </span>
       </div>
 
       <div class="equipment-card-grid">
         <div class="equipment-card-row">
           <span class="equipment-card-label">모델명</span>
-          <span class="equipment-card-value">${safeText(item.model_name || '-')}</span>
+          <span class="equipment-card-value">${escapeHtml(item.model_name || '-')}</span>
         </div>
         <div class="equipment-card-row">
           <span class="equipment-card-label">부서</span>
-          <span class="equipment-card-value">${safeText(item.department || '-')}</span>
+          <span class="equipment-card-value">${escapeHtml(item.department || '-')}</span>
         </div>
         <div class="equipment-card-row">
           <span class="equipment-card-label">제조사</span>
-          <span class="equipment-card-value">${safeText(item.manufacturer || '-')}</span>
+          <span class="equipment-card-value">${escapeHtml(item.manufacturer || '-')}</span>
         </div>
         <div class="equipment-card-row">
           <span class="equipment-card-label">시리얼</span>
-          <span class="equipment-card-value">${safeText(item.serial_no || '-')}</span>
+          <span class="equipment-card-value">${escapeHtml(item.serial_no || '-')}</span>
         </div>
         <div class="equipment-card-row">
           <span class="equipment-card-label">위치</span>
-          <span class="equipment-card-value">${safeText(item.location || '-')}</span>
+          <span class="equipment-card-value">${escapeHtml(item.location || '-')}</span>
         </div>
         <div class="equipment-card-row">
           <span class="equipment-card-label">유지보수 종료</span>
-          <span class="equipment-card-value">${safeText(item.maintenance_end_date || '-')}</span>
+          <span class="equipment-card-value">${escapeHtml(item.maintenance_end_date || '-')}</span>
         </div>
       </div>
 
       <div class="equipment-card-actions">
-        <a class="btn-secondary" href="detail.html?id=${encodeURIComponent(item.equipment_id)}">상세보기</a>
-        <a class="btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id)}">수정</a>
+        <a class="btn-secondary" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세보기</a>
+        <a class="btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id || '')}">수정</a>
       </div>
     </article>
   `;
 }
 
 function renderEquipmentList(items = []) {
-  const container = qs('#equipmentList');
+  const container = document.getElementById('equipmentList');
   if (!container) return;
 
   if (!items.length) {
@@ -163,7 +196,7 @@ function renderEquipmentList(items = []) {
 }
 
 function renderPagination() {
-  const container = qs('#paginationArea');
+  const container = document.getElementById('paginationArea');
   if (!container) return;
 
   const page = equipmentListState.page;
@@ -192,11 +225,11 @@ function renderPagination() {
     <button type="button" class="pagination-btn" data-page="${Math.min(totalPages, page + 1)}" ${page >= totalPages ? 'disabled' : ''}>다음</button>
   `;
 
-  qsa('#paginationArea .pagination-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+  container.querySelectorAll('.pagination-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
       const nextPage = Number(btn.dataset.page || page);
       if (!nextPage || nextPage === equipmentListState.page) return;
-      loadEquipmentList(nextPage);
+      await loadEquipmentList(nextPage);
     });
   });
 }
@@ -205,10 +238,10 @@ async function loadEquipmentList(nextPage = equipmentListState.page) {
   if (equipmentListState.loading) return;
 
   equipmentListState.loading = true;
-  clearMessage();
 
   try {
-    showGlobalLoading('장비 목록을 불러오는 중...');
+    if (typeof clearMessage === 'function') clearMessage();
+    if (typeof showGlobalLoading === 'function') showGlobalLoading('장비 목록을 불러오는 중...');
 
     const filters = getCurrentFilters();
     equipmentListState.page = nextPage;
@@ -238,10 +271,16 @@ async function loadEquipmentList(nextPage = equipmentListState.page) {
       page_size: equipmentListState.pageSize
     });
   } catch (error) {
-    showMessage(error.message || '장비 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+    if (typeof showMessage === 'function') {
+      showMessage(error.message || '장비 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+    } else {
+      console.error(error);
+    }
   } finally {
     equipmentListState.loading = false;
-    await hideGlobalLoading(true);
+    if (typeof hideGlobalLoading === 'function') {
+      await hideGlobalLoading(true);
+    }
   }
 }
 
@@ -254,66 +293,91 @@ async function initListFilters() {
   fillStatusFilterOptions();
   fillPageSizeOptions();
 
-  await window.OrgService.bindClinicTeam(qs('#clinic_code'), qs('#team_code'), {
-    initialClinicCode: query.clinic_code || '',
-    initialTeamCode: query.team_code || ''
-  });
+  const clinicEl = document.getElementById('clinic_code');
+  const teamEl = document.getElementById('team_code');
 
-  setFormValueSafe('keyword', query.keyword || '');
-  setFormValueSafe('status', query.status || '');
-  setFormValueSafe('manufacturer', query.manufacturer || '');
-  setFormValueSafe('page_size', String(equipmentListState.pageSize));
+  if (window.OrgService && clinicEl && teamEl) {
+    await window.OrgService.bindClinicTeam(clinicEl, teamEl, {
+      initialClinicCode: query.clinic_code || '',
+      initialTeamCode: query.team_code || '',
+      clinicEmptyLabel: '전체 의원',
+      teamEmptyLabel: '전체 팀'
+    });
+  }
+
+  setValue('keyword', query.keyword || '');
+  setValue('status', query.status || '');
+  setValue('manufacturer', query.manufacturer || '');
+  setValue('page_size', String(equipmentListState.pageSize));
 }
 
 function bindListEvents() {
-  const searchForm = qs('#searchForm');
+  const searchForm = document.getElementById('searchForm');
   if (searchForm) {
-    searchForm.addEventListener('submit', async (event) => {
+    searchForm.addEventListener('submit', async function(event) {
       event.preventDefault();
       await loadEquipmentList(1);
     });
   }
 
-  const resetBtn = qs('#resetFilterBtn');
+  const resetBtn = document.getElementById('resetFilterBtn');
   if (resetBtn) {
-    resetBtn.addEventListener('click', async () => {
-      setFormValueSafe('keyword', '');
-      setFormValueSafe('clinic_code', '');
-      setFormValueSafe('team_code', '');
-      setFormValueSafe('status', '');
-      setFormValueSafe('manufacturer', '');
-      await window.OrgService.fillTeamSelect(qs('#team_code'), '', {
-        includeEmpty: true,
-        emptyLabel: '전체 팀',
-        selectedValue: ''
-      });
+    resetBtn.addEventListener('click', async function() {
+      setValue('keyword', '');
+      setValue('clinic_code', '');
+      setValue('team_code', '');
+      setValue('status', '');
+      setValue('manufacturer', '');
+
+      if (window.OrgService) {
+        await window.OrgService.fillTeamSelect(document.getElementById('team_code'), '', {
+          includeEmpty: true,
+          emptyLabel: '전체 팀',
+          selectedValue: ''
+        });
+      }
+
       await loadEquipmentList(1);
     });
   }
 
-  const pageSizeEl = qs('#page_size');
+  const pageSizeEl = document.getElementById('page_size');
   if (pageSizeEl) {
-    pageSizeEl.addEventListener('change', async () => {
+    pageSizeEl.addEventListener('change', async function() {
       equipmentListState.pageSize = Number(pageSizeEl.value || 20) || 20;
       await loadEquipmentList(1);
     });
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  showGlobalLoading('장비 목록 화면을 준비하는 중...');
-
+document.addEventListener('DOMContentLoaded', async function() {
   try {
-    equipmentListState.user = window.auth.requireAuth();
+    if (typeof showGlobalLoading === 'function') {
+      showGlobalLoading('장비 목록 화면을 준비하는 중...');
+    }
+
+    equipmentListState.user = window.auth && window.auth.requireAuth
+      ? window.auth.requireAuth()
+      : null;
+
     if (!equipmentListState.user) return;
 
-    await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    if (window.appPermission && window.appPermission.requirePermission) {
+      await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    }
+
     await initListFilters();
     bindListEvents();
     await loadEquipmentList(equipmentListState.page);
   } catch (error) {
-    showMessage(error.message || '화면 초기화 중 오류가 발생했습니다.', 'error');
+    if (typeof showMessage === 'function') {
+      showMessage(error.message || '화면 초기화 중 오류가 발생했습니다.', 'error');
+    } else {
+      console.error(error);
+    }
   } finally {
-    await hideGlobalLoading(true);
+    if (typeof hideGlobalLoading === 'function') {
+      await hideGlobalLoading(true);
+    }
   }
 });
