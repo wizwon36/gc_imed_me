@@ -250,6 +250,8 @@ async function loadEquipments() {
     showGlobalLoading('장비를 조회하는 중...');    
     setLoading(searchBtn, true, '조회 중...');
 
+    const user = window.auth?.getSession?.() || {};
+    params.request_user_email = user.email || '';
     const result = await apiGet('listEquipments', params);
     renderEquipmentCards(result.data || []);
   } catch (error) {

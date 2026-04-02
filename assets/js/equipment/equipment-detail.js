@@ -224,8 +224,8 @@ async function loadEquipmentDetail() {
         id,
         request_user_email: user?.email || ''
       }),
-      apiGet('listHistories', { equipment_id: id }),
-      apiGet('listInventoryLogs', { equipment_id: id })
+      apiGet('listHistories', { equipment_id: id, request_user_email: user?.email || '' }),
+      apiGet('listInventoryLogs', { equipment_id: id, request_user_email: user?.email || '' })
     ]);
 
     currentEquipmentData = detailResult.data;

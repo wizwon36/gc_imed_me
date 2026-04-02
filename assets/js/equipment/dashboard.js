@@ -213,11 +213,13 @@ async function loadDashboard() {
   clearMessage();
   renderDashboardSkeleton();
   showGlobalLoading();
-  
+
+  const user = window.auth?.getSession?.() || {};
+
   try {
     const [equipmentResult, historyResult] = await Promise.all([
-      apiGet('listEquipments'),
-      apiGet('listRecentHistories', { limit: 5 })
+      apiGet('listEquipments', { request_user_email: user?.email || '' }),
+      apiGet('listRecentHistories', { limit: 5, request_user_email: user?.email || '' })
     ]);
 
     const items = equipmentResult.data || [];
