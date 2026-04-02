@@ -12,9 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const user = window.auth?.getSession?.();
-
   if (!user) {
-    alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+    alert('로그인 세션이 만료되었습니다.\n다시 로그인해 주세요.');
     location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
     return;
   }
@@ -26,12 +25,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (subEl) {
     const clinicName = user.clinic_name || '';
     const teamName = user.team_name || '';
-    const dept = user.department || ((clinicName && teamName) ? `${clinicName} / ${teamName}` : '소속 없음');
+    const dept =
+      user.department ||
+      ((clinicName && teamName) ? `${clinicName} / ${teamName}` : '소속 없음');
     const role = user.role || user.permission || 'user';
     subEl.textContent = `${dept} / ${role}`;
   }
 
-  const isAdmin = String(user.role || '').toLowerCase() === 'admin';
+  const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
 
   if (adminPageBtn) {
     adminPageBtn.style.display = isAdmin ? '' : 'none';
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     logs: {
       title: '시스템 로그',
       desc: '작업 이력 조회',
-      icon: '📋',
+      icon: '🧾',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
     },
     users_admin: {
@@ -66,11 +67,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const loadingStartedAt = Date.now();
   showGlobalLoading('앱 목록 불러오는 중...');
+
   await waitForPaint();
   await delay(120);
 
   try {
-    const result = await apiGet('getUserPermissions', { user_email: user.email });
+    const result = await apiGet('getUserPermissions', {
+      user_email: user.email,
+      request_user_email: user.email
+    });
+
     const permissions = Array.isArray(result.data) ? [...result.data] : [];
 
     if (isAdmin && !permissions.some((p) => p.app_id === 'users_admin')) {
@@ -81,7 +87,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    const visiblePermissions = permissions.filter((p) => p && p.app_id && APP_MAP[p.app_id]);
+    const visiblePermissions = permissions.filter((p) => {
+      if (!p || !p.app_id) return false;
+      if (String(p.active || 'Y').trim().toUpperCase() !== 'Y') return false;
+      return !!APP_MAP[p.app_id];
+    });
 
     if (!visiblePermissions.length) {
       if (gridEl) {
@@ -90,7 +100,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (emptyEl) {
         emptyEl.style.display = 'block';
       }
-
       await waitForPaint();
       await delayUntilMinimum(loadingStartedAt, 700);
       return;
@@ -103,14 +112,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cards = visiblePermissions
       .map((p) => {
         const app = APP_MAP[p.app_id];
-        const permissionLabel = p.permission === 'admin' ? '관리자' : (p.permission || '');
+        const permissionLabel =
+          p.permission === 'admin'
+            ? '관리자'
+            : p.permission === 'edit'
+              ? '편집'
+              : p.permission === 'view'
+                ? '조회'
+                : (p.permission || '');
 
         return `
           <a class="portal-app-card" href="${app.url}">
-            <div class="portal-app-icon">${app.icon}</div>
-            <h3 class="portal-app-title">${escapeHtml(app.title)}</h3>
-            <p class="portal-app-desc">${escapeHtml(app.desc)}</p>
-            <div class="portal-app-meta">${escapeHtml(permissionLabel)}</div>
+            <div class="portal-app-icon">${escapeHtml(app.icon)}</div>
+            <div class="portal-app-body">
+              <div class="portal-app-title-row">
+                <strong class="portal-app-title">${escapeHtml(app.title)}</strong>
+                <span class="portal-app-badge">${escapeHtml(permissionLabel)}</span>
+              </div>
+              <div class="portal-app-desc">${escapeHtml(app.desc)}</div>
+            </div>
           </a>
         `;
       })
@@ -135,21 +155,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
-        <div class="portal-error">
+        <div class="portal-error-box">
           ${escapeHtml(error.message || '불러오기 실패')}
         </div>
       `;
     }
-
     await waitForPaint();
     await delayUntilMinimum(loadingStartedAt, 500);
   } finally {
     hideGlobalLoading();
   }
 });
-
-
-
 
 function waitForPaint() {
   return new Promise((resolve) => {
@@ -166,7 +182,6 @@ function delay(ms) {
 async function delayUntilMinimum(startedAt, minimumMs) {
   const elapsed = Date.now() - startedAt;
   const remain = Math.max(0, minimumMs - elapsed);
-
   if (remain > 0) {
     await delay(remain);
   }
