@@ -1,17 +1,20 @@
-// =====================================================
-// 대시보드 sessionStorage 캐시
-// =====================================================
 const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v1';
-const DASHBOARD_SESSION_TTL = 1000 * 60 * 5; // 5분
+const DASHBOARD_SESSION_TTL = 1000 * 60 * 5;
+let DASHBOARD_BOOTSTRAPPED = false;
 
 function getDashboardSessionCache() {
   try {
     const raw = sessionStorage.getItem(DASHBOARD_SESSION_KEY);
     if (!raw) return null;
+
     const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.savedAt) return null;
     if (Date.now() - parsed.savedAt > DASHBOARD_SESSION_TTL) return null;
-    return parsed.data;
-  } catch { return null; }
+
+    return parsed.data || null;
+  } catch (error) {
+    return null;
+  }
 }
 
 function setDashboardSessionCache(data) {
@@ -20,13 +23,17 @@ function setDashboardSessionCache(data) {
       savedAt: Date.now(),
       data
     }));
-  } catch {}
+  } catch (error) {
+    // 무시
+  }
 }
 
 function invalidateDashboardSessionCache() {
   try {
     sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
-  } catch {}
+  } catch (error) {
+    // 무시
+  }
 }
 
 function compactDateText(value) {
@@ -36,28 +43,25 @@ function compactDateText(value) {
 }
 
 function renderDashboardSkeleton() {
-  qs('#recentEquipmentList').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
+  const targets = [
+    '#recentEquipmentList',
+    '#recentHistoryList',
+    '#maintenanceAlertList',
+    '#departmentSummaryList'
+  ];
 
-  qs('#recentHistoryList').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
+  targets.forEach(selector => {
+    const el = qs(selector);
+    if (!el) return;
 
-  qs('#maintenanceAlertList').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
-
-  qs('#departmentSummaryList').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
+    el.innerHTML = `
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    `;
+  });
 }
 
-function renderKpis(kpis) {
+function renderKpis(kpis = {}) {
   qs('#totalCount').textContent = formatNumber(kpis.total || 0);
   qs('#inUseCount').textContent = formatNumber(kpis.in_use || 0);
   qs('#repairingCount').textContent = formatNumber(kpis.repairing || 0);
@@ -69,8 +73,26 @@ function renderKpis(kpis) {
   qs('#statusStoredText').textContent = `${formatNumber(kpis.stored || 0)}대`;
 }
 
-function renderRecentEquipments(items) {
+function buildDashboardListItemHtml(item) {
+  return `
+    <div class="dashboard-list-main">
+      <div class="dashboard-list-title-row">
+        <strong class="dashboard-list-title">${safeText(item.title)}</strong>
+        ${item.badge ? item.badge : ''}
+      </div>
+      <div class="dashboard-list-desc">${safeText(item.desc)}</div>
+      ${item.meta ? `<div class="dashboard-list-side-sub">${safeText(item.meta)}</div>` : ''}
+    </div>
+    <div class="dashboard-list-side">
+      <div>${safeText(item.side)}</div>
+      ${item.sideSub ? `<div class="dashboard-list-side-sub">${safeText(item.sideSub)}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderRecentEquipments(items = []) {
   const container = qs('#recentEquipmentList');
+  if (!container) return;
 
   if (!items.length) {
     container.innerHTML = `<div class="empty-box">최근 등록 장비가 없습니다.</div>`;
@@ -78,18 +100,21 @@ function renderRecentEquipments(items) {
   }
 
   container.innerHTML = items.map(item => `
-    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
-      <div>
-        <strong>${safeText(item.equipment_name)}</strong>
-        <div>${safeText(item.department)} · ${safeText(item.model_name)}</div>
-      </div>
-      <div>${compactDateText(item.created_at)}</div>
+    <button type="button" class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+      ${buildDashboardListItemHtml({
+        title: item.equipment_name,
+        desc: `${item.department || '-'} · ${item.model_name || '-'}`,
+        meta: item.equipment_id || '',
+        side: compactDateText(item.created_at),
+        sideSub: statusLabel(item.status || '')
+      })}
     </button>
   `).join('');
 }
 
-function renderRecentHistories(items) {
+function renderRecentHistories(items = []) {
   const container = qs('#recentHistoryList');
+  if (!container) return;
 
   if (!items.length) {
     container.innerHTML = `<div class="empty-box">최근 이력이 없습니다.</div>`;
@@ -97,116 +122,128 @@ function renderRecentHistories(items) {
   }
 
   container.innerHTML = items.map(item => `
-    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
-      <div>
-        <strong>${safeText(item.equipment_name)}</strong>
-        <div>${safeText(item.description)}</div>
-      </div>
-      <div>${compactDateText(item.work_date)}</div>
+    <button type="button" class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+      ${buildDashboardListItemHtml({
+        title: item.equipment_name || '-',
+        desc: item.description || '-',
+        meta: `${historyTypeLabel(item.history_type || '')} · ${item.department || '-'}`,
+        side: compactDateText(item.work_date),
+        sideSub: item.result_status ? resultStatusLabel(item.result_status) : ''
+      })}
     </button>
   `).join('');
 }
 
-function renderMaintenanceAlerts(items) {
+function renderMaintenanceAlerts(items = []) {
   const container = qs('#maintenanceAlertList');
+  if (!container) return;
 
   if (!items.length) {
-    container.innerHTML = `<div class="empty-box">유지보수 예정 없음</div>`;
+    container.innerHTML = `<div class="empty-box">유지보수 종료 예정 장비가 없습니다.</div>`;
     return;
   }
 
-  container.innerHTML = items.map(item => `
-    <button class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
-      <div>
-        <strong>${safeText(item.equipment_name)}</strong>
-        <div>${safeText(item.department)}</div>
-      </div>
-      <div>D-${item.dday}</div>
-    </button>
-  `).join('');
+  container.innerHTML = items.map(item => {
+    const dday = Number(item.dday || 0);
+    const ddayText = dday < 0 ? `D+${Math.abs(dday)}` : `D-${dday}`;
+    const badgeClass = dday < 0 ? 'is-over' : (dday <= 30 ? 'is-soon' : 'is-normal');
+
+    return `
+      <button type="button" class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id)}')">
+        ${buildDashboardListItemHtml({
+          title: item.equipment_name || '-',
+          desc: item.department || '-',
+          meta: item.model_name || '',
+          side: compactDateText(item.maintenance_end_date),
+          sideSub: ''
+        })}
+        <span class="dashboard-dday-badge ${badgeClass}">${ddayText}</span>
+      </button>
+    `;
+  }).join('');
 }
 
-function renderDepartmentSummary(items) {
+function renderDepartmentSummary(items = []) {
   const container = qs('#departmentSummaryList');
+  if (!container) return;
 
   if (!items.length) {
-    container.innerHTML = `<div class="empty-box">데이터 없음</div>`;
+    container.innerHTML = `<div class="empty-box">데이터가 없습니다.</div>`;
     return;
   }
 
   container.innerHTML = items.map(item => `
     <div class="dashboard-rank-item">
-      <span>${safeText(item.department)}</span>
-      <strong>${formatNumber(item.count)}대</strong>
+      <div class="dashboard-rank-main">
+        <div class="dashboard-rank-title">${safeText(item.department)}</div>
+        <div class="dashboard-rank-desc">현재 등록 장비 수</div>
+      </div>
+      <strong class="dashboard-rank-count">${formatNumber(item.count)}대</strong>
     </div>
   `).join('');
+}
+
+function renderDashboardData(summary = {}, histories = []) {
+  renderKpis(summary.kpis || {});
+  renderRecentEquipments(summary.recent_equipments || []);
+  renderMaintenanceAlerts(summary.maintenance_alerts || []);
+  renderDepartmentSummary(summary.department_summary || []);
+  renderRecentHistories(histories || []);
+}
+
+async function fetchDashboardData() {
+  const user = window.auth?.getSession?.() || {};
+
+  const [summaryResult, historyResult] = await Promise.all([
+    apiGet('getEquipmentDashboardSummary', {
+      request_user_email: user.email || ''
+    }),
+    apiGet('listRecentHistories', {
+      limit: 5,
+      request_user_email: user.email || ''
+    })
+  ]);
+
+  return {
+    summary: summaryResult.data || {},
+    histories: historyResult.data || []
+  };
 }
 
 async function loadDashboard() {
   clearMessage();
   renderDashboardSkeleton();
-  showGlobalLoading();
 
-  const user = window.auth?.getSession?.() || {};
-
-  try {
-    // 1. sessionStorage 캐시 확인 (GAS 호출 없이 즉시 렌더링)
-    const sessionCached = getDashboardSessionCache();
-    if (sessionCached) {
-      renderKpis(sessionCached.kpis || {});
-      renderRecentEquipments(sessionCached.recent_equipments || []);
-      renderMaintenanceAlerts(sessionCached.maintenance_alerts || []);
-      renderDepartmentSummary(sessionCached.department_summary || []);
-      renderRecentHistories(sessionCached.recent_histories || []);
-      return;
-    }
-
-    // 2. GAS 호출 (CacheService로 시트 읽기 절감)
-    const [summaryResult, historyResult] = await Promise.all([
-      apiGet('getEquipmentDashboardSummary', {
-        request_user_email: user.email || ''
-      }),
-      apiGet('listRecentHistories', {
-        limit: 5,
-        request_user_email: user.email || ''
-      })
-    ]);
-
-    const summary = summaryResult.data || {};
-    const histories = historyResult.data || [];
-
-    renderKpis(summary.kpis || {});
-    renderRecentEquipments(summary.recent_equipments || []);
-    renderMaintenanceAlerts(summary.maintenance_alerts || []);
-    renderDepartmentSummary(summary.department_summary || []);
-    renderRecentHistories(histories);
-
-    // 3. sessionStorage에 저장 (다음 방문 시 즉시 렌더링)
-    setDashboardSessionCache({
-      ...summary,
-      recent_histories: histories
-    });
-
-  } catch (error) {
-    showMessage(error.message, 'error');
-  } finally {
-    hideGlobalLoading();
+  const sessionCached = getDashboardSessionCache();
+  if (sessionCached) {
+    renderDashboardData(sessionCached.summary || {}, sessionCached.histories || []);
+    return;
   }
+
+  const { summary, histories } = await fetchDashboardData();
+  renderDashboardData(summary, histories);
+
+  setDashboardSessionCache({
+    summary,
+    histories
+  });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  showGlobalLoading();
+  if (DASHBOARD_BOOTSTRAPPED) return;
+  DASHBOARD_BOOTSTRAPPED = true;
+
+  showGlobalLoading('대시보드를 불러오는 중...');
 
   try {
     const user = window.auth.requireAuth();
     if (!user) return;
 
     await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-
     await loadDashboard();
   } catch (error) {
-    showMessage(error.message, 'error');
+    showMessage(error.message || '대시보드를 불러오는 중 오류가 발생했습니다.', 'error');
   } finally {
-    hideGlobalLoading();
+    await hideGlobalLoading(true);
   }
 });
