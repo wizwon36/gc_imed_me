@@ -33,7 +33,12 @@ async function loadLabelData() {
   qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
 
   try {
-    const result = await apiGet('getEquipment', { id: equipmentId });
+    const user = window.auth?.getSession?.() || {};
+    
+    const result = await apiGet('getEquipment', {
+      id: equipmentId,
+      request_user_email: user.email || ''
+    });
     const item = result.data;
 
     qs('#labelEquipmentName').textContent = item.equipment_name || '-';
