@@ -14,7 +14,8 @@ window.appPermission = (function () {
 
     try {
       const result = await apiGet('getUserPermissions', {
-        user_email: user.email
+        user_email: user.email,
+        request_user_email: user.email
       });
 
       cachedPermissions = Array.isArray(result.data) ? result.data : [];
@@ -33,8 +34,19 @@ window.appPermission = (function () {
   }
 
   async function hasPermission(appId, allowedPermissions = []) {
-    const permission = await getPermission(appId);
-    if (!permission) return false;
+    const user = window.auth?.getSession?.();
+
+    if (String(user?.role || '').trim().toLowerCase() === 'admin') {
+      return true;
+    }
+
+    const permissions = await loadPermissions();
+    const found = permissions.find(item => item.app_id === appId);
+
+    if (!found) return false;
+    if (String(found.active || 'Y').trim().toUpperCase() !== 'Y') return false;
+
+    const permission = found.permission;
 
     if (!Array.isArray(allowedPermissions) || allowedPermissions.length === 0) {
       return true;
@@ -45,13 +57,11 @@ window.appPermission = (function () {
 
   async function requirePermission(appId, allowedPermissions = []) {
     const ok = await hasPermission(appId, allowedPermissions);
-
     if (!ok) {
       alert('이 앱에 접근할 권한이 없습니다.');
       location.replace(`${CONFIG.SITE_BASE_URL}/portal.html`);
       return false;
     }
-
     return true;
   }
 
