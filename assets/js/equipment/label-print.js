@@ -22,7 +22,7 @@ function renderLabelQr(equipmentId) {
 async function loadLabelData() {
   clearMessage();
   showGlobalLoading();
-  
+
   const equipmentId = getQueryParam('equipment_id');
 
   if (!equipmentId) {
@@ -32,9 +32,9 @@ async function loadLabelData() {
 
   qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
 
+  const user = window.auth?.getSession?.() || {};
+
   try {
-    const user = window.auth?.getSession?.() || {};
-    
     const result = await apiGet('getEquipment', {
       id: equipmentId,
       request_user_email: user.email || ''
