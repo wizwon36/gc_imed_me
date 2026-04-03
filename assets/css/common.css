@@ -5678,3 +5678,68 @@ select.input {
     margin-top: 4px;
   }
 }
+
+/* =========================
+   Dashboard visual tune
+   ========================= */
+
+#recentEquipmentList .dashboard-list-item .status-badge {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+#recentEquipmentList .dashboard-list-title-row {
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#recentEquipmentList .dashboard-list-side {
+  min-width: 78px;
+}
+
+#recentEquipmentList .dashboard-list-side-sub {
+  display: none;
+}
+
+#maintenanceAlertList .dashboard-list-side {
+  display: none;
+}
+
+#maintenanceAlertList .dashboard-list-item {
+  padding-right: 84px;
+}
+
+#maintenanceAlertList .dashboard-dday-badge {
+  min-width: 56px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  #recentEquipmentList .dashboard-list-item .status-badge {
+    min-height: 26px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  #maintenanceAlertList .dashboard-list-item {
+    padding-right: 18px;
+    padding-top: 18px;
+  }
+
+  #maintenanceAlertList .dashboard-dday-badge {
+    position: static;
+    margin-top: 10px;
+  }
+}
