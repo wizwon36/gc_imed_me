@@ -6,10 +6,6 @@ function dq(selector) {
   return document.querySelector(selector);
 }
 
-function dqa(selector) {
-  return Array.from(document.querySelectorAll(selector));
-}
-
 function textSafe(value) {
   return String(value == null ? '' : value)
     .replace(/&/g, '&amp;')
@@ -19,7 +15,7 @@ function textSafe(value) {
     .replace(/'/g, '&#39;');
 }
 
-function numberSafe(value) {
+function formatNumberLocal(value) {
   const num = Number(value || 0);
   return Number.isFinite(num) ? num.toLocaleString('ko-KR') : '0';
 }
@@ -41,12 +37,24 @@ function statusLabelLocal(value) {
   return map[String(value || '').trim()] || (value || '-');
 }
 
+function statusBadgeClassLocal(value) {
+  const map = {
+    IN_USE: 'is-in-use',
+    REPAIRING: 'is-repairing',
+    INSPECTING: 'is-inspecting',
+    STORED: 'is-stored',
+    DISPOSED: 'is-disposed'
+  };
+  return map[String(value || '').trim()] || '';
+}
+
 function historyTypeLabelLocal(value) {
   const map = {
     REPAIR: '수리',
-    INSPECTION: '점검',
-    CALIBRATION: '교정',
-    MAINTENANCE: '유지보수',
+    REGULAR_CHECK: '정기점검',
+    LEGAL_INSPECTION: '법정검사',
+    PREVENTIVE: '예방점검',
+    ETC: '기타',
     INVENTORY: '재고조사'
   };
   return map[String(value || '').trim()] || (value || '-');
@@ -56,9 +64,9 @@ function resultStatusLabelLocal(value) {
   const map = {
     DONE: '완료',
     COMPLETED: '완료',
-    PENDING: '대기',
     IN_PROGRESS: '진행중',
-    REQUESTED: '요청'
+    HOLD: '보류',
+    PENDING: '대기'
   };
   return map[String(value || '').trim()] || (value || '-');
 }
@@ -92,45 +100,33 @@ function setDashboardSessionCache(data) {
   }
 }
 
-function invalidateDashboardSessionCache() {
-  try {
-    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
-  } catch (error) {
-    // ignore
-  }
-}
-
 function renderDashboardSkeleton() {
-  const targets = [
+  const ids = [
     '#recentEquipmentList',
     '#recentHistoryList',
     '#maintenanceAlertList',
     '#departmentSummaryList'
   ];
 
-  targets.forEach(function(selector) {
+  ids.forEach((selector) => {
     const el = dq(selector);
     if (!el) return;
-
-    el.innerHTML = `
-      <div class="skeleton skeleton-card"></div>
-      <div class="skeleton skeleton-card"></div>
-    `;
+    el.innerHTML = `<div class="empty-box">불러오는 중...</div>`;
   });
 }
 
-function renderKpis(kpis) {
-  const data = kpis || {};
+function renderKpis(summary) {
+  const kpis = summary?.kpis || {};
 
-  if (dq('#totalCount')) dq('#totalCount').textContent = numberSafe(data.total || 0);
-  if (dq('#inUseCount')) dq('#inUseCount').textContent = numberSafe(data.in_use || 0);
-  if (dq('#repairingCount')) dq('#repairingCount').textContent = numberSafe(data.repairing || 0);
-  if (dq('#inspectingCount')) dq('#inspectingCount').textContent = numberSafe(data.inspecting || 0);
+  if (dq('#totalCount')) dq('#totalCount').textContent = formatNumberLocal(kpis.total || 0);
+  if (dq('#inUseCount')) dq('#inUseCount').textContent = formatNumberLocal(kpis.in_use || 0);
+  if (dq('#repairingCount')) dq('#repairingCount').textContent = formatNumberLocal(kpis.repairing || 0);
+  if (dq('#inspectingCount')) dq('#inspectingCount').textContent = formatNumberLocal(kpis.inspecting || 0);
 
-  if (dq('#statusInUseText')) dq('#statusInUseText').textContent = `${numberSafe(data.in_use || 0)}대`;
-  if (dq('#statusRepairingText')) dq('#statusRepairingText').textContent = `${numberSafe(data.repairing || 0)}대`;
-  if (dq('#statusInspectingText')) dq('#statusInspectingText').textContent = `${numberSafe(data.inspecting || 0)}대`;
-  if (dq('#statusStoredText')) dq('#statusStoredText').textContent = `${numberSafe(data.stored || 0)}대`;
+  if (dq('#statusInUseText')) dq('#statusInUseText').textContent = `${formatNumberLocal(kpis.in_use || 0)}대`;
+  if (dq('#statusRepairingText')) dq('#statusRepairingText').textContent = `${formatNumberLocal(kpis.repairing || 0)}대`;
+  if (dq('#statusInspectingText')) dq('#statusInspectingText').textContent = `${formatNumberLocal(kpis.inspecting || 0)}대`;
+  if (dq('#statusStoredText')) dq('#statusStoredText').textContent = `${formatNumberLocal(kpis.stored || 0)}대`;
 }
 
 function buildDashboardListItemHtml(item) {
@@ -144,15 +140,21 @@ function buildDashboardListItemHtml(item) {
       ${item.meta ? `<div class="dashboard-list-side-sub">${textSafe(item.meta)}</div>` : ''}
     </div>
     <div class="dashboard-list-side">
-      <div>${textSafe(item.side || '-')}</div>
+      ${item.side ? `<div>${textSafe(item.side)}</div>` : ''}
       ${item.sideSub ? `<div class="dashboard-list-side-sub">${textSafe(item.sideSub)}</div>` : ''}
     </div>
   `;
 }
 
+function buildStatusBadge(status) {
+  const label = statusLabelLocal(status);
+  const cls = statusBadgeClassLocal(status);
+  return `<span class="status-badge ${cls}">${textSafe(label)}</span>`;
+}
+
 function goToDetail(id) {
   if (!id) return;
-  location.href = `detail.html?id=${id}`;
+  location.href = `detail.html?id=${encodeURIComponent(id)}`;
 }
 
 window.goToDetail = goToDetail;
@@ -167,19 +169,18 @@ function renderRecentEquipments(items) {
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
-    return `
-      <button type="button" class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id || '')}')">
-        ${buildDashboardListItemHtml({
-          title: item.equipment_name || '-',
-          desc: `${item.department || '-'} · ${item.model_name || '-'}`,
-          meta: item.equipment_id || '',
-          side: compactDateText(item.created_at),
-          sideSub: statusLabelLocal(item.status || '')
-        })}
-      </button>
-    `;
-  }).join('');
+  container.innerHTML = list.map((item) => `
+    <button type="button" class="dashboard-list-item" onclick="goToDetail('${String(item.equipment_id || '').replace(/'/g, "\\'")}')">
+      ${buildDashboardListItemHtml({
+        title: item.equipment_name || '-',
+        desc: `${item.department || '-'} · ${item.model_name || '-'}`,
+        meta: item.equipment_id || '',
+        side: compactDateText(item.created_at),
+        sideSub: '',
+        badge: buildStatusBadge(item.status || '')
+      })}
+    </button>
+  `).join('');
 }
 
 function renderRecentHistories(items) {
@@ -192,19 +193,17 @@ function renderRecentHistories(items) {
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
-    return `
-      <button type="button" class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id || '')}')">
-        ${buildDashboardListItemHtml({
-          title: item.equipment_name || '-',
-          desc: item.description || '-',
-          meta: `${historyTypeLabelLocal(item.history_type || '')} · ${item.department || '-'}`,
-          side: compactDateText(item.work_date),
-          sideSub: item.result_status ? resultStatusLabelLocal(item.result_status) : ''
-        })}
-      </button>
-    `;
-  }).join('');
+  container.innerHTML = list.map((item) => `
+    <button type="button" class="dashboard-list-item" onclick="goToDetail('${String(item.equipment_id || '').replace(/'/g, "\\'")}')">
+      ${buildDashboardListItemHtml({
+        title: item.equipment_name || '-',
+        desc: item.description || '-',
+        meta: `${historyTypeLabelLocal(item.history_type || '')} · ${item.department || '-'}`,
+        side: compactDateText(item.work_date),
+        sideSub: item.result_status ? resultStatusLabelLocal(item.result_status) : ''
+      })}
+    </button>
+  `).join('');
 }
 
 function renderMaintenanceAlerts(items) {
@@ -217,18 +216,18 @@ function renderMaintenanceAlerts(items) {
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
+  container.innerHTML = list.map((item) => {
     const dday = Number(item.dday || 0);
     const ddayText = dday < 0 ? `D+${Math.abs(dday)}` : `D-${dday}`;
     const badgeClass = dday < 0 ? 'is-over' : (dday <= 30 ? 'is-soon' : 'is-normal');
 
     return `
-      <button type="button" class="dashboard-list-item" onclick="goToDetail('${encodeURIComponent(item.equipment_id || '')}')">
+      <button type="button" class="dashboard-list-item" onclick="goToDetail('${String(item.equipment_id || '').replace(/'/g, "\\'")}')">
         ${buildDashboardListItemHtml({
           title: item.equipment_name || '-',
           desc: item.department || '-',
           meta: item.model_name || '',
-          side: compactDateText(item.maintenance_end_date),
+          side: '',
           sideSub: ''
         })}
         <span class="dashboard-dday-badge ${badgeClass}">${textSafe(ddayText)}</span>
@@ -247,34 +246,29 @@ function renderDepartmentSummary(items) {
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
-    return `
-      <div class="dashboard-rank-item">
-        <div class="dashboard-rank-main">
-          <div class="dashboard-rank-title">${textSafe(item.department || '-')}</div>
-          <div class="dashboard-rank-desc">현재 등록 장비 수</div>
-        </div>
-        <strong class="dashboard-rank-count">${numberSafe(item.count || 0)}대</strong>
+  container.innerHTML = list.map((item) => `
+    <div class="dashboard-rank-item">
+      <div class="dashboard-rank-main">
+        <div class="dashboard-rank-title">${textSafe(item.department || '-')}</div>
+        <div class="dashboard-rank-desc">현재 등록 장비 수</div>
       </div>
-    `;
-  }).join('');
+      <strong class="dashboard-rank-count">${formatNumberLocal(item.count || 0)}대</strong>
+    </div>
+  `).join('');
 }
 
 function renderDashboardData(summary, histories) {
-  const summaryData = summary || {};
-  const historyData = Array.isArray(histories) ? histories : [];
-
-  renderKpis(summaryData.kpis || {});
-  renderRecentEquipments(summaryData.recent_equipments || []);
-  renderMaintenanceAlerts(summaryData.maintenance_alerts || []);
-  renderDepartmentSummary(summaryData.department_summary || []);
-  renderRecentHistories(historyData);
+  renderKpis(summary || {});
+  renderRecentEquipments(summary?.recent_equipments || []);
+  renderMaintenanceAlerts(summary?.maintenance_alerts || []);
+  renderDepartmentSummary(summary?.department_summary || []);
+  renderRecentHistories(histories || []);
 }
 
 async function fetchDashboardData() {
-  const user = window.auth && window.auth.getSession ? window.auth.getSession() : {};
+  const user = window.auth?.getSession?.() || {};
 
-  const results = await Promise.all([
+  const [summaryResult, historyResult] = await Promise.all([
     apiGet('getEquipmentDashboardSummary', {
       request_user_email: user.email || ''
     }),
@@ -285,8 +279,8 @@ async function fetchDashboardData() {
   ]);
 
   return {
-    summary: results[0] && results[0].data ? results[0].data : {},
-    histories: results[1] && Array.isArray(results[1].data) ? results[1].data : []
+    summary: summaryResult?.data || {},
+    histories: Array.isArray(historyResult?.data) ? historyResult.data : []
   };
 }
 
@@ -305,7 +299,7 @@ async function loadDashboard() {
   setDashboardSessionCache(loaded);
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async () => {
   if (DASHBOARD_BOOTSTRAPPED) return;
   DASHBOARD_BOOTSTRAPPED = true;
 
@@ -314,10 +308,10 @@ document.addEventListener('DOMContentLoaded', async function() {
       showGlobalLoading('대시보드를 불러오는 중...');
     }
 
-    const user = window.auth && window.auth.requireAuth ? window.auth.requireAuth() : null;
+    const user = window.auth?.requireAuth?.();
     if (!user) return;
 
-    if (window.appPermission && window.appPermission.requirePermission) {
+    if (window.appPermission?.requirePermission) {
       await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
     }
 
