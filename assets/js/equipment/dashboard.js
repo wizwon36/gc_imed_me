@@ -100,6 +100,16 @@ function setDashboardSessionCache(data) {
   }
 }
 
+function invalidateDashboardSessionCache() {
+  try {
+    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+  } catch (error) {
+    // ignore
+  }
+}
+
+window.invalidateDashboardSessionCache = invalidateDashboardSessionCache;
+
 function renderDashboardSkeleton() {
   const ids = [
     '#recentEquipmentList',
@@ -108,7 +118,7 @@ function renderDashboardSkeleton() {
     '#departmentSummaryList'
   ];
 
-  ids.forEach((selector) => {
+  ids.forEach(function(selector) {
     const el = dq(selector);
     if (!el) return;
     el.innerHTML = `<div class="empty-box">불러오는 중...</div>`;
@@ -169,18 +179,21 @@ function renderRecentEquipments(items) {
     return;
   }
 
-  container.innerHTML = list.map((item) => `
-    <button type="button" class="dashboard-list-item" onclick="goToDetail('${String(item.equipment_id || '').replace(/'/g, "\\'")}')">
-      ${buildDashboardListItemHtml({
-        title: item.equipment_name || '-',
-        desc: `${item.department || '-'} · ${item.model_name || '-'}`,
-        meta: item.equipment_id || '',
-        side: compactDateText(item.created_at),
-        sideSub: '',
-        badge: buildStatusBadge(item.status || '')
-      })}
-    </button>
-  `).join('');
+  container.innerHTML = list.map(function(item) {
+    const safeId = String(item.equipment_id || '').replace(/'/g, "\\'");
+    return `
+      <button type="button" class="dashboard-list-item" onclick="goToDetail('${safeId}')">
+        ${buildDashboardListItemHtml({
+          title: item.equipment_name || '-',
+          desc: `${item.department || '-'} · ${item.model_name || '-'}`,
+          meta: item.equipment_id || '',
+          side: compactDateText(item.created_at),
+          sideSub: '',
+          badge: buildStatusBadge(item.status || '')
+        })}
+      </button>
+    `;
+  }).join('');
 }
 
 function renderRecentHistories(items) {
@@ -193,17 +206,20 @@ function renderRecentHistories(items) {
     return;
   }
 
-  container.innerHTML = list.map((item) => `
-    <button type="button" class="dashboard-list-item" onclick="goToDetail('${String(item.equipment_id || '').replace(/'/g, "\\'")}')">
-      ${buildDashboardListItemHtml({
-        title: item.equipment_name || '-',
-        desc: item.description || '-',
-        meta: `${historyTypeLabelLocal(item.history_type || '')} · ${item.department || '-'}`,
-        side: compactDateText(item.work_date),
-        sideSub: item.result_status ? resultStatusLabelLocal(item.result_status) : ''
-      })}
-    </button>
-  `).join('');
+  container.innerHTML = list.map(function(item) {
+    const safeId = String(item.equipment_id || '').replace(/'/g, "\\'");
+    return `
+      <button type="button" class="dashboard-list-item" onclick="goToDetail('${safeId}')">
+        ${buildDashboardListItemHtml({
+          title: item.equipment_name || '-',
+          desc: item.description || '-',
+          meta: `${historyTypeLabelLocal(item.history_type || '')} · ${item.department || '-'}`,
+          side: compactDateText(item.work_date),
+          sideSub: item.result_status ? resultStatusLabelLocal(item.result_status) : ''
+        })}
+      </button>
+    `;
+  }).join('');
 }
 
 function renderMaintenanceAlerts(items) {
@@ -216,13 +232,14 @@ function renderMaintenanceAlerts(items) {
     return;
   }
 
-  container.innerHTML = list.map((item) => {
+  container.innerHTML = list.map(function(item) {
     const dday = Number(item.dday || 0);
     const ddayText = dday < 0 ? `D+${Math.abs(dday)}` : `D-${dday}`;
     const badgeClass = dday < 0 ? 'is-over' : (dday <= 30 ? 'is-soon' : 'is-normal');
+    const safeId = String(item.equipment_id || '').replace(/'/g, "\\'");
 
     return `
-      <button type="button" class="dashboard-list-item" onclick="goToDetail('${String(item.equipment_id || '').replace(/'/g, "\\'")}')">
+      <button type="button" class="dashboard-list-item" onclick="goToDetail('${safeId}')">
         ${buildDashboardListItemHtml({
           title: item.equipment_name || '-',
           desc: item.department || '-',
@@ -246,15 +263,17 @@ function renderDepartmentSummary(items) {
     return;
   }
 
-  container.innerHTML = list.map((item) => `
-    <div class="dashboard-rank-item">
-      <div class="dashboard-rank-main">
-        <div class="dashboard-rank-title">${textSafe(item.department || '-')}</div>
-        <div class="dashboard-rank-desc">현재 등록 장비 수</div>
+  container.innerHTML = list.map(function(item) {
+    return `
+      <div class="dashboard-rank-item">
+        <div class="dashboard-rank-main">
+          <div class="dashboard-rank-title">${textSafe(item.department || '-')}</div>
+          <div class="dashboard-rank-desc">현재 등록 장비 수</div>
+        </div>
+        <strong class="dashboard-rank-count">${formatNumberLocal(item.count || 0)}대</strong>
       </div>
-      <strong class="dashboard-rank-count">${formatNumberLocal(item.count || 0)}대</strong>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function renderDashboardData(summary, histories) {
