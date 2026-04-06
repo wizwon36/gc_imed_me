@@ -1,11 +1,6 @@
 let currentEquipmentId = '';
 let currentEquipmentData = null;
 
-
-
-
-
-
 function getCurrentUser() {
   if (window.auth && typeof window.auth.getSession === 'function') {
     return window.auth.getSession() || null;
@@ -24,7 +19,7 @@ function applyActionVisibility() {
     deleteBtn.style.display = isAdminUser() ? '' : 'none';
   }
 
-  const isDeleted = String(currentEquipmentData?.deleted_yn || 'N') === 'Y';
+  const isDeleted = String(currentEquipmentData?.deleted_yn || 'N').trim().toUpperCase() === 'Y';
 
   const editBtn = qs('#editEquipmentBtn');
   const addHistoryBtn = qs('#addHistoryBtn');
@@ -50,36 +45,95 @@ function safeNumber(value) {
   return formatNumber(value);
 }
 
+function invalidateDashboardSessionCacheSafe() {
+  try {
+    sessionStorage.removeItem('gc_imed_dashboard_v1');
+  } catch (error) {
+    // ignore
+  }
+}
+
 function renderDetailSkeleton() {
-  qs('#detailInfoGrid').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card info-tile-wide"></div>
-  `;
+  const detailInfoGrid = qs('#detailInfoGrid');
+  const qrBox = qs('#qrBox');
+  const qrText = qs('#qrText');
+  const historyArea = qs('#historyArea');
+  const inventoryArea = qs('#inventoryArea');
 
-  qs('#qrBox').innerHTML = `<div class="skeleton" style="width:180px;height:180px;border-radius:18px;"></div>`;
-  qs('#qrText').innerHTML = `<div class="skeleton skeleton-text" style="height:36px;"></div>`;
+  if (detailInfoGrid) {
+    detailInfoGrid.innerHTML = `
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card info-tile-wide"></div>
+    `;
+  }
 
-  qs('#historyArea').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
+  if (qrBox) {
+    qrBox.innerHTML = `<div class="skeleton" style="width:180px;height:180px;border-radius:18px;"></div>`;
+  }
 
-  qs('#inventoryArea').innerHTML = `
-    <div class="skeleton skeleton-card"></div>
-    <div class="skeleton skeleton-card"></div>
-  `;
+  if (qrText) {
+    qrText.innerHTML = `<div class="skeleton skeleton-text" style="height:36px;"></div>`;
+  }
+
+  if (historyArea) {
+    historyArea.innerHTML = `
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    `;
+  }
+
+  if (inventoryArea) {
+    inventoryArea.innerHTML = `
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    `;
+  }
+
+  const historyCountText = qs('#historyCountText');
+  const inventoryCountText = qs('#inventoryCountText');
+
+  if (historyCountText) historyCountText.textContent = '불러오는 중...';
+  if (inventoryCountText) inventoryCountText.textContent = '불러오는 중...';
+}
+
+function renderSectionLoading(areaSelector, countSelector, loadingText) {
+  const area = qs(areaSelector);
+  const countEl = qs(countSelector);
+
+  if (countEl) countEl.textContent = '불러오는 중...';
+  if (area) {
+    area.innerHTML = `
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    `;
+  }
+}
+
+function renderSectionError(areaSelector, countSelector, message) {
+  const area = qs(areaSelector);
+  const countEl = qs(countSelector);
+
+  if (countEl) countEl.textContent = '로드 실패';
+  if (area) {
+    area.innerHTML = `<div class="empty-box">${escapeHtml(message || '불러오기에 실패했습니다.')}</div>`;
+  }
 }
 
 function renderHero(item) {
-  qs('#heroEquipmentName').textContent = item.equipment_name || '장비명';
-  qs('#heroEquipmentId').textContent = item.equipment_id || '-';
-
+  const heroEquipmentName = qs('#heroEquipmentName');
+  const heroEquipmentId = qs('#heroEquipmentId');
   const badge = qs('#heroStatusBadge');
-  badge.textContent = statusLabel(item.status);
-  badge.className = `status-badge ${statusClass(item.status)}`;
+
+  if (heroEquipmentName) heroEquipmentName.textContent = item.equipment_name || '장비명';
+  if (heroEquipmentId) heroEquipmentId.textContent = item.equipment_id || '-';
+
+  if (badge) {
+    badge.textContent = statusLabel(item.status);
+    badge.className = `status-badge ${statusClass(item.status)}`;
+  }
 }
 
 function renderQrCode(equipmentId) {
@@ -103,6 +157,7 @@ function renderQrCode(equipmentId) {
 
 function renderDetailInfo(item) {
   const detailInfoGrid = qs('#detailInfoGrid');
+  if (!detailInfoGrid) return;
 
   const fields = [
     { label: '장비번호', value: item.equipment_id },
@@ -125,121 +180,167 @@ function renderDetailInfo(item) {
     { label: '비고', value: item.memo || '-' }
   ];
 
-  detailInfoGrid.innerHTML = fields.map(field => `
-    <div class="info-tile ${field.label === '비고' ? 'info-tile-wide' : ''}">
-      <div class="info-tile-label">${escapeHtml(field.label)}</div>
-      <div class="info-tile-value">${field.isHtml ? field.value : nl2br(field.value)}</div>
-    </div>
-  `).join('');
+  detailInfoGrid.innerHTML = fields.map(function(field) {
+    return `
+      <div class="info-tile ${field.label === '비고' ? 'info-tile-wide' : ''}">
+        <div class="info-tile-label">${escapeHtml(field.label)}</div>
+        <div class="info-tile-value">${field.isHtml ? field.value : nl2br(field.value)}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderHistories(items) {
   const area = qs('#historyArea');
-  qs('#historyCountText').textContent = `${formatNumber(items.length)}건`;
+  const countText = qs('#historyCountText');
+  const list = Array.isArray(items) ? items : [];
 
-  if (!items.length) {
+  if (countText) countText.textContent = `${formatNumber(list.length)}건`;
+
+  if (!area) return;
+
+  if (!list.length) {
     area.innerHTML = `<div class="empty-box">등록된 이력이 없습니다.</div>`;
     return;
   }
 
-  area.innerHTML = items.map(item => `
-    <article class="timeline-card">
-      <div class="timeline-card-head">
-        <div>
-          <div class="timeline-title">${escapeHtml(historyTypeLabel(item.history_type))}</div>
-          <div class="timeline-date">${safeValue(item.work_date)}</div>
+  area.innerHTML = list.map(function(item) {
+    return `
+      <article class="timeline-card">
+        <div class="timeline-card-head">
+          <div>
+            <div class="timeline-title">${escapeHtml(historyTypeLabel(item.history_type))}</div>
+            <div class="timeline-date">${safeValue(item.work_date)}</div>
+          </div>
+          <div class="timeline-badge">${escapeHtml(resultStatusLabel(item.result_status))}</div>
         </div>
-        <div class="timeline-badge">${escapeHtml(resultStatusLabel(item.result_status))}</div>
-      </div>
 
-      <div class="timeline-meta">
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">처리업체</span>
-          <span class="timeline-meta-value">${safeValue(item.vendor_name)}</span>
+        <div class="timeline-meta">
+          <div class="timeline-meta-item">
+            <span class="timeline-meta-label">처리업체</span>
+            <span class="timeline-meta-value">${safeValue(item.vendor_name)}</span>
+          </div>
+          <div class="timeline-meta-item">
+            <span class="timeline-meta-label">수리금액</span>
+            <span class="timeline-meta-value">${safeNumber(item.amount)}</span>
+          </div>
         </div>
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">수리금액</span>
-          <span class="timeline-meta-value">${safeNumber(item.amount)}</span>
-        </div>
-      </div>
 
-      <div class="timeline-desc">${nl2br(item.description || '-')}</div>
-    </article>
-  `).join('');
+        <div class="timeline-desc">${nl2br(item.description || '-')}</div>
+      </article>
+    `;
+  }).join('');
 }
 
 function renderInventoryLogs(items) {
   const area = qs('#inventoryArea');
-  qs('#inventoryCountText').textContent = `${formatNumber(items.length)}건`;
+  const countText = qs('#inventoryCountText');
+  const list = Array.isArray(items) ? items : [];
 
-  if (!items.length) {
+  if (countText) countText.textContent = `${formatNumber(list.length)}건`;
+
+  if (!area) return;
+
+  if (!list.length) {
     area.innerHTML = `<div class="empty-box">등록된 재고조사 이력이 없습니다.</div>`;
     return;
   }
 
-  area.innerHTML = items.map(item => `
-    <article class="timeline-card">
-      <div class="timeline-card-head">
-        <div>
-          <div class="timeline-title">${escapeHtml(conditionStatusLabel(item.condition_status))}</div>
-          <div class="timeline-date">${safeValue(item.checked_at)}</div>
+  area.innerHTML = list.map(function(item) {
+    return `
+      <article class="timeline-card">
+        <div class="timeline-card-head">
+          <div>
+            <div class="timeline-title">${escapeHtml(conditionStatusLabel(item.condition_status))}</div>
+            <div class="timeline-date">${safeValue(item.checked_at)}</div>
+          </div>
+          <div class="timeline-badge">${safeValue(item.checked_by)}</div>
         </div>
-        <div class="timeline-badge">${safeValue(item.checked_by)}</div>
-      </div>
 
-      <div class="timeline-meta">
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">부서</span>
-          <span class="timeline-meta-value">${safeValue(item.department_at_check)}</span>
+        <div class="timeline-meta">
+          <div class="timeline-meta-item">
+            <span class="timeline-meta-label">부서</span>
+            <span class="timeline-meta-value">${safeValue(item.department_at_check)}</span>
+          </div>
+          <div class="timeline-meta-item">
+            <span class="timeline-meta-label">위치</span>
+            <span class="timeline-meta-value">${safeValue(item.location_at_check)}</span>
+          </div>
         </div>
-        <div class="timeline-meta-item">
-          <span class="timeline-meta-label">위치</span>
-          <span class="timeline-meta-value">${safeValue(item.location_at_check)}</span>
-        </div>
-      </div>
 
-      <div class="timeline-desc">${nl2br(item.memo || '-')}</div>
-    </article>
-  `).join('');
+        <div class="timeline-desc">${nl2br(item.memo || '-')}</div>
+      </article>
+    `;
+  }).join('');
+}
+
+async function loadHistorySection(equipmentId, userEmail) {
+  renderSectionLoading('#historyArea', '#historyCountText');
+
+  try {
+    const result = await apiGet('listHistories', {
+      equipment_id: equipmentId,
+      request_user_email: userEmail || ''
+    });
+
+    renderHistories(result?.data || []);
+  } catch (error) {
+    renderSectionError('#historyArea', '#historyCountText', error.message || '이력 정보를 불러오지 못했습니다.');
+  }
+}
+
+async function loadInventorySection(equipmentId, userEmail) {
+  renderSectionLoading('#inventoryArea', '#inventoryCountText');
+
+  try {
+    const result = await apiGet('listInventoryLogs', {
+      equipment_id: equipmentId,
+      request_user_email: userEmail || ''
+    });
+
+    renderInventoryLogs(result?.data || []);
+  } catch (error) {
+    renderSectionError('#inventoryArea', '#inventoryCountText', error.message || '재고조사 정보를 불러오지 못했습니다.');
+  }
 }
 
 async function loadEquipmentDetail() {
   clearMessage();
   renderDetailSkeleton();
-  showGlobalLoading();
+  showGlobalLoading('장비 기본정보를 불러오는 중...');
 
   const id = getQueryParam('id');
   currentEquipmentId = id;
 
   if (!id) {
     showMessage('장비 ID가 없습니다.', 'error');
+    hideGlobalLoading();
     return;
   }
 
   const user = getCurrentUser();
 
   try {
-    const [detailResult, historyResult, inventoryResult] = await Promise.all([
-      apiGet('getEquipment', {
-        id,
-        request_user_email: user?.email || ''
-      }),
-      apiGet('listHistories', { equipment_id: id, request_user_email: user?.email || '' }),
-      apiGet('listInventoryLogs', { equipment_id: id, request_user_email: user?.email || '' })
-    ]);
+    const detailResult = await apiGet('getEquipment', {
+      id,
+      request_user_email: user?.email || ''
+    });
 
-    currentEquipmentData = detailResult.data;
+    currentEquipmentData = detailResult.data || {};
     applyActionVisibility();
-    renderHero(detailResult.data);
-    renderDetailInfo(detailResult.data);
-    renderQrCode(detailResult.data.equipment_id);
-    renderHistories(historyResult.data || []);
-    renderInventoryLogs(inventoryResult.data || []);
+    renderHero(currentEquipmentData);
+    renderDetailInfo(currentEquipmentData);
+    renderQrCode(currentEquipmentData.equipment_id);
   } catch (error) {
-    showMessage(error.message, 'error');
+    showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
+    hideGlobalLoading();
+    return;
   } finally {
     hideGlobalLoading();
   }
+
+  loadHistorySection(id, user?.email || '');
+  loadInventorySection(id, user?.email || '');
 }
 
 async function deleteCurrentEquipment() {
@@ -255,17 +356,20 @@ async function deleteCurrentEquipment() {
   if (!confirmed) return;
 
   try {
+    showGlobalLoading('장비를 삭제하는 중...');
     await apiPost('deleteEquipment', {
       equipment_id: currentEquipmentId,
       request_user_email: user?.email || '',
       deleted_by: user?.email || ''
     });
 
-    invalidateDashboardSessionCache();
+    invalidateDashboardSessionCacheSafe();
     alert('삭제되었습니다.');
     location.href = 'list.html';
   } catch (error) {
-    showMessage(error.message, 'error');
+    showMessage(error.message || '장비 삭제 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
   }
 }
 
@@ -301,16 +405,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     applyActionVisibility();
 
-    qs('#editEquipmentBtn').addEventListener('click', moveToEditForm);
-    qs('#deleteBtn').addEventListener('click', deleteCurrentEquipment);
-    qs('#addHistoryBtn').addEventListener('click', moveToHistoryForm);
-    qs('#addInventoryBtn').addEventListener('click', moveToInventoryForm);
-    qs('#printLabelBtn').addEventListener('click', moveToLabelPrint);
+    const editBtn = qs('#editEquipmentBtn');
+    const deleteBtn = qs('#deleteBtn');
+    const addHistoryBtn = qs('#addHistoryBtn');
+    const addInventoryBtn = qs('#addInventoryBtn');
+    const printLabelBtn = qs('#printLabelBtn');
 
-    loadEquipmentDetail();
+    if (editBtn) editBtn.addEventListener('click', moveToEditForm);
+    if (deleteBtn) deleteBtn.addEventListener('click', deleteCurrentEquipment);
+    if (addHistoryBtn) addHistoryBtn.addEventListener('click', moveToHistoryForm);
+    if (addInventoryBtn) addInventoryBtn.addEventListener('click', moveToInventoryForm);
+    if (printLabelBtn) printLabelBtn.addEventListener('click', moveToLabelPrint);
+
+    await loadEquipmentDetail();
   } catch (error) {
     showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
-  } finally {
     hideGlobalLoading();
   }
 });
