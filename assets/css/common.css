@@ -5743,3 +5743,129 @@ select.input {
     margin-top: 10px;
   }
 }
+
+/* ===== 등록/입력 페이지 우측 액션 버튼 ===== */
+.side-actions,
+.form-side-actions,
+.guide-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.side-actions .btn,
+.form-side-actions .btn,
+.guide-actions .btn,
+.side-actions button,
+.form-side-actions button,
+.guide-actions button,
+.side-actions a,
+.form-side-actions a,
+.guide-actions a {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 18px;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.side-actions .btn:hover,
+.form-side-actions .btn:hover,
+.guide-actions .btn:hover,
+.side-actions button:hover,
+.form-side-actions button:hover,
+.guide-actions button:hover,
+.side-actions a:hover,
+.form-side-actions a:hover,
+.guide-actions a:hover {
+  transform: translateY(-1px);
+}
+
+/* 주 버튼 */
+.btn-primary-solid,
+.btn-save,
+.btn-submit {
+  background: #0b1f4d;
+  color: #fff;
+  border: 1px solid #0b1f4d;
+  box-shadow: 0 10px 24px rgba(11, 31, 77, 0.16);
+}
+
+.btn-primary-solid:hover,
+.btn-save:hover,
+.btn-submit:hover {
+  background: #102a67;
+  border-color: #102a67;
+  color: #fff;
+}
+
+/* 보조 버튼 */
+.btn-secondary-soft,
+.btn-back,
+.btn-return {
+  background: #fff;
+  color: #0b1f4d;
+  border: 1px solid #cfd8e3;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.btn-secondary-soft:hover,
+.btn-back:hover,
+.btn-return:hover {
+  background: #f8fbff;
+  border-color: #b8c7da;
+  color: #0b1f4d;
+}
+
+/* 비활성 */
+.btn-primary-solid:disabled,
+.btn-save:disabled,
+.btn-submit:disabled,
+.btn-secondary-soft:disabled,
+.btn-back:disabled,
+.btn-return:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 우측 안내 카드 내부 여백 정리 */
+.input-guide-card .guide-actions,
+.form-guide-card .guide-actions,
+.sidebar-card .guide-actions {
+  margin-top: 20px;
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .side-actions,
+  .form-side-actions,
+  .guide-actions {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .side-actions .btn,
+  .form-side-actions .btn,
+  .guide-actions .btn,
+  .side-actions button,
+  .form-side-actions button,
+  .guide-actions button,
+  .side-actions a,
+  .form-side-actions a,
+  .guide-actions a {
+    min-height: 50px;
+    border-radius: 14px;
+    font-size: 15px;
+  }
+}
