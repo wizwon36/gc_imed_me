@@ -2813,3 +2813,264 @@ body.dashboard-compact {
     font-size: 12px;
   }
 }
+
+/* =========================================
+ * operational dashboard layout
+ * 현재 요약 제거 / 유지보수 만료 예정 / 모바일 안정화
+ * ========================================= */
+
+.dashboard-intro--simple {
+  margin-top: 20px;
+  margin-bottom: 18px;
+}
+
+.dashboard-intro--simple .dashboard-intro-main {
+  border: 1px solid #d9e4f5;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  padding: 28px 30px;
+  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.05);
+}
+
+.dashboard-page .dashboard-page-title {
+  margin-bottom: 8px;
+}
+
+.dashboard-page .dashboard-page-desc {
+  color: #667085;
+}
+
+.dashboard-page .dashboard-kpi-grid--portal {
+  margin-bottom: 18px;
+}
+
+.dashboard-page .dashboard-section-grid--portal {
+  align-items: start;
+}
+
+.dashboard-page .dashboard-panel--portal {
+  min-height: 100%;
+}
+
+/* 유지보수 만료 예정 */
+.dashboard-maintenance-list {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-maintenance-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 82px;
+  padding: 16px 18px;
+  border: 1px solid #d9dee7;
+  border-radius: 20px;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.dashboard-maintenance-item:hover {
+  transform: translateY(-1px);
+  border-color: #bfd0ea;
+  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+}
+
+.dashboard-maintenance-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.dashboard-maintenance-title {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #0b1f44;
+  word-break: keep-all;
+}
+
+.dashboard-maintenance-desc {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #667085;
+  word-break: keep-all;
+}
+
+.dashboard-maintenance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dashboard-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #d9e2f2;
+  background: #f8fbff;
+  color: #4b5d79;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-maintenance-side {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-dday-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 66px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #c2410c;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.dashboard-dday-badge.is-normal {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.dashboard-dday-badge.is-overdue {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b42318;
+}
+
+/* 기존 common / old dashboard 스타일 충돌 덮어쓰기 */
+#maintenanceAlertList.dashboard-maintenance-list {
+  display: grid;
+}
+
+#maintenanceAlertList .dashboard-list-item,
+#maintenanceAlertList .dashboard-maintenance-item {
+  padding-right: 18px;
+}
+
+#maintenanceAlertList .dashboard-dday-badge {
+  position: static;
+  right: auto;
+  top: auto;
+}
+
+/* 우측 패널이 너무 커지지 않게 정리 */
+.dashboard-page .dashboard-section-grid--portal > .dashboard-panel--portal:last-child {
+  align-self: stretch;
+}
+
+/* 태블릿 */
+@media (max-width: 1024px) {
+  .dashboard-intro--simple .dashboard-intro-main {
+    padding: 24px 24px;
+  }
+
+  .dashboard-page .dashboard-kpi-grid--portal {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-page .dashboard-section-grid--portal {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .dashboard-intro--simple {
+    margin-top: 18px;
+    margin-bottom: 16px;
+  }
+
+  .dashboard-intro--simple .dashboard-intro-main {
+    padding: 22px 20px;
+    border-radius: 24px;
+  }
+
+  .dashboard-page .dashboard-page-title {
+    font-size: 28px;
+    line-height: 1.15;
+  }
+
+  .dashboard-page .dashboard-page-desc {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .dashboard-page .dashboard-kpi-grid--portal {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .dashboard-page .dashboard-section-grid--portal {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .dashboard-page .dashboard-panel--portal {
+    padding: 18px 16px;
+    border-radius: 22px;
+  }
+
+  .dashboard-maintenance-list {
+    gap: 10px;
+  }
+
+  .dashboard-maintenance-item {
+    align-items: flex-start;
+    flex-direction: column;
+    min-height: 0;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .dashboard-maintenance-main,
+  .dashboard-maintenance-side {
+    width: 100%;
+  }
+
+  .dashboard-maintenance-side {
+    justify-content: flex-end;
+  }
+
+  .dashboard-maintenance-title {
+    font-size: 15px;
+  }
+
+  .dashboard-maintenance-desc {
+    font-size: 13px;
+  }
+
+  .dashboard-maintenance-meta {
+    gap: 6px;
+  }
+
+  .dashboard-meta-chip {
+    min-height: 28px;
+    font-size: 11px;
+  }
+
+  .dashboard-dday-badge {
+    min-width: 60px;
+    min-height: 32px;
+    font-size: 12px;
+  }
+}
