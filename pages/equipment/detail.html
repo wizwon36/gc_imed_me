@@ -34,12 +34,18 @@
       display: grid;
       grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
       gap: 16px;
+      align-items: start;
     }
 
     .detail-sub-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
+    }
+
+    .qr-sticky-wrap {
+      position: sticky;
+      top: 20px;
     }
 
     .qr-panel {
@@ -75,6 +81,11 @@
       .detail-main-grid,
       .detail-sub-grid {
         grid-template-columns: 1fr;
+      }
+
+      .qr-sticky-wrap {
+        position: static;
+        top: auto;
       }
     }
 
@@ -149,17 +160,19 @@
         </div>
       </article>
 
-      <article class="card">
-        <div class="section-head">
-          <h2 class="section-title">QR 코드</h2>
-        </div>
-        <div class="qr-panel">
-          <div id="qrBox" class="qr-box">
-            <div class="empty-box">불러오는 중...</div>
+      <div class="qr-sticky-wrap">
+        <article class="card">
+          <div class="section-head">
+            <h2 class="section-title">QR 코드</h2>
           </div>
-          <div id="qrText" class="sub-text" style="margin-top:12px;">-</div>
-        </div>
-      </article>
+          <div class="qr-panel">
+            <div id="qrBox" class="qr-box">
+              <div class="empty-box">불러오는 중...</div>
+            </div>
+            <div id="qrText" class="sub-text" style="margin-top:12px;">-</div>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="detail-sub-grid" style="margin-top:16px;">
