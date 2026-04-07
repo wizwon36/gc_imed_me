@@ -3250,3 +3250,54 @@ body.dashboard-compact {
     justify-content: flex-end;
   }
 }
+
+/* =========================================
+ * maintenance panel scroll fix
+ * 유지보수만 스크롤 / 빠른작업 고정
+ * ========================================= */
+
+/* 1) 우측 패널만 내부 스크롤 */
+.dashboard-page .dashboard-panel--portal:last-child {
+  display: flex;
+  flex-direction: column;
+  max-height: 420px; /* 👉 핵심: 높이 제한 */
+}
+
+/* 리스트 영역만 스크롤 */
+.dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list {
+  overflow-y: auto;
+  max-height: 320px;
+  padding-right: 4px;
+}
+
+/* 스크롤바 자연스럽게 */
+.dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list::-webkit-scrollbar-thumb {
+  background: #d0d7e2;
+  border-radius: 999px;
+}
+
+/* 2) 빠른작업 카드 높이 고정 */
+.dashboard-page .dashboard-panel--portal:first-child {
+  align-self: start;
+}
+
+/* 3) 카드 내부가 늘어나지 않도록 */
+.dashboard-page .dashboard-action-grid--portal,
+.dashboard-page .dashboard-action-grid--enhanced {
+  height: auto !important;
+}
+
+/* 4) 모바일에서도 동일 적용 */
+@media (max-width: 768px) {
+  .dashboard-page .dashboard-panel--portal:last-child {
+    max-height: 380px;
+  }
+
+  .dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list {
+    max-height: 260px;
+  }
+}
