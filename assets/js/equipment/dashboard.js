@@ -1,11 +1,8 @@
 const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v1';
 const DASHBOARD_SESSION_TTL = 1000 * 60 * 5;
+
 let DASHBOARD_BOOTSTRAPPED = false;
-let DASHBOARD_PERMISSION = {
-  canView: false,
-  canEdit: false,
-  canDelete: false
-};
+let DASHBOARD_PERMISSION = { canView: false, canEdit: false, canDelete: false };
 
 function dq(selector) {
   return document.querySelector(selector);
@@ -178,10 +175,10 @@ function renderDashboardSkeleton() {
     '#departmentSummaryList'
   ];
 
-  ids.forEach(function(selector) {
+  ids.forEach(function (selector) {
     const el = dq(selector);
     if (!el) return;
-    el.innerHTML = `<div class="empty-box">불러오는 중...</div>`;
+    el.innerHTML = '<div class="empty-box">불러오는 중...</div>';
   });
 }
 
@@ -201,17 +198,21 @@ function renderKpis(summary) {
 
 function buildDashboardListItemHtml(item) {
   return `
-    <div class="dashboard-list-main">
-      <div class="dashboard-list-title-row">
-        <strong class="dashboard-list-title">${textSafe(item.title || '-')}</strong>
-        ${item.badge || ''}
+    <div class="dashboard-list-item">
+      <div class="dashboard-list-main">
+        <div class="dashboard-list-title-row">
+          <strong class="dashboard-list-title">${textSafe(item.title || '-')}</strong>
+          ${item.badge || ''}
+        </div>
+        <div class="dashboard-list-desc">${textSafe(item.desc || '-')}</div>
+        ${item.meta ? `<div class="dashboard-list-meta">${textSafe(item.meta)}</div>` : ''}
       </div>
-      <div class="dashboard-list-desc">${textSafe(item.desc || '-')}</div>
-      ${item.meta ? `<div class="dashboard-list-side-sub">${textSafe(item.meta)}</div>` : ''}
-    </div>
-    <div class="dashboard-list-side">
-      ${item.side ? `<div>${textSafe(item.side)}</div>` : ''}
-      ${item.sideSub ? `<div class="dashboard-list-side-sub">${textSafe(item.sideSub)}</div>` : ''}
+      ${(item.side || item.sideSub) ? `
+        <div class="dashboard-list-side">
+          ${item.side ? `<div class="dashboard-list-side-main">${textSafe(item.side)}</div>` : ''}
+          ${item.sideSub ? `<div class="dashboard-list-side-sub">${textSafe(item.sideSub)}</div>` : ''}
+        </div>
+      ` : ''}
     </div>
   `;
 }
@@ -235,14 +236,14 @@ function renderRecentEquipments(items) {
 
   const list = Array.isArray(items) ? items : [];
   if (!list.length) {
-    container.innerHTML = `<div class="empty-box">최근 등록 장비가 없습니다.</div>`;
+    container.innerHTML = '<div class="empty-box">최근 등록 장비가 없습니다.</div>';
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
+  container.innerHTML = list.map(function (item) {
     const safeId = String(item.equipment_id || '').replace(/'/g, "\\'");
     return `
-      <button type="button" class="dashboard-list-item" onclick="goToDetail('${safeId}')">
+      <button type="button" class="dashboard-link-item" onclick="goToDetail('${safeId}')">
         ${buildDashboardListItemHtml({
           title: item.equipment_name || '-',
           desc: `${item.department || '-'} · ${item.model_name || '-'}`,
@@ -262,14 +263,14 @@ function renderRecentHistories(items) {
 
   const list = Array.isArray(items) ? items : [];
   if (!list.length) {
-    container.innerHTML = `<div class="empty-box">최근 이력이 없습니다.</div>`;
+    container.innerHTML = '<div class="empty-box">최근 이력이 없습니다.</div>';
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
+  container.innerHTML = list.map(function (item) {
     const safeId = String(item.equipment_id || '').replace(/'/g, "\\'");
     return `
-      <button type="button" class="dashboard-list-item" onclick="goToDetail('${safeId}')">
+      <button type="button" class="dashboard-link-item" onclick="goToDetail('${safeId}')">
         ${buildDashboardListItemHtml({
           title: item.equipment_name || '-',
           desc: item.description || '-',
@@ -284,31 +285,55 @@ function renderRecentHistories(items) {
 
 function renderMaintenanceAlerts(items) {
   const container = dq('#maintenanceAlertList');
+  const emptyEl = dq('#maintenanceAlertEmpty');
   if (!container) return;
 
   const list = Array.isArray(items) ? items : [];
+
   if (!list.length) {
-    container.innerHTML = `<div class="empty-box">유지보수 종료 예정 장비가 없습니다.</div>`;
+    container.innerHTML = '';
+    container.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
+  container.style.display = 'grid';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  container.innerHTML = list.map(function (item) {
     const dday = Number(item.dday || 0);
-    const ddayText = dday < 0 ? `D+${Math.abs(dday)}` : `D-${dday}`;
-    const badgeClass = dday < 0 ? 'is-over' : (dday <= 30 ? 'is-soon' : 'is-normal');
+    const ddayText = dday < 0
+      ? `D+${Math.abs(dday)}`
+      : dday === 0
+      ? 'D-DAY'
+      : `D-${dday}`;
+
+    const badgeClass = dday < 0
+      ? 'dashboard-dday-badge is-overdue'
+      : dday <= 30
+      ? 'dashboard-dday-badge'
+      : 'dashboard-dday-badge is-normal';
+
     const safeId = String(item.equipment_id || '').replace(/'/g, "\\'");
+    const name = textSafe(item.equipment_name || '-');
+    const dept = textSafe(item.department || '-');
+    const model = textSafe(item.model_name || '-');
+    const endDate = formatDisplayDate(item.maintenance_end_date);
 
     return `
-      <button type="button" class="dashboard-list-item" onclick="goToDetail('${safeId}')">
-        ${buildDashboardListItemHtml({
-          title: item.equipment_name || '-',
-          desc: item.department || '-',
-          meta: item.model_name || '',
-          side: formatDisplayDate(item.maintenance_end_date),
-          sideSub: ''
-        })}
-        <span class="dashboard-dday-badge ${badgeClass}">${textSafe(ddayText)}</span>
-      </button>
+      <a class="dashboard-maintenance-item" href="detail.html?id=${encodeURIComponent(safeId)}">
+        <div class="dashboard-maintenance-main">
+          <div class="dashboard-maintenance-title">${name}</div>
+          <div class="dashboard-maintenance-desc">유지보수 만료일 ${textSafe(endDate)}</div>
+          <div class="dashboard-maintenance-meta">
+            <span class="dashboard-meta-chip">${model}</span>
+            <span class="dashboard-meta-chip">${dept}</span>
+          </div>
+        </div>
+        <div class="dashboard-maintenance-side">
+          <span class="${badgeClass}">${textSafe(ddayText)}</span>
+        </div>
+      </a>
     `;
   }).join('');
 }
@@ -319,18 +344,16 @@ function renderDepartmentSummary(items) {
 
   const list = Array.isArray(items) ? items : [];
   if (!list.length) {
-    container.innerHTML = `<div class="empty-box">데이터가 없습니다.</div>`;
+    container.innerHTML = '<div class="empty-box">데이터가 없습니다.</div>';
     return;
   }
 
-  container.innerHTML = list.map(function(item) {
+  container.innerHTML = list.map(function (item) {
     return `
-      <div class="dashboard-rank-item">
-        <div class="dashboard-rank-main">
-          <div class="dashboard-rank-title">${textSafe(item.department || '-')}</div>
-          <div class="dashboard-rank-desc">현재 등록 장비 수</div>
-        </div>
-        <strong class="dashboard-rank-count">${formatNumberLocal(item.count || 0)}대</strong>
+      <div class="dashboard-summary-item">
+        <div class="dashboard-summary-dept">${textSafe(item.department || '-')}</div>
+        <div class="dashboard-summary-label">현재 등록 장비 수</div>
+        <div class="dashboard-summary-count">${formatNumberLocal(item.count || 0)}대</div>
       </div>
     `;
   }).join('');
@@ -365,6 +388,7 @@ async function fetchDashboardData() {
 
 async function loadDashboard() {
   if (typeof clearMessage === 'function') clearMessage();
+
   renderDashboardSkeleton();
 
   const cached = getDashboardSessionCache();
