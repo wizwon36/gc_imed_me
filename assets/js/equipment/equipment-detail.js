@@ -196,7 +196,13 @@ function renderQrCode(equipmentId) {
       height: 180
     });
   } else {
-    qrBox.innerHTML = `<div class="empty-box">QR 라이브러리를 불러오지 못했습니다.</div>`;
+    qrBox.innerHTML = `
+      <div class="qr-fallback-link">
+        QR 라이브러리를 불러오지 못했습니다.<br />
+        아래 링크로 접근하세요.<br /><br />
+        ${escapeHtml(qrValue)}
+      </div>
+    `;
   }
 }
 
@@ -431,7 +437,7 @@ function moveToLabelPrint() {
   location.href = `label-print.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async function() {
   try {
     if (typeof showGlobalLoading === 'function') {
       showGlobalLoading('장비 기본정보를 불러오는 중...');
