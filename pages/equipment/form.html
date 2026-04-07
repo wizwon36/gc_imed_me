@@ -59,6 +59,11 @@
           <select id="team_code" class="input" required></select>
         </label>
 
+        <label class="form-field full-col">
+          <span class="form-label">부서명</span>
+          <input type="text" id="department_preview" class="input" readonly placeholder="의원 / 팀 선택 시 자동 표시" />
+        </label>
+
         <label class="form-field">
           <span class="form-label">제조사</span>
           <input type="text" id="manufacturer" class="input" />
@@ -127,7 +132,7 @@
 
       <div class="form-actions">
         <a href="list.html" class="btn-secondary">목록으로</a>
-        <button type="submit" class="btn-primary">
+        <button type="submit" id="submitButton" class="btn-primary">
           <span id="submitButtonText">장비 등록</span>
         </button>
       </div>
