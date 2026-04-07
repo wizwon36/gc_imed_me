@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="../../assets/css/pages/equipment-dashboard.css" />
 </head>
-<body class="portal-page dashboard-page dashboard-page-fixed">
+<body class="portal-page dashboard-page">
   <div class="container page-shell dashboard-page-shell">
     <section class="top-brand-bar portal-topbar portal-hero-card dashboard-topbar">
       <div class="top-brand-left">
@@ -26,31 +26,42 @@
 
     <div id="messageBox" class="message-box"></div>
 
-    <section class="dashboard-kpi-grid dashboard-kpi-grid--portal">
-      <article class="dashboard-kpi-card">
-        <div class="dashboard-kpi-label">전체 장비</div>
-        <div class="dashboard-kpi-value" id="totalCount">0</div>
-        <div class="dashboard-kpi-sub">등록된 전체 장비 수</div>
-      </article>
+    <div class="dashboard-kpi-scroll-wrap">
+      <div id="dashboardKpiScroll" class="dashboard-kpi-scroll">
+        <section class="dashboard-kpi-grid dashboard-kpi-grid--portal">
+          <article class="dashboard-kpi-card" id="kpiCard1">
+            <div class="dashboard-kpi-label">전체 장비</div>
+            <div class="dashboard-kpi-value" id="totalCount">0</div>
+            <div class="dashboard-kpi-sub">등록된 전체 장비 수</div>
+          </article>
 
-      <article class="dashboard-kpi-card">
-        <div class="dashboard-kpi-label">사용중</div>
-        <div class="dashboard-kpi-value" id="inUseCount">0</div>
-        <div class="dashboard-kpi-sub">정상 운영 가능 장비</div>
-      </article>
+          <article class="dashboard-kpi-card" id="kpiCard2">
+            <div class="dashboard-kpi-label">사용중</div>
+            <div class="dashboard-kpi-value" id="inUseCount">0</div>
+            <div class="dashboard-kpi-sub">정상 운영 가능 장비</div>
+          </article>
 
-      <article class="dashboard-kpi-card">
-        <div class="dashboard-kpi-label">수리중</div>
-        <div class="dashboard-kpi-value" id="repairingCount">0</div>
-        <div class="dashboard-kpi-sub">조치 진행 중 장비</div>
-      </article>
+          <article class="dashboard-kpi-card" id="kpiCard3">
+            <div class="dashboard-kpi-label">수리중</div>
+            <div class="dashboard-kpi-value" id="repairingCount">0</div>
+            <div class="dashboard-kpi-sub">조치 진행 중 장비</div>
+          </article>
 
-      <article class="dashboard-kpi-card">
-        <div class="dashboard-kpi-label">점검중</div>
-        <div class="dashboard-kpi-value" id="inspectingCount">0</div>
-        <div class="dashboard-kpi-sub">정기점검 또는 검사 대상</div>
-      </article>
-    </section>
+          <article class="dashboard-kpi-card" id="kpiCard4">
+            <div class="dashboard-kpi-label">점검중</div>
+            <div class="dashboard-kpi-value" id="inspectingCount">0</div>
+            <div class="dashboard-kpi-sub">정기점검 또는 검사 대상</div>
+          </article>
+        </section>
+      </div>
+
+      <div class="dashboard-kpi-dots" id="dashboardKpiDots" aria-label="KPI 카드 탐색">
+        <button type="button" class="dashboard-kpi-dot is-active" data-target="kpiCard1" aria-label="전체 장비 카드 보기"></button>
+        <button type="button" class="dashboard-kpi-dot" data-target="kpiCard2" aria-label="사용중 카드 보기"></button>
+        <button type="button" class="dashboard-kpi-dot" data-target="kpiCard3" aria-label="수리중 카드 보기"></button>
+        <button type="button" class="dashboard-kpi-dot" data-target="kpiCard4" aria-label="점검중 카드 보기"></button>
+      </div>
+    </div>
 
     <section class="dashboard-section-grid dashboard-section-grid--portal dashboard-main-panels">
       <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions">
@@ -131,6 +142,61 @@
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
+  <script>
+    (function () {
+      const scrollEl = document.getElementById('dashboardKpiScroll');
+      const dotsWrap = document.getElementById('dashboardKpiDots');
+      if (!scrollEl || !dotsWrap) return;
+
+      const dots = Array.from(dotsWrap.querySelectorAll('.dashboard-kpi-dot'));
+      const cards = dots
+        .map((dot) => document.getElementById(dot.dataset.target))
+        .filter(Boolean);
+
+      function setActiveDot(index) {
+        dots.forEach((dot, i) => {
+          dot.classList.toggle('is-active', i === index);
+        });
+      }
+
+      function updateActiveByScroll() {
+        if (window.innerWidth > 768) {
+          setActiveDot(0);
+          return;
+        }
+
+        const scrollLeft = scrollEl.scrollLeft;
+        let activeIndex = 0;
+        let minDistance = Number.POSITIVE_INFINITY;
+
+        cards.forEach((card, index) => {
+          const distance = Math.abs(card.offsetLeft - scrollLeft);
+          if (distance < minDistance) {
+            minDistance = distance;
+            activeIndex = index;
+          }
+        });
+
+        setActiveDot(activeIndex);
+      }
+
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', function () {
+          const card = cards[index];
+          if (!card) return;
+          scrollEl.scrollTo({
+            left: card.offsetLeft,
+            behavior: 'smooth'
+          });
+          setActiveDot(index);
+        });
+      });
+
+      scrollEl.addEventListener('scroll', updateActiveByScroll, { passive: true });
+      window.addEventListener('resize', updateActiveByScroll);
+      updateActiveByScroll();
+    })();
+  </script>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
