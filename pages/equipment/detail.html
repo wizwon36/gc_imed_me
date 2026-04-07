@@ -30,13 +30,6 @@
       align-items: center;
     }
 
-    .detail-action-group .btn-primary,
-    .detail-action-group .btn-secondary,
-    .detail-action-group .btn-danger {
-      min-width: 118px;
-      justify-content: center;
-    }
-
     .detail-main-grid {
       display: grid;
       grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
@@ -95,9 +88,7 @@
         width: 100%;
       }
 
-      .detail-action-group .btn-primary,
-      .detail-action-group .btn-secondary,
-      .detail-action-group .btn-danger {
+      .detail-action-group .btn {
         flex: 1 1 auto;
         min-width: 0;
       }
@@ -136,15 +127,15 @@
 
     <section class="detail-action-bar">
       <div class="detail-action-group">
-        <a href="list.html" class="btn-secondary">목록으로</a>
-        <button type="button" id="printLabelBtn" class="btn-secondary" style="display:none;">라벨 출력</button>
+        <a href="list.html" class="btn">목록으로</a>
+        <button type="button" id="printLabelBtn" class="btn" style="display:none;">라벨 출력</button>
       </div>
 
       <div class="detail-action-group">
-        <button type="button" id="addHistoryBtn" class="btn-secondary" style="display:none;">이력 등록</button>
-        <button type="button" id="addInventoryBtn" class="btn-secondary" style="display:none;">재고조사 등록</button>
-        <button type="button" id="editEquipmentBtn" class="btn-primary" style="display:none;">장비 수정</button>
-        <button type="button" id="deleteBtn" class="btn-danger" style="display:none;">장비 삭제</button>
+        <button type="button" id="addHistoryBtn" class="btn" style="display:none;">이력 등록</button>
+        <button type="button" id="addInventoryBtn" class="btn" style="display:none;">재고조사 등록</button>
+        <button type="button" id="editEquipmentBtn" class="btn btn-primary" style="display:none;">장비 수정</button>
+        <button type="button" id="deleteBtn" class="btn btn-danger" style="display:none;">장비 삭제</button>
       </div>
     </section>
 
