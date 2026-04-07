@@ -24,17 +24,11 @@
       </div>
     </section>
 
-    <section class="portal-intro dashboard-intro">
-      <div class="portal-intro-main dashboard-intro-main">
+    <section class="dashboard-intro dashboard-intro--simple">
+      <div class="dashboard-intro-main">
         <span class="portal-section-kicker">DASHBOARD</span>
-        <h1 class="page-title portal-page-title dashboard-page-title">장비 현황 대시보드</h1>
-        <p class="page-desc portal-page-desc dashboard-page-desc">등록 현황과 운영 상태를 한 화면에서 빠르게 확인합니다.</p>
-      </div>
-
-      <div class="portal-profile-card dashboard-summary-card">
-        <div class="portal-profile-label">현재 요약</div>
-        <div class="portal-user-name" id="dashboardSummaryValue">182대</div>
-        <div class="portal-user-sub" id="dashboardSummaryText">등록 장비 기준 전체 운영 현황</div>
+        <h1 class="page-title dashboard-page-title">장비 현황 대시보드</h1>
+        <p class="page-desc dashboard-page-desc">운영 현황과 우선 확인 항목을 한 화면에서 빠르게 확인합니다.</p>
       </div>
     </section>
 
@@ -114,44 +108,26 @@
       <article class="card dashboard-panel dashboard-panel--portal">
         <div class="section-head dashboard-section-head">
           <div>
-            <span class="portal-section-kicker">STATUS</span>
-            <h2 class="section-title dashboard-section-title">운영 상태</h2>
-            <div class="sub-text dashboard-section-desc">현재 상태를 요약합니다.</div>
+            <span class="portal-section-kicker">MAINTENANCE</span>
+            <h2 class="section-title dashboard-section-title">유지보수 만료 예정</h2>
+            <div class="sub-text dashboard-section-desc">가까운 시일 내 확인이 필요한 장비입니다.</div>
           </div>
         </div>
 
-        <div class="dashboard-status-list dashboard-status-list--portal">
-          <div class="dashboard-status-item">
-            <div class="dashboard-status-left">
-              <span class="status-badge is-in-use">사용중</span>
-              <span class="dashboard-status-text dashboard-status-desc">정상 운영 장비</span>
+        <div id="maintenanceAlertList" class="dashboard-maintenance-list">
+          <div class="dashboard-maintenance-item">
+            <div class="dashboard-maintenance-main">
+              <div class="dashboard-maintenance-title">예정 장비를 불러오는 중입니다.</div>
+              <div class="dashboard-maintenance-desc">유지보수 만료일 기준으로 정렬됩니다.</div>
             </div>
-            <strong class="dashboard-status-count" id="statusInUseText">0대</strong>
+            <div class="dashboard-maintenance-side">
+              <span class="dashboard-dday-badge">-</span>
+            </div>
           </div>
+        </div>
 
-          <div class="dashboard-status-item">
-            <div class="dashboard-status-left">
-              <span class="status-badge is-repairing">수리중</span>
-              <span class="dashboard-status-text dashboard-status-desc">조치 진행 장비</span>
-            </div>
-            <strong class="dashboard-status-count" id="statusRepairingText">0대</strong>
-          </div>
-
-          <div class="dashboard-status-item">
-            <div class="dashboard-status-left">
-              <span class="status-badge is-inspecting">점검중</span>
-              <span class="dashboard-status-text dashboard-status-desc">점검 대상 장비</span>
-            </div>
-            <strong class="dashboard-status-count" id="statusInspectingText">0대</strong>
-          </div>
-
-          <div class="dashboard-status-item">
-            <div class="dashboard-status-left">
-              <span class="status-badge is-stored">보관</span>
-              <span class="dashboard-status-text dashboard-status-desc">보관 장비</span>
-            </div>
-            <strong class="dashboard-status-count" id="statusStoredText">0대</strong>
-          </div>
+        <div id="maintenanceAlertEmpty" class="empty-box" style="display:none;">
+          유지보수 만료 예정 장비가 없습니다.
         </div>
       </article>
     </section>
@@ -163,27 +139,6 @@
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
-
-  <script>
-    (function () {
-      const totalEl = document.getElementById('totalCount');
-      const summaryValueEl = document.getElementById('dashboardSummaryValue');
-      const summaryTextEl = document.getElementById('dashboardSummaryText');
-
-      function syncDashboardSummary() {
-        if (!summaryValueEl || !summaryTextEl || !totalEl) return;
-        const total = (totalEl.textContent || '0').trim();
-        summaryValueEl.textContent = `${total}대`;
-        summaryTextEl.textContent = '등록 장비 기준 전체 운영 현황';
-      }
-
-      const observer = new MutationObserver(syncDashboardSummary);
-      if (totalEl) {
-        observer.observe(totalEl, { childList: true, subtree: true, characterData: true });
-      }
-      syncDashboardSummary();
-    })();
-  </script>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
