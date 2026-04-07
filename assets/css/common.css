@@ -7304,3 +7304,31 @@ body.dashboard-compact {
     padding-left: 12px;
   }
 }
+
+/* ===== portal left line 완전 정리 ===== */
+
+/* 기존 라인 제거 (before, border 둘 다 제거) */
+.portal-page-compact .portal-section-head,
+.portal-page-compact .portal-section-head::before {
+  border-left: none !important;
+  padding-left: 0 !important;
+  background: none !important;
+}
+
+/* 우리가 쓸 라인 하나만 다시 정의 */
+.portal-page-compact .portal-section-head--compact > div {
+  position: relative;
+  padding-left: 14px;
+}
+
+/* 진짜 라인 */
+.portal-page-compact .portal-section-head--compact > div::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
+}
