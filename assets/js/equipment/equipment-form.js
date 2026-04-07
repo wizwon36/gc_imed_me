@@ -1,232 +1,298 @@
-const equipmentFormState = {
-  mode: 'create',
-  equipmentId: '',
-  user: null,
-  submitting: false
+window.ORG_CONFIG = {
+  CACHE_KEY: 'gc_imed_me_org_data_v1',
+  CACHE_TTL: 1000 * 60 * 30,
+  cache: {
+    loaded: false,
+    loadingPromise: null,
+    clinics: [],
+    teams: []
+  }
 };
 
-function getEquipmentFormMode() {
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id') || '';
-  return {
-    mode: id ? 'edit' : 'create',
-    equipmentId: id
-  };
-}
+window.OrgService = {
+  normalize(value) {
+    return String(value || '').trim();
+  },
 
-function setFormTitle(mode) {
-  const titleEl = qs('#pageTitle');
-  const descEl = qs('#pageDesc');
-  const submitTextEl = qs('#submitButtonText');
+  getCachedData() {
+    try {
+      const raw = sessionStorage.getItem(window.ORG_CONFIG.CACHE_KEY);
+      if (!raw) return null;
 
-  if (mode === 'edit') {
-    if (titleEl) titleEl.textContent = '장비 정보 수정';
-    if (descEl) descEl.textContent = '기존 등록 장비 정보를 수정합니다.';
-    if (submitTextEl) submitTextEl.textContent = '수정 저장';
-  } else {
-    if (titleEl) titleEl.textContent = '장비 등록';
-    if (descEl) descEl.textContent = '신규 의료장비 정보를 등록합니다.';
-    if (submitTextEl) submitTextEl.textContent = '장비 등록';
-  }
-}
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.savedAt || !parsed.data) return null;
 
-function getFormValue(id) {
-  const el = qs(`#${id}`);
-  return el ? String(el.value || '').trim() : '';
-}
+      const isExpired = (Date.now() - parsed.savedAt) > window.ORG_CONFIG.CACHE_TTL;
+      if (isExpired) return null;
 
-function setFormValue(id, value) {
-  const el = qs(`#${id}`);
-  if (!el) return;
-  el.value = value == null ? '' : value;
-}
+      return parsed.data;
+    } catch (error) {
+      return null;
+    }
+  },
 
-function setStatusOptions() {
-  const statusEl = qs('#status');
-  if (!statusEl) return;
+  setCachedData(data) {
+    try {
+      sessionStorage.setItem(
+        window.ORG_CONFIG.CACHE_KEY,
+        JSON.stringify({
+          savedAt: Date.now(),
+          data
+        })
+      );
+    } catch (error) {
+      // ignore
+    }
+  },
 
-  statusEl.innerHTML = `
-    <option value="IN_USE">사용중</option>
-    <option value="REPAIRING">수리중</option>
-    <option value="INSPECTING">점검중</option>
-    <option value="STORED">보관</option>
-    <option value="DISPOSED">폐기</option>
-  `;
-}
+  async load() {
+    if (window.ORG_CONFIG.cache.loaded) {
+      return window.ORG_CONFIG.cache;
+    }
 
-function collectEquipmentPayload() {
-  return {
-    equipment_name: getFormValue('equipment_name'),
-    model_name: getFormValue('model_name'),
+    const cached = this.getCachedData();
+    if (cached) {
+      window.ORG_CONFIG.cache.loaded = true;
+      window.ORG_CONFIG.cache.clinics = Array.isArray(cached.clinics) ? cached.clinics : [];
+      window.ORG_CONFIG.cache.teams = Array.isArray(cached.teams) ? cached.teams : [];
+      return window.ORG_CONFIG.cache;
+    }
 
-    clinic_code: getFormValue('clinic_code'),
-    clinic_name: '',
-    team_code: getFormValue('team_code'),
-    team_name: '',
-    department: '',
+    if (window.ORG_CONFIG.cache.loadingPromise) {
+      return window.ORG_CONFIG.cache.loadingPromise;
+    }
 
-    manufacturer: getFormValue('manufacturer'),
-    manufacture_date: getFormValue('manufacture_date'),
-    purchase_date: getFormValue('purchase_date'),
-    serial_no: getFormValue('serial_no'),
-    vendor: getFormValue('vendor'),
-    manager_name: getFormValue('manager_name'),
-    manager_phone: getFormValue('manager_phone'),
-    acquisition_cost: getFormValue('acquisition_cost'),
-    maintenance_end_date: getFormValue('maintenance_end_date'),
-    status: getFormValue('status') || 'IN_USE',
-    location: getFormValue('location'),
-    current_user: getFormValue('current_user'),
-    memo: getFormValue('memo')
-  };
-}
+    window.ORG_CONFIG.cache.loadingPromise = (async () => {
+      const result = await apiGet('getOrgData');
+      const data = result.data || {};
 
-async function buildEquipmentSubmitPayload() {
-  const raw = collectEquipmentPayload();
-  const orgPayload = await window.OrgService.buildOrgPayload(raw.clinic_code, raw.team_code);
+      const clinics = Array.isArray(data.clinics) ? data.clinics : [];
+      const teams = Array.isArray(data.teams) ? data.teams : [];
 
-  const payload = {
-    ...raw,
-    ...orgPayload
-  };
+      window.ORG_CONFIG.cache.loaded = true;
+      window.ORG_CONFIG.cache.clinics = clinics;
+      window.ORG_CONFIG.cache.teams = teams;
 
-  if (equipmentFormState.mode === 'edit') {
-    payload.equipment_id = equipmentFormState.equipmentId;
-    payload.updated_by = equipmentFormState.user.email || '';
-  } else {
-    payload.created_by = equipmentFormState.user.email || '';
-  }
+      this.setCachedData({ clinics, teams });
 
-  return payload;
-}
+      return window.ORG_CONFIG.cache;
+    })();
 
-function validateEquipmentForm(payload) {
-  if (!payload.equipment_name) throw new Error('장비명을 입력해 주세요.');
-  if (!payload.model_name) throw new Error('모델명을 입력해 주세요.');
-  if (!payload.serial_no) throw new Error('시리얼번호를 입력해 주세요.');
-  if (!payload.clinic_code) throw new Error('의원을 선택해 주세요.');
-  if (!payload.team_code) throw new Error('팀을 선택해 주세요.');
+    try {
+      return await window.ORG_CONFIG.cache.loadingPromise;
+    } finally {
+      window.ORG_CONFIG.cache.loadingPromise = null;
+    }
+  },
 
-  if (payload.acquisition_cost && Number.isNaN(Number(payload.acquisition_cost))) {
-    throw new Error('취득가액은 숫자로 입력해 주세요.');
-  }
-}
+  async preload() {
+    await this.load();
+  },
 
-function fillEquipmentForm(data = {}) {
-  setFormValue('equipment_name', data.equipment_name || '');
-  setFormValue('model_name', data.model_name || '');
-  setFormValue('manufacturer', data.manufacturer || '');
-  setFormValue('manufacture_date', data.manufacture_date || '');
-  setFormValue('purchase_date', data.purchase_date || '');
-  setFormValue('serial_no', data.serial_no || '');
-  setFormValue('vendor', data.vendor || '');
-  setFormValue('manager_name', data.manager_name || '');
-  setFormValue('manager_phone', data.manager_phone || '');
-  setFormValue('acquisition_cost', data.acquisition_cost ?? '');
-  setFormValue('maintenance_end_date', data.maintenance_end_date || '');
-  setFormValue('status', data.status || 'IN_USE');
-  setFormValue('location', data.location || '');
-  setFormValue('current_user', data.current_user || '');
-  setFormValue('memo', data.memo || '');
-}
+  async getClinics() {
+    const cache = await this.load();
+    return cache.clinics;
+  },
 
-async function loadEquipmentDetailForEdit() {
-  if (equipmentFormState.mode !== 'edit') return;
+  async getTeams() {
+    const cache = await this.load();
+    return cache.teams;
+  },
 
-  const result = await apiGet('getEquipment', {
-    id: equipmentFormState.equipmentId,
-    request_user_email: equipmentFormState.user.email || ''
-  });
+  getClinicCodeValue(item) {
+    return this.normalize(item?.code_value || item?.code || item?.value);
+  },
 
-  const data = result.data || {};
+  getClinicNameValue(item) {
+    return this.normalize(item?.code_name || item?.name);
+  },
 
-  await window.OrgService.bindClinicTeam(qs('#clinic_code'), qs('#team_code'), {
-    initialClinicCode: data.clinic_code || '',
-    initialTeamCode: data.team_code || ''
-  });
+  getTeamCodeValue(item) {
+    return this.normalize(item?.code_value || item?.code || item?.value);
+  },
 
-  fillEquipmentForm(data);
-}
+  getTeamNameValue(item) {
+    return this.normalize(item?.code_name || item?.name);
+  },
 
-async function initEquipmentFormPage() {
-  equipmentFormState.user = window.auth.requireAuth();
-  if (!equipmentFormState.user) return;
+  getTeamParentClinicCode(item) {
+    return this.normalize(
+      item?.parent_code ||
+      item?.parent_code_value ||
+      item?.clinic_code ||
+      item?.parentClinicCode
+    );
+  },
 
-  await window.appPermission.requirePermission('equipment', ['edit', 'admin', 'view']);
+  async getTeamsByClinicCode(clinicCode) {
+    const teams = await this.getTeams();
+    const target = this.normalize(clinicCode);
+    if (!target) return [];
 
-  const { mode, equipmentId } = getEquipmentFormMode();
-  equipmentFormState.mode = mode;
-  equipmentFormState.equipmentId = equipmentId;
+    return teams.filter((team) => this.getTeamParentClinicCode(team) === target);
+  },
 
-  setFormTitle(mode);
-  setStatusOptions();
+  async getClinicName(clinicCode) {
+    const clinics = await this.getClinics();
+    const target = this.normalize(clinicCode);
 
-  if (mode === 'edit') {
-    await loadEquipmentDetailForEdit();
-  } else {
-    await window.OrgService.bindClinicTeam(qs('#clinic_code'), qs('#team_code'), {
-      initialClinicCode: equipmentFormState.user.clinic_code || '',
-      initialTeamCode: equipmentFormState.user.team_code || ''
+    const found = clinics.find(item => this.getClinicCodeValue(item) === target);
+    return found ? this.getClinicNameValue(found) : '';
+  },
+
+  async getTeamName(teamCode) {
+    const teams = await this.getTeams();
+    const target = this.normalize(teamCode);
+
+    const found = teams.find(item => this.getTeamCodeValue(item) === target);
+    return found ? this.getTeamNameValue(found) : '';
+  },
+
+  buildDepartmentText(clinicName, teamName) {
+    const clinic = this.normalize(clinicName);
+    const team = this.normalize(teamName);
+    if (clinic && team) return `${clinic} / ${team}`;
+    return '';
+  },
+
+  setLoadingState(clinicEl, teamEl) {
+    if (clinicEl) {
+      clinicEl.innerHTML = '<option value="">의원 불러오는 중...</option>';
+      clinicEl.disabled = true;
+    }
+
+    if (teamEl) {
+      teamEl.innerHTML = '<option value="">팀 불러오는 중...</option>';
+      teamEl.disabled = true;
+    }
+  },
+
+  async fillClinicSelect(selectEl, options = {}) {
+    if (!selectEl) return;
+
+    const {
+      includeEmpty = true,
+      emptyLabel = '의원을 선택하세요',
+      selectedValue = ''
+    } = options;
+
+    const clinics = await this.getClinics();
+
+    let html = '';
+    if (includeEmpty) {
+      html += `<option value="">${emptyLabel}</option>`;
+    }
+
+    html += clinics.map(item => {
+      const value = this.getClinicCodeValue(item);
+      const name = this.getClinicNameValue(item);
+      return `<option value="${value}">${name}</option>`;
+    }).join('');
+
+    selectEl.innerHTML = html;
+    selectEl.disabled = false;
+    selectEl.value = selectedValue || '';
+  },
+
+  async fillTeamSelect(selectEl, clinicCode, options = {}) {
+    if (!selectEl) return;
+
+    const {
+      includeEmpty = true,
+      emptyLabel = '팀을 선택하세요',
+      selectedValue = ''
+    } = options;
+
+    const teams = clinicCode ? await this.getTeamsByClinicCode(clinicCode) : [];
+
+    let html = '';
+    if (includeEmpty) {
+      html += `<option value="">${emptyLabel}</option>`;
+    }
+
+    html += teams.map(item => {
+      const value = this.getTeamCodeValue(item);
+      const name = this.getTeamNameValue(item);
+      return `<option value="${value}">${name}</option>`;
+    }).join('');
+
+    selectEl.innerHTML = html;
+    selectEl.disabled = !clinicCode;
+    selectEl.value = selectedValue || '';
+  },
+
+  async updateDepartmentField(clinicCode, teamCode, departmentEl) {
+    if (!departmentEl) return '';
+
+    const clinic_name = await this.getClinicName(clinicCode);
+    const team_name = await this.getTeamName(teamCode);
+    const department = this.buildDepartmentText(clinic_name, team_name);
+
+    departmentEl.value = department || '';
+    return department;
+  },
+
+  async bindClinicTeam(clinicEl, teamEl, options = {}) {
+    if (!clinicEl || !teamEl) {
+      return;
+    }
+
+    const {
+      clinicEmptyLabel = '의원을 선택하세요',
+      teamEmptyLabel = '팀을 선택하세요',
+      initialClinicCode = '',
+      initialTeamCode = '',
+      departmentEl = null
+    } = options;
+
+    this.setLoadingState(clinicEl, teamEl);
+
+    await this.fillClinicSelect(clinicEl, {
+      includeEmpty: true,
+      emptyLabel: clinicEmptyLabel,
+      selectedValue: initialClinicCode
     });
 
-    setFormValue('status', 'IN_USE');
-    setFormValue('manager_name', equipmentFormState.user.name || '');
-    setFormValue('manager_phone', equipmentFormState.user.phone || '');
-  }
-}
+    await this.fillTeamSelect(teamEl, initialClinicCode, {
+      includeEmpty: true,
+      emptyLabel: teamEmptyLabel,
+      selectedValue: initialTeamCode
+    });
 
-async function handleEquipmentSubmit(event) {
-  event.preventDefault();
-  if (equipmentFormState.submitting) return;
+    await this.updateDepartmentField(initialClinicCode, initialTeamCode, departmentEl);
 
-  clearMessage();
+    if (clinicEl.dataset.orgBound !== 'Y') {
+      clinicEl.addEventListener('change', async () => {
+        await this.fillTeamSelect(teamEl, clinicEl.value, {
+          includeEmpty: true,
+          emptyLabel: teamEmptyLabel,
+          selectedValue: ''
+        });
+        await this.updateDepartmentField(clinicEl.value, '', departmentEl);
+      });
 
-  try {
-    equipmentFormState.submitting = true;
-    showGlobalLoading(equipmentFormState.mode === 'edit' ? '장비 정보를 수정하는 중...' : '장비를 등록하는 중...');
-
-    const payload = await buildEquipmentSubmitPayload();
-    validateEquipmentForm(payload);
-
-    const result = equipmentFormState.mode === 'edit'
-      ? await apiPost('updateEquipment', payload)
-      : await apiPost('createEquipment', payload);
-
-    showMessage(result.message || '저장되었습니다.', 'success');
-
-    if (equipmentFormState.mode === 'edit') {
-      setTimeout(() => {
-        location.href = `detail.html?id=${encodeURIComponent(equipmentFormState.equipmentId)}`;
-      }, 500);
-    } else {
-      const newId = result?.data?.equipment_id || '';
-      setTimeout(() => {
-        location.href = newId
-          ? `detail.html?id=${encodeURIComponent(newId)}`
-          : 'list.html';
-      }, 500);
+      clinicEl.dataset.orgBound = 'Y';
     }
-  } catch (error) {
-    showMessage(error.message || '저장 중 오류가 발생했습니다.', 'error');
-  } finally {
-    equipmentFormState.submitting = false;
-    await hideGlobalLoading(true);
-  }
-}
 
-document.addEventListener('DOMContentLoaded', async () => {
-  showGlobalLoading('화면을 준비하는 중...');
+    if (teamEl.dataset.orgBound !== 'Y') {
+      teamEl.addEventListener('change', async () => {
+        await this.updateDepartmentField(clinicEl.value, teamEl.value, departmentEl);
+      });
 
-  try {
-    await initEquipmentFormPage();
-
-    const formEl = qs('#equipmentForm');
-    if (formEl) {
-      formEl.addEventListener('submit', handleEquipmentSubmit);
+      teamEl.dataset.orgBound = 'Y';
     }
-  } catch (error) {
-    showMessage(error.message || '화면 초기화 중 오류가 발생했습니다.', 'error');
-  } finally {
-    await hideGlobalLoading(true);
+  },
+
+  async buildOrgPayload(clinicCode, teamCode) {
+    const clinic_name = await this.getClinicName(clinicCode);
+    const team_name = await this.getTeamName(teamCode);
+
+    return {
+      clinic_code: clinicCode || '',
+      clinic_name: clinic_name || '',
+      team_code: teamCode || '',
+      team_name: team_name || '',
+      department: this.buildDepartmentText(clinic_name, team_name)
+    };
   }
-});
+};
