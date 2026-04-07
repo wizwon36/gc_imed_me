@@ -3433,3 +3433,84 @@ body.dashboard-compact {
     font-size: 11px;
   }
 }
+
+/* =========================================
+ * dashboard panel height tuning
+ * 하단 2개 패널 높이 확장
+ * ========================================= */
+
+/* PC: 하단 패널 전체 높이 증가 */
+.dashboard-page .dashboard-section-grid--portal {
+  align-items: stretch;
+}
+
+.dashboard-page .dashboard-panel--portal {
+  min-height: 455px;
+}
+
+/* 빠른 작업: 카드 자체는 크게 안 키우고,
+   패널 내부 여백만 조금 넓힘 */
+.dashboard-page .dashboard-panel--portal:first-child {
+  padding-bottom: 24px;
+}
+
+.dashboard-page .dashboard-panel--portal:first-child .dashboard-action-grid--portal,
+.dashboard-page .dashboard-panel--portal:first-child .dashboard-action-grid--enhanced {
+  align-content: start;
+}
+
+/* 유지보수 패널: 리스트 영역을 더 크게 */
+.dashboard-page .dashboard-panel--portal:last-child {
+  min-height: 455px;
+}
+
+.dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list {
+  max-height: 340px;
+}
+
+/* 너무 답답하지 않게 카드 간격 아주 소폭 */
+.dashboard-maintenance-list {
+  gap: 12px;
+}
+
+/* 카드 높이는 살짝만 */
+.dashboard-maintenance-item {
+  min-height: 88px;
+}
+
+/* 버튼 카드가 너무 커지지 않게 상한 유지 */
+.dashboard-page .dashboard-action-card {
+  min-height: 84px;
+}
+
+.dashboard-page .dashboard-action-card--primary {
+  min-height: 90px;
+}
+
+/* 태블릿 */
+@media (max-width: 1024px) {
+  .dashboard-page .dashboard-panel--portal,
+  .dashboard-page .dashboard-panel--portal:last-child {
+    min-height: 430px;
+  }
+
+  .dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list {
+    max-height: 310px;
+  }
+}
+
+/* 모바일: 너무 길어지지 않게 적당히만 증가 */
+@media (max-width: 768px) {
+  .dashboard-page .dashboard-panel--portal,
+  .dashboard-page .dashboard-panel--portal:last-child {
+    min-height: 400px;
+  }
+
+  .dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list {
+    max-height: 280px;
+  }
+
+  .dashboard-maintenance-item {
+    min-height: 76px;
+  }
+}
