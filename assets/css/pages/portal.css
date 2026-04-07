@@ -24,3 +24,15 @@
   width: 4px;
   background: linear-gradient(180deg,#2563eb,#60a5fa);
 }
+
+/* ===== portal unify ===== */
+
+.portal-app-card {
+  min-height: 100px;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.portal-section-title {
+  font-size: 28px;
+}
