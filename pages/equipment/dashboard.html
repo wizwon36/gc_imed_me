@@ -52,14 +52,28 @@
             <div class="dashboard-kpi-value" id="inspectingCount">0</div>
             <div class="dashboard-kpi-sub">정기점검 또는 검사 대상</div>
           </article>
+
+          <article class="dashboard-kpi-card dashboard-kpi-card--accent" id="kpiCard5">
+            <div class="dashboard-kpi-label">최근 30일 수리</div>
+            <div class="dashboard-kpi-value" id="recentRepairCount">0</div>
+            <div class="dashboard-kpi-sub">최근 한달 이내 수리 장비 수</div>
+          </article>
+
+          <article class="dashboard-kpi-card dashboard-kpi-card--accent" id="kpiCard6">
+            <div class="dashboard-kpi-label">최근 30일 신규 등록</div>
+            <div class="dashboard-kpi-value" id="recentRegisterCount">0</div>
+            <div class="dashboard-kpi-sub">최근 한달 이내 등록 장비 수</div>
+          </article>
         </section>
       </div>
 
       <div class="dashboard-kpi-dots" id="dashboardKpiDots" aria-label="KPI 카드 탐색">
-        <button type="button" class="dashboard-kpi-dot is-active" data-target="kpiCard1" aria-label="전체 장비 카드 보기"></button>
-        <button type="button" class="dashboard-kpi-dot" data-target="kpiCard2" aria-label="사용중 카드 보기"></button>
-        <button type="button" class="dashboard-kpi-dot" data-target="kpiCard3" aria-label="수리중 카드 보기"></button>
-        <button type="button" class="dashboard-kpi-dot" data-target="kpiCard4" aria-label="점검중 카드 보기"></button>
+        <button type="button" class="dashboard-kpi-dot is-active" data-index="0" aria-label="전체 장비"></button>
+        <button type="button" class="dashboard-kpi-dot" data-index="1" aria-label="사용중"></button>
+        <button type="button" class="dashboard-kpi-dot" data-index="2" aria-label="수리중"></button>
+        <button type="button" class="dashboard-kpi-dot" data-index="3" aria-label="점검중"></button>
+        <button type="button" class="dashboard-kpi-dot" data-index="4" aria-label="최근 30일 수리"></button>
+        <button type="button" class="dashboard-kpi-dot" data-index="5" aria-label="최근 30일 신규 등록"></button>
       </div>
     </div>
 
@@ -117,20 +131,49 @@
           </div>
         </div>
 
-        <div id="maintenanceAlertList" class="dashboard-maintenance-list">
-          <div class="dashboard-maintenance-item">
-            <div class="dashboard-maintenance-main">
-              <div class="dashboard-maintenance-title">예정 장비를 불러오는 중입니다.</div>
-              <div class="dashboard-maintenance-desc">유지보수 만료일 기준으로 정렬됩니다.</div>
-            </div>
-            <div class="dashboard-maintenance-side">
-              <span class="dashboard-dday-badge">-</span>
+        <div id="maintenanceAlertList" class="dashboard-list-stack">
+          <div class="dashboard-record-item">
+            <div class="dashboard-record-main">
+              <div class="dashboard-record-title">예정 장비를 불러오는 중입니다.</div>
+              <div class="dashboard-record-desc">유지보수 만료일 기준으로 정렬됩니다.</div>
             </div>
           </div>
         </div>
 
         <div id="maintenanceAlertEmpty" class="empty-box" style="display:none;">
           유지보수 만료 예정 장비가 없습니다.
+        </div>
+      </article>
+    </section>
+
+    <section class="dashboard-section-grid dashboard-section-grid--portal dashboard-extra-panels">
+      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records">
+        <div class="section-head dashboard-section-head">
+          <div>
+            <span class="portal-section-kicker">REPAIR</span>
+            <h2 class="section-title dashboard-section-title">최근 30일 수리된 장비</h2>
+            <div class="sub-text dashboard-section-desc">최근 한달 이내 수리 이력이 등록된 장비입니다.</div>
+          </div>
+        </div>
+
+        <div id="recentRepairList" class="dashboard-list-stack"></div>
+        <div id="recentRepairEmpty" class="empty-box" style="display:none;">
+          최근 30일 수리 장비가 없습니다.
+        </div>
+      </article>
+
+      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records">
+        <div class="section-head dashboard-section-head">
+          <div>
+            <span class="portal-section-kicker">REGISTERED</span>
+            <h2 class="section-title dashboard-section-title">최근 30일 등록된 장비</h2>
+            <div class="sub-text dashboard-section-desc">최근 한달 이내 신규 등록된 장비입니다.</div>
+          </div>
+        </div>
+
+        <div id="recentRegisteredList" class="dashboard-list-stack"></div>
+        <div id="recentRegisteredEmpty" class="empty-box" style="display:none;">
+          최근 30일 등록 장비가 없습니다.
         </div>
       </article>
     </section>
@@ -142,61 +185,6 @@
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
-  <script>
-    (function () {
-      const scrollEl = document.getElementById('dashboardKpiScroll');
-      const dotsWrap = document.getElementById('dashboardKpiDots');
-      if (!scrollEl || !dotsWrap) return;
-
-      const dots = Array.from(dotsWrap.querySelectorAll('.dashboard-kpi-dot'));
-      const cards = dots
-        .map((dot) => document.getElementById(dot.dataset.target))
-        .filter(Boolean);
-
-      function setActiveDot(index) {
-        dots.forEach((dot, i) => {
-          dot.classList.toggle('is-active', i === index);
-        });
-      }
-
-      function updateActiveByScroll() {
-        if (window.innerWidth > 768) {
-          setActiveDot(0);
-          return;
-        }
-
-        const scrollLeft = scrollEl.scrollLeft;
-        let activeIndex = 0;
-        let minDistance = Number.POSITIVE_INFINITY;
-
-        cards.forEach((card, index) => {
-          const distance = Math.abs(card.offsetLeft - scrollLeft);
-          if (distance < minDistance) {
-            minDistance = distance;
-            activeIndex = index;
-          }
-        });
-
-        setActiveDot(activeIndex);
-      }
-
-      dots.forEach((dot, index) => {
-        dot.addEventListener('click', function () {
-          const card = cards[index];
-          if (!card) return;
-          scrollEl.scrollTo({
-            left: card.offsetLeft,
-            behavior: 'smooth'
-          });
-          setActiveDot(index);
-        });
-      });
-
-      scrollEl.addEventListener('scroll', updateActiveByScroll, { passive: true });
-      window.addEventListener('resize', updateActiveByScroll);
-      updateActiveByScroll();
-    })();
-  </script>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
