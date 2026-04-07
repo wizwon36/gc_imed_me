@@ -1,38 +1,20 @@
 /* =========================================
  * equipment-dashboard.css
- * one-screen fixed dashboard
+ * natural dashboard layout + mobile KPI swipe
  * ========================================= */
 
-html,
-body.dashboard-page-fixed {
-  height: 100%;
-}
-
-body.dashboard-page-fixed {
-  overflow: hidden;
-}
-
 .dashboard-page {
-  padding-bottom: 0;
+  padding-bottom: 24px;
 }
 
 .dashboard-page .dashboard-page-shell {
   padding-top: 0;
-}
-
-/* 전체 페이지 높이 고정 */
-.dashboard-page-fixed .container.page-shell.dashboard-page-shell {
-  min-height: 100vh;
-  height: 100vh;
-  gap: 14px;
-  padding-top: 12px;
-  padding-bottom: 12px;
+  gap: 16px;
 }
 
 /* 헤더 */
 .dashboard-page .dashboard-topbar {
-  margin-top: 0;
-  flex: 0 0 auto;
+  margin-top: 10px;
 }
 
 .dashboard-page .dashboard-top-actions {
@@ -50,22 +32,34 @@ body.dashboard-page-fixed {
 
 /* 메시지 */
 .dashboard-page #messageBox.message-box {
-  flex: 0 0 auto;
   margin: 0;
+}
+
+/* KPI wrapper */
+.dashboard-kpi-scroll-wrap {
+  width: 100%;
+}
+
+.dashboard-kpi-scroll {
+  width: 100%;
+}
+
+.dashboard-kpi-dots {
+  display: none;
 }
 
 /* KPI */
 .dashboard-page .dashboard-kpi-grid--portal {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin: 0;
-  flex: 0 0 auto;
+  gap: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .dashboard-page .dashboard-kpi-card {
-  min-height: 104px;
-  padding: 16px 18px;
+  min-height: 118px;
+  padding: 18px 20px;
   border: 1px solid #d9dee7;
   border-radius: 22px;
   background: #fff;
@@ -73,7 +67,7 @@ body.dashboard-page-fixed {
 }
 
 .dashboard-page .dashboard-kpi-label {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -81,8 +75,8 @@ body.dashboard-page-fixed {
 }
 
 .dashboard-page .dashboard-kpi-value {
-  margin-bottom: 4px;
-  font-size: 34px;
+  margin-bottom: 6px;
+  font-size: 36px;
   line-height: 1;
   font-weight: 800;
   color: #0b1f44;
@@ -91,26 +85,25 @@ body.dashboard-page-fixed {
 
 .dashboard-page .dashboard-kpi-sub {
   font-size: 13px;
-  line-height: 1.35;
+  line-height: 1.4;
   color: #667085;
   word-break: keep-all;
 }
 
-/* 하단 메인 패널 */
-.dashboard-page .dashboard-main-panels {
+/* 하단 2단 */
+.dashboard-page .dashboard-main-panels,
+.dashboard-page .dashboard-section-grid--portal {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
-  align-items: stretch;
-  flex: 1 1 auto;
-  min-height: 0;
+  align-items: start;
 }
 
 .dashboard-page .dashboard-panel--portal {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+  height: auto;
   padding: 20px;
   border: 1px solid #d9dee7;
   border-radius: 24px;
@@ -165,7 +158,6 @@ body.dashboard-page-fixed {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   align-content: start;
-  flex: 1 1 auto;
 }
 
 .dashboard-page .dashboard-action-card {
@@ -254,11 +246,13 @@ body.dashboard-page-fixed {
 /* 유지보수 패널 */
 .dashboard-page .dashboard-panel--maintenance {
   overflow: hidden;
+  min-height: 460px;
 }
 
 .dashboard-page .dashboard-panel--maintenance .dashboard-maintenance-list {
   flex: 1 1 auto;
   min-height: 0;
+  max-height: 360px;
   overflow-y: auto;
   padding-right: 6px;
   display: grid;
@@ -286,13 +280,6 @@ body.dashboard-page-fixed {
   background: #fff;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.dashboard-maintenance-item:hover {
-  transform: translateY(-1px);
-  border-color: #bfd0ea;
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
 }
 
 .dashboard-maintenance-main {
@@ -312,7 +299,6 @@ body.dashboard-page-fixed {
   font-size: 13px;
   line-height: 1.4;
   color: #667085;
-  word-break: keep-all;
 }
 
 .dashboard-maintenance-meta {
@@ -386,72 +372,23 @@ body.dashboard-page-fixed {
   margin-top: 0;
 }
 
-/* 노트북 대응 */
-@media (max-width: 1400px) {
-  .dashboard-page-fixed .container.page-shell.dashboard-page-shell {
-    gap: 12px;
-  }
-
-  .dashboard-page .dashboard-kpi-card {
-    min-height: 98px;
-    padding: 15px 16px;
-  }
-
-  .dashboard-page .dashboard-kpi-value {
-    font-size: 30px;
-  }
-
-  .dashboard-page .dashboard-panel--portal {
-    padding: 18px;
-  }
-
-  .dashboard-page .dashboard-action-card {
-    min-height: 72px;
-  }
-
-  .dashboard-page .dashboard-action-card--primary {
-    min-height: 78px;
-  }
-
-  .dashboard-maintenance-item {
-    min-height: 76px;
-    padding: 13px 14px;
-  }
-}
-
-/* 태블릿 이하: 한 화면 고정 해제 */
+/* 태블릿 */
 @media (max-width: 1024px) {
-  html,
-  body.dashboard-page-fixed {
-    height: auto;
-  }
-
-  body.dashboard-page-fixed {
-    overflow: auto;
-  }
-
-  .dashboard-page-fixed .container.page-shell.dashboard-page-shell {
-    min-height: auto;
-    height: auto;
-    padding-top: 12px;
-    padding-bottom: 20px;
-  }
-
   .dashboard-page .dashboard-kpi-grid--portal {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dashboard-page .dashboard-main-panels {
+  .dashboard-page .dashboard-main-panels,
+  .dashboard-page .dashboard-section-grid--portal {
     grid-template-columns: 1fr;
-    flex: 0 0 auto;
   }
 
-  .dashboard-page .dashboard-panel--portal {
-    height: auto;
+  .dashboard-page .dashboard-panel--maintenance {
+    min-height: 420px;
   }
 
   .dashboard-page .dashboard-panel--maintenance .dashboard-maintenance-list {
-    max-height: 320px;
+    max-height: 300px;
   }
 }
 
@@ -508,46 +445,79 @@ body.dashboard-page-fixed {
     font-weight: 800;
   }
 
+  .dashboard-kpi-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-top: 2px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .dashboard-kpi-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
   .dashboard-page .dashboard-kpi-grid--portal {
-    grid-template-columns: 1fr 1fr;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 78%;
+    grid-template-columns: none;
     gap: 12px;
-    margin-top: 0;
-    margin-bottom: 14px;
+    margin: 0;
   }
 
   .dashboard-page .dashboard-kpi-card {
-    min-height: 96px;
-    padding: 15px;
+    min-height: 108px;
+    padding: 16px;
     border-radius: 20px;
+    scroll-snap-align: start;
   }
 
   .dashboard-page .dashboard-kpi-value {
-    font-size: 30px;
+    font-size: 34px;
   }
 
   .dashboard-page .dashboard-kpi-sub {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.35;
+  }
+
+  .dashboard-kpi-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 2px;
+  }
+
+  .dashboard-kpi-dot {
+    width: 8px;
+    height: 8px;
+    border: 0;
+    border-radius: 999px;
+    background: #cfd8e6;
+    padding: 0;
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .dashboard-kpi-dot.is-active {
+    width: 20px;
+    background: #2563eb;
+  }
+
+  .dashboard-page .dashboard-main-panels,
+  .dashboard-page .dashboard-section-grid--portal {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .dashboard-page .dashboard-panel--portal {
     padding: 18px 16px;
     border-radius: 22px;
-  }
-
-  .dashboard-page .dashboard-section-head {
-    margin-bottom: 14px;
-  }
-
-  .dashboard-page .dashboard-section-title {
-    font-size: 20px;
-    line-height: 1.25;
-  }
-
-  .dashboard-page .dashboard-section-desc {
-    margin-top: 6px;
-    font-size: 13px;
-    line-height: 1.45;
   }
 
   .dashboard-page .dashboard-action-grid--portal,
@@ -556,28 +526,8 @@ body.dashboard-page-fixed {
     gap: 10px;
   }
 
-  .dashboard-page .dashboard-action-card,
-  .dashboard-page .dashboard-action-card--primary {
-    min-height: 0;
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .dashboard-page .dashboard-action-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    font-size: 18px;
-  }
-
-  .dashboard-page .dashboard-action-title {
-    font-size: 15px;
-  }
-
-  .dashboard-page .dashboard-action-desc {
-    margin-top: 3px;
-    font-size: 12px;
-    line-height: 1.35;
+  .dashboard-page .dashboard-panel--maintenance {
+    min-height: 400px;
   }
 
   .dashboard-page .dashboard-panel--maintenance .dashboard-maintenance-list {
@@ -594,11 +544,6 @@ body.dashboard-page-fixed {
     border-radius: 16px;
   }
 
-  .dashboard-maintenance-side {
-    align-self: center;
-    justify-content: flex-end;
-  }
-
   .dashboard-maintenance-title {
     font-size: 14px;
   }
@@ -606,11 +551,6 @@ body.dashboard-page-fixed {
   .dashboard-maintenance-desc {
     margin-top: 3px;
     font-size: 12px;
-  }
-
-  .dashboard-maintenance-meta {
-    margin-top: 7px;
-    gap: 5px;
   }
 
   .dashboard-meta-chip {
