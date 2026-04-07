@@ -2407,3 +2407,65 @@ select.input {
   border-radius: 999px;
   background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
 }
+
+/* =========================
+ * DESIGN SYSTEM
+ * ========================= */
+
+:root {
+  --primary: #2563eb;
+  --primary-soft: #eff6ff;
+
+  --text-main: #0b1f44;
+  --text-sub: #667085;
+
+  --border: #d9dee7;
+  --bg-card: #ffffff;
+  --bg-page: #f5f7fb;
+
+  --radius-lg: 24px;
+  --radius-md: 16px;
+
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+}
+
+/* 카드 통일 */
+.card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: 0 6px 18px rgba(16,24,40,0.05);
+}
+
+/* 버튼 통일 */
+.btn,
+.portal-header-btn {
+  border-radius: var(--radius-md);
+  font-weight: 700;
+}
+
+/* 제목 통일 */
+.page-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* 설명 텍스트 */
+.text-sub {
+  color: var(--text-sub);
+}
+
+/* 기본 간격 */
+.section {
+  margin-bottom: var(--space-4);
+}
