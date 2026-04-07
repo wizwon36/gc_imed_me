@@ -3301,3 +3301,135 @@ body.dashboard-compact {
     max-height: 260px;
   }
 }
+
+/* =========================================
+ * maintenance panel stable scroll
+ * 카드 크기 유지 + 우측만 내부 스크롤
+ * ========================================= */
+
+/* 좌우 카드 높이는 같은 줄 기준으로 맞추고,
+   오른쪽 패널 내부만 스크롤되게 */
+.dashboard-page .dashboard-section-grid--portal {
+  align-items: stretch !important;
+}
+
+.dashboard-page .dashboard-panel--portal {
+  height: 100%;
+}
+
+/* 유지보수 패널만 내부 레이아웃 분리 */
+.dashboard-page .dashboard-panel--portal:last-child {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 헤더 아래 리스트 영역만 남은 공간을 차지 */
+.dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* 스크롤바 */
+.dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list::-webkit-scrollbar-thumb {
+  background: #d0d7e2;
+  border-radius: 999px;
+}
+
+/* 카드가 찌그러지지 않도록 원래 크기 유지 */
+.dashboard-maintenance-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 84px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+.dashboard-maintenance-main {
+  min-width: 0;
+}
+
+.dashboard-maintenance-title {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.dashboard-maintenance-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.dashboard-maintenance-meta {
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dashboard-meta-chip {
+  min-height: 28px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+
+.dashboard-maintenance-side {
+  width: auto;
+  justify-content: flex-end;
+  align-self: center;
+}
+
+.dashboard-dday-badge {
+  min-width: 58px;
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* 모바일에서도 카드 형태 유지 */
+@media (max-width: 768px) {
+  .dashboard-page .dashboard-panel--portal:last-child .dashboard-maintenance-list {
+    padding-right: 4px;
+  }
+
+  .dashboard-maintenance-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 76px;
+    padding: 12px 13px;
+    border-radius: 16px;
+  }
+
+  .dashboard-maintenance-side {
+    align-self: center;
+    justify-content: flex-end;
+  }
+
+  .dashboard-maintenance-title {
+    font-size: 14px;
+  }
+
+  .dashboard-maintenance-desc {
+    margin-top: 3px;
+    font-size: 12px;
+  }
+
+  .dashboard-meta-chip {
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .dashboard-dday-badge {
+    min-width: 54px;
+    min-height: 28px;
+    font-size: 11px;
+  }
+}
