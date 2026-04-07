@@ -7154,3 +7154,132 @@ body.dashboard-compact {
     font-size: 17px;
   }
 }
+
+/* =========================================
+ * portal compact cleanup
+ * ========================================= */
+
+.portal-page-compact .portal-topbar {
+  align-items: center;
+}
+
+.portal-page-compact .top-brand-texts {
+  gap: 0;
+}
+
+.portal-page-compact .portal-top-actions-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.portal-page-compact .portal-header-userline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid #d9dee7;
+  border-radius: 18px;
+  background: #fff;
+  color: #667085;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.portal-page-compact .portal-header-userlabel {
+  color: #667085;
+  font-weight: 600;
+}
+
+.portal-page-compact .portal-header-username {
+  color: #0b1f44;
+  font-weight: 800;
+}
+
+.portal-page-compact .portal-header-usersep {
+  color: #b2bccb;
+}
+
+.portal-page-compact .portal-header-usersub {
+  color: #667085;
+  font-weight: 500;
+}
+
+.portal-page-compact .portal-apps-section-compact {
+  margin-top: 22px;
+}
+
+.portal-page-compact .portal-section-head--compact {
+  margin-bottom: 18px;
+  padding-left: 14px;
+  border-left: 4px solid #2563eb;
+}
+
+.portal-page-compact .portal-section-head--compact .portal-section-title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: #0b1f44;
+}
+
+@media (max-width: 768px) {
+  .portal-page-compact .portal-top-actions-compact {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .portal-page-compact .portal-header-userline {
+    grid-column: 1 / -1;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 18px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .portal-page-compact .portal-section-head--compact {
+    margin-bottom: 14px;
+    padding-left: 12px;
+  }
+
+  .portal-page-compact .portal-section-head--compact .portal-section-title {
+    font-size: 26px;
+  }
+}
+
+/* =========================================
+ * dashboard primary action fix
+ * 장비 등록 카드 표시 복구
+ * ========================================= */
+
+.dashboard-page .dashboard-action-card--primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #2563eb;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+}
+
+.dashboard-page .dashboard-action-card--primary:hover {
+  border-color: #1d4ed8;
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+}
+
+.dashboard-page .dashboard-action-card--primary .dashboard-action-icon {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.dashboard-page .dashboard-action-card--primary .dashboard-action-body {
+  color: #fff;
+}
+
+.dashboard-page .dashboard-action-card--primary .dashboard-action-title,
+.dashboard-page .dashboard-action-card--primary .dashboard-action-desc {
+  color: #fff;
+}
