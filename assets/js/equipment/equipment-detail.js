@@ -51,14 +51,10 @@ function formatDisplayDate(value) {
   const raw = String(value || '').trim();
   if (!raw) return '-';
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    return raw;
-  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
 
   const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
-  if (dateOnlyMatch) {
-    return dateOnlyMatch[1];
-  }
+  if (dateOnlyMatch) return dateOnlyMatch[1];
 
   const parsed = new Date(raw);
   if (!isNaN(parsed.getTime())) {
@@ -80,9 +76,7 @@ function formatDisplayDateTime(value) {
     return `${isoMatch[1]} ${isoMatch[2]}`;
   }
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    return raw;
-  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
 
   const parsed = new Date(raw);
   if (!isNaN(parsed.getTime())) {
@@ -119,25 +113,11 @@ function applyActionVisibility() {
 
   const isDeleted = String(currentEquipmentData?.deleted_yn || 'N').trim().toUpperCase() === 'Y';
 
-  if (editBtn) {
-    editBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
-  }
-
-  if (deleteBtn) {
-    deleteBtn.style.display = detailPermission.canDelete ? '' : 'none';
-  }
-
-  if (addHistoryBtn) {
-    addHistoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
-  }
-
-  if (addInventoryBtn) {
-    addInventoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
-  }
-
-  if (printLabelBtn) {
-    printLabelBtn.style.display = detailPermission.canView ? '' : 'none';
-  }
+  if (editBtn) editBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  if (deleteBtn) deleteBtn.style.display = detailPermission.canDelete ? '' : 'none';
+  if (addHistoryBtn) addHistoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  if (addInventoryBtn) addInventoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  if (printLabelBtn) printLabelBtn.style.display = detailPermission.canView ? '' : 'none';
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
@@ -148,8 +128,6 @@ function renderDetailSkeleton() {
   const detailInfoGrid = qs('#detailInfoGrid');
   const qrBox = qs('#qrBox');
   const qrText = qs('#qrText');
-  const historyArea = qs('#historyArea');
-  const inventoryArea = qs('#inventoryArea');
 
   if (detailInfoGrid) {
     detailInfoGrid.innerHTML = `
@@ -168,26 +146,6 @@ function renderDetailSkeleton() {
   if (qrText) {
     qrText.innerHTML = `<div class="skeleton skeleton-text" style="height:36px;"></div>`;
   }
-
-  if (historyArea) {
-    historyArea.innerHTML = `
-      <div class="skeleton skeleton-card"></div>
-      <div class="skeleton skeleton-card"></div>
-    `;
-  }
-
-  if (inventoryArea) {
-    inventoryArea.innerHTML = `
-      <div class="skeleton skeleton-card"></div>
-      <div class="skeleton skeleton-card"></div>
-    `;
-  }
-
-  const historyCountText = qs('#historyCountText');
-  const inventoryCountText = qs('#inventoryCountText');
-
-  if (historyCountText) historyCountText.textContent = '불러오는 중...';
-  if (inventoryCountText) inventoryCountText.textContent = '불러오는 중...';
 }
 
 function renderSectionLoading(areaSelector, countSelector) {
@@ -195,10 +153,15 @@ function renderSectionLoading(areaSelector, countSelector) {
   const countEl = qs(countSelector);
 
   if (countEl) countEl.textContent = '불러오는 중...';
+
   if (area) {
     area.innerHTML = `
-      <div class="skeleton skeleton-card"></div>
-      <div class="skeleton skeleton-card"></div>
+      <div class="empty-box">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:96px;">
+          <div class="global-loading__spinner" aria-hidden="true"></div>
+          <span>불러오는 중...</span>
+        </div>
+      </div>
     `;
   }
 }
@@ -413,6 +376,8 @@ async function loadInventorySection(equipmentId, userEmail) {
 async function loadEquipmentDetail() {
   clearMessage();
   renderDetailSkeleton();
+  renderSectionLoading('#historyArea', '#historyCountText');
+  renderSectionLoading('#inventoryArea', '#inventoryCountText');
 
   const id = getQueryParam('id');
   currentEquipmentId = id;
@@ -435,10 +400,8 @@ async function loadEquipmentDetail() {
   renderQrCode(currentEquipmentData.equipment_id);
   applyActionVisibility();
 
-  Promise.allSettled([
-    loadHistorySection(id, user?.email || ''),
-    loadInventorySection(id, user?.email || '')
-  ]);
+  loadHistorySection(id, user?.email || '');
+  loadInventorySection(id, user?.email || '');
 }
 
 async function deleteCurrentEquipment() {
