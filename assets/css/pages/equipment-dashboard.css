@@ -2394,3 +2394,17 @@ body.dashboard-compact {
 }
 
 /* portal section title left line fix */
+
+/* ===== dashboard unify ===== */
+
+.dashboard-kpi-card {
+  border-radius: var(--radius-lg);
+}
+
+.dashboard-action-card {
+  border-radius: var(--radius-lg);
+}
+
+.dashboard-status-item {
+  border-radius: var(--radius-lg);
+}
