@@ -458,3 +458,10 @@
   position: static;
   }
 }
+
+/* ===== detail unify ===== */
+
+.detail-info-card,
+.timeline-card {
+  border-radius: var(--radius-lg);
+}
