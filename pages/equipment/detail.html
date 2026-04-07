@@ -6,12 +6,20 @@
   <title>장비 상세정보</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <style>
-    .detail-action-bar {
+    .detail-hero-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
       align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .detail-action-bar {
+      display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
       margin-top: 16px;
     }
 
@@ -25,16 +33,56 @@
     .detail-action-group .btn-primary,
     .detail-action-group .btn-secondary,
     .detail-action-group .btn-danger {
-      min-width: 120px;
+      min-width: 118px;
       justify-content: center;
     }
 
-    .detail-hero-meta {
+    .detail-main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+      gap: 16px;
+    }
+
+    .detail-sub-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .qr-panel {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      flex-direction: column;
       align-items: center;
-      margin-top: 8px;
+      justify-content: center;
+      min-height: 240px;
+      text-align: center;
+    }
+
+    .qr-box {
+      width: 220px;
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed rgba(18, 34, 66, 0.16);
+      border-radius: 18px;
+      background: #f8fafc;
+      padding: 16px;
+      word-break: break-all;
+      overflow: hidden;
+    }
+
+    .qr-fallback-link {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #334155;
+    }
+
+    @media (max-width: 1024px) {
+      .detail-main-grid,
+      .detail-sub-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 768px) {
@@ -150,7 +198,7 @@
   <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
-  <script src="../../assets/js/vendor/qrcode.min.js"></script>
+  <script src="../../assets/libs/qrcode.min.js"></script>
   <script src="../../assets/js/equipment/equipment-detail.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
