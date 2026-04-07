@@ -3092,6 +3092,12 @@ body.dashboard-compact {
   max-width: none;
 }
 
+/* 2) 하단 2단 카드: 서로 높이 맞춰 늘어나지 않게 */
+.dashboard-page .dashboard-section-grid--portal {
+  align-items: start !important;
+}
+
+
 .dashboard-page .dashboard-panel--portal {
   min-height: 0 !important;
   height: auto !important;
