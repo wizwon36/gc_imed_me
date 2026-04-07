@@ -1,6 +1,11 @@
 const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v1';
 const DASHBOARD_SESSION_TTL = 1000 * 60 * 5;
 let DASHBOARD_BOOTSTRAPPED = false;
+let DASHBOARD_PERMISSION = {
+  canView: false,
+  canEdit: false,
+  canDelete: false
+};
 
 function dq(selector) {
   return document.querySelector(selector);
@@ -109,6 +114,43 @@ function invalidateDashboardSessionCache() {
 }
 
 window.invalidateDashboardSessionCache = invalidateDashboardSessionCache;
+
+async function getEquipmentPermissionContext() {
+  const user = window.auth?.getSession?.() || null;
+  if (!user || !user.email) {
+    return { canView: false, canEdit: false, canDelete: false };
+  }
+
+  const role = String(user.role || '').trim().toLowerCase();
+  if (role === 'admin') {
+    return { canView: true, canEdit: true, canDelete: true };
+  }
+
+  try {
+    const result = await apiGet('getUserAppPermission', {
+      user_email: user.email,
+      app_id: 'equipment',
+      request_user_email: user.email
+    });
+
+    const permission = String(result?.data?.permission || '').trim().toLowerCase();
+
+    return {
+      canView: ['view', 'edit', 'admin'].includes(permission),
+      canEdit: ['edit', 'admin'].includes(permission),
+      canDelete: false
+    };
+  } catch (error) {
+    return { canView: false, canEdit: false, canDelete: false };
+  }
+}
+
+function applyDashboardPermissionUi() {
+  const createAction = dq('#dashboardCreateEquipmentAction');
+  if (createAction) {
+    createAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
+  }
+}
 
 function renderDashboardSkeleton() {
   const ids = [
@@ -330,10 +372,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = window.auth?.requireAuth?.();
     if (!user) return;
 
-    if (window.appPermission?.requirePermission) {
-      await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    DASHBOARD_PERMISSION = await getEquipmentPermissionContext();
+    if (!DASHBOARD_PERMISSION.canView) {
+      throw new Error('장비 메뉴 접근 권한이 없습니다.');
     }
 
+    applyDashboardPermissionUi();
     await loadDashboard();
   } catch (error) {
     if (typeof showMessage === 'function') {
@@ -343,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } finally {
     if (typeof hideGlobalLoading === 'function') {
-      await hideGlobalLoading(true);
+      hideGlobalLoading();
     }
   }
 });
