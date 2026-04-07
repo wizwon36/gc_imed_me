@@ -2408,3 +2408,11 @@ body.dashboard-compact {
 .dashboard-status-item {
   border-radius: var(--radius-lg);
 }
+
+.dashboard-kpi-value {
+  letter-spacing: -0.03em;
+}
+
+.dashboard-kpi-card:hover {
+  border-color: var(--primary);
+}
