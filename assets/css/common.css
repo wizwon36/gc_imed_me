@@ -2469,3 +2469,107 @@ select.input {
 .section {
   margin-bottom: var(--space-4);
 }
+
+/* =========================
+ * INTERACTION SYSTEM
+ * ========================= */
+
+/* 기본 transition */
+.card,
+.dashboard-action-card,
+.portal-app-card,
+.equipment-item-card,
+.btn,
+.portal-header-btn {
+  transition: all 0.18s ease;
+}
+
+/* hover (카드 공통) */
+.card:hover,
+.portal-app-card:hover,
+.equipment-item-card:hover,
+.dashboard-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+  border-color: #c7d2fe;
+}
+
+/* 클릭 느낌 */
+.card:active,
+.portal-app-card:active,
+.dashboard-action-card:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(16, 24, 40, 0.06);
+}
+
+/* 버튼 hover */
+.btn:hover,
+.portal-header-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* 버튼 클릭 */
+.btn:active,
+.portal-header-btn:active {
+  transform: scale(0.97);
+}
+
+/* =========================
+ * STATUS SYSTEM
+ * ========================= */
+
+.status-badge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-badge.is-in-use {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.status-badge.is-repairing {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.is-inspecting {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.status-badge.is-stored {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* clickable 강조 */
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  border-color: var(--primary);
+}
+
+/* skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 25%,
+    #e2e8f0 37%,
+    #f1f5f9 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton 1.4s ease infinite;
+  border-radius: 12px;
+}
+
+@keyframes skeleton {
+  0% { background-position: 100% 0 }
+  100% { background-position: 0 0 }
+}
