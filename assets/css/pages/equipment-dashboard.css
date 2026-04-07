@@ -3092,18 +3092,6 @@ body.dashboard-compact {
   max-width: none;
 }
 
-/* 2) 하단 2단 카드: 서로 높이 맞춰 늘어나지 않게 */
-.dashboard-page .dashboard-section-grid--portal {
-  align-items: start !important;
-}
-
-
-.dashboard-page .dashboard-panel--portal {
-  min-height: 0 !important;
-  height: auto !important;
-  align-self: start !important;
-}
-
 /* 3) 유지보수 만료 예정 리스트 컴팩트화 */
 .dashboard-maintenance-list {
   gap: 10px;
@@ -3225,5 +3213,40 @@ body.dashboard-compact {
     min-width: 54px;
     min-height: 28px;
     font-size: 11px;
+  }
+}
+
+/* =========================================
+ * dashboard layout reset (같이 늘어나도록)
+ * ========================================= */
+
+.dashboard-page .dashboard-section-grid--portal {
+  align-items: stretch !important;
+}
+
+.dashboard-page .dashboard-panel--portal {
+  height: 100%;
+}
+
+/* 유지보수 리스트 컴팩트 유지 */
+.dashboard-maintenance-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+/* 모바일도 동일하게 오른쪽 유지 */
+@media (max-width: 768px) {
+  .dashboard-maintenance-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .dashboard-maintenance-side {
+    align-self: center;
+    justify-content: flex-end;
   }
 }
