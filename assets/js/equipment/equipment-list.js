@@ -65,6 +65,30 @@ function formatNumberLocal(value) {
   return Number.isFinite(num) ? num.toLocaleString('ko-KR') : '0';
 }
 
+function formatDisplayDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '-';
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+  if (dateOnlyMatch) {
+    return dateOnlyMatch[1];
+  }
+
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return raw;
+}
+
 function statusLabelLocal(value) {
   const map = {
     IN_USE: '사용중',
@@ -138,7 +162,7 @@ function renderListSummary() {
 
 function buildEquipmentCard(item) {
   const editAction = equipmentListState.canEdit
-    ? `<a class="btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id || '')}">수정</a>`
+    ? `<a class="btn btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id || '')}">수정</a>`
     : '';
 
   return `
@@ -176,12 +200,12 @@ function buildEquipmentCard(item) {
         </div>
         <div class="equipment-card-row">
           <span class="equipment-card-label">유지보수 종료</span>
-          <span class="equipment-card-value">${escapeHtml(item.maintenance_end_date || '-')}</span>
+          <span class="equipment-card-value">${escapeHtml(formatDisplayDate(item.maintenance_end_date || ''))}</span>
         </div>
       </div>
       
       <div class="equipment-card-actions">
-        <a class="btn-secondary" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세</a>
+        <a class="btn" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세</a>
         ${editAction}
       </div>
     </article>
@@ -291,7 +315,7 @@ async function loadEquipmentList(nextPage = equipmentListState.page) {
   } finally {
     equipmentListState.loading = false;
     if (typeof hideGlobalLoading === 'function') {
-      await hideGlobalLoading(true);
+      hideGlobalLoading();
     }
   }
 }
@@ -389,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } finally {
     if (typeof hideGlobalLoading === 'function') {
-      await hideGlobalLoading(true);
+      hideGlobalLoading();
     }
   }
 });
