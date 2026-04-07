@@ -846,3 +846,14 @@
  * 대시보드 한 화면형 정리 버전
  * 기존 HTML 유지 / CSS만 교체
  * ========================================= */
+
+/* ===== form unify ===== */
+
+.form-main-card,
+.form-side-card {
+  border-radius: var(--radius-lg);
+}
+
+.form-input-lg {
+  border-radius: var(--radius-md);
+}
