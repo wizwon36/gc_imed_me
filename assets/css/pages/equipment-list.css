@@ -1216,3 +1216,20 @@
 .portal-hero-card {
   margin-top: 10px;
 }
+
+/* ===== list unify ===== */
+
+.equipment-item-card {
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.equipment-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.equipment-model {
+  font-size: 14px;
+  color: var(--text-sub);
+}
