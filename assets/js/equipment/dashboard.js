@@ -70,13 +70,17 @@ function setDashboardSessionCache(data) {
         data
       })
     );
-  } catch (error) {}
+  } catch (error) {
+    // ignore
+  }
 }
 
 function invalidateDashboardSessionCache() {
   try {
     sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
-  } catch (error) {}
+  } catch (error) {
+    // ignore
+  }
 }
 
 window.invalidateDashboardSessionCache = invalidateDashboardSessionCache;
@@ -119,13 +123,13 @@ function applyDashboardPermissionUi() {
 }
 
 function renderDashboardSkeleton() {
-  const ids = [
+  const targetIds = [
     '#maintenanceAlertList',
     '#recentRepairList',
     '#recentRegisteredList'
   ];
 
-  ids.forEach(function (selector) {
+  targetIds.forEach(function (selector) {
     const el = dq(selector);
     if (!el) return;
     el.innerHTML = '<div class="empty-box">불러오는 중...</div>';
@@ -143,9 +147,9 @@ function renderKpis(summary) {
   if (dq('#recentRegisterCount')) dq('#recentRegisterCount').textContent = formatNumberLocal(kpis.recent_registrations || 0);
 }
 
-function renderRecordList(containerId, emptyId, items, options) {
-  const container = dq(containerId);
-  const emptyEl = dq(emptyId);
+function renderRecordList(containerSelector, emptySelector, items, options) {
+  const container = dq(containerSelector);
+  const emptyEl = dq(emptySelector);
   if (!container) return;
 
   const list = Array.isArray(items) ? items : [];
@@ -165,14 +169,15 @@ function renderRecordList(containerId, emptyId, items, options) {
     const desc = textSafe(`${options.dateLabel} ${dateText}`);
     const model = textSafe(item.model_name || '-');
     const dept = textSafe(item.department || '-');
+    const id = encodeURIComponent(item.equipment_id || '');
 
     let sideHtml = '';
-    if (options.sideRenderer) {
+    if (typeof options.sideRenderer === 'function') {
       sideHtml = options.sideRenderer(item) || '';
     }
 
     return `
-      <a class="dashboard-record-item" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">
+      <a class="dashboard-record-item" href="detail.html?id=${id}">
         <div class="dashboard-record-main">
           <div class="dashboard-record-title">${title}</div>
           <div class="dashboard-record-desc">${desc}</div>
@@ -262,12 +267,12 @@ async function fetchDashboardData() {
   };
 }
 
-function initKpiCarousel() {
-  const scrollEl = dq('#dashboardKpiScroll');
-  const dotsWrap = dq('#dashboardKpiDots');
+function initPanelCarousel() {
+  const scrollEl = dq('#dashboardPanelsScroll');
+  const dotsWrap = dq('#dashboardPanelDots');
   if (!scrollEl || !dotsWrap) return;
 
-  const dots = Array.from(dotsWrap.querySelectorAll('.dashboard-kpi-dot'));
+  const dots = Array.from(dotsWrap.querySelectorAll('.dashboard-panel-dot'));
 
   function setActive(index) {
     dots.forEach(function (dot, i) {
@@ -275,10 +280,12 @@ function initKpiCarousel() {
     });
   }
 
-  function getCardWidth() {
-    const firstCard = scrollEl.querySelector('.dashboard-kpi-card');
-    if (!firstCard) return 1;
-    const styles = window.getComputedStyle(scrollEl.querySelector('.dashboard-kpi-grid--portal'));
+  function getPanelWidth() {
+    const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
+    const grid = scrollEl.querySelector('.dashboard-panels-grid');
+    if (!firstCard || !grid) return 1;
+
+    const styles = window.getComputedStyle(grid);
     const gap = parseFloat(styles.columnGap || styles.gap || 0);
     return firstCard.offsetWidth + gap;
   }
@@ -288,7 +295,8 @@ function initKpiCarousel() {
       setActive(0);
       return;
     }
-    const width = getCardWidth();
+
+    const width = getPanelWidth();
     const index = Math.round(scrollEl.scrollLeft / width);
     setActive(Math.max(0, Math.min(index, dots.length - 1)));
   }
@@ -296,12 +304,15 @@ function initKpiCarousel() {
   dots.forEach(function (dot) {
     dot.addEventListener('click', function () {
       if (window.innerWidth > 768) return;
+
       const index = Number(dot.dataset.index || 0);
-      const width = getCardWidth();
+      const width = getPanelWidth();
+
       scrollEl.scrollTo({
         left: width * index,
         behavior: 'smooth'
       });
+
       setActive(index);
     });
   });
@@ -327,7 +338,7 @@ async function loadDashboard() {
   setDashboardSessionCache(loaded);
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async function () {
   if (DASHBOARD_BOOTSTRAPPED) return;
   DASHBOARD_BOOTSTRAPPED = true;
 
@@ -345,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     applyDashboardPermissionUi();
-    initKpiCarousel();
+    initPanelCarousel();
     await loadDashboard();
   } catch (error) {
     if (typeof showMessage === 'function') {
