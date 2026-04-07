@@ -302,32 +302,26 @@ function renderMaintenanceAlerts(items) {
 
   container.innerHTML = list.map(function (item) {
     const dday = Number(item.dday || 0);
-    const ddayText = dday < 0
-      ? `D+${Math.abs(dday)}`
-      : dday === 0
-      ? 'D-DAY'
+    const ddayText =
+      dday < 0 ? `D+${Math.abs(dday)}`
+      : dday === 0 ? 'D-DAY'
       : `D-${dday}`;
 
-    const badgeClass = dday < 0
-      ? 'dashboard-dday-badge is-overdue'
-      : dday <= 30
-      ? 'dashboard-dday-badge'
-      : 'dashboard-dday-badge is-normal';
-
-    const safeId = String(item.equipment_id || '').replace(/'/g, "\\'");
-    const name = textSafe(item.equipment_name || '-');
-    const dept = textSafe(item.department || '-');
-    const model = textSafe(item.model_name || '-');
-    const endDate = formatDisplayDate(item.maintenance_end_date);
+    const badgeClass =
+      dday < 0
+        ? 'dashboard-dday-badge is-overdue'
+        : dday <= 30
+        ? 'dashboard-dday-badge'
+        : 'dashboard-dday-badge is-normal';
 
     return `
-      <a class="dashboard-maintenance-item" href="detail.html?id=${encodeURIComponent(safeId)}">
+      <a class="dashboard-maintenance-item" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">
         <div class="dashboard-maintenance-main">
-          <div class="dashboard-maintenance-title">${name}</div>
-          <div class="dashboard-maintenance-desc">유지보수 만료일 ${textSafe(endDate)}</div>
+          <div class="dashboard-maintenance-title">${textSafe(item.equipment_name || '-')}</div>
+          <div class="dashboard-maintenance-desc">유지보수 만료일 ${textSafe(formatDisplayDate(item.maintenance_end_date))}</div>
           <div class="dashboard-maintenance-meta">
-            <span class="dashboard-meta-chip">${model}</span>
-            <span class="dashboard-meta-chip">${dept}</span>
+            <span class="dashboard-meta-chip">${textSafe(item.model_name || '-')}</span>
+            <span class="dashboard-meta-chip">${textSafe(item.department || '-')}</span>
           </div>
         </div>
         <div class="dashboard-maintenance-side">
