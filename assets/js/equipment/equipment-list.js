@@ -4,7 +4,8 @@ const equipmentListState = {
   pageSize: 20,
   totalCount: 0,
   totalPages: 1,
-  loading: false
+  loading: false,
+  canEdit: false
 };
 
 function el(selector) {
@@ -136,6 +137,10 @@ function renderListSummary() {
 }
 
 function buildEquipmentCard(item) {
+  const editAction = equipmentListState.canEdit
+    ? `<a class="btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id || '')}">수정</a>`
+    : '';
+
   return `
     <article class="equipment-card">
       <div class="equipment-card-head">
@@ -177,7 +182,7 @@ function buildEquipmentCard(item) {
       
       <div class="equipment-card-actions">
         <a class="btn-secondary" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세</a>
-        <a class="btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id || '')}">수정</a>
+        ${editAction}
       </div>
     </article>
   `;
@@ -232,6 +237,13 @@ function renderPagination() {
       await loadEquipmentList(nextPage);
     });
   });
+}
+
+function applyListPermissionUi() {
+  const createBtn = document.getElementById('createEquipmentBtn');
+  if (createBtn) {
+    createBtn.style.display = equipmentListState.canEdit ? '' : 'none';
+  }
 }
 
 async function loadEquipmentList(nextPage = equipmentListState.page) {
@@ -328,6 +340,7 @@ function bindListEvents() {
       setValue('team_code', '');
       setValue('status', '');
       setValue('manufacturer', '');
+      setValue('page_size', String(equipmentListState.pageSize));
 
       if (window.OrgService) {
         await window.OrgService.fillTeamSelect(document.getElementById('team_code'), '', {
@@ -350,22 +363,21 @@ function bindListEvents() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async () => {
   try {
     if (typeof showGlobalLoading === 'function') {
       showGlobalLoading('장비 목록 화면을 준비하는 중...');
     }
 
-    equipmentListState.user = window.auth && window.auth.requireAuth
-      ? window.auth.requireAuth()
-      : null;
-
+    equipmentListState.user = window.auth?.requireAuth?.();
     if (!equipmentListState.user) return;
 
-    if (window.appPermission && window.appPermission.requirePermission) {
-      await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-    }
+    const canView = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+    if (!canView) return;
 
+    equipmentListState.canEdit = await window.appPermission.hasPermission('equipment', ['edit', 'admin']);
+
+    applyListPermissionUi();
     await initListFilters();
     bindListEvents();
     await loadEquipmentList(equipmentListState.page);
