@@ -47,6 +47,56 @@ function safeValue(value) {
   return escapeHtml(value || '-');
 }
 
+function formatDisplayDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '-';
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+  if (dateOnlyMatch) {
+    return dateOnlyMatch[1];
+  }
+
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return raw;
+}
+
+function formatDisplayDateTime(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '-';
+
+  const isoMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[1]} ${isoMatch[2]}`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    const hh = String(parsed.getHours()).padStart(2, '0');
+    const mi = String(parsed.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
+
+  return raw;
+}
+
 function safeNumber(value) {
   if (value === null || value === undefined || value === '') return '-';
   return formatNumber(value);
@@ -216,18 +266,19 @@ function renderDetailInfo(item) {
     { label: '모델명', value: item.model_name },
     { label: '사용부서', value: item.department },
     { label: '제조사', value: item.manufacturer },
-    { label: '제조일자', value: item.manufacture_date },
+    { label: '제조일자', value: formatDisplayDate(item.manufacture_date) },
+    { label: '취득일자', value: formatDisplayDate(item.purchase_date) },
     { label: '시리얼번호', value: item.serial_no },
     { label: '구매처', value: item.vendor },
     { label: '담당자', value: item.manager_name },
     { label: '연락처', value: item.manager_phone },
     { label: '취득가액', value: safeNumber(item.acquisition_cost), isHtml: true },
-    { label: '유지보수 종료일', value: item.maintenance_end_date },
+    { label: '유지보수 종료일', value: formatDisplayDate(item.maintenance_end_date) },
     { label: '현재 상태', value: statusLabel(item.status) },
     { label: '현재 위치', value: item.location },
     { label: '현재 사용자', value: item.current_user },
-    { label: '등록일시', value: item.created_at },
-    { label: '수정일시', value: item.updated_at },
+    { label: '등록일시', value: formatDisplayDateTime(item.created_at) },
+    { label: '수정일시', value: formatDisplayDateTime(item.updated_at) },
     { label: '비고', value: item.memo || '-' }
   ];
 
@@ -261,7 +312,7 @@ function renderHistories(items) {
         <div class="timeline-card-head">
           <div>
             <div class="timeline-title">${escapeHtml(historyTypeLabel(item.history_type))}</div>
-            <div class="timeline-date">${safeValue(item.work_date)}</div>
+            <div class="timeline-date">${safeValue(formatDisplayDate(item.work_date))}</div>
           </div>
           <div class="timeline-badge">${escapeHtml(resultStatusLabel(item.result_status))}</div>
         </div>
@@ -274,6 +325,10 @@ function renderHistories(items) {
           <div class="timeline-meta-item">
             <span class="timeline-meta-label">수리금액</span>
             <span class="timeline-meta-value">${safeNumber(item.amount)}</span>
+          </div>
+          <div class="timeline-meta-item">
+            <span class="timeline-meta-label">다음 조치일</span>
+            <span class="timeline-meta-value">${safeValue(formatDisplayDate(item.next_action_date))}</span>
           </div>
         </div>
 
@@ -303,7 +358,7 @@ function renderInventoryLogs(items) {
         <div class="timeline-card-head">
           <div>
             <div class="timeline-title">${escapeHtml(conditionStatusLabel(item.condition_status))}</div>
-            <div class="timeline-date">${safeValue(item.checked_at)}</div>
+            <div class="timeline-date">${safeValue(formatDisplayDate(item.checked_at))}</div>
           </div>
           <div class="timeline-badge">${safeValue(item.checked_by)}</div>
         </div>
