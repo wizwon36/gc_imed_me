@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="../../assets/css/pages/equipment-dashboard.css" />
 </head>
-<body class="portal-page dashboard-page">
+<body class="portal-page dashboard-page dashboard-page-fixed">
   <div class="container page-shell dashboard-page-shell">
     <section class="top-brand-bar portal-topbar portal-hero-card dashboard-topbar">
       <div class="top-brand-left">
@@ -52,8 +52,8 @@
       </article>
     </section>
 
-    <section class="dashboard-section-grid dashboard-section-grid--portal">
-      <article class="card dashboard-panel dashboard-panel--portal">
+    <section class="dashboard-section-grid dashboard-section-grid--portal dashboard-main-panels">
+      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions">
         <div class="section-head dashboard-section-head">
           <div>
             <span class="portal-section-kicker">QUICK ACTIONS</span>
@@ -97,12 +97,12 @@
         </div>
       </article>
 
-      <article class="card dashboard-panel dashboard-panel--portal">
+      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--maintenance">
         <div class="section-head dashboard-section-head">
           <div>
             <span class="portal-section-kicker">MAINTENANCE</span>
             <h2 class="section-title dashboard-section-title">유지보수 만료 예정</h2>
-            <div class="sub-text dashboard-section-desc">가까운 시일 내 확인이 필요한 장비입니다.</div>
+            <div class="sub-text dashboard-section-desc">만료 60일 이내 장비를 표시합니다.</div>
           </div>
         </div>
 
