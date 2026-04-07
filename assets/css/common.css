@@ -7283,3 +7283,24 @@ body.dashboard-compact {
 .dashboard-page .dashboard-action-card--primary .dashboard-action-desc {
   color: #fff;
 }
+
+/* portal section title left line fix */
+.portal-page-compact .portal-section-head--compact {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.portal-page-compact .portal-section-head--compact::before {
+  display: none;
+}
+
+.portal-page-compact .portal-section-head--compact > div {
+  padding-left: 14px;
+  border-left: 4px solid #2563eb;
+}
+
+@media (max-width: 768px) {
+  .portal-page-compact .portal-section-head--compact > div {
+    padding-left: 12px;
+  }
+}
