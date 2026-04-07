@@ -26,156 +26,152 @@
 
     <div id="messageBox" class="message-box"></div>
 
-    <div class="dashboard-kpi-scroll-wrap">
-      <div id="dashboardKpiScroll" class="dashboard-kpi-scroll">
-        <section class="dashboard-kpi-grid dashboard-kpi-grid--portal">
-          <article class="dashboard-kpi-card" id="kpiCard1">
-            <div class="dashboard-kpi-label">전체 장비</div>
-            <div class="dashboard-kpi-value" id="totalCount">0</div>
-            <div class="dashboard-kpi-sub">등록된 전체 장비 수</div>
-          </article>
-
-          <article class="dashboard-kpi-card" id="kpiCard2">
-            <div class="dashboard-kpi-label">사용중</div>
-            <div class="dashboard-kpi-value" id="inUseCount">0</div>
-            <div class="dashboard-kpi-sub">정상 운영 가능 장비</div>
-          </article>
-
-          <article class="dashboard-kpi-card" id="kpiCard3">
-            <div class="dashboard-kpi-label">수리중</div>
-            <div class="dashboard-kpi-value" id="repairingCount">0</div>
-            <div class="dashboard-kpi-sub">조치 진행 중 장비</div>
-          </article>
-
-          <article class="dashboard-kpi-card" id="kpiCard4">
-            <div class="dashboard-kpi-label">점검중</div>
-            <div class="dashboard-kpi-value" id="inspectingCount">0</div>
-            <div class="dashboard-kpi-sub">정기점검 또는 검사 대상</div>
-          </article>
-
-          <article class="dashboard-kpi-card dashboard-kpi-card--accent" id="kpiCard5">
-            <div class="dashboard-kpi-label">최근 30일 수리</div>
-            <div class="dashboard-kpi-value" id="recentRepairCount">0</div>
-            <div class="dashboard-kpi-sub">최근 한달 이내 수리 장비 수</div>
-          </article>
-
-          <article class="dashboard-kpi-card dashboard-kpi-card--accent" id="kpiCard6">
-            <div class="dashboard-kpi-label">최근 30일 신규 등록</div>
-            <div class="dashboard-kpi-value" id="recentRegisterCount">0</div>
-            <div class="dashboard-kpi-sub">최근 한달 이내 등록 장비 수</div>
-          </article>
-        </section>
-      </div>
-
-      <div class="dashboard-kpi-dots" id="dashboardKpiDots" aria-label="KPI 카드 탐색">
-        <button type="button" class="dashboard-kpi-dot is-active" data-index="0" aria-label="전체 장비"></button>
-        <button type="button" class="dashboard-kpi-dot" data-index="1" aria-label="사용중"></button>
-        <button type="button" class="dashboard-kpi-dot" data-index="2" aria-label="수리중"></button>
-        <button type="button" class="dashboard-kpi-dot" data-index="3" aria-label="점검중"></button>
-        <button type="button" class="dashboard-kpi-dot" data-index="4" aria-label="최근 30일 수리"></button>
-        <button type="button" class="dashboard-kpi-dot" data-index="5" aria-label="최근 30일 신규 등록"></button>
-      </div>
-    </div>
-
-    <section class="dashboard-section-grid dashboard-section-grid--portal dashboard-main-panels">
-      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions">
-        <div class="section-head dashboard-section-head">
-          <div>
-            <span class="portal-section-kicker">QUICK ACTIONS</span>
-            <h2 class="section-title dashboard-section-title">빠른 작업</h2>
-            <div class="sub-text dashboard-section-desc">자주 사용하는 화면으로 바로 이동합니다.</div>
-          </div>
-        </div>
-
-        <div class="dashboard-action-grid dashboard-action-grid--enhanced dashboard-action-grid--portal">
-          <a class="dashboard-action-card dashboard-action-card--primary" id="dashboardCreateEquipmentAction" href="form.html">
-            <span class="dashboard-action-icon" aria-hidden="true">＋</span>
-            <div class="dashboard-action-body">
-              <div class="dashboard-action-title">장비 등록</div>
-              <div class="dashboard-action-desc">등록 바로가기</div>
-            </div>
-          </a>
-
-          <a class="dashboard-action-card" href="list.html?view=all">
-            <span class="dashboard-action-icon" aria-hidden="true">📋</span>
-            <div class="dashboard-action-body">
-              <div class="dashboard-action-title">전체 장비</div>
-              <div class="dashboard-action-desc">전체 조회</div>
-            </div>
-          </a>
-
-          <a class="dashboard-action-card" href="list.html?view=history">
-            <span class="dashboard-action-icon" aria-hidden="true">🕘</span>
-            <div class="dashboard-action-body">
-              <div class="dashboard-action-title">이력 확인</div>
-              <div class="dashboard-action-desc">이력 조회</div>
-            </div>
-          </a>
-
-          <a class="dashboard-action-card" href="list.html?view=label">
-            <span class="dashboard-action-icon" aria-hidden="true">🏷</span>
-            <div class="dashboard-action-body">
-              <div class="dashboard-action-title">라벨 출력</div>
-              <div class="dashboard-action-desc">라벨 찾기</div>
-            </div>
-          </a>
-        </div>
+    <section class="dashboard-kpi-grid dashboard-kpi-grid--portal">
+      <article class="dashboard-kpi-card">
+        <div class="dashboard-kpi-label">전체 장비</div>
+        <div class="dashboard-kpi-value" id="totalCount">0</div>
+        <div class="dashboard-kpi-sub">등록된 전체 장비 수</div>
       </article>
 
-      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--maintenance">
-        <div class="section-head dashboard-section-head">
-          <div>
-            <span class="portal-section-kicker">MAINTENANCE</span>
-            <h2 class="section-title dashboard-section-title">유지보수 만료 예정</h2>
-            <div class="sub-text dashboard-section-desc">만료 60일 이내 장비를 표시합니다.</div>
-          </div>
-        </div>
+      <article class="dashboard-kpi-card">
+        <div class="dashboard-kpi-label">사용중</div>
+        <div class="dashboard-kpi-value" id="inUseCount">0</div>
+        <div class="dashboard-kpi-sub">정상 운영 가능 장비</div>
+      </article>
 
-        <div id="maintenanceAlertList" class="dashboard-list-stack">
-          <div class="dashboard-record-item">
-            <div class="dashboard-record-main">
-              <div class="dashboard-record-title">예정 장비를 불러오는 중입니다.</div>
-              <div class="dashboard-record-desc">유지보수 만료일 기준으로 정렬됩니다.</div>
-            </div>
-          </div>
-        </div>
+      <article class="dashboard-kpi-card">
+        <div class="dashboard-kpi-label">수리중</div>
+        <div class="dashboard-kpi-value" id="repairingCount">0</div>
+        <div class="dashboard-kpi-sub">조치 진행 중 장비</div>
+      </article>
 
-        <div id="maintenanceAlertEmpty" class="empty-box" style="display:none;">
-          유지보수 만료 예정 장비가 없습니다.
-        </div>
+      <article class="dashboard-kpi-card">
+        <div class="dashboard-kpi-label">점검중</div>
+        <div class="dashboard-kpi-value" id="inspectingCount">0</div>
+        <div class="dashboard-kpi-sub">정기점검 또는 검사 대상</div>
+      </article>
+
+      <article class="dashboard-kpi-card dashboard-kpi-card--accent">
+        <div class="dashboard-kpi-label">최근 30일 수리</div>
+        <div class="dashboard-kpi-value" id="recentRepairCount">0</div>
+        <div class="dashboard-kpi-sub">최근 한달 이내 수리 장비 수</div>
+      </article>
+
+      <article class="dashboard-kpi-card dashboard-kpi-card--accent">
+        <div class="dashboard-kpi-label">최근 30일 신규 등록</div>
+        <div class="dashboard-kpi-value" id="recentRegisterCount">0</div>
+        <div class="dashboard-kpi-sub">최근 한달 이내 등록 장비 수</div>
       </article>
     </section>
 
-    <section class="dashboard-section-grid dashboard-section-grid--portal dashboard-extra-panels">
-      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records">
-        <div class="section-head dashboard-section-head">
-          <div>
-            <span class="portal-section-kicker">REPAIR</span>
-            <h2 class="section-title dashboard-section-title">최근 30일 수리된 장비</h2>
-            <div class="sub-text dashboard-section-desc">최근 한달 이내 수리 이력이 등록된 장비입니다.</div>
-          </div>
-        </div>
+    <section class="dashboard-panels-carousel-wrap">
+      <div id="dashboardPanelsScroll" class="dashboard-panels-scroll">
+        <div class="dashboard-panels-grid">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions" id="panelCard1">
+            <div class="section-head dashboard-section-head">
+              <div>
+                <span class="portal-section-kicker">QUICK ACTIONS</span>
+                <h2 class="section-title dashboard-section-title">빠른 작업</h2>
+                <div class="sub-text dashboard-section-desc">자주 사용하는 화면으로 바로 이동합니다.</div>
+              </div>
+            </div>
 
-        <div id="recentRepairList" class="dashboard-list-stack"></div>
-        <div id="recentRepairEmpty" class="empty-box" style="display:none;">
-          최근 30일 수리 장비가 없습니다.
-        </div>
-      </article>
+            <div class="dashboard-action-grid dashboard-action-grid--enhanced dashboard-action-grid--portal">
+              <a class="dashboard-action-card dashboard-action-card--primary" id="dashboardCreateEquipmentAction" href="form.html">
+                <span class="dashboard-action-icon" aria-hidden="true">＋</span>
+                <div class="dashboard-action-body">
+                  <div class="dashboard-action-title">장비 등록</div>
+                  <div class="dashboard-action-desc">등록 바로가기</div>
+                </div>
+              </a>
 
-      <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records">
-        <div class="section-head dashboard-section-head">
-          <div>
-            <span class="portal-section-kicker">REGISTERED</span>
-            <h2 class="section-title dashboard-section-title">최근 30일 등록된 장비</h2>
-            <div class="sub-text dashboard-section-desc">최근 한달 이내 신규 등록된 장비입니다.</div>
-          </div>
-        </div>
+              <a class="dashboard-action-card" href="list.html?view=all">
+                <span class="dashboard-action-icon" aria-hidden="true">📋</span>
+                <div class="dashboard-action-body">
+                  <div class="dashboard-action-title">전체 장비</div>
+                  <div class="dashboard-action-desc">전체 조회</div>
+                </div>
+              </a>
 
-        <div id="recentRegisteredList" class="dashboard-list-stack"></div>
-        <div id="recentRegisteredEmpty" class="empty-box" style="display:none;">
-          최근 30일 등록 장비가 없습니다.
+              <a class="dashboard-action-card" href="list.html?view=history">
+                <span class="dashboard-action-icon" aria-hidden="true">🕘</span>
+                <div class="dashboard-action-body">
+                  <div class="dashboard-action-title">이력 확인</div>
+                  <div class="dashboard-action-desc">이력 조회</div>
+                </div>
+              </a>
+
+              <a class="dashboard-action-card" href="list.html?view=label">
+                <span class="dashboard-action-icon" aria-hidden="true">🏷</span>
+                <div class="dashboard-action-body">
+                  <div class="dashboard-action-title">라벨 출력</div>
+                  <div class="dashboard-action-desc">라벨 찾기</div>
+                </div>
+              </a>
+            </div>
+          </article>
+
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--maintenance" id="panelCard2">
+            <div class="section-head dashboard-section-head">
+              <div>
+                <span class="portal-section-kicker">MAINTENANCE</span>
+                <h2 class="section-title dashboard-section-title">유지보수 만료 예정</h2>
+                <div class="sub-text dashboard-section-desc">만료 60일 이내 장비를 표시합니다.</div>
+              </div>
+            </div>
+
+            <div id="maintenanceAlertList" class="dashboard-list-stack">
+              <div class="dashboard-record-item">
+                <div class="dashboard-record-main">
+                  <div class="dashboard-record-title">예정 장비를 불러오는 중입니다.</div>
+                  <div class="dashboard-record-desc">유지보수 만료일 기준으로 정렬됩니다.</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="maintenanceAlertEmpty" class="empty-box" style="display:none;">
+              유지보수 만료 예정 장비가 없습니다.
+            </div>
+          </article>
+
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records" id="panelCard3">
+            <div class="section-head dashboard-section-head">
+              <div>
+                <span class="portal-section-kicker">REPAIR</span>
+                <h2 class="section-title dashboard-section-title">최근 30일 수리된 장비</h2>
+                <div class="sub-text dashboard-section-desc">최근 한달 이내 수리 이력이 등록된 장비입니다.</div>
+              </div>
+            </div>
+
+            <div id="recentRepairList" class="dashboard-list-stack"></div>
+            <div id="recentRepairEmpty" class="empty-box" style="display:none;">
+              최근 30일 수리 장비가 없습니다.
+            </div>
+          </article>
+
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records" id="panelCard4">
+            <div class="section-head dashboard-section-head">
+              <div>
+                <span class="portal-section-kicker">REGISTERED</span>
+                <h2 class="section-title dashboard-section-title">최근 30일 등록된 장비</h2>
+                <div class="sub-text dashboard-section-desc">최근 한달 이내 신규 등록된 장비입니다.</div>
+              </div>
+            </div>
+
+            <div id="recentRegisteredList" class="dashboard-list-stack"></div>
+            <div id="recentRegisteredEmpty" class="empty-box" style="display:none;">
+              최근 30일 등록 장비가 없습니다.
+            </div>
+          </article>
         </div>
-      </article>
+      </div>
+
+      <div class="dashboard-panel-dots" id="dashboardPanelDots" aria-label="대시보드 패널 탐색">
+        <button type="button" class="dashboard-panel-dot is-active" data-index="0" aria-label="빠른 작업"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="1" aria-label="유지보수 만료 예정"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="2" aria-label="최근 30일 수리된 장비"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="3" aria-label="최근 30일 등록된 장비"></button>
+      </div>
     </section>
   </div>
 
@@ -185,12 +181,5 @@
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
-
-  <div id="globalLoading" aria-hidden="true">
-    <div class="global-loading__dialog">
-      <div class="global-loading__spinner" aria-hidden="true"></div>
-      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
-    </div>
-  </div>
 </body>
 </html>
