@@ -1233,3 +1233,7 @@
   font-size: 14px;
   color: var(--text-sub);
 }
+
+.equipment-item-card:hover {
+  background: #f9fbff;
+}
