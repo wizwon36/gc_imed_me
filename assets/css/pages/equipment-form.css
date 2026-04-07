@@ -1,0 +1,848 @@
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-section-title {
+  margin: 0 0 14px;
+  font-size: var(--fs-h3);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  color: #516274;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: #98a2b3;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.card-action-btn {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+  .hero-title {
+  font-size: 40px;
+  }
+
+  .equipment-card-list {
+  grid-template-columns: 1fr;
+  }
+
+  .equipment-summary-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .container.app-shell {
+  padding-top: 20px;
+  }
+
+  .hero-panel {
+  flex-direction: column;
+  gap: 16px;
+  }
+
+  .hero-title {
+  font-size: 34px;
+  }
+
+  .hero-subtext {
+  font-size: 16px;
+  }
+
+  .hero-actions {
+  width: 100%;
+  }
+
+  .hero-actions .nav-link {
+  flex: 1 1 calc(50% - 5px);
+  min-height: 52px;
+  }
+
+  .equipment-search-card {
+  border-radius: 22px;
+  padding: 18px;
+  }
+
+  .equipment-search-grid {
+  grid-template-columns: 1fr;
+  }
+
+  .equipment-summary-row {
+  grid-template-columns: 1fr 1fr;
+  }
+
+  .equipment-card-top {
+  flex-direction: column;
+  align-items: flex-start;
+  }
+
+  .equipment-top-right {
+  align-items: flex-start;
+  }
+
+  .equipment-id {
+  text-align: left;
+  }
+
+  .equipment-meta-grid {
+  grid-template-columns: 1fr;
+  }
+
+  .search-input-lg,
+  .search-submit-btn,
+  .btn,
+  .nav-link,
+  .form-input,
+  .form-select {
+  min-height: 52px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+  font-size: 30px;
+  }
+
+  .equipment-summary-row {
+  grid-template-columns: 1fr;
+  }
+
+  .equipment-item-card {
+  padding: 18px;
+  border-radius: 20px;
+  }
+
+  .equipment-title {
+  font-size: 21px;
+  }
+
+  .summary-pill-value {
+  font-size: 24px;
+  }
+}
+
+.form-shell {
+  padding-top: 28px;
+}
+
+.form-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.form-hero-topline {
+  font-size: 14px;
+  font-weight: 700;
+  color: #667085;
+  margin-bottom: 8px;
+}
+
+.form-hero-title {
+  margin: 0 0 10px;
+  font-size: 46px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.form-hero-subtext {
+  font-size: 18px;
+  color: #667085;
+  line-height: 1.55;
+}
+
+.form-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.form-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.form-main-card,
+.form-side-card {
+  border-radius: 28px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.form-grid-modern {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-input-lg {
+  min-height: 58px;
+}
+
+.form-inner-head {
+  margin-top: 26px;
+}
+
+.form-side-card {
+  position: sticky;
+  top: 20px;
+}
+
+.form-side-actions {
+  margin-top: 20px;
+}
+
+.form-submit-btn {
+  width: 100%;
+  min-height: 54px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+@media (max-width: 1024px) {
+  .form-hero-title {
+  font-size: 38px;
+  }
+
+  .form-page-grid {
+  grid-template-columns: 1fr;
+  }
+
+  .form-side-card {
+  position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-shell {
+  padding-top: 20px;
+  }
+
+  .form-hero {
+  flex-direction: column;
+  gap: 16px;
+  }
+
+  .form-hero-title {
+  font-size: 32px;
+  }
+
+  .form-hero-subtext {
+  font-size: 16px;
+  }
+
+  .form-hero-actions {
+  width: 100%;
+  }
+
+  .form-hero-actions .nav-link {
+  flex: 1 1 calc(50% - 5px);
+  min-height: 52px;
+  }
+
+  .form-grid-modern {
+  grid-template-columns: 1fr;
+  }
+
+  .form-main-card,
+  .form-side-card {
+  border-radius: 22px;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea,
+  .btn,
+  .nav-link {
+  min-height: 52px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-hero-title {
+  font-size: 28px;
+  }
+
+  .guide-item {
+  border-radius: 16px;
+  }
+}
+
+.form-hero-subtext,
+.form-hero-topline,
+.form-hero-subtext,
+.form-hero-title,
+.form-hero {
+  margin-bottom: 22px;
+}
+
+.form-main-card,
+.form-side-card,
+.form-shell-tuned {
+  padding-top: 20px;
+}
+
+.form-hero-tuned {
+  margin-bottom: 20px;
+}
+
+.form-page-grid-tuned {
+  gap: 16px;
+}
+
+.form-main-card-tuned,
+.form-side-card-tuned {
+  box-shadow: none;
+}
+
+.form-main-card-tuned {
+  border-radius: 24px;
+}
+
+.form-side-card-tuned {
+  border-radius: 24px;
+}
+
+.form-side-card-tuned .guide-item {
+  background: var(--surface-soft);
+}
+
+.form-side-card-tuned .guide-title {
+  color: var(--text-primary);
+}
+
+.form-side-card-tuned .guide-text {
+  color: var(--text-secondary);
+}
+
+.form-main-card-tuned .form-input[readonly] {
+  background: #f8fafc;
+  color: #5f6b7a;
+}
+
+.form-main-card-tuned .form-textarea,
+.form-main-card-tuned .form-input,
+.form-main-card-tuned .form-select {
+  background: #fff;
+}
+
+@media (max-width: 768px) {
+  .form-shell-tuned {
+  padding-top: 16px;
+  }
+}
+
+.form-field label,
+.equipment-card-list-tuned {
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .equipment-search-card .card-body,
+  .search-panel .card-body,
+  .search-form-card .card-body {
+  padding: 18px;
+  }
+
+  .equipment-search-card,
+  .search-panel,
+  .search-form-card {
+  border-radius: 18px;
+  }
+
+  .equipment-search-form,
+  .search-form-grid {
+  gap: 12px;
+  }
+
+  #keyword {
+  min-height: 54px;
+  font-size: 15px;
+  border-radius: 16px;
+  }
+
+  #department,
+  #manufacturer,
+  #status {
+  min-height: 50px;
+  border-radius: 14px;
+  }
+
+  .field-group label,
+  .form-field label,
+  .search-field label {
+  margin-bottom: 6px;
+  font-size: 12px;
+  }
+
+  .search-filter-block {
+  margin-top: 16px;
+  }
+
+  .search-action-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  }
+
+  .search-chip-row {
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  }
+
+  .filter-chip {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  }
+
+  .equipment-search-actions {
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  flex-wrap: wrap;
+  }
+
+  .equipment-search-actions .btn,
+  .search-submit-btn,
+  #resetBtn {
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  }
+
+  .equipment-search-actions .btn {
+  flex: 1 1 calc(50% - 4px);
+  min-width: 0;
+  }
+
+  #summaryRow {
+  margin-top: 14px;
+  }
+
+  #resultSection {
+  margin-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .equipment-search-card .card-body,
+  .search-panel .card-body,
+  .search-form-card .card-body {
+  padding: 16px;
+  }
+
+  .search-chip-row {
+  gap: 6px;
+  }
+
+  .filter-chip {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  }
+
+  .equipment-search-actions .btn {
+  flex: 1 1 100%;
+  }
+}
+
+.form-field,
+.equipment-search-form .form-field,
+.search-form-grid .form-field,
+.form-actions.form-side-actions,
+.form-side-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.form-actions.form-side-actions > .btn,
+.form-actions.form-side-actions > .form-submit-btn,
+.form-side-actions > .btn,
+.form-side-actions > .form-submit-btn {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 18px;
+  border-radius: 16px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.form-actions.form-side-actions > .btn:not(.btn-primary),
+.form-side-actions > .btn:not(.btn-primary) {
+  background: #fff;
+  color: #344054;
+  border: 1px solid #d0d5dd;
+}
+
+.form-actions.form-side-actions > .btn:not(.btn-primary):hover,
+.form-side-actions > .btn:not(.btn-primary):hover {
+  background: #f8fafc;
+}
+
+/* =========================
+   Dashboard / form / list / portal unified patch
+   ========================= */
+
+.form-card,
+.form-grid.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field.full-col {
+  grid-column: 1 / -1;
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #d92d20;
+}
+
+.form-actions,
+.inline-field .form-label {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted, #667085);
+}
+
+.form-side-actions,
+.form-side-actions .btn,
+.form-side-actions button,
+.form-side-actions a,
+.form-side-actions .btn:hover,
+.form-side-actions button:hover,
+.form-side-actions a:hover,
+.form-guide-card .guide-actions,
+.sidebar-card .guide-actions {
+  margin-top: 20px;
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .side-actions,
+  .form-side-actions,
+  .guide-actions {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .side-actions .btn,
+  .form-side-actions .btn,
+  .guide-actions .btn,
+  .side-actions button,
+  .form-side-actions button,
+  .guide-actions button,
+  .side-actions a,
+  .form-side-actions a,
+  .guide-actions a {
+    min-height: 50px;
+    border-radius: 14px;
+    font-size: 15px;
+  }
+}
+
+/* =========================================
+ * history-form / inventory-form
+ * safe visual tune
+ * 기존 구조 유지 + 덧붙이기 전용
+ * ========================================= */
+
+.form-shell.form-shell-tuned {
+  padding-bottom: 32px;
+}
+
+.form-hero.form-hero-tuned {
+  margin-bottom: 18px;
+}
+
+.form-page-grid.form-page-grid-tuned {
+  align-items: start;
+}
+
+.form-main-card.form-main-card-tuned,
+.form-side-card.form-side-card-tuned {
+  border-radius: 28px;
+  border: 1px solid #d8e0eb;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.form-main-card.form-main-card-tuned {
+  padding: 24px;
+}
+
+.form-side-card.form-side-card-tuned {
+  padding: 20px;
+}
+
+.form-main-card-tuned .section-head {
+  margin-bottom: 14px;
+}
+
+.form-main-card-tuned .section-head + .form-grid,
+.form-main-card-tuned .section-head + .form-grid-modern {
+  margin-top: 0;
+}
+
+.form-main-card-tuned .section-title {
+  letter-spacing: -0.02em;
+}
+
+.form-main-card-tuned .sub-text {
+  margin-top: 6px;
+  color: #667085;
+  line-height: 1.5;
+}
+
+.form-main-card-tuned .form-grid.form-grid-modern {
+  gap: 16px 16px;
+}
+
+.form-main-card-tuned .form-label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #344054;
+}
+
+.form-main-card-tuned .form-input,
+.form-main-card-tuned .form-select,
+.form-main-card-tuned .form-textarea {
+  border-radius: 16px;
+  border: 1px solid #cfd8e3;
+  background: #ffffff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.form-main-card-tuned .form-input,
+.form-main-card-tuned .form-select {
+  min-height: 56px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.form-main-card-tuned .form-textarea {
+  min-height: 144px;
+  padding: 14px 16px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.form-main-card-tuned .form-input:focus,
+.form-main-card-tuned .form-select:focus,
+.form-main-card-tuned .form-textarea:focus {
+  border-color: #9bb7ff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+  outline: none;
+}
+
+.form-main-card-tuned input[readonly] {
+  background: #f8fafc;
+  color: #475467;
+}
+
+.form-main-card-tuned select:disabled,
+.form-main-card-tuned input:disabled,
+.form-main-card-tuned textarea:disabled {
+  background: #f8fafc;
+  color: #667085;
+  opacity: 1;
+}
+
+.form-main-card-tuned .required {
+  color: #d92d20;
+}
+
+.form-main-card-tuned .section-head[style] {
+  margin-top: 28px !important;
+  padding-top: 6px;
+  border-top: 1px solid #eef2f6;
+}
+
+.form-side-card.form-side-card-tuned {
+  position: sticky;
+  top: 24px;
+}
+
+.form-side-card-tuned .section-head {
+  margin-bottom: 14px;
+}
+
+.form-side-card-tuned .guide-list {
+  display: grid;
+  gap: 12px;
+}
+
+.form-side-card-tuned .guide-item {
+  border-radius: 18px;
+  border: 1px solid #dde5ee;
+  background: #f8fbff;
+  padding: 16px 16px 15px;
+}
+
+.form-side-card-tuned .guide-title {
+  margin-bottom: 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0b1f44;
+}
+
+.form-side-card-tuned .guide-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5f6b7a;
+  word-break: keep-all;
+}
+
+.form-side-card-tuned .form-actions.form-side-actions {
+  margin-top: 18px;
+}
+
+.form-side-card-tuned .form-actions.form-side-actions > .btn,
+.form-side-card-tuned .form-side-actions > .btn,
+.form-side-card-tuned .form-side-actions > .form-submit-btn {
+  min-height: 54px;
+  border-radius: 18px;
+}
+
+.form-side-card-tuned .btn-back {
+  color: #0b1f44;
+}
+
+#messageBox.message-box {
+  margin-bottom: 16px;
+  border-radius: 18px;
+}
+
+@media (max-width: 1024px) {
+  .form-side-card.form-side-card-tuned {
+    position: static;
+    top: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-main-card.form-main-card-tuned,
+  .form-side-card.form-side-card-tuned {
+    border-radius: 22px;
+  }
+
+  .form-main-card.form-main-card-tuned {
+    padding: 18px;
+  }
+
+  .form-side-card.form-side-card-tuned {
+    padding: 18px;
+  }
+
+  .form-main-card-tuned .form-grid.form-grid-modern {
+    gap: 14px;
+  }
+
+  .form-main-card-tuned .form-input,
+  .form-main-card-tuned .form-select {
+    min-height: 52px;
+    border-radius: 14px;
+  }
+
+  .form-main-card-tuned .form-textarea {
+    min-height: 132px;
+    border-radius: 14px;
+  }
+
+  .form-side-card-tuned .guide-item {
+    padding: 14px 14px 13px;
+    border-radius: 16px;
+  }
+
+  .form-side-card-tuned .form-actions.form-side-actions {
+    margin-top: 16px;
+  }
+}
+
+/* =========================================
+ * dashboard compact mode refined
+ * 대시보드 한 화면형 정리 버전
+ * 기존 HTML 유지 / CSS만 교체
+ * ========================================= */
