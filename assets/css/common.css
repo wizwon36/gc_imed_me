@@ -6090,9 +6090,9 @@ select.input {
 }
 
 /* =========================================
- * dashboard compact mode
- * 한 화면 요약형 대시보드 전용
- * 기존 구조를 덮어쓰는 안전한 추가 스타일
+ * dashboard compact mode refined
+ * 대시보드 한 화면형 정리 버전
+ * 기존 HTML 유지 / CSS만 교체
  * ========================================= */
 
 body.dashboard-compact {
@@ -6102,40 +6102,57 @@ body.dashboard-compact {
 .dashboard-compact .page-shell,
 .dashboard-compact .dashboard-compact-shell {
   padding-top: 18px;
-  padding-bottom: 20px;
+  padding-bottom: 18px;
 }
 
+/* 상단 브랜드 바 */
 .dashboard-compact .top-brand-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
   padding: 14px 18px;
   margin-bottom: 16px;
   border-radius: 22px;
-  gap: 14px;
 }
 
 .dashboard-compact .top-brand-left {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .dashboard-compact .top-brand-logo {
-  width: 26px;
-  height: 26px;
-  font-size: 15px;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  flex: 0 0 28px;
 }
 
 .dashboard-compact .top-brand-texts {
+  display: flex;
+  align-items: baseline;
   gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .dashboard-compact .top-brand-title {
-  font-size: 16px;
+  font-size: 15px;
+  line-height: 1.2;
 }
 
 .dashboard-compact .top-brand-sub {
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .dashboard-compact .top-brand-actions {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .dashboard-compact .top-brand-actions .nav-link {
@@ -6143,51 +6160,57 @@ body.dashboard-compact {
   padding: 0 16px;
   border-radius: 16px;
   font-size: 13px;
+  font-weight: 700;
 }
 
+/* 타이틀 영역 */
 .dashboard-compact .page-hero-simple,
 .dashboard-compact .dashboard-hero-compact {
   margin-bottom: 14px;
 }
 
 .dashboard-compact .page-title {
-  margin-bottom: 4px;
-  font-size: clamp(34px, 4vw, 54px);
-  line-height: 1.04;
+  margin: 0 0 4px;
+  font-size: clamp(24px, 3.2vw, 40px);
+  line-height: 1.08;
   letter-spacing: -0.03em;
 }
 
 .dashboard-compact .page-desc {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
 .dashboard-compact #messageBox.message-box {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  border-radius: 16px;
 }
 
+/* KPI */
 .dashboard-compact .dashboard-kpi-grid,
 .dashboard-compact .dashboard-kpi-grid-compact {
+  display: grid;
   gap: 14px;
   margin-bottom: 16px;
 }
 
 .dashboard-compact .dashboard-kpi-card {
-  padding: 18px 20px;
-  min-height: 118px;
-  border-radius: 22px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  padding: 16px 18px;
+  min-height: 108px;
+  border-radius: 20px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
 .dashboard-compact .dashboard-kpi-label {
   margin-bottom: 8px;
   font-size: 13px;
+  line-height: 1.3;
 }
 
 .dashboard-compact .dashboard-kpi-value {
   margin-bottom: 6px;
-  font-size: clamp(32px, 3vw, 42px);
+  font-size: clamp(28px, 2.8vw, 40px);
   line-height: 1;
 }
 
@@ -6196,18 +6219,22 @@ body.dashboard-compact {
   line-height: 1.35;
 }
 
+/* 하단 2단 */
 .dashboard-compact .dashboard-section-grid,
 .dashboard-compact .dashboard-section-grid-compact {
+  display: grid;
   gap: 16px;
-  margin-bottom: 0;
-  align-items: start;
+  align-items: stretch;
 }
 
 .dashboard-compact .dashboard-panel,
 .dashboard-compact .dashboard-panel-compact {
-  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 18px 18px 16px;
   border-radius: 24px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
 }
 
 .dashboard-compact .section-head,
@@ -6216,138 +6243,182 @@ body.dashboard-compact {
 }
 
 .dashboard-compact .section-title {
-  margin-bottom: 4px;
-  font-size: 20px;
+  margin: 0 0 4px;
+  font-size: 18px;
   line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .dashboard-compact .section-head .sub-text {
+  margin: 0;
   font-size: 13px;
   line-height: 1.4;
 }
 
+/* 빠른 작업 */
 .dashboard-compact .dashboard-action-grid,
 .dashboard-compact .dashboard-action-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  height: 100%;
 }
 
 .dashboard-compact .dashboard-action-card,
 .dashboard-compact .dashboard-action-card-compact {
-  min-height: 74px;
-  padding: 14px 15px;
-  border-radius: 16px;
+  display: flex;
+  align-items: center;
   gap: 10px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
 .dashboard-compact .dashboard-action-card--primary {
-  min-height: 80px;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
+  grid-column: 1 / -1;
+  min-height: 78px;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.16);
 }
 
 .dashboard-compact .dashboard-action-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  font-size: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  font-size: 15px;
+  flex: 0 0 36px;
+}
+
+.dashboard-compact .dashboard-action-body {
+  min-width: 0;
 }
 
 .dashboard-compact .dashboard-action-title {
+  margin: 0;
   font-size: 14px;
   line-height: 1.3;
-  margin: 0;
+  font-weight: 800;
 }
 
 .dashboard-compact .dashboard-action-desc {
   margin-top: 2px;
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.3;
 }
 
+/* 운영 상태 */
 .dashboard-compact .dashboard-status-list,
 .dashboard-compact .dashboard-status-list-compact {
+  display: grid;
   gap: 10px;
+  height: 100%;
 }
 
 .dashboard-compact .dashboard-status-item,
 .dashboard-compact .dashboard-status-item-compact {
-  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
   padding: 12px 14px;
   border-radius: 16px;
 }
 
 .dashboard-compact .dashboard-status-left {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-.dashboard-compact .dashboard-status-text {
+.dashboard-compact .dashboard-status-desc {
+  min-width: 0;
   font-size: 13px;
   line-height: 1.35;
 }
 
 .dashboard-compact .dashboard-status-count {
+  flex-shrink: 0;
   font-size: 15px;
+  line-height: 1;
 }
 
 .dashboard-compact .dashboard-status-list .status-badge {
   min-height: 28px;
   padding: 0 10px;
+  border-radius: 999px;
   font-size: 12px;
+  flex-shrink: 0;
 }
 
+/* 데스크톱 */
 @media (min-width: 1200px) {
-  .dashboard-compact .dashboard-kpi-grid {
+  .dashboard-compact .dashboard-kpi-grid,
+  .dashboard-compact .dashboard-kpi-grid-compact {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .dashboard-compact .dashboard-section-grid,
   .dashboard-compact .dashboard-section-grid-compact {
-    grid-template-columns: 1.05fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
+/* 태블릿 */
 @media (max-width: 1024px) {
+  .dashboard-compact .page-title {
+    font-size: clamp(24px, 4vw, 34px);
+  }
+
   .dashboard-compact .dashboard-kpi-card {
-    min-height: 108px;
-    padding: 16px 18px;
+    min-height: 100px;
+    padding: 15px 16px;
   }
 
   .dashboard-compact .dashboard-panel,
   .dashboard-compact .dashboard-panel-compact {
-    padding: 16px 18px;
+    padding: 16px;
+    border-radius: 20px;
   }
 }
 
+/* 모바일 */
 @media (max-width: 768px) {
   .dashboard-compact .page-shell,
   .dashboard-compact .dashboard-compact-shell {
     padding-top: 14px;
-    padding-bottom: 16px;
+    padding-bottom: 14px;
   }
 
   .dashboard-compact .top-brand-bar {
-    padding: 14px 14px;
+    padding: 13px 14px;
     margin-bottom: 14px;
     border-radius: 18px;
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .dashboard-compact .top-brand-title {
-    font-size: 15px;
+  .dashboard-compact .top-brand-actions {
+    width: 100%;
   }
 
-  .dashboard-compact .top-brand-sub {
-    font-size: 12px;
+  .dashboard-compact .top-brand-actions .nav-link {
+    flex: 1 1 0;
+    justify-content: center;
   }
 
   .dashboard-compact .page-title {
-    font-size: 32px;
+    font-size: 28px;
   }
 
   .dashboard-compact .page-desc {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .dashboard-compact .dashboard-kpi-grid,
+  .dashboard-compact .dashboard-kpi-grid-compact,
   .dashboard-compact .dashboard-section-grid,
   .dashboard-compact .dashboard-section-grid-compact {
     gap: 12px;
@@ -6357,37 +6428,46 @@ body.dashboard-compact {
   .dashboard-compact .dashboard-panel,
   .dashboard-compact .dashboard-panel-compact {
     border-radius: 18px;
-    padding: 15px;
   }
 
   .dashboard-compact .dashboard-kpi-card {
-    min-height: 100px;
+    min-height: 94px;
+    padding: 14px 15px;
   }
 
   .dashboard-compact .dashboard-kpi-value {
-    font-size: 30px;
+    font-size: 28px;
+  }
+
+  .dashboard-compact .dashboard-panel,
+  .dashboard-compact .dashboard-panel-compact {
+    padding: 15px;
   }
 
   .dashboard-compact .section-title {
-    font-size: 18px;
+    font-size: 17px;
+  }
+
+  .dashboard-compact .dashboard-action-grid,
+  .dashboard-compact .dashboard-action-grid-compact {
+    grid-template-columns: 1fr;
   }
 
   .dashboard-compact .dashboard-action-card,
   .dashboard-compact .dashboard-action-card-compact {
-    min-height: 68px;
-    padding: 12px 13px;
+    min-height: 64px;
+    padding: 11px 12px;
     border-radius: 14px;
   }
 
   .dashboard-compact .dashboard-action-card--primary {
-    min-height: 72px;
+    min-height: 68px;
   }
 
   .dashboard-compact .dashboard-action-icon {
     width: 34px;
     height: 34px;
-    border-radius: 11px;
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .dashboard-compact .dashboard-action-title {
@@ -6395,17 +6475,17 @@ body.dashboard-compact {
   }
 
   .dashboard-compact .dashboard-action-desc {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .dashboard-compact .dashboard-status-item,
   .dashboard-compact .dashboard-status-item-compact {
     min-height: 54px;
-    padding: 11px 12px;
+    padding: 10px 12px;
     border-radius: 14px;
   }
 
-  .dashboard-compact .dashboard-status-text {
+  .dashboard-compact .dashboard-status-desc {
     font-size: 12px;
   }
 
