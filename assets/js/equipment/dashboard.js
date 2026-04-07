@@ -288,7 +288,14 @@ function renderMaintenanceAlerts(items) {
   const emptyEl = dq('#maintenanceAlertEmpty');
   if (!container) return;
 
-  const list = Array.isArray(items) ? items : [];
+  const list = (Array.isArray(items) ? items : [])
+    .filter(function (item) {
+      const dday = Number(item?.dday);
+      return Number.isFinite(dday) && dday <= 60;
+    })
+    .sort(function (a, b) {
+      return Number(a.dday || 0) - Number(b.dday || 0);
+    });
 
   if (!list.length) {
     container.innerHTML = '';
