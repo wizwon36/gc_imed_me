@@ -5869,3 +5869,222 @@ select.input {
     font-size: 15px;
   }
 }
+
+/* =========================================
+ * history-form / inventory-form
+ * safe visual tune
+ * 기존 구조 유지 + 덧붙이기 전용
+ * ========================================= */
+
+.form-shell.form-shell-tuned {
+  padding-bottom: 32px;
+}
+
+.form-hero.form-hero-tuned {
+  margin-bottom: 18px;
+}
+
+.form-page-grid.form-page-grid-tuned {
+  align-items: start;
+}
+
+.form-main-card.form-main-card-tuned,
+.form-side-card.form-side-card-tuned {
+  border-radius: 28px;
+  border: 1px solid #d8e0eb;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.form-main-card.form-main-card-tuned {
+  padding: 24px;
+}
+
+.form-side-card.form-side-card-tuned {
+  padding: 20px;
+}
+
+.form-main-card-tuned .section-head {
+  margin-bottom: 14px;
+}
+
+.form-main-card-tuned .section-head + .form-grid,
+.form-main-card-tuned .section-head + .form-grid-modern {
+  margin-top: 0;
+}
+
+.form-main-card-tuned .section-title {
+  letter-spacing: -0.02em;
+}
+
+.form-main-card-tuned .sub-text {
+  margin-top: 6px;
+  color: #667085;
+  line-height: 1.5;
+}
+
+.form-main-card-tuned .form-grid.form-grid-modern {
+  gap: 16px 16px;
+}
+
+.form-main-card-tuned .form-label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #344054;
+}
+
+.form-main-card-tuned .form-input,
+.form-main-card-tuned .form-select,
+.form-main-card-tuned .form-textarea {
+  border-radius: 16px;
+  border: 1px solid #cfd8e3;
+  background: #ffffff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.form-main-card-tuned .form-input,
+.form-main-card-tuned .form-select {
+  min-height: 56px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.form-main-card-tuned .form-textarea {
+  min-height: 144px;
+  padding: 14px 16px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.form-main-card-tuned .form-input:focus,
+.form-main-card-tuned .form-select:focus,
+.form-main-card-tuned .form-textarea:focus {
+  border-color: #9bb7ff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.10);
+  outline: none;
+}
+
+.form-main-card-tuned input[readonly] {
+  background: #f8fafc;
+  color: #475467;
+}
+
+.form-main-card-tuned select:disabled,
+.form-main-card-tuned input:disabled,
+.form-main-card-tuned textarea:disabled {
+  background: #f8fafc;
+  color: #667085;
+  opacity: 1;
+}
+
+.form-main-card-tuned .required {
+  color: #d92d20;
+}
+
+.form-main-card-tuned .section-head[style] {
+  margin-top: 28px !important;
+  padding-top: 6px;
+  border-top: 1px solid #eef2f6;
+}
+
+.form-side-card.form-side-card-tuned {
+  position: sticky;
+  top: 24px;
+}
+
+.form-side-card-tuned .section-head {
+  margin-bottom: 14px;
+}
+
+.form-side-card-tuned .guide-list {
+  display: grid;
+  gap: 12px;
+}
+
+.form-side-card-tuned .guide-item {
+  border-radius: 18px;
+  border: 1px solid #dde5ee;
+  background: #f8fbff;
+  padding: 16px 16px 15px;
+}
+
+.form-side-card-tuned .guide-title {
+  margin-bottom: 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0b1f44;
+}
+
+.form-side-card-tuned .guide-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5f6b7a;
+  word-break: keep-all;
+}
+
+.form-side-card-tuned .form-actions.form-side-actions {
+  margin-top: 18px;
+}
+
+.form-side-card-tuned .form-actions.form-side-actions > .btn,
+.form-side-card-tuned .form-side-actions > .btn,
+.form-side-card-tuned .form-side-actions > .form-submit-btn {
+  min-height: 54px;
+  border-radius: 18px;
+}
+
+.form-side-card-tuned .btn-back {
+  color: #0b1f44;
+}
+
+#messageBox.message-box {
+  margin-bottom: 16px;
+  border-radius: 18px;
+}
+
+@media (max-width: 1024px) {
+  .form-side-card.form-side-card-tuned {
+    position: static;
+    top: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-main-card.form-main-card-tuned,
+  .form-side-card.form-side-card-tuned {
+    border-radius: 22px;
+  }
+
+  .form-main-card.form-main-card-tuned {
+    padding: 18px;
+  }
+
+  .form-side-card.form-side-card-tuned {
+    padding: 18px;
+  }
+
+  .form-main-card-tuned .form-grid.form-grid-modern {
+    gap: 14px;
+  }
+
+  .form-main-card-tuned .form-input,
+  .form-main-card-tuned .form-select {
+    min-height: 52px;
+    border-radius: 14px;
+  }
+
+  .form-main-card-tuned .form-textarea {
+    min-height: 132px;
+    border-radius: 14px;
+  }
+
+  .form-side-card-tuned .guide-item {
+    padding: 14px 14px 13px;
+    border-radius: 16px;
+  }
+
+  .form-side-card-tuned .form-actions.form-side-actions {
+    margin-top: 16px;
+  }
+}
