@@ -1,5 +1,10 @@
 let currentEquipmentId = '';
 let currentEquipmentData = null;
+let detailPermission = {
+  canView: false,
+  canEdit: false,
+  canDelete: false
+};
 
 function getCurrentUser() {
   if (window.auth && typeof window.auth.getSession === 'function') {
@@ -8,32 +13,34 @@ function getCurrentUser() {
   return null;
 }
 
-function isAdminUser() {
+async function getEquipmentPermissionContext() {
   const user = getCurrentUser();
-  return String(user?.role || '').trim().toLowerCase() === 'admin';
-}
-
-function applyActionVisibility() {
-  const deleteBtn = qs('#deleteBtn');
-  if (deleteBtn) {
-    deleteBtn.style.display = isAdminUser() ? '' : 'none';
+  if (!user || !user.email) {
+    return { canView: false, canEdit: false, canDelete: false };
   }
 
-  const isDeleted = String(currentEquipmentData?.deleted_yn || 'N').trim().toUpperCase() === 'Y';
-
-  const editBtn = qs('#editEquipmentBtn');
-  const addHistoryBtn = qs('#addHistoryBtn');
-  const addInventoryBtn = qs('#addInventoryBtn');
-
-  if (isDeleted) {
-    if (editBtn) editBtn.style.display = 'none';
-    if (addHistoryBtn) addHistoryBtn.style.display = 'none';
-    if (addInventoryBtn) addInventoryBtn.style.display = 'none';
+  const role = String(user.role || '').trim().toLowerCase();
+  if (role === 'admin') {
+    return { canView: true, canEdit: true, canDelete: true };
   }
-}
 
-function buildEquipmentDetailUrl(equipmentId) {
-  return `${CONFIG.SITE_BASE_URL}/pages/equipment/detail.html?id=${encodeURIComponent(equipmentId)}`;
+  try {
+    const result = await apiGet('getUserAppPermission', {
+      user_email: user.email,
+      app_id: 'equipment',
+      request_user_email: user.email
+    });
+
+    const permission = String(result?.data?.permission || '').trim().toLowerCase();
+
+    return {
+      canView: ['view', 'edit', 'admin'].includes(permission),
+      canEdit: ['edit', 'admin'].includes(permission),
+      canDelete: false
+    };
+  } catch (error) {
+    return { canView: false, canEdit: false, canDelete: false };
+  }
 }
 
 function safeValue(value) {
@@ -51,6 +58,40 @@ function invalidateDashboardSessionCacheSafe() {
   } catch (error) {
     // ignore
   }
+}
+
+function applyActionVisibility() {
+  const editBtn = qs('#editEquipmentBtn');
+  const deleteBtn = qs('#deleteBtn');
+  const addHistoryBtn = qs('#addHistoryBtn');
+  const addInventoryBtn = qs('#addInventoryBtn');
+  const printLabelBtn = qs('#printLabelBtn');
+
+  const isDeleted = String(currentEquipmentData?.deleted_yn || 'N').trim().toUpperCase() === 'Y';
+
+  if (editBtn) {
+    editBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  }
+
+  if (deleteBtn) {
+    deleteBtn.style.display = detailPermission.canDelete ? '' : 'none';
+  }
+
+  if (addHistoryBtn) {
+    addHistoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  }
+
+  if (addInventoryBtn) {
+    addInventoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  }
+
+  if (printLabelBtn) {
+    printLabelBtn.style.display = detailPermission.canView ? '' : 'none';
+  }
+}
+
+function buildEquipmentDetailUrl(equipmentId) {
+  return `${CONFIG.SITE_BASE_URL}/pages/equipment/detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
 
 function renderDetailSkeleton() {
@@ -99,7 +140,7 @@ function renderDetailSkeleton() {
   if (inventoryCountText) inventoryCountText.textContent = '불러오는 중...';
 }
 
-function renderSectionLoading(areaSelector, countSelector, loadingText) {
+function renderSectionLoading(areaSelector, countSelector) {
   const area = qs(areaSelector);
   const countEl = qs(countSelector);
 
@@ -148,11 +189,15 @@ function renderQrCode(equipmentId) {
   qrText.textContent = 'QR 스캔 시 장비 상세 페이지로 이동';
   qrText.title = qrValue;
 
-  new QRCode(qrBox, {
-    text: qrValue,
-    width: 180,
-    height: 180
-  });
+  if (typeof QRCode === 'function') {
+    new QRCode(qrBox, {
+      text: qrValue,
+      width: 180,
+      height: 180
+    });
+  } else {
+    qrBox.innerHTML = `<div class="empty-box">QR 라이브러리를 불러오지 못했습니다.</div>`;
+  }
 }
 
 function renderDetailInfo(item) {
@@ -307,51 +352,42 @@ async function loadInventorySection(equipmentId, userEmail) {
 async function loadEquipmentDetail() {
   clearMessage();
   renderDetailSkeleton();
-  showGlobalLoading('장비 기본정보를 불러오는 중...');
 
   const id = getQueryParam('id');
   currentEquipmentId = id;
 
   if (!id) {
-    showMessage('장비 ID가 없습니다.', 'error');
-    hideGlobalLoading();
-    return;
+    throw new Error('장비 ID가 없습니다.');
   }
 
   const user = getCurrentUser();
 
-  try {
-    const detailResult = await apiGet('getEquipment', {
-      id,
-      request_user_email: user?.email || ''
-    });
+  const detailResult = await apiGet('getEquipment', {
+    id,
+    request_user_email: user?.email || ''
+  });
 
-    currentEquipmentData = detailResult.data || {};
-    applyActionVisibility();
-    renderHero(currentEquipmentData);
-    renderDetailInfo(currentEquipmentData);
-    renderQrCode(currentEquipmentData.equipment_id);
-  } catch (error) {
-    showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
-    hideGlobalLoading();
-    return;
-  } finally {
-    hideGlobalLoading();
-  }
+  currentEquipmentData = detailResult.data || {};
 
-  loadHistorySection(id, user?.email || '');
-  loadInventorySection(id, user?.email || '');
+  renderHero(currentEquipmentData);
+  renderDetailInfo(currentEquipmentData);
+  renderQrCode(currentEquipmentData.equipment_id);
+  applyActionVisibility();
+
+  Promise.allSettled([
+    loadHistorySection(id, user?.email || ''),
+    loadInventorySection(id, user?.email || '')
+  ]);
 }
 
 async function deleteCurrentEquipment() {
   if (!currentEquipmentId) return;
-
-  const user = getCurrentUser();
-  if (!isAdminUser()) {
-    showMessage('관리자만 장비를 삭제할 수 있습니다.', 'error');
+  if (!detailPermission.canDelete) {
+    showMessage('삭제 권한이 없습니다.', 'error');
     return;
   }
 
+  const user = getCurrentUser();
   const confirmed = confirm('이 장비를 삭제하시겠습니까?');
   if (!confirmed) return;
 
@@ -369,41 +405,45 @@ async function deleteCurrentEquipment() {
   } catch (error) {
     showMessage(error.message || '장비 삭제 중 오류가 발생했습니다.', 'error');
   } finally {
-    hideGlobalLoading();
+    if (typeof hideGlobalLoading === 'function') {
+      hideGlobalLoading();
+    }
   }
 }
 
 function moveToEditForm() {
-  if (!currentEquipmentId) return;
+  if (!currentEquipmentId || !detailPermission.canEdit) return;
   location.href = `form.html?id=${encodeURIComponent(currentEquipmentId)}&mode=edit`;
 }
 
 function moveToHistoryForm() {
-  if (!currentEquipmentId) return;
+  if (!currentEquipmentId || !detailPermission.canEdit) return;
   location.href = `history-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
 function moveToInventoryForm() {
-  if (!currentEquipmentId) return;
+  if (!currentEquipmentId || !detailPermission.canEdit) return;
   location.href = `inventory-form.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
 function moveToLabelPrint() {
-  if (!currentEquipmentId) return;
+  if (!currentEquipmentId || !detailPermission.canView) return;
   location.href = `label-print.html?equipment_id=${encodeURIComponent(currentEquipmentId)}`;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  showGlobalLoading('장비 정보를 불러오는 중...');
-
   try {
-    const user = window.auth.requireAuth();
+    if (typeof showGlobalLoading === 'function') {
+      showGlobalLoading('장비 기본정보를 불러오는 중...');
+    }
+
+    const user = window.auth?.requireAuth?.();
     if (!user) return;
 
-    const ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-    if (!ok) return;
-
-    applyActionVisibility();
+    detailPermission = await getEquipmentPermissionContext();
+    if (!detailPermission.canView) {
+      throw new Error('장비 메뉴 접근 권한이 없습니다.');
+    }
 
     const editBtn = qs('#editEquipmentBtn');
     const deleteBtn = qs('#deleteBtn');
@@ -420,6 +460,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadEquipmentDetail();
   } catch (error) {
     showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
-    hideGlobalLoading();
+  } finally {
+    if (typeof hideGlobalLoading === 'function') {
+      hideGlobalLoading();
+    }
   }
 });
