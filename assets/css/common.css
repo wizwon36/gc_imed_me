@@ -1,18 +1,14 @@
-/* Cleaned common.css (base only)
-   - Common layout, buttons, forms
-   - Page-specific styles removed
-*/
 
-/* Reset & base */
+/* ===== COMMON BASE CSS ===== */
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
-  color: #0b1f44;
   background: #f5f7fb;
+  color: #0b1f44;
 }
 
-/* Layout */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -25,7 +21,6 @@ body {
   gap: 20px;
 }
 
-/* Top bar */
 .top-brand-bar {
   display: flex;
   justify-content: space-between;
@@ -53,70 +48,17 @@ body {
   color: #fff;
 }
 
-.top-brand-title {
-  font-weight: 800;
-  font-size: 16px;
-}
-
-.top-brand-actions {
-  display: flex;
-  gap: 10px;
-}
-
-/* Buttons */
 .portal-header-btn {
   padding: 10px 16px;
   border-radius: 16px;
   border: 1px solid #d9dee7;
   background: #fff;
-  cursor: pointer;
   font-weight: 700;
 }
 
-.portal-header-btn--primary {
-  background: #0b1f44;
-  color: #fff;
-}
-
-.portal-header-btn--secondary {
-  background: #fff;
-}
-
-/* Section title */
-.section-title {
-  font-size: 24px;
-  font-weight: 800;
-}
-
-/* Cards */
 .card {
   background: #fff;
   border: 1px solid #d9dee7;
   border-radius: 24px;
   padding: 20px;
-}
-
-/* Grid */
-.portal-app-grid {
-  display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: 16px;
-}
-
-/* App card */
-.portal-app-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px solid #d9dee7;
-  background: #fff;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .portal-app-grid {
-    grid-template-columns: 1fr;
-  }
 }
