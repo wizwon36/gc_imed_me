@@ -25,10 +25,28 @@ function formatNumberLocal(value) {
   return Number.isFinite(num) ? num.toLocaleString('ko-KR') : '0';
 }
 
-function compactDateText(value) {
-  if (!value) return '-';
-  const text = String(value);
-  return text.length >= 10 ? text.slice(0, 10) : text;
+function formatDisplayDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '-';
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+  if (dateOnlyMatch) {
+    return dateOnlyMatch[1];
+  }
+
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return raw;
 }
 
 function statusLabelLocal(value) {
@@ -229,7 +247,7 @@ function renderRecentEquipments(items) {
           title: item.equipment_name || '-',
           desc: `${item.department || '-'} · ${item.model_name || '-'}`,
           meta: item.equipment_id || '',
-          side: compactDateText(item.created_at),
+          side: formatDisplayDate(item.created_at),
           sideSub: '',
           badge: buildStatusBadge(item.status || '')
         })}
@@ -256,7 +274,7 @@ function renderRecentHistories(items) {
           title: item.equipment_name || '-',
           desc: item.description || '-',
           meta: `${historyTypeLabelLocal(item.history_type || '')} · ${item.department || '-'}`,
-          side: compactDateText(item.work_date),
+          side: formatDisplayDate(item.work_date),
           sideSub: item.result_status ? resultStatusLabelLocal(item.result_status) : ''
         })}
       </button>
@@ -286,7 +304,7 @@ function renderMaintenanceAlerts(items) {
           title: item.equipment_name || '-',
           desc: item.department || '-',
           meta: item.model_name || '',
-          side: '',
+          side: formatDisplayDate(item.maintenance_end_date),
           sideSub: ''
         })}
         <span class="dashboard-dday-badge ${badgeClass}">${textSafe(ddayText)}</span>
