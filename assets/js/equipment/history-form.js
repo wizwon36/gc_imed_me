@@ -12,102 +12,6 @@ function getCurrentUserSafe() {
   return {};
 }
 
-function extractDepartmentListFromOrgService() {
-  if (!window.OrgService) return [];
-
-  if (typeof window.OrgService.getOrgData === 'function') {
-    const data = window.OrgService.getOrgData();
-    if (Array.isArray(data)) {
-      return data
-        .map(function(item) {
-          return item.department || item.department_name || item.name || '';
-        })
-        .filter(function(item) {
-          return normalizeText(item);
-        });
-    }
-  }
-
-  if (typeof window.OrgService.getOrgConfig === 'function') {
-    const config = window.OrgService.getOrgConfig();
-    if (Array.isArray(config)) {
-      return config
-        .map(function(item) {
-          return item.department || item.department_name || item.name || '';
-        })
-        .filter(function(item) {
-          return normalizeText(item);
-        });
-    }
-  }
-
-  if (Array.isArray(window.OrgService.departments)) {
-    return window.OrgService.departments
-      .map(function(item) {
-        if (typeof item === 'string') return item;
-        return item.department || item.department_name || item.name || '';
-      })
-      .filter(function(item) {
-        return normalizeText(item);
-      });
-  }
-
-  return [];
-}
-
-function setDepartmentOptions(departments, selectedValue) {
-  const deptEl = qs('#request_department');
-  if (!deptEl) return;
-
-  const selected = normalizeText(selectedValue);
-  const seen = {};
-  const unique = [];
-
-  deptEl.innerHTML = '<option value="">선택하세요</option>';
-
-  departments.forEach(function(name) {
-    const text = normalizeText(name);
-    if (!text) return;
-    if (seen[text]) return;
-    seen[text] = true;
-    unique.push(text);
-  });
-
-  unique.forEach(function(name) {
-    const option = document.createElement('option');
-    option.value = name;
-    option.textContent = name;
-    deptEl.appendChild(option);
-  });
-
-  if (selected && !seen[selected]) {
-    const fallback = document.createElement('option');
-    fallback.value = selected;
-    fallback.textContent = selected;
-    deptEl.appendChild(fallback);
-  }
-
-  deptEl.value = selected || '';
-}
-
-async function initHistoryDepartmentSelector(item) {
-  const equipmentDepartment = normalizeText(item && item.department);
-  let departmentList = [];
-
-  if (window.OrgService && typeof window.OrgService.preload === 'function') {
-    await window.OrgService.preload();
-  }
-
-  departmentList = extractDepartmentListFromOrgService();
-
-  // 목록이 없더라도 현재 장비 부서는 선택 가능하게 유지
-  if (!departmentList.length && equipmentDepartment) {
-    departmentList = [equipmentDepartment];
-  }
-
-  setDepartmentOptions(departmentList, equipmentDepartment);
-}
-
 async function loadEquipmentInfo() {
   const equipmentId = getQueryParam('equipment_id');
   currentEquipmentId = equipmentId;
@@ -137,6 +41,7 @@ async function loadEquipmentInfo() {
 
     qs('#equipment_id').value = item.equipment_id || '';
     qs('#equipment_name').value = item.equipment_name || '';
+    qs('#request_department').value = item.department || '';
 
     await initHistoryDepartmentSelector(item);
   } catch (error) {
@@ -183,8 +88,7 @@ function validateHistoryForm(payload) {
   }
 
   if (!payload.request_department) {
-    showMessage('요청부서를 선택하세요.', 'error');
-    qs('#request_department').focus();
+    showMessage('부서 정보가 없습니다.', 'error');
     return false;
   }
 
