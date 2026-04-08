@@ -557,7 +557,10 @@
    Dashboard / form / list / portal unified patch
    ========================= */
 
-.form-card,
+.form-card {
+  display: block;
+}
+
 .form-grid.two-col {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -861,4 +864,60 @@
 .form-input-lg:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ===== equipment form layout fix ===== */
+
+.form-card {
+  display: block;
+  padding: 20px;
+}
+
+.form-grid.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-field.full-col {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .form-card {
+    padding: 18px;
+  }
+
+  .form-grid.two-col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-field.full-col {
+    grid-column: auto;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions .btn,
+  .form-actions button {
+    width: 100%;
+  }
 }
