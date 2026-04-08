@@ -10,7 +10,10 @@ function renderLabelQr(equipmentId) {
   const qrValue = buildEquipmentDetailUrl(equipmentId);
 
   qrArea.innerHTML = '';
-  caption.textContent = qrValue;
+  if (caption) {
+    caption.textContent = '';
+    caption.style.display = 'none';
+  }
 
   new QRCode(qrArea, {
     text: qrValue,
