@@ -532,30 +532,37 @@
   }
 }
 
-/* ===== section head horizontal order fix ===== */
+/* ===== section head layout fix ===== */
 
 .form-card .section-head > div {
-  display: block;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  grid-template-areas:
+    "title kicker ."
+    "desc  desc   desc";
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 8px;
 }
 
 .form-card .section-title {
-  display: inline-block;
-  margin: 0 8px 0 0;
-  vertical-align: middle;
+  grid-area: title;
+  margin: 0;
 }
 
 .form-card .portal-section-kicker {
-  display: inline-block;
+  grid-area: kicker;
   margin: 0;
-  vertical-align: middle;
   font-size: 12px;
   color: #94a3b8;
   font-weight: 600;
   letter-spacing: 0.08em;
+  line-height: 1;
 }
 
 .form-card .sub-text,
 .form-card .equipment-form-section-desc {
+  grid-area: desc;
+  margin: 0;
   display: block;
-  margin-top: 8px;
 }
