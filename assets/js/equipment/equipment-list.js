@@ -4,8 +4,11 @@ const equipmentListState = {
   pageSize: 20,
   totalCount: 0,
   totalPages: 1,
+  hasNext: false,
+  hasPrev: false,
   loading: false,
-  canEdit: false
+  canEdit: false,
+  isRecentMode: false
 };
 
 function el(selector) {
@@ -121,6 +124,16 @@ function getCurrentFilters() {
   };
 }
 
+function hasMeaningfulFilter(filters) {
+  return Boolean(
+    filters.keyword ||
+    filters.clinic_code ||
+    filters.team_code ||
+    filters.status ||
+    filters.manufacturer
+  );
+}
+
 function fillStatusFilterOptions() {
   const target = document.getElementById('status');
   if (!target) return;
@@ -152,6 +165,13 @@ function fillPageSizeOptions() {
 function renderListSummary() {
   const summaryEl = document.getElementById('listSummary');
   if (!summaryEl) return;
+
+  if (equipmentListState.isRecentMode) {
+    const page = formatNumberLocal(equipmentListState.page || 1);
+    const size = formatNumberLocal(equipmentListState.pageSize || 20);
+    summaryEl.textContent = `최근 등록 장비 ${size}건 기준 · ${page} 페이지`;
+    return;
+  }
 
   const total = formatNumberLocal(equipmentListState.totalCount || 0);
   const page = formatNumberLocal(equipmentListState.page || 1);
@@ -203,7 +223,7 @@ function buildEquipmentCard(item) {
           <span class="equipment-card-value">${escapeHtml(formatDisplayDate(item.maintenance_end_date || ''))}</span>
         </div>
       </div>
-      
+
       <div class="equipment-card-actions">
         <a class="btn" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세</a>
         ${editAction}
@@ -217,14 +237,39 @@ function renderEquipmentList(items = []) {
   if (!container) return;
 
   if (!items.length) {
-    container.innerHTML = `<div class="empty-box">조회된 장비가 없습니다.</div>`;
+    if (equipmentListState.isRecentMode) {
+      container.innerHTML = `<div class="empty-box">최근 등록 장비가 없습니다.</div>`;
+    } else {
+      container.innerHTML = `<div class="empty-box">조회된 장비가 없습니다.</div>`;
+    }
     return;
   }
 
   container.innerHTML = items.map(buildEquipmentCard).join('');
 }
 
-function renderPagination() {
+function renderRecentPagination() {
+  const container = document.getElementById('paginationArea');
+  if (!container) return;
+
+  const page = equipmentListState.page;
+
+  container.innerHTML = `
+    <button type="button" class="pagination-btn" data-page="${Math.max(1, page - 1)}" ${page <= 1 ? 'disabled' : ''}>이전</button>
+    <button type="button" class="pagination-btn is-active" disabled>${page}</button>
+    <button type="button" class="pagination-btn" data-page="${page + 1}" ${equipmentListState.hasNext ? '' : 'disabled'}>다음</button>
+  `;
+
+  container.querySelectorAll('.pagination-btn[data-page]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const nextPage = Number(btn.dataset.page || page);
+      if (!nextPage || nextPage === equipmentListState.page) return;
+      await loadEquipmentList(nextPage);
+    });
+  });
+}
+
+function renderFullPagination() {
   const container = document.getElementById('paginationArea');
   if (!container) return;
 
@@ -263,11 +308,58 @@ function renderPagination() {
   });
 }
 
+function renderPagination() {
+  if (equipmentListState.isRecentMode) {
+    renderRecentPagination();
+    return;
+  }
+
+  renderFullPagination();
+}
+
 function applyListPermissionUi() {
   const createBtn = document.getElementById('createEquipmentBtn');
   if (createBtn) {
     createBtn.style.display = equipmentListState.canEdit ? '' : 'none';
   }
+}
+
+function buildListRequestParams(filters, nextPage) {
+  const hasFilter = hasMeaningfulFilter(filters);
+
+  equipmentListState.isRecentMode = !hasFilter;
+
+  const base = {
+    request_user_email: equipmentListState.user.email || '',
+    keyword: filters.keyword,
+    clinic_code: filters.clinic_code,
+    team_code: filters.team_code,
+    status: filters.status,
+    manufacturer: filters.manufacturer,
+    page: nextPage,
+    page_size: equipmentListState.pageSize
+  };
+
+  if (!hasFilter) {
+    return {
+      ...base,
+      recent_only: 'Y',
+      include_total: 'N'
+    };
+  }
+
+  return {
+    ...base,
+    include_total: 'Y'
+  };
+}
+
+function syncListQueryParams(filters) {
+  setListQueryParams({
+    ...filters,
+    page: equipmentListState.page,
+    page_size: equipmentListState.pageSize
+  });
 }
 
 async function loadEquipmentList(nextPage = equipmentListState.page) {
@@ -277,35 +369,35 @@ async function loadEquipmentList(nextPage = equipmentListState.page) {
 
   try {
     if (typeof clearMessage === 'function') clearMessage();
-    if (typeof showGlobalLoading === 'function') showGlobalLoading('장비 목록을 불러오는 중...');
+    if (typeof showGlobalLoading === 'function') {
+      showGlobalLoading('장비 목록을 불러오는 중...');
+    }
 
     const filters = getCurrentFilters();
+    const requestParams = buildListRequestParams(filters, nextPage);
+
     equipmentListState.page = nextPage;
 
-    const result = await apiGet('listEquipments', {
-      request_user_email: equipmentListState.user.email || '',
-      keyword: filters.keyword,
-      clinic_code: filters.clinic_code,
-      team_code: filters.team_code,
-      status: filters.status,
-      manufacturer: filters.manufacturer,
-      page: equipmentListState.page,
-      page_size: equipmentListState.pageSize
-    });
+    const result = await apiGet('listEquipments', requestParams);
 
-    equipmentListState.totalCount = Number(result.total_count || result.count || 0);
-    equipmentListState.totalPages = Number(result.total_pages || 1);
     equipmentListState.page = Number(result.page || 1);
+    equipmentListState.hasNext = Boolean(result.has_next);
+    equipmentListState.hasPrev = Boolean(result.has_prev);
+
+    if (equipmentListState.isRecentMode) {
+      equipmentListState.totalCount = 0;
+      equipmentListState.totalPages = equipmentListState.hasNext
+        ? equipmentListState.page + 1
+        : equipmentListState.page;
+    } else {
+      equipmentListState.totalCount = Number(result.total_count || result.count || 0);
+      equipmentListState.totalPages = Number(result.total_pages || 1);
+    }
 
     renderEquipmentList(Array.isArray(result.data) ? result.data : []);
     renderListSummary();
     renderPagination();
-
-    setListQueryParams({
-      ...filters,
-      page: equipmentListState.page,
-      page_size: equipmentListState.pageSize
-    });
+    syncListQueryParams(filters);
   } catch (error) {
     if (typeof showMessage === 'function') {
       showMessage(error.message || '장비 목록을 불러오는 중 오류가 발생했습니다.', 'error');
@@ -364,6 +456,8 @@ function bindListEvents() {
       setValue('team_code', '');
       setValue('status', '');
       setValue('manufacturer', '');
+
+      equipmentListState.pageSize = Number(getValue('page_size') || equipmentListState.pageSize || 20) || 20;
       setValue('page_size', String(equipmentListState.pageSize));
 
       if (window.OrgService) {
