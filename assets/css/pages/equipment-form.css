@@ -532,26 +532,30 @@
   }
 }
 
-/* ===== section title horizontal swap ===== */
+/* ===== section head horizontal order fix ===== */
 
 .form-card .section-head > div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: block;
 }
 
-/* 기본정보 먼저 */
 .form-card .section-title {
-  order: 1;
-  margin: 0;
+  display: inline-block;
+  margin: 0 8px 0 0;
+  vertical-align: middle;
 }
 
-/* BASIC INFO 오른쪽으로 */
 .form-card .portal-section-kicker {
-  order: 2;
+  display: inline-block;
   margin: 0;
+  vertical-align: middle;
   font-size: 12px;
   color: #94a3b8;
   font-weight: 600;
   letter-spacing: 0.08em;
+}
+
+.form-card .sub-text,
+.form-card .equipment-form-section-desc {
+  display: block;
+  margin-top: 8px;
 }
