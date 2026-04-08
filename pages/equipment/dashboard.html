@@ -59,6 +59,13 @@
     </section>
 
     <section class="dashboard-panels-carousel-wrap">
+      <div class="dashboard-panel-dots" id="dashboardPanelDots" aria-label="대시보드 패널 탐색">
+        <button type="button" class="dashboard-panel-dot is-active" data-index="0" aria-label="빠른 작업"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="1" aria-label="유지보수 만료 예정"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="2" aria-label="최근 30일 수리된 장비"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="3" aria-label="최근 30일 등록된 장비"></button>
+      </div>
+
       <div id="dashboardPanelsScroll" class="dashboard-panels-scroll">
         <div class="dashboard-panels-grid">
           <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions" id="panelCard1">
@@ -128,7 +135,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records" id="panelCard3">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--repair" id="panelCard3">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">REPAIR</span>
@@ -143,7 +150,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records" id="panelCard4">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--registered" id="panelCard4">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">REGISTERED</span>
@@ -158,13 +165,6 @@
             </div>
           </article>
         </div>
-      </div>
-
-      <div class="dashboard-panel-dots" id="dashboardPanelDots" aria-label="대시보드 패널 탐색">
-        <button type="button" class="dashboard-panel-dot is-active" data-index="0" aria-label="빠른 작업"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="1" aria-label="유지보수 만료 예정"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="2" aria-label="최근 30일 수리된 장비"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="3" aria-label="최근 30일 등록된 장비"></button>
       </div>
     </section>
   </div>
