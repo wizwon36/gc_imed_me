@@ -461,7 +461,7 @@ function moveToLabelPrint() {
 document.addEventListener('DOMContentLoaded', async function() {
   try {
     if (typeof showGlobalLoading === 'function') {
-      showGlobalLoading('장비 상세정보와 이력을 불러오는 중...');
+      showGlobalLoading('불러오는 중...');
     }
 
     const user = window.auth?.requireAuth?.();
