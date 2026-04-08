@@ -17,52 +17,35 @@
   padding: 20px;
 }
 
-.portal-section-title {
-  position: relative;
-  padding-left: 14px;
-  font-size: 28px;
-}
-
-.portal-section-title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 4px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
-}
-
-/* ===== portal section title single line fix ===== */
-
-/* 기존 줄 전부 제거 */
+/* 기존 줄 제거: 제목 바깥 래퍼 쪽만 제거 */
 .portal-section-head--compact,
-.portal-section-head--compact > div,
-.portal-section-title {
+.portal-section-head--compact > div {
   border-left: 0 !important;
 }
 
 .portal-section-head--compact::before,
 .portal-section-head--compact::after,
 .portal-section-head--compact > div::before,
-.portal-section-head--compact > div::after,
-.portal-section-title::before,
+.portal-section-head--compact > div::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* 제목 자체에 한 줄만 그림 */
+.portal-section-title {
+  position: relative;
+  padding-left: 16px;
+  font-size: 28px;
+  border-left: 0 !important;
+}
+
 .portal-section-title::after {
   content: none !important;
   display: none !important;
 }
 
-/* 한 줄만 다시 그림 */
-.portal-section-title {
-  position: relative;
-  padding-left: 16px;
-  font-size: 28px;
-}
-
 .portal-section-title::before {
   content: "";
-  display: block !important;
   position: absolute;
   left: 0;
   top: 4px;
@@ -70,4 +53,5 @@
   width: 4px;
   border-radius: 999px;
   background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
+  display: block;
 }
