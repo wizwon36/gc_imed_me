@@ -30,37 +30,31 @@
       <article class="dashboard-kpi-card">
         <div class="dashboard-kpi-label">전체 장비</div>
         <div class="dashboard-kpi-value" id="totalCount">0</div>
-        <div class="dashboard-kpi-sub">등록된 전체 장비 수</div>
       </article>
 
       <article class="dashboard-kpi-card">
         <div class="dashboard-kpi-label">사용중</div>
         <div class="dashboard-kpi-value" id="inUseCount">0</div>
-        <div class="dashboard-kpi-sub">정상 운영 가능 장비</div>
       </article>
 
       <article class="dashboard-kpi-card">
         <div class="dashboard-kpi-label">수리중</div>
         <div class="dashboard-kpi-value" id="repairingCount">0</div>
-        <div class="dashboard-kpi-sub">조치 진행 중 장비</div>
       </article>
 
       <article class="dashboard-kpi-card">
         <div class="dashboard-kpi-label">점검중</div>
         <div class="dashboard-kpi-value" id="inspectingCount">0</div>
-        <div class="dashboard-kpi-sub">정기점검 또는 검사 대상</div>
       </article>
 
       <article class="dashboard-kpi-card dashboard-kpi-card--accent">
         <div class="dashboard-kpi-label">최근 30일 수리</div>
         <div class="dashboard-kpi-value" id="recentRepairCount">0</div>
-        <div class="dashboard-kpi-sub">최근 한달 이내 수리 장비 수</div>
       </article>
 
       <article class="dashboard-kpi-card dashboard-kpi-card--accent">
         <div class="dashboard-kpi-label">최근 30일 신규 등록</div>
         <div class="dashboard-kpi-value" id="recentRegisterCount">0</div>
-        <div class="dashboard-kpi-sub">최근 한달 이내 등록 장비 수</div>
       </article>
     </section>
 
@@ -181,5 +175,12 @@
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
+
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
+    </div>
+  </div>
 </body>
 </html>
