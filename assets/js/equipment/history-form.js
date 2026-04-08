@@ -1,17 +1,111 @@
 let currentEquipmentId = '';
 let currentEquipment = null;
 
-async function initHistoryOrgSelectors(item = {}) {
-  await OrgService.bindClinicTeam(
-    qs('#request_clinic_code'),
-    qs('#request_team_code'),
-    {
-      initialClinicCode: item.request_clinic_code || item.clinic_code || '',
-      initialTeamCode: item.request_team_code || item.team_code || '',
-      clinicEmptyLabel: '의원을 선택하세요',
-      teamEmptyLabel: '팀을 선택하세요'
+function normalizeText(value) {
+  return String(value || '').trim();
+}
+
+function getCurrentUserSafe() {
+  if (window.auth && typeof window.auth.getSession === 'function') {
+    return window.auth.getSession() || {};
+  }
+  return {};
+}
+
+function extractDepartmentListFromOrgService() {
+  if (!window.OrgService) return [];
+
+  if (typeof window.OrgService.getOrgData === 'function') {
+    const data = window.OrgService.getOrgData();
+    if (Array.isArray(data)) {
+      return data
+        .map(function(item) {
+          return item.department || item.department_name || item.name || '';
+        })
+        .filter(function(item) {
+          return normalizeText(item);
+        });
     }
-  );
+  }
+
+  if (typeof window.OrgService.getOrgConfig === 'function') {
+    const config = window.OrgService.getOrgConfig();
+    if (Array.isArray(config)) {
+      return config
+        .map(function(item) {
+          return item.department || item.department_name || item.name || '';
+        })
+        .filter(function(item) {
+          return normalizeText(item);
+        });
+    }
+  }
+
+  if (Array.isArray(window.OrgService.departments)) {
+    return window.OrgService.departments
+      .map(function(item) {
+        if (typeof item === 'string') return item;
+        return item.department || item.department_name || item.name || '';
+      })
+      .filter(function(item) {
+        return normalizeText(item);
+      });
+  }
+
+  return [];
+}
+
+function setDepartmentOptions(departments, selectedValue) {
+  const deptEl = qs('#request_department');
+  if (!deptEl) return;
+
+  const selected = normalizeText(selectedValue);
+  const seen = {};
+  const unique = [];
+
+  deptEl.innerHTML = '<option value="">선택하세요</option>';
+
+  departments.forEach(function(name) {
+    const text = normalizeText(name);
+    if (!text) return;
+    if (seen[text]) return;
+    seen[text] = true;
+    unique.push(text);
+  });
+
+  unique.forEach(function(name) {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    deptEl.appendChild(option);
+  });
+
+  if (selected && !seen[selected]) {
+    const fallback = document.createElement('option');
+    fallback.value = selected;
+    fallback.textContent = selected;
+    deptEl.appendChild(fallback);
+  }
+
+  deptEl.value = selected || '';
+}
+
+async function initHistoryDepartmentSelector(item) {
+  const equipmentDepartment = normalizeText(item && item.department);
+  let departmentList = [];
+
+  if (window.OrgService && typeof window.OrgService.preload === 'function') {
+    await window.OrgService.preload();
+  }
+
+  departmentList = extractDepartmentListFromOrgService();
+
+  // 목록이 없더라도 현재 장비 부서는 선택 가능하게 유지
+  if (!departmentList.length && equipmentDepartment) {
+    departmentList = [equipmentDepartment];
+  }
+
+  setDepartmentOptions(departmentList, equipmentDepartment);
 }
 
 async function loadEquipmentInfo() {
@@ -26,22 +120,25 @@ async function loadEquipmentInfo() {
     return;
   }
 
-  qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
+  if (qs('#backToDetailBtn')) {
+    qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
+  }
 
-  const user = window.auth?.getSession?.() || {};
+  const user = getCurrentUserSafe();
 
   try {
     const result = await apiGet('getEquipment', {
       id: equipmentId,
       request_user_email: user.email || ''
     });
+
     const item = result.data || {};
     currentEquipment = item;
 
     qs('#equipment_id').value = item.equipment_id || '';
     qs('#equipment_name').value = item.equipment_name || '';
 
-    await initHistoryOrgSelectors(item);
+    await initHistoryDepartmentSelector(item);
   } catch (error) {
     showMessage(error.message, 'error');
   } finally {
@@ -50,21 +147,17 @@ async function loadEquipmentInfo() {
 }
 
 async function buildHistoryPayload() {
-  const clinicCode = qs('#request_clinic_code').value;
-  const teamCode = qs('#request_team_code').value;
-  const org = await OrgService.buildOrgPayload(clinicCode, teamCode);
-
-  const currentUser = window.auth?.getSession?.() || {};
+  const currentUser = getCurrentUserSafe();
 
   return {
     equipment_id: qs('#equipment_id').value.trim(),
     history_type: qs('#history_type').value,
 
-    request_clinic_code: org.clinic_code,
-    request_clinic_name: org.clinic_name,
-    request_team_code: org.team_code,
-    request_team_name: org.team_name,
-    request_department: org.department,
+    request_clinic_code: normalizeText(currentEquipment && currentEquipment.clinic_code),
+    request_clinic_name: normalizeText(currentEquipment && currentEquipment.clinic_name),
+    request_team_code: normalizeText(currentEquipment && currentEquipment.team_code),
+    request_team_name: normalizeText(currentEquipment && currentEquipment.team_name),
+    request_department: qs('#request_department').value,
 
     requester: qs('#requester').value.trim(),
     work_date: qs('#work_date').value,
@@ -89,15 +182,9 @@ function validateHistoryForm(payload) {
     return false;
   }
 
-  if (!payload.request_clinic_code) {
-    showMessage('요청 의원을 선택하세요.', 'error');
-    qs('#request_clinic_code').focus();
-    return false;
-  }
-
-  if (!payload.request_team_code) {
-    showMessage('요청 팀을 선택하세요.', 'error');
-    qs('#request_team_code').focus();
+  if (!payload.request_department) {
+    showMessage('요청부서를 선택하세요.', 'error');
+    qs('#request_department').focus();
     return false;
   }
 
@@ -122,7 +209,9 @@ async function handleSubmitHistory(event) {
   try {
     setLoading(submitBtn, true, '저장 중...');
     showGlobalLoading('이력을 저장하는 중...');
+
     await apiPost('createHistory', payload);
+
     alert('이력이 등록되었습니다.');
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
@@ -144,41 +233,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!ok) return;
 
     qs('#historyForm').addEventListener('submit', handleSubmitHistory);
-    await OrgService.preload();
+
+    if (window.OrgService && typeof window.OrgService.preload === 'function') {
+      await window.OrgService.preload();
+    }
+
     await loadEquipmentInfo();
   } catch (error) {
     showMessage(error.message || '이력 등록 화면을 불러오는 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
   }
-  
-  await initDepartmentSelect();
 });
-
-async function initDepartmentSelect() {
-  const deptEl = document.getElementById('request_department');
-  if (!deptEl) return;
-
-  // OrgService 존재 확인
-  if (!window.OrgService) return;
-
-  // 현재 선택된 clinic/team 기준으로 부서 목록 가져오기
-  const clinicCode = window.currentUser?.clinic_code || '';
-  const teamCode = window.currentUser?.team_code || '';
-
-  try {
-    const departments = await window.OrgService.getDepartments(clinicCode, teamCode);
-
-    deptEl.innerHTML = '<option value="">선택하세요</option>';
-
-    departments.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.name;
-      opt.textContent = d.name;
-      deptEl.appendChild(opt);
-    });
-
-  } catch (e) {
-    console.error('부서 로딩 실패', e);
-  }
-}
