@@ -151,4 +151,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   } finally {
     hideGlobalLoading();
   }
+  
+  await initDepartmentSelect();
 });
+
+async function initDepartmentSelect() {
+  const deptEl = document.getElementById('request_department');
+  if (!deptEl) return;
+
+  // OrgService 존재 확인
+  if (!window.OrgService) return;
+
+  // 현재 선택된 clinic/team 기준으로 부서 목록 가져오기
+  const clinicCode = window.currentUser?.clinic_code || '';
+  const teamCode = window.currentUser?.team_code || '';
+
+  try {
+    const departments = await window.OrgService.getDepartments(clinicCode, teamCode);
+
+    deptEl.innerHTML = '<option value="">선택하세요</option>';
+
+    departments.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.name;
+      opt.textContent = d.name;
+      deptEl.appendChild(opt);
+    });
+
+  } catch (e) {
+    console.error('부서 로딩 실패', e);
+  }
+}
