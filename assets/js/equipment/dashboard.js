@@ -26,14 +26,10 @@ function formatDisplayDate(value) {
   const raw = String(value || '').trim();
   if (!raw) return '-';
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    return raw;
-  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
 
   const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
-  if (dateOnlyMatch) {
-    return dateOnlyMatch[1];
-  }
+  if (dateOnlyMatch) return dateOnlyMatch[1];
 
   const parsed = new Date(raw);
   if (!isNaN(parsed.getTime())) {
@@ -70,17 +66,13 @@ function setDashboardSessionCache(data) {
         data
       })
     );
-  } catch (error) {
-    // ignore
-  }
+  } catch (error) {}
 }
 
 function invalidateDashboardSessionCache() {
   try {
     sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
-  } catch (error) {
-    // ignore
-  }
+  } catch (error) {}
 }
 
 window.invalidateDashboardSessionCache = invalidateDashboardSessionCache;
@@ -123,13 +115,7 @@ function applyDashboardPermissionUi() {
 }
 
 function renderDashboardSkeleton() {
-  const targetIds = [
-    '#maintenanceAlertList',
-    '#recentRepairList',
-    '#recentRegisteredList'
-  ];
-
-  targetIds.forEach(function (selector) {
+  ['#maintenanceAlertList', '#recentRepairList', '#recentRegisteredList'].forEach(function (selector) {
     const el = dq(selector);
     if (!el) return;
     el.innerHTML = '<div class="empty-box">불러오는 중...</div>';
@@ -138,7 +124,6 @@ function renderDashboardSkeleton() {
 
 function renderKpis(summary) {
   const kpis = summary?.kpis || {};
-
   if (dq('#totalCount')) dq('#totalCount').textContent = formatNumberLocal(kpis.total || 0);
   if (dq('#inUseCount')) dq('#inUseCount').textContent = formatNumberLocal(kpis.in_use || 0);
   if (dq('#repairingCount')) dq('#repairingCount').textContent = formatNumberLocal(kpis.repairing || 0);
@@ -193,59 +178,44 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 }
 
 function renderMaintenanceAlerts(items) {
-  renderRecordList(
-    '#maintenanceAlertList',
-    '#maintenanceAlertEmpty',
-    items,
-    {
-      dateField: 'maintenance_end_date',
-      dateLabel: '유지보수 만료일',
-      sideRenderer: function (item) {
-        const dday = Number(item.dday || 0);
-        const ddayText =
-          dday < 0 ? `D+${Math.abs(dday)}`
-          : dday === 0 ? 'D-DAY'
-          : `D-${dday}`;
+  renderRecordList('#maintenanceAlertList', '#maintenanceAlertEmpty', items, {
+    dateField: 'maintenance_end_date',
+    dateLabel: '유지보수 만료일',
+    sideRenderer: function (item) {
+      const dday = Number(item.dday || 0);
+      const ddayText =
+        dday < 0 ? `D+${Math.abs(dday)}`
+        : dday === 0 ? 'D-DAY'
+        : `D-${dday}`;
 
-        const badgeClass =
-          dday < 0
-            ? 'dashboard-dday-badge is-overdue'
-            : dday <= 30
-            ? 'dashboard-dday-badge'
-            : 'dashboard-dday-badge is-normal';
+      const badgeClass =
+        dday < 0
+          ? 'dashboard-dday-badge is-overdue'
+          : dday <= 30
+          ? 'dashboard-dday-badge'
+          : 'dashboard-dday-badge is-normal';
 
-        return `
-          <div class="dashboard-record-side">
-            <span class="${badgeClass}">${textSafe(ddayText)}</span>
-          </div>
-        `;
-      }
+      return `
+        <div class="dashboard-record-side">
+          <span class="${badgeClass}">${textSafe(ddayText)}</span>
+        </div>
+      `;
     }
-  );
+  });
 }
 
 function renderRecentRepairList(items) {
-  renderRecordList(
-    '#recentRepairList',
-    '#recentRepairEmpty',
-    items,
-    {
-      dateField: 'work_date',
-      dateLabel: '최근 수리일'
-    }
-  );
+  renderRecordList('#recentRepairList', '#recentRepairEmpty', items, {
+    dateField: 'work_date',
+    dateLabel: '최근 수리일'
+  });
 }
 
 function renderRecentRegisteredList(items) {
-  renderRecordList(
-    '#recentRegisteredList',
-    '#recentRegisteredEmpty',
-    items,
-    {
-      dateField: 'created_at',
-      dateLabel: '등록일'
-    }
-  );
+  renderRecordList('#recentRegisteredList', '#recentRegisteredEmpty', items, {
+    dateField: 'created_at',
+    dateLabel: '등록일'
+  });
 }
 
 function renderDashboardData(summary) {
@@ -257,7 +227,6 @@ function renderDashboardData(summary) {
 
 async function fetchDashboardData() {
   const user = window.auth?.getSession?.() || {};
-
   const summaryResult = await apiGet('getEquipmentDashboardSummary', {
     request_user_email: user.email || ''
   });
@@ -284,7 +253,6 @@ function initPanelCarousel() {
     const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
     const grid = scrollEl.querySelector('.dashboard-panels-grid');
     if (!firstCard || !grid) return 1;
-
     const styles = window.getComputedStyle(grid);
     const gap = parseFloat(styles.columnGap || styles.gap || 0);
     return firstCard.offsetWidth + gap;
@@ -295,7 +263,6 @@ function initPanelCarousel() {
       setActive(0);
       return;
     }
-
     const width = getPanelWidth();
     const index = Math.round(scrollEl.scrollLeft / width);
     setActive(Math.max(0, Math.min(index, dots.length - 1)));
@@ -304,15 +271,12 @@ function initPanelCarousel() {
   dots.forEach(function (dot) {
     dot.addEventListener('click', function () {
       if (window.innerWidth > 768) return;
-
       const index = Number(dot.dataset.index || 0);
       const width = getPanelWidth();
-
       scrollEl.scrollTo({
         left: width * index,
         behavior: 'smooth'
       });
-
       setActive(index);
     });
   });
