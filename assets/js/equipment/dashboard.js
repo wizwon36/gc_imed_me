@@ -25,7 +25,6 @@ function formatNumberLocal(value) {
 function formatDisplayDate(value) {
   const raw = String(value || '').trim();
   if (!raw) return '-';
-
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
 
   const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
@@ -253,6 +252,7 @@ function initPanelCarousel() {
     const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
     const grid = scrollEl.querySelector('.dashboard-panels-grid');
     if (!firstCard || !grid) return 1;
+
     const styles = window.getComputedStyle(grid);
     const gap = parseFloat(styles.columnGap || styles.gap || 0);
     return firstCard.offsetWidth + gap;
@@ -263,6 +263,7 @@ function initPanelCarousel() {
       setActive(0);
       return;
     }
+
     const width = getPanelWidth();
     const index = Math.round(scrollEl.scrollLeft / width);
     setActive(Math.max(0, Math.min(index, dots.length - 1)));
@@ -271,12 +272,15 @@ function initPanelCarousel() {
   dots.forEach(function (dot) {
     dot.addEventListener('click', function () {
       if (window.innerWidth > 768) return;
+
       const index = Number(dot.dataset.index || 0);
       const width = getPanelWidth();
+
       scrollEl.scrollTo({
         left: width * index,
         behavior: 'smooth'
       });
+
       setActive(index);
     });
   });
