@@ -1,4 +1,4 @@
-const equipmentListState = {
+var equipmentListState = {
   user: null,
   page: 1,
   pageSize: 20,
@@ -16,7 +16,7 @@ function el(selector) {
 }
 
 function getListQueryParams() {
-  const params = new URLSearchParams(location.search);
+  var params = new URLSearchParams(location.search);
 
   return {
     keyword: params.get('keyword') || '',
@@ -30,27 +30,30 @@ function getListQueryParams() {
 }
 
 function setListQueryParams(next) {
-  const url = new URL(location.href);
+  var url = new URL(location.href);
+  var key;
 
-  Object.entries(next).forEach(([key, value]) => {
-    if (value === '' || value === null || value === undefined) {
+  for (key in next) {
+    if (!Object.prototype.hasOwnProperty.call(next, key)) continue;
+
+    if (next[key] === '' || next[key] === null || next[key] === undefined) {
       url.searchParams.delete(key);
     } else {
-      url.searchParams.set(key, String(value));
+      url.searchParams.set(key, String(next[key]));
     }
-  });
+  }
 
   history.replaceState({}, '', url.toString());
 }
 
 function setValue(id, value) {
-  const target = document.getElementById(id);
+  var target = document.getElementById(id);
   if (!target) return;
   target.value = value == null ? '' : value;
 }
 
 function getValue(id) {
-  const target = document.getElementById(id);
+  var target = document.getElementById(id);
   return target ? String(target.value || '').trim() : '';
 }
 
@@ -64,53 +67,61 @@ function escapeHtml(value) {
 }
 
 function formatNumberLocal(value) {
-  const num = Number(value || 0);
+  var num = Number(value || 0);
   return Number.isFinite(num) ? num.toLocaleString('ko-KR') : '0';
 }
 
 function formatDisplayDate(value) {
-  const raw = String(value || '').trim();
+  var raw = String(value || '').trim();
+  var dateOnlyMatch;
+  var parsed;
+  var yyyy;
+  var mm;
+  var dd;
+
   if (!raw) return '-';
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
     return raw;
   }
 
-  const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+  dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
   if (dateOnlyMatch) {
     return dateOnlyMatch[1];
   }
 
-  const parsed = new Date(raw);
+  parsed = new Date(raw);
   if (!isNaN(parsed.getTime())) {
-    const yyyy = parsed.getFullYear();
-    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
-    const dd = String(parsed.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    yyyy = parsed.getFullYear();
+    mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    dd = String(parsed.getDate()).padStart(2, '0');
+    return yyyy + '-' + mm + '-' + dd;
   }
 
   return raw;
 }
 
 function statusLabelLocal(value) {
-  const map = {
+  var map = {
     IN_USE: '사용중',
     REPAIRING: '수리중',
     INSPECTING: '점검중',
     STORED: '보관',
     DISPOSED: '폐기'
   };
+
   return map[String(value || '').trim()] || (value || '-');
 }
 
 function statusClassLocal(value) {
-  const map = {
+  var map = {
     IN_USE: 'is-in-use',
     REPAIRING: 'is-repairing',
     INSPECTING: 'is-inspecting',
     STORED: 'is-stored',
     DISPOSED: 'is-disposed'
   };
+
   return map[String(value || '').trim()] || '';
 }
 
@@ -135,112 +146,119 @@ function hasMeaningfulFilter(filters) {
 }
 
 function fillStatusFilterOptions() {
-  const target = document.getElementById('status');
+  var target = document.getElementById('status');
   if (!target) return;
 
-  target.innerHTML = `
-    <option value="">전체 상태</option>
-    <option value="IN_USE">사용중</option>
-    <option value="REPAIRING">수리중</option>
-    <option value="INSPECTING">점검중</option>
-    <option value="STORED">보관</option>
-    <option value="DISPOSED">폐기</option>
-  `;
+  target.innerHTML =
+    '<option value="">전체 상태</option>' +
+    '<option value="IN_USE">사용중</option>' +
+    '<option value="REPAIRING">수리중</option>' +
+    '<option value="INSPECTING">점검중</option>' +
+    '<option value="STORED">보관</option>' +
+    '<option value="DISPOSED">폐기</option>';
 }
 
 function fillPageSizeOptions() {
-  const target = document.getElementById('page_size');
+  var target = document.getElementById('page_size');
   if (!target) return;
 
-  target.innerHTML = `
-    <option value="10">10개</option>
-    <option value="20">20개</option>
-    <option value="50">50개</option>
-    <option value="100">100개</option>
-  `;
+  target.innerHTML =
+    '<option value="10">10개</option>' +
+    '<option value="20">20개</option>' +
+    '<option value="50">50개</option>' +
+    '<option value="100">100개</option>';
 
   target.value = String(equipmentListState.pageSize);
 }
 
 function renderListSummary() {
-  const summaryEl = document.getElementById('listSummary');
+  var summaryEl = document.getElementById('listSummary');
+  var total;
+  var page;
+  var totalPages;
+  var size;
+
   if (!summaryEl) return;
 
   if (equipmentListState.isRecentMode) {
-    const page = formatNumberLocal(equipmentListState.page || 1);
-    const size = formatNumberLocal(equipmentListState.pageSize || 20);
-    summaryEl.textContent = `최근 등록 장비 보기 · ${size}건 단위 · ${page}페이지`;
+    page = formatNumberLocal(equipmentListState.page || 1);
+    size = formatNumberLocal(equipmentListState.pageSize || 20);
+    summaryEl.textContent = '최근 등록 장비 보기 · ' + size + '건 단위 · ' + page + '페이지';
     return;
   }
 
-  const total = formatNumberLocal(equipmentListState.totalCount || 0);
-  const page = formatNumberLocal(equipmentListState.page || 1);
-  const totalPages = formatNumberLocal(equipmentListState.totalPages || 1);
+  total = formatNumberLocal(equipmentListState.totalCount || 0);
+  page = formatNumberLocal(equipmentListState.page || 1);
+  totalPages = formatNumberLocal(equipmentListState.totalPages || 1);
 
-  summaryEl.textContent = `검색 결과 ${total}건 · ${page} / ${totalPages} 페이지`;
+  summaryEl.textContent = '검색 결과 ' + total + '건 · ' + page + ' / ' + totalPages + ' 페이지';
 }
 
 function buildEquipmentCard(item) {
-  const editAction = equipmentListState.canEdit
-    ? `<a class="btn btn-primary" href="form.html?id=${encodeURIComponent(item.equipment_id || '')}">수정</a>`
-    : '';
+  var editAction = '';
 
-  return `
-    <article class="equipment-card">
-      <div class="equipment-card-head">
-        <div class="equipment-card-title-wrap">
-          <h3 class="equipment-card-title">${escapeHtml(item.equipment_name || '-')}</h3>
-          <div class="equipment-card-sub">${escapeHtml(item.equipment_id || '')}</div>
-        </div>
-        <span class="status-badge ${statusClassLocal(item.status || '')}">
-          ${escapeHtml(statusLabelLocal(item.status || ''))}
-        </span>
-      </div>
+  if (equipmentListState.canEdit) {
+    editAction = '<a class="btn btn-primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
+  }
 
-      <div class="equipment-card-grid">
-        <div class="equipment-card-row">
-          <span class="equipment-card-label">모델명</span>
-          <span class="equipment-card-value">${escapeHtml(item.model_name || '-')}</span>
-        </div>
-        <div class="equipment-card-row">
-          <span class="equipment-card-label">부서</span>
-          <span class="equipment-card-value">${escapeHtml(item.department || '-')}</span>
-        </div>
-        <div class="equipment-card-row">
-          <span class="equipment-card-label">제조사</span>
-          <span class="equipment-card-value">${escapeHtml(item.manufacturer || '-')}</span>
-        </div>
-        <div class="equipment-card-row">
-          <span class="equipment-card-label">시리얼</span>
-          <span class="equipment-card-value">${escapeHtml(item.serial_no || '-')}</span>
-        </div>
-        <div class="equipment-card-row">
-          <span class="equipment-card-label">위치</span>
-          <span class="equipment-card-value">${escapeHtml(item.location || '-')}</span>
-        </div>
-        <div class="equipment-card-row">
-          <span class="equipment-card-label">유지보수 종료</span>
-          <span class="equipment-card-value">${escapeHtml(formatDisplayDate(item.maintenance_end_date || ''))}</span>
-        </div>
-      </div>
+  return (
+    '<article class="equipment-card">' +
+      '<div class="equipment-card-head">' +
+        '<div class="equipment-card-title-wrap">' +
+          '<h3 class="equipment-card-title">' + escapeHtml(item.equipment_name || '-') + '</h3>' +
+          '<div class="equipment-card-sub">' + escapeHtml(item.equipment_id || '') + '</div>' +
+        '</div>' +
+        '<span class="status-badge ' + statusClassLocal(item.status || '') + '">' +
+          escapeHtml(statusLabelLocal(item.status || '')) +
+        '</span>' +
+      '</div>' +
 
-      <div class="equipment-card-actions">
-        <a class="btn" href="detail.html?id=${encodeURIComponent(item.equipment_id || '')}">상세</a>
-        ${editAction}
-      </div>
-    </article>
-  `;
+      '<div class="equipment-card-grid">' +
+        '<div class="equipment-card-row">' +
+          '<span class="equipment-card-label">모델명</span>' +
+          '<span class="equipment-card-value">' + escapeHtml(item.model_name || '-') + '</span>' +
+        '</div>' +
+        '<div class="equipment-card-row">' +
+          '<span class="equipment-card-label">부서</span>' +
+          '<span class="equipment-card-value">' + escapeHtml(item.department || '-') + '</span>' +
+        '</div>' +
+        '<div class="equipment-card-row">' +
+          '<span class="equipment-card-label">제조사</span>' +
+          '<span class="equipment-card-value">' + escapeHtml(item.manufacturer || '-') + '</span>' +
+        '</div>' +
+        '<div class="equipment-card-row">' +
+          '<span class="equipment-card-label">시리얼</span>' +
+          '<span class="equipment-card-value">' + escapeHtml(item.serial_no || '-') + '</span>' +
+        '</div>' +
+        '<div class="equipment-card-row">' +
+          '<span class="equipment-card-label">위치</span>' +
+          '<span class="equipment-card-value">' + escapeHtml(item.location || '-') + '</span>' +
+        '</div>' +
+        '<div class="equipment-card-row">' +
+          '<span class="equipment-card-label">유지보수 종료</span>' +
+          '<span class="equipment-card-value">' + escapeHtml(formatDisplayDate(item.maintenance_end_date || '')) + '</span>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="equipment-card-actions">' +
+        '<a class="btn" href="detail.html?id=' + encodeURIComponent(item.equipment_id || '') + '">상세</a>' +
+        editAction +
+      '</div>' +
+    '</article>'
+  );
 }
 
-function renderEquipmentList(items = []) {
-  const container = document.getElementById('equipmentList');
+function renderEquipmentList(items) {
+  var container = document.getElementById('equipmentList');
   if (!container) return;
+
+  items = Array.isArray(items) ? items : [];
 
   if (!items.length) {
     if (equipmentListState.isRecentMode) {
-      container.innerHTML = `<div class="empty-box">최근 등록 장비가 없습니다.</div>`;
+      container.innerHTML = '<div class="empty-box">최근 등록 장비가 없습니다.</div>';
     } else {
-      container.innerHTML = `<div class="empty-box">조회된 장비가 없습니다.</div>`;
+      container.innerHTML = '<div class="empty-box">조회된 장비가 없습니다.</div>';
     }
     return;
   }
@@ -249,20 +267,18 @@ function renderEquipmentList(items = []) {
 }
 
 function renderRecentPagination() {
-  const container = document.getElementById('paginationArea');
+  var container = document.getElementById('paginationArea');
+  var page = equipmentListState.page;
   if (!container) return;
 
-  const page = equipmentListState.page;
+  container.innerHTML =
+    '<button type="button" class="pagination-btn" data-page="' + Math.max(1, page - 1) + '" ' + (page <= 1 ? 'disabled' : '') + '>이전</button>' +
+    '<button type="button" class="pagination-btn is-active" disabled>' + page + '</button>' +
+    '<button type="button" class="pagination-btn" data-page="' + (page + 1) + '" ' + (equipmentListState.hasNext ? '' : 'disabled') + '>다음</button>';
 
-  container.innerHTML = `
-    <button type="button" class="pagination-btn" data-page="${Math.max(1, page - 1)}" ${page <= 1 ? 'disabled' : ''}>이전</button>
-    <button type="button" class="pagination-btn is-active" disabled>${page}</button>
-    <button type="button" class="pagination-btn" data-page="${page + 1}" ${equipmentListState.hasNext ? '' : 'disabled'}>다음</button>
-  `;
-
-  container.querySelectorAll('.pagination-btn[data-page]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const nextPage = Number(btn.dataset.page || page);
+  Array.prototype.forEach.call(container.querySelectorAll('.pagination-btn[data-page]'), function(btn) {
+    btn.addEventListener('click', async function() {
+      var nextPage = Number(btn.dataset.page || page);
       if (!nextPage || nextPage === equipmentListState.page) return;
       await loadEquipmentList(nextPage);
     });
@@ -270,38 +286,40 @@ function renderRecentPagination() {
 }
 
 function renderFullPagination() {
-  const container = document.getElementById('paginationArea');
-  if (!container) return;
+  var container = document.getElementById('paginationArea');
+  var page = equipmentListState.page;
+  var totalPages = equipmentListState.totalPages;
+  var pages = [];
+  var start;
+  var end;
+  var i;
 
-  const page = equipmentListState.page;
-  const totalPages = equipmentListState.totalPages;
+  if (!container) return;
 
   if (totalPages <= 1) {
     container.innerHTML = '';
     return;
   }
 
-  const pages = [];
-  const start = Math.max(1, page - 2);
-  const end = Math.min(totalPages, page + 2);
+  start = Math.max(1, page - 2);
+  end = Math.min(totalPages, page + 2);
 
-  for (let i = start; i <= end; i += 1) {
-    pages.push(`
-      <button type="button" class="pagination-btn ${i === page ? 'is-active' : ''}" data-page="${i}">
-        ${i}
-      </button>
-    `);
+  for (i = start; i <= end; i += 1) {
+    pages.push(
+      '<button type="button" class="pagination-btn ' + (i === page ? 'is-active' : '') + '" data-page="' + i + '">' +
+        i +
+      '</button>'
+    );
   }
 
-  container.innerHTML = `
-    <button type="button" class="pagination-btn" data-page="${Math.max(1, page - 1)}" ${page <= 1 ? 'disabled' : ''}>이전</button>
-    ${pages.join('')}
-    <button type="button" class="pagination-btn" data-page="${Math.min(totalPages, page + 1)}" ${page >= totalPages ? 'disabled' : ''}>다음</button>
-  `;
+  container.innerHTML =
+    '<button type="button" class="pagination-btn" data-page="' + Math.max(1, page - 1) + '" ' + (page <= 1 ? 'disabled' : '') + '>이전</button>' +
+    pages.join('') +
+    '<button type="button" class="pagination-btn" data-page="' + Math.min(totalPages, page + 1) + '" ' + (page >= totalPages ? 'disabled' : '') + '>다음</button>';
 
-  container.querySelectorAll('.pagination-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const nextPage = Number(btn.dataset.page || page);
+  Array.prototype.forEach.call(container.querySelectorAll('.pagination-btn'), function(btn) {
+    btn.addEventListener('click', async function() {
+      var nextPage = Number(btn.dataset.page || page);
       if (!nextPage || nextPage === equipmentListState.page) return;
       await loadEquipmentList(nextPage);
     });
@@ -313,24 +331,24 @@ function renderPagination() {
     renderRecentPagination();
     return;
   }
-
   renderFullPagination();
 }
 
 function applyListPermissionUi() {
-  const createBtn = document.getElementById('createEquipmentBtn');
+  var createBtn = document.getElementById('createEquipmentBtn');
   if (createBtn) {
     createBtn.style.display = equipmentListState.canEdit ? '' : 'none';
   }
 }
 
 function buildListRequestParams(filters, nextPage) {
-  const hasFilter = hasMeaningfulFilter(filters);
+  var hasFilter = hasMeaningfulFilter(filters);
+  var base;
 
   equipmentListState.isRecentMode = !hasFilter;
 
-  const base = {
-    request_user_email: equipmentListState.user.email || '',
+  base = {
+    request_user_email: equipmentListState.user && equipmentListState.user.email ? equipmentListState.user.email : '',
     keyword: filters.keyword,
     clinic_code: filters.clinic_code,
     team_code: filters.team_code,
@@ -341,28 +359,32 @@ function buildListRequestParams(filters, nextPage) {
   };
 
   if (!hasFilter) {
-    return {
-      ...base,
-      recent_only: 'Y',
-      include_total: 'N'
-    };
+    base.recent_only = 'Y';
+    base.include_total = 'N';
+    return base;
   }
 
-  return {
-    ...base,
-    include_total: 'Y'
-  };
+  base.include_total = 'Y';
+  return base;
 }
 
 function syncListQueryParams(filters) {
   setListQueryParams({
-    ...filters,
+    keyword: filters.keyword,
+    clinic_code: filters.clinic_code,
+    team_code: filters.team_code,
+    status: filters.status,
+    manufacturer: filters.manufacturer,
     page: equipmentListState.page,
     page_size: equipmentListState.pageSize
   });
 }
 
-async function loadEquipmentList(nextPage = equipmentListState.page) {
+async function loadEquipmentList(nextPage) {
+  var filters;
+  var requestParams;
+  var result;
+
   if (equipmentListState.loading) return;
 
   equipmentListState.loading = true;
@@ -373,12 +395,12 @@ async function loadEquipmentList(nextPage = equipmentListState.page) {
       showGlobalLoading('장비 목록을 불러오는 중...');
     }
 
-    const filters = getCurrentFilters();
-    const requestParams = buildListRequestParams(filters, nextPage);
+    filters = getCurrentFilters();
+    requestParams = buildListRequestParams(filters, nextPage || equipmentListState.page);
 
-    equipmentListState.page = nextPage;
+    equipmentListState.page = nextPage || equipmentListState.page;
 
-    const result = await apiGet('listEquipments', requestParams);
+    result = await apiGet('listEquipments', requestParams);
 
     equipmentListState.page = Number(result.page || 1);
     equipmentListState.hasNext = Boolean(result.has_next);
@@ -413,7 +435,9 @@ async function loadEquipmentList(nextPage = equipmentListState.page) {
 }
 
 async function initListFilters() {
-  const query = getListQueryParams();
+  var query = getListQueryParams();
+  var clinicEl;
+  var teamEl;
 
   equipmentListState.page = query.page > 0 ? query.page : 1;
   equipmentListState.pageSize = query.page_size > 0 ? query.page_size : 20;
@@ -421,8 +445,8 @@ async function initListFilters() {
   fillStatusFilterOptions();
   fillPageSizeOptions();
 
-  const clinicEl = document.getElementById('clinic_code');
-  const teamEl = document.getElementById('team_code');
+  clinicEl = document.getElementById('clinic_code');
+  teamEl = document.getElementById('team_code');
 
   if (window.OrgService && clinicEl && teamEl) {
     await window.OrgService.bindClinicTeam(clinicEl, teamEl, {
@@ -440,7 +464,10 @@ async function initListFilters() {
 }
 
 function bindListEvents() {
-  const searchForm = document.getElementById('searchForm');
+  var searchForm = document.getElementById('searchForm');
+  var resetBtn = document.getElementById('resetFilterBtn');
+  var pageSizeEl = document.getElementById('page_size');
+
   if (searchForm) {
     searchForm.addEventListener('submit', async function(event) {
       event.preventDefault();
@@ -448,7 +475,6 @@ function bindListEvents() {
     });
   }
 
-  const resetBtn = document.getElementById('resetFilterBtn');
   if (resetBtn) {
     resetBtn.addEventListener('click', async function() {
       setValue('keyword', '');
@@ -460,7 +486,7 @@ function bindListEvents() {
       equipmentListState.pageSize = Number(getValue('page_size') || equipmentListState.pageSize || 20) || 20;
       setValue('page_size', String(equipmentListState.pageSize));
 
-      if (window.OrgService) {
+      if (window.OrgService && typeof window.OrgService.fillTeamSelect === 'function') {
         await window.OrgService.fillTeamSelect(document.getElementById('team_code'), '', {
           includeEmpty: true,
           emptyLabel: '전체 팀',
@@ -472,7 +498,6 @@ function bindListEvents() {
     });
   }
 
-  const pageSizeEl = document.getElementById('page_size');
   if (pageSizeEl) {
     pageSizeEl.addEventListener('change', async function() {
       equipmentListState.pageSize = Number(pageSizeEl.value || 20) || 20;
@@ -481,19 +506,26 @@ function bindListEvents() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async function() {
   try {
     if (typeof showGlobalLoading === 'function') {
       showGlobalLoading('장비 목록 화면을 준비하는 중...');
     }
 
-    equipmentListState.user = window.auth?.requireAuth?.();
+    if (window.auth && typeof window.auth.requireAuth === 'function') {
+      equipmentListState.user = window.auth.requireAuth();
+    }
+
     if (!equipmentListState.user) return;
 
-    const canView = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-    if (!canView) return;
+    if (window.appPermission && typeof window.appPermission.requirePermission === 'function') {
+      var canView = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
+      if (!canView) return;
+    }
 
-    equipmentListState.canEdit = await window.appPermission.hasPermission('equipment', ['edit', 'admin']);
+    if (window.appPermission && typeof window.appPermission.hasPermission === 'function') {
+      equipmentListState.canEdit = await window.appPermission.hasPermission('equipment', ['edit', 'admin']);
+    }
 
     applyListPermissionUi();
     await initListFilters();
@@ -511,82 +543,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 });
-
-/* ===== list ux polish ===== */
-
-.equipment-list-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding: 0 2px;
-}
-
-.equipment-list-summary {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: #eef4ff;
-  border: 1px solid #d7e5ff;
-  color: #285ea8;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.pagination-btn {
-  min-width: 40px;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid #d5dce7;
-  border-radius: 12px;
-  background: #fff;
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    border-color 0.16s ease,
-    background-color 0.16s ease,
-    color 0.16s ease;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  border-color: #94a3b8;
-  background: #f8fafc;
-}
-
-.pagination-btn.is-active {
-  background: #0b1f44;
-  border-color: #0b1f44;
-  color: #fff;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-@media (max-width: 768px) {
-  .equipment-list-toolbar {
-    margin-bottom: 12px;
-  }
-
-  .equipment-list-summary {
-    width: 100%;
-    min-height: 40px;
-    padding: 0 12px;
-    border-radius: 14px;
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .pagination-btn {
-    min-height: 38px;
-    border-radius: 11px;
-    font-size: 13px;
-  }
-}
