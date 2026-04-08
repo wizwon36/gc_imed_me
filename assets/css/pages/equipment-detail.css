@@ -599,3 +599,22 @@
     grid-template-columns: 72px minmax(0, 1fr);
   }
 }
+
+.timeline-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.timeline-actions .btn {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.btn-sm {
+  min-height: 38px;
+}
