@@ -169,7 +169,7 @@ function renderListSummary() {
   if (equipmentListState.isRecentMode) {
     const page = formatNumberLocal(equipmentListState.page || 1);
     const size = formatNumberLocal(equipmentListState.pageSize || 20);
-    summaryEl.textContent = `최근 등록 장비 ${size}건 기준 · ${page} 페이지`;
+    summaryEl.textContent = `최근 등록 장비 보기 · ${size}건 단위 · ${page}페이지`;
     return;
   }
 
@@ -177,7 +177,7 @@ function renderListSummary() {
   const page = formatNumberLocal(equipmentListState.page || 1);
   const totalPages = formatNumberLocal(equipmentListState.totalPages || 1);
 
-  summaryEl.textContent = `총 ${total}건 · ${page} / ${totalPages} 페이지`;
+  summaryEl.textContent = `검색 결과 ${total}건 · ${page} / ${totalPages} 페이지`;
 }
 
 function buildEquipmentCard(item) {
