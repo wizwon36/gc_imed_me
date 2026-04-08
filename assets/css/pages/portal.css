@@ -104,3 +104,20 @@
   border-radius: 999px;
   background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
 }
+
+/* ===== portal section title line ===== */
+.portal-section-title {
+  position: relative;
+  padding-left: 14px;
+}
+
+.portal-section-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
+}
