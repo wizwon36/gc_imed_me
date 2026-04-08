@@ -1693,21 +1693,25 @@
   }
 }
 
-/* ===== label size fine tuning ===== */
+/* ===== label size fine tuning reset ===== */
 
-/* 90 x 48 : QR만 조금 아래로 */
+/* 90 x 48 */
 .equipment-label-page .device-label.size-90x48 {
-  align-items: start;
+  align-items: center;
 }
 
 .equipment-label-page .device-label.size-90x48 .qr-panel {
-  align-self: start;
-  padding-top: 10px;
+  align-self: center;
+  padding-top: 0;
 }
 
-/* 70 x 40 : 관리번호 한 줄 + QR 조금 아래로 */
+.equipment-label-page .device-label.size-90x48 .label-qr-box {
+  margin-top: 10px;
+}
+
+/* 70 x 40 */
 .equipment-label-page .device-label.size-70x40 {
-  align-items: start;
+  align-items: center;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-row-emphasis {
@@ -1724,23 +1728,30 @@
 }
 
 .equipment-label-page .device-label.size-70x40 .qr-panel {
-  align-self: start;
-  padding-top: 12px;
+  align-self: center;
+  padding-top: 0;
 }
 
-/* ===== print fine tuning ===== */
+.equipment-label-page .device-label.size-70x40 .label-qr-box {
+  margin-top: 12px;
+}
+
 @media print {
   .equipment-label-page .device-label.size-90x48 {
-    align-items: start;
+    align-items: center;
   }
 
   .equipment-label-page .device-label.size-90x48 .qr-panel {
-    align-self: start;
-    padding-top: 2mm;
+    align-self: center;
+    padding-top: 0;
+  }
+
+  .equipment-label-page .device-label.size-90x48 .label-qr-box {
+    margin-top: 2mm;
   }
 
   .equipment-label-page .device-label.size-70x40 {
-    align-items: start;
+    align-items: center;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-row-emphasis {
@@ -1757,7 +1768,11 @@
   }
 
   .equipment-label-page .device-label.size-70x40 .qr-panel {
-    align-self: start;
-    padding-top: 2.2mm;
+    align-self: center;
+    padding-top: 0;
+  }
+
+  .equipment-label-page .device-label.size-70x40 .label-qr-box {
+    margin-top: 2.2mm;
   }
 }
