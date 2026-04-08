@@ -1,6 +1,6 @@
 
 /* ===== PORTAL CSS ===== */
-/*
+
 .portal-page-compact .portal-header-userline {
   display: inline-flex;
   gap: 8px;
@@ -26,7 +26,6 @@
   width: 4px;
   background: linear-gradient(180deg,#2563eb,#60a5fa);
 }
-*/
 
 /* ===== portal unify ===== */
 
@@ -38,4 +37,53 @@
 
 .portal-section-title {
   font-size: 28px;
+}
+
+/* ===== portal section title line fix ===== */
+/* 공통 스타일(common.css)에서 들어오는 border-left / pseudo element를 모두 끄고
+   포털 섹션에서 한 줄만 다시 그림 */
+
+.portal-section-head--compact,
+.portal-section-head--compact > div {
+  position: relative;
+}
+
+.portal-section-head--compact > div {
+  padding-left: 14px;
+}
+
+/* 기존/공통 pseudo line 제거 */
+.portal-section-head--compact::before,
+.portal-section-head--compact::after,
+.portal-section-head--compact > div::before,
+.portal-section-head--compact > div::after,
+.portal-section-title::before,
+.portal-section-title::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* 기존/공통 border-left 제거 */
+.portal-section-head--compact,
+.portal-section-head--compact > div,
+.portal-section-title {
+  border-left: 0 !important;
+  box-shadow: none;
+}
+
+/* 한 줄만 다시 생성 */
+.portal-section-head--compact > div {
+  position: relative;
+}
+
+.portal-section-head--compact > div::before {
+  content: "";
+  display: block !important;
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
 }
