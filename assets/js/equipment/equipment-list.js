@@ -511,3 +511,82 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 });
+
+/* ===== list ux polish ===== */
+
+.equipment-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 0 2px;
+}
+
+.equipment-list-summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #eef4ff;
+  border: 1px solid #d7e5ff;
+  color: #285ea8;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pagination-btn {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #d5dce7;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.pagination-btn.is-active {
+  background: #0b1f44;
+  border-color: #0b1f44;
+  color: #fff;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 768px) {
+  .equipment-list-toolbar {
+    margin-bottom: 12px;
+  }
+
+  .equipment-list-summary {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .pagination-btn {
+    min-height: 38px;
+    border-radius: 11px;
+    font-size: 13px;
+  }
+}
