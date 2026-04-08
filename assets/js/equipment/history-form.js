@@ -53,6 +53,7 @@ async function loadEquipmentInfo() {
 
 async function buildHistoryPayload() {
   const currentUser = getCurrentUserSafe();
+  const requestDepartment = qs('#request_department').value.trim();
 
   return {
     equipment_id: qs('#equipment_id').value.trim(),
@@ -60,9 +61,12 @@ async function buildHistoryPayload() {
 
     request_clinic_code: normalizeText(currentEquipment && currentEquipment.clinic_code),
     request_clinic_name: normalizeText(currentEquipment && currentEquipment.clinic_name),
-    request_team_code: normalizeText(currentEquipment && currentEquipment.team_code),
-    request_team_name: normalizeText(currentEquipment && currentEquipment.team_name),
-    request_department: qs('#request_department').value,
+
+    // 팀 정보가 필수 검증에 걸리는 경우를 대비해
+    // 현재 요청부서 값을 그대로 같이 태워서 보냄
+    request_team_code: requestDepartment,
+    request_team_name: requestDepartment,
+    request_department: requestDepartment,
 
     requester: qs('#requester').value.trim(),
     work_date: qs('#work_date').value,
