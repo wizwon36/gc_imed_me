@@ -2485,7 +2485,6 @@ select.input {
 }
 
 /* hover (카드 공통) */
-.card:hover,
 .portal-app-card:hover,
 .equipment-item-card:hover,
 .dashboard-action-card:hover {
@@ -2495,7 +2494,6 @@ select.input {
 }
 
 /* 클릭 느낌 */
-.card:active,
 .portal-app-card:active,
 .dashboard-action-card:active {
   transform: translateY(0);
