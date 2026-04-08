@@ -531,3 +531,23 @@
     min-height: 46px;
   }
 }
+
+/* ===== section title order swap ===== */
+
+.form-card .section-head > div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 기본 정보 먼저 */
+.form-card .section-title {
+  order: 1;
+}
+
+/* BASIC INFO 아래로 */
+.form-card .portal-section-kicker {
+  order: 2;
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.7;
+}
