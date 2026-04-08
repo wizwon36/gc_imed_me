@@ -1,6 +1,6 @@
 
 /* ===== PORTAL CSS ===== */
-
+/*
 .portal-page-compact .portal-header-userline {
   display: inline-flex;
   gap: 8px;
@@ -10,12 +10,13 @@
   background: #fff;
 }
 
+
 .portal-section-head--compact > div {
   position: relative;
   padding-left: 14px;
 }
 
-/*
+
 .portal-section-head--compact > div::before {
   content: "";
   position: absolute;
