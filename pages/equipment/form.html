@@ -7,9 +7,9 @@
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="../../assets/css/pages/equipment-form.css" />
 </head>
-<body>
-  <div class="container page-shell">
-    <section class="top-brand-bar">
+<body class="portal-page equipment-form-page">
+  <div class="container page-shell equipment-form-shell">
+    <section class="top-brand-bar portal-topbar portal-hero-card equipment-form-topbar">
       <div class="top-brand-left">
         <div class="top-brand-logo">+</div>
         <div class="top-brand-texts">
@@ -18,15 +18,16 @@
         </div>
       </div>
 
-      <div class="top-brand-actions">
-        <a class="nav-link" href="../../portal.html">HOME</a>
-        <a class="nav-link" href="dashboard.html">대시보드</a>
-        <a class="nav-link" href="list.html">장비목록</a>
+      <div class="top-brand-actions portal-top-actions equipment-form-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+        <a class="portal-header-btn portal-header-btn--secondary" href="dashboard.html">대시보드</a>
+        <a class="portal-header-btn portal-header-btn--secondary" href="list.html">장비목록</a>
       </div>
     </section>
 
-    <section class="page-hero-simple">
-      <div>
+    <section class="page-hero-simple equipment-form-hero">
+      <div class="equipment-form-hero-copy">
+        <span class="portal-section-kicker">EQUIPMENT FORM</span>
         <h1 class="page-title" id="pageTitle">장비 등록</h1>
         <p class="page-desc" id="pageDesc">신규 의료장비 정보를 등록합니다.</p>
       </div>
@@ -34,20 +35,26 @@
 
     <div id="messageBox" class="message-box"></div>
 
-    <form id="equipmentForm" class="card form-card">
-      <div class="section-head">
-        <h2 class="section-title">기본 정보</h2>
+    <form id="equipmentForm" class="card form-card equipment-form-card">
+      <div class="section-head equipment-form-section-head">
+        <div>
+          <span class="portal-section-kicker">BASIC INFO</span>
+          <h2 class="section-title">기본 정보</h2>
+          <div class="sub-text equipment-form-section-desc">
+            장비 식별, 소속, 구매 및 관리 정보를 입력합니다.
+          </div>
+        </div>
       </div>
 
       <div class="form-grid two-col">
         <label class="form-field">
           <span class="form-label required">장비명</span>
-          <input type="text" id="equipment_name" class="input" required />
+          <input type="text" id="equipment_name" class="input" placeholder="예: 초음파 진단기" required />
         </label>
 
         <label class="form-field">
           <span class="form-label required">모델명</span>
-          <input type="text" id="model_name" class="input" required />
+          <input type="text" id="model_name" class="input" placeholder="모델명을 입력하세요" required />
         </label>
 
         <label class="form-field">
@@ -73,7 +80,7 @@
 
         <label class="form-field">
           <span class="form-label">제조사</span>
-          <input type="text" id="manufacturer" class="input" />
+          <input type="text" id="manufacturer" class="input" placeholder="제조사를 입력하세요" />
         </label>
 
         <label class="form-field">
@@ -88,27 +95,27 @@
 
         <label class="form-field">
           <span class="form-label required">시리얼번호</span>
-          <input type="text" id="serial_no" class="input" required />
+          <input type="text" id="serial_no" class="input" placeholder="시리얼번호를 입력하세요" required />
         </label>
 
         <label class="form-field">
           <span class="form-label">구매처</span>
-          <input type="text" id="vendor" class="input" />
+          <input type="text" id="vendor" class="input" placeholder="구매처를 입력하세요" />
         </label>
 
         <label class="form-field">
           <span class="form-label">취득가액</span>
-          <input type="number" id="acquisition_cost" class="input" />
+          <input type="number" id="acquisition_cost" class="input" placeholder="숫자만 입력" />
         </label>
 
         <label class="form-field">
           <span class="form-label">담당자</span>
-          <input type="text" id="manager_name" class="input" />
+          <input type="text" id="manager_name" class="input" placeholder="담당자명을 입력하세요" />
         </label>
 
         <label class="form-field">
           <span class="form-label">담당자 연락처</span>
-          <input type="text" id="manager_phone" class="input" />
+          <input type="text" id="manager_phone" class="input" placeholder="연락처를 입력하세요" />
         </label>
 
         <label class="form-field">
@@ -123,17 +130,17 @@
 
         <label class="form-field">
           <span class="form-label">위치</span>
-          <input type="text" id="location" class="input" />
+          <input type="text" id="location" class="input" placeholder="예: 3층 진료실" />
         </label>
 
         <label class="form-field">
           <span class="form-label">현재 사용자</span>
-          <input type="text" id="current_user" class="input" />
+          <input type="text" id="current_user" class="input" placeholder="현재 사용자를 입력하세요" />
         </label>
 
         <label class="form-field full-col">
           <span class="form-label">메모</span>
-          <textarea id="memo" class="textarea" rows="5"></textarea>
+          <textarea id="memo" class="textarea" rows="5" placeholder="추가로 관리해야 할 사항을 입력하세요"></textarea>
         </label>
       </div>
 
