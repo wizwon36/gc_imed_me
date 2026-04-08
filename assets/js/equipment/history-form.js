@@ -42,8 +42,6 @@ async function loadEquipmentInfo() {
     qs('#equipment_id').value = item.equipment_id || '';
     qs('#equipment_name').value = item.equipment_name || '';
     qs('#request_department').value = item.department || '';
-
-    await initHistoryDepartmentSelector(item);
   } catch (error) {
     showMessage(error.message, 'error');
   } finally {
