@@ -1,24 +1,17 @@
-
 function buildEquipmentDetailUrl(equipmentId) {
   return `${CONFIG.SITE_BASE_URL}/pages/equipment/detail.html?id=${encodeURIComponent(equipmentId)}`;
 }
 
 function renderLabelQr(equipmentId) {
   const qrArea = qs('#labelQr');
-  const caption = qs('#labelQrCaption');
-
   const qrValue = buildEquipmentDetailUrl(equipmentId);
 
   qrArea.innerHTML = '';
-  if (caption) {
-    caption.textContent = '';
-    caption.style.display = 'none';
-  }
 
   new QRCode(qrArea, {
     text: qrValue,
-    width: 128,
-    height: 128
+    width: 124,
+    height: 124
   });
 }
 
@@ -30,6 +23,7 @@ async function loadLabelData() {
 
   if (!equipmentId) {
     showMessage('equipment_id가 없습니다.', 'error');
+    hideGlobalLoading();
     return;
   }
 
@@ -42,7 +36,8 @@ async function loadLabelData() {
       id: equipmentId,
       request_user_email: user.email || ''
     });
-    const item = result.data;
+
+    const item = result.data || {};
 
     qs('#labelEquipmentName').textContent = item.equipment_name || '-';
     qs('#labelEquipmentId').textContent = item.equipment_id || '-';
@@ -51,9 +46,9 @@ async function loadLabelData() {
     qs('#labelLocation').textContent = item.location || '-';
     qs('#labelStatus').textContent = statusLabel(item.status || '');
 
-    renderLabelQr(item.equipment_id);
+    renderLabelQr(item.equipment_id || equipmentId);
   } catch (error) {
-    showMessage(error.message, 'error');
+    showMessage(error.message || '라벨 정보를 불러오는 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
   }
@@ -70,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!ok) return;
 
     qs('#printBtn').addEventListener('click', () => window.print());
+
     await loadLabelData();
   } catch (error) {
     showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
