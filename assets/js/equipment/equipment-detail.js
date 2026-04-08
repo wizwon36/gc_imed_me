@@ -387,10 +387,11 @@ async function loadEquipmentDetail() {
   }
 
   const user = getCurrentUser();
+  const userEmail = user?.email || '';
 
   const detailResult = await apiGet('getEquipment', {
     id,
-    request_user_email: user?.email || ''
+    request_user_email: userEmail
   });
 
   currentEquipmentData = detailResult.data || {};
@@ -400,8 +401,10 @@ async function loadEquipmentDetail() {
   renderQrCode(currentEquipmentData.equipment_id);
   applyActionVisibility();
 
-  loadHistorySection(id, user?.email || '');
-  loadInventorySection(id, user?.email || '');
+  await Promise.all([
+    loadHistorySection(id, userEmail),
+    loadInventorySection(id, userEmail)
+  ]);
 }
 
 async function deleteCurrentEquipment() {
@@ -458,7 +461,7 @@ function moveToLabelPrint() {
 document.addEventListener('DOMContentLoaded', async function() {
   try {
     if (typeof showGlobalLoading === 'function') {
-      showGlobalLoading('장비 기본정보를 불러오는 중...');
+      showGlobalLoading('장비 상세정보와 이력을 불러오는 중...');
     }
 
     const user = window.auth?.requireAuth?.();
