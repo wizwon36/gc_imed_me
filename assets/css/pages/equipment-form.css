@@ -566,3 +566,27 @@
   margin: 0;
   display: block;
 }
+
+/* ===== history form section separation ===== */
+
+.equipment-form-card .section-head + .form-grid {
+  margin-bottom: 0;
+}
+
+/* 두 번째 section-head(이력 정보) 강조 */
+.equipment-form-card .section-head[style] {
+  margin-top: 28px !important;
+  padding-top: 24px;
+  border-top: 1px solid #e7ecf3;
+}
+
+/* 대상장비 영역 입력칸은 읽기 전용 느낌 강화 */
+.equipment-form-card #equipment_id,
+.equipment-form-card #equipment_name {
+  background: #f8fafc;
+}
+
+/* 이력 정보 영역 시작부에 살짝 시각 강조 */
+.equipment-form-card .section-head[style] + .form-grid {
+  margin-top: 4px;
+}
