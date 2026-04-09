@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const user = window.auth?.getSession?.();
+  const userEmail = user?.email || user?.user_email || '';
 
-  if (!user || !user.email) {
+  if (!user || !userEmail) {
     alert('로그인 정보가 없습니다. 다시 로그인해 주세요.');
     location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
     return;
@@ -20,7 +21,9 @@ async function handleChangePassword(event) {
   event.preventDefault();
 
   const user = window.auth?.getSession?.();
-  if (!user || !user.email) {
+  const userEmail = user?.email || user?.user_email || '';
+
+  if (!user || !userEmail) {
     alert('로그인 정보가 없습니다. 다시 로그인해 주세요.');
     location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
     return;
@@ -62,7 +65,7 @@ async function handleChangePassword(event) {
 
   try {
     const result = await apiPost('changePassword', {
-      user_email: user.email,
+      user_email: userEmail,
       current_password: currentPassword,
       new_password: newPassword
     });
@@ -71,6 +74,8 @@ async function handleChangePassword(event) {
 
     const updatedUser = {
       ...user,
+      email: userEmail,
+      user_email: userEmail,
       first_login: 'N'
     };
 
@@ -99,8 +104,6 @@ function setMessage(message, type = '') {
     el.classList.add(type);
   }
 }
-
-
 
 function waitForPaint() {
   return new Promise((resolve) => {
