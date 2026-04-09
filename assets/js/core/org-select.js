@@ -33,35 +33,40 @@
     return orgDataCache;
   }
 
-  function fillSelectOptions(selectEl, items, config = {}) {
-    if (!selectEl) return;
+function fillSelectOptions(selectEl, items, config = {}) {
+  if (!selectEl) return;
 
-    const valueKey = config.valueKey || 'code_value';
-    const labelKey = config.labelKey || 'code_name';
-    const includeEmpty = config.includeEmpty !== false;
-    const emptyText = config.emptyText || '선택하세요';
+  const valueKey = config.valueKey || 'code_value';
+  const labelKey = config.labelKey || 'code_name';
+  const includeEmpty = config.includeEmpty !== false;
+  const emptyText = config.emptyText || '선택하세요';
+  const keepDisabled = config.keepDisabled === true;
 
-    const currentValue = normalizeText(selectEl.value);
-    selectEl.innerHTML = '';
+  const currentValue = normalizeText(selectEl.value);
+  selectEl.innerHTML = '';
 
-    if (includeEmpty) {
-      const emptyOption = document.createElement('option');
-      emptyOption.value = '';
-      emptyOption.textContent = emptyText;
-      selectEl.appendChild(emptyOption);
-    }
-
-    (items || []).forEach(item => {
-      const option = document.createElement('option');
-      option.value = normalizeText(item[valueKey]);
-      option.textContent = normalizeText(item[labelKey]);
-      selectEl.appendChild(option);
-    });
-
-    if (currentValue) {
-      selectEl.value = currentValue;
-    }
+  if (includeEmpty) {
+    const emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = emptyText;
+    selectEl.appendChild(emptyOption);
   }
+
+  (items || []).forEach(item => {
+    const option = document.createElement('option');
+    option.value = normalizeText(item[valueKey]);
+    option.textContent = normalizeText(item[labelKey]);
+    selectEl.appendChild(option);
+  });
+
+  if (currentValue) {
+    selectEl.value = currentValue;
+  }
+
+  if (!keepDisabled) {
+    selectEl.disabled = false;
+  }
+}
 
   function getFilteredTeams(clinicCode) {
     const code = normalizeText(clinicCode);
@@ -88,15 +93,22 @@
     }
 
     function renderTeamsByClinic(clinicCode, preferredTeamCode = '') {
-      const teams = getFilteredTeams(clinicCode);
+      const normalizedClinicCode = normalizeText(clinicCode);
+      const teams = getFilteredTeams(normalizedClinicCode);
+    
       fillSelectOptions(teamSelect, teams, {
-        emptyText: '팀을 선택하세요'
+        emptyText: '팀을 선택하세요',
+        keepDisabled: !normalizedClinicCode
       });
-
+    
+      teamSelect.disabled = !normalizedClinicCode;
+    
       if (preferredTeamCode) {
         teamSelect.value = normalizeText(preferredTeamCode);
+      } else {
+        teamSelect.value = '';
       }
-
+    
       if (onTeamChanged) {
         onTeamChanged({
           clinic_code: normalizeText(clinicSelect.value),
