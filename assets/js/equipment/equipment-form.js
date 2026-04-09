@@ -15,6 +15,37 @@ function normalizeText(value) {
   return String(value || '').trim();
 }
 
+function formatNumberWithComma(value) {
+  const raw = String(value || '').replace(/[^\d]/g, '');
+  if (!raw) return '';
+  return raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function unformatNumber(value) {
+  return String(value || '').replace(/[^\d.-]/g, '');
+}
+
+function bindCurrencyInput(selector) {
+  const el = qs(selector);
+  if (!el) return;
+
+  el.addEventListener('input', function() {
+    const caretToEnd = this === document.activeElement;
+    this.value = formatNumberWithComma(this.value);
+    if (caretToEnd) {
+      requestAnimationFrame(() => {
+        try {
+          this.setSelectionRange(this.value.length, this.value.length);
+        } catch (e) {}
+      });
+    }
+  });
+
+  el.addEventListener('blur', function() {
+    this.value = formatNumberWithComma(this.value);
+  });
+}
+
 function formatDateInputValue(value) {
   const raw = String(value || '').trim();
   if (!raw) return '';
@@ -194,7 +225,7 @@ function fillEquipmentForm(item) {
   qs('#vendor').value = item.vendor || '';
   qs('#manager_name').value = item.manager_name || '';
   qs('#manager_phone').value = item.manager_phone || '';
-  qs('#acquisition_cost').value = item.acquisition_cost ?? '';
+  qs('#acquisition_cost').value = formatNumberWithComma(item.acquisition_cost ?? '');
   qs('#maintenance_end_date').value = formatDateInputValue(item.maintenance_end_date);
   qs('#location').value = item.location || '';
   qs('#current_user').value = item.current_user || '';
@@ -262,7 +293,7 @@ function buildEquipmentPayload() {
     vendor: normalizeText(qs('#vendor')?.value),
     manager_name: normalizeText(qs('#manager_name')?.value),
     manager_phone: normalizeText(qs('#manager_phone')?.value),
-    acquisition_cost: normalizeText(qs('#acquisition_cost')?.value),
+    acquisition_cost: unformatNumber(qs('#acquisition_cost')?.value),
     maintenance_end_date: normalizeText(qs('#maintenance_end_date')?.value),
     status: normalizeText(qs('#status')?.value) || 'IN_USE',
     location: normalizeText(qs('#location')?.value),
@@ -364,6 +395,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setPageMode();
     await initializeOrgSelectors();
     await loadStatusOptions('IN_USE');
+    bindCurrencyInput('#acquisition_cost');
     await loadEquipmentIfEditMode();
     updateDepartmentPreview();
 
