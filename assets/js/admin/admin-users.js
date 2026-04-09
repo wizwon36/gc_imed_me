@@ -2,10 +2,7 @@ let currentSessionUser = null;
 let editingUserEmail = '';
 let allUsers = [];
 let hasLoadedUsers = false;
-let orgDataCache = {
-  clinics: [],
-  teams: []
-};
+let orgBinder = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
@@ -23,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   showGlobalLoading('초기 정보를 불러오는 중...');
   try {
-    await loadOrgData();
+    await initializeOrgData();
   } catch (error) {
     setAdminMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -59,7 +56,6 @@ function bindEvents() {
 
   document.getElementById('clinic_code')?.addEventListener('change', () => {
     clearFieldInvalid();
-    syncTeamSelectByClinic('');
   });
 
   document.getElementById('userList')?.addEventListener('click', async (event) => {
@@ -92,87 +88,31 @@ function getRequestUserEmail() {
     .toLowerCase();
 }
 
-async function loadOrgData() {
-  const result = await apiGet('getOrgData');
-  orgDataCache = result.data || { clinics: [], teams: [] };
+async function initializeOrgData() {
+  await window.orgSelect.loadOrgData();
 
-  populateClinicSelect(
+  window.orgSelect.fillSelectOptions(
     document.getElementById('clinic_code'),
-    orgDataCache.clinics,
-    '의원을 선택하세요'
+    window.orgSelect.getClinics(),
+    { emptyText: '의원을 선택하세요' }
   );
 
-  populateClinicSelect(
+  window.orgSelect.fillSelectOptions(
     document.getElementById('userFilterClinic'),
-    orgDataCache.clinics,
-    '전체 의원'
+    window.orgSelect.getClinics(),
+    { emptyText: '전체 의원' }
   );
 
-  populateTeamSelect(
+  window.orgSelect.fillSelectOptions(
     document.getElementById('team_code'),
     [],
-    '팀을 선택하세요'
+    { emptyText: '팀을 선택하세요' }
   );
-}
 
-function populateClinicSelect(selectEl, clinics, emptyLabel, selectedValue = '') {
-  if (!selectEl) return;
-
-  const options = [`<option value="">${escapeHtml(emptyLabel)}</option>`]
-    .concat(
-      (clinics || []).map((clinic) => {
-        const code = normalize(clinic.code || clinic.code_value);
-        const name = normalize(clinic.code_name || clinic.name);
-        const selected = code === selectedValue ? ' selected' : '';
-        return `<option value="${escapeHtml(code)}"${selected}>${escapeHtml(name)}</option>`;
-      })
-    )
-    .join('');
-
-  selectEl.innerHTML = options;
-  selectEl.disabled = false;
-}
-
-function populateTeamSelect(selectEl, teams, emptyLabel, selectedValue = '') {
-  if (!selectEl) return;
-
-  const options = [`<option value="">${escapeHtml(emptyLabel)}</option>`]
-    .concat(
-      (teams || []).map((team) => {
-        const code = normalize(team.code || team.code_value);
-        const name = normalize(team.code_name || team.name);
-        const selected = code === selectedValue ? ' selected' : '';
-        return `<option value="${escapeHtml(code)}"${selected}>${escapeHtml(name)}</option>`;
-      })
-    )
-    .join('');
-
-  selectEl.innerHTML = options;
-  selectEl.disabled = false;
-}
-
-function getTeamsByClinicCode(clinicCode) {
-  const code = normalize(clinicCode);
-  if (!code) return [];
-
-  return (orgDataCache.teams || []).filter((team) => {
-    const parentClinicCode =
-      normalize(team.parent_code) ||
-      normalize(team.parent_code_value) ||
-      normalize(team.clinic_code);
-    return parentClinicCode === code;
+  orgBinder = window.orgSelect.bindClinicTeamSelects({
+    clinicSelect: document.getElementById('clinic_code'),
+    teamSelect: document.getElementById('team_code')
   });
-}
-
-function syncTeamSelectByClinic(selectedTeamCode = '') {
-  const clinicSelect = document.getElementById('clinic_code');
-  const teamSelect = document.getElementById('team_code');
-  if (!clinicSelect || !teamSelect) return;
-
-  const clinicCode = normalize(clinicSelect.value);
-  const teams = getTeamsByClinicCode(clinicCode);
-
-  populateTeamSelect(teamSelect, teams, '팀을 선택하세요', selectedTeamCode);
 }
 
 function buildDepartmentText(clinicName, teamName) {
@@ -344,10 +284,7 @@ async function updateUser() {
     user_email: editingUserEmail,
     user_name: normalize(document.getElementById('userName')?.value),
     clinic_code: org.clinic_code,
-    clinic_name: org.clinic_name,
     team_code: org.team_code,
-    team_name: org.team_name,
-    department: org.department,
     phone: normalize(document.getElementById('phone')?.value),
     role: normalize(document.getElementById('globalRole')?.value) || 'user',
     active: normalize(document.getElementById('userActive')?.value) || 'Y',
@@ -532,14 +469,16 @@ async function editUser(userEmail) {
     document.getElementById('globalRole').value = user.role || 'user';
     document.getElementById('userActive').value = user.active || 'Y';
 
-    populateClinicSelect(
-      document.getElementById('clinic_code'),
-      orgDataCache.clinics,
-      '의원을 선택하세요',
-      user.clinic_code || ''
-    );
+    const clinicSelect = document.getElementById('clinic_code');
 
-    syncTeamSelectByClinic(user.team_code || '');
+    if (clinicSelect) {
+      clinicSelect.value = user.clinic_code || '';
+    }
+
+    if (orgBinder?.renderTeamsByClinic) {
+      orgBinder.renderTeamsByClinic(user.clinic_code || '', user.team_code || '');
+    }
+    
     setPermissionValues(permissions);
     setEditMode(user);
 
@@ -615,19 +554,15 @@ function clearUserForm() {
     if (el) el.value = '';
   });
 
-  populateClinicSelect(
-    document.getElementById('clinic_code'),
-    orgDataCache.clinics,
-    '의원을 선택하세요',
-    ''
-  );
+  const clinicSelect = document.getElementById('clinic_code');
+  const teamSelect = document.getElementById('team_code');
 
-  populateTeamSelect(
-    document.getElementById('team_code'),
-    [],
-    '팀을 선택하세요',
-    ''
-  );
+  if (clinicSelect) clinicSelect.value = '';
+  if (teamSelect) {
+    window.orgSelect.fillSelectOptions(teamSelect, [], {
+      emptyText: '팀을 선택하세요'
+    });
+  }
 
   const roleEl = document.getElementById('globalRole');
   if (roleEl) roleEl.value = 'user';
