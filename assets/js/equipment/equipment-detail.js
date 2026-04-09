@@ -9,9 +9,16 @@ function getCurrentUser() {
   return null;
 }
 
+function getCurrentUserEmail() {
+  const user = getCurrentUser();
+  return String((user && (user.email || user.user_email)) || '').trim().toLowerCase();
+}
+
 async function getEquipmentPermissionContext() {
   const user = getCurrentUser();
-  if (!user || !user.email) {
+  const userEmail = getCurrentUserEmail();
+
+  if (!user || !userEmail) {
     return { canView: false, canEdit: false, canDelete: false };
   }
 
@@ -22,16 +29,16 @@ async function getEquipmentPermissionContext() {
 
   try {
     const result = await apiGet('getUserAppPermission', {
-      user_email: user.email,
+      user_email: userEmail,
       app_id: 'equipment',
-      request_user_email: user.email
+      request_user_email: userEmail
     });
 
     const permission = String((result && result.data && result.data.permission) || '').trim().toLowerCase();
 
     return {
-      canView: ['view', 'edit', 'admin'].indexOf(permission) > -1,
-      canEdit: ['edit', 'admin'].indexOf(permission) > -1,
+      canView: ['view', 'edit', 'admin'].includes(permission),
+      canEdit: ['edit', 'admin'].includes(permission),
       canDelete: false
     };
   } catch (error) {
@@ -58,6 +65,7 @@ function formatDisplayDate(value) {
     const dd = String(parsed.getDate()).padStart(2, '0');
     return yyyy + '-' + mm + '-' + dd;
   }
+
   return raw;
 }
 
@@ -92,7 +100,7 @@ function safeNumber(value) {
 
 function invalidateDashboardSessionCacheSafe() {
   try {
-    sessionStorage.removeItem('gc_imed_dashboard_v1');
+    sessionStorage.removeItem('gc_imed_dashboard_v2');
   } catch (error) {}
 }
 
@@ -120,17 +128,9 @@ function renderDetailSkeleton() {
   const qrBox = qs('#qrBox');
   const qrText = qs('#qrText');
 
-  if (detailInfoGrid) {
-    detailInfoGrid.innerHTML = '';
-  }
-
-  if (qrBox) {
-    qrBox.innerHTML = '';
-  }
-
-  if (qrText) {
-    qrText.innerHTML = '';
-  }
+  if (detailInfoGrid) detailInfoGrid.innerHTML = '';
+  if (qrBox) qrBox.innerHTML = '';
+  if (qrText) qrText.innerHTML = '';
 }
 
 function renderSectionLoading(areaSelector, countSelector) {
@@ -184,7 +184,9 @@ function renderQrCode(equipmentId) {
       height: 180
     });
   } else {
-    qrBox.innerHTML = 'QR 라이브러리를 불러오지 못했습니다.<br>아래 링크로 접근하세요.<br><br>' + escapeHtml(qrValue);
+    qrBox.innerHTML =
+      'QR 라이브러리를 불러오지 못했습니다.<br>아래 링크로 접근하세요.<br><br>' +
+      escapeHtml(qrValue);
   }
 }
 
@@ -196,7 +198,7 @@ function renderDetailInfo(item) {
     { label: '장비번호', value: item.equipment_id },
     { label: '장비명', value: item.equipment_name },
     { label: '모델명', value: item.model_name },
-    { label: '사용부서', value: item.department },
+    { label: '사용부서', value: item.department_display || item.department },
     { label: '제조사', value: item.manufacturer },
     { label: '제조일자', value: formatDisplayDate(item.manufacture_date) },
     { label: '취득일자', value: formatDisplayDate(item.purchase_date) },
@@ -215,8 +217,9 @@ function renderDetailInfo(item) {
   ];
 
   detailInfoGrid.innerHTML = fields.map(function(field) {
+    const wideClass = field.label === '비고' ? ' info-tile-wide' : '';
     return (
-      '<div class="info-tile ' + (field.label === '비고' ? 'info-tile-wide' : '') + '">' +
+      '<div class="info-tile' + wideClass + '">' +
         '<div class="info-tile-label">' + escapeHtml(field.label) + '</div>' +
         '<div class="info-tile-value">' + nl2br(field.value) + '</div>' +
       '</div>'
@@ -273,22 +276,10 @@ function renderHistories(items) {
         '</div>' +
 
         '<div class="timeline-meta">' +
-          '<div class="timeline-meta-item">' +
-            '<span class="timeline-meta-label">처리업체</span>' +
-            '<span class="timeline-meta-value">' + safeValue(item.vendor_name) + '</span>' +
-          '</div>' +
-          '<div class="timeline-meta-item">' +
-            '<span class="timeline-meta-label">수리금액</span>' +
-            '<span class="timeline-meta-value">' + safeNumber(item.amount) + '</span>' +
-          '</div>' +
-          '<div class="timeline-meta-item">' +
-            '<span class="timeline-meta-label">다음 조치일</span>' +
-            '<span class="timeline-meta-value">' + safeValue(formatDisplayDate(item.next_action_date)) + '</span>' +
-          '</div>' +
-          '<div class="timeline-meta-item">' +
-            '<span class="timeline-meta-label">요청부서</span>' +
-            '<span class="timeline-meta-value">' + safeValue(item.request_department) + '</span>' +
-          '</div>' +
+          '<div class="timeline-meta-item"><span class="timeline-meta-label">처리업체</span><span class="timeline-meta-value">' + safeValue(item.vendor_name) + '</span></div>' +
+          '<div class="timeline-meta-item"><span class="timeline-meta-label">수리금액</span><span class="timeline-meta-value">' + safeNumber(item.amount) + '</span></div>' +
+          '<div class="timeline-meta-item"><span class="timeline-meta-label">다음 조치일</span><span class="timeline-meta-value">' + safeValue(formatDisplayDate(item.next_action_date)) + '</span></div>' +
+          '<div class="timeline-meta-item"><span class="timeline-meta-label">요청부서</span><span class="timeline-meta-value">' + safeValue(item.request_department_display || item.request_department) + '</span></div>' +
         '</div>' +
 
         '<div class="timeline-desc">' + nl2br(item.description || '-') + '</div>' +
@@ -322,16 +313,12 @@ function renderInventoryLogs(items) {
             '<div class="timeline-date">' + safeValue(formatDisplayDate(item.checked_at)) + ' · ' + safeValue(item.checked_by) + '</div>' +
           '</div>' +
         '</div>' +
+
         '<div class="timeline-meta">' +
-          '<div class="timeline-meta-item">' +
-            '<span class="timeline-meta-label">부서</span>' +
-            '<span class="timeline-meta-value">' + safeValue(item.department_at_check) + '</span>' +
-          '</div>' +
-          '<div class="timeline-meta-item">' +
-            '<span class="timeline-meta-label">위치</span>' +
-            '<span class="timeline-meta-value">' + safeValue(item.location_at_check) + '</span>' +
-          '</div>' +
+          '<div class="timeline-meta-item"><span class="timeline-meta-label">부서</span><span class="timeline-meta-value">' + safeValue(item.department_at_check_display || item.department_at_check) + '</span></div>' +
+          '<div class="timeline-meta-item"><span class="timeline-meta-label">위치</span><span class="timeline-meta-value">' + safeValue(item.location_at_check) + '</span></div>' +
         '</div>' +
+
         '<div class="timeline-desc">' + nl2br(item.memo || '-') + '</div>' +
       '</div>'
     );
@@ -340,11 +327,13 @@ function renderInventoryLogs(items) {
 
 async function loadHistorySection(equipmentId, userEmail) {
   renderSectionLoading('#historyArea', '#historyCountText');
+
   try {
     const result = await apiGet('listHistories', {
       equipment_id: equipmentId,
       request_user_email: userEmail || ''
     });
+
     renderHistories((result && result.data) || []);
   } catch (error) {
     renderSectionError('#historyArea', '#historyCountText', error.message || '이력 정보를 불러오지 못했습니다.');
@@ -353,11 +342,13 @@ async function loadHistorySection(equipmentId, userEmail) {
 
 async function loadInventorySection(equipmentId, userEmail) {
   renderSectionLoading('#inventoryArea', '#inventoryCountText');
+
   try {
     const result = await apiGet('listInventoryLogs', {
       equipment_id: equipmentId,
       request_user_email: userEmail || ''
     });
+
     renderInventoryLogs((result && result.data) || []);
   } catch (error) {
     renderSectionError('#inventoryArea', '#inventoryCountText', error.message || '재고조사 정보를 불러오지 못했습니다.');
@@ -377,8 +368,7 @@ async function loadEquipmentDetail() {
     throw new Error('장비 ID가 없습니다.');
   }
 
-  const user = getCurrentUser();
-  const userEmail = (user && user.email) || '';
+  const userEmail = getCurrentUserEmail();
 
   const detailResult = await apiGet('getEquipment', {
     id: id,
@@ -405,7 +395,7 @@ async function deleteCurrentEquipment() {
     return;
   }
 
-  const user = getCurrentUser();
+  const userEmail = getCurrentUserEmail();
   const confirmed = confirm('이 장비를 삭제하시겠습니까?');
   if (!confirmed) return;
 
@@ -413,8 +403,8 @@ async function deleteCurrentEquipment() {
     showGlobalLoading('장비를 삭제하는 중...');
     await apiPost('deleteEquipment', {
       equipment_id: currentEquipmentId,
-      request_user_email: (user && user.email) || '',
-      deleted_by: (user && user.email) || ''
+      request_user_email: userEmail,
+      deleted_by: userEmail
     });
     invalidateDashboardSessionCacheSafe();
     alert('삭제되었습니다.');
@@ -461,7 +451,7 @@ async function completeRepairHistory(historyId, equipmentId) {
   const confirmed = confirm('이 수리 이력을 완료 처리하시겠습니까? 장비 상태도 사용중으로 변경됩니다.');
   if (!confirmed) return;
 
-  const user = getCurrentUser();
+  const userEmail = getCurrentUserEmail();
 
   try {
     showGlobalLoading('수리 이력을 완료 처리하는 중...');
@@ -470,15 +460,18 @@ async function completeRepairHistory(historyId, equipmentId) {
       equipment_id: equipmentId,
       result_status: 'COMPLETED',
       update_equipment_status: 'IN_USE',
-      updated_by: (user && user.email) || ''
+      updated_by: userEmail
     });
 
     await loadEquipmentDetail();
+    invalidateDashboardSessionCacheSafe();
     alert('완료 처리되었습니다.');
   } catch (error) {
     showMessage(error.message || '완료 처리 중 오류가 발생했습니다.', 'error');
   } finally {
-    hideGlobalLoading();
+    if (typeof hideGlobalLoading === 'function') {
+      hideGlobalLoading();
+    }
   }
 }
 
@@ -527,7 +520,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     await loadEquipmentDetail();
   } catch (error) {
-    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
+    showMessage(error.message || '장비 상세 정보를 불러오지 못했습니다.', 'error');
   } finally {
     if (typeof hideGlobalLoading === 'function') {
       hideGlobalLoading();
