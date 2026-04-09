@@ -52,7 +52,7 @@ async function loadEquipmentInfo() {
   try {
     const result = await apiGet('getEquipment', {
       id: equipmentId,
-      request_user_email: user.email || ''
+      request_user_email: user.email || user.user_email || ''
     });
 
     const item = result.data || {};
@@ -83,10 +83,10 @@ async function buildInventoryPayload() {
     equipment_id: qs('#equipment_id').value.trim(),
     checked_at: qs('#checked_at').value.trim(),
 
-    // 백엔드 검증용: 반드시 이메일
+    // 백엔드 검증용: 이메일 저장
     checked_by: currentUser.email || currentUser.user_email || '',
 
-    // 필요하면 화면 표시용으로 따로 남길 수 있음
+    // 화면 표시용 보조값
     checked_by_name: checkedByInput,
 
     clinic_code_at_check: item.clinic_code || '',
@@ -100,7 +100,6 @@ async function buildInventoryPayload() {
     qr_scan_yn: qs('#qr_scan_yn').value,
     memo: qs('#memo').value.trim()
   };
-}
 }
 
 function validateInventoryForm(payload) {
