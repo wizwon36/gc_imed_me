@@ -310,7 +310,11 @@ function renderInventoryLogs(items) {
         '<div class="timeline-card-head">' +
           '<div>' +
             '<div class="timeline-title">' + escapeHtml(conditionStatusLabel(item.condition_status)) + '</div>' +
-            '<div class="timeline-date">' + safeValue(formatDisplayDate(item.checked_at)) + ' · ' + safeValue(item.checked_by) + '</div>' +
+            '<div class="timeline-date">' +
+              safeValue(formatDisplayDate(item.checked_at)) +
+              ' · ' +
+              safeValue(item.checked_by_name || item.checked_by) +
+            '</div>' +
           '</div>' +
         '</div>' +
 
@@ -355,23 +359,16 @@ async function loadInventorySection(equipmentId, userEmail) {
   }
 }
 
-async function loadEquipmentDetail() {
-  clearMessage();
-  renderDetailSkeleton();
-  renderSectionLoading('#historyArea', '#historyCountText');
-  renderSectionLoading('#inventoryArea', '#inventoryCountText');
+async function loadEquipmentCore(equipmentId, userEmail, options) {
+  const opts = options || {};
+  const shouldResetSkeleton = opts.resetSkeleton === true;
 
-  const id = getQueryParam('id');
-  currentEquipmentId = id;
-
-  if (!id) {
-    throw new Error('장비 ID가 없습니다.');
+  if (shouldResetSkeleton) {
+    renderDetailSkeleton();
   }
 
-  const userEmail = getCurrentUserEmail();
-
   const detailResult = await apiGet('getEquipment', {
-    id: id,
+    id: equipmentId,
     request_user_email: userEmail
   });
 
@@ -381,6 +378,45 @@ async function loadEquipmentDetail() {
   renderDetailInfo(currentEquipmentData);
   renderQrCode(currentEquipmentData.equipment_id);
   applyActionVisibility();
+
+  return currentEquipmentData;
+}
+
+async function reloadDetailSectionsOnly() {
+  const userEmail = getCurrentUserEmail();
+  if (!currentEquipmentId) return;
+
+  await Promise.all([
+    loadHistorySection(currentEquipmentId, userEmail),
+    loadInventorySection(currentEquipmentId, userEmail)
+  ]);
+}
+
+async function loadEquipmentDetail(options) {
+  const opts = options || {};
+  const forceReset = opts.forceReset === true;
+
+  clearMessage();
+
+  if (forceReset) {
+    renderDetailSkeleton();
+  }
+
+  renderSectionLoading('#historyArea', '#historyCountText');
+  renderSectionLoading('#inventoryArea', '#inventoryCountText');
+
+  const id = getQueryParam('id') || currentEquipmentId;
+  currentEquipmentId = id;
+
+  if (!id) {
+    throw new Error('장비 ID가 없습니다.');
+  }
+
+  const userEmail = getCurrentUserEmail();
+
+  await loadEquipmentCore(id, userEmail, {
+    resetSkeleton: forceReset
+  });
 
   await Promise.all([
     loadHistorySection(id, userEmail),
@@ -463,7 +499,8 @@ async function completeRepairHistory(historyId, equipmentId) {
       updated_by: userEmail
     });
 
-    await loadEquipmentDetail();
+    await loadEquipmentCore(currentEquipmentId, userEmail, { resetSkeleton: false });
+    await reloadDetailSectionsOnly();
     invalidateDashboardSessionCacheSafe();
     alert('완료 처리되었습니다.');
   } catch (error) {
@@ -518,7 +555,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (addInventoryBtn) addInventoryBtn.addEventListener('click', moveToInventoryForm);
     if (printLabelBtn) printLabelBtn.addEventListener('click', moveToLabelPrint);
 
-    await loadEquipmentDetail();
+    await loadEquipmentDetail({ forceReset: true });
   } catch (error) {
     showMessage(error.message || '장비 상세 정보를 불러오지 못했습니다.', 'error');
   } finally {
