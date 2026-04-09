@@ -154,9 +154,6 @@ function markFieldInvalid(fieldId) {
   el.focus();
 }
 
-
-
-
 function normalize(value) {
   return String(value || '').trim();
 }
@@ -179,12 +176,6 @@ function collectPermissions() {
   });
 
   return permissions;
-}
-
-function getSelectedText(selectEl) {
-  if (!selectEl) return '';
-  const option = selectEl.options[selectEl.selectedIndex];
-  return option ? normalize(option.textContent) : '';
 }
 
 function buildUserOrgPayload() {
@@ -283,8 +274,10 @@ async function updateUser() {
     request_user_email: getRequestUserEmail(),
     user_email: editingUserEmail,
     user_name: normalize(document.getElementById('userName')?.value),
+
     clinic_code: org.clinic_code,
     team_code: org.team_code,
+
     phone: normalize(document.getElementById('phone')?.value),
     role: normalize(document.getElementById('globalRole')?.value) || 'user',
     active: normalize(document.getElementById('userActive')?.value) || 'Y',
@@ -470,15 +463,21 @@ async function editUser(userEmail) {
     document.getElementById('userActive').value = user.active || 'Y';
 
     const clinicSelect = document.getElementById('clinic_code');
-
     if (clinicSelect) {
       clinicSelect.value = user.clinic_code || '';
     }
 
     if (orgBinder?.renderTeamsByClinic) {
       orgBinder.renderTeamsByClinic(user.clinic_code || '', user.team_code || '');
+    } else {
+      window.orgSelect.fillSelectOptions(
+        document.getElementById('team_code'),
+        [],
+        { emptyText: '팀을 선택하세요' }
+      );
+      document.getElementById('team_code').value = user.team_code || '';
     }
-    
+
     setPermissionValues(permissions);
     setEditMode(user);
 
@@ -557,7 +556,10 @@ function clearUserForm() {
   const clinicSelect = document.getElementById('clinic_code');
   const teamSelect = document.getElementById('team_code');
 
-  if (clinicSelect) clinicSelect.value = '';
+  if (clinicSelect) {
+    clinicSelect.value = '';
+  }
+
   if (teamSelect) {
     window.orgSelect.fillSelectOptions(teamSelect, [], {
       emptyText: '팀을 선택하세요'
