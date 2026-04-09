@@ -3,6 +3,14 @@ let isEditMode = false;
 let currentEquipment = null;
 let orgBinder = null;
 
+const DEFAULT_EQUIPMENT_STATUSES = [
+  { value: 'IN_USE', label: '사용중' },
+  { value: 'REPAIRING', label: '수리중' },
+  { value: 'INSPECTING', label: '점검중' },
+  { value: 'STORED', label: '보관중' },
+  { value: 'DISPOSED', label: '폐기' }
+];
+
 function normalizeText(value) {
   return String(value || '').trim();
 }
@@ -11,17 +19,14 @@ function formatDateInputValue(value) {
   const raw = String(value || '').trim();
   if (!raw) return '';
 
-  // 이미 yyyy-MM-dd 형태면 그대로 사용
   const directMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (directMatch) return raw;
 
-  // yyyy-MM-dd HH:mm:ss / ISO 문자열 대응
   const datePartMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (datePartMatch) {
     return `${datePartMatch[1]}-${datePartMatch[2]}-${datePartMatch[3]}`;
   }
 
-  // JS Date 파싱 fallback
   const parsed = new Date(raw);
   if (!isNaN(parsed.getTime())) {
     const yyyy = parsed.getFullYear();
@@ -40,16 +45,25 @@ function getCurrentUserSafe() {
 function setPageMode() {
   const titleEl = document.querySelector('.page-title');
   const descEl = document.querySelector('.page-desc');
-  const submitBtn = qs('#submitBtn');
+  const submitBtn = qs('#submitButton');
+  const submitBtnText = qs('#submitButtonText');
 
   if (isEditMode) {
     if (titleEl) titleEl.textContent = '장비 수정';
     if (descEl) descEl.textContent = '등록된 장비 정보를 수정합니다.';
-    if (submitBtn) submitBtn.textContent = '수정 저장';
+    if (submitBtnText) {
+      submitBtnText.textContent = '수정 저장';
+    } else if (submitBtn) {
+      submitBtn.textContent = '수정 저장';
+    }
   } else {
     if (titleEl) titleEl.textContent = '장비 등록';
-    if (descEl) descEl.textContent = '의료장비 정보를 등록합니다.';
-    if (submitBtn) submitBtn.textContent = '저장';
+    if (descEl) descEl.textContent = '신규 의료장비 정보를 등록합니다.';
+    if (submitBtnText) {
+      submitBtnText.textContent = '장비 등록';
+    } else if (submitBtn) {
+      submitBtn.textContent = '장비 등록';
+    }
   }
 }
 
@@ -61,11 +75,55 @@ function getSelectedOrgCodes() {
 }
 
 function updateDepartmentPreview() {
-  const previewEl = qs('#department');
+  const previewEl = qs('#department_preview');
   if (!previewEl) return;
 
   const { clinic_code, team_code } = getSelectedOrgCodes();
   previewEl.value = window.orgSelect?.getOrgDisplayText?.(clinic_code, team_code) || '';
+}
+
+function renderStatusOptions(items, selectedValue) {
+  const selectEl = qs('#status');
+  if (!selectEl) return;
+
+  const list = Array.isArray(items) && items.length
+    ? items.map(function(item) {
+        return {
+          value: normalizeText(item.code_value || item.value),
+          label: normalizeText(item.code_name || item.label || item.code_value || item.value)
+        };
+      }).filter(function(item) {
+        return !!item.value;
+      })
+    : DEFAULT_EQUIPMENT_STATUSES;
+
+  const safeSelected = normalizeText(selectedValue) || 'IN_USE';
+
+  selectEl.innerHTML =
+    '<option value="">선택하세요</option>' +
+    list.map(function(item) {
+      const selected = item.value === safeSelected ? ' selected' : '';
+      return '<option value="' + escapeHtml(item.value) + '"' + selected + '>' +
+        escapeHtml(item.label) +
+      '</option>';
+    }).join('');
+
+  if (!selectEl.value) {
+    selectEl.value = safeSelected;
+  }
+}
+
+async function loadStatusOptions(selectedValue) {
+  try {
+    const result = await apiGet('getCodes', {
+      code_group: 'EQUIPMENT_STATUS'
+    });
+
+    const items = Array.isArray(result?.data) ? result.data : [];
+    renderStatusOptions(items, selectedValue);
+  } catch (error) {
+    renderStatusOptions([], selectedValue);
+  }
 }
 
 async function initializeOrgSelectors() {
@@ -98,8 +156,7 @@ function fillEquipmentForm(item) {
   qs('#manager_name').value = item.manager_name || '';
   qs('#manager_phone').value = item.manager_phone || '';
   qs('#acquisition_cost').value = item.acquisition_cost ?? '';
-  qs('#maintenance_end_date').value = formatDateInputValue(item.maintenance_end_date)
-  qs('#status').value = item.status || 'IN_USE';
+  qs('#maintenance_end_date').value = formatDateInputValue(item.maintenance_end_date);
   qs('#location').value = item.location || '';
   qs('#current_user').value = item.current_user || '';
   qs('#memo').value = item.memo || '';
@@ -117,6 +174,7 @@ function fillEquipmentForm(item) {
     teamSelect.value = item.team_code || '';
   }
 
+  renderStatusOptions([], item.status || 'IN_USE');
   updateDepartmentPreview();
 }
 
@@ -225,7 +283,7 @@ async function handleSubmit(event) {
   event.preventDefault();
   clearMessage();
 
-  const submitBtn = qs('#submitBtn');
+  const submitBtn = qs('#submitButton');
   const payload = buildEquipmentPayload();
 
   if (!validateEquipmentForm(payload)) return;
@@ -263,11 +321,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     showGlobalLoading('화면을 준비하는 중...');
+    setPageMode();
     await initializeOrgSelectors();
+    await loadStatusOptions('IN_USE');
     await loadEquipmentIfEditMode();
     updateDepartmentPreview();
 
-    document.querySelector('form')?.addEventListener('submit', handleSubmit);
+    document.querySelector('#equipmentForm')?.addEventListener('submit', handleSubmit);
   } catch (error) {
     showMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
