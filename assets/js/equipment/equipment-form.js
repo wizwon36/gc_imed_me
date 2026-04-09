@@ -7,6 +7,32 @@ function normalizeText(value) {
   return String(value || '').trim();
 }
 
+function formatDateInputValue(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  // 이미 yyyy-MM-dd 형태면 그대로 사용
+  const directMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (directMatch) return raw;
+
+  // yyyy-MM-dd HH:mm:ss / ISO 문자열 대응
+  const datePartMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (datePartMatch) {
+    return `${datePartMatch[1]}-${datePartMatch[2]}-${datePartMatch[3]}`;
+  }
+
+  // JS Date 파싱 fallback
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return '';
+}
+
 function getCurrentUserSafe() {
   return window.auth?.getSession?.() || {};
 }
@@ -65,14 +91,14 @@ function fillEquipmentForm(item) {
   qs('#equipment_name').value = item.equipment_name || '';
   qs('#model_name').value = item.model_name || '';
   qs('#manufacturer').value = item.manufacturer || '';
-  qs('#manufacture_date').value = item.manufacture_date || '';
-  qs('#purchase_date').value = item.purchase_date || '';
+  qs('#manufacture_date').value = formatDateInputValue(item.manufacture_date);
+  qs('#purchase_date').value = formatDateInputValue(item.purchase_date);
   qs('#serial_no').value = item.serial_no || '';
   qs('#vendor').value = item.vendor || '';
   qs('#manager_name').value = item.manager_name || '';
   qs('#manager_phone').value = item.manager_phone || '';
   qs('#acquisition_cost').value = item.acquisition_cost ?? '';
-  qs('#maintenance_end_date').value = item.maintenance_end_date || '';
+  qs('#maintenance_end_date').value = formatDateInputValue(item.maintenance_end_date)
   qs('#status').value = item.status || 'IN_USE';
   qs('#location').value = item.location || '';
   qs('#current_user').value = item.current_user || '';
