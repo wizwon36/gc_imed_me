@@ -82,6 +82,31 @@ function updateDepartmentPreview() {
   previewEl.value = window.orgSelect?.getOrgDisplayText?.(clinic_code, team_code) || '';
 }
 
+function updateTeamSelectGuide() {
+  const clinicSelect = qs('#clinic_code');
+  const teamSelect = qs('#team_code');
+  if (!teamSelect) return;
+
+  const clinicCode = normalizeText(clinicSelect?.value);
+
+  if (!clinicCode) {
+    teamSelect.disabled = true;
+    teamSelect.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
+    return;
+  }
+
+  teamSelect.disabled = false;
+
+  if (!teamSelect.options.length) {
+    teamSelect.innerHTML = '<option value="">팀을 선택하세요</option>';
+  } else if (teamSelect.options.length === 1 && !teamSelect.value) {
+    const firstText = normalizeText(teamSelect.options[0].text);
+    if (!firstText || firstText === '의원을 먼저 선택하세요') {
+      teamSelect.innerHTML = '<option value="">팀을 선택하세요</option>';
+    }
+  }
+}
+
 function renderStatusOptions(items, selectedValue) {
   const selectEl = qs('#status');
   if (!selectEl) return;
@@ -136,11 +161,25 @@ async function initializeOrgSelectors() {
     emptyText: '의원을 선택하세요'
   });
 
+  if (teamSelect) {
+    teamSelect.disabled = true;
+    teamSelect.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
+  }
+
   orgBinder = window.orgSelect.bindClinicTeamSelects({
     clinicSelect,
     teamSelect,
-    onTeamChanged: updateDepartmentPreview
+    onClinicChanged: function() {
+      updateTeamSelectGuide();
+      updateDepartmentPreview();
+    },
+    onTeamChanged: function() {
+      updateTeamSelectGuide();
+      updateDepartmentPreview();
+    }
   });
+
+  updateTeamSelectGuide();
 }
 
 function fillEquipmentForm(item) {
@@ -174,6 +213,7 @@ function fillEquipmentForm(item) {
     teamSelect.value = item.team_code || '';
   }
 
+  updateTeamSelectGuide();
   renderStatusOptions([], item.status || 'IN_USE');
   updateDepartmentPreview();
 }
