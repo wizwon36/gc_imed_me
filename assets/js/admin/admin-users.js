@@ -87,7 +87,9 @@ function bindEvents() {
 }
 
 function getRequestUserEmail() {
-  return String(currentSessionUser?.email || '').trim().toLowerCase();
+  return String(currentSessionUser?.email || currentSessionUser?.user_email || '')
+    .trim()
+    .toLowerCase();
 }
 
 async function loadOrgData() {
@@ -176,7 +178,10 @@ function syncTeamSelectByClinic(selectedTeamCode = '') {
 function buildDepartmentText(clinicName, teamName) {
   const clinic = normalize(clinicName);
   const team = normalize(teamName);
+
   if (clinic && team) return `${clinic} / ${team}`;
+  if (team) return team;
+  if (clinic) return clinic;
   return '';
 }
 
@@ -246,17 +251,9 @@ function buildUserOrgPayload() {
   const clinicEl = document.getElementById('clinic_code');
   const teamEl = document.getElementById('team_code');
 
-  const clinic_code = normalize(clinicEl?.value);
-  const clinic_name = getSelectedText(clinicEl);
-  const team_code = normalize(teamEl?.value);
-  const team_name = getSelectedText(teamEl);
-
   return {
-    clinic_code,
-    clinic_name,
-    team_code,
-    team_name,
-    department: buildDepartmentText(clinic_name, team_name)
+    clinic_code: normalize(clinicEl?.value),
+    team_code: normalize(teamEl?.value)
   };
 }
 
@@ -304,11 +301,10 @@ async function createUser() {
     request_user_email: getRequestUserEmail(),
     user_email: normalize(document.getElementById('userEmail')?.value).toLowerCase(),
     user_name: normalize(document.getElementById('userName')?.value),
+
     clinic_code: org.clinic_code,
-    clinic_name: org.clinic_name,
     team_code: org.team_code,
-    team_name: org.team_name,
-    department: org.department,
+
     phone: normalize(document.getElementById('phone')?.value),
     role: normalize(document.getElementById('globalRole')?.value) || 'user',
     active: normalize(document.getElementById('userActive')?.value) || 'Y',
