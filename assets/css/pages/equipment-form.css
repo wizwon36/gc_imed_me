@@ -590,3 +590,7 @@
 .equipment-form-card .section-head[style] + .form-grid {
   margin-top: 4px;
 }
+
+.is-hidden-field {
+  display: none !important;
+}
