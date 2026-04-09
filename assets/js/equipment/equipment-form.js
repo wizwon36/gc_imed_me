@@ -30,9 +30,10 @@ function bindCurrencyInput(selector) {
   if (!el) return;
 
   el.addEventListener('input', function() {
-    const caretToEnd = this === document.activeElement;
+    const active = this === document.activeElement;
     this.value = formatNumberWithComma(this.value);
-    if (caretToEnd) {
+
+    if (active) {
       requestAnimationFrame(() => {
         try {
           this.setSelectionRange(this.value.length, this.value.length);
@@ -225,7 +226,11 @@ function fillEquipmentForm(item) {
   qs('#vendor').value = item.vendor || '';
   qs('#manager_name').value = item.manager_name || '';
   qs('#manager_phone').value = item.manager_phone || '';
-  qs('#acquisition_cost').value = formatNumberWithComma(item.acquisition_cost ?? '');
+  qs('#acquisition_cost').value = formatNumberWithComma(
+    item.acquisition_cost === null || item.acquisition_cost === undefined
+      ? ''
+      : item.acquisition_cost
+  );
   qs('#maintenance_end_date').value = formatDateInputValue(item.maintenance_end_date);
   qs('#location').value = item.location || '';
   qs('#current_user').value = item.current_user || '';
