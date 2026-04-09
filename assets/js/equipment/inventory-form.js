@@ -12,16 +12,16 @@ function getNowDateTimeString() {
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
-async function initInventoryOrgSelectors(item = {}) {
-  await OrgService.bindClinicTeam(
-    qs('#clinic_code_at_check'),
-    qs('#team_code_at_check'),
-    {
-      initialClinicCode: item.clinic_code_at_check || item.clinic_code || '',
-      initialTeamCode: item.team_code_at_check || item.team_code || '',
-      clinicEmptyLabel: '의원을 선택하세요',
-      teamEmptyLabel: '팀을 선택하세요'
-    }
+function getCurrentUserSafe() {
+  return window.auth?.getSession?.() || {};
+}
+
+function getEquipmentDepartmentDisplay(item) {
+  if (!item) return '';
+  return (
+    item.department_display ||
+    item.department ||
+    [item.clinic_name, item.team_name].filter(Boolean).join(' / ')
   );
 }
 
@@ -37,46 +37,56 @@ async function loadEquipmentInfo() {
     return;
   }
 
-  qs('#backToDetailBtn').href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
-  qs('#checked_at').value = getNowDateTimeString();
+  const backBtn = qs('#backToDetailBtn');
+  if (backBtn) {
+    backBtn.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
+  }
 
-  const user = window.auth?.getSession?.() || {};
+  const checkedAtEl = qs('#checked_at');
+  if (checkedAtEl) {
+    checkedAtEl.value = getNowDateTimeString();
+  }
+
+  const user = getCurrentUserSafe();
 
   try {
     const result = await apiGet('getEquipment', {
       id: equipmentId,
       request_user_email: user.email || ''
     });
+
     const item = result.data || {};
     currentEquipment = item;
 
     qs('#equipment_id').value = item.equipment_id || '';
     qs('#equipment_name').value = item.equipment_name || '';
+    qs('#department_at_check').value = getEquipmentDepartmentDisplay(item);
     qs('#location_at_check').value = item.location || '';
 
-    await initInventoryOrgSelectors(item);
+    const checkedByEl = qs('#checked_by');
+    if (checkedByEl && !checkedByEl.value) {
+      checkedByEl.value = user.name || user.user_name || '';
+    }
   } catch (error) {
-    showMessage(error.message, 'error');
+    showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
   } finally {
     hideGlobalLoading();
   }
 }
 
 async function buildInventoryPayload() {
-  const clinicCode = qs('#clinic_code_at_check').value;
-  const teamCode = qs('#team_code_at_check').value;
-  const org = await OrgService.buildOrgPayload(clinicCode, teamCode);
+  const item = currentEquipment || {};
 
   return {
     equipment_id: qs('#equipment_id').value.trim(),
     checked_at: qs('#checked_at').value.trim(),
     checked_by: qs('#checked_by').value.trim(),
 
-    clinic_code_at_check: org.clinic_code,
-    clinic_name_at_check: org.clinic_name,
-    team_code_at_check: org.team_code,
-    team_name_at_check: org.team_name,
-    department_at_check: org.department,
+    clinic_code_at_check: item.clinic_code || '',
+    clinic_name_at_check: item.clinic_name || '',
+    team_code_at_check: item.team_code || '',
+    team_name_at_check: item.team_name || '',
+    department_at_check: getEquipmentDepartmentDisplay(item),
 
     location_at_check: qs('#location_at_check').value.trim(),
     condition_status: qs('#condition_status').value,
@@ -93,25 +103,29 @@ function validateInventoryForm(payload) {
 
   if (!payload.checked_at) {
     showMessage('점검일시를 입력하세요.', 'error');
-    qs('#checked_at').focus();
+    qs('#checked_at')?.focus();
     return false;
   }
 
   if (!payload.checked_by) {
     showMessage('점검자를 입력하세요.', 'error');
-    qs('#checked_by').focus();
+    qs('#checked_by')?.focus();
     return false;
   }
 
   if (!payload.clinic_code_at_check) {
-    showMessage('점검 의원을 선택하세요.', 'error');
-    qs('#clinic_code_at_check').focus();
+    showMessage('장비의 의원 정보가 없습니다.', 'error');
     return false;
   }
 
   if (!payload.team_code_at_check) {
-    showMessage('점검 팀을 선택하세요.', 'error');
-    qs('#team_code_at_check').focus();
+    showMessage('장비의 사용부서 정보가 없습니다.', 'error');
+    return false;
+  }
+
+  if (!payload.condition_status) {
+    showMessage('상태를 선택하세요.', 'error');
+    qs('#condition_status')?.focus();
     return false;
   }
 
@@ -123,20 +137,23 @@ async function handleSubmitInventory(event) {
   clearMessage();
 
   const submitBtn = qs('#submitBtn');
-  const payload = await buildInventoryPayload();
-
-  if (!validateInventoryForm(payload)) return;
 
   try {
+    const payload = await buildInventoryPayload();
+
+    if (!validateInventoryForm(payload)) return;
+
     setLoading(submitBtn, true, '저장 중...');
     showGlobalLoading('재고조사 이력을 저장하는 중...');
+
     await apiPost('createInventoryLog', payload);
+
     alert('재고조사 이력이 등록되었습니다.');
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
-    hideGlobalLoading();
-    showMessage(error.message, 'error');
+    showMessage(error.message || '재고조사 저장 중 오류가 발생했습니다.', 'error');
   } finally {
+    hideGlobalLoading();
     setLoading(submitBtn, false);
   }
 }
@@ -145,14 +162,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   showGlobalLoading('재고조사 화면을 준비하는 중...');
 
   try {
-    const user = window.auth.requireAuth();
+    const user = window.auth?.requireAuth?.();
     if (!user) return;
 
-    const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
+    const ok = await window.appPermission?.requirePermission?.('equipment', ['edit', 'admin']);
     if (!ok) return;
 
-    qs('#inventoryForm').addEventListener('submit', handleSubmitInventory);
-    await OrgService.preload();
+    qs('#inventoryForm')?.addEventListener('submit', handleSubmitInventory);
+
     await loadEquipmentInfo();
   } catch (error) {
     showMessage(error.message || '재고조사 화면을 불러오는 중 오류가 발생했습니다.', 'error');
