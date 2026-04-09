@@ -1,5 +1,8 @@
-const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v1';
+const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v2';
 const DASHBOARD_SESSION_TTL = 1000 * 60 * 5;
+
+const DASHBOARD_PERMISSION_CACHE_KEY = 'gc_imed_dashboard_permission_v1';
+const DASHBOARD_PERMISSION_CACHE_TTL = 1000 * 60 * 5;
 
 let DASHBOARD_BOOTSTRAPPED = false;
 let DASHBOARD_PERMISSION = { canView: false, canEdit: false, canDelete: false };
@@ -41,6 +44,11 @@ function formatDisplayDate(value) {
   return raw;
 }
 
+function getCurrentUserEmail() {
+  const user = window.auth?.getSession?.() || {};
+  return String(user.email || user.user_email || '').trim().toLowerCase();
+}
+
 function getDashboardSessionCache() {
   try {
     const raw = sessionStorage.getItem(DASHBOARD_SESSION_KEY);
@@ -76,31 +84,76 @@ function invalidateDashboardSessionCache() {
 
 window.invalidateDashboardSessionCache = invalidateDashboardSessionCache;
 
+function getDashboardPermissionCache() {
+  try {
+    const raw = sessionStorage.getItem(DASHBOARD_PERMISSION_CACHE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.savedAt) return null;
+    if (Date.now() - parsed.savedAt > DASHBOARD_PERMISSION_CACHE_TTL) return null;
+
+    return parsed.data || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function setDashboardPermissionCache(data) {
+  try {
+    sessionStorage.setItem(
+      DASHBOARD_PERMISSION_CACHE_KEY,
+      JSON.stringify({
+        savedAt: Date.now(),
+        data
+      })
+    );
+  } catch (error) {}
+}
+
+function invalidateDashboardPermissionCache() {
+  try {
+    sessionStorage.removeItem(DASHBOARD_PERMISSION_CACHE_KEY);
+  } catch (error) {}
+}
+
 async function getEquipmentPermissionContext() {
   const user = window.auth?.getSession?.() || null;
-  if (!user || !user.email) {
+  const userEmail = getCurrentUserEmail();
+
+  if (!user || !userEmail) {
     return { canView: false, canEdit: false, canDelete: false };
+  }
+
+  const cached = getDashboardPermissionCache();
+  if (cached) {
+    return cached;
   }
 
   const role = String(user.role || '').trim().toLowerCase();
   if (role === 'admin') {
-    return { canView: true, canEdit: true, canDelete: true };
+    const adminPermission = { canView: true, canEdit: true, canDelete: true };
+    setDashboardPermissionCache(adminPermission);
+    return adminPermission;
   }
 
   try {
     const result = await apiGet('getUserAppPermission', {
-      user_email: user.email,
+      user_email: userEmail,
       app_id: 'equipment',
-      request_user_email: user.email
+      request_user_email: userEmail
     });
 
     const permission = String(result?.data?.permission || '').trim().toLowerCase();
 
-    return {
+    const normalized = {
       canView: ['view', 'edit', 'admin'].includes(permission),
       canEdit: ['edit', 'admin'].includes(permission),
       canDelete: false
     };
+
+    setDashboardPermissionCache(normalized);
+    return normalized;
   } catch (error) {
     return { canView: false, canEdit: false, canDelete: false };
   }
@@ -152,7 +205,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     const dateText = textSafe(formatDisplayDate(item[options.dateField]));
     const desc = textSafe(`${options.dateLabel} ${dateText}`);
     const model = textSafe(item.model_name || '-');
-    const dept = textSafe(item.department || '-');
+    const dept = textSafe(item.department_display || item.department || '-');
     const id = encodeURIComponent(item.equipment_id || '');
 
     let sideHtml = '';
@@ -225,9 +278,10 @@ function renderDashboardData(summary) {
 }
 
 async function fetchDashboardData() {
-  const user = window.auth?.getSession?.() || {};
+  const userEmail = getCurrentUserEmail();
+
   const summaryResult = await apiGet('getEquipmentDashboardSummary', {
-    request_user_email: user.email || ''
+    request_user_email: userEmail
   });
 
   return {
@@ -318,14 +372,28 @@ document.addEventListener('DOMContentLoaded', async function () {
     const user = window.auth?.requireAuth?.();
     if (!user) return;
 
-    DASHBOARD_PERMISSION = await getEquipmentPermissionContext();
+    const permissionPromise = getEquipmentPermissionContext();
+    const dashboardPromise = fetchDashboardData();
+
+    DASHBOARD_PERMISSION = await permissionPromise;
     if (!DASHBOARD_PERMISSION.canView) {
       throw new Error('장비 메뉴 접근 권한이 없습니다.');
     }
 
     applyDashboardPermissionUi();
+
+    const cached = getDashboardSessionCache();
+    if (cached) {
+      renderDashboardData(cached.summary || {});
+      initPanelCarousel();
+      return;
+    }
+
+    const loaded = await dashboardPromise;
+    renderDashboardData(loaded.summary || {});
+    setDashboardSessionCache(loaded);
+
     initPanelCarousel();
-    await loadDashboard();
   } catch (error) {
     if (typeof showMessage === 'function') {
       showMessage(error.message || '대시보드를 불러오는 중 오류가 발생했습니다.', 'error');
