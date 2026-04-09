@@ -56,7 +56,12 @@ async function loadEquipmentInfo() {
 
     qs('#equipment_id').value = item.equipment_id || '';
     qs('#equipment_name').value = item.equipment_name || '';
-    qs('#request_department').value = item.department || '';
+    qs('#request_department').value = item.department_display || item.department || '';
+
+    const requestDepartmentEl = qs('#request_department');
+    if (requestDepartmentEl) {
+      requestDepartmentEl.readOnly = true;
+    }
   } catch (error) {
     showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
   }
@@ -66,13 +71,19 @@ function fillHistoryForm(item) {
   if (!item) return;
 
   qs('#history_type').value = item.history_type || '';
-  qs('#request_department').value = item.request_department || (currentEquipment && currentEquipment.department) || '';
+  qs('#request_department').value =
+    item.request_department_display ||
+    item.request_department ||
+    (currentEquipment && (currentEquipment.department_display || currentEquipment.department)) ||
+    '';
+
   qs('#requester').value = item.requester || '';
   qs('#work_date').value = item.work_date || '';
   qs('#amount').value = item.amount === null || item.amount === undefined ? '' : item.amount;
   qs('#vendor_name').value = item.vendor_name || '';
   qs('#description').value = item.description || '';
   qs('#result_status').value = item.result_status || '';
+  qs('#next_action_date').value = item.next_action_date || '';
   qs('#update_equipment_status').value = '';
 }
 
@@ -102,81 +113,68 @@ async function loadHistoryInfoIfEditMode() {
 
 async function buildHistoryPayload() {
   const currentUser = getCurrentUserSafe();
-  const requestDepartment = qs('#request_department').value.trim();
+  const actor = currentUser.email || currentUser.user_email || currentUser.name || 'system';
 
   const payload = {
     equipment_id: qs('#equipment_id').value.trim(),
     history_type: qs('#history_type').value,
-
-    request_clinic_code: normalizeText(currentEquipment && currentEquipment.clinic_code),
-    request_clinic_name: normalizeText(currentEquipment && currentEquipment.clinic_name),
-
-    // 서버 검증 유지 대응
-    request_team_code: requestDepartment,
-    request_team_name: requestDepartment,
-    request_department: requestDepartment,
-
     requester: qs('#requester').value.trim(),
     work_date: qs('#work_date').value,
     amount: qs('#amount').value,
     vendor_name: qs('#vendor_name').value.trim(),
     description: qs('#description').value.trim(),
     result_status: qs('#result_status').value,
-    updated_by: currentUser.email || currentUser.user_email || currentUser.name || 'system',
-    created_by: currentUser.email || currentUser.user_email || currentUser.name || 'system',
-    update_equipment_status: qs('#update_equipment_status').value
+    next_action_date: qs('#next_action_date')?.value || '',
+    created_by: actor,
+    updated_by: actor,
+    update_equipment_status: qs('#update_equipment_status').value || ''
   };
 
-  if (isEditMode) {
+  if (isEditMode && currentHistoryId) {
     payload.history_id = currentHistoryId;
   }
 
   return payload;
 }
 
-function validateHistoryForm(payload) {
+function validateHistoryPayload(payload) {
   if (!payload.equipment_id) {
     showMessage('장비번호가 없습니다.', 'error');
     return false;
   }
 
   if (!payload.history_type) {
-    showMessage('이력 유형을 선택하세요.', 'error');
-    qs('#history_type').focus();
+    showMessage('이력 구분을 선택하세요.', 'error');
+    qs('#history_type')?.focus();
     return false;
   }
 
   if (!payload.work_date) {
-    showMessage('처리일자를 입력하세요.', 'error');
-    qs('#work_date').focus();
-    return false;
-  }
-
-  if (!payload.request_department) {
-    showMessage('장비 부서 정보가 없습니다.', 'error');
+    showMessage('작업일을 입력하세요.', 'error');
+    qs('#work_date')?.focus();
     return false;
   }
 
   if (!payload.description) {
-    showMessage('처리내용을 입력하세요.', 'error');
-    qs('#description').focus();
+    showMessage('작업내용을 입력하세요.', 'error');
+    qs('#description')?.focus();
     return false;
   }
 
   return true;
 }
 
-async function handleSubmitHistory(event) {
+async function handleSubmit(event) {
   event.preventDefault();
   clearMessage();
 
-  const submitBtn = qs('#submitBtn');
   const payload = await buildHistoryPayload();
+  if (!validateHistoryPayload(payload)) return;
 
-  if (!validateHistoryForm(payload)) return;
+  const submitBtn = qs('#submitBtn');
 
   try {
-    setLoading(submitBtn, true, isEditMode ? '수정 저장 중...' : '저장 중...');
+    setLoading(submitBtn, true, isEditMode ? '수정 중...' : '저장 중...');
     showGlobalLoading(isEditMode ? '이력을 수정하는 중...' : '이력을 저장하는 중...');
 
     if (isEditMode) {
@@ -187,31 +185,27 @@ async function handleSubmitHistory(event) {
       alert('이력이 등록되었습니다.');
     }
 
-    location.href = 'detail.html?id=' + encodeURIComponent(payload.equipment_id);
+    location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
-    showMessage(error.message || (isEditMode ? '이력 수정 중 오류가 발생했습니다.' : '이력 등록 중 오류가 발생했습니다.'), 'error');
+    showMessage(error.message || '이력 저장 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
     setLoading(submitBtn, false);
   }
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
-  showGlobalLoading('이력 등록 화면을 준비하는 중...');
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = window.auth?.requireAuth?.();
+  if (!user) return;
 
   try {
-    const user = window.auth.requireAuth();
-    if (!user) return;
-
-    const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
-    if (!ok) return;
-
-    qs('#historyForm').addEventListener('submit', handleSubmitHistory);
-
+    showGlobalLoading('초기 정보를 불러오는 중...');
     await loadEquipmentInfo();
     await loadHistoryInfoIfEditMode();
+
+    document.querySelector('form')?.addEventListener('submit', handleSubmit);
   } catch (error) {
-    showMessage(error.message || '이력 화면을 불러오는 중 오류가 발생했습니다.', 'error');
+    showMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
   }
