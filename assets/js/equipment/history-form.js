@@ -31,6 +31,42 @@ function setPageMode() {
   }
 }
 
+function formatNumberWithComma(value) {
+  const raw = String(value || '').replace(/[^\d]/g, '');
+  if (!raw) return '';
+  return raw.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function unformatNumber(value) {
+  return String(value || '').replace(/[^\d.-]/g, '');
+}
+
+function bindCurrencyInput(selector) {
+  const el = qs(selector);
+  if (!el) return;
+
+  el.addEventListener('input', function() {
+    this.value = formatNumberWithComma(this.value);
+    requestAnimationFrame(() => {
+      try {
+        this.setSelectionRange(this.value.length, this.value.length);
+      } catch (e) {}
+    });
+  });
+
+  el.addEventListener('blur', function() {
+    this.value = formatNumberWithComma(this.value);
+  });
+}
+
+function getTodayYmd() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 async function loadEquipmentInfo() {
   const equipmentId = getQueryParam('equipment_id');
   currentEquipmentId = equipmentId;
@@ -82,7 +118,9 @@ function fillHistoryForm(item) {
 
   qs('#requester').value = item.requester || '';
   qs('#work_date').value = item.work_date || '';
-  qs('#amount').value = item.amount === null || item.amount === undefined ? '' : item.amount;
+  qs('#amount').value = item.amount === null || item.amount === undefined
+    ? ''
+    : formatNumberWithComma(item.amount);
   qs('#vendor_name').value = item.vendor_name || '';
   qs('#description').value = item.description || '';
   qs('#result_status').value = item.result_status || '';
@@ -150,7 +188,7 @@ async function buildHistoryPayload() {
     history_type: qs('#history_type').value,
     requester: qs('#requester').value.trim(),
     work_date: qs('#work_date').value,
-    amount: qs('#amount').value,
+    amount: unformatNumber(qs('#amount').value),
     vendor_name: qs('#vendor_name').value.trim(),
     description: qs('#description').value.trim(),
     result_status: qs('#result_status').value,
@@ -236,8 +274,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     showGlobalLoading('초기 정보를 불러오는 중...');
-    await loadEquipmentInfo();
-    await loadHistoryInfoIfEditMode();
+    await loadEquipmentContext();
+    await loadHistoryIfEditMode();
+    applyHistoryFormDefaults();
+    bindCurrencyInput('#amount');
 
     document.querySelector('form')?.addEventListener('submit', handleSubmit);
   } catch (error) {
@@ -246,3 +286,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideGlobalLoading();
   }
 });
+
+function applyHistoryFormDefaults() {
+  if (!isEditMode) {
+    const workDateEl = qs('#work_date');
+    if (workDateEl && !workDateEl.value) {
+      workDateEl.value = getTodayYmd();
+    }
+  }
+}
