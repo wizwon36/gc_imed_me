@@ -9,38 +9,26 @@ function normalizeText(value) {
 }
 
 function getCurrentUserSafe() {
-  return window.auth?.getSession?.() || {};
+  if (window.auth && typeof window.auth.getSession === 'function') {
+    return window.auth.getSession() || {};
+  }
+  return {};
 }
 
-function formatDateInputValue(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
+function setPageMode() {
+  const titleEl = document.querySelector('.page-title');
+  const descEl = document.querySelector('.page-desc');
+  const submitBtn = qs('#submitBtn');
 
-  const directMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (directMatch) return raw;
-
-  const datePartMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (datePartMatch) {
-    return `${datePartMatch[1]}-${datePartMatch[2]}-${datePartMatch[3]}`;
+  if (isEditMode) {
+    if (titleEl) titleEl.textContent = '이력 수정';
+    if (descEl) descEl.textContent = '등록된 수리 및 점검 이력을 수정합니다.';
+    if (submitBtn) submitBtn.textContent = '수정 저장';
+  } else {
+    if (titleEl) titleEl.textContent = '이력 등록';
+    if (descEl) descEl.textContent = '수리 및 점검 이력을 기록합니다.';
+    if (submitBtn) submitBtn.textContent = '저장';
   }
-
-  const parsed = new Date(raw);
-  if (!isNaN(parsed.getTime())) {
-    const yyyy = parsed.getFullYear();
-    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
-    const dd = String(parsed.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  return '';
-}
-
-function getTodayYmd() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
 }
 
 function formatNumberWithComma(value) {
@@ -71,79 +59,51 @@ function bindCurrencyInput(selector) {
   });
 }
 
-function setPageMode() {
-  const titleEl = document.querySelector('.page-title');
-  const descEl = document.querySelector('.page-desc');
-  const submitBtn = qs('#submitButton');
-  const submitBtnText = qs('#submitButtonText');
-
-  if (isEditMode) {
-    if (titleEl) titleEl.textContent = '이력 수정';
-    if (descEl) descEl.textContent = '등록된 수리 및 점검 이력을 수정합니다.';
-    if (submitBtnText) {
-      submitBtnText.textContent = '수정 저장';
-    } else if (submitBtn) {
-      submitBtn.textContent = '수정 저장';
-    }
-  } else {
-    if (titleEl) titleEl.textContent = '이력 등록';
-    if (descEl) descEl.textContent = '수리 및 점검 이력을 기록합니다.';
-    if (submitBtnText) {
-      submitBtnText.textContent = '이력 등록';
-    } else if (submitBtn) {
-      submitBtn.textContent = '이력 등록';
-    }
-  }
+function getTodayYmd() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function setEquipmentInfo(item) {
-  const data = item || {};
-  qs('#equipment_id').value = data.equipment_id || '';
-  qs('#equipment_name').value = data.equipment_name || '';
-  qs('#request_department').value =
-    data.department_display ||
-    data.department ||
-    '';
-}
+async function loadEquipmentInfo() {
+  const equipmentId = getQueryParam('equipment_id');
+  currentEquipmentId = equipmentId;
 
-async function loadEquipmentContext() {
-  const user = getCurrentUserSafe();
-
-  currentEquipmentId = getQueryParam('equipment_id') || getQueryParam('id') || currentEquipmentId;
-  if (!currentEquipmentId) {
-    throw new Error('장비 ID가 없습니다.');
+  if (!equipmentId) {
+    showMessage('equipment_id가 없습니다.', 'error');
+    return;
   }
 
-  const result = await apiGet('getEquipment', {
-    id: currentEquipmentId,
-    request_user_email: user.email || user.user_email || ''
-  });
-
-  currentEquipment = result.data || {};
-  setEquipmentInfo(currentEquipment);
-}
-
-async function loadHistoryIfEditMode() {
-  currentHistoryId = getQueryParam('history_id');
-  isEditMode = !!currentHistoryId;
-  setPageMode();
-
-  if (!isEditMode) return;
+  const backBtn = qs('#backToDetailBtn');
+  if (backBtn) {
+    backBtn.href = 'detail.html?id=' + encodeURIComponent(equipmentId);
+  }
 
   const user = getCurrentUserSafe();
 
-  const result = await apiGet('getHistory', {
-    history_id: currentHistoryId,
-    request_user_email: user.email || user.user_email || ''
-  });
+  try {
+    const result = await apiGet('getEquipment', {
+      id: equipmentId,
+      request_user_email: user.email || user.user_email || ''
+    });
 
-  currentHistory = result.data || {};
+    const item = result.data || {};
+    currentEquipment = item;
 
-  if (!currentEquipmentId) {
-    currentEquipmentId = currentHistory.equipment_id || '';
+    qs('#equipment_id').value = item.equipment_id || '';
+    qs('#equipment_name').value = item.equipment_name || '';
+    qs('#request_department').value =
+      item.department_display || item.department || '';
+
+    const requestDepartmentEl = qs('#request_department');
+    if (requestDepartmentEl) {
+      requestDepartmentEl.readOnly = true;
+    }
+  } catch (error) {
+    showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
   }
-
-  fillHistoryForm(currentHistory);
 }
 
 function fillHistoryForm(item) {
@@ -155,41 +115,65 @@ function fillHistoryForm(item) {
   qs('#request_department').value =
     item.request_department_display ||
     item.request_department ||
-    currentEquipment?.department_display ||
-    currentEquipment?.department ||
+    (currentEquipment && (currentEquipment.department_display || currentEquipment.department)) ||
     '';
 
   qs('#requester').value = item.requester || '';
-  qs('#work_date').value = formatDateInputValue(item.work_date);
-  qs('#amount').value = item.amount === null || item.amount === undefined
-    ? ''
-    : formatNumberWithComma(item.amount);
+  qs('#work_date').value = item.work_date || '';
+  qs('#amount').value =
+    item.amount === null || item.amount === undefined
+      ? ''
+      : formatNumberWithComma(item.amount);
   qs('#vendor_name').value = item.vendor_name || '';
   qs('#description').value = item.description || '';
   qs('#result_status').value = item.result_status || '';
-  qs('#next_action_date').value = formatDateInputValue(item.next_action_date);
+  qs('#next_action_date').value = item.next_action_date || '';
   qs('#update_equipment_status').value = '';
 }
 
-function applyHistoryFormDefaults() {
-  if (!isEditMode) {
-    const workDateEl = qs('#work_date');
-    if (workDateEl && !workDateEl.value) {
-      workDateEl.value = getTodayYmd();
+async function loadHistoryInfoIfEditMode() {
+  currentHistoryId = getQueryParam('history_id');
+  isEditMode = !!currentHistoryId;
+  setPageMode();
+
+  if (!isEditMode) return;
+
+  const user = getCurrentUserSafe();
+
+  try {
+    showGlobalLoading('이력 정보를 불러오는 중...');
+
+    const result = await apiGet('getHistory', {
+      history_id: currentHistoryId,
+      request_user_email: user.email || user.user_email || ''
+    });
+
+    const item = result.data || {};
+
+    if (!currentEquipmentId) {
+      currentEquipmentId = item.equipment_id || '';
     }
 
-    if (qs('#request_department') && !qs('#request_department').value) {
-      qs('#request_department').value =
-        currentEquipment?.department_display ||
-        currentEquipment?.department ||
-        '';
+    fillHistoryForm(item);
+
+    const backBtn = qs('#backToDetailBtn');
+    if (backBtn && currentEquipmentId) {
+      backBtn.href = 'detail.html?id=' + encodeURIComponent(currentEquipmentId);
     }
+  } catch (error) {
+    showMessage(error.message || '이력 정보를 불러오지 못했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
   }
 }
 
-function buildHistoryPayload() {
+async function buildHistoryPayload() {
   const currentUser = getCurrentUserSafe();
-  const actor = currentUser.email || currentUser.user_email || currentUser.name || 'system';
+  const actor =
+    currentUser.email ||
+    currentUser.user_email ||
+    currentUser.name ||
+    'system';
 
   const fallbackOrg = {
     request_clinic_code:
@@ -214,23 +198,23 @@ function buildHistoryPayload() {
         : '') ||
       currentEquipment?.department_display ||
       currentEquipment?.department ||
-      normalizeText(qs('#request_department')?.value)
+      qs('#request_department')?.value.trim() ||
+      ''
   };
 
   const payload = {
-    equipment_id: normalizeText(qs('#equipment_id')?.value),
-    history_type: normalizeText(qs('#history_type')?.value),
-    requester: normalizeText(qs('#requester')?.value),
-    work_date: normalizeText(qs('#work_date')?.value),
-    amount: unformatNumber(qs('#amount')?.value),
-    vendor_name: normalizeText(qs('#vendor_name')?.value),
-    description: normalizeText(qs('#description')?.value),
-    result_status: normalizeText(qs('#result_status')?.value),
-    next_action_date: normalizeText(qs('#next_action_date')?.value),
+    equipment_id: qs('#equipment_id').value.trim(),
+    history_type: qs('#history_type').value,
+    requester: qs('#requester').value.trim(),
+    work_date: qs('#work_date').value,
+    amount: unformatNumber(qs('#amount').value),
+    vendor_name: qs('#vendor_name').value.trim(),
+    description: qs('#description').value.trim(),
+    result_status: qs('#result_status').value,
+    next_action_date: qs('#next_action_date')?.value || '',
     created_by: actor,
     updated_by: actor,
-    update_equipment_status: normalizeText(qs('#update_equipment_status')?.value),
-
+    update_equipment_status: qs('#update_equipment_status').value || '',
     request_clinic_code: fallbackOrg.request_clinic_code,
     request_clinic_name: fallbackOrg.request_clinic_name,
     request_team_code: fallbackOrg.request_team_code,
@@ -245,26 +229,26 @@ function buildHistoryPayload() {
   return payload;
 }
 
-function validateHistoryForm(payload) {
+function validateHistoryPayload(payload) {
   if (!payload.equipment_id) {
-    showMessage('대상 장비 정보가 없습니다.', 'error');
+    showMessage('장비번호가 없습니다.', 'error');
     return false;
   }
 
   if (!payload.history_type) {
-    showMessage('이력 유형을 선택하세요.', 'error');
+    showMessage('이력 구분을 선택하세요.', 'error');
     qs('#history_type')?.focus();
     return false;
   }
 
   if (!payload.work_date) {
-    showMessage('처리일자를 입력하세요.', 'error');
+    showMessage('작업일을 입력하세요.', 'error');
     qs('#work_date')?.focus();
     return false;
   }
 
   if (!payload.description) {
-    showMessage('처리 내용을 입력하세요.', 'error');
+    showMessage('작업내용을 입력하세요.', 'error');
     qs('#description')?.focus();
     return false;
   }
@@ -276,14 +260,14 @@ async function handleSubmit(event) {
   event.preventDefault();
   clearMessage();
 
-  const submitBtn = qs('#submitButton');
-  const payload = buildHistoryPayload();
+  const payload = await buildHistoryPayload();
+  if (!validateHistoryPayload(payload)) return;
 
-  if (!validateHistoryForm(payload)) return;
+  const submitBtn = qs('#submitBtn');
 
   try {
     setLoading(submitBtn, true, isEditMode ? '수정 중...' : '저장 중...');
-    showGlobalLoading(isEditMode ? '이력을 수정하는 중...' : '이력을 등록하는 중...');
+    showGlobalLoading(isEditMode ? '이력을 수정하는 중...' : '이력을 저장하는 중...');
 
     if (isEditMode) {
       await apiPost('updateHistory', payload);
@@ -293,11 +277,7 @@ async function handleSubmit(event) {
       alert('이력이 등록되었습니다.');
     }
 
-    if (payload.equipment_id) {
-      location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
-    } else {
-      history.back();
-    }
+    location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
     showMessage(error.message || '이력 저장 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -306,21 +286,26 @@ async function handleSubmit(event) {
   }
 }
 
+function applyHistoryFormDefaults() {
+  if (!isEditMode) {
+    const workDateEl = qs('#work_date');
+    if (workDateEl && !workDateEl.value) {
+      workDateEl.value = getTodayYmd();
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
   try {
-    showGlobalLoading('화면을 준비하는 중...');
-    setPageMode();
-
-    await loadHistoryIfEditMode();
-    await loadEquipmentContext();
-
-    bindCurrencyInput('#amount');
+    showGlobalLoading('초기 정보를 불러오는 중...');
+    await loadEquipmentInfo();
+    await loadHistoryInfoIfEditMode();
     applyHistoryFormDefaults();
-
-    document.querySelector('#historyForm')?.addEventListener('submit', handleSubmit);
+    bindCurrencyInput('#amount');
+    document.querySelector('form')?.addEventListener('submit', handleSubmit);
   } catch (error) {
     showMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
