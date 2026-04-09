@@ -9,16 +9,9 @@ function getCurrentUser() {
   return null;
 }
 
-function getCurrentUserEmail() {
-  const user = getCurrentUser();
-  return String((user && (user.email || user.user_email)) || '').trim().toLowerCase();
-}
-
 async function getEquipmentPermissionContext() {
   const user = getCurrentUser();
-  const userEmail = getCurrentUserEmail();
-
-  if (!user || !userEmail) {
+  if (!user || !user.email) {
     return { canView: false, canEdit: false, canDelete: false };
   }
 
@@ -29,9 +22,9 @@ async function getEquipmentPermissionContext() {
 
   try {
     const result = await apiGet('getUserAppPermission', {
-      user_email: userEmail,
+      user_email: user.email,
       app_id: 'equipment',
-      request_user_email: userEmail
+      request_user_email: user.email
     });
 
     const permission = String((result && result.data && result.data.permission) || '').trim().toLowerCase();
@@ -99,7 +92,7 @@ function safeNumber(value) {
 
 function invalidateDashboardSessionCacheSafe() {
   try {
-    sessionStorage.removeItem('gc_imed_dashboard_v2');
+    sessionStorage.removeItem('gc_imed_dashboard_v1');
   } catch (error) {}
 }
 
@@ -199,13 +192,11 @@ function renderDetailInfo(item) {
   const detailInfoGrid = qs('#detailInfoGrid');
   if (!detailInfoGrid) return;
 
-  const departmentText = item.department_display || item.department || '-';
-
   const fields = [
     { label: '장비번호', value: item.equipment_id },
     { label: '장비명', value: item.equipment_name },
     { label: '모델명', value: item.model_name },
-    { label: '사용부서', value: departmentText },
+    { label: '사용부서', value: item.department },
     { label: '제조사', value: item.manufacturer },
     { label: '제조일자', value: formatDisplayDate(item.manufacture_date) },
     { label: '취득일자', value: formatDisplayDate(item.purchase_date) },
@@ -271,8 +262,6 @@ function renderHistories(items) {
   }
 
   area.innerHTML = list.map(function(item) {
-    const requestDepartment = item.request_department_display || item.request_department || '-';
-
     return (
       '<div class="timeline-card">' +
         '<div class="timeline-card-head">' +
@@ -298,7 +287,7 @@ function renderHistories(items) {
           '</div>' +
           '<div class="timeline-meta-item">' +
             '<span class="timeline-meta-label">요청부서</span>' +
-            '<span class="timeline-meta-value">' + safeValue(requestDepartment) + '</span>' +
+            '<span class="timeline-meta-value">' + safeValue(item.request_department) + '</span>' +
           '</div>' +
         '</div>' +
 
@@ -325,8 +314,6 @@ function renderInventoryLogs(items) {
   }
 
   area.innerHTML = list.map(function(item) {
-    const departmentAtCheck = item.department_at_check_display || item.department_at_check || '-';
-
     return (
       '<div class="timeline-card">' +
         '<div class="timeline-card-head">' +
@@ -338,7 +325,7 @@ function renderInventoryLogs(items) {
         '<div class="timeline-meta">' +
           '<div class="timeline-meta-item">' +
             '<span class="timeline-meta-label">부서</span>' +
-            '<span class="timeline-meta-value">' + safeValue(departmentAtCheck) + '</span>' +
+            '<span class="timeline-meta-value">' + safeValue(item.department_at_check) + '</span>' +
           '</div>' +
           '<div class="timeline-meta-item">' +
             '<span class="timeline-meta-label">위치</span>' +
@@ -390,7 +377,8 @@ async function loadEquipmentDetail() {
     throw new Error('장비 ID가 없습니다.');
   }
 
-  const userEmail = getCurrentUserEmail();
+  const user = getCurrentUser();
+  const userEmail = (user && user.email) || '';
 
   const detailResult = await apiGet('getEquipment', {
     id: id,
@@ -417,7 +405,7 @@ async function deleteCurrentEquipment() {
     return;
   }
 
-  const userEmail = getCurrentUserEmail();
+  const user = getCurrentUser();
   const confirmed = confirm('이 장비를 삭제하시겠습니까?');
   if (!confirmed) return;
 
@@ -425,8 +413,8 @@ async function deleteCurrentEquipment() {
     showGlobalLoading('장비를 삭제하는 중...');
     await apiPost('deleteEquipment', {
       equipment_id: currentEquipmentId,
-      request_user_email: userEmail,
-      deleted_by: userEmail
+      request_user_email: (user && user.email) || '',
+      deleted_by: (user && user.email) || ''
     });
     invalidateDashboardSessionCacheSafe();
     alert('삭제되었습니다.');
@@ -473,7 +461,7 @@ async function completeRepairHistory(historyId, equipmentId) {
   const confirmed = confirm('이 수리 이력을 완료 처리하시겠습니까? 장비 상태도 사용중으로 변경됩니다.');
   if (!confirmed) return;
 
-  const userEmail = getCurrentUserEmail();
+  const user = getCurrentUser();
 
   try {
     showGlobalLoading('수리 이력을 완료 처리하는 중...');
@@ -482,11 +470,10 @@ async function completeRepairHistory(historyId, equipmentId) {
       equipment_id: equipmentId,
       result_status: 'COMPLETED',
       update_equipment_status: 'IN_USE',
-      updated_by: userEmail
+      updated_by: (user && user.email) || ''
     });
 
     await loadEquipmentDetail();
-    invalidateDashboardSessionCacheSafe();
     alert('완료 처리되었습니다.');
   } catch (error) {
     showMessage(error.message || '완료 처리 중 오류가 발생했습니다.', 'error');
@@ -540,7 +527,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     await loadEquipmentDetail();
   } catch (error) {
-    showMessage(error.message || '장비 상세 정보를 불러오지 못했습니다.', 'error');
+    showMessage(error.message || '화면을 불러오는 중 오류가 발생했습니다.', 'error');
   } finally {
     if (typeof hideGlobalLoading === 'function') {
       hideGlobalLoading();
