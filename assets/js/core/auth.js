@@ -26,27 +26,49 @@
     return `${CONFIG.SITE_BASE_URL}/pages/auth/change-password.html`;
   }
 
+  function normalizeSessionUser(user) {
+    const raw = user || {};
+    return {
+      ...raw,
+      email: raw.email || raw.user_email || '',
+      user_email: raw.user_email || raw.email || '',
+      name: raw.name || raw.user_name || '',
+      user_name: raw.user_name || raw.name || '',
+      role: raw.role || 'user',
+      first_login: String(raw.first_login || 'N').toUpperCase(),
+      loginAt: raw.loginAt || Date.now()
+    };
+  }
+
   function saveSession(user) {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        ...user,
-        loginAt: Date.now()
-      })
-    );
+    const normalized = normalizeSessionUser(user);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
   }
 
   function getSession() {
     try {
-      const user = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (!user) return null;
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!raw) return null;
 
-      if (user.loginAt && Date.now() - user.loginAt > SESSION_MAX_AGE) {
+      if (raw.loginAt && Date.now() - raw.loginAt > SESSION_MAX_AGE) {
         clearSession();
         return null;
       }
 
-      return user;
+      const normalized = normalizeSessionUser(raw);
+
+      // 예전 형식 세션이 남아 있어도 현재 형식으로 자동 보정
+      if (
+        raw.email !== normalized.email ||
+        raw.user_email !== normalized.user_email ||
+        raw.name !== normalized.name ||
+        raw.user_name !== normalized.user_name ||
+        raw.first_login !== normalized.first_login
+      ) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      }
+
+      return normalized;
     } catch (error) {
       return null;
     }
