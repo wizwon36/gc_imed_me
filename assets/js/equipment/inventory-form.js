@@ -76,11 +76,18 @@ async function loadEquipmentInfo() {
 
 async function buildInventoryPayload() {
   const item = currentEquipment || {};
+  const currentUser = getCurrentUserSafe();
+  const checkedByInput = qs('#checked_by')?.value.trim() || '';
 
   return {
     equipment_id: qs('#equipment_id').value.trim(),
     checked_at: qs('#checked_at').value.trim(),
-    checked_by: qs('#checked_by').value.trim(),
+
+    // 백엔드 검증용: 반드시 이메일
+    checked_by: currentUser.email || currentUser.user_email || '',
+
+    // 필요하면 화면 표시용으로 따로 남길 수 있음
+    checked_by_name: checkedByInput,
 
     clinic_code_at_check: item.clinic_code || '',
     clinic_name_at_check: item.clinic_name || '',
@@ -93,6 +100,7 @@ async function buildInventoryPayload() {
     qr_scan_yn: qs('#qr_scan_yn').value,
     memo: qs('#memo').value.trim()
   };
+}
 }
 
 function validateInventoryForm(payload) {
@@ -108,8 +116,7 @@ function validateInventoryForm(payload) {
   }
 
   if (!payload.checked_by) {
-    showMessage('점검자를 입력하세요.', 'error');
-    qs('#checked_by')?.focus();
+    showMessage('로그인 사용자 정보가 없습니다.', 'error');
     return false;
   }
 
