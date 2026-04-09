@@ -1,6 +1,7 @@
 let currentEquipmentId = '';
 let currentEquipment = null;
 let currentHistoryId = '';
+let currentHistory = null;
 let isEditMode = false;
 
 function normalizeText(value) {
@@ -70,6 +71,8 @@ async function loadEquipmentInfo() {
 function fillHistoryForm(item) {
   if (!item) return;
 
+  currentHistory = item;
+  
   qs('#history_type').value = item.history_type || '';
   qs('#request_department').value =
     item.request_department_display ||
@@ -115,6 +118,33 @@ async function buildHistoryPayload() {
   const currentUser = getCurrentUserSafe();
   const actor = currentUser.email || currentUser.user_email || currentUser.name || 'system';
 
+  const fallbackOrg = {
+    request_clinic_code:
+      (isEditMode ? currentHistory?.request_clinic_code : '') ||
+      currentEquipment?.clinic_code ||
+      '',
+    request_clinic_name:
+      (isEditMode ? currentHistory?.request_clinic_name : '') ||
+      currentEquipment?.clinic_name ||
+      '',
+    request_team_code:
+      (isEditMode ? currentHistory?.request_team_code : '') ||
+      currentEquipment?.team_code ||
+      '',
+    request_team_name:
+      (isEditMode ? currentHistory?.request_team_name : '') ||
+      currentEquipment?.team_name ||
+      '',
+    request_department:
+      (isEditMode
+        ? (currentHistory?.request_department_display || currentHistory?.request_department)
+        : '') ||
+      currentEquipment?.department_display ||
+      currentEquipment?.department ||
+      qs('#request_department')?.value.trim() ||
+      ''
+  };
+
   const payload = {
     equipment_id: qs('#equipment_id').value.trim(),
     history_type: qs('#history_type').value,
@@ -127,7 +157,13 @@ async function buildHistoryPayload() {
     next_action_date: qs('#next_action_date')?.value || '',
     created_by: actor,
     updated_by: actor,
-    update_equipment_status: qs('#update_equipment_status').value || ''
+    update_equipment_status: qs('#update_equipment_status').value || '',
+
+    request_clinic_code: fallbackOrg.request_clinic_code,
+    request_clinic_name: fallbackOrg.request_clinic_name,
+    request_team_code: fallbackOrg.request_team_code,
+    request_team_name: fallbackOrg.request_team_name,
+    request_department: fallbackOrg.request_department
   };
 
   if (isEditMode && currentHistoryId) {
