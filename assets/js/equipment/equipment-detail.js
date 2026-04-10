@@ -127,10 +127,22 @@ function renderDetailSkeleton() {
   const detailInfoGrid = qs('#detailInfoGrid');
   const qrBox = qs('#qrBox');
   const qrText = qs('#qrText');
+  const photoImg = qs('#detailPhotoImage');
+  const photoEmpty = qs('#detailPhotoEmpty');
 
   if (detailInfoGrid) detailInfoGrid.innerHTML = '';
   if (qrBox) qrBox.innerHTML = '';
   if (qrText) qrText.innerHTML = '';
+
+  if (photoImg) {
+    photoImg.src = '';
+    photoImg.classList.add('is-hidden');
+  }
+
+  if (photoEmpty) {
+    photoEmpty.classList.remove('is-hidden');
+    photoEmpty.textContent = '불러오는 중...';
+  }
 }
 
 function renderSectionLoading(areaSelector, countSelector) {
@@ -164,6 +176,27 @@ function renderHero(item) {
   if (badge) {
     badge.textContent = statusLabel(item.status);
     badge.className = 'status-badge ' + statusClass(item.status);
+  }
+}
+
+function renderPhoto(item) {
+  const imgEl = qs('#detailPhotoImage');
+  const emptyEl = qs('#detailPhotoEmpty');
+
+  if (!imgEl || !emptyEl) return;
+
+  const photoUrl = String((item && item.photo_url) || '').trim();
+
+  if (photoUrl) {
+    imgEl.src = photoUrl;
+    imgEl.classList.remove('is-hidden');
+    emptyEl.classList.add('is-hidden');
+    emptyEl.textContent = '등록된 사진이 없습니다.';
+  } else {
+    imgEl.src = '';
+    imgEl.classList.add('is-hidden');
+    emptyEl.classList.remove('is-hidden');
+    emptyEl.textContent = '등록된 사진이 없습니다.';
   }
 }
 
@@ -375,6 +408,7 @@ async function loadEquipmentCore(equipmentId, userEmail, options) {
   currentEquipmentData = detailResult.data || {};
 
   renderHero(currentEquipmentData);
+  renderPhoto(currentEquipmentData);
   renderDetailInfo(currentEquipmentData);
   renderQrCode(currentEquipmentData.equipment_id);
   applyActionVisibility();
