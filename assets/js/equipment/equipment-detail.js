@@ -546,6 +546,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (!user) return;
 
   try {
+    if (typeof showGlobalLoading === 'function') {
+      showGlobalLoading('상세 정보를 불러오는 중...');
+    }
+
     detailPermission = await getEquipmentPermissionContext();
 
     if (!detailPermission.canView) {
@@ -585,5 +589,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   } catch (error) {
     showMessage(error.message || '상세 정보를 불러오지 못했습니다.', 'error');
+  } finally {
+    if (typeof hideGlobalLoading === 'function') {
+      hideGlobalLoading();
+    }
   }
 });
