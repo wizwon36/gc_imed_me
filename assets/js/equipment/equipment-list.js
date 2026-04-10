@@ -195,14 +195,16 @@ function renderListSummary() {
 }
 
 function buildEquipmentCard(item) {
-  var editAction = '';
-  var labelAction = '';
+  var leftActions = '';
+  var rightActions = '';
+
+  leftActions += '<a class="btn" href="detail.html?id=' + encodeURIComponent(item.equipment_id || '') + '">상세</a>';
 
   if (equipmentListState.canEdit) {
-    editAction = '<a class="btn btn-primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
+    leftActions += '<a class="btn btn-primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
   }
 
-  labelAction = '<a class="btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨출력</a>';
+  rightActions = '<a class="btn equipment-card-label-btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨출력</a>';
 
   return (
     '<article class="equipment-card">' +
@@ -244,9 +246,12 @@ function buildEquipmentCard(item) {
       '</div>' +
 
       '<div class="equipment-card-actions">' +
-        '<a class="btn" href="detail.html?id=' + encodeURIComponent(item.equipment_id || '') + '">상세</a>' +
-        editAction +
-        labelAction +
+        '<div class="equipment-card-actions-left">' +
+          leftActions +
+        '</div>' +
+        '<div class="equipment-card-actions-right">' +
+          rightActions +
+        '</div>' +
       '</div>' +
     '</article>'
   );
