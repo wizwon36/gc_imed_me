@@ -192,25 +192,30 @@ function renderHero(item) {
 function renderPhoto(item) {
   const imgEl = qs('#detailPhotoImage');
   const emptyEl = qs('#detailPhotoEmpty');
+  const openBtn = qs('#photoOpenBtn');
+  const deleteBtn = qs('#photoDeleteBtn');
 
   if (!imgEl || !emptyEl) return;
 
   const inlineUrl = String((item && item.photo_inline_url) || '').trim();
   const directUrl = String((item && item.photo_url) || '').trim();
   const finalUrl = inlineUrl || directUrl;
+  const hasPhoto = !!finalUrl;
 
   imgEl.onerror = function() {
     imgEl.src = '';
     imgEl.classList.add('is-hidden');
     emptyEl.classList.remove('is-hidden');
     emptyEl.textContent = '사진을 불러오지 못했습니다. 네트워크 또는 파일 접근 경로를 확인하세요.';
+    if (openBtn) openBtn.style.display = 'none';
+    if (deleteBtn) deleteBtn.style.display = 'none';
   };
 
   imgEl.onload = function() {
     emptyEl.classList.add('is-hidden');
   };
 
-  if (finalUrl) {
+  if (hasPhoto) {
     imgEl.src = finalUrl;
     imgEl.classList.remove('is-hidden');
     emptyEl.classList.add('is-hidden');
@@ -220,6 +225,141 @@ function renderPhoto(item) {
     imgEl.classList.add('is-hidden');
     emptyEl.classList.remove('is-hidden');
     emptyEl.textContent = '등록된 사진이 없습니다.';
+  }
+
+  if (openBtn) {
+    openBtn.style.display = hasPhoto ? '' : 'none';
+  }
+
+  if (deleteBtn) {
+    deleteBtn.style.display = hasPhoto && detailPermission.canDelete ? '' : 'none';
+  }
+}
+
+function getCurrentPhotoUrl() {
+  if (!currentEquipmentData) return '';
+  return String(currentEquipmentData.photo_inline_url || currentEquipmentData.photo_url || '').trim();
+}
+
+function openPhotoInNewWindow() {
+  const imageUrl = getCurrentPhotoUrl();
+  if (!imageUrl) {
+    showMessage('열 수 있는 사진이 없습니다.', 'error');
+    return;
+  }
+
+  const win = window.open('', '_blank');
+  if (!win) {
+    showMessage('새 창을 열 수 없습니다. 팝업 차단을 확인해주세요.', 'error');
+    return;
+  }
+
+  const title = escapeHtml((currentEquipmentData && currentEquipmentData.equipment_name) || '장비 사진');
+
+  win.document.open();
+  win.document.write(
+    '<!DOCTYPE html>' +
+    '<html lang="ko">' +
+    '<head>' +
+      '<meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+      '<title>' + title + '</title>' +
+      '<style>' +
+        'html,body{margin:0;padding:0;background:#111;height:100%;}' +
+        'body{display:flex;align-items:center;justify-content:center;}' +
+        'img{max-width:100vw;max-height:100vh;object-fit:contain;display:block;}' +
+      '</style>' +
+    '</head>' +
+    '<body>' +
+      '<img src="' + imageUrl + '" alt="' + title + '">' +
+    '</body>' +
+    '</html>'
+  );
+  win.document.close();
+}
+
+async function deleteCurrentPhoto() {
+  if (!detailPermission.canDelete) {
+    showMessage('사진을 삭제할 권한이 없습니다.', 'error');
+    return;
+  }
+
+  if (!currentEquipmentId) {
+    showMessage('장비 정보가 없습니다.', 'error');
+    return;
+  }
+
+  const confirmed = confirm('현재 등록된 장비 사진을 삭제하시겠습니까?');
+  if (!confirmed) return;
+
+  const user = getCurrentUser();
+  const userEmail = (user && user.email) || '';
+
+  try {
+    showGlobalLoading('장비 사진을 삭제하는 중...');
+    await apiPost('deleteEquipmentPhoto', {
+      equipment_id: currentEquipmentId,
+      request_user_email: userEmail
+    });
+
+    await loadEquipmentCore(currentEquipmentId, userEmail, { resetSkeleton: false });
+    invalidateDashboardSessionCacheSafe();
+    showMessage('장비 사진이 삭제되었습니다.', 'success');
+  } catch (error) {
+    showMessage(error.message || '장비 사진 삭제 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (typeof hideGlobalLoading === 'function') {
+      hideGlobalLoading();
+    }
+  }
+}
+
+async function deleteCurrentEquipment() {
+  if (!detailPermission.canDelete) {
+    showMessage('장비를 삭제할 권한이 없습니다.', 'error');
+    return;
+  }
+
+  if (!currentEquipmentId) {
+    showMessage('장비 정보가 없습니다.', 'error');
+    return;
+  }
+
+  const confirmed = confirm('이 장비를 삭제하시겠습니까? 삭제 후 목록에서 제외됩니다.');
+  if (!confirmed) return;
+
+  const user = getCurrentUser();
+  const userEmail = (user && user.email) || '';
+
+  try {
+    showGlobalLoading('장비를 삭제하는 중...');
+    await apiPost('deleteEquipment', {
+      equipment_id: currentEquipmentId,
+      request_user_email: userEmail
+    });
+
+    invalidateDashboardSessionCacheSafe();
+    alert('장비가 삭제되었습니다.');
+    location.href = 'list.html';
+  } catch (error) {
+    showMessage(error.message || '장비 삭제 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (typeof hideGlobalLoading === 'function') {
+      hideGlobalLoading();
+    }
+  }
+}
+
+function bindPhotoActionButtons() {
+  const openBtn = qs('#photoOpenBtn');
+  const deleteBtn = qs('#photoDeleteBtn');
+
+  if (openBtn) {
+    openBtn.onclick = openPhotoInNewWindow;
+  }
+
+  if (deleteBtn) {
+    deleteBtn.onclick = deleteCurrentPhoto;
   }
 }
 
@@ -435,6 +575,7 @@ async function loadEquipmentCore(equipmentId, userEmail, options) {
   renderDetailInfo(currentEquipmentData);
   renderQrCode(currentEquipmentData.equipment_id);
   applyActionVisibility();
+  bindPhotoActionButtons();
 
   return currentEquipmentData;
 }
@@ -585,6 +726,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (addInventoryBtn) {
       addInventoryBtn.addEventListener('click', function() {
         location.href = 'inventory-form.html?equipment_id=' + encodeURIComponent(currentEquipmentId);
+      });
+    }
+
+    const deleteBtn = qs('#deleteBtn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', function() {
+        deleteCurrentEquipment();
+      });
+    }
+
+    const printLabelBtn = qs('#printLabelBtn');
+    if (printLabelBtn) {
+      printLabelBtn.addEventListener('click', function() {
+        location.href = 'label-print.html?id=' + encodeURIComponent(currentEquipmentId);
       });
     }
   } catch (error) {
