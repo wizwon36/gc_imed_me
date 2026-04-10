@@ -2,6 +2,8 @@ let currentEquipmentId = '';
 let isEditMode = false;
 let currentEquipment = null;
 let orgBinder = null;
+let selectedPhotoFile = null;
+let removePhotoRequested = false;
 
 const DEFAULT_EQUIPMENT_STATUSES = [
   { value: 'IN_USE', label: '사용중' },
@@ -214,6 +216,186 @@ async function initializeOrgSelectors() {
   updateTeamSelectGuide();
 }
 
+function getPhotoElements() {
+  return {
+    input: qs('#photoInput'),
+    preview: qs('#photoPreview'),
+    empty: qs('#photoPreviewEmpty'),
+    removeBtn: qs('#removePhotoBtn')
+  };
+}
+
+function renderPhotoPreview(src) {
+  const els = getPhotoElements();
+  if (!els.preview || !els.empty) return;
+
+  if (src) {
+    els.preview.src = src;
+    els.preview.classList.remove('is-hidden');
+    els.empty.classList.add('is-hidden');
+  } else {
+    els.preview.src = '';
+    els.preview.classList.add('is-hidden');
+    els.empty.classList.remove('is-hidden');
+  }
+}
+
+function initializePhotoUi() {
+  const els = getPhotoElements();
+  if (!els.input) return;
+
+  els.input.addEventListener('change', function(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+      selectedPhotoFile = null;
+      return;
+    }
+
+    selectedPhotoFile = file;
+    removePhotoRequested = false;
+
+    const localUrl = URL.createObjectURL(file);
+    renderPhotoPreview(localUrl);
+  });
+
+  els.removeBtn?.addEventListener('click', function() {
+    selectedPhotoFile = null;
+    removePhotoRequested = true;
+
+    if (els.input) {
+      els.input.value = '';
+    }
+
+    renderPhotoPreview('');
+  });
+}
+
+function loadExistingPhoto(item) {
+  const photoUrl = item?.photo_url || '';
+  if (photoUrl) {
+    renderPhotoPreview(photoUrl);
+  } else {
+    renderPhotoPreview('');
+  }
+}
+
+function getImageTypeForOutput(file) {
+  const type = String(file?.type || '').toLowerCase();
+  if (type === 'image/png') return 'image/jpeg';
+  if (type === 'image/webp') return 'image/jpeg';
+  return 'image/jpeg';
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function() {
+      resolve(reader.result);
+    };
+
+    reader.onerror = function() {
+      reject(new Error('파일을 읽지 못했습니다.'));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageFromDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+
+    img.onload = function() {
+      resolve(img);
+    };
+
+    img.onerror = function() {
+      reject(new Error('이미지 로드에 실패했습니다.'));
+    };
+
+    img.src = dataUrl;
+  });
+}
+
+async function compressImageFile(file) {
+  const dataUrl = await readFileAsDataUrl(file);
+  const img = await loadImageFromDataUrl(dataUrl);
+
+  const maxSize = 800;
+  let width = img.width;
+  let height = img.height;
+
+  if (width > height && width > maxSize) {
+    height = Math.round((height * maxSize) / width);
+    width = maxSize;
+  } else if (height >= width && height > maxSize) {
+    width = Math.round((width * maxSize) / height);
+    height = maxSize;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+
+  const mimeType = getImageTypeForOutput(file);
+  const compressedDataUrl = canvas.toDataURL(mimeType, 0.75);
+
+  return {
+    dataUrl: compressedDataUrl,
+    mimeType: mimeType,
+    fileName: file.name || 'equipment-photo.jpg'
+  };
+}
+
+async function uploadPhotoIfNeeded(equipmentId) {
+  const currentUser = getCurrentUserSafe();
+  const requestUserEmail = currentUser.email || currentUser.user_email || '';
+
+  if (!equipmentId) return;
+
+  if (removePhotoRequested && currentEquipment?.photo_file_id) {
+    await apiPost('deleteEquipmentPhoto', {
+      equipment_id: equipmentId,
+      request_user_email: requestUserEmail
+    });
+
+    currentEquipment.photo_file_id = '';
+    currentEquipment.photo_url = '';
+    removePhotoRequested = false;
+  }
+
+  if (!selectedPhotoFile) return;
+
+  const compressed = await compressImageFile(selectedPhotoFile);
+
+  const result = await apiPost('uploadEquipmentPhoto', {
+    equipment_id: equipmentId,
+    request_user_email: requestUserEmail,
+    data_url: compressed.dataUrl,
+    mime_type: compressed.mimeType,
+    file_name: compressed.fileName
+  });
+
+  const uploaded = result?.data || {};
+  currentEquipment = currentEquipment || {};
+  currentEquipment.photo_file_id = uploaded.photo_file_id || '';
+  currentEquipment.photo_url = uploaded.photo_url || '';
+
+  renderPhotoPreview(currentEquipment.photo_url || '');
+
+  selectedPhotoFile = null;
+  removePhotoRequested = false;
+
+  const els = getPhotoElements();
+  if (els.input) {
+    els.input.value = '';
+  }
+}
+
 function fillEquipmentForm(item) {
   if (!item) return;
 
@@ -252,6 +434,7 @@ function fillEquipmentForm(item) {
   updateTeamSelectGuide();
   renderStatusOptions([], item.status || 'IN_USE');
   updateDepartmentPreview();
+  loadExistingPhoto(item);
 }
 
 async function loadEquipmentIfEditMode() {
@@ -368,20 +551,24 @@ async function handleSubmit(event) {
     setLoading(submitBtn, true, isEditMode ? '수정 중...' : '저장 중...');
     showGlobalLoading(isEditMode ? '장비 정보를 수정하는 중...' : '장비를 등록하는 중...');
 
+    let equipmentId = '';
+
     if (isEditMode) {
       await apiPost('updateEquipment', payload);
-      alert('장비 정보가 수정되었습니다.');
-      location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
+      equipmentId = payload.equipment_id;
     } else {
       const result = await apiPost('createEquipment', payload);
-      const equipmentId = result?.data?.equipment_id || '';
-      alert('장비가 등록되었습니다.');
+      equipmentId = result?.data?.equipment_id || '';
+    }
 
-      if (equipmentId) {
-        location.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
-      } else {
-        location.href = 'dashboard.html';
-      }
+    await uploadPhotoIfNeeded(equipmentId);
+
+    alert(isEditMode ? '장비 정보가 수정되었습니다.' : '장비가 등록되었습니다.');
+
+    if (equipmentId) {
+      location.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
+    } else {
+      location.href = 'dashboard.html';
     }
   } catch (error) {
     showMessage(error.message || '장비 저장 중 오류가 발생했습니다.', 'error');
@@ -401,6 +588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initializeOrgSelectors();
     await loadStatusOptions('IN_USE');
     bindCurrencyInput('#acquisition_cost');
+    initializePhotoUi();
     await loadEquipmentIfEditMode();
     updateDepartmentPreview();
 
