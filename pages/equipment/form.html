@@ -142,6 +142,39 @@
           <span class="form-label">메모</span>
           <textarea id="memo" class="textarea" rows="5" placeholder="추가로 관리해야 할 사항을 입력하세요"></textarea>
         </label>
+
+        <div class="form-field full-col">
+          <span class="form-label">장비 사진</span>
+
+          <div class="photo-upload-box">
+            <div class="photo-preview-wrap">
+              <img
+                id="photoPreview"
+                class="photo-preview-image is-hidden"
+                alt="장비 사진 미리보기"
+              />
+              <div id="photoPreviewEmpty" class="photo-preview-empty">
+                등록된 사진이 없습니다.
+              </div>
+            </div>
+
+            <div class="photo-upload-actions">
+              <input
+                type="file"
+                id="photoInput"
+                class="input"
+                accept="image/*"
+              />
+              <div class="photo-upload-help">
+                업로드 전에 자동 압축됩니다. 장비 식별이 가능한 정도의 사진만 올려주세요.
+              </div>
+              <div class="photo-upload-button-row">
+                <button type="button" class="btn" id="removePhotoBtn">사진 제거</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
       </div>
 
       <div class="form-actions">
