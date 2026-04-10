@@ -672,13 +672,20 @@
   border-radius: 18px;
   background: #f8fafc;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .detail-photo-image {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   max-height: 420px;
+  height: auto;
+  margin: 0 auto;
   object-fit: contain;
+  object-position: center center;
   background: #fff;
 }
 
