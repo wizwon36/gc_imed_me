@@ -247,51 +247,79 @@ function initializePhotoUi() {
 
   els.input.addEventListener('change', function(event) {
     const file = event.target.files && event.target.files[0];
+    const statusEl = qs('#photoStatusText');
+  
     if (!file) {
       selectedPhotoFile = null;
+  
       if (els.fileName) {
-        els.fileName.textContent = '선택된 파일 없음';
+        els.fileName.textContent = currentEquipment?.photo_file_id
+          ? '등록된 사진 있음'
+          : '선택된 파일 없음';
       }
+  
+      if (statusEl) {
+        statusEl.textContent = currentEquipment?.photo_file_id ? '현재 등록된 사진' : '';
+      }
+  
+      loadExistingPhoto(currentEquipment || {});
       return;
     }
-
+  
     selectedPhotoFile = file;
     removePhotoRequested = false;
-
+  
     if (els.fileName) {
       els.fileName.textContent = file.name || '선택된 파일 없음';
     }
-
+  
+    if (statusEl) {
+      statusEl.textContent = '새로 선택한 사진';
+    }
+  
     const localUrl = URL.createObjectURL(file);
     renderPhotoPreview(localUrl);
   });
 
   els.removeBtn?.addEventListener('click', function() {
+    const statusEl = qs('#photoStatusText');
+  
     selectedPhotoFile = null;
     removePhotoRequested = true;
-
+  
     if (els.input) {
       els.input.value = '';
     }
-
+  
     if (els.fileName) {
       els.fileName.textContent = '선택된 파일 없음';
     }
-
+  
+    if (statusEl) {
+      statusEl.textContent = '삭제 예정';
+    }
+  
     renderPhotoPreview('');
   });
 }
 
 function loadExistingPhoto(item) {
-  const photoUrl = item?.photo_url || '';
+  const inlineUrl = normalizeText(item?.photo_inline_url);
+  const photoUrl = normalizeText(item?.photo_url);
+  const finalUrl = inlineUrl || photoUrl;
   const els = getPhotoElements();
+  const statusEl = qs('#photoStatusText');
 
   if (els.fileName) {
-    els.fileName.textContent = photoUrl ? '등록된 사진 있음' : '선택된 파일 없음';
+    els.fileName.textContent = finalUrl ? '등록된 사진 있음' : '선택된 파일 없음';
   }
 
-  if (photoUrl) {
-    renderPhotoPreview(photoUrl);
+  if (statusEl) {
+    statusEl.textContent = finalUrl ? '현재 등록된 사진' : '';
+  }
+
+  if (finalUrl) {
+    renderPhotoPreview(finalUrl);
   } else {
     renderPhotoPreview('');
   }
@@ -380,9 +408,10 @@ async function uploadPhotoIfNeeded(equipmentId) {
       equipment_id: equipmentId,
       request_user_email: requestUserEmail
     });
-
+  
     currentEquipment.photo_file_id = '';
     currentEquipment.photo_url = '';
+    currentEquipment.photo_inline_url = '';
     removePhotoRequested = false;
   }
 
@@ -402,19 +431,26 @@ async function uploadPhotoIfNeeded(equipmentId) {
   currentEquipment = currentEquipment || {};
   currentEquipment.photo_file_id = uploaded.photo_file_id || '';
   currentEquipment.photo_url = uploaded.photo_url || '';
-
-  renderPhotoPreview(currentEquipment.photo_url || '');
-
+  
   selectedPhotoFile = null;
   removePhotoRequested = false;
-
+  
   const els = getPhotoElements();
+  const statusEl = qs('#photoStatusText');
+  
   if (els.input) {
     els.input.value = '';
   }
+  
   if (els.fileName) {
-    els.fileName.textContent = currentEquipment.photo_url ? '등록된 사진 있음' : '선택된 파일 없음';
+    els.fileName.textContent = currentEquipment.photo_file_id ? '등록된 사진 있음' : '선택된 파일 없음';
   }
+  
+  if (statusEl) {
+    statusEl.textContent = currentEquipment.photo_file_id ? '현재 등록된 사진' : '';
+  }
+  
+  loadExistingPhoto(currentEquipment);
 }
 
 function fillEquipmentForm(item) {
