@@ -620,3 +620,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideGlobalLoading();
   }
 });
+
+function renderExistingPhotoPreview(item) {
+  const imgEl = document.getElementById('photoPreviewImage');
+  const emptyEl = document.getElementById('photoPreviewEmpty');
+  const metaEl = document.getElementById('photoExistingMeta');
+
+  if (!imgEl || !emptyEl) return;
+
+  const inlineUrl = String((item && item.photo_inline_url) || '').trim();
+  const photoUrl = String((item && item.photo_url) || '').trim();
+  const finalUrl = inlineUrl || photoUrl;
+
+  imgEl.onerror = function () {
+    imgEl.src = '';
+    imgEl.classList.add('is-hidden');
+    emptyEl.classList.remove('is-hidden');
+    emptyEl.textContent = '기존 사진을 불러오지 못했습니다.';
+    if (metaEl) metaEl.style.display = 'none';
+  };
+
+  if (finalUrl) {
+    imgEl.src = finalUrl;
+    imgEl.classList.remove('is-hidden');
+    emptyEl.classList.add('is-hidden');
+    emptyEl.textContent = '등록된 사진이 없습니다.';
+    if (metaEl) metaEl.style.display = '';
+  } else {
+    imgEl.src = '';
+    imgEl.classList.add('is-hidden');
+    emptyEl.classList.remove('is-hidden');
+    emptyEl.textContent = '등록된 사진이 없습니다.';
+    if (metaEl) metaEl.style.display = 'none';
+  }
+}
