@@ -219,10 +219,12 @@ async function initializeOrgSelectors() {
 function getPhotoElements() {
   return {
     input: qs('#photoInput'),
-    preview: qs('#photoPreview'),
+    preview: qs('#photoPreviewImage'),
     empty: qs('#photoPreviewEmpty'),
     removeBtn: qs('#removePhotoBtn'),
-    fileName: qs('#photoFileName')
+    fileName: qs('#photoFileName'),
+    previewWrap: qs('#photoPreviewWrap'),
+    existingMeta: qs('#photoExistingMeta')
   };
 }
 
@@ -230,14 +232,48 @@ function renderPhotoPreview(src) {
   const els = getPhotoElements();
   if (!els.preview || !els.empty) return;
 
+  els.preview.onerror = function() {
+    els.preview.src = '';
+    els.preview.classList.add('is-hidden');
+    els.empty.classList.remove('is-hidden');
+    els.empty.textContent = '사진을 불러오지 못했습니다.';
+    if (els.previewWrap) els.previewWrap.classList.remove('has-image');
+    if (els.existingMeta) els.existingMeta.style.display = 'none';
+  };
+
   if (src) {
     els.preview.src = src;
     els.preview.classList.remove('is-hidden');
     els.empty.classList.add('is-hidden');
+    els.empty.textContent = '등록된 사진이 없습니다.';
+    if (els.previewWrap) els.previewWrap.classList.add('has-image');
   } else {
     els.preview.src = '';
     els.preview.classList.add('is-hidden');
     els.empty.classList.remove('is-hidden');
+    els.empty.textContent = '등록된 사진이 없습니다.';
+    if (els.previewWrap) els.previewWrap.classList.remove('has-image');
+  }
+}
+
+function loadExistingPhoto(item) {
+  const inlineUrl = normalizeText(item?.photo_inline_url);
+  const photoUrl = normalizeText(item?.photo_url);
+  const finalUrl = inlineUrl || photoUrl;
+  const els = getPhotoElements();
+
+  if (els.fileName) {
+    els.fileName.textContent = finalUrl ? '등록된 사진 있음' : '선택된 파일 없음';
+  }
+
+  if (els.existingMeta) {
+    els.existingMeta.style.display = finalUrl ? '' : 'none';
+  }
+
+  if (finalUrl) {
+    renderPhotoPreview(finalUrl);
+  } else {
+    renderPhotoPreview('');
   }
 }
 
@@ -247,82 +283,59 @@ function initializePhotoUi() {
 
   els.input.addEventListener('change', function(event) {
     const file = event.target.files && event.target.files[0];
-    const statusEl = qs('#photoStatusText');
-  
+
     if (!file) {
       selectedPhotoFile = null;
-  
+
       if (els.fileName) {
         els.fileName.textContent = currentEquipment?.photo_file_id
           ? '등록된 사진 있음'
           : '선택된 파일 없음';
       }
-  
-      if (statusEl) {
-        statusEl.textContent = currentEquipment?.photo_file_id ? '현재 등록된 사진' : '';
+
+      if (els.existingMeta) {
+        els.existingMeta.style.display = currentEquipment?.photo_file_id ? '' : 'none';
       }
-  
+
       loadExistingPhoto(currentEquipment || {});
       return;
     }
-  
+
     selectedPhotoFile = file;
     removePhotoRequested = false;
-  
+
     if (els.fileName) {
       els.fileName.textContent = file.name || '선택된 파일 없음';
     }
-  
-    if (statusEl) {
-      statusEl.textContent = '새로 선택한 사진';
+
+    if (els.existingMeta) {
+      els.existingMeta.style.display = '';
+      els.existingMeta.textContent = '새로 선택한 사진이 있습니다.';
     }
-  
+
     const localUrl = URL.createObjectURL(file);
     renderPhotoPreview(localUrl);
   });
 
   els.removeBtn?.addEventListener('click', function() {
-    const statusEl = qs('#photoStatusText');
-  
     selectedPhotoFile = null;
     removePhotoRequested = true;
-  
+
     if (els.input) {
       els.input.value = '';
     }
-  
+
     if (els.fileName) {
       els.fileName.textContent = '선택된 파일 없음';
     }
-  
-    if (statusEl) {
-      statusEl.textContent = '삭제 예정';
+
+    if (els.existingMeta) {
+      els.existingMeta.style.display = '';
+      els.existingMeta.textContent = '사진 삭제 예정';
     }
-  
+
     renderPhotoPreview('');
   });
-}
-
-function loadExistingPhoto(item) {
-  const inlineUrl = normalizeText(item?.photo_inline_url);
-  const photoUrl = normalizeText(item?.photo_url);
-  const finalUrl = inlineUrl || photoUrl;
-  const els = getPhotoElements();
-  const statusEl = qs('#photoStatusText');
-
-  if (els.fileName) {
-    els.fileName.textContent = finalUrl ? '등록된 사진 있음' : '선택된 파일 없음';
-  }
-
-  if (statusEl) {
-    statusEl.textContent = finalUrl ? '현재 등록된 사진' : '';
-  }
-
-  if (finalUrl) {
-    renderPhotoPreview(finalUrl);
-  } else {
-    renderPhotoPreview('');
-  }
 }
 
 function getImageTypeForOutput(file) {
@@ -408,14 +421,20 @@ async function uploadPhotoIfNeeded(equipmentId) {
       equipment_id: equipmentId,
       request_user_email: requestUserEmail
     });
-  
+
     currentEquipment.photo_file_id = '';
     currentEquipment.photo_url = '';
     currentEquipment.photo_inline_url = '';
     removePhotoRequested = false;
   }
 
-  if (!selectedPhotoFile) return;
+  if (!selectedPhotoFile) {
+    const els = getPhotoElements();
+    if (!currentEquipment?.photo_file_id && els.existingMeta && !removePhotoRequested) {
+      els.existingMeta.style.display = 'none';
+    }
+    return;
+  }
 
   const compressed = await compressImageFile(selectedPhotoFile);
 
@@ -431,25 +450,26 @@ async function uploadPhotoIfNeeded(equipmentId) {
   currentEquipment = currentEquipment || {};
   currentEquipment.photo_file_id = uploaded.photo_file_id || '';
   currentEquipment.photo_url = uploaded.photo_url || '';
-  
+  currentEquipment.photo_inline_url = '';
+
   selectedPhotoFile = null;
   removePhotoRequested = false;
-  
+
   const els = getPhotoElements();
-  const statusEl = qs('#photoStatusText');
-  
+
   if (els.input) {
     els.input.value = '';
   }
-  
+
   if (els.fileName) {
     els.fileName.textContent = currentEquipment.photo_file_id ? '등록된 사진 있음' : '선택된 파일 없음';
   }
-  
-  if (statusEl) {
-    statusEl.textContent = currentEquipment.photo_file_id ? '현재 등록된 사진' : '';
+
+  if (els.existingMeta) {
+    els.existingMeta.textContent = currentEquipment.photo_file_id ? '현재 등록된 사진이 있습니다.' : '';
+    els.existingMeta.style.display = currentEquipment.photo_file_id ? '' : 'none';
   }
-  
+
   loadExistingPhoto(currentEquipment);
 }
 
@@ -494,44 +514,6 @@ function fillEquipmentForm(item) {
   loadExistingPhoto(item);
 }
 
-function renderExistingPhotoPreview(item) {
-  const previewWrap = qs('#photoPreviewWrap');
-  const imgEl = qs('#photoPreviewImage');
-  const emptyEl = qs('#photoPreviewEmpty');
-  const statusEl = qs('#photoStatusText');
-
-  if (!imgEl || !emptyEl) return;
-
-  const inlineUrl = normalizeText(item?.photo_inline_url);
-  const photoUrl = normalizeText(item?.photo_url);
-  const finalUrl = inlineUrl || photoUrl;
-
-  imgEl.onerror = function() {
-    imgEl.src = '';
-    imgEl.classList.add('is-hidden');
-    emptyEl.classList.remove('is-hidden');
-    emptyEl.textContent = '기존 사진을 불러오지 못했습니다.';
-    if (statusEl) statusEl.textContent = '';
-    if (previewWrap) previewWrap.classList.remove('has-image');
-  };
-
-  if (finalUrl) {
-    imgEl.src = finalUrl;
-    imgEl.classList.remove('is-hidden');
-    emptyEl.classList.add('is-hidden');
-    emptyEl.textContent = '등록된 사진이 없습니다.';
-    if (statusEl) statusEl.textContent = '현재 등록된 사진';
-    if (previewWrap) previewWrap.classList.add('has-image');
-  } else {
-    imgEl.src = '';
-    imgEl.classList.add('is-hidden');
-    emptyEl.classList.remove('is-hidden');
-    emptyEl.textContent = '등록된 사진이 없습니다.';
-    if (statusEl) statusEl.textContent = '';
-    if (previewWrap) previewWrap.classList.remove('has-image');
-  }
-}
-
 async function loadEquipmentIfEditMode() {
   currentEquipmentId = getQueryParam('id');
   isEditMode = !!currentEquipmentId;
@@ -546,9 +528,9 @@ async function loadEquipmentIfEditMode() {
       id: currentEquipmentId,
       request_user_email: user.email || user.user_email || ''
     });
+
     currentEquipment = result.data || {};
     fillEquipmentForm(currentEquipment);
-    renderExistingPhotoPreview(currentEquipment);
   } catch (error) {
     showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
   } finally {
@@ -652,6 +634,8 @@ async function handleSubmit(event) {
     } else {
       const result = await apiPost('createEquipment', payload);
       equipmentId = result?.data?.equipment_id || '';
+      currentEquipment = currentEquipment || {};
+      currentEquipment.equipment_id = equipmentId;
     }
 
     await uploadPhotoIfNeeded(equipmentId);
@@ -671,36 +655,6 @@ async function handleSubmit(event) {
   }
 }
 
-function bindPhotoPreviewInput() {
-  const fileInput = qs('#photo');
-  const previewWrap = qs('#photoPreviewWrap');
-  const imgEl = qs('#photoPreviewImage');
-  const emptyEl = qs('#photoPreviewEmpty');
-  const statusEl = qs('#photoStatusText');
-
-  if (!fileInput || !imgEl || !emptyEl) return;
-
-  fileInput.addEventListener('change', function(event) {
-    const file = event.target.files?.[0];
-    if (!file) {
-      if (isEditMode && currentEquipment) {
-        renderExistingPhotoPreview(currentEquipment);
-      }
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(loadEvent) {
-      imgEl.src = loadEvent.target?.result || '';
-      imgEl.classList.remove('is-hidden');
-      emptyEl.classList.add('is-hidden');
-      if (statusEl) statusEl.textContent = '새로 선택한 사진';
-      if (previewWrap) previewWrap.classList.add('has-image');
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
@@ -711,7 +665,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initializeOrgSelectors();
     await loadStatusOptions('IN_USE');
     bindCurrencyInput('#acquisition_cost');
-    bindPhotoPreviewInput();
+    initializePhotoUi();
     await loadEquipmentIfEditMode();
     updateDepartmentPreview();
     document.querySelector('#equipmentForm')?.addEventListener('submit', handleSubmit);
@@ -721,37 +675,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideGlobalLoading();
   }
 });
-
-function renderExistingPhotoPreview(item) {
-  const imgEl = document.getElementById('photoPreviewImage');
-  const emptyEl = document.getElementById('photoPreviewEmpty');
-  const metaEl = document.getElementById('photoExistingMeta');
-
-  if (!imgEl || !emptyEl) return;
-
-  const inlineUrl = String((item && item.photo_inline_url) || '').trim();
-  const photoUrl = String((item && item.photo_url) || '').trim();
-  const finalUrl = inlineUrl || photoUrl;
-
-  imgEl.onerror = function () {
-    imgEl.src = '';
-    imgEl.classList.add('is-hidden');
-    emptyEl.classList.remove('is-hidden');
-    emptyEl.textContent = '기존 사진을 불러오지 못했습니다.';
-    if (metaEl) metaEl.style.display = 'none';
-  };
-
-  if (finalUrl) {
-    imgEl.src = finalUrl;
-    imgEl.classList.remove('is-hidden');
-    emptyEl.classList.add('is-hidden');
-    emptyEl.textContent = '등록된 사진이 없습니다.';
-    if (metaEl) metaEl.style.display = '';
-  } else {
-    imgEl.src = '';
-    imgEl.classList.add('is-hidden');
-    emptyEl.classList.remove('is-hidden');
-    emptyEl.textContent = '등록된 사진이 없습니다.';
-    if (metaEl) metaEl.style.display = 'none';
-  }
-}
