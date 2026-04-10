@@ -652,3 +652,57 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+.photo-file-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.photo-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.photo-file-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.photo-file-trigger:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.photo-file-name {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #475569;
+  font-size: 14px;
+  min-width: 220px;
+  max-width: 100%;
+  word-break: break-all;
+}
