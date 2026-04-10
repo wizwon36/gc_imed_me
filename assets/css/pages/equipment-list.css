@@ -1387,3 +1387,21 @@
     border-radius: 2mm;
   }
 }
+
+.equipment-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.equipment-card-actions-left,
+.equipment-card-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.equipment-card-actions-right {
+  margin-left: auto;
+}
