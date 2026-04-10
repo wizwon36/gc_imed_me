@@ -187,6 +187,17 @@ function renderPhoto(item) {
 
   const photoUrl = String((item && item.photo_url) || '').trim();
 
+  imgEl.onerror = function() {
+    imgEl.src = '';
+    imgEl.classList.add('is-hidden');
+    emptyEl.classList.remove('is-hidden');
+    emptyEl.textContent = '사진을 불러오지 못했습니다. 네트워크 또는 파일 접근 경로를 확인하세요.';
+  };
+
+  imgEl.onload = function() {
+    emptyEl.classList.add('is-hidden');
+  };
+
   if (photoUrl) {
     imgEl.src = photoUrl;
     imgEl.classList.remove('is-hidden');
