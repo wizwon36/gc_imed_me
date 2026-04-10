@@ -147,15 +147,15 @@
           <span class="form-label">장비 사진</span>
 
           <div class="photo-upload-box">
-            <div class="photo-preview-wrap">
-              <img
-                id="photoPreview"
-                class="photo-preview-image is-hidden"
-                alt="장비 사진 미리보기"
-              />
+            <div class="form-photo-preview" id="photoPreviewWrap">
+              <img id="photoPreviewImage" class="photo-preview-image is-hidden" alt="장비 사진 미리보기" />
               <div id="photoPreviewEmpty" class="photo-preview-empty">
                 등록된 사진이 없습니다.
               </div>
+            </div>
+            
+            <div class="form-photo-meta" id="photoExistingMeta" style="display:none;">
+              현재 등록된 사진이 있습니다.
             </div>
 
             <div class="photo-upload-actions">
