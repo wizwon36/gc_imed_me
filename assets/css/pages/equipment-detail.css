@@ -718,3 +718,33 @@
     top: auto;
   }
 }
+
+.detail-photo-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.detail-photo-actions .btn,
+.detail-photo-actions .btn-danger,
+.detail-photo-actions .btn-light {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .detail-photo-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-photo-actions .btn,
+  .detail-photo-actions .btn-danger,
+  .detail-photo-actions .btn-light {
+    width: 100%;
+  }
+}
