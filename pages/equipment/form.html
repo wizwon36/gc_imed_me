@@ -159,12 +159,12 @@
             </div>
 
             <div class="photo-upload-actions">
-              <input
-                type="file"
-                id="photoInput"
-                class="input"
-                accept="image/*"
-              />
+              <div class="photo-file-control">
+                <input type="file" id="photoInput" class="photo-file-input" accept="image/*" />
+                <label for="photoInput" class="photo-file-trigger">사진 선택</label>
+                <div id="photoFileName" class="photo-file-name">선택된 파일 없음</div>
+              </div>
+              
               <div class="photo-upload-help">
                 업로드 전에 자동 압축됩니다. 장비 식별이 가능한 정도의 사진만 올려주세요.
               </div>
