@@ -61,18 +61,37 @@
         </div>
       </article>
 
-      <div class="qr-sticky-wrap">
-        <article class="card detail-qr-card">
+      <div class="detail-side-stack">
+        <article class="card detail-photo-card">
           <div class="section-head">
-            <h2 class="section-title">QR 코드</h2>
+            <h2 class="section-title">장비 사진</h2>
           </div>
-          <div class="qr-panel">
-            <div id="qrBox" class="qr-box">
-              <div class="empty-box">불러오는 중...</div>
+
+          <div id="detailPhotoWrap" class="detail-photo-wrap">
+            <img
+              id="detailPhotoImage"
+              class="detail-photo-image is-hidden"
+              alt="장비 사진"
+            />
+            <div id="detailPhotoEmpty" class="detail-photo-empty">
+              등록된 사진이 없습니다.
             </div>
-            <div id="qrText" class="sub-text detail-qr-text">-</div>
           </div>
         </article>
+
+        <div class="qr-sticky-wrap">
+          <article class="card detail-qr-card">
+            <div class="section-head">
+              <h2 class="section-title">QR 코드</h2>
+            </div>
+            <div class="qr-panel">
+              <div id="qrBox" class="qr-box">
+                <div class="empty-box">불러오는 중...</div>
+              </div>
+              <div id="qrText" class="sub-text detail-qr-text">-</div>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
