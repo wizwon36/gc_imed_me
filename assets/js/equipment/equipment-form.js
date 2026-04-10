@@ -221,7 +221,8 @@ function getPhotoElements() {
     input: qs('#photoInput'),
     preview: qs('#photoPreview'),
     empty: qs('#photoPreviewEmpty'),
-    removeBtn: qs('#removePhotoBtn')
+    removeBtn: qs('#removePhotoBtn'),
+    fileName: qs('#photoFileName')
   };
 }
 
@@ -248,11 +249,18 @@ function initializePhotoUi() {
     const file = event.target.files && event.target.files[0];
     if (!file) {
       selectedPhotoFile = null;
+      if (els.fileName) {
+        els.fileName.textContent = '선택된 파일 없음';
+      }
       return;
     }
 
     selectedPhotoFile = file;
     removePhotoRequested = false;
+
+    if (els.fileName) {
+      els.fileName.textContent = file.name || '선택된 파일 없음';
+    }
 
     const localUrl = URL.createObjectURL(file);
     renderPhotoPreview(localUrl);
@@ -266,12 +274,22 @@ function initializePhotoUi() {
       els.input.value = '';
     }
 
+    if (els.fileName) {
+      els.fileName.textContent = '선택된 파일 없음';
+    }
+
     renderPhotoPreview('');
   });
 }
 
 function loadExistingPhoto(item) {
   const photoUrl = item?.photo_url || '';
+  const els = getPhotoElements();
+
+  if (els.fileName) {
+    els.fileName.textContent = photoUrl ? '등록된 사진 있음' : '선택된 파일 없음';
+  }
+
   if (photoUrl) {
     renderPhotoPreview(photoUrl);
   } else {
@@ -393,6 +411,9 @@ async function uploadPhotoIfNeeded(equipmentId) {
   const els = getPhotoElements();
   if (els.input) {
     els.input.value = '';
+  }
+  if (els.fileName) {
+    els.fileName.textContent = currentEquipment.photo_url ? '등록된 사진 있음' : '선택된 파일 없음';
   }
 }
 
