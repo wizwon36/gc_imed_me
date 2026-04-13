@@ -457,13 +457,25 @@ async function initListFilters() {
   clinicEl = document.getElementById('clinic_code');
   teamEl = document.getElementById('team_code');
 
-  if (window.OrgService && clinicEl && teamEl) {
-    await window.OrgService.bindClinicTeam(clinicEl, teamEl, {
-      initialClinicCode: query.clinic_code || '',
-      initialTeamCode: query.team_code || '',
-      clinicEmptyLabel: '전체 의원',
-      teamEmptyLabel: '전체 팀'
+  if (window.orgSelect && clinicEl && teamEl) {
+    await window.orgSelect.loadOrgData();
+    window.orgSelect.fillSelectOptions(clinicEl, window.orgSelect.getClinics(), {
+      emptyText: '전체 의원'
     });
+    window.orgSelect.bindClinicTeamSelects({
+      clinicSelect: clinicEl,
+      teamSelect: teamEl,
+      onTeamChanged: null
+    });
+    if (query.clinic_code) {
+      clinicEl.value = query.clinic_code;
+      window.orgSelect.fillSelectOptions(
+        teamEl,
+        window.orgSelect.getFilteredTeams(query.clinic_code),
+        { emptyText: '전체 팀' }
+      );
+      if (query.team_code) teamEl.value = query.team_code;
+    }
   }
 
   setValue('keyword', query.keyword || '');
@@ -495,12 +507,12 @@ function bindListEvents() {
       equipmentListState.pageSize = Number(getValue('page_size') || equipmentListState.pageSize || 20) || 20;
       setValue('page_size', String(equipmentListState.pageSize));
 
-      if (window.OrgService && typeof window.OrgService.fillTeamSelect === 'function') {
-        await window.OrgService.fillTeamSelect(document.getElementById('team_code'), '', {
-          includeEmpty: true,
-          emptyLabel: '전체 팀',
-          selectedValue: ''
-        });
+      if (window.orgSelect) {
+        window.orgSelect.fillSelectOptions(
+          document.getElementById('team_code'),
+          [],
+          { emptyText: '전체 팀' }
+        );
       }
 
       await loadEquipmentList(1);
