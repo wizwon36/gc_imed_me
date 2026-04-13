@@ -57,15 +57,6 @@ function getValue(id) {
   return target ? String(target.value || '').trim() : '';
 }
 
-function escapeHtml(value) {
-  return String(value == null ? '' : value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 function formatNumberLocal(value) {
   var num = Number(value || 0);
   return Number.isFinite(num) ? num.toLocaleString('ko-KR') : '0';
@@ -99,30 +90,6 @@ function formatDisplayDate(value) {
   }
 
   return raw;
-}
-
-function statusLabelLocal(value) {
-  var map = {
-    IN_USE: '사용중',
-    REPAIRING: '수리중',
-    INSPECTING: '점검중',
-    STORED: '보관',
-    DISPOSED: '폐기'
-  };
-
-  return map[String(value || '').trim()] || (value || '-');
-}
-
-function statusClassLocal(value) {
-  var map = {
-    IN_USE: 'is-in-use',
-    REPAIRING: 'is-repairing',
-    INSPECTING: 'is-inspecting',
-    STORED: 'is-stored',
-    DISPOSED: 'is-disposed'
-  };
-
-  return map[String(value || '').trim()] || '';
 }
 
 function getCurrentFilters() {
@@ -213,8 +180,8 @@ function buildEquipmentCard(item) {
           '<h3 class="equipment-card-title">' + escapeHtml(item.equipment_name || '-') + '</h3>' +
           '<div class="equipment-card-sub">' + escapeHtml(item.equipment_id || '') + '</div>' +
         '</div>' +
-        '<span class="status-badge ' + statusClassLocal(item.status || '') + '">' +
-          escapeHtml(statusLabelLocal(item.status || '')) +
+        '<span class="status-badge ' + statusClass(item.status || '') + '">' +
+          escapeHtml(statusLabel(item.status || '')) +
         '</span>' +
       '</div>' +
 
