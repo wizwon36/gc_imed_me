@@ -188,8 +188,13 @@
       path === `${siteBasePath}/index.html` ||
       location.pathname.endsWith('/index.html');
 
+    const isPublicPage =
+      location.pathname.includes('/pages/equipment/public-detail.html');
+
     function checkSessionGuard_() {
       const user = getSession();
+
+      if (isPublicPage) return;
 
       if (isLoginPage) {
         if (user) {
