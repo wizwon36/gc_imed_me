@@ -114,13 +114,14 @@ async function loadPublicEquipment() {
     renderPublicInfo(item);
 
     // 로그인 여부 확인 — 세션 있으면 상세 링크 활성화
-    var user = window.auth && typeof window.auth.getSession === 'function'
-      ? window.auth.getSession()
-      : null;
+    var sessionRaw = null;
+    try {
+      sessionRaw = JSON.parse(localStorage.getItem('imed_portal_user'));
+    } catch (e) {}
 
     var detailBtn = document.getElementById('goToDetailBtn');
     if (detailBtn) {
-      if (user) {
+      if (sessionRaw && sessionRaw.user_email) {
         detailBtn.href = 'detail.html?id=' + encodeURIComponent(equipmentId);
         detailBtn.style.display = '';
       } else {
