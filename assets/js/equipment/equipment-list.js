@@ -442,6 +442,9 @@ async function initListFilters() {
         { emptyText: '전체 팀' }
       );
       if (query.team_code) teamEl.value = query.team_code;
+    } else {
+      teamEl.innerHTML = '<option value="">팀을 선택하세요</option>';
+      teamEl.disabled = true;
     }
   }
 
