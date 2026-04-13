@@ -407,20 +407,34 @@ function renderDetailInfo(item) {
     { label: '연락처', value: item.manager_phone },
     { label: '취득가액', value: safeNumber(item.acquisition_cost) },
     { label: '유지보수 종료일', value: formatDisplayDate(item.maintenance_end_date) },
-    { label: '현재 상태', value: statusLabel(item.status) },
+    { label: '현재 상태', value: item.status, isStatus: true },
     { label: '현재 위치', value: item.location },
     { label: '현재 사용자', value: item.current_user },
     { label: '등록일시', value: formatDisplayDateTime(item.created_at) },
     { label: '수정일시', value: formatDisplayDateTime(item.updated_at) },
-    { label: '비고', value: item.memo || '-' }
+    { label: '비고', value: item.memo || '-', wide: true }
   ];
 
   detailInfoGrid.innerHTML = fields
     .map(function(field) {
+      const tileClass = 'info-tile' + (field.wide ? ' info-tile-wide' : '');
+      let valueHtml;
+
+      if (field.isStatus) {
+        valueHtml = '<span class="status-badge ' + statusClass(field.value) + '">' +
+          escapeHtml(statusLabel(field.value)) +
+          '</span>';
+      } else {
+        const display = (field.value === null || field.value === undefined || field.value === '')
+          ? '-'
+          : field.value;
+        valueHtml = nl2br(display);
+      }
+
       return (
-        '<div class="info-tile">' +
+        '<div class="' + tileClass + '">' +
           '<div class="info-tile-label">' + escapeHtml(field.label) + '</div>' +
-          '<div class="info-tile-value">' + nl2br(field.value) + '</div>' +
+          '<div class="info-tile-value">' + valueHtml + '</div>' +
         '</div>'
       );
     })
