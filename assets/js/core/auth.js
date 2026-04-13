@@ -188,7 +188,7 @@
       path === `${siteBasePath}/index.html` ||
       location.pathname.endsWith('/index.html');
 
-    window.addEventListener('pageshow', () => {
+    function checkSessionGuard_() {
       const user = getSession();
 
       if (isLoginPage) {
@@ -211,33 +211,13 @@
       if (!isChangePasswordPage && String(user.first_login || 'N').toUpperCase() === 'Y') {
         location.replace(getChangePasswordUrl());
       }
-    });
+    }
+
+    window.addEventListener('pageshow', checkSessionGuard_);
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible') return;
-
-      const user = getSession();
-
-      if (isLoginPage) {
-        if (user) {
-          if (String(user.first_login || 'N').toUpperCase() === 'Y') {
-            location.replace(getChangePasswordUrl());
-            return;
-          }
-          location.replace(getPortalUrl());
-        }
-        return;
-      }
-
-      if (!user) {
-        location.replace(getLoginUrl());
-        return;
-      }
-
-      const isChangePasswordPage = location.pathname.includes('/pages/auth/change-password.html');
-      if (!isChangePasswordPage && String(user.first_login || 'N').toUpperCase() === 'Y') {
-        location.replace(getChangePasswordUrl());
-      }
+      checkSessionGuard_();
     });
   }
 
