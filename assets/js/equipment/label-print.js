@@ -1,5 +1,5 @@
 function buildEquipmentDetailUrl(equipmentId) {
-  return CONFIG.SITE_BASE_URL + '/pages/equipment/detail.html?id=' + encodeURIComponent(equipmentId);
+  return CONFIG.SITE_BASE_URL + '/pages/equipment/public-detail.html?id=' + encodeURIComponent(equipmentId);
 }
 
 function getSelectedLabelSize() {
