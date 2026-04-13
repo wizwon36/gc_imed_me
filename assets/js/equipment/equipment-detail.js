@@ -95,7 +95,9 @@ function safeNumber(value) {
 
 function invalidateDashboardSessionCacheSafe() {
   try {
-    sessionStorage.removeItem('gc_imed_dashboard_v1');
+    if (typeof window.invalidateDashboardSessionCache === 'function') {
+      window.invalidateDashboardSessionCache();
+    }
   } catch (error) {}
 }
 
