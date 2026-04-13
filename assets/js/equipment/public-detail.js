@@ -53,7 +53,9 @@ function renderPublicInfo(item) {
     { label: '사용부서', value: item.department },
     { label: '현재 위치', value: item.location },
     { label: '유지보수 종료일', value: formatDisplayDate(item.maintenance_end_date) },
-    { label: '현재 상태', value: item.status, isStatus: true }
+    { label: '현재 상태', value: item.status, isStatus: true },
+    { label: '담당자', value: item.manager_name },
+    { label: '연락처', value: item.manager_phone }
   ];
 
   grid.innerHTML = fields.map(function(field) {
