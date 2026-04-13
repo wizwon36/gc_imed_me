@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const printLabelBtn = qs('#printLabelBtn');
     if (printLabelBtn) {
       printLabelBtn.addEventListener('click', function() {
-        location.href = 'label-print.html?id=' + encodeURIComponent(currentEquipmentId);
+        location.href = 'label-print.html?equipment_id=' + encodeURIComponent(currentEquipmentId);
       });
     }
   } catch (error) {
