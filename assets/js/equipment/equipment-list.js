@@ -544,8 +544,6 @@ async function exportEquipmentExcel() {
       return;
     }
 
-    showGlobalLoading('엑셀 파일을 생성하는 중...');
-
     var headers = [
       '장비번호', '장비명', '모델명', '제조사', '시리얼번호',
       '사용부서', '의원', '팀', '현재위치', '현재상태',
@@ -607,7 +605,7 @@ async function exportEquipmentExcel() {
       exportBtn.disabled = false;
       exportBtn.textContent = '엑셀 다운로드';
     }
-    hideGlobalLoading();
+    hideGlobalLoading(true);
   }
 }
 
