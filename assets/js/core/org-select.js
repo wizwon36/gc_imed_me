@@ -95,9 +95,10 @@ function fillSelectOptions(selectEl, items, config = {}) {
     function renderTeamsByClinic(clinicCode, preferredTeamCode = '') {
       const normalizedClinicCode = normalizeText(clinicCode);
       const teams = getFilteredTeams(normalizedClinicCode);
-    
+      const emptyText = options.teamEmptyText || '팀을 선택하세요';
+
       fillSelectOptions(teamSelect, teams, {
-        emptyText: '팀을 선택하세요',
+        emptyText: emptyText,
         keepDisabled: !normalizedClinicCode
       });
     
