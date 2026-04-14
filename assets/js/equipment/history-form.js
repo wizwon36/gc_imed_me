@@ -92,10 +92,22 @@ async function loadEquipmentInfo() {
     const item = result.data || {};
     currentEquipment = item;
 
-    qs('#equipment_id').value = item.equipment_id || '';
-    qs('#equipment_name').value = item.equipment_name || '';
-    qs('#request_department').value =
-      item.department_display || item.department || '';
+    const equipmentIdEl = qs('#equipment_id');
+    if (equipmentIdEl) {
+      equipmentIdEl.value = item.equipment_id || '';
+    }
+    
+    const equipmentNameEl = qs('#equipment_name');
+    if (equipmentNameEl) {
+      equipmentNameEl.value = item.equipment_name || '';
+    }
+    
+    const requestDeptEl = qs('#request_department');
+    if (requestDeptEl) {
+      requestDeptEl.value =
+        item.department_display || item.department || '';
+      requestDeptEl.readOnly = true;
+    }
 
     const requestDepartmentEl = qs('#request_department');
     if (requestDepartmentEl) {
@@ -111,24 +123,46 @@ function fillHistoryForm(item) {
 
   currentHistory = item;
 
-  qs('#history_type').value = item.history_type || '';
-  qs('#request_department').value =
-    item.request_department_display ||
-    item.request_department ||
-    (currentEquipment && (currentEquipment.department_display || currentEquipment.department)) ||
-    '';
-
-  qs('#requester').value = item.requester || '';
-  qs('#work_date').value = item.work_date || '';
-  qs('#amount').value =
-    item.amount === null || item.amount === undefined
-      ? ''
-      : formatNumberWithComma(item.amount);
-  qs('#vendor_name').value = item.vendor_name || '';
-  qs('#description').value = item.description || '';
-  qs('#result_status').value = item.result_status || '';
-  qs('#next_action_date').value = item.next_action_date || '';
-  qs('#update_equipment_status').value = '';
+  const historyTypeEl = qs('#history_type');
+  if (historyTypeEl) historyTypeEl.value = item.history_type || '';
+  
+  const requestDeptEl = qs('#request_department');
+  if (requestDeptEl) {
+    requestDeptEl.value =
+      item.request_department_display ||
+      item.request_department ||
+      (currentEquipment && (currentEquipment.department_display || currentEquipment.department)) ||
+      '';
+  }
+  
+  const requesterEl = qs('#requester');
+  if (requesterEl) requesterEl.value = item.requester || '';
+  
+  const workDateEl = qs('#work_date');
+  if (workDateEl) workDateEl.value = item.work_date || '';
+  
+  const amountEl = qs('#amount');
+  if (amountEl) {
+    amountEl.value =
+      item.amount === null || item.amount === undefined
+        ? ''
+        : formatNumberWithComma(item.amount);
+  }
+  
+  const vendorEl = qs('#vendor_name');
+  if (vendorEl) vendorEl.value = item.vendor_name || '';
+  
+  const descEl = qs('#description');
+  if (descEl) descEl.value = item.description || '';
+  
+  const resultEl = qs('#result_status');
+  if (resultEl) resultEl.value = item.result_status || '';
+  
+  const nextDateEl = qs('#next_action_date');
+  if (nextDateEl) nextDateEl.value = item.next_action_date || '';
+  
+  const statusEl = qs('#update_equipment_status');
+  if (statusEl) statusEl.value = '';
 }
 
 async function loadHistoryInfoIfEditMode() {
@@ -203,14 +237,14 @@ async function buildHistoryPayload() {
   };
 
   const payload = {
-    equipment_id: qs('#equipment_id').value.trim(),
-    history_type: qs('#history_type').value,
-    requester: qs('#requester').value.trim(),
-    work_date: qs('#work_date').value,
-    amount: unformatNumber(qs('#amount').value),
-    vendor_name: qs('#vendor_name').value.trim(),
-    description: qs('#description').value.trim(),
-    result_status: qs('#result_status').value,
+    equipment_id: qs('#equipment_id')?.value.trim() || '',
+    history_type: qs('#history_type')?.value || '',
+    requester: qs('#requester')?.value.trim() || '',
+    work_date: qs('#work_date')?.value || '',
+    amount: unformatNumber(qs('#amount')?.value || ''),
+    vendor_name: qs('#vendor_name')?.value.trim() || '',
+    description: qs('#description')?.value.trim() || '',
+    result_status: qs('#result_status')?.value || '',
     next_action_date: qs('#next_action_date')?.value || '',
     created_by: actor,
     updated_by: actor,
