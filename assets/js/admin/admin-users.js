@@ -193,7 +193,7 @@ function validateUserForm(data) {
 
   if (!data.user_email) {
     markFieldInvalid('userEmail');
-    throw new Error('이메일을 입력해 주세요.');
+    throw new Error('아이디를 입력해 주세요.');
   }
 
   if (!data.user_name) {
@@ -610,7 +610,7 @@ function setEditMode(user) {
   if (cancelBtn) cancelBtn.style.display = 'inline-flex';
   if (emailInput) emailInput.disabled = true;
   if (passwordHint) {
-    passwordHint.innerHTML = '수정 모드에서는 이메일을 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
+    passwordHint.innerHTML = '수정 모드에서는 아이디를 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
   }
 
   clearFieldInvalid();
