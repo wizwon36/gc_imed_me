@@ -432,6 +432,7 @@ async function initListFilters() {
     window.orgSelect.bindClinicTeamSelects({
       clinicSelect: clinicEl,
       teamSelect: teamEl,
+      teamEmptyText: '전체 팀',
       onTeamChanged: null
     });
     if (query.clinic_code) {
