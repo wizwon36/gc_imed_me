@@ -116,7 +116,7 @@
     const password = passwordEl.value.trim();
 
     if (!user_email) {
-      setMessage('이메일을 입력해 주세요.', 'error');
+      setMessage('아이디를 입력해 주세요.', 'error');
       emailEl.focus();
       return;
     }
