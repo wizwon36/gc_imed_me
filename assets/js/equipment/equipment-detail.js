@@ -476,11 +476,14 @@ function buildHistoryActionButtons(item) {
   const historyId = item.history_id || '';
   const equipmentId = item.equipment_id || currentEquipmentId || '';
 
-  buttons.push(
-    '<button type="button" class="btn btn-light btn-sm js-edit-history" data-history-id="' +
-      escapeHtml(historyId) +
-      '">수정</button>'
-  );
+  if (String(item.result_status || '') !== 'COMPLETED') {
+    buttons.push(
+      '<button type="button" class="btn btn-light btn-sm js-edit-history" ' +
+        'data-history-id="' + escapeHtml(historyId) + '" ' +
+        'data-status="' + escapeHtml(item.result_status) + '">' +
+        '수정</button>'
+    );
+  }
 
   if (String(item.history_type || '') === 'REPAIR' && String(item.result_status || '') === 'IN_PROGRESS') {
     buttons.push(
@@ -674,7 +677,15 @@ function bindHistoryActionButtons() {
   document.querySelectorAll('.js-edit-history').forEach(function(btn) {
     btn.addEventListener('click', function() {
       const historyId = this.getAttribute('data-history-id');
+      const status = this.getAttribute('data-status');
+  
       if (!historyId) return;
+  
+      if (status === 'COMPLETED') {
+        alert('완료된 이력은 수정할 수 없습니다.');
+        return;
+      }
+  
       location.href =
         'history-form.html?equipment_id=' +
         encodeURIComponent(currentEquipmentId) +
