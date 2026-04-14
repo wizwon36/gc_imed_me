@@ -498,6 +498,119 @@ function bindListEvents() {
   }
 }
 
+function statusLabelForExport(value) {
+  var map = {
+    IN_USE: '사용중',
+    REPAIRING: '수리중',
+    INSPECTING: '점검중',
+    STORED: '보관',
+    DISPOSED: '폐기'
+  };
+  return map[String(value || '').trim()] || (value || '');
+}
+
+async function exportEquipmentExcel() {
+  var exportBtn = document.getElementById('exportExcelBtn');
+
+  if (!window.XLSX) {
+    showMessage('엑셀 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', 'error');
+    return;
+  }
+
+  var filters = getCurrentFilters();
+  var userEmail = equipmentListState.user && equipmentListState.user.email
+    ? equipmentListState.user.email : '';
+
+  try {
+    if (exportBtn) {
+      exportBtn.disabled = true;
+      exportBtn.textContent = '다운로드 중...';
+    }
+    showGlobalLoading('장비 데이터를 불러오는 중...');
+
+    var result = await apiGet('exportEquipments', {
+      request_user_email: userEmail,
+      keyword: filters.keyword,
+      clinic_code: filters.clinic_code,
+      team_code: filters.team_code,
+      status: filters.status,
+      manufacturer: filters.manufacturer
+    });
+
+    var data = Array.isArray(result.data) ? result.data : [];
+
+    if (!data.length) {
+      showMessage('다운로드할 데이터가 없습니다.', 'error');
+      return;
+    }
+
+    showGlobalLoading('엑셀 파일을 생성하는 중...');
+
+    var headers = [
+      '장비번호', '장비명', '모델명', '제조사', '시리얼번호',
+      '사용부서', '의원', '팀', '현재위치', '현재상태',
+      '담당자', '연락처', '구매처', '취득가액',
+      '취득일자', '제조일자', '유지보수종료일', '현재사용자', '비고', '등록일시'
+    ];
+
+    var rows = data.map(function(item) {
+      return [
+        item.equipment_id || '',
+        item.equipment_name || '',
+        item.model_name || '',
+        item.manufacturer || '',
+        item.serial_no || '',
+        item.department || '',
+        item.clinic_name || '',
+        item.team_name || '',
+        item.location || '',
+        statusLabelForExport(item.status),
+        item.manager_name || '',
+        item.manager_phone || '',
+        item.vendor || '',
+        item.acquisition_cost !== '' && item.acquisition_cost !== null && item.acquisition_cost !== undefined
+          ? Number(item.acquisition_cost) : '',
+        item.purchase_date || '',
+        item.manufacture_date || '',
+        item.maintenance_end_date || '',
+        item.current_user || '',
+        item.memo || '',
+        item.created_at || ''
+      ];
+    });
+
+    var wsData = [headers].concat(rows);
+    var ws = window.XLSX.utils.aoa_to_sheet(wsData);
+
+    // 컬럼 너비 설정
+    ws['!cols'] = [
+      { wch: 14 }, { wch: 20 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
+      { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 8 },
+      { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 18 }
+    ];
+
+    var wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, '장비대장');
+
+    var now = new Date();
+    var dateStr = now.getFullYear() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0');
+    var fileName = '장비대장_' + dateStr + '.xlsx';
+
+    window.XLSX.writeFile(wb, fileName);
+  } catch (error) {
+    showMessage(error.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.textContent = '엑셀 다운로드';
+    }
+    hideGlobalLoading();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
   try {
     if (typeof showGlobalLoading === 'function') {
@@ -523,6 +636,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     await initListFilters();
     bindListEvents();
     await loadEquipmentList(equipmentListState.page);
+
+    var exportBtn = document.getElementById('exportExcelBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportEquipmentExcel);
+    }
   } catch (error) {
     if (typeof showMessage === 'function') {
       showMessage(error.message || '화면 초기화 중 오류가 발생했습니다.', 'error');
