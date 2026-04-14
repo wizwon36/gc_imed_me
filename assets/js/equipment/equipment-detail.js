@@ -41,6 +41,16 @@ async function getEquipmentPermissionContext() {
   }
 }
 
+function getHistoryTypeLabel(type) {
+  const map = {
+    REPAIR: '수리',
+    INSPECTION: '점검',
+    MAINTENANCE: '유지보수',
+    OTHER: '기타'
+  };
+  return map[type] || type;
+}
+
 function safeValue(value) {
   return escapeHtml(value || '-');
 }
@@ -485,7 +495,7 @@ function renderHistories(items) {
       '<div class="timeline-card">' +
         '<div class="timeline-card-head">' +
           '<div>' +
-            '<div class="timeline-title">' + escapeHtml(historyTypeLabel(item.history_type)) + '</div>' +
+            '<div class="timeline-title">' + escapeHtml(getHistoryTypeLabel(item.history_type)) + '</div>' +
             '<div class="timeline-date">' + safeValue(formatDisplayDate(item.work_date)) + '</div>' +
           '</div>' +
           '<div class="timeline-badge">' + escapeHtml(resultStatusLabel(item.result_status)) + '</div>' +
