@@ -51,6 +51,24 @@ function getHistoryTypeLabel(type) {
   return map[type] || type;
 }
 
+function getResultStatusLabel(status) {
+  const map = {
+    COMPLETED: '완료',
+    IN_PROGRESS: '진행중',
+    PENDING: '대기'
+  };
+  return map[status] || status;
+}
+
+function getResultStatusClass(status) {
+  const map = {
+    COMPLETED: 'badge-green',
+    IN_PROGRESS: 'badge-orange',
+    PENDING: 'badge-gray'
+  };
+  return map[status] || 'badge-gray';
+}
+
 function safeValue(value) {
   return escapeHtml(value || '-');
 }
@@ -498,7 +516,9 @@ function renderHistories(items) {
             '<div class="timeline-title">' + escapeHtml(getHistoryTypeLabel(item.history_type)) + '</div>' +
             '<div class="timeline-date">' + safeValue(formatDisplayDate(item.work_date)) + '</div>' +
           '</div>' +
-          '<div class="timeline-badge">' + escapeHtml(resultStatusLabel(item.result_status)) + '</div>' +
+          '<div class="timeline-badge ' + getResultStatusClass(item.result_status) + '">' +
+            escapeHtml(getResultStatusLabel(item.result_status)) +
+          '</div>' +
         '</div>' +
         '<div class="timeline-meta">' +
           '<div class="timeline-meta-item"><span class="timeline-meta-label">처리업체</span><span class="timeline-meta-value">' + safeValue(item.vendor_name) + '</span></div>' +
