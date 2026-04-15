@@ -491,7 +491,7 @@ function renderHistories(items) {
             '<div class="timeline-title">' + escapeHtml(historyTypeLabel(item.history_type)) + '</div>' +
             '<div class="timeline-date">' + safeValue(formatDisplayDate(item.work_date)) + '</div>' +
           '</div>' +
-          '<div class="timeline-badge ' + getResultStatusClass(item.result_status) + '">' +
+          '<div class="timeline-badge ' + ResultStatusClass(item.result_status) + '">' +
             escapeHtml(resultStatusLabel(item.result_status)) +
           '</div>' +
         '</div>' +
