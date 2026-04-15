@@ -220,12 +220,3 @@ function formatDateTimeKR(value) {
     second: '2-digit'
   });
 }
-
-function getResultStatusClass(status) {
-  const map = {
-    COMPLETED: 'badge-green',
-    IN_PROGRESS: 'badge-orange',
-    PENDING: 'badge-gray'
-  };
-  return map[status] || 'badge-gray';
-}
