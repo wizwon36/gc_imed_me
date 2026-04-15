@@ -9,6 +9,15 @@ function getCurrentUser() {
   return null;
 }
 
+function getResultStatusClass(status) {
+  const map = {
+    COMPLETED: 'badge-green',
+    IN_PROGRESS: 'badge-orange',
+    PENDING: 'badge-gray'
+  };
+  return map[status] || 'badge-gray';
+}
+
 async function getEquipmentPermissionContext() {
   const user = getCurrentUser();
   if (!user || !user.email) {
