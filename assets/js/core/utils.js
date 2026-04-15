@@ -177,16 +177,24 @@ function historyTypeLabel(type) {
 }
 
 function resultStatusLabel(type) {
+  const value = String(type || '').trim();
+
+  if (!value) return '미등록';  // 🔥 핵심 fallback
+
   const map = {
     COMPLETED: '완료',
     IN_PROGRESS: '진행중',
     PENDING: '대기'
   };
 
-  return map[String(type || '').trim()] || String(type || '');
+  return map[value] || value;
 }
 
 function conditionStatusLabel(type) {
+  const value = String(type || '').trim();
+
+  if (!value) return '미등록';
+
   const map = {
     NORMAL: '정상',
     NEEDS_CHECK: '확인 필요',
@@ -194,7 +202,7 @@ function conditionStatusLabel(type) {
     MISSING: '분실',
   };
 
-  return map[String(type || '').trim()] || String(type || '');
+  return map[value] || value;
 }
 
 function formatDateTimeKR(value) {
