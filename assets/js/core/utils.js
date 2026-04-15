@@ -168,10 +168,9 @@ function statusClass(status) {
 function historyTypeLabel(type) {
   const map = {
     REPAIR: '수리',
-    REGULAR_CHECK: '정기점검',
-    LEGAL_INSPECTION: '법정검사',
-    PREVENTIVE: '예방점검',
-    ETC: '기타'
+    INSPECTION: '점검',
+    MAINTENANCE: '유지보수',
+    OTHER: '기타'
   };
 
   return map[String(type || '').trim()] || String(type || '');
@@ -179,9 +178,9 @@ function historyTypeLabel(type) {
 
 function resultStatusLabel(type) {
   const map = {
-    DONE: '완료',
+    COMPLETED: '완료',
     IN_PROGRESS: '진행중',
-    HOLD: '보류'
+    PENDING: '대기'
   };
 
   return map[String(type || '').trim()] || String(type || '');
@@ -190,10 +189,9 @@ function resultStatusLabel(type) {
 function conditionStatusLabel(type) {
   const map = {
     NORMAL: '정상',
-    NEED_REPAIR: '수리필요',
-    LOCATION_MISMATCH: '위치불일치',
-    MISSING: '분실의심',
-    DISPOSAL_TARGET: '폐기대상'
+    NEEDS_CHECK: '확인 필요',
+    ABNORMAL: '이상',
+    MISSING: '분실',
   };
 
   return map[String(type || '').trim()] || String(type || '');
@@ -213,4 +211,13 @@ function formatDateTimeKR(value) {
     minute: '2-digit',
     second: '2-digit'
   });
+}
+
+function getResultStatusClass(status) {
+  const map = {
+    COMPLETED: 'badge-green',
+    IN_PROGRESS: 'badge-orange',
+    PENDING: 'badge-gray'
+  };
+  return map[status] || 'badge-gray';
 }
