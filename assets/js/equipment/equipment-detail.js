@@ -69,6 +69,17 @@ function getResultStatusClass(status) {
   return map[status] || 'badge-gray';
 }
 
+function conditionStatusLabel(status) {
+  const map = {
+    NORMAL: '정상',
+    NEEDS_CHECK: '확인 필요',
+    DAMAGED: '파손',
+    MISSING: '분실',
+    UNKNOWN: '미확인'
+  };
+  return map[status] || status;
+}
+
 function safeValue(value) {
   return escapeHtml(value || '-');
 }
