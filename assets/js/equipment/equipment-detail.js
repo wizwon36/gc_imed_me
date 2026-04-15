@@ -41,45 +41,6 @@ async function getEquipmentPermissionContext() {
   }
 }
 
-function getHistoryTypeLabel(type) {
-  const map = {
-    REPAIR: '수리',
-    INSPECTION: '점검',
-    MAINTENANCE: '유지보수',
-    OTHER: '기타'
-  };
-  return map[type] || type;
-}
-
-function getResultStatusLabel(status) {
-  const map = {
-    COMPLETED: '완료',
-    IN_PROGRESS: '진행중',
-    PENDING: '대기'
-  };
-  return map[status] || status;
-}
-
-function getResultStatusClass(status) {
-  const map = {
-    COMPLETED: 'badge-green',
-    IN_PROGRESS: 'badge-orange',
-    PENDING: 'badge-gray'
-  };
-  return map[status] || 'badge-gray';
-}
-
-function conditionStatusLabel(status) {
-  const map = {
-    NORMAL: '정상',
-    NEEDS_CHECK: '확인 필요',
-    DAMAGED: '파손',
-    MISSING: '분실',
-    UNKNOWN: '미확인'
-  };
-  return map[status] || status;
-}
-
 function safeValue(value) {
   return escapeHtml(value || '-');
 }
@@ -527,11 +488,11 @@ function renderHistories(items) {
       '<div class="timeline-card">' +
         '<div class="timeline-card-head">' +
           '<div>' +
-            '<div class="timeline-title">' + escapeHtml(getHistoryTypeLabel(item.history_type)) + '</div>' +
+            '<div class="timeline-title">' + escapeHtml(historyTypeLabel(item.history_type)) + '</div>' +
             '<div class="timeline-date">' + safeValue(formatDisplayDate(item.work_date)) + '</div>' +
           '</div>' +
           '<div class="timeline-badge ' + getResultStatusClass(item.result_status) + '">' +
-            escapeHtml(getResultStatusLabel(item.result_status)) +
+            escapeHtml(resultStatusLabel(item.result_status)) +
           '</div>' +
         '</div>' +
         '<div class="timeline-meta">' +
