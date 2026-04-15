@@ -190,6 +190,16 @@ function resultStatusLabel(type) {
   return map[value] || value;
 }
 
+
+function ResultStatusClass(status) {
+  const map = {
+    COMPLETED: 'badge-green',
+    IN_PROGRESS: 'badge-orange',
+    PENDING: 'badge-gray'
+  };
+  return map[status] || 'badge-gray';
+}
+
 function conditionStatusLabel(type) {
   const value = String(type || '').trim();
 
