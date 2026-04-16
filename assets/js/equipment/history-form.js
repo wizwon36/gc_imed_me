@@ -276,7 +276,11 @@ async function handleSubmit(event) {
     showGlobalLoading(isEditMode ? '이력을 수정하는 중...' : '이력을 저장하는 중...');
 
     if (isEditMode) {
-      await apiPost('updateHistory', payload);
+      const updateResult = await apiPost('updateHistory', payload);
+      // ★ 서버가 반환한 새 updated_at 으로 즉시 갱신
+      if (updateResult?.data?.updated_at && currentHistory) {
+        currentHistory.updated_at = updateResult.data.updated_at;
+      }
       alert('이력이 수정되었습니다.');
     } else {
       await apiPost('createHistory', payload);
