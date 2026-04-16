@@ -537,8 +537,13 @@ async function handleSubmit(event) {
     let equipmentId = '';
 
     if (isEditMode) {
-      await apiPost('updateEquipment', payload);
+      const updateResult = await apiPost('updateEquipment', payload);
       equipmentId = payload.equipment_id;
+      // ★ 서버가 반환한 새 updated_at 으로 즉시 갱신
+      //    alert → 뒤로가기 등으로 연속 수정 시 오래된 client_updated_at 전송 방지
+      if (updateResult?.data?.updated_at && currentEquipment) {
+        currentEquipment.updated_at = updateResult.data.updated_at;
+      }
     } else {
       const result = await apiPost('createEquipment', payload);
       equipmentId = result?.data?.equipment_id || '';
