@@ -1,5 +1,6 @@
 let currentEquipmentId = '';
 let currentEquipment = null;
+let isSubmitting = false; // ★ 중복 제출 방지 플래그
 
 function getNowDateTimeString() {
   const now = new Date();
@@ -38,14 +39,10 @@ async function loadEquipmentInfo() {
   }
 
   const backBtn = qs('#backToDetailBtn');
-  if (backBtn) {
-    backBtn.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
-  }
+  if (backBtn) backBtn.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
 
   const checkedAtEl = qs('#checked_at');
-  if (checkedAtEl) {
-    checkedAtEl.value = getNowDateTimeString();
-  }
+  if (checkedAtEl) checkedAtEl.value = getNowDateTimeString();
 
   const user = getCurrentUserSafe();
 
@@ -103,38 +100,12 @@ async function buildInventoryPayload() {
 }
 
 function validateInventoryForm(payload) {
-  if (!payload.equipment_id) {
-    showMessage('장비번호가 없습니다.', 'error');
-    return false;
-  }
-
-  if (!payload.checked_at) {
-    showMessage('점검일시를 입력하세요.', 'error');
-    qs('#checked_at')?.focus();
-    return false;
-  }
-
-  if (!payload.checked_by) {
-    showMessage('로그인 사용자 정보가 없습니다.', 'error');
-    return false;
-  }
-
-  if (!payload.clinic_code_at_check) {
-    showMessage('장비의 의원 정보가 없습니다.', 'error');
-    return false;
-  }
-
-  if (!payload.team_code_at_check) {
-    showMessage('장비의 사용부서 정보가 없습니다.', 'error');
-    return false;
-  }
-
-  if (!payload.condition_status) {
-    showMessage('상태를 선택하세요.', 'error');
-    qs('#condition_status')?.focus();
-    return false;
-  }
-
+  if (!payload.equipment_id) { showMessage('장비번호가 없습니다.', 'error'); return false; }
+  if (!payload.checked_at) { showMessage('점검일시를 입력하세요.', 'error'); qs('#checked_at')?.focus(); return false; }
+  if (!payload.checked_by) { showMessage('로그인 사용자 정보가 없습니다.', 'error'); return false; }
+  if (!payload.clinic_code_at_check) { showMessage('장비의 의원 정보가 없습니다.', 'error'); return false; }
+  if (!payload.team_code_at_check) { showMessage('장비의 사용부서 정보가 없습니다.', 'error'); return false; }
+  if (!payload.condition_status) { showMessage('상태를 선택하세요.', 'error'); qs('#condition_status')?.focus(); return false; }
   return true;
 }
 
@@ -142,13 +113,16 @@ async function handleSubmitInventory(event) {
   event.preventDefault();
   clearMessage();
 
+  // ★ 중복 제출 방지: 이미 요청 중이면 무시
+  if (isSubmitting) return;
+
   const submitBtn = qs('#submitBtn');
 
   try {
     const payload = await buildInventoryPayload();
-
     if (!validateInventoryForm(payload)) return;
 
+    isSubmitting = true;
     setLoading(submitBtn, true, '저장 중...');
     showGlobalLoading('재고조사 이력을 저장하는 중...');
 
@@ -158,6 +132,7 @@ async function handleSubmitInventory(event) {
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
     showMessage(error.message || '재고조사 저장 중 오류가 발생했습니다.', 'error');
+    isSubmitting = false; // 오류 시에만 플래그 해제 (성공 시엔 페이지 이동)
   } finally {
     hideGlobalLoading();
     setLoading(submitBtn, false);

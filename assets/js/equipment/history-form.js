@@ -48,9 +48,7 @@ function bindCurrencyInput(selector) {
   el.addEventListener('input', function() {
     this.value = formatNumberWithComma(this.value);
     requestAnimationFrame(() => {
-      try {
-        this.setSelectionRange(this.value.length, this.value.length);
-      } catch (e) {}
+      try { this.setSelectionRange(this.value.length, this.value.length); } catch (e) {}
     });
   });
 
@@ -77,9 +75,7 @@ async function loadEquipmentInfo() {
   }
 
   const backBtn = qs('#backToDetailBtn');
-  if (backBtn) {
-    backBtn.href = 'detail.html?id=' + encodeURIComponent(equipmentId);
-  }
+  if (backBtn) backBtn.href = 'detail.html?id=' + encodeURIComponent(equipmentId);
 
   const user = getCurrentUserSafe();
 
@@ -93,25 +89,15 @@ async function loadEquipmentInfo() {
     currentEquipment = item;
 
     const equipmentIdEl = qs('#equipment_id');
-    if (equipmentIdEl) {
-      equipmentIdEl.value = item.equipment_id || '';
-    }
-    
+    if (equipmentIdEl) equipmentIdEl.value = item.equipment_id || '';
+
     const equipmentNameEl = qs('#equipment_name');
-    if (equipmentNameEl) {
-      equipmentNameEl.value = item.equipment_name || '';
-    }
-    
+    if (equipmentNameEl) equipmentNameEl.value = item.equipment_name || '';
+
     const requestDeptEl = qs('#request_department');
     if (requestDeptEl) {
-      requestDeptEl.value =
-        item.department_display || item.department || '';
+      requestDeptEl.value = item.department_display || item.department || '';
       requestDeptEl.readOnly = true;
-    }
-
-    const requestDepartmentEl = qs('#request_department');
-    if (requestDepartmentEl) {
-      requestDepartmentEl.readOnly = true;
     }
   } catch (error) {
     showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
@@ -125,7 +111,7 @@ function fillHistoryForm(item) {
 
   const historyTypeEl = qs('#history_type');
   if (historyTypeEl) historyTypeEl.value = item.history_type || '';
-  
+
   const requestDeptEl = qs('#request_department');
   if (requestDeptEl) {
     requestDeptEl.value =
@@ -134,13 +120,13 @@ function fillHistoryForm(item) {
       (currentEquipment && (currentEquipment.department_display || currentEquipment.department)) ||
       '';
   }
-  
+
   const requesterEl = qs('#requester');
   if (requesterEl) requesterEl.value = item.requester || '';
-  
+
   const workDateEl = qs('#work_date');
   if (workDateEl) workDateEl.value = item.work_date || '';
-  
+
   const amountEl = qs('#amount');
   if (amountEl) {
     amountEl.value =
@@ -148,19 +134,19 @@ function fillHistoryForm(item) {
         ? ''
         : formatNumberWithComma(item.amount);
   }
-  
+
   const vendorEl = qs('#vendor_name');
   if (vendorEl) vendorEl.value = item.vendor_name || '';
-  
+
   const descEl = qs('#description');
   if (descEl) descEl.value = item.description || '';
-  
+
   const resultEl = qs('#result_status');
   if (resultEl) resultEl.value = item.result_status || '';
-  
+
   const nextDateEl = qs('#next_action_date');
   if (nextDateEl) nextDateEl.value = item.next_action_date || '';
-  
+
   const statusEl = qs('#update_equipment_status');
   if (statusEl) statusEl.value = '';
 }
@@ -184,16 +170,13 @@ async function loadHistoryInfoIfEditMode() {
 
     const item = result.data || {};
 
-    if (!currentEquipmentId) {
-      currentEquipmentId = item.equipment_id || '';
-    }
+    if (!currentEquipmentId) currentEquipmentId = item.equipment_id || '';
 
     fillHistoryForm(item);
+    // ★ item.updated_at 이 currentHistory 에 보관됨 → buildHistoryPayload() 에서 client_updated_at 으로 전송
 
     const backBtn = qs('#backToDetailBtn');
-    if (backBtn && currentEquipmentId) {
-      backBtn.href = 'detail.html?id=' + encodeURIComponent(currentEquipmentId);
-    }
+    if (backBtn && currentEquipmentId) backBtn.href = 'detail.html?id=' + encodeURIComponent(currentEquipmentId);
   } catch (error) {
     showMessage(error.message || '이력 정보를 불러오지 못했습니다.', 'error');
   } finally {
@@ -203,29 +186,17 @@ async function loadHistoryInfoIfEditMode() {
 
 async function buildHistoryPayload() {
   const currentUser = getCurrentUserSafe();
-  const actor =
-    currentUser.email ||
-    currentUser.user_email ||
-    currentUser.name ||
-    'system';
+  const actor = currentUser.email || currentUser.user_email || currentUser.name || 'system';
 
   const fallbackOrg = {
     request_clinic_code:
-      (isEditMode ? currentHistory?.request_clinic_code : '') ||
-      currentEquipment?.clinic_code ||
-      '',
+      (isEditMode ? currentHistory?.request_clinic_code : '') || currentEquipment?.clinic_code || '',
     request_clinic_name:
-      (isEditMode ? currentHistory?.request_clinic_name : '') ||
-      currentEquipment?.clinic_name ||
-      '',
+      (isEditMode ? currentHistory?.request_clinic_name : '') || currentEquipment?.clinic_name || '',
     request_team_code:
-      (isEditMode ? currentHistory?.request_team_code : '') ||
-      currentEquipment?.team_code ||
-      '',
+      (isEditMode ? currentHistory?.request_team_code : '') || currentEquipment?.team_code || '',
     request_team_name:
-      (isEditMode ? currentHistory?.request_team_name : '') ||
-      currentEquipment?.team_name ||
-      '',
+      (isEditMode ? currentHistory?.request_team_name : '') || currentEquipment?.team_name || '',
     request_department:
       (isEditMode
         ? (currentHistory?.request_department_display || currentHistory?.request_department)
@@ -258,36 +229,37 @@ async function buildHistoryPayload() {
 
   if (isEditMode && currentHistoryId) {
     payload.history_id = currentHistoryId;
+    // ★ 낙관적 락: 내가 조회했을 때의 updated_at 을 서버로 전송
+    // 서버가 현재 시트의 updated_at 과 비교해, 다른 사람이 먼저 수정했으면 오류를 반환합니다.
+    payload.client_updated_at = normalizeText(currentHistory?.updated_at);
   }
 
   return payload;
 }
 
 function validateHistoryPayload(payload) {
-  if (!payload.equipment_id) {
-    showMessage('장비번호가 없습니다.', 'error');
-    return false;
-  }
-
-  if (!payload.history_type) {
-    showMessage('이력 구분을 선택하세요.', 'error');
-    qs('#history_type')?.focus();
-    return false;
-  }
-
-  if (!payload.work_date) {
-    showMessage('작업일을 입력하세요.', 'error');
-    qs('#work_date')?.focus();
-    return false;
-  }
-
-  if (!payload.description) {
-    showMessage('작업내용을 입력하세요.', 'error');
-    qs('#description')?.focus();
-    return false;
-  }
-
+  if (!payload.equipment_id) { showMessage('장비번호가 없습니다.', 'error'); return false; }
+  if (!payload.history_type) { showMessage('이력 구분을 선택하세요.', 'error'); qs('#history_type')?.focus(); return false; }
+  if (!payload.work_date) { showMessage('작업일을 입력하세요.', 'error'); qs('#work_date')?.focus(); return false; }
+  if (!payload.description) { showMessage('작업내용을 입력하세요.', 'error'); qs('#description')?.focus(); return false; }
   return true;
+}
+
+/**
+ * 충돌 발생 시 서버에서 최신 이력 데이터를 다시 불러옵니다.
+ */
+async function refreshCurrentHistory() {
+  if (!currentHistoryId) return;
+  try {
+    const user = getCurrentUserSafe();
+    const result = await apiGet('getHistory', {
+      history_id: currentHistoryId,
+      request_user_email: user.email || user.user_email || ''
+    });
+    currentHistory = result.data || {};
+  } catch (_) {
+    // 갱신 실패 시 무시
+  }
 }
 
 async function handleSubmit(event) {
@@ -313,7 +285,14 @@ async function handleSubmit(event) {
 
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
-    showMessage(error.message || '이력 저장 중 오류가 발생했습니다.', 'error');
+    const msg = error.message || '이력 저장 중 오류가 발생했습니다.';
+    showMessage(msg, 'error');
+
+    // ★ 충돌 감지 시 최신 데이터를 자동으로 다시 불러와서
+    //    다음 저장 시도 때 올바른 client_updated_at 이 전송되도록 합니다.
+    if (isEditMode && msg.includes('다른 사용자가 이미 수정했습니다')) {
+      await refreshCurrentHistory();
+    }
   } finally {
     hideGlobalLoading();
     setLoading(submitBtn, false);
@@ -323,9 +302,7 @@ async function handleSubmit(event) {
 function applyHistoryFormDefaults() {
   if (!isEditMode) {
     const workDateEl = qs('#work_date');
-    if (workDateEl && !workDateEl.value) {
-      workDateEl.value = getTodayYmd();
-    }
+    if (workDateEl && !workDateEl.value) workDateEl.value = getTodayYmd();
   }
 }
 

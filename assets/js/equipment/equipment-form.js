@@ -151,9 +151,7 @@ function renderStatusOptions(items, selectedValue) {
           value: normalizeText(item.code_value || item.value),
           label: normalizeText(item.code_name || item.label || item.code_value || item.value)
         };
-      }).filter(function(item) {
-        return !!item.value;
-      })
+      }).filter(function(item) { return !!item.value; })
     : DEFAULT_EQUIPMENT_STATUSES;
 
   const safeSelected = normalizeText(selectedValue) || 'IN_USE';
@@ -167,17 +165,12 @@ function renderStatusOptions(items, selectedValue) {
       '</option>';
     }).join('');
 
-  if (!selectEl.value) {
-    selectEl.value = safeSelected;
-  }
+  if (!selectEl.value) selectEl.value = safeSelected;
 }
 
 async function loadStatusOptions(selectedValue) {
   try {
-    const result = await apiGet('getCodes', {
-      code_group: 'EQUIPMENT_STATUS'
-    });
-
+    const result = await apiGet('getCodes', { code_group: 'EQUIPMENT_STATUS' });
     const items = Array.isArray(result?.data) ? result.data : [];
     renderStatusOptions(items, selectedValue);
   } catch (error) {
@@ -203,14 +196,8 @@ async function initializeOrgSelectors() {
   orgBinder = window.orgSelect.bindClinicTeamSelects({
     clinicSelect,
     teamSelect,
-    onClinicChanged: function() {
-      updateTeamSelectGuide();
-      updateDepartmentPreview();
-    },
-    onTeamChanged: function() {
-      updateTeamSelectGuide();
-      updateDepartmentPreview();
-    }
+    onClinicChanged: function() { updateTeamSelectGuide(); updateDepartmentPreview(); },
+    onTeamChanged: function() { updateTeamSelectGuide(); updateDepartmentPreview(); }
   });
 
   updateTeamSelectGuide();
@@ -262,19 +249,10 @@ function loadExistingPhoto(item) {
   const finalUrl = inlineUrl || photoUrl;
   const els = getPhotoElements();
 
-  if (els.fileName) {
-    els.fileName.textContent = finalUrl ? '등록된 사진 있음' : '선택된 파일 없음';
-  }
+  if (els.fileName) els.fileName.textContent = finalUrl ? '등록된 사진 있음' : '선택된 파일 없음';
+  if (els.existingMeta) els.existingMeta.style.display = finalUrl ? '' : 'none';
 
-  if (els.existingMeta) {
-    els.existingMeta.style.display = finalUrl ? '' : 'none';
-  }
-
-  if (finalUrl) {
-    renderPhotoPreview(finalUrl);
-  } else {
-    renderPhotoPreview('');
-  }
+  renderPhotoPreview(finalUrl || '');
 }
 
 function initializePhotoUi() {
@@ -286,17 +264,8 @@ function initializePhotoUi() {
 
     if (!file) {
       selectedPhotoFile = null;
-
-      if (els.fileName) {
-        els.fileName.textContent = currentEquipment?.photo_file_id
-          ? '등록된 사진 있음'
-          : '선택된 파일 없음';
-      }
-
-      if (els.existingMeta) {
-        els.existingMeta.style.display = currentEquipment?.photo_file_id ? '' : 'none';
-      }
-
+      if (els.fileName) els.fileName.textContent = currentEquipment?.photo_file_id ? '등록된 사진 있음' : '선택된 파일 없음';
+      if (els.existingMeta) els.existingMeta.style.display = currentEquipment?.photo_file_id ? '' : 'none';
       loadExistingPhoto(currentEquipment || {});
       return;
     }
@@ -304,35 +273,19 @@ function initializePhotoUi() {
     selectedPhotoFile = file;
     removePhotoRequested = false;
 
-    if (els.fileName) {
-      els.fileName.textContent = file.name || '선택된 파일 없음';
-    }
+    if (els.fileName) els.fileName.textContent = file.name || '선택된 파일 없음';
+    if (els.existingMeta) { els.existingMeta.style.display = ''; els.existingMeta.textContent = '새로 선택한 사진이 있습니다.'; }
 
-    if (els.existingMeta) {
-      els.existingMeta.style.display = '';
-      els.existingMeta.textContent = '새로 선택한 사진이 있습니다.';
-    }
-
-    const localUrl = URL.createObjectURL(file);
-    renderPhotoPreview(localUrl);
+    renderPhotoPreview(URL.createObjectURL(file));
   });
 
   els.removeBtn?.addEventListener('click', function() {
     selectedPhotoFile = null;
     removePhotoRequested = true;
 
-    if (els.input) {
-      els.input.value = '';
-    }
-
-    if (els.fileName) {
-      els.fileName.textContent = '선택된 파일 없음';
-    }
-
-    if (els.existingMeta) {
-      els.existingMeta.style.display = '';
-      els.existingMeta.textContent = '사진 삭제 예정';
-    }
+    if (els.input) els.input.value = '';
+    if (els.fileName) els.fileName.textContent = '선택된 파일 없음';
+    if (els.existingMeta) { els.existingMeta.style.display = ''; els.existingMeta.textContent = '사진 삭제 예정'; }
 
     renderPhotoPreview('');
   });
@@ -348,15 +301,8 @@ function getImageTypeForOutput(file) {
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-
-    reader.onload = function() {
-      resolve(reader.result);
-    };
-
-    reader.onerror = function() {
-      reject(new Error('파일을 읽지 못했습니다.'));
-    };
-
+    reader.onload = function() { resolve(reader.result); };
+    reader.onerror = function() { reject(new Error('파일을 읽지 못했습니다.')); };
     reader.readAsDataURL(file);
   });
 }
@@ -364,15 +310,8 @@ function readFileAsDataUrl(file) {
 function loadImageFromDataUrl(dataUrl) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-
-    img.onload = function() {
-      resolve(img);
-    };
-
-    img.onerror = function() {
-      reject(new Error('이미지 로드에 실패했습니다.'));
-    };
-
+    img.onload = function() { resolve(img); };
+    img.onerror = function() { reject(new Error('이미지 로드에 실패했습니다.')); };
     img.src = dataUrl;
   });
 }
@@ -396,16 +335,12 @@ async function compressImageFile(file) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, width, height);
+  canvas.getContext('2d').drawImage(img, 0, 0, width, height);
 
   const mimeType = getImageTypeForOutput(file);
-  const compressedDataUrl = canvas.toDataURL(mimeType, 0.75);
-
   return {
-    dataUrl: compressedDataUrl,
-    mimeType: mimeType,
+    dataUrl: canvas.toDataURL(mimeType, 0.75),
+    mimeType,
     fileName: file.name || 'equipment-photo.jpg'
   };
 }
@@ -417,11 +352,7 @@ async function uploadPhotoIfNeeded(equipmentId) {
   if (!equipmentId) return;
 
   if (removePhotoRequested && currentEquipment?.photo_file_id) {
-    await apiPost('deleteEquipmentPhoto', {
-      equipment_id: equipmentId,
-      request_user_email: requestUserEmail
-    });
-
+    await apiPost('deleteEquipmentPhoto', { equipment_id: equipmentId, request_user_email: requestUserEmail });
     currentEquipment.photo_file_id = '';
     currentEquipment.photo_url = '';
     currentEquipment.photo_inline_url = '';
@@ -437,7 +368,6 @@ async function uploadPhotoIfNeeded(equipmentId) {
   }
 
   const compressed = await compressImageFile(selectedPhotoFile);
-
   const result = await apiPost('uploadEquipmentPhoto', {
     equipment_id: equipmentId,
     request_user_email: requestUserEmail,
@@ -451,20 +381,12 @@ async function uploadPhotoIfNeeded(equipmentId) {
   currentEquipment.photo_file_id = uploaded.photo_file_id || '';
   currentEquipment.photo_url = uploaded.photo_url || '';
   currentEquipment.photo_inline_url = '';
-
   selectedPhotoFile = null;
   removePhotoRequested = false;
 
   const els = getPhotoElements();
-
-  if (els.input) {
-    els.input.value = '';
-  }
-
-  if (els.fileName) {
-    els.fileName.textContent = currentEquipment.photo_file_id ? '등록된 사진 있음' : '선택된 파일 없음';
-  }
-
+  if (els.input) els.input.value = '';
+  if (els.fileName) els.fileName.textContent = currentEquipment.photo_file_id ? '등록된 사진 있음' : '선택된 파일 없음';
   if (els.existingMeta) {
     els.existingMeta.textContent = currentEquipment.photo_file_id ? '현재 등록된 사진이 있습니다.' : '';
     els.existingMeta.style.display = currentEquipment.photo_file_id ? '' : 'none';
@@ -486,9 +408,7 @@ function fillEquipmentForm(item) {
   qs('#manager_name').value = item.manager_name || '';
   qs('#manager_phone').value = item.manager_phone || '';
   qs('#acquisition_cost').value = formatNumberWithComma(
-    item.acquisition_cost === null || item.acquisition_cost === undefined
-      ? ''
-      : item.acquisition_cost
+    item.acquisition_cost === null || item.acquisition_cost === undefined ? '' : item.acquisition_cost
   );
   qs('#maintenance_end_date').value = formatDateInputValue(item.maintenance_end_date);
   qs('#location').value = item.location || '';
@@ -498,9 +418,7 @@ function fillEquipmentForm(item) {
   const clinicSelect = qs('#clinic_code');
   const teamSelect = qs('#team_code');
 
-  if (clinicSelect) {
-    clinicSelect.value = item.clinic_code || '';
-  }
+  if (clinicSelect) clinicSelect.value = item.clinic_code || '';
 
   if (orgBinder?.renderTeamsByClinic) {
     orgBinder.renderTeamsByClinic(item.clinic_code || '', item.team_code || '');
@@ -530,6 +448,7 @@ async function loadEquipmentIfEditMode() {
     });
 
     currentEquipment = result.data || {};
+    // ★ updated_at 이 currentEquipment 에 보관됨 → buildEquipmentPayload() 에서 client_updated_at 으로 전송
     fillEquipmentForm(currentEquipment);
   } catch (error) {
     showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
@@ -545,10 +464,8 @@ function buildEquipmentPayload() {
   const payload = {
     equipment_name: normalizeText(qs('#equipment_name')?.value),
     model_name: normalizeText(qs('#model_name')?.value),
-
     clinic_code,
     team_code,
-
     manufacturer: normalizeText(qs('#manufacturer')?.value),
     manufacture_date: normalizeText(qs('#manufacture_date')?.value),
     purchase_date: normalizeText(qs('#purchase_date')?.value),
@@ -562,55 +479,46 @@ function buildEquipmentPayload() {
     location: normalizeText(qs('#location')?.value),
     current_user: normalizeText(qs('#current_user')?.value),
     memo: normalizeText(qs('#memo')?.value),
-
     created_by: currentUser.email || currentUser.user_email || '',
     updated_by: currentUser.email || currentUser.user_email || ''
   };
 
   if (isEditMode) {
     payload.equipment_id = currentEquipmentId;
+    // ★ 낙관적 락: 내가 조회했을 때의 updated_at 을 서버로 전송
+    // 서버가 현재 시트의 updated_at 과 비교해, 다른 사람이 먼저 수정했으면 오류를 반환합니다.
+    payload.client_updated_at = normalizeText(currentEquipment?.updated_at);
   }
 
   return payload;
 }
 
 function validateEquipmentForm(payload) {
-  if (!payload.equipment_name) {
-    showMessage('장비명을 입력하세요.', 'error');
-    qs('#equipment_name')?.focus();
-    return false;
-  }
-
-  if (!payload.model_name) {
-    showMessage('모델명을 입력하세요.', 'error');
-    qs('#model_name')?.focus();
-    return false;
-  }
-
-  if (!payload.serial_no) {
-    showMessage('시리얼번호를 입력하세요.', 'error');
-    qs('#serial_no')?.focus();
-    return false;
-  }
-
-  if (!payload.clinic_code) {
-    showMessage('의원을 선택하세요.', 'error');
-    qs('#clinic_code')?.focus();
-    return false;
-  }
-
-  if (!payload.team_code) {
-    showMessage('팀을 선택하세요.', 'error');
-    qs('#team_code')?.focus();
-    return false;
-  }
-
-  if (!payload.created_by && !payload.updated_by) {
-    showMessage('로그인 사용자 정보가 없습니다.', 'error');
-    return false;
-  }
-
+  if (!payload.equipment_name) { showMessage('장비명을 입력하세요.', 'error'); qs('#equipment_name')?.focus(); return false; }
+  if (!payload.model_name) { showMessage('모델명을 입력하세요.', 'error'); qs('#model_name')?.focus(); return false; }
+  if (!payload.serial_no) { showMessage('시리얼번호를 입력하세요.', 'error'); qs('#serial_no')?.focus(); return false; }
+  if (!payload.clinic_code) { showMessage('의원을 선택하세요.', 'error'); qs('#clinic_code')?.focus(); return false; }
+  if (!payload.team_code) { showMessage('팀을 선택하세요.', 'error'); qs('#team_code')?.focus(); return false; }
+  if (!payload.created_by && !payload.updated_by) { showMessage('로그인 사용자 정보가 없습니다.', 'error'); return false; }
   return true;
+}
+
+/**
+ * 충돌 발생 시 서버에서 최신 장비 데이터를 다시 불러옵니다.
+ * currentEquipment.updated_at 이 갱신되므로 재시도 시 올바른 client_updated_at 이 전송됩니다.
+ */
+async function refreshCurrentEquipment() {
+  if (!currentEquipmentId) return;
+  try {
+    const user = getCurrentUserSafe();
+    const result = await apiGet('getEquipment', {
+      id: currentEquipmentId,
+      request_user_email: user.email || user.user_email || ''
+    });
+    currentEquipment = result.data || {};
+  } catch (_) {
+    // 갱신 실패 시 무시 — 사용자가 수동으로 새로고침 가능
+  }
 }
 
 async function handleSubmit(event) {
@@ -648,7 +556,14 @@ async function handleSubmit(event) {
       location.href = 'dashboard.html';
     }
   } catch (error) {
-    showMessage(error.message || '장비 저장 중 오류가 발생했습니다.', 'error');
+    const msg = error.message || '장비 저장 중 오류가 발생했습니다.';
+    showMessage(msg, 'error');
+
+    // ★ 충돌 감지 시 최신 데이터를 자동으로 다시 불러와서
+    //    다음 저장 시도 때 올바른 client_updated_at 이 전송되도록 합니다.
+    if (isEditMode && msg.includes('다른 사용자가 이미 수정했습니다')) {
+      await refreshCurrentEquipment();
+    }
   } finally {
     hideGlobalLoading();
     setLoading(submitBtn, false);
