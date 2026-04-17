@@ -64,27 +64,27 @@
         </div>
       </div>
 
-      <!-- STEP 2: 공통 정보 -->
+      <!-- STEP 2: 공통 기본 정보 -->
       <div class="card form-card" id="sectionCommon" style="display:none;">
         <div class="section-head">
           <span class="portal-section-kicker">STEP 2</span>
           <h2 class="section-title">기본 정보</h2>
+          <p class="sub-text">로그인 계정 정보로 자동 입력됩니다. 수정이 필요한 경우 직접 변경해 주세요.</p>
         </div>
 
         <div class="form-grid two-col">
+
+          <!-- 요청 의원/팀: 읽기 전용으로 자동 세팅 -->
           <label class="form-field">
             <span class="form-label required">요청 의원</span>
-            <select id="clinic_code" class="input" required></select>
+            <input type="text" id="clinic_name_display" class="input" readonly placeholder="로그인 정보에서 자동 입력" />
+            <input type="hidden" id="clinic_code" />
           </label>
 
           <label class="form-field">
             <span class="form-label required">요청 팀</span>
-            <select id="team_code" class="input" required></select>
-          </label>
-
-          <label class="form-field full-col is-hidden-field">
-            <span class="form-label">부서명</span>
-            <input type="text" id="department_preview" class="input" readonly placeholder="의원 / 팀 선택 시 자동 표시" />
+            <input type="text" id="team_name_display" class="input" readonly placeholder="로그인 정보에서 자동 입력" />
+            <input type="hidden" id="team_code" />
           </label>
 
           <label class="form-field">
@@ -110,6 +110,7 @@
             </select>
           </label>
 
+          <!-- 긴급 사유: 전체 너비 -->
           <label class="form-field full-col" id="urgentReasonField" style="display:none;">
             <span class="form-label required">긴급 사유</span>
             <input type="text" id="urgent_reason" class="input" placeholder="긴급 처리가 필요한 사유를 입력하세요" />
@@ -120,17 +121,20 @@
             <textarea id="text_content" class="input textarea" rows="3" placeholder="제작에 들어갈 문구를 입력하세요" required></textarea>
           </label>
 
-          <label class="form-field full-col">
+          <!-- 시안 파일 첨부 -->
+          <div class="form-field full-col">
             <span class="form-label">시안 파일 첨부</span>
-            <div class="file-upload-area" id="fileArea_main">
-              <div class="file-upload-inner">
-                <span class="file-upload-icon">📎</span>
-                <span class="file-upload-text">파일을 선택하거나 드래그하세요</span>
-                <input type="file" id="file_main" class="file-input" multiple accept="image/*,.pdf,.ai,.psd" />
+            <div class="file-upload-zone" id="zone_main">
+              <div class="file-upload-zone-inner">
+                <span class="file-zone-icon">📎</span>
+                <span class="file-zone-text">파일을 드래그하거나 버튼으로 선택하세요</span>
+                <button type="button" class="btn file-select-btn" onclick="document.getElementById('file_main').click()">파일 선택</button>
+                <input type="file" id="file_main" class="file-input-hidden" multiple accept="image/*,.pdf,.ai,.psd" />
               </div>
               <div class="file-list" id="fileList_main"></div>
             </div>
-          </label>
+          </div>
+
         </div>
       </div>
 
@@ -142,19 +146,20 @@
         </div>
 
         <div class="form-grid two-col">
+
           <label class="form-field">
             <span class="form-label required">사이즈</span>
-            <input type="text" id="sign_size" class="input" placeholder="예: 900 x 600 x 5 mm" required />
+            <input type="text" id="sign_size" class="input" placeholder="예: 900 × 600 × 5 mm" />
           </label>
 
           <label class="form-field">
             <span class="form-label required">형태 / 종류</span>
-            <input type="text" id="sign_type" class="input" placeholder="예: 현수막, 아크릴 판넬 등" required />
+            <input type="text" id="sign_type" class="input" placeholder="예: 현수막, 아크릴 판넬 등" />
           </label>
 
           <label class="form-field">
             <span class="form-label required">설치 환경</span>
-            <select id="install_env" class="input" required>
+            <select id="install_env" class="input">
               <option value="">선택하세요</option>
               <option value="INDOOR">실내</option>
               <option value="OUTDOOR">실외</option>
@@ -163,32 +168,37 @@
 
           <label class="form-field">
             <span class="form-label required">설치 위치 상세</span>
-            <input type="text" id="install_location" class="input" placeholder="예: 1층 로비 입구 우측" required />
+            <input type="text" id="install_location" class="input" placeholder="예: 1층 로비 입구 우측" />
           </label>
 
-          <label class="form-field full-col">
+          <!-- 설치 위치 사진 -->
+          <div class="form-field full-col">
             <span class="form-label required">설치 위치 사진 <span class="badge-required-note">(필수 첨부)</span></span>
-            <div class="file-upload-area" id="fileArea_location">
-              <div class="file-upload-inner">
-                <span class="file-upload-icon">📸</span>
-                <span class="file-upload-text">설치 위치 사진을 첨부해 주세요</span>
-                <input type="file" id="file_location" class="file-input" multiple accept="image/*" />
+            <div class="file-upload-zone" id="zone_location">
+              <div class="file-upload-zone-inner">
+                <span class="file-zone-icon">📸</span>
+                <span class="file-zone-text">설치 위치 사진을 첨부해 주세요</span>
+                <button type="button" class="btn file-select-btn" onclick="document.getElementById('file_location').click()">사진 선택</button>
+                <input type="file" id="file_location" class="file-input-hidden" multiple accept="image/*" />
               </div>
               <div class="file-list" id="fileList_location"></div>
             </div>
-          </label>
+          </div>
 
-          <label class="form-field full-col">
+          <!-- 참고 자료 -->
+          <div class="form-field full-col">
             <span class="form-label required">참고 자료 <span class="badge-required-note">(도면 또는 레퍼런스 이미지)</span></span>
-            <div class="file-upload-area" id="fileArea_reference">
-              <div class="file-upload-inner">
-                <span class="file-upload-icon">🗂</span>
-                <span class="file-upload-text">도면 또는 레퍼런스 이미지를 첨부해 주세요</span>
-                <input type="file" id="file_reference" class="file-input" multiple accept="image/*,.pdf,.ai,.dwg" />
+            <div class="file-upload-zone" id="zone_reference">
+              <div class="file-upload-zone-inner">
+                <span class="file-zone-icon">🗂</span>
+                <span class="file-zone-text">도면 또는 레퍼런스 이미지를 첨부해 주세요</span>
+                <button type="button" class="btn file-select-btn" onclick="document.getElementById('file_reference').click()">파일 선택</button>
+                <input type="file" id="file_reference" class="file-input-hidden" multiple accept="image/*,.pdf,.ai,.dwg" />
               </div>
               <div class="file-list" id="fileList_reference"></div>
             </div>
-          </label>
+          </div>
+
         </div>
       </div>
 
@@ -199,43 +209,57 @@
           <h2 class="section-title">규격 명판 상세</h2>
         </div>
 
-        <div class="form-grid two-col">
-          <label class="form-field full-col">
-            <span class="form-label required">명판 타입 선택</span>
-            <div class="nameplate-type-grid">
-              <label class="nameplate-type-card" data-type="A">
-                <input type="radio" name="nameplate_type" value="A" class="nameplate-radio" />
-                <div class="nameplate-type-badge">A</div>
-                <div class="nameplate-type-size">200 × 60 mm</div>
-                <div class="nameplate-type-desc">소형 표준</div>
-              </label>
-              <label class="nameplate-type-card" data-type="B">
-                <input type="radio" name="nameplate_type" value="B" class="nameplate-radio" />
-                <div class="nameplate-type-badge">B</div>
-                <div class="nameplate-type-size">250 × 80 mm</div>
-                <div class="nameplate-type-desc">중형 표준</div>
-              </label>
-              <label class="nameplate-type-card" data-type="C">
-                <input type="radio" name="nameplate_type" value="C" class="nameplate-radio" />
-                <div class="nameplate-type-badge">C</div>
-                <div class="nameplate-type-size">300 × 100 mm</div>
-                <div class="nameplate-type-desc">대형 표준</div>
-              </label>
-              <label class="nameplate-type-card" data-type="D">
-                <input type="radio" name="nameplate_type" value="D" class="nameplate-radio" />
-                <div class="nameplate-type-badge">D</div>
-                <div class="nameplate-type-size">400 × 120 mm</div>
-                <div class="nameplate-type-desc">특대형</div>
-              </label>
-            </div>
-            <div id="namedplateSizeInfo" class="nameplate-size-info" style="display:none;">
-              선택된 규격: <strong id="selectedSizeText"></strong>
-            </div>
-          </label>
+        <!-- 명판 타입 선택 -->
+        <div class="form-field" style="margin-bottom:24px;">
+          <span class="form-label required">명판 타입 선택</span>
+          <div class="nameplate-type-grid">
+            <label class="nameplate-type-card" id="npCard_A">
+              <input type="radio" name="nameplate_type" value="A" class="nameplate-radio" />
+              <div class="nameplate-type-badge">A</div>
+              <div class="nameplate-type-size">높이 5cm</div>
+              <div class="nameplate-type-desc">20cm / 16cm</div>
+            </label>
+            <label class="nameplate-type-card" id="npCard_B">
+              <input type="radio" name="nameplate_type" value="B" class="nameplate-radio" />
+              <div class="nameplate-type-badge">B</div>
+              <div class="nameplate-type-size">높이 4cm</div>
+              <div class="nameplate-type-desc">20cm / 18cm</div>
+            </label>
+            <label class="nameplate-type-card" id="npCard_C">
+              <input type="radio" name="nameplate_type" value="C" class="nameplate-radio" />
+              <div class="nameplate-type-badge">C</div>
+              <div class="nameplate-type-size">높이 3cm</div>
+              <div class="nameplate-type-desc">20cm / 18cm</div>
+            </label>
+            <label class="nameplate-type-card" id="npCard_D">
+              <input type="radio" name="nameplate_type" value="D" class="nameplate-radio" />
+              <div class="nameplate-type-badge">D</div>
+              <div class="nameplate-type-size">높이 2.5cm</div>
+              <div class="nameplate-type-desc">20cm</div>
+            </label>
+          </div>
+        </div>
 
+        <!-- 선택된 타입 디자인 이미지 -->
+        <div id="nameplateDesignWrap" style="display:none; margin-bottom:24px;">
+          <div class="nameplate-design-label">선택한 타입 디자인</div>
+          <img id="nameplateDesignImg" src="" alt="명판 디자인" class="nameplate-design-img" />
+          <div class="nameplate-size-info">
+            선택된 규격: <strong id="selectedSizeText"></strong>
+          </div>
+        </div>
+
+        <!-- 문구 레이아웃 (공통 안내) -->
+        <div class="nameplate-layout-section">
+          <div class="nameplate-design-label">문구 레이아웃 안내</div>
+          <img id="layoutImg" src="" alt="문구 레이아웃" class="nameplate-layout-img" />
+          <p class="sub-text" style="margin-top:8px;">위 레이아웃(ㄱ/ㄴ/ㄷ) 중 원하시는 형태를 아래 문구 상세에 기재해 주세요.</p>
+        </div>
+
+        <div class="form-grid two-col" style="margin-top:20px;">
           <label class="form-field">
             <span class="form-label required">설치 환경</span>
-            <select id="install_env_nameplate" class="input" required>
+            <select id="install_env_nameplate" class="input">
               <option value="">선택하세요</option>
               <option value="INDOOR">실내</option>
               <option value="OUTDOOR">실외</option>
@@ -244,15 +268,15 @@
 
           <label class="form-field full-col">
             <span class="form-label required">명판 문구 상세</span>
-            <textarea id="nameplate_text" class="input textarea" rows="4"
-              placeholder="예:&#10;성함: 홍길동&#10;직함: 원장&#10;부서: 내과" required></textarea>
+            <textarea id="nameplate_text" class="input textarea" rows="5"
+              placeholder="예)&#10;레이아웃: ㄴ형&#10;성함: 홍길동&#10;직함: MD / G.D&#10;부서: 내과" required></textarea>
           </label>
         </div>
       </div>
 
       <!-- 제출 버튼 -->
       <div class="form-actions" id="formActions" style="display:none;">
-        <button type="submit" id="submitBtn" class="btn btn-primary">
+        <button type="submit" id="submitBtn" class="btn btn-primary btn-submit">
           <span id="submitBtnText">신청하기</span>
         </button>
       </div>
@@ -260,7 +284,7 @@
     </form>
   </div>
 
-  <!-- 전역 로딩 -->
+  <!-- 전역 로딩 스피너 -->
   <div id="globalLoading" class="global-loading" aria-hidden="true">
     <div class="global-loading-inner">
       <div class="global-loading-spinner"></div>
@@ -273,6 +297,7 @@
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/org-select.js"></script>
+  <script src="../../assets/js/signage/nameplate-images.js"></script>
   <script src="../../assets/js/signage/signage-form.js"></script>
 </body>
 </html>
