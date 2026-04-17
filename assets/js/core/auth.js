@@ -79,6 +79,7 @@
   }
 
   function logout() {
+    window.appPermission?.clearCache?.(); // ← 추가
     clearSession();
     history.replaceState(null, '', getLoginUrl());
     location.replace(getLoginUrl());
