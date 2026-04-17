@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindFileDropzones();
     bindNameplateTypeSelector();
 
-    // 초기 레이아웃 이미지 세팅
+    // 레이아웃 이미지 세팅 (항상 우측에 표시)
     if (typeof NAMEPLATE_IMAGES !== 'undefined') {
-      const el = document.getElementById('layoutImgOnly');
+      const el = document.getElementById('layoutImg');
       if (el) el.src = NAMEPLATE_IMAGES.layout || '';
     }
 
@@ -150,17 +150,21 @@ function bindNameplateTypeSelector() {
 
       if (typeof NAMEPLATE_IMAGES !== 'undefined') {
         const designImg = document.getElementById('nameplateDesignImg');
-        const layoutImg = document.getElementById('layoutImg');
         if (designImg) designImg.src = NAMEPLATE_IMAGES[type] || '';
-        if (layoutImg)  layoutImg.src  = NAMEPLATE_IMAGES.layout || '';
+        // layoutImg는 초기화 시 이미 세팅됨
       }
 
       const sizeText = document.getElementById('selectedSizeText');
-      if (sizeText) sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
+      if (sizeText) {
+        sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
+        sizeText.style.display = '';
+      }
 
-      // 단독 레이아웃 숨기고 나란히 배치 표시
-      hideEl('npLayoutOnly');
-      showEl('npDetailWrap');
+      // 플레이스홀더 숨기고 디자인 이미지 표시
+      const placeholder = document.getElementById('npDesignPlaceholder');
+      const designImg = document.getElementById('nameplateDesignImg');
+      if (placeholder) placeholder.style.display = 'none';
+      if (designImg) designImg.style.display = '';
     });
   });
 }
