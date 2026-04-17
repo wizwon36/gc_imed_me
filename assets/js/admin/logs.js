@@ -70,9 +70,7 @@ async function fetchLogs() {
   const dateFrom   = (document.getElementById('filterDateFrom')?.value  || '').trim();
   const dateTo     = (document.getElementById('filterDateTo')?.value    || '').trim();
 
-  // 세션에서 이메일을 최대한 안전하게 추출
-  const rawEmail = String(user.user_email || user.email || user.userEmail || '').trim().toLowerCase();
-  const userEmail = rawEmail.includes('@') ? rawEmail : '';
+  const userEmail = String(user.user_email || user.email || '').trim().toLowerCase();
   
   if (!userEmail) {
     showMessage('로그인 세션에서 사용자 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', 'error');
