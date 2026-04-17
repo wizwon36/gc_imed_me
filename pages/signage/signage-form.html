@@ -1,147 +1,110 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>사인물 신청</title>
 
   <link rel="stylesheet" href="../../assets/css/common.css">
   <link rel="stylesheet" href="../../assets/css/portal.css">
+  <link rel="stylesheet" href="../../assets/css/equipment.css">
+
+  <script src="../../assets/js/config.js"></script>
 </head>
 
 <body class="portal-page-compact">
 
-<div class="container">
+  <div class="portal-container">
 
-  <h2>사인물 신청</h2>
-
-  <!-- 제작 종류 -->
-  <div class="form-group">
-    <label>제작 종류 *</label>
-    <select id="type" onchange="onTypeChange()">
-      <option value="">선택</option>
-      <option value="SIGN">일반 사인물</option>
-      <option value="NAMEPLATE">규격 명판</option>
-    </select>
-  </div>
-
-  <!-- 공통 -->
-  <div class="form-group">
-    <label>요청자 *</label>
-    <input type="text" id="requester_name">
-  </div>
-
-  <div class="form-group">
-    <label>연락처 *</label>
-    <input type="text" id="contact">
-  </div>
-
-  <div class="form-group">
-    <label>수량 *</label>
-    <input type="number" id="quantity" value="1">
-  </div>
-
-  <div class="form-group">
-    <label>문구 *</label>
-    <input type="text" id="text_content">
-  </div>
-
-  <!-- 긴급 -->
-  <div class="form-group">
-    <label>
-      <input type="checkbox" id="urgent_yn" onchange="toggleUrgent()">
-      긴급 요청
-    </label>
-  </div>
-
-  <div class="form-group" id="urgent_reason_wrap" style="display:none;">
-    <label>긴급 사유 *</label>
-    <input type="text" id="urgent_reason">
-  </div>
-
-  <!-- ========================= -->
-  <!-- 일반 사인물 -->
-  <!-- ========================= -->
-  <div id="sign_section" style="display:none;">
-
-    <div class="form-group">
-      <label>사이즈 *</label>
-      <input type="text" id="sign_size" placeholder="가로 x 세로 x 폭">
+    <!-- 헤더 -->
+    <div class="portal-header">
+      <div class="portal-header-title">사인물 신청</div>
     </div>
 
-    <div class="form-group">
-      <label>형태/종류 *</label>
-      <input type="text" id="sign_type">
-    </div>
+    <!-- 카드 영역 -->
+    <div class="portal-card">
 
-    <div class="form-group">
-      <label>설치 위치 *</label>
-      <input type="text" id="install_location">
-    </div>
+      <!-- 1. 제작 종류 -->
+      <div class="form-section">
+        <div class="form-title">제작 종류 선택</div>
 
-    <div class="form-group">
-      <label>설치 환경 *</label>
-      <select id="install_env">
-        <option value="">선택</option>
-        <option value="INDOOR">실내</option>
-        <option value="OUTDOOR">실외</option>
-      </select>
-    </div>
+        <label><input type="radio" name="type" value="SIGN"> 일반 사인물</label>
+        <label><input type="radio" name="type" value="NAMEPLATE"> 규격 명판</label>
+      </div>
 
-    <div class="form-group">
-      <label>위치 사진 *</label>
-      <input type="file" id="location_files" multiple>
-    </div>
+      <!-- 공통 -->
+      <div class="form-section">
+        <div class="form-title">기본 정보</div>
 
-    <div class="form-group">
-      <label>참고 자료 *</label>
-      <input type="file" id="reference_files" multiple>
-    </div>
+        <div class="form-row">
+          <input id="requester_name" placeholder="요청자">
+          <input id="contact" placeholder="연락처">
+        </div>
 
+        <div class="form-row">
+          <input id="clinic_code" placeholder="의원코드">
+          <input id="team_code" placeholder="팀코드">
+        </div>
+
+        <div class="form-row">
+          <input id="quantity" placeholder="수량" type="number">
+          <input id="text_content" placeholder="문구">
+        </div>
+
+        <div class="form-row">
+          <select id="is_urgent">
+            <option value="N">일반</option>
+            <option value="Y">긴급</option>
+          </select>
+          <input id="urgent_reason" placeholder="긴급 사유">
+        </div>
+
+        <div class="form-row">
+          <input type="file" id="file_main" multiple>
+        </div>
+      </div>
+
+      <!-- 사인물 -->
+      <div id="section_sign" class="form-section" style="display:none;">
+        <div class="form-title">일반 사인물</div>
+
+        <input id="sign_size" placeholder="사이즈 (가로x세로x폭)">
+        <input id="sign_type" placeholder="형태/종류">
+        <input id="install_location" placeholder="설치 위치">
+
+        <select id="install_env">
+          <option value="">환경 선택</option>
+          <option value="INDOOR">실내</option>
+          <option value="OUTDOOR">실외</option>
+        </select>
+
+        <input type="file" id="file_location" multiple>
+        <input type="file" id="file_reference" multiple>
+      </div>
+
+      <!-- 명판 -->
+      <div id="section_nameplate" class="form-section" style="display:none;">
+        <div class="form-title">규격 명판</div>
+
+        <select id="nameplate_type">
+          <option value="">타입 선택</option>
+          <option value="A">A 타입</option>
+          <option value="B">B 타입</option>
+          <option value="C">C 타입</option>
+          <option value="D">D 타입</option>
+        </select>
+
+        <input id="nameplate_text" placeholder="명판 문구">
+      </div>
+
+      <!-- 버튼 -->
+      <div class="form-actions">
+        <button id="submitBtn" class="btn-primary">신청하기</button>
+      </div>
+
+    </div>
   </div>
 
-  <!-- ========================= -->
-  <!-- 명판 -->
-  <!-- ========================= -->
-  <div id="nameplate_section" style="display:none;">
-
-    <div class="form-group">
-      <label>명판 타입 *</label>
-      <select id="nameplate_type">
-        <option value="">선택</option>
-        <option value="A">A타입</option>
-        <option value="B">B타입</option>
-        <option value="C">C타입</option>
-        <option value="D">D타입</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>설치 환경 *</label>
-      <select id="np_install_env">
-        <option value="">선택</option>
-        <option value="INDOOR">실내</option>
-        <option value="OUTDOOR">실외</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>명판 문구 *</label>
-      <input type="text" id="nameplate_text">
-    </div>
-
-  </div>
-
-  <!-- 공통 파일 -->
-  <div class="form-group">
-    <label>첨부 파일</label>
-    <input type="file" id="common_files" multiple>
-  </div>
-
-  <button onclick="submitSignage()">신청하기</button>
-
-</div>
-
-<script src="../../assets/js/signage/signage-form.js"></script>
+  <script src="../../assets/js/signage/signage-form.js"></script>
 
 </body>
 </html>
