@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     showGlobalLoading('화면을 준비하는 중...');
 
-    // org-select 로드 후 실제 의원명/팀명 세팅
+    // ★ loadOrgData 완료를 기다린 후 prefill — 타이밍 문제 해결
     await window.orgSelect.loadOrgData();
     prefillUserInfo(user);
 
@@ -34,10 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindFileDropzones();
     bindNameplateTypeSelector();
 
-    // 문구 레이아웃 이미지 세팅 (타입 미선택 상태에서도 보이는 것)
+    // 초기 레이아웃 이미지 세팅
     if (typeof NAMEPLATE_IMAGES !== 'undefined') {
-      const layoutImgOnly = document.getElementById('layoutImgOnly');
-      if (layoutImgOnly) layoutImgOnly.src = NAMEPLATE_IMAGES.layout;
+      const el = document.getElementById('layoutImgOnly');
+      if (el) el.src = NAMEPLATE_IMAGES.layout || '';
     }
 
     document.getElementById('signageForm').addEventListener('submit', handleSubmit);
@@ -50,43 +50,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ─────────────────────────────────────────────
 // 로그인 유저 정보 자동 입력
-// org-select 캐시를 활용해 실제 의원명/팀명 표시
+// loadOrgData() 완료 후 호출되므로 getClinics/getTeams 캐시 확실히 있음
 // ─────────────────────────────────────────────
 function prefillUserInfo(user) {
-  // hidden 코드값
+  // hidden 코드값 세팅
   setVal('clinic_code', user.clinic_code || '');
-  setVal('team_code', user.team_code || '');
+  setVal('team_code',   user.team_code   || '');
 
-  // 표시명: 세션에 이미 있으면 그대로, 없으면 org-select 캐시에서 조회
-  const clinicName = resolveOrgName(
-    user.clinic_name,
-    user.clinic_code,
-    window.orgSelect?.getClinics?.() || [],
-    'code_value',
-    'code_name'
-  );
-  const teamName = resolveOrgName(
-    user.team_name,
-    user.team_code,
-    window.orgSelect?.getTeams?.() || [],
-    'code_value',
-    'code_name'
-  );
+  // 표시명 우선순위: 세션 → org 배열에서 code로 조회 → 빈값
+  const clinics = window.orgSelect.getClinics();
+  const teams   = window.orgSelect.getTeams();
+
+  const clinicName = resolveOrgName(user.clinic_name, user.clinic_code, clinics);
+  const teamName   = resolveOrgName(user.team_name,   user.team_code,   teams);
 
   setVal('clinic_name_display', clinicName);
-  setVal('team_name_display', teamName);
-  setVal('requester_name', user.name || user.user_name || '');
-  setVal('contact', user.phone || '');
+  setVal('team_name_display',   teamName);
+  setVal('requester_name', user.name      || user.user_name  || '');
+  setVal('contact',        user.phone     || '');
 }
 
 /**
- * 세션값 우선 사용, 없으면 org 배열에서 code 로 이름 조회
+ * 세션 name 우선, 없으면 org 배열에서 code_value → code_name 조회
  */
-function resolveOrgName(sessionName, code, list, codeKey, nameKey) {
+function resolveOrgName(sessionName, code, list) {
   if (sessionName && String(sessionName).trim()) return String(sessionName).trim();
-  if (!code || !list.length) return '';
-  const found = list.find(item => String(item[codeKey] || '').trim() === String(code || '').trim());
-  return found ? String(found[nameKey] || '').trim() : '';
+  if (!code || !Array.isArray(list) || !list.length) return '';
+  const found = list.find(item =>
+    String(item.code_value || '').trim() === String(code || '').trim()
+  );
+  return found ? String(found.code_name || '').trim() : '';
 }
 
 // ─────────────────────────────────────────────
@@ -145,7 +138,7 @@ function bindUrgentToggle() {
 }
 
 // ─────────────────────────────────────────────
-// 명판 타입 선택 → 디자인 이미지 + 문구 레이아웃
+// 명판 타입 선택 → 디자인 이미지 표시
 // ─────────────────────────────────────────────
 function bindNameplateTypeSelector() {
   document.querySelectorAll('input[name="nameplate_type"]').forEach(radio => {
@@ -155,57 +148,54 @@ function bindNameplateTypeSelector() {
       document.querySelectorAll('.np-type-card').forEach(c => c.classList.remove('is-selected'));
       document.getElementById('npCard_' + type)?.classList.add('is-selected');
 
-      const detailWrap = document.getElementById('npDetailWrap');
-      const layoutOnly = document.getElementById('npLayoutOnly');
-      const designImg = document.getElementById('nameplateDesignImg');
-      const layoutImg = document.getElementById('layoutImg');
-      const sizeText = document.getElementById('selectedSizeText');
-
       if (typeof NAMEPLATE_IMAGES !== 'undefined') {
+        const designImg = document.getElementById('nameplateDesignImg');
+        const layoutImg = document.getElementById('layoutImg');
         if (designImg) designImg.src = NAMEPLATE_IMAGES[type] || '';
-        if (layoutImg) layoutImg.src = NAMEPLATE_IMAGES.layout || '';
+        if (layoutImg)  layoutImg.src  = NAMEPLATE_IMAGES.layout || '';
       }
 
+      const sizeText = document.getElementById('selectedSizeText');
       if (sizeText) sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
 
-      // 타입 선택 후: 나란히 배치 영역 표시, 단독 레이아웃 숨김
-      if (detailWrap) detailWrap.style.display = '';
-      if (layoutOnly) layoutOnly.style.display = 'none';
+      // 단독 레이아웃 숨기고 나란히 배치 표시
+      hideEl('npLayoutOnly');
+      showEl('npDetailWrap');
     });
   });
 }
 
 // ─────────────────────────────────────────────
-// 파일 선택 버튼 바인딩 (버튼 하나씩만)
+// 파일 버튼 바인딩 (각각 하나씩)
 // ─────────────────────────────────────────────
 function bindFileButtons() {
-  linkBtn('btn_main', 'file_main');
-  linkBtn('btn_location', 'file_location');
+  linkBtn('btn_main',      'file_main');
+  linkBtn('btn_location',  'file_location');
   linkBtn('btn_reference', 'file_reference');
 }
 
 function linkBtn(btnId, inputId) {
-  const btn = document.getElementById(btnId);
+  const btn   = document.getElementById(btnId);
   const input = document.getElementById(inputId);
   if (btn && input) {
     btn.addEventListener('click', (e) => {
-      e.stopPropagation(); // 존 클릭 이벤트로 버블링 차단
+      e.stopPropagation();
       input.click();
     });
   }
 }
 
 // ─────────────────────────────────────────────
-// 드래그 앤 드롭 존
+// 드래그 앤 드롭
 // ─────────────────────────────────────────────
 function bindFileDropzones() {
-  bindDrop('zone_main', 'file_main', 'main', 'fileList_main');
-  bindDrop('zone_location', 'file_location', 'location', 'fileList_location');
-  bindDrop('zone_reference', 'file_reference', 'reference', 'fileList_reference');
+  bindDrop('zone_main',       'file_main',      'main',      'fileList_main');
+  bindDrop('zone_location',   'file_location',  'location',  'fileList_location');
+  bindDrop('zone_reference',  'file_reference', 'reference', 'fileList_reference');
 }
 
 function bindDrop(zoneId, inputId, key, listId) {
-  const zone = document.getElementById(zoneId);
+  const zone  = document.getElementById(zoneId);
   const input = document.getElementById(inputId);
   if (!zone || !input) return;
 
@@ -224,7 +214,7 @@ function bindDrop(zoneId, inputId, key, listId) {
 }
 
 async function processFiles(files, key, listId) {
-  const user = window.auth?.getSession?.() || {};
+  const user      = window.auth?.getSession?.() || {};
   const createdBy = user.email || user.user_email || '';
 
   for (const file of files) {
@@ -248,7 +238,7 @@ async function processFiles(files, key, listId) {
 
     try {
       const base64 = await toBase64(file);
-      const res = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
+      const res    = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
       uploadedFileIds[key].push(res.data.file_id);
 
       const el = document.getElementById(itemId);
@@ -266,7 +256,7 @@ async function processFiles(files, key, listId) {
 function toBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload  = () => resolve(reader.result);
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -327,24 +317,24 @@ function buildPayload() {
 
   return {
     type,
-    clinic_code: getValue('clinic_code'),
-    team_code: getValue('team_code'),
-    requester_name: getValue('requester_name'),
-    contact: getValue('contact'),
-    quantity: Number(getValue('quantity') || 1),
-    text_content: getValue('text_content'),
-    is_urgent: getValue('is_urgent') || 'N',
-    urgent_reason: getValue('urgent_reason'),
-    file_ids: [...uploadedFileIds.main],
+    clinic_code:       getValue('clinic_code'),
+    team_code:         getValue('team_code'),
+    requester_name:    getValue('requester_name'),
+    contact:           getValue('contact'),
+    quantity:          Number(getValue('quantity') || 1),
+    text_content:      getValue('text_content'),
+    is_urgent:         getValue('is_urgent') || 'N',
+    urgent_reason:     getValue('urgent_reason'),
+    file_ids:          [...uploadedFileIds.main],
     location_file_ids: [...uploadedFileIds.location],
-    reference_file_ids: [...uploadedFileIds.reference],
-    sign_size: getValue('sign_size'),
-    sign_type: getValue('sign_type'),
-    install_location: getValue('install_location'),
-    install_env: type === 'SIGN' ? getValue('install_env') : getValue('install_env_nameplate'),
-    nameplate_type: nameplateType,
-    nameplate_text: getValue('nameplate_text'),
-    created_by: user.email || user.user_email || ''
+    reference_file_ids:[...uploadedFileIds.reference],
+    sign_size:         getValue('sign_size'),
+    sign_type:         getValue('sign_type'),
+    install_location:  getValue('install_location'),
+    install_env:       type === 'SIGN' ? getValue('install_env') : getValue('install_env_nameplate'),
+    nameplate_type:    nameplateType,
+    nameplate_text:    getValue('nameplate_text'),
+    created_by:        user.email || user.user_email || ''
   };
 }
 
@@ -352,27 +342,27 @@ function buildPayload() {
 // 유효성 검증
 // ─────────────────────────────────────────────
 function validatePayload(p) {
-  if (!p.clinic_code) return fail('의원 정보가 없습니다. 다시 로그인해 주세요.', null);
-  if (!p.team_code) return fail('팀 정보가 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.clinic_code)    return fail('의원 정보가 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.team_code)      return fail('팀 정보가 없습니다. 다시 로그인해 주세요.', null);
   if (!p.requester_name) return fail('요청자명을 입력해 주세요.', 'requester_name');
-  if (!p.contact) return fail('연락처를 입력해 주세요.', 'contact');
+  if (!p.contact)        return fail('연락처를 입력해 주세요.', 'contact');
   if (!p.quantity || p.quantity < 1) return fail('수량을 1 이상 입력해 주세요.', 'quantity');
-  if (!p.text_content) return fail('문구를 입력해 주세요.', 'text_content');
+  if (!p.text_content)   return fail('문구를 입력해 주세요.', 'text_content');
   if (p.is_urgent === 'Y' && !p.urgent_reason) return fail('긴급 사유를 입력해 주세요.', 'urgent_reason');
-  if (!p.created_by) return fail('로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.created_by)     return fail('로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', null);
 
   if (p.type === 'SIGN') {
-    if (!p.sign_size) return fail('사이즈를 입력해 주세요.', 'sign_size');
-    if (!p.sign_type) return fail('형태/종류를 입력해 주세요.', 'sign_type');
-    if (!p.install_env) return fail('설치 환경을 선택해 주세요.', 'install_env');
-    if (!p.install_location) return fail('설치 위치를 입력해 주세요.', 'install_location');
-    if (uploadedFileIds.location.length === 0) return fail('설치 위치 사진을 첨부해 주세요.', null);
+    if (!p.sign_size)       return fail('사이즈를 입력해 주세요.', 'sign_size');
+    if (!p.sign_type)       return fail('형태/종류를 입력해 주세요.', 'sign_type');
+    if (!p.install_env)     return fail('설치 환경을 선택해 주세요.', 'install_env');
+    if (!p.install_location)return fail('설치 위치를 입력해 주세요.', 'install_location');
+    if (uploadedFileIds.location.length  === 0) return fail('설치 위치 사진을 첨부해 주세요.', null);
     if (uploadedFileIds.reference.length === 0) return fail('참고 자료(도면/레퍼런스)를 첨부해 주세요.', null);
   }
 
   if (p.type === 'NAMEPLATE') {
     if (!p.nameplate_type) return fail('명판 타입을 선택해 주세요.', null);
-    if (!p.install_env) return fail('설치 환경을 선택해 주세요.', 'install_env_nameplate');
+    if (!p.install_env)    return fail('설치 환경을 선택해 주세요.', 'install_env_nameplate');
     if (!p.nameplate_text) return fail('명판 문구를 입력해 주세요.', 'nameplate_text');
   }
 
@@ -389,16 +379,8 @@ function fail(msg, focusId) {
 // ─────────────────────────────────────────────
 // 헬퍼
 // ─────────────────────────────────────────────
-function getValue(id) {
-  const el = document.getElementById(id);
-  return el ? String(el.value || '').trim() : '';
-}
-
-function setVal(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.value = val;
-}
-
+function getValue(id) { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
 function showEl(id) { const el = document.getElementById(id); if (el) el.style.display = ''; }
 function hideEl(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 function setRequired(id, v) { const el = document.getElementById(id); if (el) el.required = v; }
