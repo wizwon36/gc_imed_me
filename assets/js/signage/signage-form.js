@@ -3,25 +3,19 @@
  * 사인물 / 명판 제작 신청 폼 컨트롤러
  */
 
-// 명판 타입별 사이즈 (백엔드 NAMEPLATE_SIZE_MAP 과 동일하게 유지)
+// 명판 타입별 규격 (백엔드 NAMEPLATE_SIZE_MAP 과 동일하게 유지)
 const NAMEPLATE_SIZES = {
-  A: '200 × 60 mm',
-  B: '250 × 80 mm',
-  C: '300 × 100 mm',
-  D: '400 × 120 mm'
+  A: '높이 5cm (20cm / 16cm)',
+  B: '높이 4cm (20cm / 18cm)',
+  C: '높이 3cm (20cm / 18cm)',
+  D: '높이 2.5cm (20cm)'
 };
 
 // 업로드된 파일 ID 저장소
-const uploadedFileIds = {
-  main: [],
-  location: [],
-  reference: []
-};
+const uploadedFileIds = { main: [], location: [], reference: [] };
 
-// 업로드 진행 중 카운터 (모두 완료 전 제출 차단)
-let pendingUploads = 0;
-let isSubmitting = false;
-let orgBinder = null;
+let pendingUploads = 0;   // 업로드 진행 수
+let isSubmitting = false;  // 중복 제출 방지
 
 // ─────────────────────────────────────────────
 // 초기화
@@ -32,11 +26,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     showGlobalLoading('화면을 준비하는 중...');
-    await initOrgSelectors();
+
+    // 로그인 유저 정보로 신청자 기본값 세팅
+    prefillUserInfo(user);
+
+    // 이벤트 바인딩
     bindTypeSelector();
     bindUrgentToggle();
     bindFileUploads();
     bindNameplateTypeSelector();
+
+    // 문구 레이아웃 이미지 세팅
+    const layoutImg = document.getElementById('layoutImg');
+    if (layoutImg && typeof NAMEPLATE_IMAGES !== 'undefined') {
+      layoutImg.src = NAMEPLATE_IMAGES.layout;
+    }
+
     document.getElementById('signageForm').addEventListener('submit', handleSubmit);
   } catch (err) {
     showMessage(err.message || '초기화 중 오류가 발생했습니다.', 'error');
@@ -46,38 +51,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ─────────────────────────────────────────────
-// 조직 선택 초기화
+// 로그인 유저 정보 자동 입력
 // ─────────────────────────────────────────────
-async function initOrgSelectors() {
-  await window.orgSelect.loadOrgData();
+function prefillUserInfo(user) {
+  // 의원/팀: 표시용 텍스트 + hidden 코드
+  const clinicNameEl = document.getElementById('clinic_name_display');
+  const clinicCodeEl = document.getElementById('clinic_code');
+  const teamNameEl = document.getElementById('team_name_display');
+  const teamCodeEl = document.getElementById('team_code');
 
-  const clinicSelect = document.getElementById('clinic_code');
-  const teamSelect = document.getElementById('team_code');
+  if (clinicNameEl) clinicNameEl.value = user.clinic_name || '';
+  if (clinicCodeEl) clinicCodeEl.value = user.clinic_code || '';
+  if (teamNameEl) teamNameEl.value = user.team_name || '';
+  if (teamCodeEl) teamCodeEl.value = user.team_code || '';
 
-  window.orgSelect.fillSelectOptions(clinicSelect, window.orgSelect.getClinics(), {
-    emptyText: '의원을 선택하세요'
-  });
+  // 요청자명
+  const nameEl = document.getElementById('requester_name');
+  if (nameEl) nameEl.value = user.name || user.user_name || '';
 
-  if (teamSelect) {
-    teamSelect.disabled = true;
-    teamSelect.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
-  }
-
-  orgBinder = window.orgSelect.bindClinicTeamSelects({
-    clinicSelect,
-    teamSelect,
-    onClinicChanged: updateDeptPreview,
-    onTeamChanged: updateDeptPreview
-  });
-}
-
-function updateDeptPreview() {
-  const clinicCode = qs('#clinic_code')?.value || '';
-  const teamCode = qs('#team_code')?.value || '';
-  const preview = qs('#department_preview');
-  if (preview) {
-    preview.value = window.orgSelect?.getOrgDisplayText?.(clinicCode, teamCode) || '';
-  }
+  // 연락처
+  const phoneEl = document.getElementById('contact');
+  if (phoneEl) phoneEl.value = user.phone || '';
 }
 
 // ─────────────────────────────────────────────
@@ -92,20 +86,17 @@ function bindTypeSelector() {
 function handleTypeChange(e) {
   const type = e.target.value;
 
-  // 타입 카드 활성화 표시
-  document.querySelectorAll('.type-card').forEach(card => card.classList.remove('is-selected'));
-  const selectedCard = document.getElementById('typeCard_' + type);
-  if (selectedCard) selectedCard.classList.add('is-selected');
+  // 카드 활성화
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('is-selected'));
+  document.getElementById('typeCard_' + type)?.classList.add('is-selected');
 
   // 공통 섹션 표시
   showEl('sectionCommon');
   showEl('formActions');
 
-  // 사인물/명판 분기
   if (type === 'SIGN') {
     showEl('sectionSign');
     hideEl('sectionNameplate');
-    // 사인물 필드 필수 활성화
     setRequired('sign_size', true);
     setRequired('sign_type', true);
     setRequired('install_env', true);
@@ -123,46 +114,47 @@ function handleTypeChange(e) {
     setRequired('nameplate_text', true);
   }
 
-  // 스크롤
   setTimeout(() => {
     document.getElementById('sectionCommon')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
+  }, 80);
 }
 
 // ─────────────────────────────────────────────
 // 긴급 여부 토글
 // ─────────────────────────────────────────────
 function bindUrgentToggle() {
-  const urgentSel = qs('#is_urgent');
-  if (!urgentSel) return;
-
-  urgentSel.addEventListener('change', () => {
-    const isUrgent = urgentSel.value === 'Y';
-    const field = qs('#urgentReasonField');
+  document.getElementById('is_urgent')?.addEventListener('change', function () {
+    const isUrgent = this.value === 'Y';
+    const field = document.getElementById('urgentReasonField');
     if (field) field.style.display = isUrgent ? '' : 'none';
     setRequired('urgent_reason', isUrgent);
   });
 }
 
 // ─────────────────────────────────────────────
-// 명판 타입 선택 → 사이즈 자동 표시
+// 명판 타입 선택 → 디자인 이미지 + 사이즈 표시
 // ─────────────────────────────────────────────
 function bindNameplateTypeSelector() {
   document.querySelectorAll('input[name="nameplate_type"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
       const type = e.target.value;
-      const size = NAMEPLATE_SIZES[type] || '';
 
       // 카드 활성화
       document.querySelectorAll('.nameplate-type-card').forEach(c => c.classList.remove('is-selected'));
-      e.target.closest('.nameplate-type-card')?.classList.add('is-selected');
+      document.getElementById('npCard_' + type)?.classList.add('is-selected');
 
-      // 사이즈 안내 표시
-      const infoEl = qs('#namedplateSizeInfo');
-      const sizeText = qs('#selectedSizeText');
-      if (infoEl && sizeText) {
-        sizeText.textContent = type + ' 타입 — ' + size;
-        infoEl.style.display = '';
+      // 디자인 이미지 표시
+      const wrap = document.getElementById('nameplateDesignWrap');
+      const img = document.getElementById('nameplateDesignImg');
+      const sizeText = document.getElementById('selectedSizeText');
+
+      if (wrap && img && typeof NAMEPLATE_IMAGES !== 'undefined') {
+        img.src = NAMEPLATE_IMAGES[type] || '';
+        wrap.style.display = '';
+      }
+
+      if (sizeText) {
+        sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
       }
     });
   });
@@ -172,58 +164,53 @@ function bindNameplateTypeSelector() {
 // 파일 업로드
 // ─────────────────────────────────────────────
 function bindFileUploads() {
-  bindFileUpload('file_main', 'main', 'fileList_main');
-  bindFileUpload('file_location', 'location', 'fileList_location');
-  bindFileUpload('file_reference', 'reference', 'fileList_reference');
+  bindFileZone('file_main', 'main', 'fileList_main', 'zone_main');
+  bindFileZone('file_location', 'location', 'fileList_location', 'zone_location');
+  bindFileZone('file_reference', 'reference', 'fileList_reference', 'zone_reference');
 }
 
-function bindFileUpload(inputId, key, listId) {
+function bindFileZone(inputId, key, listId, zoneId) {
   const input = document.getElementById(inputId);
+  const zone = document.getElementById(zoneId);
   if (!input) return;
 
   // 드래그 앤 드롭
-  const area = input.closest('.file-upload-area');
-  if (area) {
-    area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('is-dragover'); });
-    area.addEventListener('dragleave', () => area.classList.remove('is-dragover'));
-    area.addEventListener('drop', e => {
+  if (zone) {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('is-dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
+    zone.addEventListener('drop', e => {
       e.preventDefault();
-      area.classList.remove('is-dragover');
-      uploadFiles(Array.from(e.dataTransfer.files), key, listId);
-    });
-    // 클릭 시 input 트리거
-    area.addEventListener('click', (e) => {
-      if (e.target !== input) input.click();
+      zone.classList.remove('is-dragover');
+      processFiles(Array.from(e.dataTransfer.files), key, listId);
     });
   }
 
-  input.addEventListener('change', (e) => {
-    uploadFiles(Array.from(e.target.files), key, listId);
-    input.value = ''; // 같은 파일 재선택 가능하도록
+  input.addEventListener('change', e => {
+    processFiles(Array.from(e.target.files), key, listId);
+    input.value = '';
   });
 }
 
-async function uploadFiles(files, key, listId) {
+async function processFiles(files, key, listId) {
   const user = window.auth?.getSession?.() || {};
   const createdBy = user.email || user.user_email || '';
 
   for (const file of files) {
     if (file.size > 20 * 1024 * 1024) {
-      showMessage('파일 크기는 20MB 이하여야 합니다: ' + file.name, 'error');
+      showMessage('20MB 이하 파일만 업로드 가능합니다: ' + file.name, 'error');
       continue;
     }
 
     pendingUploads++;
+    const itemId = 'fi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     const listEl = document.getElementById(listId);
-    const itemId = 'fileItem_' + Date.now() + '_' + Math.random().toString(36).slice(2);
 
-    // 업로드 진행 표시
     if (listEl) {
       listEl.insertAdjacentHTML('beforeend',
-        '<div class="file-item is-uploading" id="' + itemId + '">' +
-        '<span class="file-item-name">' + escapeHtml(file.name) + '</span>' +
-        '<span class="file-item-status">업로드 중...</span>' +
-        '</div>'
+        `<div class="file-item is-uploading" id="${itemId}">
+          <span class="file-item-name">${escapeHtml(file.name)}</span>
+          <span class="file-item-status">업로드 중...</span>
+        </div>`
       );
     }
 
@@ -237,20 +224,18 @@ async function uploadFiles(files, key, listId) {
 
       uploadedFileIds[key].push(res.data.file_id);
 
-      const itemEl = document.getElementById(itemId);
-      if (itemEl) {
-        itemEl.classList.remove('is-uploading');
-        itemEl.classList.add('is-done');
-        itemEl.querySelector('.file-item-status').textContent = '✓ 완료';
+      const el = document.getElementById(itemId);
+      if (el) {
+        el.classList.replace('is-uploading', 'is-done');
+        el.querySelector('.file-item-status').textContent = '✓ 완료';
       }
     } catch (err) {
-      const itemEl = document.getElementById(itemId);
-      if (itemEl) {
-        itemEl.classList.remove('is-uploading');
-        itemEl.classList.add('is-error');
-        itemEl.querySelector('.file-item-status').textContent = '✗ 실패';
+      const el = document.getElementById(itemId);
+      if (el) {
+        el.classList.replace('is-uploading', 'is-error');
+        el.querySelector('.file-item-status').textContent = '✗ 실패';
       }
-      showMessage('파일 업로드 실패: ' + file.name, 'error');
+      showMessage('업로드 실패: ' + file.name, 'error');
     } finally {
       pendingUploads--;
     }
@@ -281,11 +266,10 @@ async function handleSubmit(e) {
   }
 
   const payload = buildPayload();
-  if (!payload) return; // 유효성 실패 시 buildPayload 내에서 showMessage 처리
-
+  if (!payload) return;
   if (!validatePayload(payload)) return;
 
-  const submitBtn = qs('#submitBtn');
+  const submitBtn = document.getElementById('submitBtn');
   try {
     isSubmitting = true;
     setLoading(submitBtn, true, '신청 중...');
@@ -293,7 +277,7 @@ async function handleSubmit(e) {
 
     await apiPost('createSignageRequest', payload);
 
-    alert('신청이 완료되었습니다. 담당자에게 알림이 전송되었습니다.');
+    alert('신청이 완료되었습니다.\n담당자(gcsbjeong@gccorp.com)에게 알림이 전송되었습니다.');
     location.href = '../../portal.html';
   } catch (err) {
     showMessage(err.message || '신청 중 오류가 발생했습니다.', 'error');
@@ -336,13 +320,11 @@ function buildPayload() {
     location_file_ids: [...uploadedFileIds.location],
     reference_file_ids: [...uploadedFileIds.reference],
 
-    // 사인물
     sign_size: getValue('sign_size'),
     sign_type: getValue('sign_type'),
     install_location: getValue('install_location'),
     install_env: type === 'SIGN' ? getValue('install_env') : getValue('install_env_nameplate'),
 
-    // 명판
     nameplate_type: nameplateType,
     nameplate_text: getValue('nameplate_text'),
 
@@ -354,14 +336,14 @@ function buildPayload() {
 // 유효성 검증
 // ─────────────────────────────────────────────
 function validatePayload(p) {
-  if (!p.clinic_code) return fail('의원을 선택해 주세요.', 'clinic_code');
-  if (!p.team_code) return fail('팀을 선택해 주세요.', 'team_code');
+  if (!p.clinic_code) return fail('의원 정보가 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.team_code) return fail('팀 정보가 없습니다. 다시 로그인해 주세요.', null);
   if (!p.requester_name) return fail('요청자명을 입력해 주세요.', 'requester_name');
   if (!p.contact) return fail('연락처를 입력해 주세요.', 'contact');
   if (!p.quantity || p.quantity < 1) return fail('수량을 1 이상 입력해 주세요.', 'quantity');
   if (!p.text_content) return fail('문구를 입력해 주세요.', 'text_content');
   if (p.is_urgent === 'Y' && !p.urgent_reason) return fail('긴급 사유를 입력해 주세요.', 'urgent_reason');
-  if (!p.created_by) return fail('로그인 사용자 정보가 없습니다.', null);
+  if (!p.created_by) return fail('로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', null);
 
   if (p.type === 'SIGN') {
     if (!p.sign_size) return fail('사이즈를 입력해 주세요.', 'sign_size');
@@ -383,17 +365,14 @@ function validatePayload(p) {
 
 function fail(msg, focusId) {
   showMessage(msg, 'error');
-  if (focusId) qs('#' + focusId)?.focus();
+  if (focusId) document.getElementById(focusId)?.focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   return false;
 }
 
 // ─────────────────────────────────────────────
 // 헬퍼
 // ─────────────────────────────────────────────
-function qs(selector) {
-  return document.querySelector(selector);
-}
-
 function getValue(id) {
   const el = document.getElementById(id);
   return el ? String(el.value || '').trim() : '';
