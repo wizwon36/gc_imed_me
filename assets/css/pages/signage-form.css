@@ -1,343 +1,174 @@
 /* =========================================
- * signage-form.css — 최종 수정본
- * 모바일 우선 레이아웃
+ * signage-form.css
  * ========================================= */
 
-/* ── 기본 리셋 ── */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-.req { color: #dc2626; }
 
-/* ── 페이지 컨테이너 ── */
+/* 필수 표기 */
+.req-mark { color: #dc2626; font-weight: 700; }
+
+/* ── 페이지 ── */
 .signage-page { background: var(--bg, #f3f5f7); min-height: 100vh; }
+.signage-shell { max-width: 760px; margin: 0 auto; padding: 0 0 48px; }
 
-.signage-shell {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 0 0 48px;
-}
-
-/* ── 헤더 (모바일 최적화) ── */
+/* ── 헤더 ── */
 .signage-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 16px;
+  background: #fff; border-bottom: 1px solid #e5e7eb;
+  position: sticky; top: 0; z-index: 100;
 }
-
-.signage-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
+.signage-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .signage-header-logo {
-  width: 36px; height: 36px;
-  border-radius: 50%;
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(135deg, #2563eb, #60a5fa);
-  color: #fff;
-  font-size: 16px;
+  color: #fff; font-size: 15px;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
 }
-
-.signage-header-texts {
-  display: flex; flex-direction: column; min-width: 0;
-}
-
-.signage-header-title {
-  font-size: 14px; font-weight: 800; color: #0b1f44;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-
-.signage-header-sub {
-  font-size: 11px; color: #6b7280; white-space: nowrap;
-}
-
+.signage-header-texts { display: flex; flex-direction: column; min-width: 0; }
+.signage-header-title { font-size: 13px; font-weight: 800; color: #0b1f44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.signage-header-sub { font-size: 11px; color: #6b7280; }
 .signage-home-btn {
-  flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: 10px;
-  border: 1.5px solid #d1d5db;
-  background: #fff;
-  color: #374151;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
+  flex-shrink: 0; padding: 6px 12px; border-radius: 10px;
+  border: 1.5px solid #d1d5db; background: #fff;
+  color: #374151; font-size: 13px; font-weight: 700;
+  text-decoration: none; white-space: nowrap;
   transition: background .15s;
 }
 .signage-home-btn:hover { background: #f3f4f6; }
 
-/* ── 페이지 타이틀 ── */
-.signage-page-title-wrap {
-  padding: 20px 16px 4px;
-}
-
-.signage-kicker {
-  display: inline-block;
-  font-size: 11px; font-weight: 700;
-  letter-spacing: .12em; color: #2563eb;
-  text-transform: uppercase; margin-bottom: 4px;
-}
-
-.signage-page-title {
-  margin: 0 0 6px;
-  font-size: 28px; font-weight: 800;
-  color: #0b1f44; letter-spacing: -.03em; line-height: 1.15;
-}
-
-.signage-page-desc {
-  margin: 0; font-size: 14px; color: #6b7280;
-  line-height: 1.6; word-break: keep-all;
-}
+/* ── 타이틀 ── */
+.signage-page-title-wrap { padding: 18px 16px 4px; }
+.signage-kicker { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: #2563eb; text-transform: uppercase; margin-bottom: 4px; }
+.signage-page-title { margin: 0 0 6px; font-size: 26px; font-weight: 800; color: #0b1f44; letter-spacing: -.03em; line-height: 1.15; }
+.signage-page-desc { margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6; word-break: keep-all; }
 
 /* ── 메시지 박스 ── */
-.message-box {
-  display: none; margin: 12px 16px;
-  padding: 12px 14px; border-radius: 12px;
-  font-size: 14px; line-height: 1.5;
-}
-.message-box.error { background: #fef2f2; border: 1px solid #fecaca; color: #b42318; display: block; }
-.message-box.success { background: #ecfdf3; border: 1px solid #bbf7d0; color: #027a48; display: block; }
+.message-box { display: none; margin: 10px 16px; padding: 11px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+.message-box.error { display: block; background: #fef2f2; border: 1px solid #fecaca; color: #b42318; }
+.message-box.success { display: block; background: #ecfdf3; border: 1px solid #bbf7d0; color: #027a48; }
 
 /* ── 카드 ── */
-.s-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 20px 16px;
-  margin: 12px 16px 0;
-}
+.s-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 18px 16px; margin: 10px 16px 0; }
 
 /* ── 섹션 헤더 ── */
-.s-section-head { margin-bottom: 16px; }
-
-.s-kicker {
-  display: inline-block;
-  font-size: 11px; font-weight: 700;
-  letter-spacing: .12em; color: #2563eb;
-  text-transform: uppercase; margin-bottom: 4px;
-}
-
-.s-section-title {
-  position: relative;
-  margin: 0 0 4px; padding-left: 14px;
-  font-size: 20px; font-weight: 800;
-  color: #0b1f44; line-height: 1.2;
-}
-.s-section-title::before {
-  content: "";
-  position: absolute; left: 0; top: 3px; bottom: 3px;
-  width: 4px; border-radius: 999px;
-  background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
-}
-
-.s-section-desc {
-  margin: 0; font-size: 13px; color: #6b7280; line-height: 1.5;
-}
+.s-section-head { margin-bottom: 14px; }
+.s-kicker { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .12em; color: #2563eb; text-transform: uppercase; margin-bottom: 3px; }
+.s-section-title { position: relative; margin: 0 0 3px; padding-left: 13px; font-size: 18px; font-weight: 800; color: #0b1f44; line-height: 1.2; }
+.s-section-title::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; border-radius: 999px; background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%); }
+.s-section-desc { margin: 0; font-size: 12px; color: #6b7280; line-height: 1.5; }
 
 /* ── 폼 그리드 ── */
-.s-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px 12px;
-}
-
-.s-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.s-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 10px; }
+.s-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .s-field--full { grid-column: 1 / -1; }
-
-.s-label {
-  font-size: 13px; font-weight: 600; color: #374151; line-height: 1.3;
-}
-.req-label::before { content: "* "; color: #dc2626; }
-
+.s-label { font-size: 12px; font-weight: 600; color: #374151; line-height: 1.3; }
 .badge-note { font-size: 11px; font-weight: 400; color: #dc2626; margin-left: 2px; }
 
 /* ── 인풋 ── */
 .s-input {
-  display: block; width: 100%;
-  min-height: 46px; padding: 10px 13px;
+  display: block; width: 100%; box-sizing: border-box;
+  min-height: 44px; padding: 9px 12px;
   border: 1.5px solid #d1d5db; border-radius: 12px;
-  font-size: 15px; color: #111827; background: #fff;
+  font-size: 14px; color: #111827; background: #fff;
   transition: border-color .15s, box-shadow .15s;
   outline: none; appearance: none; -webkit-appearance: none;
-  box-sizing: border-box;
 }
 .s-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
 .s-input[readonly] { background: #f3f4f6; color: #6b7280; cursor: default; }
-
-/* select 전체 너비 보장 */
-.s-select--full { width: 100%; }
-
-.s-textarea { min-height: 88px; resize: vertical; line-height: 1.6; }
+.s-textarea { min-height: 80px; resize: vertical; line-height: 1.6; }
 
 /* ── 제작 종류 카드 ── */
-.type-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
+.type-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .type-card {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 20px 12px;
-  border: 2px solid #e5e7eb; border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 18px 10px; border: 2px solid #e5e7eb; border-radius: 14px;
   background: #f9fafb; cursor: pointer; text-align: center;
-  transition: border-color .15s, background .15s, box-shadow .15s;
-  position: relative;
+  transition: border-color .15s, background .15s, box-shadow .15s; position: relative;
 }
 .type-card:hover { border-color: #93c5fd; background: #eff6ff; }
 .type-card.is-selected { border-color: #2563eb; background: #eff6ff; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
-.type-icon { font-size: 30px; line-height: 1; }
-.type-title { font-size: 16px; font-weight: 800; color: #0b1f44; }
-.type-desc { font-size: 12px; color: #6b7280; line-height: 1.4; }
+.type-icon { font-size: 28px; line-height: 1; }
+.type-title { font-size: 15px; font-weight: 800; color: #0b1f44; }
+.type-desc { font-size: 11px; color: #6b7280; line-height: 1.4; }
 
 /* ── 명판 타입 카드 ── */
-.np-type-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
-
+.np-type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 6px; }
 .np-type-card {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 12px 6px;
-  border: 2px solid #e5e7eb; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 10px 4px; border: 2px solid #e5e7eb; border-radius: 12px;
   background: #f9fafb; cursor: pointer; text-align: center;
-  transition: border-color .15s, background .15s, box-shadow .15s;
-  position: relative;
+  transition: border-color .15s, background .15s, box-shadow .15s; position: relative;
 }
 .np-type-card:hover { border-color: #93c5fd; background: #eff6ff; }
 .np-type-card.is-selected { border-color: #2563eb; background: #eff6ff; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.np-badge { width: 28px; height: 28px; border-radius: 50%; background: #0b1f44; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.np-size { font-size: 10px; font-weight: 700; color: #374151; }
+.np-sub { font-size: 9px; color: #9ca3af; }
 
-.np-badge {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: #0b1f44; color: #fff;
-  font-size: 14px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
+/* ── 명판 디자인 + 레이아웃 ── */
+.np-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.np-detail-col { display: flex; flex-direction: column; gap: 6px; }
+.np-detail-label { font-size: 11px; font-weight: 700; color: #374151; }
+
+/* 이미지: 모바일에서 과도하게 크지 않도록 max-height 제한 */
+.np-img {
+  width: 100%; max-height: 220px;
+  object-fit: contain; border-radius: 8px;
+  border: 1px solid #e5e7eb; display: block; background: #fafafa;
 }
-.np-size { font-size: 11px; font-weight: 700; color: #374151; }
-.np-sub { font-size: 10px; color: #9ca3af; }
+.np-img--layout-only { max-width: 360px; max-height: 200px; }
 
-/* ── 명판 타입 선택 후: 디자인 + 레이아웃 나란히 ── */
-.np-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.np-detail-col { display: flex; flex-direction: column; gap: 8px; }
-
-.np-detail-label {
-  font-size: 12px; font-weight: 700; color: #374151;
-}
-
-.np-design-img {
-  width: 100%; border-radius: 10px;
-  border: 1px solid #e5e7eb; display: block;
-  object-fit: contain;
-}
-
-.np-layout-img {
-  width: 100%; border-radius: 10px;
-  border: 1px solid #e5e7eb; display: block;
-  object-fit: contain;
-}
-
-.np-size-badge {
-  padding: 7px 10px;
-  background: #eff6ff; border: 1px solid #bfdbfe;
-  border-radius: 10px; font-size: 12px; color: #1d4ed8; font-weight: 600;
-}
-
-.np-layout-hint {
-  margin: 10px 0 0; font-size: 12px; color: #6b7280; line-height: 1.5;
-}
+.np-size-badge { padding: 6px 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 11px; color: #1d4ed8; font-weight: 600; }
+.np-layout-hint { margin: 8px 0 0; font-size: 11px; color: #6b7280; line-height: 1.5; }
 
 /* ── 파일 업로드 존 ── */
 .file-zone {
-  border: 2px dashed #d1d5db; border-radius: 14px;
-  padding: 16px; background: #fafafa;
+  border: 2px dashed #d1d5db; border-radius: 12px;
+  padding: 14px 12px; background: #fafafa;
   transition: border-color .15s, background .15s;
 }
 .file-zone.is-dragover { border-color: #2563eb; background: #eff6ff; }
 
-.file-zone-body {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  margin-bottom: 12px;
+/* 힌트: pointer-events none → 클릭이 버튼으로만 전달 */
+.file-zone-hint {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin-bottom: 10px; pointer-events: none;
 }
-.file-zone-icon { font-size: 22px; }
-.file-zone-text { font-size: 13px; color: #6b7280; text-align: center; }
+.file-zone-icon { font-size: 20px; }
+.file-zone-text { font-size: 12px; color: #9ca3af; text-align: center; }
 
-/* 파일 선택 버튼: 하나만 */
+/* 파일 선택 버튼 하나 */
 .file-btn {
   display: block; width: 100%;
-  padding: 10px 0; border-radius: 10px;
+  padding: 9px 0; border-radius: 10px;
   border: 1.5px solid #d1d5db; background: #fff;
-  color: #374151; font-size: 14px; font-weight: 700;
+  color: #374151; font-size: 13px; font-weight: 700;
   cursor: pointer; text-align: center;
   transition: background .15s, border-color .15s;
 }
 .file-btn:hover { background: #f3f4f6; border-color: #9ca3af; }
 
-.file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
-.file-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 10px; border-radius: 8px; background: #f3f4f6;
-  font-size: 12px; gap: 6px;
-}
+.file-list { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.file-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 9px; border-radius: 7px; background: #f3f4f6; font-size: 12px; gap: 6px; }
 .file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #374151; }
-.file-item-status { font-weight: 700; white-space: nowrap; font-size: 12px; }
+.file-item-status { font-weight: 700; white-space: nowrap; font-size: 11px; }
 .file-item.is-uploading .file-item-status { color: #2563eb; }
 .file-item.is-done .file-item-status { color: #16a34a; }
 .file-item.is-error .file-item-status { color: #dc2626; }
 
 /* ── 제출 버튼 ── */
-.s-actions {
-  padding: 16px 16px 0;
-  display: flex; justify-content: flex-end;
-}
-
+.s-actions { padding: 14px 16px 0; display: flex; justify-content: flex-end; }
 .s-submit-btn {
-  min-width: 120px; min-height: 50px;
-  padding: 0 28px;
-  border: none; border-radius: 14px;
+  min-width: 110px; min-height: 48px; padding: 0 24px;
+  border: none; border-radius: 12px;
   background: #0b1f44; color: #fff;
-  font-size: 16px; font-weight: 800; cursor: pointer;
+  font-size: 15px; font-weight: 800; cursor: pointer;
   transition: background .15s, transform .1s;
 }
 .s-submit-btn:hover { background: #13203f; }
 .s-submit-btn:active { transform: scale(.98); }
 .s-submit-btn:disabled { background: #9ca3af; cursor: not-allowed; }
-
-/* ── 전역 로딩 ── */
-.global-loading {
-  position: fixed; inset: 0;
-  background: rgba(255,255,255,.8);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 9999; opacity: 0; pointer-events: none;
-  transition: opacity .2s;
-}
-.global-loading.is-open { opacity: 1; pointer-events: all; }
-.global-loading-inner { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.global-loading-spinner {
-  width: 38px; height: 38px;
-  border: 3px solid #e5e7eb; border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.global-loading-text { font-size: 14px; font-weight: 600; color: #374151; }
 
 /* ── 반응형 ── */
 @media (max-width: 480px) {
@@ -345,5 +176,6 @@
   .s-field--full { grid-column: 1; }
   .np-type-grid { grid-template-columns: repeat(2, 1fr); }
   .np-detail-grid { grid-template-columns: 1fr; }
-  .signage-page-title { font-size: 24px; }
+  .np-img { max-height: 160px; }
+  .signage-page-title { font-size: 22px; }
 }
