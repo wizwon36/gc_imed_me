@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     bindTypeSelector();
     bindUrgentToggle();
-    bindFileButtons();
     bindFileDropzones();
     bindNameplateTypeSelector();
 
@@ -170,48 +169,30 @@ function bindNameplateTypeSelector() {
 }
 
 // ─────────────────────────────────────────────
-// 파일 버튼 바인딩 (각각 하나씩)
-// ─────────────────────────────────────────────
-function bindFileButtons() {
-  linkBtn('btn_main',      'file_main');
-  linkBtn('btn_location',  'file_location');
-  linkBtn('btn_reference', 'file_reference');
-}
-
-function linkBtn(btnId, inputId) {
-  const btn   = document.getElementById(btnId);
-  const input = document.getElementById(inputId);
-  if (btn && input) {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      input.click();
-    });
-  }
-}
-
-// ─────────────────────────────────────────────
 // 드래그 앤 드롭
 // ─────────────────────────────────────────────
 function bindFileDropzones() {
-  bindDrop('zone_main',       'file_main',      'main',      'fileList_main');
-  bindDrop('zone_location',   'file_location',  'location',  'fileList_location');
-  bindDrop('zone_reference',  'file_reference', 'reference', 'fileList_reference');
+  bindDrop(null, 'file_main',      'main',      'fileList_main');
+  bindDrop(null, 'file_location',  'location',  'fileList_location');
+  bindDrop(null, 'file_reference', 'reference', 'fileList_reference');
 }
 
 function bindDrop(zoneId, inputId, key, listId) {
-  const zone  = document.getElementById(zoneId);
   const input = document.getElementById(inputId);
-  if (!zone || !input) return;
-
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('is-dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('is-dragover');
-    processFiles(Array.from(e.dataTransfer.files), key, listId);
-  });
+  if (!input) return;
 
   input.addEventListener('change', e => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      // 파일명 표시 업데이트
+      const fileNameKey = inputId.replace('file_', '');
+      const fileNameEl = document.getElementById('fileName_' + fileNameKey);
+      if (fileNameEl) {
+        fileNameEl.textContent = files.length === 1
+          ? files[0].name
+          : files.length + '개 파일 선택됨';
+      }
+    }
     processFiles(Array.from(e.target.files), key, listId);
     input.value = '';
   });
@@ -247,6 +228,10 @@ async function processFiles(files, key, listId) {
 
       const el = document.getElementById(itemId);
       if (el) { el.classList.replace('is-uploading', 'is-done'); el.querySelector('.signage-file-item-status').textContent = '✓ 완료'; }
+
+      // 파일이 생기면 empty 안내 숨기기
+      const emptyEl = document.getElementById('previewEmpty_' + key);
+      if (emptyEl) emptyEl.style.display = 'none';
     } catch (err) {
       const el = document.getElementById(itemId);
       if (el) { el.classList.replace('is-uploading', 'is-error'); el.querySelector('.signage-file-item-status').textContent = '✗ 실패'; }
