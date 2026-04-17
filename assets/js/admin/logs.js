@@ -70,14 +70,24 @@ async function fetchLogs() {
   const dateFrom   = (document.getElementById('filterDateFrom')?.value  || '').trim();
   const dateTo     = (document.getElementById('filterDateTo')?.value    || '').trim();
 
+  // 세션에서 이메일을 최대한 안전하게 추출
+  const userEmail = String(
+    user.email || user.user_email || user.userEmail || ''
+  ).trim().toLowerCase();
+  
+  if (!userEmail) {
+    showMessage('로그인 세션에서 사용자 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', 'error');
+    return;
+  }
+  
   const params = {
-    request_user_email: user.email || user.user_email || '',
+    request_user_email: userEmail,
     keyword,
     action_type: actionType,
     target_type: targetType,
     date_from:   dateFrom,
     date_to:     dateTo,
-    limit:       200
+    limit:       '200'   // ← 문자열로 명시 (숫자도 동작하지만 일관성)
   };
 
   const searchBtn = document.getElementById('searchBtn');
