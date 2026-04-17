@@ -10,7 +10,13 @@ const NAMEPLATE_SIZES = {
   D: '높이 2.5cm (20cm)'
 };
 
-const uploadedFileIds = { main: [], location: [], reference: [] };
+const MAX_SINGLE_FILE_MB = 10;
+const MAX_TOTAL_FILE_MB  = 20;
+const MAX_SINGLE_BYTES   = MAX_SINGLE_FILE_MB * 1024 * 1024;
+const MAX_TOTAL_BYTES    = MAX_TOTAL_FILE_MB  * 1024 * 1024;
+
+const uploadedFileIds   = { main: [], location: [], reference: [] };
+const uploadedFileSizes = { main: [], location: [], reference: [] };
 let pendingUploads = 0;
 let isSubmitting = false;
 
@@ -24,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     showGlobalLoading('화면을 준비하는 중...');
 
-    // ★ loadOrgData 완료를 기다린 후 prefill — 타이밍 문제 해결
     await window.orgSelect.loadOrgData();
     prefillUserInfo(user);
 
@@ -33,7 +38,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindFileDropzones();
     bindNameplateTypeSelector();
 
-    // 레이아웃 이미지 세팅 (항상 우측에 표시)
     if (typeof NAMEPLATE_IMAGES !== 'undefined') {
       const el = document.getElementById('layoutImg');
       if (el) el.src = NAMEPLATE_IMAGES.layout || '';
@@ -49,14 +53,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ─────────────────────────────────────────────
 // 로그인 유저 정보 자동 입력
-// loadOrgData() 완료 후 호출되므로 getClinics/getTeams 캐시 확실히 있음
 // ─────────────────────────────────────────────
 function prefillUserInfo(user) {
-  // hidden 코드값 세팅
   setVal('clinic_code', user.clinic_code || '');
   setVal('team_code',   user.team_code   || '');
 
-  // 표시명 우선순위: 세션 → org 배열에서 code로 조회 → 빈값
   const clinics = window.orgSelect.getClinics();
   const teams   = window.orgSelect.getTeams();
 
@@ -69,9 +70,6 @@ function prefillUserInfo(user) {
   setVal('contact',        user.phone     || '');
 }
 
-/**
- * 세션 name 우선, 없으면 org 배열에서 code_value → code_name 조회
- */
 function resolveOrgName(sessionName, code, list) {
   if (sessionName && String(sessionName).trim()) return String(sessionName).trim();
   if (!code || !Array.isArray(list) || !list.length) return '';
@@ -150,7 +148,6 @@ function bindNameplateTypeSelector() {
       if (typeof NAMEPLATE_IMAGES !== 'undefined') {
         const designImg = document.getElementById('nameplateDesignImg');
         if (designImg) designImg.src = NAMEPLATE_IMAGES[type] || '';
-        // layoutImg는 초기화 시 이미 세팅됨
       }
 
       const sizeText = document.getElementById('selectedSizeText');
@@ -159,7 +156,6 @@ function bindNameplateTypeSelector() {
         sizeText.style.display = '';
       }
 
-      // 플레이스홀더 숨기고 디자인 이미지 표시
       const placeholder = document.getElementById('npDesignPlaceholder');
       const designImg = document.getElementById('nameplateDesignImg');
       if (placeholder) placeholder.style.display = 'none';
@@ -184,7 +180,6 @@ function bindDrop(zoneId, inputId, key, listId) {
   input.addEventListener('change', e => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      // 파일명 표시 업데이트
       const fileNameKey = inputId.replace('file_', '');
       const fileNameEl = document.getElementById('fileName_' + fileNameKey);
       if (fileNameEl) {
@@ -198,13 +193,44 @@ function bindDrop(zoneId, inputId, key, listId) {
   });
 }
 
+// ─────────────────────────────────────────────
+// 전체 업로드 용량 합산
+// ─────────────────────────────────────────────
+function getTotalUploadedBytes() {
+  return [
+    ...uploadedFileSizes.main,
+    ...uploadedFileSizes.location,
+    ...uploadedFileSizes.reference
+  ].reduce((acc, size) => acc + size, 0);
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024)        return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 async function processFiles(files, key, listId) {
   const user      = window.auth?.getSession?.() || {};
-  const createdBy = user.email || user.user_email || '';
+  const createdBy = user.user_email || user.email || '';
 
   for (const file of files) {
-    if (file.size > 20 * 1024 * 1024) {
-      showMessage('20MB 이하 파일만 업로드 가능합니다: ' + file.name, 'error');
+    // 개별 파일 용량 체크
+    if (file.size > MAX_SINGLE_BYTES) {
+      showMessage(
+        `파일 용량 초과: "${file.name}" (${formatFileSize(file.size)}) — 개별 파일은 ${MAX_SINGLE_FILE_MB}MB 이하만 가능합니다.`,
+        'error'
+      );
+      continue;
+    }
+
+    // 전체 합산 용량 체크
+    const currentTotal = getTotalUploadedBytes();
+    if (currentTotal + file.size > MAX_TOTAL_BYTES) {
+      showMessage(
+        `전체 첨부 용량 초과 — 현재 ${formatFileSize(currentTotal)}, 추가 시 ${formatFileSize(currentTotal + file.size)} (최대 ${MAX_TOTAL_FILE_MB}MB)`,
+        'error'
+      );
       continue;
     }
 
@@ -224,17 +250,24 @@ async function processFiles(files, key, listId) {
     try {
       const base64 = await toBase64(file);
       const res    = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
+
       uploadedFileIds[key].push(res.data.file_id);
+      uploadedFileSizes[key].push(file.size);  // ★ 용량 추적
 
       const el = document.getElementById(itemId);
-      if (el) { el.classList.replace('is-uploading', 'is-done'); el.querySelector('.signage-file-item-status').textContent = '✓ 완료'; }
+      if (el) {
+        el.classList.replace('is-uploading', 'is-done');
+        el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatFileSize(file.size)})`;
+      }
 
-      // 파일이 생기면 empty 안내 숨기기
       const emptyEl = document.getElementById('previewEmpty_' + key);
       if (emptyEl) emptyEl.style.display = 'none';
     } catch (err) {
       const el = document.getElementById(itemId);
-      if (el) { el.classList.replace('is-uploading', 'is-error'); el.querySelector('.signage-file-item-status').textContent = '✗ 실패'; }
+      if (el) {
+        el.classList.replace('is-uploading', 'is-error');
+        el.querySelector('.signage-file-item-status').textContent = '✗ 실패';
+      }
       showMessage('업로드 실패: ' + file.name, 'error');
     } finally {
       pendingUploads--;
@@ -261,6 +294,16 @@ async function handleSubmit(e) {
   if (isSubmitting) return;
   if (pendingUploads > 0) {
     showMessage('파일 업로드가 진행 중입니다. 완료 후 다시 시도해 주세요.', 'error');
+    return;
+  }
+
+  // 제출 시점 최종 용량 체크
+  const totalBytes = getTotalUploadedBytes();
+  if (totalBytes > MAX_TOTAL_BYTES) {
+    showMessage(
+      `전체 첨부 용량(${formatFileSize(totalBytes)})이 최대 ${MAX_TOTAL_FILE_MB}MB를 초과했습니다.`,
+      'error'
+    );
     return;
   }
 
@@ -306,24 +349,24 @@ function buildPayload() {
 
   return {
     type,
-    clinic_code:       getValue('clinic_code'),
-    team_code:         getValue('team_code'),
-    requester_name:    getValue('requester_name'),
-    contact:           getValue('contact'),
-    quantity:          Number(getValue('quantity') || 1),
-    text_content:      getValue('text_content'),
-    is_urgent:         getValue('is_urgent') || 'N',
-    urgent_reason:     getValue('urgent_reason'),
-    file_ids:          [...uploadedFileIds.main],
-    location_file_ids: [...uploadedFileIds.location],
-    reference_file_ids:[...uploadedFileIds.reference],
-    sign_size:         getValue('sign_size'),
-    sign_type:         getValue('sign_type'),
-    install_location:  getValue('install_location'),
-    install_env:       type === 'SIGN' ? getValue('install_env') : getValue('install_env_nameplate'),
-    nameplate_type:    nameplateType,
-    nameplate_text:    getValue('nameplate_text'),
-    created_by:        user.email || user.user_email || ''
+    clinic_code:        getValue('clinic_code'),
+    team_code:          getValue('team_code'),
+    requester_name:     getValue('requester_name'),
+    contact:            getValue('contact'),
+    quantity:           Number(getValue('quantity') || 1),
+    text_content:       getValue('text_content'),
+    is_urgent:          getValue('is_urgent') || 'N',
+    urgent_reason:      getValue('urgent_reason'),
+    file_ids:           [...uploadedFileIds.main],
+    location_file_ids:  [...uploadedFileIds.location],
+    reference_file_ids: [...uploadedFileIds.reference],
+    sign_size:          getValue('sign_size'),
+    sign_type:          getValue('sign_type'),
+    install_location:   getValue('install_location'),
+    install_env:        type === 'SIGN' ? getValue('install_env') : getValue('install_env_nameplate'),
+    nameplate_type:     nameplateType,
+    nameplate_text:     getValue('nameplate_text'),
+    created_by:         user.user_email || user.email || ''
   };
 }
 
@@ -341,10 +384,10 @@ function validatePayload(p) {
   if (!p.created_by)     return fail('로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', null);
 
   if (p.type === 'SIGN') {
-    if (!p.sign_size)       return fail('사이즈를 입력해 주세요.', 'sign_size');
-    if (!p.sign_type)       return fail('형태/종류를 입력해 주세요.', 'sign_type');
-    if (!p.install_env)     return fail('설치 환경을 선택해 주세요.', 'install_env');
-    if (!p.install_location)return fail('설치 위치를 입력해 주세요.', 'install_location');
+    if (!p.sign_size)        return fail('사이즈를 입력해 주세요.', 'sign_size');
+    if (!p.sign_type)        return fail('형태/종류를 입력해 주세요.', 'sign_type');
+    if (!p.install_env)      return fail('설치 환경을 선택해 주세요.', 'install_env');
+    if (!p.install_location) return fail('설치 위치를 입력해 주세요.', 'install_location');
     if (uploadedFileIds.location.length  === 0) return fail('설치 위치 사진을 첨부해 주세요.', null);
     if (uploadedFileIds.reference.length === 0) return fail('참고 자료(도면/레퍼런스)를 첨부해 주세요.', null);
   }
