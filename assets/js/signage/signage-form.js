@@ -188,7 +188,10 @@ function linkBtn(btnId, inputId) {
   const btn = document.getElementById(btnId);
   const input = document.getElementById(inputId);
   if (btn && input) {
-    btn.addEventListener('click', () => input.click());
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // 존 클릭 이벤트로 버블링 차단
+      input.click();
+    });
   }
 }
 
