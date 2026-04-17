@@ -3,7 +3,6 @@
  * 사인물 / 명판 제작 신청 폼 컨트롤러
  */
 
-// 명판 타입별 규격 (백엔드 NAMEPLATE_SIZE_MAP 과 동일하게 유지)
 const NAMEPLATE_SIZES = {
   A: '높이 5cm (20cm / 16cm)',
   B: '높이 4cm (20cm / 18cm)',
@@ -11,11 +10,9 @@ const NAMEPLATE_SIZES = {
   D: '높이 2.5cm (20cm)'
 };
 
-// 업로드된 파일 ID 저장소
 const uploadedFileIds = { main: [], location: [], reference: [] };
-
-let pendingUploads = 0;   // 업로드 진행 수
-let isSubmitting = false;  // 중복 제출 방지
+let pendingUploads = 0;
+let isSubmitting = false;
 
 // ─────────────────────────────────────────────
 // 초기화
@@ -27,19 +24,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     showGlobalLoading('화면을 준비하는 중...');
 
-    // 로그인 유저 정보로 신청자 기본값 세팅
+    // org-select 로드 후 실제 의원명/팀명 세팅
+    await window.orgSelect.loadOrgData();
     prefillUserInfo(user);
 
-    // 이벤트 바인딩
     bindTypeSelector();
     bindUrgentToggle();
-    bindFileUploads();
+    bindFileButtons();
+    bindFileDropzones();
     bindNameplateTypeSelector();
 
-    // 문구 레이아웃 이미지 세팅
-    const layoutImg = document.getElementById('layoutImg');
-    if (layoutImg && typeof NAMEPLATE_IMAGES !== 'undefined') {
-      layoutImg.src = NAMEPLATE_IMAGES.layout;
+    // 문구 레이아웃 이미지 세팅 (타입 미선택 상태에서도 보이는 것)
+    if (typeof NAMEPLATE_IMAGES !== 'undefined') {
+      const layoutImgOnly = document.getElementById('layoutImgOnly');
+      if (layoutImgOnly) layoutImgOnly.src = NAMEPLATE_IMAGES.layout;
     }
 
     document.getElementById('signageForm').addEventListener('submit', handleSubmit);
@@ -52,30 +50,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ─────────────────────────────────────────────
 // 로그인 유저 정보 자동 입력
+// org-select 캐시를 활용해 실제 의원명/팀명 표시
 // ─────────────────────────────────────────────
 function prefillUserInfo(user) {
-  // 의원/팀: 표시용 텍스트 + hidden 코드
-  const clinicNameEl = document.getElementById('clinic_name_display');
-  const clinicCodeEl = document.getElementById('clinic_code');
-  const teamNameEl = document.getElementById('team_name_display');
-  const teamCodeEl = document.getElementById('team_code');
+  // hidden 코드값
+  setVal('clinic_code', user.clinic_code || '');
+  setVal('team_code', user.team_code || '');
 
-  if (clinicNameEl) clinicNameEl.value = user.clinic_name || '';
-  if (clinicCodeEl) clinicCodeEl.value = user.clinic_code || '';
-  if (teamNameEl) teamNameEl.value = user.team_name || '';
-  if (teamCodeEl) teamCodeEl.value = user.team_code || '';
+  // 표시명: 세션에 이미 있으면 그대로, 없으면 org-select 캐시에서 조회
+  const clinicName = resolveOrgName(
+    user.clinic_name,
+    user.clinic_code,
+    window.orgSelect?.getClinics?.() || [],
+    'code_value',
+    'code_name'
+  );
+  const teamName = resolveOrgName(
+    user.team_name,
+    user.team_code,
+    window.orgSelect?.getTeams?.() || [],
+    'code_value',
+    'code_name'
+  );
 
-  // 요청자명
-  const nameEl = document.getElementById('requester_name');
-  if (nameEl) nameEl.value = user.name || user.user_name || '';
+  setVal('clinic_name_display', clinicName);
+  setVal('team_name_display', teamName);
+  setVal('requester_name', user.name || user.user_name || '');
+  setVal('contact', user.phone || '');
+}
 
-  // 연락처
-  const phoneEl = document.getElementById('contact');
-  if (phoneEl) phoneEl.value = user.phone || '';
+/**
+ * 세션값 우선 사용, 없으면 org 배열에서 code 로 이름 조회
+ */
+function resolveOrgName(sessionName, code, list, codeKey, nameKey) {
+  if (sessionName && String(sessionName).trim()) return String(sessionName).trim();
+  if (!code || !list.length) return '';
+  const found = list.find(item => String(item[codeKey] || '').trim() === String(code || '').trim());
+  return found ? String(found[nameKey] || '').trim() : '';
 }
 
 // ─────────────────────────────────────────────
-// 제작 종류 선택 (사인물 / 명판)
+// 제작 종류 선택
 // ─────────────────────────────────────────────
 function bindTypeSelector() {
   document.querySelectorAll('input[name="type"]').forEach(radio => {
@@ -86,11 +101,9 @@ function bindTypeSelector() {
 function handleTypeChange(e) {
   const type = e.target.value;
 
-  // 카드 활성화
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('is-selected'));
   document.getElementById('typeCard_' + type)?.classList.add('is-selected');
 
-  // 공통 섹션 표시
   showEl('sectionCommon');
   showEl('formActions');
 
@@ -132,58 +145,74 @@ function bindUrgentToggle() {
 }
 
 // ─────────────────────────────────────────────
-// 명판 타입 선택 → 디자인 이미지 + 사이즈 표시
+// 명판 타입 선택 → 디자인 이미지 + 문구 레이아웃
 // ─────────────────────────────────────────────
 function bindNameplateTypeSelector() {
   document.querySelectorAll('input[name="nameplate_type"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
       const type = e.target.value;
 
-      // 카드 활성화
-      document.querySelectorAll('.nameplate-type-card').forEach(c => c.classList.remove('is-selected'));
+      document.querySelectorAll('.np-type-card').forEach(c => c.classList.remove('is-selected'));
       document.getElementById('npCard_' + type)?.classList.add('is-selected');
 
-      // 디자인 이미지 표시
-      const wrap = document.getElementById('nameplateDesignWrap');
-      const img = document.getElementById('nameplateDesignImg');
+      const detailWrap = document.getElementById('npDetailWrap');
+      const layoutOnly = document.getElementById('npLayoutOnly');
+      const designImg = document.getElementById('nameplateDesignImg');
+      const layoutImg = document.getElementById('layoutImg');
       const sizeText = document.getElementById('selectedSizeText');
 
-      if (wrap && img && typeof NAMEPLATE_IMAGES !== 'undefined') {
-        img.src = NAMEPLATE_IMAGES[type] || '';
-        wrap.style.display = '';
+      if (typeof NAMEPLATE_IMAGES !== 'undefined') {
+        if (designImg) designImg.src = NAMEPLATE_IMAGES[type] || '';
+        if (layoutImg) layoutImg.src = NAMEPLATE_IMAGES.layout || '';
       }
 
-      if (sizeText) {
-        sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
-      }
+      if (sizeText) sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
+
+      // 타입 선택 후: 나란히 배치 영역 표시, 단독 레이아웃 숨김
+      if (detailWrap) detailWrap.style.display = '';
+      if (layoutOnly) layoutOnly.style.display = 'none';
     });
   });
 }
 
 // ─────────────────────────────────────────────
-// 파일 업로드
+// 파일 선택 버튼 바인딩 (버튼 하나씩만)
 // ─────────────────────────────────────────────
-function bindFileUploads() {
-  bindFileZone('file_main', 'main', 'fileList_main', 'zone_main');
-  bindFileZone('file_location', 'location', 'fileList_location', 'zone_location');
-  bindFileZone('file_reference', 'reference', 'fileList_reference', 'zone_reference');
+function bindFileButtons() {
+  linkBtn('btn_main', 'file_main');
+  linkBtn('btn_location', 'file_location');
+  linkBtn('btn_reference', 'file_reference');
 }
 
-function bindFileZone(inputId, key, listId, zoneId) {
+function linkBtn(btnId, inputId) {
+  const btn = document.getElementById(btnId);
   const input = document.getElementById(inputId);
-  const zone = document.getElementById(zoneId);
-  if (!input) return;
-
-  // 드래그 앤 드롭
-  if (zone) {
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('is-dragover'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
-    zone.addEventListener('drop', e => {
-      e.preventDefault();
-      zone.classList.remove('is-dragover');
-      processFiles(Array.from(e.dataTransfer.files), key, listId);
-    });
+  if (btn && input) {
+    btn.addEventListener('click', () => input.click());
   }
+}
+
+// ─────────────────────────────────────────────
+// 드래그 앤 드롭 존
+// ─────────────────────────────────────────────
+function bindFileDropzones() {
+  bindDrop('zone_main', 'file_main', 'main', 'fileList_main');
+  bindDrop('zone_location', 'file_location', 'location', 'fileList_location');
+  bindDrop('zone_reference', 'file_reference', 'reference', 'fileList_reference');
+}
+
+function bindDrop(zoneId, inputId, key, listId) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  if (!zone || !input) return;
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('is-dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('is-dragover');
+    processFiles(Array.from(e.dataTransfer.files), key, listId);
+  });
 
   input.addEventListener('change', e => {
     processFiles(Array.from(e.target.files), key, listId);
@@ -216,25 +245,14 @@ async function processFiles(files, key, listId) {
 
     try {
       const base64 = await toBase64(file);
-      const res = await apiPost('uploadSignageFile', {
-        file_base64: base64,
-        file_name: file.name,
-        created_by: createdBy
-      });
-
+      const res = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
       uploadedFileIds[key].push(res.data.file_id);
 
       const el = document.getElementById(itemId);
-      if (el) {
-        el.classList.replace('is-uploading', 'is-done');
-        el.querySelector('.file-item-status').textContent = '✓ 완료';
-      }
+      if (el) { el.classList.replace('is-uploading', 'is-done'); el.querySelector('.file-item-status').textContent = '✓ 완료'; }
     } catch (err) {
       const el = document.getElementById(itemId);
-      if (el) {
-        el.classList.replace('is-uploading', 'is-error');
-        el.querySelector('.file-item-status').textContent = '✗ 실패';
-      }
+      if (el) { el.classList.replace('is-uploading', 'is-error'); el.querySelector('.file-item-status').textContent = '✗ 실패'; }
       showMessage('업로드 실패: ' + file.name, 'error');
     } finally {
       pendingUploads--;
@@ -259,7 +277,6 @@ async function handleSubmit(e) {
   clearMessage();
 
   if (isSubmitting) return;
-
   if (pendingUploads > 0) {
     showMessage('파일 업로드가 진행 중입니다. 완료 후 다시 시도해 주세요.', 'error');
     return;
@@ -297,7 +314,7 @@ function buildPayload() {
 
   if (!type) {
     showMessage('제작 종류를 선택해 주세요.', 'error');
-    document.querySelector('.type-selector-grid')?.scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('.type-grid')?.scrollIntoView({ behavior: 'smooth' });
     return null;
   }
 
@@ -315,19 +332,15 @@ function buildPayload() {
     text_content: getValue('text_content'),
     is_urgent: getValue('is_urgent') || 'N',
     urgent_reason: getValue('urgent_reason'),
-
     file_ids: [...uploadedFileIds.main],
     location_file_ids: [...uploadedFileIds.location],
     reference_file_ids: [...uploadedFileIds.reference],
-
     sign_size: getValue('sign_size'),
     sign_type: getValue('sign_type'),
     install_location: getValue('install_location'),
     install_env: type === 'SIGN' ? getValue('install_env') : getValue('install_env_nameplate'),
-
     nameplate_type: nameplateType,
     nameplate_text: getValue('nameplate_text'),
-
     created_by: user.email || user.user_email || ''
   };
 }
@@ -378,17 +391,11 @@ function getValue(id) {
   return el ? String(el.value || '').trim() : '';
 }
 
-function showEl(id) {
+function setVal(id, val) {
   const el = document.getElementById(id);
-  if (el) el.style.display = '';
+  if (el) el.value = val;
 }
 
-function hideEl(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = 'none';
-}
-
-function setRequired(id, required) {
-  const el = document.getElementById(id);
-  if (el) el.required = required;
-}
+function showEl(id) { const el = document.getElementById(id); if (el) el.style.display = ''; }
+function hideEl(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function setRequired(id, v) { const el = document.getElementById(id); if (el) el.required = v; }
