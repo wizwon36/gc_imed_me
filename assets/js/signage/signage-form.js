@@ -276,7 +276,7 @@ async function handleSubmit(e) {
 
     await apiPost('createSignageRequest', payload);
 
-    alert('신청이 완료되었습니다.\n담당자(gcsbjeong@gccorp.com)에게 알림이 전송되었습니다.');
+    alert('신청이 완료되었습니다.\n담당자(gcjwchoi3@gccorp.com)에게 알림이 전송되었습니다.');
     location.href = '../../portal.html';
   } catch (err) {
     showMessage(err.message || '신청 중 오류가 발생했습니다.', 'error');
