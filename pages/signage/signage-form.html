@@ -226,26 +226,23 @@
           </div>
         </div>
 
-        <!-- 타입 미선택: 레이아웃만 -->
-        <div id="npLayoutOnly" style="margin-bottom:20px;">
-          <span class="form-label">문구 레이아웃 안내</span>
-          <img id="layoutImgOnly" src="" alt="문구 레이아웃" class="signage-np-layout-img" />
-          <p class="sub-text" style="margin-top:8px;">위 레이아웃(ㄱ/ㄴ/ㄷ) 중 원하시는 형태를 아래 문구 상세에 기재해 주세요.</p>
-        </div>
-
-        <!-- 타입 선택 후: 나란히 -->
-        <div id="npDetailWrap" style="display:none; margin-bottom:20px;">
-          <div class="signage-np-detail-grid">
-            <div class="signage-np-detail-col">
-              <span class="form-label">선택한 타입 디자인</span>
-              <img id="nameplateDesignImg" src="" alt="명판 디자인" class="signage-np-img" />
-              <div class="signage-np-size-badge" id="selectedSizeText"></div>
+        <!-- 항상 2컬럼 고정: 왼쪽=타입 디자인(미선택시 안내문구), 오른쪽=레이아웃 -->
+        <div class="signage-np-detail-grid" style="margin-bottom:20px;">
+          <!-- 왼쪽: 타입 미선택 시 안내, 선택 시 이미지 -->
+          <div class="signage-np-detail-col">
+            <span class="form-label">선택한 타입 디자인</span>
+            <div id="npDesignPlaceholder" class="signage-np-placeholder">
+              <span class="signage-np-placeholder-icon">🏷</span>
+              <span class="signage-np-placeholder-text">위에서 명판 타입을 선택해 주세요</span>
             </div>
-            <div class="signage-np-detail-col">
-              <span class="form-label">문구 레이아웃 안내</span>
-              <img id="layoutImg" src="" alt="문구 레이아웃" class="signage-np-img" />
-              <p class="sub-text" style="margin-top:6px;">위 레이아웃(ㄱ/ㄴ/ㄷ) 중 원하시는 형태를 아래 문구 상세에 기재해 주세요.</p>
-            </div>
+            <img id="nameplateDesignImg" src="" alt="명판 디자인" class="signage-np-img" style="display:none;" />
+            <div class="signage-np-size-badge" id="selectedSizeText" style="display:none;"></div>
+          </div>
+          <!-- 오른쪽: 항상 레이아웃 이미지 -->
+          <div class="signage-np-detail-col">
+            <span class="form-label">문구 레이아웃 안내</span>
+            <img id="layoutImg" src="" alt="문구 레이아웃" class="signage-np-img" />
+            <p class="sub-text" style="margin-top:6px;">위 레이아웃(ㄱ/ㄴ/ㄷ) 중 원하시는 형태를 아래 문구 상세에 기재해 주세요.</p>
           </div>
         </div>
 
