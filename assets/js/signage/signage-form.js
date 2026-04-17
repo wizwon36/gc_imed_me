@@ -94,7 +94,7 @@ function bindTypeSelector() {
 function handleTypeChange(e) {
   const type = e.target.value;
 
-  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('is-selected'));
+  document.querySelectorAll('.signage-type-card').forEach(c => c.classList.remove('is-selected'));
   document.getElementById('typeCard_' + type)?.classList.add('is-selected');
 
   showEl('sectionCommon');
@@ -145,7 +145,7 @@ function bindNameplateTypeSelector() {
     radio.addEventListener('change', (e) => {
       const type = e.target.value;
 
-      document.querySelectorAll('.np-type-card').forEach(c => c.classList.remove('is-selected'));
+      document.querySelectorAll('.signage-np-card').forEach(c => c.classList.remove('is-selected'));
       document.getElementById('npCard_' + type)?.classList.add('is-selected');
 
       if (typeof NAMEPLATE_IMAGES !== 'undefined') {
@@ -229,9 +229,9 @@ async function processFiles(files, key, listId) {
 
     if (listEl) {
       listEl.insertAdjacentHTML('beforeend',
-        `<div class="file-item is-uploading" id="${itemId}">
-          <span class="file-item-name">${escapeHtml(file.name)}</span>
-          <span class="file-item-status">업로드 중...</span>
+        `<div class="signage-file-item is-uploading" id="${itemId}">
+          <span class="signage-file-item-name">${escapeHtml(file.name)}</span>
+          <span class="signage-file-item-status">업로드 중...</span>
         </div>`
       );
     }
@@ -242,10 +242,10 @@ async function processFiles(files, key, listId) {
       uploadedFileIds[key].push(res.data.file_id);
 
       const el = document.getElementById(itemId);
-      if (el) { el.classList.replace('is-uploading', 'is-done'); el.querySelector('.file-item-status').textContent = '✓ 완료'; }
+      if (el) { el.classList.replace('is-uploading', 'is-done'); el.querySelector('.signage-file-item-status').textContent = '✓ 완료'; }
     } catch (err) {
       const el = document.getElementById(itemId);
-      if (el) { el.classList.replace('is-uploading', 'is-error'); el.querySelector('.file-item-status').textContent = '✗ 실패'; }
+      if (el) { el.classList.replace('is-uploading', 'is-error'); el.querySelector('.signage-file-item-status').textContent = '✗ 실패'; }
       showMessage('업로드 실패: ' + file.name, 'error');
     } finally {
       pendingUploads--;
@@ -287,7 +287,7 @@ async function handleSubmit(e) {
 
     await apiPost('createSignageRequest', payload);
 
-    alert('신청이 완료되었습니다.\n담당자(wizwon36@gmail.com)에게 알림이 전송되었습니다.');
+    alert('신청이 완료되었습니다.\n담당자(gcsbjeong@gccorp.com)에게 알림이 전송되었습니다.');
     location.href = '../../portal.html';
   } catch (err) {
     showMessage(err.message || '신청 중 오류가 발생했습니다.', 'error');
@@ -307,7 +307,7 @@ function buildPayload() {
 
   if (!type) {
     showMessage('제작 종류를 선택해 주세요.', 'error');
-    document.querySelector('.type-grid')?.scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('.signage-type-grid')?.scrollIntoView({ behavior: 'smooth' });
     return null;
   }
 
