@@ -48,6 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '🩺',
       url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
     },
+    signage: {
+      title: '사인물 신청',
+      desc: '사인물 / 명판 제작 요청',
+      icon: '🪧',
+      url: `${CONFIG.SITE_BASE_URL}/pages/signage/signage-form.html`
+    },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 등록 및 권한 관리',
