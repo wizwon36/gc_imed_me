@@ -1,0 +1,387 @@
+/* =========================================
+ * signage-form.css
+ * 사인물 / 명판 제작 신청 페이지 전용
+ * common.css + equipment-form.css 패턴 통일
+ * ========================================= */
+
+.page-shell {
+  padding-top: 0;
+  padding-bottom: 40px;
+}
+
+.signage-form-topbar {
+  margin-bottom: 18px;
+}
+
+/* 히어로 */
+.page-hero-simple {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 0 2px;
+}
+
+.page-hero-simple .page-title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: #0b1f44;
+  font-weight: 800;
+}
+
+.page-hero-simple .page-desc {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #667085;
+  word-break: keep-all;
+}
+
+/* form card */
+.form-card {
+  padding: 24px;
+  border: 1px solid #d9dee7;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+  margin-bottom: 20px;
+}
+
+.section-head {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  position: relative;
+  display: inline-block;
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: #0b1f44;
+}
+
+.section-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
+}
+
+.portal-section-kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #2563eb;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* form grid */
+.form-grid.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-field.full-col {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.form-label .required,
+.required {
+  color: #dc2626;
+}
+
+.badge-required-note {
+  font-size: 12px;
+  font-weight: 400;
+  color: #dc2626;
+  margin-left: 4px;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 14px;
+  font-size: 15px;
+  color: #111827;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+.input[readonly] {
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* ─── 제작 종류 선택 카드 ─── */
+.type-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  text-align: center;
+  position: relative;
+}
+
+.type-card:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.type-card.is-selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.type-card .type-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.type-card-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.type-card-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0b1f44;
+}
+
+.type-card-desc {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* ─── 명판 타입 선택 ─── */
+.nameplate-type-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.nameplate-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  text-align: center;
+  position: relative;
+}
+
+.nameplate-type-card:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.nameplate-type-card.is-selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.nameplate-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nameplate-type-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0b1f44;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nameplate-type-size {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.nameplate-type-desc {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.nameplate-size-info {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #1d4ed8;
+}
+
+/* ─── 파일 업로드 ─── */
+.file-upload-area {
+  border: 2px dashed #d1d5db;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: #fafafa;
+}
+
+.file-upload-area:hover,
+.file-upload-area.is-dragover {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.file-upload-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.file-upload-icon {
+  font-size: 28px;
+}
+
+.file-upload-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f3f4f6;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.file-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #374151;
+  flex: 1;
+}
+
+.file-item-status {
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.file-item.is-uploading .file-item-status { color: #2563eb; }
+.file-item.is-done .file-item-status { color: #16a34a; }
+.file-item.is-error .file-item-status { color: #dc2626; }
+
+/* ─── 제출 버튼 ─── */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 640px) {
+  .form-grid.two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .type-selector-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nameplate-type-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .form-card {
+    padding: 16px;
+  }
+}
