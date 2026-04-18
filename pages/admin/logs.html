@@ -149,6 +149,12 @@
       align-items: end;
     }
 
+    /* 데스크탑: wrapper는 grid item 안에서 내부 컬럼을 펼침 */
+    .filter-type-row,
+    .filter-date-row {
+      display: contents;
+    }
+
     .form-group {
       display: flex;
       flex-direction: column;
@@ -437,14 +443,32 @@
       .page-header-actions { width: 100%; }
       .page-header-actions .admin-btn { flex: 1 1 auto; }
 
+      /* 필터: 1열 세로 정렬 */
       .filter-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      /* 작업 유형 + 대상 유형: 나란히 2열 */
+      .filter-type-row {
+        display: grid;
         grid-template-columns: 1fr 1fr;
+        gap: 12px;
       }
-      .filter-grid .form-group:first-child {
-        grid-column: 1 / -1;
+
+      /* 시작일 + 종료일: 나란히 2열, 충분한 간격 */
+      .filter-date-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
       }
-      .filter-grid .form-group:last-child {
-        grid-column: 1 / -1;
+
+      /* 조회 버튼: 전체 너비 */
+      .filter-grid > .form-group:last-child .admin-btn {
+        width: 100%;
+        min-height: 48px;
+        font-size: 15px;
       }
 
       th, td { padding: 10px 10px; }
@@ -482,41 +506,45 @@
             <label class="form-label">검색어</label>
             <input type="text" id="filterKeyword" class="input" placeholder="대상 ID, 작업자, 작업 내용으로 검색" />
           </div>
-          <div class="form-group">
-            <label class="form-label">작업 유형</label>
-            <select id="filterActionType" class="select">
-              <option value="">전체</option>
-              <option value="CREATE">CREATE</option>
-              <option value="UPDATE">UPDATE</option>
-              <option value="DELETE">DELETE</option>
-              <option value="LOGIN">LOGIN</option>
-              <option value="UPLOAD">UPLOAD</option>
-              <option value="UPLOAD_PHOTO">UPLOAD_PHOTO</option>
-              <option value="DELETE_PHOTO">DELETE_PHOTO</option>
-              <option value="RESET_PASSWORD">RESET_PASSWORD</option>
-              <option value="ACTIVATE">ACTIVATE</option>
-              <option value="DEACTIVATE">DEACTIVATE</option>
-            </select>
+          <div class="filter-type-row">
+            <div class="form-group">
+              <label class="form-label">작업 유형</label>
+              <select id="filterActionType" class="select">
+                <option value="">전체</option>
+                <option value="CREATE">CREATE</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
+                <option value="LOGIN">LOGIN</option>
+                <option value="UPLOAD">UPLOAD</option>
+                <option value="UPLOAD_PHOTO">UPLOAD_PHOTO</option>
+                <option value="DELETE_PHOTO">DELETE_PHOTO</option>
+                <option value="RESET_PASSWORD">RESET_PASSWORD</option>
+                <option value="ACTIVATE">ACTIVATE</option>
+                <option value="DEACTIVATE">DEACTIVATE</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">대상 유형</label>
+              <select id="filterTargetType" class="select">
+                <option value="">전체</option>
+                <option value="EQUIPMENT">EQUIPMENT</option>
+                <option value="HISTORY">HISTORY</option>
+                <option value="INVENTORY">INVENTORY</option>
+                <option value="USER">USER</option>
+                <option value="SIGNAGE">SIGNAGE</option>
+                <option value="SIGNAGE_FILE">SIGNAGE_FILE</option>
+              </select>
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">대상 유형</label>
-            <select id="filterTargetType" class="select">
-              <option value="">전체</option>
-              <option value="EQUIPMENT">EQUIPMENT</option>
-              <option value="HISTORY">HISTORY</option>
-              <option value="INVENTORY">INVENTORY</option>
-              <option value="USER">USER</option>
-              <option value="SIGNAGE">SIGNAGE</option>
-              <option value="SIGNAGE_FILE">SIGNAGE_FILE</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">시작일</label>
-            <input type="date" id="filterDateFrom" class="input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">종료일</label>
-            <input type="date" id="filterDateTo" class="input" />
+          <div class="filter-date-row">
+            <div class="form-group">
+              <label class="form-label">시작일</label>
+              <input type="date" id="filterDateFrom" class="input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">종료일</label>
+              <input type="date" id="filterDateTo" class="input" />
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">&nbsp;</label>
