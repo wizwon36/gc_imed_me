@@ -442,32 +442,24 @@
       .page-header-actions { width: 100%; }
       .page-header-actions .admin-btn { flex: 1 1 auto; }
 
-      /* 6개 항목을 2열 grid로 */
+      /* 모든 항목 1열 */
       .filter-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 14px;
         align-items: start;
       }
 
-      /* 검색어: 전체 너비 */
       .filter-grid .form-group:nth-child(1) {
-        grid-column: 1 / -1;
+        grid-column: 1;
       }
 
-      /* 조회 버튼: 전체 너비 */
       .filter-grid .form-group:nth-child(6) {
-        grid-column: 1 / -1;
+        grid-column: 1;
       }
       .filter-grid .form-group:nth-child(6) .admin-btn {
         width: 100%;
         min-height: 48px;
         font-size: 15px;
-      }
-
-      /* 날짜 인풋 브라우저 기본 min-width 제거 */
-      .filter-grid input[type="date"] {
-        min-width: 0;
-        width: 100%;
       }
 
       th, td { padding: 10px 10px; }
