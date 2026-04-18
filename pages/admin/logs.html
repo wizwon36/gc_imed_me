@@ -142,25 +142,16 @@
     .panel-body { padding: 22px; }
 
     /* ── 필터 영역 ── */
-    /* 데스크탑: 검색어 | [유형2열] | [날짜2열] | 버튼 */
     .filter-grid {
       display: grid;
-      grid-template-columns: 2fr 2fr 2fr auto;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
       gap: 12px;
       align-items: end;
     }
 
-    /* 검색어: 전체 너비 한 행 */
-    .filter-grid .form-group:first-child {
+    /* 검색어: 전체 너비 */
+    .filter-grid .form-group:nth-child(1) {
       grid-column: 1 / -1;
-    }
-
-    /* wrapper 안 2열 */
-    .filter-type-row,
-    .filter-date-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
     }
 
     .form-group {
@@ -434,12 +425,12 @@
     /* ── 반응형 ── */
     @media (max-width: 1100px) {
       .filter-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
       }
-      .filter-grid .form-group:first-child {
+      .filter-grid .form-group:nth-child(1) {
         grid-column: 1 / -1;
       }
-      .filter-grid > .form-group:last-child {
+      .filter-grid .form-group:nth-child(6) {
         grid-column: 1 / -1;
       }
     }
@@ -451,26 +442,26 @@
       .page-header-actions { width: 100%; }
       .page-header-actions .admin-btn { flex: 1 1 auto; }
 
-      /* 필터: 1열 세로 */
+      /* 6개 항목을 2열 grid로 */
       .filter-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        align-items: start;
       }
-      .filter-grid .form-group:first-child {
-        grid-column: 1;
+
+      /* 검색어: 전체 너비 */
+      .filter-grid .form-group:nth-child(1) {
+        grid-column: 1 / -1;
       }
-      .filter-grid > .form-group:last-child {
-        grid-column: 1;
+
+      /* 조회 버튼: 전체 너비 */
+      .filter-grid .form-group:nth-child(6) {
+        grid-column: 1 / -1;
       }
-      .filter-grid > .form-group:last-child .admin-btn {
+      .filter-grid .form-group:nth-child(6) .admin-btn {
         width: 100%;
         min-height: 48px;
         font-size: 15px;
-      }
-
-      /* wrapper: 내부는 그대로 2열 유지 */
-      .filter-type-row,
-      .filter-date-row {
-        grid-template-columns: 1fr 1fr;
       }
 
       th, td { padding: 10px 10px; }
@@ -508,45 +499,41 @@
             <label class="form-label">검색어</label>
             <input type="text" id="filterKeyword" class="input" placeholder="대상 ID, 작업자, 작업 내용으로 검색" />
           </div>
-          <div class="filter-type-row">
-            <div class="form-group">
-              <label class="form-label">작업 유형</label>
-              <select id="filterActionType" class="select">
-                <option value="">전체</option>
-                <option value="CREATE">CREATE</option>
-                <option value="UPDATE">UPDATE</option>
-                <option value="DELETE">DELETE</option>
-                <option value="LOGIN">LOGIN</option>
-                <option value="UPLOAD">UPLOAD</option>
-                <option value="UPLOAD_PHOTO">UPLOAD_PHOTO</option>
-                <option value="DELETE_PHOTO">DELETE_PHOTO</option>
-                <option value="RESET_PASSWORD">RESET_PASSWORD</option>
-                <option value="ACTIVATE">ACTIVATE</option>
-                <option value="DEACTIVATE">DEACTIVATE</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">대상 유형</label>
-              <select id="filterTargetType" class="select">
-                <option value="">전체</option>
-                <option value="EQUIPMENT">EQUIPMENT</option>
-                <option value="HISTORY">HISTORY</option>
-                <option value="INVENTORY">INVENTORY</option>
-                <option value="USER">USER</option>
-                <option value="SIGNAGE">SIGNAGE</option>
-                <option value="SIGNAGE_FILE">SIGNAGE_FILE</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label class="form-label">작업 유형</label>
+            <select id="filterActionType" class="select">
+              <option value="">전체</option>
+              <option value="CREATE">CREATE</option>
+              <option value="UPDATE">UPDATE</option>
+              <option value="DELETE">DELETE</option>
+              <option value="LOGIN">LOGIN</option>
+              <option value="UPLOAD">UPLOAD</option>
+              <option value="UPLOAD_PHOTO">UPLOAD_PHOTO</option>
+              <option value="DELETE_PHOTO">DELETE_PHOTO</option>
+              <option value="RESET_PASSWORD">RESET_PASSWORD</option>
+              <option value="ACTIVATE">ACTIVATE</option>
+              <option value="DEACTIVATE">DEACTIVATE</option>
+            </select>
           </div>
-          <div class="filter-date-row">
-            <div class="form-group">
-              <label class="form-label">시작일</label>
-              <input type="date" id="filterDateFrom" class="input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">종료일</label>
-              <input type="date" id="filterDateTo" class="input" />
-            </div>
+          <div class="form-group">
+            <label class="form-label">대상 유형</label>
+            <select id="filterTargetType" class="select">
+              <option value="">전체</option>
+              <option value="EQUIPMENT">EQUIPMENT</option>
+              <option value="HISTORY">HISTORY</option>
+              <option value="INVENTORY">INVENTORY</option>
+              <option value="USER">USER</option>
+              <option value="SIGNAGE">SIGNAGE</option>
+              <option value="SIGNAGE_FILE">SIGNAGE_FILE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">시작일</label>
+            <input type="date" id="filterDateFrom" class="input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">종료일</label>
+            <input type="date" id="filterDateTo" class="input" />
           </div>
           <div class="form-group">
             <label class="form-label">&nbsp;</label>
