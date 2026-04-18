@@ -142,17 +142,25 @@
     .panel-body { padding: 22px; }
 
     /* ── 필터 영역 ── */
+    /* 데스크탑: 검색어 | [유형2열] | [날짜2열] | 버튼 */
     .filter-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+      grid-template-columns: 2fr 2fr 2fr auto;
       gap: 12px;
       align-items: end;
     }
 
-    /* 데스크탑: wrapper div를 grid에서 투명하게 — 자식들이 직접 grid cell 차지 */
+    /* 검색어: 전체 너비 한 행 */
+    .filter-grid .form-group:first-child {
+      grid-column: 1 / -1;
+    }
+
+    /* wrapper 안 2열 */
     .filter-type-row,
     .filter-date-row {
-      display: contents;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
     .form-group {
@@ -426,12 +434,12 @@
     /* ── 반응형 ── */
     @media (max-width: 1100px) {
       .filter-grid {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
       }
       .filter-grid .form-group:first-child {
         grid-column: 1 / -1;
       }
-      .filter-grid .form-group:last-child {
+      .filter-grid > .form-group:last-child {
         grid-column: 1 / -1;
       }
     }
@@ -443,44 +451,26 @@
       .page-header-actions { width: 100%; }
       .page-header-actions .admin-btn { flex: 1 1 auto; }
 
-      /* 필터: grid 해제 → flex 세로 정렬 */
+      /* 필터: 1열 세로 */
       .filter-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        align-items: stretch;
+        grid-template-columns: 1fr;
       }
-
-      /* 모든 form-group: 왼쪽 정렬, 전체 너비 */
-      .filter-grid .form-group {
-        width: 100%;
-        align-items: flex-start;
+      .filter-grid .form-group:first-child {
+        grid-column: 1;
       }
-
-      /* 작업유형 + 대상유형: 나란히 2열 */
-      .filter-type-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        width: 100%;
-      }
-
-      /* 시작일 + 종료일: 나란히 2열 */
-      .filter-date-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        width: 100%;
-      }
-
-      /* 조회 버튼: 전체 너비 */
       .filter-grid > .form-group:last-child {
-        width: 100%;
+        grid-column: 1;
       }
       .filter-grid > .form-group:last-child .admin-btn {
         width: 100%;
         min-height: 48px;
         font-size: 15px;
+      }
+
+      /* wrapper: 내부는 그대로 2열 유지 */
+      .filter-type-row,
+      .filter-date-row {
+        grid-template-columns: 1fr 1fr;
       }
 
       th, td { padding: 10px 10px; }
