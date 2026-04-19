@@ -37,6 +37,20 @@ function bindEvents() {
   document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
   document.getElementById('cancelEditBtn')?.addEventListener('click', () => resetEditMode());
   document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
+  document.getElementById('loadPendingBtn')?.addEventListener('click', loadPendingRegistrations);
+
+  // 가입신청 목록 이벤트 위임 (승인 / 거절)
+  document.getElementById('pendingList')?.addEventListener('click', async (event) => {
+    const approveBtn = event.target.closest('.js-approve');
+    if (approveBtn) {
+      await handleApprove(approveBtn.dataset.id);
+      return;
+    }
+    const rejectBtn = event.target.closest('.js-reject');
+    if (rejectBtn) {
+      await handleReject(rejectBtn.dataset.id);
+    }
+  });
 
   document.getElementById('userSearchKeyword')?.addEventListener('input', () => {
     if (hasLoadedUsers) renderUserList();
@@ -639,5 +653,136 @@ function resetEditMode(clearMessage = true) {
 
   if (clearMessage) {
     clearAdminMessage();
+  }
+}
+
+
+// ── 가입 신청 관리 ──
+
+function setPendingMessage(message, type = '') {
+  const el = document.getElementById('pendingMessage');
+  if (!el) return;
+  el.textContent = message || '';
+  el.className = 'message-box';
+  if (type) el.classList.add(type);
+}
+
+async function loadPendingRegistrations() {
+  const listEl = document.getElementById('pendingList');
+  const countEl = document.getElementById('pendingListCount');
+  const btn = document.getElementById('loadPendingBtn');
+
+  if (btn) btn.disabled = true;
+  setPendingMessage('');
+  showGlobalLoading('가입 신청 목록을 불러오는 중...');
+
+  try {
+    const result = await apiGet('listPendingRegistrations', {
+      request_user_email: getRequestUserEmail()
+    });
+
+    const list = Array.isArray(result.data) ? result.data : [];
+
+    if (countEl) {
+      countEl.textContent = list.length > 0
+        ? `대기 중인 신청 ${list.length}건`
+        : '대기 중인 신청이 없습니다.';
+    }
+
+    if (!list.length) {
+      listEl.innerHTML = `<div class="user-list-empty">대기 중인 가입 신청이 없습니다.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = list.map(item => {
+      const id = escapeHtml(item.id || item.reg_id || '');
+      const name = escapeHtml(item.user_name || '');
+      const email = escapeHtml(item.user_email || '');
+      const org = escapeHtml(
+        item.clinic_name && item.team_name
+          ? `${item.clinic_name} / ${item.team_name}`
+          : item.clinic_name || item.team_name || '소속 미입력'
+      );
+      const phone = escapeHtml(item.phone || '연락처 없음');
+      const memo = item.memo ? `<div class="pending-item__memo">💬 ${escapeHtml(item.memo)}</div>` : '';
+      const appliedAt = escapeHtml(item.created_at || item.applied_at || '');
+
+      return `
+        <div class="pending-item" data-id="${id}">
+          <div class="pending-item__main">
+            <div class="pending-item__title">
+              <strong>${name}</strong>
+              <span>${email}</span>
+            </div>
+            <div class="pending-item__meta">
+              <span>📍 ${org}</span>
+              <span>📞 ${phone}</span>
+              ${appliedAt ? `<span>🕐 ${appliedAt}</span>` : ''}
+            </div>
+            ${memo}
+          </div>
+          <div class="pending-item__actions">
+            <button type="button" class="admin-btn small approve js-approve" data-id="${id}">✅ 승인</button>
+            <button type="button" class="admin-btn small danger js-reject" data-id="${id}">❌ 거절</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    setPendingMessage(err.message || '신청 목록을 불러오지 못했습니다.', 'error');
+    if (listEl) listEl.innerHTML = `<div class="user-list-empty">불러오기 실패. 다시 시도해 주세요.</div>`;
+  } finally {
+    if (btn) btn.disabled = false;
+    hideGlobalLoading();
+  }
+}
+
+async function handleApprove(regId) {
+  if (!regId) return;
+
+  // 승인 시 권한 부여가 필요하므로 확인 후 처리
+  const confirmed = confirm('신청을 승인하시겠습니까?\n초기 비밀번호 1111로 계정이 생성됩니다.');
+  if (!confirmed) return;
+
+  showGlobalLoading('승인 처리 중...');
+  setPendingMessage('');
+
+  try {
+    const result = await apiPost('approveRegistration', {
+      request_user_email: getRequestUserEmail(),
+      reg_id: regId
+    });
+
+    setPendingMessage(result.message || '승인이 완료되었습니다.', 'success');
+    // 목록 새로고침
+    await loadPendingRegistrations();
+  } catch (err) {
+    setPendingMessage(err.message || '승인 처리 중 오류가 발생했습니다.', 'error');
+    hideGlobalLoading();
+  }
+}
+
+async function handleReject(regId) {
+  if (!regId) return;
+
+  const reason = prompt('거절 사유를 입력하세요 (선택사항):');
+  if (reason === null) return; // 취소
+
+  showGlobalLoading('거절 처리 중...');
+  setPendingMessage('');
+
+  try {
+    const result = await apiPost('rejectRegistration', {
+      request_user_email: getRequestUserEmail(),
+      reg_id: regId,
+      reason: String(reason || '').trim()
+    });
+
+    setPendingMessage(result.message || '거절 처리가 완료되었습니다.', 'success');
+    await loadPendingRegistrations();
+  } catch (err) {
+    setPendingMessage(err.message || '거절 처리 중 오류가 발생했습니다.', 'error');
+    hideGlobalLoading();
   }
 }
