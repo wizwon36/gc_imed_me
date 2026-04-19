@@ -118,16 +118,16 @@
         { emptyText: '의원을 선택하세요' }
       );
 
-      window.orgSelect.fillSelectOptions(
-        document.getElementById('regTeam'),
-        [],
-        { emptyText: '팀을 선택하세요' }
-      );
-
+      // bindClinicTeamSelects가 팀 select를 직접 관리하므로
+      // 별도 fillSelectOptions 없이 바로 bind 후 초기 렌더링 호출
       orgBinder = window.orgSelect.bindClinicTeamSelects({
         clinicSelect: document.getElementById('regClinic'),
-        teamSelect:   document.getElementById('regTeam')
+        teamSelect:   document.getElementById('regTeam'),
+        teamEmptyText: '의원을 먼저 선택하세요'
       });
+
+      // 초기 상태: 의원 미선택 → 팀 disabled
+      orgBinder.renderTeamsByClinic('', '');
     } catch (err) {
       setMessage('의원/팀 정보를 불러오지 못했습니다. 페이지를 새로고침해 주세요.', 'error');
     } finally {
