@@ -72,6 +72,14 @@ function bindEvents() {
     clearFieldInvalid();
   });
 
+  // 아이디 입력 시 허용되지 않는 문자 실시간 제거 (한글·공백·특수문자)
+  document.getElementById('userEmail')?.addEventListener('input', (e) => {
+    const raw = e.target.value;
+    const cleaned = raw.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    if (raw !== cleaned) e.target.value = cleaned;
+    e.target.classList.remove('is-invalid');
+  });
+
   document.getElementById('userList')?.addEventListener('click', async (event) => {
     const editBtn = event.target.closest('.js-edit-user');
     if (editBtn) {
@@ -208,6 +216,12 @@ function validateUserForm(data) {
   if (!data.user_email) {
     markFieldInvalid('userEmail');
     throw new Error('아이디를 입력해 주세요.');
+  }
+
+  // 아이디 형식 검증: 영문 소문자·숫자·점·하이픈·언더바만 허용
+  if (!/^[a-z0-9._-]+$/.test(data.user_email)) {
+    markFieldInvalid('userEmail');
+    throw new Error('아이디는 영문 소문자, 숫자, 점(.), 하이픈(-), 언더바(_)만 사용할 수 있습니다.');
   }
 
   if (!data.user_name) {
