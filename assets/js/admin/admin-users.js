@@ -741,7 +741,6 @@ async function loadPendingRegistrations() {
 async function handleApprove(regId) {
   if (!regId) return;
 
-  // 승인 시 권한 부여가 필요하므로 확인 후 처리
   const confirmed = confirm('신청을 승인하시겠습니까?\n초기 비밀번호 1111로 계정이 생성됩니다.');
   if (!confirmed) return;
 
@@ -753,21 +752,23 @@ async function handleApprove(regId) {
       request_user_email: getRequestUserEmail(),
       reg_id: regId
     });
-
     setPendingMessage(result.message || '승인이 완료되었습니다.', 'success');
-    // 목록 새로고침
-    await loadPendingRegistrations();
   } catch (err) {
     setPendingMessage(err.message || '승인 처리 중 오류가 발생했습니다.', 'error');
+    return;
+  } finally {
     hideGlobalLoading();
   }
+
+  // 스피너를 완전히 끈 뒤 목록 새로고침 (loadPendingRegistrations가 자체 스피너 관리)
+  await loadPendingRegistrations();
 }
 
 async function handleReject(regId) {
   if (!regId) return;
 
   const reason = prompt('거절 사유를 입력하세요 (선택사항):');
-  if (reason === null) return; // 취소
+  if (reason === null) return;
 
   showGlobalLoading('거절 처리 중...');
   setPendingMessage('');
@@ -778,11 +779,13 @@ async function handleReject(regId) {
       reg_id: regId,
       reason: String(reason || '').trim()
     });
-
     setPendingMessage(result.message || '거절 처리가 완료되었습니다.', 'success');
-    await loadPendingRegistrations();
   } catch (err) {
     setPendingMessage(err.message || '거절 처리 중 오류가 발생했습니다.', 'error');
+    return;
+  } finally {
     hideGlobalLoading();
   }
+
+  await loadPendingRegistrations();
 }
