@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가입 신청 · MSO관리팀 업무지원시스템</title>
+  <link rel="stylesheet" href="../../assets/css/common.css">
+  <style>
+    body.auth-page {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 32%),
+        linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .auth-shell {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .auth-card {
+      background: #fff;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 24px;
+      box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.08),
+        0 2px 8px rgba(15, 23, 42, 0.04);
+      padding: 32px 28px;
+    }
+
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .auth-brand-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #22c55e, #2563eb);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .auth-brand-text strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1.35;
+      color: #0f172a;
+    }
+
+    .auth-brand-text span {
+      display: block;
+      margin-top: 2px;
+      font-size: 13px;
+      color: #667085;
+    }
+
+    .auth-title {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .auth-desc {
+      margin: 0 0 24px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #667085;
+    }
+
+    .reg-form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field-group label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #344054;
+    }
+
+    .field-badge {
+      display: inline-block;
+      margin-left: 5px;
+      padding: 1px 7px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .field-badge.required { background: rgba(220,38,38,0.1); color: #b91c1c; }
+    .field-badge.optional { background: rgba(100,116,139,0.1); color: #475569; }
+
+    .reg-form input,
+    .reg-form select {
+      width: 100%;
+      min-height: 48px;
+      padding: 0 14px;
+      border: 1px solid #d0d5dd;
+      border-radius: 14px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #fff;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .reg-form select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    .reg-form input:focus,
+    .reg-form select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    }
+
+    .reg-form input.is-invalid,
+    .reg-form select.is-invalid {
+      border-color: #f04438;
+      box-shadow: 0 0 0 4px rgba(240, 68, 56, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-help {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: #667085;
+      line-height: 1.5;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(148,163,184,0.2);
+      margin: 4px 0;
+    }
+
+    .submit-btn {
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 16px;
+      background: #0b1b46;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .auth-message {
+      min-height: 20px;
+      font-size: 13px;
+      line-height: 1.5;
+      border-radius: 12px;
+      padding: 0;
+    }
+
+    .auth-message.is-error {
+      padding: 12px 14px;
+      background: rgba(254,242,242,0.9);
+      border: 1px solid rgba(220,38,38,0.18);
+      color: #b42318;
+    }
+
+    .auth-message.is-success {
+      padding: 16px 14px;
+      background: rgba(240,253,244,0.9);
+      border: 1px solid rgba(22,163,74,0.2);
+      color: #166534;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .login-link {
+      text-align: center;
+      font-size: 13px;
+      color: #667085;
+      margin-top: 4px;
+    }
+
+    .login-link a {
+      color: #2563eb;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    /* 완료 상태 */
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 12px 0 8px;
+    }
+
+    .success-state .success-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .success-state h2 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: #0f172a;
+    }
+
+    .success-state p {
+      margin: 0 0 24px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #667085;
+    }
+
+    .success-state .back-btn {
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: 14px;
+      background: #0b1b46;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    /* 로딩 오버레이 */
+    #globalLoading {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15,23,42,0.26);
+      backdrop-filter: blur(3px);
+    }
+    #globalLoading[aria-hidden="false"] { display: flex; }
+
+    .global-loading__dialog {
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 24px 28px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 18px 40px rgba(15,23,42,0.18);
+      text-align: center;
+    }
+
+    .global-loading__spinner {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 3px solid rgba(148,163,184,0.28);
+      border-top-color: #2563eb;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .global-loading__text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 520px) {
+      .auth-card { padding: 24px 18px; border-radius: 20px; }
+      .form-row { grid-template-columns: 1fr; }
+      .auth-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-brand-badge">+</div>
+        <div class="auth-brand-text">
+          <strong>MSO관리팀 업무지원시스템</strong>
+          <span>관리자 승인 후 계정이 활성화됩니다.</span>
+        </div>
+      </div>
+
+      <!-- 신청 폼 -->
+      <div id="formSection">
+        <h1 class="auth-title">가입 신청</h1>
+        <p class="auth-desc">아래 정보를 입력하면 관리자 검토 후 승인 처리됩니다.</p>
+
+        <div class="reg-form">
+          <div class="field-group">
+            <label for="regEmail">아이디 <span class="field-badge required">필수</span></label>
+            <input type="text" id="regEmail" placeholder="사번 또는 사용할 아이디 입력" autocomplete="username" />
+          </div>
+
+          <div class="form-row">
+            <div class="field-group">
+              <label for="regName">이름 <span class="field-badge required">필수</span></label>
+              <input type="text" id="regName" placeholder="실명 입력" />
+            </div>
+            <div class="field-group">
+              <label for="regPhone">연락처 <span class="field-badge optional">선택</span></label>
+              <input type="text" id="regPhone" placeholder="010-0000-0000" />
+            </div>
+          </div>
+
+          <hr class="divider" />
+
+          <div class="form-row">
+            <div class="field-group">
+              <label for="regClinic">의원 <span class="field-badge required">필수</span></label>
+              <select id="regClinic">
+                <option value="">의원을 선택하세요</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="regTeam">팀 <span class="field-badge required">필수</span></label>
+              <select id="regTeam" disabled>
+                <option value="">팀을 선택하세요</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="regMemo">신청 사유 <span class="field-badge optional">선택</span></label>
+            <input type="text" id="regMemo" placeholder="담당 업무나 신청 이유를 간략히 입력해 주세요" />
+            <p class="form-help">관리자 검토 시 참고됩니다.</p>
+          </div>
+
+          <div id="authMessage" class="auth-message"></div>
+
+          <button type="button" class="submit-btn" id="submitBtn">가입 신청하기</button>
+
+          <div class="login-link">
+            이미 계정이 있으신가요? <a href="../../index.html">로그인</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 신청 완료 상태 -->
+      <div id="successSection" class="success-state">
+        <div class="success-icon">✅</div>
+        <h2>신청이 완료되었습니다</h2>
+        <p>관리자 검토 후 승인 처리됩니다.<br>승인되면 등록하신 아이디로 로그인할 수 있습니다.</p>
+        <a href="../../index.html" class="back-btn">로그인 페이지로</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner"></div>
+      <div class="global-loading__text" id="globalLoadingText">처리 중...</div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/org-select.js"></script>
+  <script src="../../assets/js/auth/register.js"></script>
+</body>
+</html>
