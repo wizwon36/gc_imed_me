@@ -140,6 +140,40 @@
       align-items: start;
     }
 
+    /* 좌측 컬럼: 등록폼 + 가입신청 패널을 세로로 쌓음 */
+    .page-col-left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    /* 우측 컬럼: 사용자 목록, 높이 고정 + 내부 스크롤 */
+    .page-col-right {
+      position: sticky;
+      top: 20px;
+      min-width: 0;
+    }
+
+    /* 사용자 목록 패널 내부 스크롤 */
+    .user-list-scroll {
+      max-height: calc(100vh - 220px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    /* 스크롤바 스타일 */
+    .user-list-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .user-list-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .user-list-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148,163,184,0.4);
+      border-radius: 999px;
+    }
+
     .panel-card {
       background: var(--bg-panel);
       border: var(--card-border);
@@ -587,7 +621,15 @@
       .page-grid {
         grid-template-columns: 1fr;
       }
-    
+
+      .page-col-right {
+        position: static;
+      }
+
+      .user-list-scroll {
+        max-height: 520px;
+      }
+
       .filter-row {
         grid-template-columns: 1fr 1fr;
       }
@@ -675,9 +717,240 @@
     </header>
 
     <div class="page-grid">
-      <section class="panel-card">
-        <div class="panel-header">
-          <h2 class="panel-title" id="formTitle">사용자 등록</h2>
+
+      <!-- 좌측: 등록폼 + 가입신청 관리 -->
+      <div class="page-col-left">
+
+        <section class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title" id="formTitle">사용자 등록</h2>
+            <p class="panel-desc" id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
+          </div>
+
+          <div class="panel-body">
+            <div id="adminUserMessage" class="message-box" aria-live="polite"></div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="userEmail" class="form-label">아이디 <span class="field-badge required">필수</span></label>
+                <input type="text" id="userEmail" class="input" placeholder="사번 또는 아이디 입력" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="userName" class="form-label">이름 <span class="field-badge required">필수</span></label>
+                  <input type="text" id="userName" class="input" placeholder="사용자 이름" />
+                </div>
+
+                <div class="form-group">
+                  <label for="phone" class="form-label">연락처 <span class="field-badge optional">선택</span></label>
+                  <input type="text" id="phone" class="input" placeholder="연락처" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="clinic_code" class="form-label">의원 <span class="field-badge required">필수</span></label>
+                  <select id="clinic_code" class="select">
+                    <option value="">의원을 선택하세요</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="team_code" class="form-label">팀 <span class="field-badge required">필수</span></label>
+                  <select id="team_code" class="select" disabled>
+                    <option value="">팀을 선택하세요</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="globalRole" class="form-label">기본 역할 <span class="field-badge optional">선택</span></label>
+                  <select id="globalRole" class="select">
+                    <option value="user">user</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="userActive" class="form-label">사용 여부 <span class="field-badge optional">선택</span></label>
+                  <select id="userActive" class="select">
+                    <option value="Y">활성</option>
+                    <option value="N">비활성</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">앱별 권한 <span class="field-badge optional">선택</span></label>
+                <p class="form-help">권한을 선택하지 않으면 해당 앱에 접근할 수 없습니다.</p>
+
+                <div class="permission-grid">
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">의료장비 관리</p>
+                      <p class="permission-desc">장비 조회, 등록, 수정, 이력 및 재고조사 관련 기능</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="equipment">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="edit">edit</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">사인물 신청</p>
+                      <p class="permission-desc">사인물, 명판 신청기능</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="signage">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">로그 조회</p>
+                      <p class="permission-desc">시스템 작업 로그 및 변경 이력 확인</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="logs">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">사용자 관리</p>
+                      <p class="permission-desc">사용자 등록, 권한 관리, 비밀번호 초기화</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="users_admin">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <p class="form-help" id="passwordHint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</p>
+              <p class="form-help required-guide"><span class="field-badge required">필수</span> 항목을 먼저 입력한 뒤 저장해 주세요.</p>
+
+              <div class="form-actions">
+                <button type="button" id="saveUserBtn" class="admin-btn primary">사용자 등록</button>
+                <button type="button" id="cancelEditBtn" class="admin-btn secondary" style="display:none;">취소</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 가입 신청 관리 -->
+        <section class="panel-card">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">가입 신청 관리</h2>
+              <p class="panel-desc">사용자가 직접 신청한 가입 요청을 검토하고 승인 또는 거절합니다.</p>
+            </div>
+            <button type="button" id="loadPendingBtn" class="admin-btn secondary">신청 목록 새로고침</button>
+          </div>
+
+          <div class="panel-body">
+            <div id="pendingMessage" class="message-box" aria-live="polite"></div>
+            <div id="pendingListCount" class="list-count" style="margin-bottom:12px;">아직 불러오지 않았습니다.</div>
+            <div id="pendingList" class="user-list">
+              <div class="user-list-empty">
+                <strong>신청 목록 새로고침</strong>을 눌러 대기 중인 신청을 확인해 주세요.
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /.page-col-left -->
+
+      <!-- 우측: 사용자 목록 (내부 스크롤) -->
+      <div class="page-col-right">
+        <section class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title">사용자 목록</h2>
+            <p class="panel-desc">처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 조회 버튼을 눌러 주세요.</p>
+          </div>
+
+          <div class="panel-body">
+            <div class="filter-row">
+              <div class="form-group">
+                <label for="userSearchKeyword" class="form-label">검색어</label>
+                <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 아이디, 부서, 의원, 팀으로 검색" />
+              </div>
+
+              <div class="form-group">
+                <label for="userFilterActive" class="form-label">상태</label>
+                <select id="userFilterActive" class="select">
+                  <option value="">전체</option>
+                  <option value="Y">활성</option>
+                  <option value="N">비활성</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="userFilterRole" class="form-label">역할</label>
+                <select id="userFilterRole" class="select">
+                  <option value="">전체</option>
+                  <option value="user">user</option>
+                  <option value="admin">admin</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="userFilterClinic" class="form-label">의원</label>
+                <select id="userFilterClinic" class="select">
+                  <option value="">전체 의원</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" id="searchUsersBtn" class="admin-btn secondary">사용자 조회</button>
+              </div>
+            </div>
+
+            <div class="list-topbar">
+              <div id="userListCount" class="list-count">아직 조회하지 않았습니다.</div>
+            </div>
+
+            <div class="user-list-scroll">
+              <div id="userList" class="user-list">
+                <div class="user-list-empty">
+                  처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 <strong>사용자 조회</strong>를 눌러 주세요.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div><!-- /.page-col-right -->
+
+    </div><!-- /.page-grid -->
+  </div>
+
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">로딩 중...</div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/org-select.js"></script>
+  <script src="../../assets/js/admin/admin-users.js"></script>
+</body>
+</html>
           <p class="panel-desc" id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
         </div>
 
