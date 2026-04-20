@@ -152,36 +152,19 @@
             <input type="text" id="install_location" class="input" placeholder="예: 1층 로비 입구 우측" />
           </label>
           <div class="form-field full-col">
-            <span class="form-label required">설치 위치 사진 <span class="signage-badge-note">(필수 첨부)</span></span>
+            <span class="form-label required">첨부파일 <span class="signage-badge-note">(설치위치 사진, 참고자료 등)</span></span>
             <div class="photo-upload-box">
               <div class="form-photo-preview signage-file-preview" id="preview_location">
-                <div class="photo-preview-empty" id="previewEmpty_location">첨부된 사진이 없습니다.</div>
+                <div class="photo-preview-empty" id="previewEmpty_location">첨부된 파일이 없습니다.</div>
                 <div class="signage-file-list" id="fileList_location"></div>
               </div>
               <div class="photo-upload-actions">
                 <div class="photo-file-control">
-                  <input type="file" id="file_location" class="photo-file-input" multiple accept="image/*" />
-                  <label for="file_location" class="photo-file-trigger">사진 선택</label>
+                  <input type="file" id="file_location" class="photo-file-input" multiple accept="image/*,.pdf,.ai,.dwg" />
+                  <label for="file_location" class="photo-file-trigger">파일 선택</label>
                   <div id="fileName_location" class="photo-file-name">선택된 파일 없음</div>
                 </div>
-                <div class="photo-upload-help">설치 위치가 잘 보이는 사진을 올려주세요.</div>
-              </div>
-            </div>
-          </div>
-          <div class="form-field full-col">
-            <span class="form-label required">참고 자료 <span class="signage-badge-note">(도면 또는 레퍼런스 이미지)</span></span>
-            <div class="photo-upload-box">
-              <div class="form-photo-preview signage-file-preview" id="preview_reference">
-                <div class="photo-preview-empty" id="previewEmpty_reference">첨부된 파일이 없습니다.</div>
-                <div class="signage-file-list" id="fileList_reference"></div>
-              </div>
-              <div class="photo-upload-actions">
-                <div class="photo-file-control">
-                  <input type="file" id="file_reference" class="photo-file-input" multiple accept="image/*,.pdf,.ai,.dwg" />
-                  <label for="file_reference" class="photo-file-trigger">파일 선택</label>
-                  <div id="fileName_reference" class="photo-file-name">선택된 파일 없음</div>
-                </div>
-                <div class="photo-upload-help">도면, 레퍼런스 이미지, PDF, AI, DWG 파일을 첨부해 주세요.</div>
+                <div class="photo-upload-help">설치 위치 사진, 도면, 레퍼런스 이미지 등을 함께 첨부해 주세요.</div>
               </div>
             </div>
           </div>
