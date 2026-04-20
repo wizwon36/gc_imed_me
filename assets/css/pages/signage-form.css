@@ -56,6 +56,20 @@
   padding: 14px 16px;
 }
 
+/* ── 플랫 파일 업로드 (프리뷰 박스 없는 리스트형) ── */
+.signage-upload-flat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.signage-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .signage-file-list { display: flex; flex-direction: column; gap: 6px; }
 
 .signage-file-item {
