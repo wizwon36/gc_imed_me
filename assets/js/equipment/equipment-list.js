@@ -161,6 +161,7 @@ function renderListSummary() {
   summaryEl.textContent = '검색 결과 ' + total + '건 · ' + page + ' / ' + totalPages + ' 페이지';
 }
 
+/* ── 카드 (모바일용) ── */
 function buildEquipmentCard(item) {
   var leftActions = '';
   var rightActions = '';
@@ -184,7 +185,6 @@ function buildEquipmentCard(item) {
           escapeHtml(statusLabel(item.status || '')) +
         '</span>' +
       '</div>' +
-
       '<div class="equipment-card-grid">' +
         '<div class="equipment-card-row">' +
           '<span class="equipment-card-label">모델명</span>' +
@@ -211,16 +211,47 @@ function buildEquipmentCard(item) {
           '<span class="equipment-card-value">' + escapeHtml(formatDisplayDate(item.maintenance_end_date || '')) + '</span>' +
         '</div>' +
       '</div>' +
-
       '<div class="equipment-card-actions">' +
-        '<div class="equipment-card-actions-left">' +
-          leftActions +
-        '</div>' +
-        '<div class="equipment-card-actions-right">' +
-          rightActions +
-        '</div>' +
+        '<div class="equipment-card-actions-left">' + leftActions + '</div>' +
+        '<div class="equipment-card-actions-right">' + rightActions + '</div>' +
       '</div>' +
     '</article>'
+  );
+}
+
+/* ── 테이블 행 (PC용) ── */
+function buildEquipmentRow(item) {
+  var actions = '';
+
+  actions += '<a class="tbl-btn" href="detail.html?id=' + encodeURIComponent(item.equipment_id || '') + '">상세</a>';
+
+  if (equipmentListState.canEdit) {
+    actions += '<a class="tbl-btn tbl-btn--primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
+  }
+
+  actions += '<a class="tbl-btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨</a>';
+
+  return (
+    '<tr class="equipment-tbl-row">' +
+      '<td class="equipment-tbl-cell equipment-tbl-cell--name">' +
+        '<div class="equipment-tbl-name">' + escapeHtml(item.equipment_name || '-') + '</div>' +
+        '<div class="equipment-tbl-id">' + escapeHtml(item.equipment_id || '') + '</div>' +
+      '</td>' +
+      '<td class="equipment-tbl-cell">' + escapeHtml(item.model_name || '-') + '</td>' +
+      '<td class="equipment-tbl-cell">' + escapeHtml(item.department || '-') + '</td>' +
+      '<td class="equipment-tbl-cell">' + escapeHtml(item.manufacturer || '-') + '</td>' +
+      '<td class="equipment-tbl-cell equipment-tbl-cell--serial">' + escapeHtml(item.serial_no || '-') + '</td>' +
+      '<td class="equipment-tbl-cell">' + escapeHtml(item.location || '-') + '</td>' +
+      '<td class="equipment-tbl-cell">' + escapeHtml(formatDisplayDate(item.maintenance_end_date || '')) + '</td>' +
+      '<td class="equipment-tbl-cell equipment-tbl-cell--status">' +
+        '<span class="status-badge ' + statusClass(item.status || '') + '">' +
+          escapeHtml(statusLabel(item.status || '')) +
+        '</span>' +
+      '</td>' +
+      '<td class="equipment-tbl-cell equipment-tbl-cell--actions">' +
+        '<div class="equipment-tbl-actions">' + actions + '</div>' +
+      '</td>' +
+    '</tr>'
   );
 }
 
@@ -231,15 +262,43 @@ function renderEquipmentList(items) {
   items = Array.isArray(items) ? items : [];
 
   if (!items.length) {
-    if (equipmentListState.isRecentMode) {
-      container.innerHTML = '<div class="empty-box">최근 등록 장비가 없습니다.</div>';
-    } else {
-      container.innerHTML = '<div class="empty-box">조회된 장비가 없습니다.</div>';
-    }
+    var emptyMsg = equipmentListState.isRecentMode
+      ? '최근 등록 장비가 없습니다.'
+      : '조회된 장비가 없습니다.';
+    container.innerHTML = '<div class="empty-box">' + emptyMsg + '</div>';
     return;
   }
 
-  container.innerHTML = items.map(buildEquipmentCard).join('');
+  /* 카드 영역 (모바일에서 표시) */
+  var cardsHtml =
+    '<div class="equipment-cards-wrap">' +
+      items.map(buildEquipmentCard).join('') +
+    '</div>';
+
+  /* 테이블 영역 (PC에서 표시) */
+  var tableHtml =
+    '<div class="equipment-table-wrap">' +
+      '<table class="equipment-table">' +
+        '<thead>' +
+          '<tr>' +
+            '<th class="equipment-tbl-th equipment-tbl-th--name">장비명 / 번호</th>' +
+            '<th class="equipment-tbl-th">모델명</th>' +
+            '<th class="equipment-tbl-th">부서</th>' +
+            '<th class="equipment-tbl-th">제조사</th>' +
+            '<th class="equipment-tbl-th">시리얼</th>' +
+            '<th class="equipment-tbl-th">위치</th>' +
+            '<th class="equipment-tbl-th">유지보수 종료</th>' +
+            '<th class="equipment-tbl-th">상태</th>' +
+            '<th class="equipment-tbl-th equipment-tbl-th--actions">액션</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' +
+          items.map(buildEquipmentRow).join('') +
+        '</tbody>' +
+      '</table>' +
+    '</div>';
+
+  container.innerHTML = cardsHtml + tableHtml;
 }
 
 function renderRecentPagination() {
