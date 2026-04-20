@@ -119,17 +119,33 @@
   gap: 20px;
   margin-top: 8px;
   align-items: start;
+  /* ★ 수정: 그리드가 부모 너비를 벗어나지 않도록 */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
-.signage-np-detail-col { display: flex; flex-direction: column; gap: 8px; }
+
+.signage-np-detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* ★ 수정: Grid 컬럼 내 콘텐츠가 컬럼을 밀어내지 않도록 */
+  min-width: 0;
+  overflow: hidden;
+}
 
 .signage-np-img {
+  /* ★ 수정: 컬럼 너비에 맞게 이미지 수축 */
   width: 100%;
+  max-width: 100%;
+  height: auto;
   max-height: 280px;
   object-fit: contain;
   border-radius: 12px;
   border: 1px solid #d9dee7;
   display: block;
   background: #f8fafc;
+  box-sizing: border-box;
 }
 
 .signage-np-size-badge {
