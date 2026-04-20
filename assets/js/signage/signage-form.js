@@ -10,6 +10,14 @@ const NAMEPLATE_SIZES = {
   D: '높이 2.5cm (20cm)'
 };
 
+// ★ 추가: 타입별 세부 디자인 목록 (향후 B타입 추가 시 '4'만 넣으면 됨)
+const NAMEPLATE_SUBTYPES = {
+  A: ['1', '2', '3'],
+  B: ['1', '2', '3'],
+  C: ['1', '2', '3'],
+  D: ['1', '2']
+};
+
 const MAX_SINGLE_FILE_MB = 10;
 const MAX_TOTAL_FILE_MB  = 20;
 const MAX_SINGLE_BYTES   = MAX_SINGLE_FILE_MB * 1024 * 1024;
@@ -135,31 +143,71 @@ function bindUrgentToggle() {
 }
 
 // ─────────────────────────────────────────────
-// 명판 타입 선택 → 디자인 이미지 표시
+// 명판 타입 선택 (A~D) → 세부 디자인 목록 렌더링
 // ─────────────────────────────────────────────
 function bindNameplateTypeSelector() {
   document.querySelectorAll('input[name="nameplate_type"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
       const type = e.target.value;
 
+      // 타입 카드 선택 표시
       document.querySelectorAll('.signage-np-card').forEach(c => c.classList.remove('is-selected'));
       document.getElementById('npCard_' + type)?.classList.add('is-selected');
 
-      if (typeof NAMEPLATE_IMAGES !== 'undefined') {
-        const designImg = document.getElementById('nameplateDesignImg');
-        if (designImg) designImg.src = NAMEPLATE_IMAGES[type] || '';
-      }
+      // 세부 디자인 UI 렌더링
+      renderSubtypeGrid(type);
 
+      // 사이즈 텍스트 업데이트
       const sizeText = document.getElementById('selectedSizeText');
       if (sizeText) {
         sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
         sizeText.style.display = '';
       }
 
+      // 타입만 선택한 상태: 디자인 이미지는 세부 선택 후 표시
       const placeholder = document.getElementById('npDesignPlaceholder');
-      const designImg = document.getElementById('nameplateDesignImg');
-      if (placeholder) placeholder.style.display = 'none';
-      if (designImg) designImg.style.display = '';
+      const designImg   = document.getElementById('nameplateDesignImg');
+      if (placeholder) placeholder.style.display = '';
+      if (designImg)   { designImg.style.display = 'none'; designImg.src = ''; }
+    });
+  });
+}
+
+// ★ 추가: 세부 디자인 그리드 동적 렌더링
+function renderSubtypeGrid(type) {
+  const section  = document.getElementById('npSubtypeSection');
+  const grid     = document.getElementById('npSubtypeGrid');
+  if (!section || !grid) return;
+
+  const subtypes = NAMEPLATE_SUBTYPES[type] || [];
+
+  grid.innerHTML = subtypes.map(sub => `
+    <label class="signage-np-card" id="npSubCard_${type}_${sub}">
+      <input type="radio" name="nameplate_subtype" value="${sub}" class="signage-sr-only" />
+      <div class="signage-np-badge">${type}-${sub}</div>
+    </label>
+  `).join('');
+
+  section.style.display = '';
+
+  // 세부 타입 선택 이벤트
+  grid.querySelectorAll('input[name="nameplate_subtype"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const sub = e.target.value;
+
+      grid.querySelectorAll('.signage-np-card').forEach(c => c.classList.remove('is-selected'));
+      document.getElementById('npSubCard_' + type + '_' + sub)?.classList.add('is-selected');
+
+      // 세부 선택 완료 → 타입 이미지 표시 (이미지는 타입별 1개 그대로 사용)
+      if (typeof NAMEPLATE_IMAGES !== 'undefined') {
+        const designImg   = document.getElementById('nameplateDesignImg');
+        const placeholder = document.getElementById('npDesignPlaceholder');
+        if (designImg) {
+          designImg.src          = NAMEPLATE_IMAGES[type] || '';
+          designImg.style.display = '';
+        }
+        if (placeholder) placeholder.style.display = 'none';
+      }
     });
   });
 }
@@ -252,7 +300,7 @@ async function processFiles(files, key, listId) {
       const res    = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
 
       uploadedFileIds[key].push(res.data.file_id);
-      uploadedFileSizes[key].push(file.size);  // ★ 용량 추적
+      uploadedFileSizes[key].push(file.size);
 
       const el = document.getElementById(itemId);
       if (el) {
@@ -343,9 +391,16 @@ function buildPayload() {
     return null;
   }
 
-  const nameplateType = type === 'NAMEPLATE'
+  // ★ 수정: 타입 + 세부 타입 조합 (예: 'A-1')
+  const nameplateBaseType = type === 'NAMEPLATE'
     ? (document.querySelector('input[name="nameplate_type"]:checked')?.value || '')
     : '';
+  const nameplateSubtype = type === 'NAMEPLATE'
+    ? (document.querySelector('input[name="nameplate_subtype"]:checked')?.value || '')
+    : '';
+  const nameplateType = nameplateSubtype
+    ? `${nameplateBaseType}-${nameplateSubtype}`
+    : nameplateBaseType;
 
   return {
     type,
@@ -393,7 +448,10 @@ function validatePayload(p) {
   }
 
   if (p.type === 'NAMEPLATE') {
+    // ★ 수정: 기본 타입 미선택
     if (!p.nameplate_type) return fail('명판 타입을 선택해 주세요.', null);
+    // ★ 수정: 세부 디자인 미선택 ('A-1' 형태여야 하므로 '-' 없으면 미선택 상태)
+    if (!p.nameplate_type.includes('-')) return fail('세부 디자인을 선택해 주세요.', null);
     if (!p.install_env)    return fail('설치 환경을 선택해 주세요.', 'install_env_nameplate');
     if (!p.nameplate_text) return fail('명판 문구를 입력해 주세요.', 'nameplate_text');
   }
