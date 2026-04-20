@@ -203,9 +203,11 @@ function bindNameplateTypeSelector() {
         if (placeholder) placeholder.style.display = '';
       }
 
-      // 레이아웃 이미지는 아직 미선택 상태로 초기화
-      if (layoutImg)   layoutImg.style.display = 'none';
-      if (layoutPh)    layoutPh.style.display  = '';
+      // 레이아웃 이미지는 타입 선택 시점에 바로 함께 표시
+      if (typeof NAMEPLATE_IMAGES !== 'undefined' && NAMEPLATE_IMAGES.layout) {
+        if (layoutImg) { layoutImg.src = NAMEPLATE_IMAGES.layout; layoutImg.style.display = ''; }
+        if (layoutPh)  layoutPh.style.display = 'none';
+      }
 
       showEl('npDesignPreviewArea');
     });
@@ -269,7 +271,6 @@ function renderLayoutGrid() {
       grid.querySelectorAll('.signage-layout-card').forEach(c => c.classList.remove('is-selected'));
       document.getElementById('layoutCard_' + layoutId)?.classList.add('is-selected');
 
-      updateLayoutImage(layoutId);
       renderTextFields(currentLayout);
       showEl('npTextSection');
     });
