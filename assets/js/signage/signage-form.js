@@ -324,9 +324,8 @@ function buildNameplateText() {
 // 파일 업로드
 // ─────────────────────────────────────────────
 function bindFileDropzones() {
-  bindDrop('file_main',      'main',      'fileList_main');
-  bindDrop('file_location',  'location',  'fileList_location');
-  bindDrop('file_reference', 'reference', 'fileList_reference');
+  bindDrop('file_main',     'main',     'fileList_main');
+  bindDrop('file_location', 'location', 'fileList_location');
 }
 
 function bindDrop(inputId, key, listId) {
@@ -490,7 +489,7 @@ function buildPayload() {
     draft_confirm:      draftConfirm,
     file_ids:           [...uploadedFileIds.main],
     location_file_ids:  [...uploadedFileIds.location],
-    reference_file_ids: [...uploadedFileIds.reference],
+    reference_file_ids: [],
     sign_size:          getValue('sign_size'),
     sign_type:          getValue('sign_type'),
     install_location:   getValue('install_location'),
@@ -520,8 +519,7 @@ function validatePayload(p) {
     if (!p.sign_type)        return fail('형태/종류를 입력해 주세요.', 'sign_type');
     if (!p.install_env)      return fail('설치 환경을 선택해 주세요.', 'install_env');
     if (!p.install_location) return fail('설치 위치를 입력해 주세요.', 'install_location');
-    if (uploadedFileIds.location.length  === 0) return fail('설치 위치 사진을 첨부해 주세요.', null);
-    if (uploadedFileIds.reference.length === 0) return fail('참고 자료(도면/레퍼런스)를 첨부해 주세요.', null);
+    if (uploadedFileIds.location.length === 0) return fail('설치 위치 사진 또는 참고자료를 첨부해 주세요.', null);
   }
 
   if (p.type === 'NAMEPLATE') {
