@@ -127,6 +127,10 @@
           </div>
         </div>
         <div class="form-grid two-col">
+          <label class="form-field full-col">
+            <span class="form-label required">상세내역</span>
+            <textarea id="text_content" class="input textarea" rows="4" placeholder="제작에 들어갈 문구 및 상세 내용을 입력하세요" required></textarea>
+          </label>
           <label class="form-field">
             <span class="form-label required">사이즈</span>
             <input type="text" id="sign_size" class="input" placeholder="예: 900 × 600 × 5 mm" />
@@ -134,10 +138,6 @@
           <label class="form-field">
             <span class="form-label required">형태 / 종류</span>
             <input type="text" id="sign_type" class="input" placeholder="예: 현수막, 아크릴 판넬 등" />
-          </label>
-          <label class="form-field full-col">
-            <span class="form-label required">상세내역</span>
-            <textarea id="text_content" class="input textarea" rows="4" placeholder="제작에 들어갈 문구 및 상세 내용을 입력하세요" required></textarea>
           </label>
           <label class="form-field full-col">
             <span class="form-label required">설치 환경</span>
@@ -240,11 +240,11 @@
             <div class="signage-np-size-badge" id="selectedSizeText" style="display:none;"></div>
           </div>
           <div class="signage-np-detail-col">
-            <span class="form-label">선택한 레이아웃</span>
+            <span class="form-label">문구 레이아웃 안내</span>
             <img id="layoutImg" src="" alt="문구 레이아웃" class="signage-np-img" style="display:none;" />
             <div id="layoutPlaceholder" class="signage-np-placeholder">
               <span class="signage-np-placeholder-icon">📐</span>
-              <span class="signage-np-placeholder-text">레이아웃을 선택하면 미리보기가 표시됩니다</span>
+              <span class="signage-np-placeholder-text">타입 선택 시 레이아웃 안내가 표시됩니다</span>
             </div>
           </div>
         </div>
