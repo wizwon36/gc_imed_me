@@ -180,21 +180,34 @@ function bindNameplateTypeSelector() {
 
       renderSubtypeGrid(currentNpType);
       hideEl('npLayoutSection');
-      hideEl('npDesignPreviewArea');
       hideEl('npTextSection');
 
+      // 사이즈 텍스트
       const sizeText = document.getElementById('selectedSizeText');
       if (sizeText) {
         sizeText.textContent = currentNpType + ' 타입 — ' + (NAMEPLATE_SIZES[currentNpType] || '');
         sizeText.style.display = '';
       }
 
+      // 타입 선택 즉시 디자인 이미지 + 미리보기 영역 표시
+      const designImg   = document.getElementById('nameplateDesignImg');
+      const placeholder = document.getElementById('npDesignPlaceholder');
+      const layoutImg   = document.getElementById('layoutImg');
+      const layoutPh    = document.getElementById('layoutPlaceholder');
+
       if (typeof NAMEPLATE_IMAGES !== 'undefined' && NAMEPLATE_IMAGES[currentNpType]) {
-        const designImg   = document.getElementById('nameplateDesignImg');
-        const placeholder = document.getElementById('npDesignPlaceholder');
         if (designImg)   { designImg.src = NAMEPLATE_IMAGES[currentNpType]; designImg.style.display = ''; }
         if (placeholder) placeholder.style.display = 'none';
+      } else {
+        if (designImg)   designImg.style.display = 'none';
+        if (placeholder) placeholder.style.display = '';
       }
+
+      // 레이아웃 이미지는 아직 미선택 상태로 초기화
+      if (layoutImg)   layoutImg.style.display = 'none';
+      if (layoutPh)    layoutPh.style.display  = '';
+
+      showEl('npDesignPreviewArea');
     });
   });
 }
@@ -225,7 +238,6 @@ function renderSubtypeGrid(type) {
       document.getElementById('npSubCard_' + type + '_' + currentNpSubtype)?.classList.add('is-selected');
 
       renderLayoutGrid();
-      showEl('npDesignPreviewArea');
       hideEl('npTextSection');
     });
   });
