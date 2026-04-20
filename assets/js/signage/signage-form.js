@@ -164,11 +164,18 @@ function bindNameplateTypeSelector() {
         sizeText.style.display = '';
       }
 
-      // 타입만 선택한 상태: 디자인 이미지는 세부 선택 후 표시
-      const placeholder = document.getElementById('npDesignPlaceholder');
-      const designImg   = document.getElementById('nameplateDesignImg');
-      if (placeholder) placeholder.style.display = '';
-      if (designImg)   { designImg.style.display = 'none'; designImg.src = ''; }
+      // 타입만 선택한 상태에서도 이미지 바로 표시
+      if (typeof NAMEPLATE_IMAGES !== 'undefined' && NAMEPLATE_IMAGES[type]) {
+        const designImg   = document.getElementById('nameplateDesignImg');
+        const placeholder = document.getElementById('npDesignPlaceholder');
+        if (designImg) { designImg.src = NAMEPLATE_IMAGES[type]; designImg.style.display = ''; }
+        if (placeholder) placeholder.style.display = 'none';
+      } else {
+        const placeholder = document.getElementById('npDesignPlaceholder');
+        const designImg   = document.getElementById('nameplateDesignImg');
+        if (placeholder) placeholder.style.display = '';
+        if (designImg)   { designImg.style.display = 'none'; designImg.src = ''; }
+      }
     });
   });
 }
