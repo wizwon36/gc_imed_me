@@ -115,11 +115,10 @@
 
 .signage-np-detail-grid {
   display: grid;
-  grid-template-columns: 55% 45%;
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-top: 8px;
   align-items: start;
-  /* ★ 수정: 그리드가 부모 너비를 벗어나지 않도록 */
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
