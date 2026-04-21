@@ -425,12 +425,11 @@ function renderUserList() {
     const isActive = normalize(user.active || 'Y').toUpperCase() === 'Y';
     const statusClass = isActive ? 'active' : 'inactive';
     const statusText = isActive ? '활성' : '비활성';
-    const orgText =
-      normalize(user.department) ||
-      (normalize(user.clinic_name) && normalize(user.team_name)
-        ? `${normalize(user.clinic_name)} / ${normalize(user.team_name)}`
-        : '') ||
-      '-';
+    const clinicText = normalize(user.clinic_name) || '';
+    const teamText = normalize(user.team_name) || '';
+    const orgHtml = clinicText && teamText
+      ? `<div class="user-tbl-org-main">${escapeHtml(clinicText)}</div><div class="user-tbl-org-sub">${escapeHtml(teamText)}</div>`
+      : `<div class="user-tbl-org-main">${escapeHtml(normalize(user.department) || '-')}</div>`;
 
     return `
       <tr class="user-tbl-row">
@@ -438,7 +437,7 @@ function renderUserList() {
           <div class="user-tbl-name">${escapeHtml(user.user_name || '-')}</div>
           <div class="user-tbl-sub">${escapeHtml(user.user_email || '')}</div>
         </td>
-        <td class="user-tbl-cell user-tbl-cell--org">${escapeHtml(orgText)}</td>
+        <td class="user-tbl-cell user-tbl-cell--org">${orgHtml}</td>
         <td class="user-tbl-cell user-tbl-cell--role">${escapeHtml(user.role || 'user')}</td>
         <td class="user-tbl-cell user-tbl-cell--status">
           <span class="status-chip ${statusClass}">${statusText}</span>
