@@ -439,7 +439,7 @@
   }
 
   .equipment-detail-page .top-brand-bar {
-    display: block;
+    display: block !important;
     padding: 16px 18px 18px;
     border-radius: 22px;
   }
