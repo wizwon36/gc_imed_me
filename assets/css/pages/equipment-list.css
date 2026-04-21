@@ -1025,9 +1025,24 @@
     margin-bottom: 16px;
   }
 
-  /* common.css .portal-page .portal-top-actions(1fr 1fr) specificity 이기기 위해 body클래스 포함 */
-  .equipment-list-page .equipment-list-top-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* form.css 패턴과 동일하게 */
+  .equipment-list-top-actions {
+    width: 100%;
+    margin-top: 14px;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+
+  .equipment-list-top-actions .portal-header-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 0 10px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 800;
+    justify-content: center;
   }
 
   .equipment-list-page .page-hero-simple {
