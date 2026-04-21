@@ -80,24 +80,28 @@
   font-weight: 800;
 }
 
-/* main grids */
-.detail-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.85fr) minmax(300px, 0.85fr);
+/* main layout — single column flow */
+.detail-single-col {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: stretch;
   margin-top: 14px;
 }
 
-.detail-info-card {
-  box-sizing: border-box;
-}
-
-.detail-sub-grid {
+/* 사진 + QR: 나란히 2열, 높이 맞춤 */
+.detail-media-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-top: 16px;
+  align-items: start;
+}
+
+/* 이력 2열 */
+.detail-history-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
 }
 
 /* cards */
@@ -244,11 +248,6 @@
 }
 
 /* qr */
-.qr-sticky-wrap {
-  position: sticky;
-  top: 20px;
-}
-
 .detail-qr-card {
   display: flex;
   flex-direction: column;
@@ -418,17 +417,13 @@
     font-size: 36px;
   }
 
-  .detail-main-grid,
-  .detail-sub-grid {
+  .detail-media-grid,
+  .detail-history-grid {
     grid-template-columns: 1fr;
   }
 
-  .qr-sticky-wrap {
-    position: static;
-    top: auto;
-  }
-
   .detail-info-card,
+  .detail-photo-card,
   .detail-qr-card,
   .detail-list-card {
     padding: 18px;
@@ -445,65 +440,6 @@
 
   .detail-topbar {
     margin-bottom: 16px;
-  }
-
-  .equipment-detail-page .top-brand-bar {
-    display: block;
-    padding: 16px 18px 18px;
-    border-radius: 22px;
-  }
-
-  .equipment-detail-page .top-brand-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .equipment-detail-page .top-brand-logo {
-    flex-shrink: 0;
-  }
-
-  .equipment-detail-page .top-brand-texts {
-    min-width: 0;
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .equipment-detail-page .top-brand-title {
-    display: block;
-    font-size: 16px;
-    line-height: 1.25;
-    word-break: keep-all;
-  }
-
-  .equipment-detail-page .top-brand-sub {
-    display: block;
-    margin-top: 4px;
-    font-size: 13px;
-    color: #667085;
-    white-space: normal;
-  }
-
-  .detail-top-actions {
-    width: 100%;
-    margin-top: 14px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .detail-top-actions .portal-header-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 46px;
-    padding: 0 10px;
-    border-radius: 16px;
-    font-size: 14px;
-    font-weight: 800;
-    justify-content: center;
   }
 
   .equipment-detail-page .page-title {
@@ -536,6 +472,7 @@
   }
 
   .detail-info-card,
+  .detail-photo-card,
   .detail-qr-card,
   .detail-list-card {
     padding: 16px;
@@ -543,6 +480,7 @@
   }
 
   .detail-info-card .section-title,
+  .detail-photo-card .section-title,
   .detail-qr-card .section-title,
   .detail-list-card .section-title {
     font-size: 19px;
@@ -563,7 +501,6 @@
     padding-left: 4px;
   }
 
-  /* 모바일에서 마지막 info-row 안의 첫 셀도 구분선 제거 */
   .info-row:last-child .info-cell:first-child {
     border-bottom: 1px solid #eef2f7;
   }
@@ -594,8 +531,6 @@
 
   .det-tbl-main { font-size: 12px; }
 
-  /* 모바일: 테이블 스크롤 높이 축소 */
-
   .qr-panel {
     min-height: auto;
   }
@@ -618,23 +553,13 @@
 
 /* narrow mobile */
 @media (max-width: 480px) {
-  .equipment-detail-page .top-brand-bar {
-    padding: 16px;
-    border-radius: 22px;
-  }
-
-  .detail-top-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .detail-top-actions .portal-header-btn {
-    min-height: 40px;
-    font-size: 12px;
-    padding: 0 6px;
-  }
-
   .equipment-detail-page .page-title {
     font-size: 24px;
+  }
+
+  .detail-media-grid,
+  .detail-history-grid {
+    grid-template-columns: 1fr;
   }
 
   .info-cell {
@@ -659,12 +584,6 @@
 
 .btn-sm {
   min-height: 38px;
-}
-
-.detail-side-stack {
-  display: grid;
-  gap: 16px;
-  align-items: start;
 }
 
 .detail-photo-card {
@@ -750,16 +669,7 @@
   display: none;
 }
 
-@media (max-width: 1024px) {
-  .detail-main-grid {
-    grid-template-columns: 1fr;
-  }
 
-  .qr-sticky-wrap {
-    position: static;
-    top: auto;
-  }
-}
 
 .detail-photo-actions {
   display: flex;
