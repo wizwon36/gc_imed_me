@@ -1024,7 +1024,7 @@
   }
 
   .equipment-list-page .top-brand-bar {
-    display: block !important;
+    display: block;
     padding: 16px 18px 18px;
     border-radius: 22px;
   }
