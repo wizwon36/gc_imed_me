@@ -387,11 +387,15 @@
   white-space: nowrap;
 }
 
+/* PC: 부서 한 줄 유지 */
 .dash-tbl-cell--dept {
-  white-space: normal;
-  word-break: keep-all;
-  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.dept-pc   { display: inline; }
+.dept-mobile { display: none; }
 
 .dash-tbl-cell--side {
   text-align: center;
@@ -660,6 +664,15 @@
   .dashboard-panel--registered .dash-tbl-th--name { width: 58%; }
   .dashboard-panel--repair .dash-tbl-th--date,
   .dashboard-panel--registered .dash-tbl-th--date { width: 42%; }
+
+  /* 모바일: 부서 두 줄 */
+  .dept-pc     { display: none; }
+  .dept-mobile { display: inline; }
+
+  .dash-tbl-cell--dept {
+    white-space: normal;
+    line-height: 1.4;
+  }
 
   .dash-tbl-cell,
   .dash-tbl-th {
