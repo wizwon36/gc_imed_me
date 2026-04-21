@@ -1145,18 +1145,14 @@
     font-size: 14px;
     padding: 0 10px;
   }
+
+  .inline-field {
     width: 100%;
     justify-content: space-between;
   }
 
   .inline-field .input-sm {
     width: 120px;
-  }
-
-  .filter-actions-right .btn-primary,
-  .filter-actions-right .btn-secondary {
-    flex: 1 1 0;
-    min-width: 0;
   }
 
   .equipment-list-toolbar {
@@ -1239,16 +1235,20 @@
   }
 
   .equipment-card-actions-right {
+    flex: 0 0 auto;
     margin-left: 0;
   }
 
   .equipment-card-actions .btn,
-  .equipment-card-actions .btn-primary {
+  .equipment-card-actions .btn-primary,
+  .equipment-card-actions-right .btn {
     flex: 1 1 0;
     min-width: 0;
     min-height: 42px;
     font-size: 13px;
     border-radius: 12px;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .pagination-btn {
