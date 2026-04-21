@@ -83,6 +83,14 @@
                   <div class="dashboard-action-desc">조회 / 이력 / 라벨</div>
                 </div>
               </a>
+
+              <button type="button" class="dashboard-action-card" id="dashboardExportBtn" style="display:none;">
+                <span class="dashboard-action-icon" aria-hidden="true">📥</span>
+                <div class="dashboard-action-body">
+                  <div class="dashboard-action-title">장비대장 다운로드</div>
+                  <div class="dashboard-action-desc">전체 장비 다운로드</div>
+                </div>
+              </button>
             </div>
           </article>
 
@@ -148,6 +156,7 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
