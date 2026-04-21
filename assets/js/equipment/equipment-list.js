@@ -172,7 +172,7 @@ function buildEquipmentCard(item) {
     leftActions += '<a class="btn btn-primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
   }
 
-  rightActions = '<a class="btn equipment-card-label-btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨출력</a>';
+  rightActions = '<a class="btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨출력</a>';
 
   return (
     '<article class="equipment-card">' +
