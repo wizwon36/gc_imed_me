@@ -306,26 +306,103 @@
 
 /* scroll panels */
 .dashboard-page .dashboard-panel--maintenance,
-.dashboard-page .dashboard-panel--registered {
+.dashboard-page .dashboard-panel--registered,
+.dashboard-page .dashboard-panel--repair {
   overflow: hidden;
 }
 
 .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack,
-.dashboard-page .dashboard-panel--registered .dashboard-list-stack {
+.dashboard-page .dashboard-panel--registered .dashboard-list-stack,
+.dashboard-page .dashboard-panel--repair .dashboard-list-stack {
   max-height: 280px;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 4px;
 }
 
 .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack::-webkit-scrollbar,
-.dashboard-page .dashboard-panel--registered .dashboard-list-stack::-webkit-scrollbar {
-  width: 6px;
+.dashboard-page .dashboard-panel--registered .dashboard-list-stack::-webkit-scrollbar,
+.dashboard-page .dashboard-panel--repair .dashboard-list-stack::-webkit-scrollbar {
+  width: 4px;
 }
 
 .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack::-webkit-scrollbar-thumb,
-.dashboard-page .dashboard-panel--registered .dashboard-list-stack::-webkit-scrollbar-thumb {
+.dashboard-page .dashboard-panel--registered .dashboard-list-stack::-webkit-scrollbar-thumb,
+.dashboard-page .dashboard-panel--repair .dashboard-list-stack::-webkit-scrollbar-thumb {
   background: #d0d7e2;
   border-radius: 999px;
+}
+
+/* ── 패널 내부 테이블 그리드 ── */
+.dash-tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.dash-tbl-th {
+  position: sticky;
+  top: 0;
+  padding: 8px 10px;
+  background: #f1f5fb;
+  border-bottom: 1px solid #d9dee7;
+  font-size: 11px;
+  font-weight: 800;
+  color: #516274;
+  text-align: left;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.dash-tbl-th--name { width: 40%; }
+.dash-tbl-th--dept { width: 28%; }
+.dash-tbl-th--date { width: 22%; }
+.dash-tbl-th--side { width: 10%; text-align: center; }
+
+.dash-tbl-row {
+  transition: background-color 0.12s ease;
+}
+
+.dash-tbl-row:not(:last-child) td {
+  border-bottom: 1px solid #eef2f6;
+}
+
+.dash-tbl-row:hover {
+  background: #f7f9fd;
+}
+
+.dash-tbl-cell {
+  padding: 10px 10px;
+  font-size: 13px;
+  color: #1e293b;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-tbl-cell--side {
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.dash-tbl-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0b1f44;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-tbl-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* chips */
@@ -549,14 +626,35 @@
   }
 
   .dashboard-page .dashboard-panel--maintenance,
-  .dashboard-page .dashboard-panel--registered {
+  .dashboard-page .dashboard-panel--registered,
+  .dashboard-page .dashboard-panel--repair {
     min-height: 400px;
   }
 
   .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack,
-  .dashboard-page .dashboard-panel--registered .dashboard-list-stack {
-    max-height: 280px;
-    padding-right: 4px;
+  .dashboard-page .dashboard-panel--registered .dashboard-list-stack,
+  .dashboard-page .dashboard-panel--repair .dashboard-list-stack {
+    max-height: 300px;
+    padding-right: 2px;
+  }
+
+  .dash-tbl-th--name { width: 38%; }
+  .dash-tbl-th--dept { width: 30%; }
+  .dash-tbl-th--date { width: 20%; }
+  .dash-tbl-th--side { width: 12%; }
+
+  .dash-tbl-cell,
+  .dash-tbl-th {
+    padding: 8px 8px;
+    font-size: 12px;
+  }
+
+  .dash-tbl-name {
+    font-size: 12px;
+  }
+
+  .dash-tbl-sub {
+    font-size: 10px;
   }
 
   .dashboard-record-item {
