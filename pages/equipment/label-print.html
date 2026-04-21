@@ -14,7 +14,7 @@
         <div class="top-brand-logo">+</div>
         <div class="top-brand-texts">
           <strong class="top-brand-title">의료장비 관리시스템</strong>
-          <span class="top-brand-sub">QR 라벨 출력</span>
+          <span class="top-brand-sub">QR 라벨 출력 · 장비 식별표 인쇄</span>
         </div>
       </div>
 
@@ -24,15 +24,24 @@
       </div>
     </section>
 
-    <section class="label-hero no-print">
-      <div class="label-hero-copy">
-        <div class="label-hero-topline">장비 라벨 출력</div>
-        <h1 class="label-hero-title">QR 포함 장비 라벨</h1>
-        <div class="label-hero-subtext">
-          라벨 크기를 선택한 뒤 장비 식별용 라벨을 미리보고 바로 인쇄할 수 있습니다.
+    <!-- 모바일 접근 차단 안내 -->
+    <div id="mobileBlockNotice" class="mobile-block-notice no-print" style="display:none;">
+      <div class="mobile-block-icon">🖨️</div>
+      <h2 class="mobile-block-title">PC에서 이용해주세요</h2>
+      <p class="mobile-block-desc">라벨 출력은 PC 환경에서만 지원됩니다.<br>장비 상세 페이지로 돌아가세요.</p>
+      <a id="mobileBackBtn" href="#" class="btn btn-primary mobile-block-btn">상세로 돌아가기</a>
+    </div>
+
+    <div id="labelMainContent">
+      <section class="label-hero no-print">
+        <div class="label-hero-copy">
+          <div class="label-hero-topline">장비 라벨 출력</div>
+          <h1 class="label-hero-title">QR 포함 장비 라벨</h1>
+          <div class="label-hero-subtext">
+            라벨 크기를 선택한 뒤 장비 식별용 라벨을 미리보고 바로 인쇄할 수 있습니다.
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
     <div id="messageBox" class="message-box"></div>
 
@@ -93,6 +102,7 @@
         </div>
       </article>
     </section>
+    </div><!-- /labelMainContent -->
   </div>
 
   <script src="../../assets/js/core/config.js"></script>
@@ -105,6 +115,24 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/libs/qrcode.min.js"></script>
   <script src="../../assets/js/equipment/label-print.js"></script>
+  <script>
+    (function() {
+      if (window.innerWidth <= 768) {
+        var notice = document.getElementById('mobileBlockNotice');
+        var main = document.getElementById('labelMainContent');
+        var printBtn = document.getElementById('printBtn');
+        if (notice) notice.style.display = 'flex';
+        if (main) main.style.display = 'none';
+        if (printBtn) printBtn.style.display = 'none';
+
+        // 상세로 돌아가기 링크 설정
+        var backBtn = document.getElementById('mobileBackBtn');
+        var detailBackBtn = document.getElementById('backToDetailBtn');
+        var href = detailBackBtn ? detailBackBtn.getAttribute('href') : '';
+        if (backBtn && href && href !== '#') backBtn.setAttribute('href', href);
+      }
+    })();
+  </script>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
