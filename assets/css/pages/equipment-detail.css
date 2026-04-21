@@ -442,9 +442,9 @@
     margin-bottom: 16px;
   }
 
-  /* specificity 높여서 common.css의 1fr 1fr 오버라이드 */
+  /* common.css .portal-page .portal-top-actions(1fr 1fr) specificity 이기기 위해 body클래스 포함 */
   .equipment-detail-page .detail-top-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .equipment-detail-page .page-title {
@@ -512,8 +512,6 @@
 
   .info-row--wide .info-cell {
     border-bottom: none;
-    grid-template-columns: 1fr;
-    gap: 4px;
   }
 
   .info-cell {
