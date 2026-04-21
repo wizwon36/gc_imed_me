@@ -989,7 +989,6 @@
 }
 
 .equipment-label-page .equipment-label-topbar {
-  display: block;
   margin-bottom: 18px;
 }
 
@@ -1262,8 +1261,8 @@
   .equipment-label-page .equipment-label-top-actions {
     width: 100%;
     margin-top: 14px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 10px;
   }
 
@@ -1354,7 +1353,7 @@
   }
 
   .equipment-label-page .equipment-label-top-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr !important;
   }
 
   .equipment-label-page .label-preview-card {
