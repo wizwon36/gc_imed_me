@@ -30,9 +30,9 @@
 
 .equipment-detail-page .page-title {
   margin: 0;
-  font-size: 42px;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   color: #0b1f44;
   font-weight: 800;
 }
@@ -156,89 +156,70 @@
 }
 
 /* =========================================
- * 장비 기본정보
- * 운영형 정보판 스타일
+ * 장비 기본정보 — compact 행 스타일
  * ========================================= */
 
 .info-tile-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
-  align-items: start;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid #eef2f7;
 }
 
-.info-tile {
+.info-row:last-child { border-bottom: none; }
+
+.info-row--wide {
+  grid-template-columns: 1fr;
+}
+
+.info-cell {
   display: grid;
-  grid-template-columns: 86px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px 14px;
-  min-height: 0;
-  padding: 12px 14px;
-  border: 1px solid #e6ebf2;
-  border-radius: 14px;
-  background: #fbfcfe;
-}
-
-.info-tile-wide {
-  grid-column: 1 / -1;
-}
-
-.info-tile-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: #667085;
-  font-size: 13px;
-  line-height: 1.4;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.info-tile-value {
-  display: block;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0 12px;
+  padding: 9px 4px;
   min-width: 0;
-  margin: 0;
-  color: #0f172a;
-  font-size: 15px;
-  line-height: 1.55;
+}
+
+/* 같은 행의 두 셀 사이 구분선 */
+.info-row:not(.info-row--wide) .info-cell:first-child {
+  border-right: 1px solid #eef2f7;
+  padding-right: 16px;
+  margin-right: 0;
+}
+
+.info-row:not(.info-row--wide) .info-cell:last-child {
+  padding-left: 16px;
+}
+
+.info-cell-label {
+  font-size: 12px;
   font-weight: 700;
-  text-align: left;
+  color: #8896a8;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+.info-cell-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.6;
   word-break: break-word;
 }
 
-.info-tile-wide .info-tile-value {
-  font-size: 14px;
-  line-height: 1.6;
+.info-row--wide .info-cell {
+  grid-template-columns: 96px minmax(0, 1fr);
+  padding: 9px 4px;
+}
+
+.info-row--wide .info-cell-value {
+  font-size: 13.5px;
   color: #334155;
-  font-weight: 600;
-}
-
-/* 혹시 JS가 chip/badge 같은 요소를 넣더라도 운영형처럼 평탄화 */
-.info-tile-value > .value-chip,
-.info-tile-value .value-chip,
-.info-tile-value .chip,
-.info-tile-value .badge {
-  display: inline !important;
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  min-height: 0 !important;
-  color: inherit !important;
-  font: inherit !important;
-}
-
-/* 값이 너무 길 때 */
-.info-tile-value a {
-  color: inherit;
-  text-decoration: none;
-  word-break: break-all;
 }
 
 /* qr */
@@ -288,92 +269,110 @@
   color: #334155;
 }
 
-/* timeline */
-.timeline-card {
-  background: #f8fafc;
-  border: 1px solid #e8edf4;
-  border-radius: 18px;
-  padding: 15px;
-}
-
-.timeline-card + .timeline-card {
-  margin-top: 10px;
-}
-
-.timeline-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.timeline-title {
-  font-size: 17px;
-  line-height: 1.3;
-  font-weight: 800;
-  color: #0b1f44;
-  margin-bottom: 4px;
-}
-
-.timeline-date {
-  font-size: 13px;
-  line-height: 1.45;
-  color: #667085;
-}
-
+/* timeline (기존 코드 호환용 최소 유지) */
 .timeline-badge {
-  min-height: 28px;
-  padding: 5px 10px;
+  min-height: 24px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: #fff;
   border: 1px solid #dfe5ec;
   color: #334155;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* =========================================
+ * 이력 / 재고조사 테이블 그리드
+ * ========================================= */
+
+.detail-list-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.det-tbl-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 320px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.det-tbl-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.det-tbl-scroll::-webkit-scrollbar-thumb {
+  background: #d0d7e2;
+  border-radius: 999px;
+}
+
+.det-tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+.det-tbl-th {
+  position: sticky;
+  top: 0;
+  padding: 8px 10px;
+  background: #f1f5fb;
+  border-bottom: 1px solid #d9dee7;
+  font-size: 11px;
+  font-weight: 800;
+  color: #516274;
+  text-align: left;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.det-tbl-th--type  { width: 110px; }
+.det-tbl-th--desc  { min-width: 140px; }
+
+.det-tbl-row { transition: background-color 0.12s ease; }
+.det-tbl-row:not(:last-child) td { border-bottom: 1px solid #eef2f6; }
+.det-tbl-row:hover { background: #f7f9fd; }
+
+.det-tbl-cell {
+  padding: 9px 10px;
+  font-size: 13px;
+  color: #1e293b;
+  vertical-align: top;
   white-space: nowrap;
 }
 
-.timeline-meta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 10px;
-}
+.det-tbl-cell--type { vertical-align: middle; }
+.det-tbl-cell--desc { white-space: normal; min-width: 140px; line-height: 1.5; }
+.det-tbl-cell--actions { white-space: nowrap; vertical-align: middle; }
 
-.timeline-meta-item {
-  background: #fff;
-  border: 1px solid #edf1f5;
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.timeline-meta-label {
-  display: block;
-  font-size: 12px;
-  line-height: 1.35;
-  color: #667085;
-  margin-bottom: 5px;
-}
-
-.timeline-meta-value {
-  display: block;
-  font-size: 14px;
-  line-height: 1.45;
+.det-tbl-main {
+  font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
-  word-break: break-word;
+  color: #0b1f44;
+  line-height: 1.3;
 }
 
-.timeline-desc {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid #edf1f5;
-  color: #334155;
-  font-size: 14px;
-  line-height: 1.6;
-  word-break: break-word;
+.det-tbl-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* 이력 액션 버튼 (수정/완료 처리) */
+.timeline-actions {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.timeline-actions .btn {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* empty / skeleton */
@@ -513,30 +512,39 @@
     font-size: 19px;
   }
 
-  .info-tile-grid {
+  .info-row {
     grid-template-columns: 1fr;
-    gap: 8px;
   }
 
-  .info-tile,
-  .info-tile-wide {
-    grid-template-columns: 78px minmax(0, 1fr);
-    min-height: 0;
-    padding: 11px 12px;
-    border-radius: 12px;
-    gap: 8px 10px;
+  .info-row:not(.info-row--wide) .info-cell:first-child {
+    border-right: none;
+    border-bottom: 1px solid #eef2f7;
+    padding-right: 4px;
   }
 
-  .info-tile-label {
+  .info-row:not(.info-row--wide) .info-cell:last-child {
+    padding-left: 4px;
+  }
+
+  .info-cell {
+    grid-template-columns: 82px minmax(0, 1fr);
+    padding: 8px 4px;
+  }
+
+  .info-cell-label { font-size: 11px; }
+  .info-cell-value { font-size: 13px; }
+
+  .det-tbl-scroll {
+    max-height: 260px;
+  }
+
+  .det-tbl-cell,
+  .det-tbl-th {
+    padding: 7px 8px;
     font-size: 12px;
   }
 
-  .info-tile-value,
-  .info-tile-wide .info-tile-value {
-    font-size: 14px;
-    line-height: 1.5;
-    text-align: left;
-  }
+  .det-tbl-main { font-size: 12px; }
 
   .qr-panel {
     min-height: auto;
@@ -570,33 +578,11 @@
   }
 
   .equipment-detail-page .page-title {
-    font-size: 28px;
+    font-size: 24px;
   }
 
-  .detail-action-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .detail-action-group:first-child {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .detail-action-group:last-child {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .detail-info-card,
-  .detail-qr-card,
-  .detail-list-card {
-    padding: 14px;
-    border-radius: 18px;
-  }
-
-  .info-tile,
-  .info-tile-wide {
-    grid-template-columns: 72px minmax(0, 1fr);
+  .info-cell {
+    grid-template-columns: 76px minmax(0, 1fr);
   }
 }
 
