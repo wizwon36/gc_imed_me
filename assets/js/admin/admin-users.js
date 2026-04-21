@@ -351,7 +351,7 @@ async function loadUsers() {
   const listEl = document.getElementById('userList');
   const countEl = document.getElementById('userListCount');
 
-  showGlobalLoading('사용자 목록을 불러오는 중입니다...');
+  showGlobalLoading('목록을 불러오는 중입니다');
 
   try {
     const result = await apiGet('listUsers', {
