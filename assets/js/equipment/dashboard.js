@@ -203,6 +203,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const hasSide = typeof options.sideRenderer === 'function';
   const showDept = options.showDept !== false;
   const showDate = options.showDate !== false;
+  const showStatus = options.showStatus === true;
 
   const rows = list.map(function (item) {
     const title = textSafe(item.equipment_name || '-');
@@ -218,6 +219,22 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
       sideHtml = `<td class="dash-tbl-cell dash-tbl-cell--side">${options.sideRenderer(item) || ''}</td>`;
     }
 
+    let statusHtml = '';
+    if (showStatus) {
+      const st = item.status || '';
+      const stLabel = st === 'IN_USE' ? '사용중'
+        : st === 'REPAIRING' ? '수리중'
+        : st === 'INSPECTING' ? '점검중'
+        : st === 'STORED' ? '보관'
+        : st === 'DISPOSED' ? '폐기' : (st || '-');
+      const stClass = st === 'IN_USE' ? 'status-badge is-in-use'
+        : st === 'REPAIRING' ? 'status-badge is-repairing'
+        : st === 'INSPECTING' ? 'status-badge is-inspecting'
+        : st === 'STORED' ? 'status-badge is-stored'
+        : st === 'DISPOSED' ? 'status-badge is-disposed' : 'status-badge';
+      statusHtml = `<td class="dash-tbl-cell dash-tbl-cell--status"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
+    }
+
     return `
       <tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
         <td class="dash-tbl-cell dash-tbl-cell--name">
@@ -229,6 +246,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
           <span class="dept-mobile">${deptMobile}</span>
         </td>` : ''}
         ${showDate ? `<td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>` : ''}
+        ${statusHtml}
         ${sideHtml}
       </tr>
     `;
@@ -236,6 +254,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 
   const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
   const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
+  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
   const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
 
   container.innerHTML = `
@@ -245,6 +264,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
           <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
           ${deptHeader}
           ${dateHeader}
+          ${statusHeader}
           ${sideHeader}
         </tr>
       </thead>
@@ -286,8 +306,9 @@ function renderRecentRepairList(items) {
   renderRecordList('#recentRepairList', '#recentRepairEmpty', items, {
     dateField: 'work_date',
     dateLabel: '수리일',
-    showDept: false,   // 부서 제거 — 공간 확보
-    showDate: true
+    showDept: false,
+    showDate: true,
+    showStatus: true
   });
 }
 
