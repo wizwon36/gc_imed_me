@@ -12,7 +12,7 @@
   <div class="container page-shell equipment-form-shell">
 
     <!-- 헤더 -->
-    <section class="top-brand-bar portal-topbar portal-hero-card equipment-form-topbar">
+    <section class="top-brand-bar equipment-form-topbar signage-topbar">
       <div class="top-brand-left">
         <div class="top-brand-logo">✦</div>
         <div class="top-brand-texts">
@@ -257,9 +257,9 @@
             <!-- JS에서 레이아웃에 따라 동적 생성 -->
           </div>
 
-          <!-- 자석 유무 (현재 미사용 — 추후 활성화 예정) -->
-          <div class="form-field" style="display:none;" id="magnetField">
-            <span class="form-label">자석 부착</span>
+          <!-- 자석 유무 -->
+          <div class="form-field" style="margin-top:16px;">
+            <span class="form-label required">자석 부착</span>
             <div class="signage-magnet-grid">
               <label class="signage-magnet-card" id="magnetCard_Y">
                 <input type="radio" name="magnet_yn" value="Y" class="signage-sr-only" />
@@ -275,7 +275,6 @@
               </label>
             </div>
           </div>
-          <input type="hidden" name="magnet_yn_default" value="N" />
 
           <!-- 명판 예시 파일 첨부 -->
           <div class="form-field" style="margin-top:16px;">
