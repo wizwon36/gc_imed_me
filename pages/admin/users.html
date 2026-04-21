@@ -409,61 +409,102 @@
     }
 
     .user-list {
-      display: grid;
-      gap: 12px;
+      display: block;
     }
 
-    .user-item {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 16px;
-      align-items: center;
-      padding: 16px;
-      border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.20);
+    /* ── 사용자 목록 테이블 ── */
+    .user-tbl {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
       background: #fff;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 16px;
+      overflow: hidden;
     }
 
-    .user-item__main {
-      display: grid;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .user-item__title {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-    }
-
-    .user-item__title strong {
-      font-size: 15px;
+    .user-tbl-th {
+      padding: 10px 12px;
+      background: #f1f5fb;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      font-size: 12px;
       font-weight: 800;
+      color: #516274;
+      text-align: left;
+      white-space: nowrap;
     }
 
-    .user-item__meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 10px;
-      color: var(--text-subtle);
+    .user-tbl-th--name    { width: 24%; }
+    .user-tbl-th--org     { width: 28%; }
+    .user-tbl-th--role    { width: 10%; }
+    .user-tbl-th--status  { width: 10%; text-align: center; }
+    .user-tbl-th--actions { width: 28%; text-align: center; }
+
+    .user-tbl-row { transition: background-color 0.12s ease; }
+    .user-tbl-row:not(:last-child) td { border-bottom: 1px solid #eef2f6; }
+    .user-tbl-row:hover { background: #f7f9fd; }
+
+    .user-tbl-cell {
+      padding: 10px 12px;
       font-size: 13px;
+      color: #1e293b;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .user-item__sub {
-      color: var(--text-subtle);
+    .user-tbl-cell--status { text-align: center; }
+    .user-tbl-cell--actions { text-align: center; overflow: visible; white-space: nowrap; }
+
+    .user-tbl-name {
       font-size: 13px;
-      line-height: 1.5;
+      font-weight: 700;
+      color: #0b1f44;
     }
 
-    .user-item__actions {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 8px;
+    .user-tbl-sub {
+      margin-top: 2px;
+      font-size: 11px;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+
+    .user-tbl-actions {
+      display: inline-flex;
+      gap: 5px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .user-tbl-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: #f8fafc;
+      color: #0f172a;
+      transition: background 0.12s ease, border-color 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .user-tbl-btn:hover { background: #e8edf5; border-color: #b0bccc; }
+
+    .user-tbl-btn.danger {
+      border-color: rgba(220, 38, 38, 0.24);
+      color: #dc2626;
+      background: rgba(220, 38, 38, 0.05);
+    }
+
+    .user-tbl-btn.danger:hover { background: rgba(220, 38, 38, 0.10); }
 
     /* 가입신청 카드 */
     .pending-item {
@@ -663,10 +704,17 @@
 
       .form-row,
       .filter-row,
-      .permission-card,
-      .user-item {
+      .permission-card {
         grid-template-columns: 1fr;
       }
+
+      .user-tbl-th--org,
+      .user-tbl-cell--org { display: none; }
+
+      .user-tbl-th--name   { width: 30%; }
+      .user-tbl-th--role   { width: 12%; }
+      .user-tbl-th--status { width: 12%; }
+      .user-tbl-th--actions { width: 46%; }
 
       .list-topbar {
         flex-direction: column;
