@@ -1023,62 +1023,11 @@
 
   .equipment-list-topbar {
     margin-bottom: 16px;
-    display: block;
-    padding: 16px 18px 18px;
-    border-radius: 22px;
   }
 
-  .equipment-list-page .top-brand-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .equipment-list-page .top-brand-logo {
-    flex-shrink: 0;
-  }
-
-  .equipment-list-page .top-brand-texts {
-    min-width: 0;
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .equipment-list-page .top-brand-title {
-    display: block;
-    font-size: 16px;
-    line-height: 1.25;
-    word-break: keep-all;
-  }
-
-  .equipment-list-page .top-brand-sub {
-    display: block;
-    margin-top: 4px;
-    font-size: 13px;
-    color: #667085;
-    white-space: normal;
-  }
-
+  /* portal-top-actions는 common.css에서 1fr 1fr(2열)이므로 3버튼용으로 오버라이드 */
   .equipment-list-top-actions {
-    width: 100%;
-    margin-top: 14px;
-    display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .equipment-list-top-actions .portal-header-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 46px;
-    padding: 0 10px;
-    border-radius: 16px;
-    font-size: 14px;
-    font-weight: 800;
-    justify-content: center;
   }
 
   .equipment-list-page .page-hero-simple {
@@ -1344,11 +1293,6 @@
 
 /* narrow mobile */
 @media (max-width: 480px) {
-  .equipment-list-page .top-brand-bar {
-    padding: 16px;
-    border-radius: 22px;
-  }
-
   .equipment-list-top-actions {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
