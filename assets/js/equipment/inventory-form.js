@@ -129,6 +129,9 @@ async function handleSubmitInventory(event) {
     await apiPost('createInventoryLog', payload);
 
     alert('재고조사 이력이 등록되었습니다.');
+    if (typeof window.invalidateDashboardSessionCache === 'function') {
+      window.invalidateDashboardSessionCache();
+    }
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
     showMessage(error.message || '재고조사 저장 중 오류가 발생했습니다.', 'error');
