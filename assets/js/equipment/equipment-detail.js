@@ -394,51 +394,65 @@ function renderDetailInfo(item) {
   if (!detailInfoGrid) return;
 
   const fields = [
-    { label: '장비번호', value: item.equipment_id },
-    { label: '장비명', value: item.equipment_name },
-    { label: '모델명', value: item.model_name },
-    { label: '사용부서', value: item.department },
-    { label: '제조사', value: item.manufacturer },
-    { label: '제조일자', value: formatDisplayDate(item.manufacture_date) },
-    { label: '취득일자', value: formatDisplayDate(item.purchase_date) },
-    { label: '시리얼번호', value: item.serial_no },
-    { label: '구매처', value: item.vendor },
-    { label: '담당자', value: item.manager_name },
-    { label: '연락처', value: item.manager_phone },
-    { label: '취득가액', value: safeNumber(item.acquisition_cost) },
-    { label: '유지보수 종료일', value: formatDisplayDate(item.maintenance_end_date) },
-    { label: '현재 상태', value: item.status, isStatus: true },
-    { label: '현재 위치', value: item.location },
-    { label: '현재 사용자', value: item.current_user },
-    { label: '등록일시', value: formatDisplayDateTime(item.created_at) },
-    { label: '수정일시', value: formatDisplayDateTime(item.updated_at) },
-    { label: '비고', value: item.memo || '-', wide: true }
+    { label: '장비번호',      value: item.equipment_id },
+    { label: '장비명',        value: item.equipment_name },
+    { label: '모델명',        value: item.model_name },
+    { label: '사용부서',      value: item.department },
+    { label: '제조사',        value: item.manufacturer },
+    { label: '시리얼번호',    value: item.serial_no },
+    { label: '제조일자',      value: formatDisplayDate(item.manufacture_date) },
+    { label: '취득일자',      value: formatDisplayDate(item.purchase_date) },
+    { label: '구매처',        value: item.vendor },
+    { label: '취득가액',      value: safeNumber(item.acquisition_cost) },
+    { label: '담당자',        value: item.manager_name },
+    { label: '연락처',        value: item.manager_phone },
+    { label: '유지보수 종료', value: formatDisplayDate(item.maintenance_end_date) },
+    { label: '현재 위치',     value: item.location },
+    { label: '현재 사용자',   value: item.current_user },
+    { label: '현재 상태',     value: item.status, isStatus: true },
+    { label: '등록일시',      value: formatDisplayDateTime(item.created_at) },
+    { label: '수정일시',      value: formatDisplayDateTime(item.updated_at) },
+    { label: '비고',          value: item.memo || '-', wide: true }
   ];
 
-  detailInfoGrid.innerHTML = fields
-    .map(function(field) {
-      const tileClass = 'info-tile' + (field.wide ? ' info-tile-wide' : '');
-      let valueHtml;
+  function buildInfoCell(field) {
+    let valueHtml;
+    if (field.isStatus) {
+      valueHtml = '<span class="status-badge ' + statusClass(field.value) + '">' +
+        escapeHtml(statusLabel(field.value)) + '</span>';
+    } else {
+      const display = (field.value === null || field.value === undefined || field.value === '')
+        ? '-' : field.value;
+      valueHtml = nl2br(display);
+    }
+    return (
+      '<div class="info-cell">' +
+        '<span class="info-cell-label">' + escapeHtml(field.label) + '</span>' +
+        '<span class="info-cell-value">' + valueHtml + '</span>' +
+      '</div>'
+    );
+  }
 
-      if (field.isStatus) {
-        valueHtml = '<span class="status-badge ' + statusClass(field.value) + '">' +
-          escapeHtml(statusLabel(field.value)) +
-          '</span>';
+  const rows = [];
+  let i = 0;
+  while (i < fields.length) {
+    const f = fields[i];
+    if (f.wide) {
+      rows.push('<div class="info-row info-row--wide">' + buildInfoCell(f) + '</div>');
+      i++;
+    } else {
+      const next = (fields[i + 1] && !fields[i + 1].wide) ? fields[i + 1] : null;
+      if (next) {
+        rows.push('<div class="info-row">' + buildInfoCell(f) + buildInfoCell(next) + '</div>');
+        i += 2;
       } else {
-        const display = (field.value === null || field.value === undefined || field.value === '')
-          ? '-'
-          : field.value;
-        valueHtml = nl2br(display);
+        rows.push('<div class="info-row">' + buildInfoCell(f) + '</div>');
+        i++;
       }
+    }
+  }
 
-      return (
-        '<div class="' + tileClass + '">' +
-          '<div class="info-tile-label">' + escapeHtml(field.label) + '</div>' +
-          '<div class="info-tile-value">' + valueHtml + '</div>' +
-        '</div>'
-      );
-    })
-    .join('');
+  detailInfoGrid.innerHTML = rows.join('');
 }
 
 function buildHistoryActionButtons(item) {
@@ -483,29 +497,49 @@ function renderHistories(items) {
     return;
   }
 
-  area.innerHTML = list.map(function(item) {
+  const rows = list.map(function(item) {
+    const actionBtns = buildHistoryActionButtons(item);
     return (
-      '<div class="timeline-card">' +
-        '<div class="timeline-card-head">' +
-          '<div>' +
-            '<div class="timeline-title">' + escapeHtml(historyTypeLabel(item.history_type)) + '</div>' +
-            '<div class="timeline-date">' + safeValue(formatDisplayDate(item.work_date)) + '</div>' +
-          '</div>' +
-          '<div class="timeline-badge ' + ResultStatusClass(item.result_status) + '">' +
+      '<tr class="det-tbl-row">' +
+        '<td class="det-tbl-cell det-tbl-cell--type">' +
+          '<div class="det-tbl-main">' + escapeHtml(historyTypeLabel(item.history_type)) + '</div>' +
+          '<div class="det-tbl-sub">' + safeValue(formatDisplayDate(item.work_date)) + '</div>' +
+        '</td>' +
+        '<td class="det-tbl-cell">' +
+          '<span class="timeline-badge ' + ResultStatusClass(item.result_status) + '">' +
             escapeHtml(resultStatusLabel(item.result_status)) +
-          '</div>' +
-        '</div>' +
-        '<div class="timeline-meta">' +
-          '<div class="timeline-meta-item"><span class="timeline-meta-label">처리업체</span><span class="timeline-meta-value">' + safeValue(item.vendor_name) + '</span></div>' +
-          '<div class="timeline-meta-item"><span class="timeline-meta-label">수리금액</span><span class="timeline-meta-value">' + safeNumber(item.amount) + '</span></div>' +
-          '<div class="timeline-meta-item"><span class="timeline-meta-label">다음 조치일</span><span class="timeline-meta-value">' + safeValue(formatDisplayDate(item.next_action_date)) + '</span></div>' +
-          '<div class="timeline-meta-item"><span class="timeline-meta-label">요청부서</span><span class="timeline-meta-value">' + safeValue(item.request_department) + '</span></div>' +
-        '</div>' +
-        '<div class="timeline-desc">' + nl2br(item.description || '-') + '</div>' +
-        buildHistoryActionButtons(item) +
-      '</div>'
+          '</span>' +
+        '</td>' +
+        '<td class="det-tbl-cell">' + safeValue(item.request_department) + '</td>' +
+        '<td class="det-tbl-cell">' + safeValue(item.vendor_name) + '</td>' +
+        '<td class="det-tbl-cell">' + safeNumber(item.amount) + '</td>' +
+        '<td class="det-tbl-cell det-tbl-cell--desc">' + nl2br(item.description || '-') + '</td>' +
+        (actionBtns
+          ? '<td class="det-tbl-cell det-tbl-cell--actions">' + actionBtns + '</td>'
+          : '') +
+      '</tr>'
     );
   }).join('');
+
+  const actionHeader = detailPermission.canEdit
+    ? '<th class="det-tbl-th"></th>'
+    : '';
+
+  area.innerHTML =
+    '<div class="det-tbl-scroll">' +
+      '<table class="det-tbl">' +
+        '<thead><tr>' +
+          '<th class="det-tbl-th det-tbl-th--type">구분 / 날짜</th>' +
+          '<th class="det-tbl-th">상태</th>' +
+          '<th class="det-tbl-th">요청부서</th>' +
+          '<th class="det-tbl-th">처리업체</th>' +
+          '<th class="det-tbl-th">금액</th>' +
+          '<th class="det-tbl-th det-tbl-th--desc">내용</th>' +
+          actionHeader +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+    '</div>';
 
   bindHistoryActionButtons();
 }
@@ -523,27 +557,34 @@ function renderInventoryLogs(items) {
     return;
   }
 
-  area.innerHTML = list.map(function(item) {
+  const rows = list.map(function(item) {
     return (
-      '<div class="timeline-card">' +
-        '<div class="timeline-card-head">' +
-          '<div>' +
-            '<div class="timeline-title">' + escapeHtml(conditionStatusLabel(item.condition_status)) + '</div>' +
-            '<div class="timeline-date">' +
-              safeValue(formatDisplayDate(item.checked_at)) +
-              ' · ' +
-              safeValue(item.checked_by_name || item.checked_by) +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="timeline-meta">' +
-          '<div class="timeline-meta-item"><span class="timeline-meta-label">부서</span><span class="timeline-meta-value">' + safeValue(item.department_at_check) + '</span></div>' +
-          '<div class="timeline-meta-item"><span class="timeline-meta-label">위치</span><span class="timeline-meta-value">' + safeValue(item.location_at_check) + '</span></div>' +
-        '</div>' +
-        '<div class="timeline-desc">' + nl2br(item.memo || '-') + '</div>' +
-      '</div>'
+      '<tr class="det-tbl-row">' +
+        '<td class="det-tbl-cell det-tbl-cell--type">' +
+          '<div class="det-tbl-main">' + escapeHtml(conditionStatusLabel(item.condition_status)) + '</div>' +
+          '<div class="det-tbl-sub">' + safeValue(formatDisplayDate(item.checked_at)) + '</div>' +
+        '</td>' +
+        '<td class="det-tbl-cell">' + safeValue(item.checked_by_name || item.checked_by) + '</td>' +
+        '<td class="det-tbl-cell">' + safeValue(item.department_at_check) + '</td>' +
+        '<td class="det-tbl-cell">' + safeValue(item.location_at_check) + '</td>' +
+        '<td class="det-tbl-cell det-tbl-cell--desc">' + nl2br(item.memo || '-') + '</td>' +
+      '</tr>'
     );
   }).join('');
+
+  area.innerHTML =
+    '<div class="det-tbl-scroll">' +
+      '<table class="det-tbl">' +
+        '<thead><tr>' +
+          '<th class="det-tbl-th det-tbl-th--type">상태 / 날짜</th>' +
+          '<th class="det-tbl-th">점검자</th>' +
+          '<th class="det-tbl-th">부서</th>' +
+          '<th class="det-tbl-th">위치</th>' +
+          '<th class="det-tbl-th det-tbl-th--desc">메모</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+    '</div>';
 }
 
 async function loadHistorySection(equipmentId, userEmail) {
