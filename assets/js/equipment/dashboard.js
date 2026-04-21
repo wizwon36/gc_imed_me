@@ -208,7 +208,8 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     const title = textSafe(item.equipment_name || '-');
     const dateText = textSafe(formatDisplayDate(item[options.dateField]));
     const model = textSafe(item.model_name || '-');
-    const dept = textSafe(item.department_display || item.department || '-');
+    const deptRaw = item.department_display || item.department || '-';
+    const dept = textSafe(deptRaw).replace(' / ', '<br>');
     const id = encodeURIComponent(item.equipment_id || '');
 
     let sideHtml = '';
