@@ -84,8 +84,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1.85fr) minmax(300px, 0.85fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
   margin-top: 14px;
+}
+
+.detail-info-card {
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .detail-sub-grid {
