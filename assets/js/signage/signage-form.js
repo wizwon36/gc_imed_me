@@ -477,13 +477,13 @@ function buildPayload() {
 
   let nameplateType = '';
   let nameplateText = '';
-  let magnetYn      = '';
+  let magnetYn      = 'N'; // 자석 부착 미사용 — 기본값 N 고정
   const draftConfirm = document.getElementById('draft_confirm')?.checked ? 'Y' : 'N';
 
   if (type === 'NAMEPLATE') {
     nameplateType = currentNpSubtype ? `${currentNpType}-${currentNpSubtype}` : currentNpType;
     nameplateText = buildNameplateText();
-    magnetYn      = document.querySelector('input[name="magnet_yn"]:checked')?.value || '';
+    // magnet_yn: 기본값 N 고정 (UI 미사용)
     setVal('nameplate_text', nameplateText);
   }
 
@@ -539,7 +539,7 @@ function validatePayload(p) {
     if (!currentNpType)    return fail('명판 타입을 선택해 주세요.', null);
     if (!currentNpSubtype) return fail('세부 디자인을 선택해 주세요.', null);
     if (!currentLayout)    return fail('문구 레이아웃을 선택해 주세요.', null);
-    if (!p.magnet_yn)      return fail('자석 부착 여부를 선택해 주세요.', null);
+    // if (!p.magnet_yn) return fail('자석 부착 여부를 선택해 주세요.', null); // 미사용
 
     for (const fieldKey of currentLayout.fields) {
       const meta = NP_FIELD_META[fieldKey];
