@@ -439,18 +439,16 @@
   }
 
   .equipment-detail-page .top-brand-bar {
-    flex-wrap: wrap;
-    padding: 14px 16px;
-    border-radius: 20px;
-    gap: 10px;
+    display: block;
+    padding: 16px 18px 18px;
+    border-radius: 22px;
   }
 
   .equipment-detail-page .top-brand-left {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex: 1 1 auto;
-    min-width: 0;
+    width: 100%;
   }
 
   .equipment-detail-page .top-brand-texts {
@@ -460,33 +458,35 @@
 
   .equipment-detail-page .top-brand-title {
     display: block;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.25;
     word-break: keep-all;
   }
 
   .equipment-detail-page .top-brand-sub {
     display: block;
-    font-size: 12px;
+    margin-top: 4px;
+    font-size: 13px;
     color: #667085;
     white-space: normal;
   }
 
   .detail-top-actions {
     width: 100%;
+    margin-top: 14px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
-    margin-top: 0;
   }
 
   .detail-top-actions .portal-header-btn {
     width: 100%;
     min-width: 0;
-    min-height: 40px;
-    padding: 0 8px;
-    border-radius: 12px;
-    font-size: 13px;
+    min-height: 46px;
+    padding: 0 10px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 800;
     justify-content: center;
   }
 
