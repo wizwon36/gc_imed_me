@@ -44,8 +44,6 @@
       </div>
 
       <div class="detail-action-group">
-        <button type="button" id="addHistoryBtn" class="btn" style="display:none;">이력 등록</button>
-        <button type="button" id="addInventoryBtn" class="btn" style="display:none;">재고조사 등록</button>
         <button type="button" id="editEquipmentBtn" class="btn btn-primary" style="display:none;">장비 수정</button>
         <button type="button" id="deleteBtn" class="btn btn-danger" style="display:none;">장비 삭제</button>
       </div>
@@ -103,9 +101,12 @@
 
       <div class="detail-history-grid">
         <article class="card detail-list-card">
-          <div class="section-head">
-            <h2 class="section-title">수리 / 점검 이력</h2>
-            <div class="sub-text" id="historyCountText">불러오는 중...</div>
+          <div class="section-head detail-card-head">
+            <div>
+              <h2 class="section-title">수리 / 점검 이력</h2>
+              <div class="sub-text" id="historyCountText">불러오는 중...</div>
+            </div>
+            <button type="button" id="addHistoryBtn" class="btn btn-card-action" style="display:none;">+ 이력 등록</button>
           </div>
           <div id="historyArea">
             <div class="empty-box">불러오는 중...</div>
@@ -113,9 +114,12 @@
         </article>
 
         <article class="card detail-list-card">
-          <div class="section-head">
-            <h2 class="section-title">재고조사 이력</h2>
-            <div class="sub-text" id="inventoryCountText">불러오는 중...</div>
+          <div class="section-head detail-card-head">
+            <div>
+              <h2 class="section-title">재고조사 이력</h2>
+              <div class="sub-text" id="inventoryCountText">불러오는 중...</div>
+            </div>
+            <button type="button" id="addInventoryBtn" class="btn btn-card-action" style="display:none;">+ 재고조사</button>
           </div>
           <div id="inventoryArea">
             <div class="empty-box">불러오는 중...</div>
