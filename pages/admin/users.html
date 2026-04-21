@@ -1,1031 +1,809 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>사용자 관리</title>
-
-  <link rel="stylesheet" href="../../assets/css/common.css" />
-
-  <style>
-    :root {
-      --page-max-width: 1440px;
-      --card-radius: 20px;
-      --card-border: 1px solid rgba(15, 23, 42, 0.08);
-      --card-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
-      --text-subtle: #64748b;
-      --text-strong: #0f172a;
-      --bg-soft: #f8fafc;
-      --bg-panel: #ffffff;
-      --line-soft: rgba(148, 163, 184, 0.22);
-      --danger-soft: rgba(220, 38, 38, 0.08);
-      --success-soft: rgba(22, 163, 74, 0.08);
-      --primary-color: #2563eb;
-      --danger-color: #dc2626;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
-      color: var(--text-strong);
-      font-family: Pretendard, "Noto Sans KR", Arial, sans-serif;
-    }
-
-    .admin-page {
-      max-width: var(--page-max-width);
-      margin: 0 auto;
-      padding: 28px 20px 48px;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 22px;
-    }
-
-    .page-title-wrap h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    .page-title-wrap p {
-      margin: 8px 0 0;
-      color: var(--text-subtle);
-      line-height: 1.6;
-      font-size: 14px;
-    }
-
-    .page-header-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .admin-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 0 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(15, 23, 42, 0.10);
-      background: #fff;
-      color: var(--text-strong);
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, opacity 0.15s ease;
-      text-decoration: none;
-    }
-
-    .admin-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-    }
-
-    .admin-btn:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-    
-    .admin-btn.primary {
-      border-color: rgba(37, 99, 235, 0.14);
-      background: rgba(37, 99, 235, 0.08);
-      color: #1d4ed8;
-      box-shadow: none;
-    }
-    
-    .admin-btn.primary:hover {
-      background: rgba(37, 99, 235, 0.12);
-      box-shadow: none;
-    }
-    
-    .admin-btn.secondary {
-      background: #fff;
-    }
-
-    .admin-btn.danger {
-      border-color: rgba(220, 38, 38, 0.18);
-      color: var(--danger-color);
-    }
-
-    .admin-btn.small {
-      min-height: 36px;
-      padding: 0 12px;
-      font-size: 13px;
-      border-radius: 10px;
-    }
-
-    #saveUserBtn {
-      min-width: 140px;
-      padding: 0 22px;
-      border-radius: 16px;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-    }
-    
-    .page-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      align-items: start;
-    }
-
-    /* 좌측 컬럼: 등록폼 + 가입신청 패널을 세로로 쌓음 */
-    .page-col-left {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      min-width: 0;
-    }
-
-    /* 우측 컬럼: 사용자 목록, 높이 고정 + 내부 스크롤 */
-    .page-col-right {
-      position: sticky;
-      top: 20px;
-      min-width: 0;
-    }
-
-    /* 사용자 목록 패널 내부 스크롤 */
-    .user-list-scroll {
-      max-height: calc(100vh - 220px);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-    }
-
-    /* 스크롤바 스타일 */
-    .user-list-scroll::-webkit-scrollbar {
-      width: 6px;
-    }
-    .user-list-scroll::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .user-list-scroll::-webkit-scrollbar-thumb {
-      background: rgba(148,163,184,0.4);
-      border-radius: 999px;
-    }
-
-    .panel-card {
-      background: var(--bg-panel);
-      border: var(--card-border);
-      border-radius: var(--card-radius);
-      box-shadow: var(--card-shadow);
-      overflow: hidden;
-    }
-
-    .panel-header {
-      padding: 22px 22px 14px;
-      border-bottom: 1px solid var(--line-soft);
-    }
-
-    .panel-title {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    .panel-desc {
-      margin: 8px 0 0;
-      color: var(--text-subtle);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .panel-body {
-      padding: 22px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .form-label {
-      display: inline-flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-strong);
-    }
-
-    .field-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 22px;
-      padding: 0 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1;
-      letter-spacing: -0.01em;
-    }
-
-    .field-badge.required {
-      background: var(--danger-soft);
-      color: #b91c1c;
-    }
-
-    .field-badge.optional {
-      background: rgba(100, 116, 139, 0.10);
-      color: #475569;
-    }
-
-    .input,
-    .select {
-      width: 100%;
-      min-height: 46px;
-      padding: 0 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      background: #fff;
-      font-size: 14px;
-      color: var(--text-strong);
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-      -webkit-appearance: none;
-      appearance: none;
-      box-sizing: border-box;
-    }
-
-    /* select 화살표 복원 */
-    .select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
-    }
-
-    .input:focus,
-    .select:focus {
-      border-color: rgba(37, 99, 235, 0.55);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
-    }
-
-    .input[disabled] {
-      background: #f1f5f9;
-      color: #64748b;
-    }
-
-    .is-invalid {
-      border-color: rgba(220, 38, 38, 0.8) !important;
-      box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.10) !important;
-      background: rgba(254, 242, 242, 0.72);
-    }
-
-    .form-help {
-      margin: 0;
-      color: var(--text-subtle);
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .required-guide {
-      margin-top: 2px;
-    }
-
-    .permission-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
-    .permission-card {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 140px;
-      gap: 12px;
-      align-items: center;
-      padding: 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      background: var(--bg-soft);
-    }
-
-    .permission-title {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .permission-desc {
-      margin: 4px 0 0;
-      color: var(--text-subtle);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .message-box {
-      display: none;
-      margin-bottom: 16px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 1px solid transparent;
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.6;
-    }
-
-    .message-box.success,
-    .message-box.error {
-      display: block;
-    }
-
-    .message-box.success {
-      background: var(--success-soft);
-      border-color: rgba(22, 163, 74, 0.16);
-      color: #166534;
-    }
-
-    .message-box.error {
-      background: rgba(254, 242, 242, 0.9);
-      border-color: rgba(220, 38, 38, 0.18);
-      color: #b91c1c;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 2px;
-    }
-
-    .filter-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      align-items: end;
-      margin-bottom: 16px;
-    }
-    
-    .filter-row > .form-group {
-      min-width: 0;
-    }
-    
-    .filter-row > .form-group:first-child {
-      grid-column: 1 / -1;
-    }
-    
-    .filter-row .admin-btn {
-      width: 100%;
-    }
-    
-    .list-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .list-count {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-subtle);
-    }
-
-    .user-list {
-      display: block;
-    }
-
-    /* ── 사용자 목록 테이블 ── */
-    .user-tbl {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      table-layout: fixed;
-      background: #fff;
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .user-tbl-th {
-      padding: 10px 12px;
-      background: #f1f5fb;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-      font-size: 12px;
-      font-weight: 800;
-      color: #516274;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    .user-tbl-th--name    { width: 18%; }
-    .user-tbl-th--org     { width: 20%; }
-    .user-tbl-th--role    { width: 10%; text-align: center; }
-    .user-tbl-th--status  { width: 10%; text-align: center; }
-    .user-tbl-th--actions { width: 42%; text-align: center; }
-
-    .user-tbl-row { transition: background-color 0.12s ease; }
-    .user-tbl-row:not(:last-child) td { border-bottom: 1px solid #eef2f6; }
-    .user-tbl-row:hover { background: #f7f9fd; }
-
-    .user-tbl-cell {
-      padding: 10px 12px;
-      font-size: 13px;
-      color: #1e293b;
-      vertical-align: middle;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .user-tbl-cell--org {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      vertical-align: middle;
-    }
-
-    .user-tbl-org-main {
-      font-size: 13px;
-      color: #1e293b;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .user-tbl-cell--status { text-align: center; overflow: visible; white-space: nowrap; }
-    .user-tbl-cell--role { white-space: nowrap; overflow: visible; text-align: center; }
-    .user-tbl-cell--actions { text-align: center; overflow: visible; white-space: nowrap; }
-
-    .user-tbl-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #0b1f44;
-    }
-
-    .user-tbl-sub {
-      margin-top: 2px;
-      font-size: 11px;
-      color: #94a3b8;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .user-tbl-actions {
-      display: inline-flex;
-      gap: 5px;
-      justify-content: center;
-      flex-wrap: nowrap;
-      white-space: nowrap;
-    }
-
-    .user-tbl-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 28px;
-      padding: 0 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      background: #f8fafc;
-      color: #0f172a;
-      transition: background 0.12s ease, border-color 0.12s ease;
-      white-space: nowrap;
-    }
-
-    .user-tbl-btn:hover { background: #e8edf5; border-color: #b0bccc; }
-
-    .user-tbl-btn.danger {
-      border-color: rgba(220, 38, 38, 0.24);
-      color: #dc2626;
-      background: rgba(220, 38, 38, 0.05);
-    }
-
-    .user-tbl-btn.danger:hover { background: rgba(220, 38, 38, 0.10); }
-
-    /* 가입신청 카드 */
-    .pending-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px;
-      border-bottom: 1px solid rgba(148,163,184,0.14);
-    }
-    .pending-item:last-child { border-bottom: none; }
-
-    .pending-item__main { flex: 1; min-width: 0; }
-
-    .pending-item__title {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-    .pending-item__title strong { font-size: 15px; color: #0f172a; }
-    .pending-item__title span { font-size: 13px; color: #64748b; }
-
-    .pending-item__meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: 13px;
-      color: #64748b;
-      margin-bottom: 4px;
-    }
-    .pending-item__memo {
-      font-size: 13px;
-      color: #475569;
-      background: #f8fafc;
-      border-radius: 8px;
-      padding: 6px 10px;
-      margin-top: 6px;
-    }
-
-    .pending-item__actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .admin-btn.approve {
-      border-color: rgba(22,163,74,0.2);
-      background: rgba(22,163,74,0.08);
-      color: #166534;
-    }
-    .admin-btn.approve:hover { background: rgba(22,163,74,0.15); }
-
-    .status-chip {
-      display: inline-flex;
-      align-items: center;
-      min-height: 24px;
-      padding: 0 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .status-chip.active {
-      background: var(--success-soft);
-      color: #166534;
-    }
-
-    .status-chip.inactive {
-      background: rgba(148, 163, 184, 0.14);
-      color: #475569;
-    }
-
-    .user-list-empty {
-      display: block;
-      padding: 18px 16px;
-      border-radius: 16px;
-      border: 1px dashed rgba(148, 163, 184, 0.36);
-      background: #fff;
-      color: var(--text-subtle);
-      font-size: 14px;
-      line-height: 1.7;
-      word-break: keep-all;
-      overflow-wrap: break-word;
-      text-align: left;
-    }
-
-    .user-list-empty.error {
-      border-color: rgba(220, 38, 38, 0.24);
-      background: rgba(254, 242, 242, 0.8);
-      color: #b91c1c;
-    }
-
-    .user-list-empty strong {
-      display: inline;
-      white-space: nowrap;
-      word-break: keep-all;
-    }
-
-    #globalLoading {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 23, 42, 0.26);
-      backdrop-filter: blur(3px);
-      padding: 20px;
-    }
-
-    #globalLoading[aria-hidden="false"] {
-      display: flex;
-    }
-
-    .global-loading__dialog {
-      min-width: 240px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      padding: 24px 28px;
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-      text-align: center;
-    }
-
-    .global-loading__spinner {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 3px solid rgba(148, 163, 184, 0.28);
-      border-top-color: #2563eb;
-      animation: global-loading-spin 0.8s linear infinite;
-    }
-
-    .global-loading__text {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-strong);
-      line-height: 1.5;
-    }
-
-    @keyframes global-loading-spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @media (max-width: 1180px) {
-      .page-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .page-col-right {
-        position: static;
-      }
-
-      .user-list-scroll {
-        max-height: 520px;
-      }
-
-      .filter-row {
-        grid-template-columns: 1fr 1fr;
-      }
-    
-      .filter-row > .form-group:first-child {
-        grid-column: 1 / -1;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .admin-page {
-        padding: 20px 14px 34px;
-      }
-
-      .page-header {
-        flex-direction: column;
-      }
-
-      .page-header-actions {
-        width: 100%;
-      }
-
-      .page-header-actions .admin-btn {
-        flex: 1 1 auto;
-      }
-
-      .panel-header,
-      .panel-body {
-        padding: 18px;
-      }
-
-      .form-row,
-      .filter-row,
-      .permission-card {
-        grid-template-columns: 1fr;
-      }
-
-      .user-tbl-th--org,
-      .user-tbl-cell--org,
-      .user-tbl-th--role,
-      .user-tbl-cell--role,
-      .user-tbl-th--status,
-      .user-tbl-cell--status { display: none; }
-
-      .user-tbl-th--name    { width: 40%; }
-      .user-tbl-th--actions { width: 60%; }
-
-      .user-tbl-cell--actions {
-        overflow: visible;
-        white-space: nowrap;
-      }
-
-      .user-tbl-actions {
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 4px;
-      }
-
-      .list-topbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .user-item__actions {
-        justify-content: flex-start;
-      }
-      
-      .filter-row {
-        grid-template-columns: 1fr;
-      }
-    
-      .filter-row > .form-group:first-child {
-        grid-column: auto;
-      }
-
-      .user-list-empty {
-        font-size: 15px;
-        line-height: 1.75;
-      }
-
-      #saveUserBtn {
-        width: 100%;
-        min-width: 0;
-      }
-      
-      .form-actions {
-        flex-direction: column;
-        align-items: stretch;
-      }      
-    }
-  </style>
-</head>
-<body>
-  <div class="admin-page">
-    <header class="page-header">
-      <div class="page-title-wrap">
-        <h1>사용자 관리</h1>
-        <p>사용자 등록, 권한 관리, 비밀번호 초기화, 활성 여부를 관리합니다.</p>
+let currentSessionUser = null;
+let editingUserEmail = '';
+let allUsers = [];
+let hasLoadedUsers = false;
+let orgBinder = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = window.auth?.requireAuth?.();
+  if (!user) return;
+
+  currentSessionUser = user;
+
+  if (String(user.role || '').trim().toLowerCase() !== 'admin') {
+    alert('관리자만 접근할 수 있습니다.');
+    location.replace(`${CONFIG.SITE_BASE_URL}/portal.html`);
+    return;
+  }
+
+  bindEvents();
+
+  showGlobalLoading('초기 정보를 불러오는 중...');
+  try {
+    await initializeOrgData();
+  } catch (error) {
+    setAdminMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+});
+
+function bindEvents() {
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    showGlobalLoading('로그아웃 중...');
+    window.auth.logout();
+  });
+
+  document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
+  document.getElementById('cancelEditBtn')?.addEventListener('click', () => resetEditMode());
+  document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
+  document.getElementById('loadPendingBtn')?.addEventListener('click', loadPendingRegistrations);
+
+  // 가입신청 목록 이벤트 위임 (승인 / 거절)
+  document.getElementById('pendingList')?.addEventListener('click', async (event) => {
+    const approveBtn = event.target.closest('.js-approve');
+    if (approveBtn) {
+      await handleApprove(approveBtn.dataset.id);
+      return;
+    }
+    const rejectBtn = event.target.closest('.js-reject');
+    if (rejectBtn) {
+      await handleReject(rejectBtn.dataset.id);
+    }
+  });
+
+  document.getElementById('userSearchKeyword')?.addEventListener('input', () => {
+    if (hasLoadedUsers) renderUserList();
+  });
+
+  document.getElementById('userFilterActive')?.addEventListener('change', () => {
+    if (hasLoadedUsers) renderUserList();
+  });
+
+  document.getElementById('userFilterRole')?.addEventListener('change', () => {
+    if (hasLoadedUsers) renderUserList();
+  });
+
+  document.getElementById('userFilterClinic')?.addEventListener('change', () => {
+    if (hasLoadedUsers) renderUserList();
+  });
+
+  document.getElementById('clinic_code')?.addEventListener('change', () => {
+    clearFieldInvalid();
+  });
+
+  // 아이디 입력 시 허용되지 않는 문자 실시간 제거 (한글·공백·특수문자)
+  document.getElementById('userEmail')?.addEventListener('input', (e) => {
+    const raw = e.target.value;
+    const cleaned = raw.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    if (raw !== cleaned) e.target.value = cleaned;
+    e.target.classList.remove('is-invalid');
+  });
+
+  document.getElementById('userList')?.addEventListener('click', async (event) => {
+    const editBtn = event.target.closest('.js-edit-user');
+    if (editBtn) {
+      const email = editBtn.dataset.email;
+      if (email) await editUser(email);
+      return;
+    }
+
+    const resetBtn = event.target.closest('.js-reset-password');
+    if (resetBtn) {
+      const email = resetBtn.dataset.email;
+      if (email) await resetUserPassword(email);
+      return;
+    }
+
+    const activeBtn = event.target.closest('.js-toggle-active');
+    if (activeBtn) {
+      const email = activeBtn.dataset.email;
+      const active = activeBtn.dataset.active;
+      if (email && active) await setUserActive(email, active);
+    }
+  });
+}
+
+function getRequestUserEmail() {
+  return String(currentSessionUser?.email || currentSessionUser?.user_email || '')
+    .trim()
+    .toLowerCase();
+}
+
+async function initializeOrgData() {
+  await window.orgSelect.loadOrgData();
+
+  window.orgSelect.fillSelectOptions(
+    document.getElementById('clinic_code'),
+    window.orgSelect.getClinics(),
+    { emptyText: '의원을 선택하세요' }
+  );
+
+  window.orgSelect.fillSelectOptions(
+    document.getElementById('userFilterClinic'),
+    window.orgSelect.getClinics(),
+    { emptyText: '전체 의원' }
+  );
+
+  window.orgSelect.fillSelectOptions(
+    document.getElementById('team_code'),
+    [],
+    { emptyText: '팀을 선택하세요' }
+  );
+
+  orgBinder = window.orgSelect.bindClinicTeamSelects({
+    clinicSelect: document.getElementById('clinic_code'),
+    teamSelect: document.getElementById('team_code')
+  });
+}
+
+function buildDepartmentText(clinicName, teamName) {
+  const clinic = normalize(clinicName);
+  const team = normalize(teamName);
+
+  if (clinic && team) return `${clinic} / ${team}`;
+  if (team) return team;
+  if (clinic) return clinic;
+  return '';
+}
+
+function setAdminMessage(message, type = '') {
+  const el = document.getElementById('adminUserMessage');
+  if (!el) return;
+
+  el.textContent = message || '';
+  el.className = 'message-box';
+
+  if (type) {
+    el.classList.add(type);
+  }
+}
+
+function clearAdminMessage() {
+  setAdminMessage('');
+}
+
+function clearFieldInvalid() {
+  document.querySelectorAll('.is-invalid').forEach((el) => {
+    el.classList.remove('is-invalid');
+  });
+}
+
+function markFieldInvalid(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (!el) return;
+  el.classList.add('is-invalid');
+  el.focus();
+}
+
+function normalize(value) {
+  return String(value || '').trim();
+}
+
+function collectPermissions() {
+  const permissionEls = document.querySelectorAll('.app-permission');
+  const permissions = [];
+
+  permissionEls.forEach((el) => {
+    const appId = normalize(el.dataset.appId);
+    const permission = normalize(el.value);
+
+    if (!appId || !permission) return;
+
+    permissions.push({
+      app_id: appId,
+      permission,
+      active: 'Y'
+    });
+  });
+
+  return permissions;
+}
+
+function buildUserOrgPayload() {
+  const clinicEl = document.getElementById('clinic_code');
+  const teamEl = document.getElementById('team_code');
+
+  return {
+    clinic_code: normalize(clinicEl?.value),
+    team_code: normalize(teamEl?.value)
+  };
+}
+
+function validateUserForm(data) {
+  clearFieldInvalid();
+
+  if (!data.user_email) {
+    markFieldInvalid('userEmail');
+    throw new Error('아이디를 입력해 주세요.');
+  }
+
+  // 아이디 형식 검증: 영문 소문자·숫자·점·하이픈·언더바만 허용
+  if (!/^[a-z0-9._-]+$/.test(data.user_email)) {
+    markFieldInvalid('userEmail');
+    throw new Error('아이디는 영문 소문자, 숫자, 점(.), 하이픈(-), 언더바(_)만 사용할 수 있습니다.');
+  }
+
+  if (!data.user_name) {
+    markFieldInvalid('userName');
+    throw new Error('이름을 입력해 주세요.');
+  }
+
+  if (!data.clinic_code) {
+    markFieldInvalid('clinic_code');
+    throw new Error('의원을 선택해 주세요.');
+  }
+
+  if (!data.team_code) {
+    markFieldInvalid('team_code');
+    throw new Error('팀을 선택해 주세요.');
+  }
+}
+
+async function handleSaveUser() {
+  clearAdminMessage();
+
+  try {
+    if (editingUserEmail) {
+      await updateUser();
+    } else {
+      await createUser();
+    }
+  } catch (error) {
+    setAdminMessage(error.message || '사용자 저장 중 오류가 발생했습니다.', 'error');
+  }
+}
+
+async function createUser() {
+  const org = buildUserOrgPayload();
+  const payload = {
+    request_user_email: getRequestUserEmail(),
+    user_email: normalize(document.getElementById('userEmail')?.value).toLowerCase(),
+    user_name: normalize(document.getElementById('userName')?.value),
+
+    clinic_code: org.clinic_code,
+    team_code: org.team_code,
+
+    phone: normalize(document.getElementById('phone')?.value),
+    role: normalize(document.getElementById('globalRole')?.value) || 'user',
+    active: normalize(document.getElementById('userActive')?.value) || 'Y',
+    permissions: collectPermissions()
+  };
+
+  validateUserForm(payload);
+
+  const saveBtn = document.getElementById('saveUserBtn');
+  if (saveBtn) saveBtn.disabled = true;
+
+  showGlobalLoading('사용자 등록 중...');
+  try {
+    const result = await apiPost('createUser', payload);
+    setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
+
+    resetEditMode(false);
+
+    hasLoadedUsers = false;
+    allUsers = [];
+    document.getElementById('userListCount').textContent = '아직 조회하지 않았습니다.';
+    document.getElementById('userList').innerHTML = `
+      <div class="user-list-empty">
+        등록이 완료되었습니다. 필요하면 <strong>사용자 조회</strong>를 눌러 목록을 다시 불러와 주세요.
       </div>
+    `;
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+    hideGlobalLoading();
+  }
+}
 
-      <div class="page-header-actions">
-        <a href="../../portal.html" class="admin-btn secondary">HOME</a>
-        <button type="button" id="logoutBtn" class="admin-btn secondary">로그아웃</button>
-      </div>
-    </header>
+async function updateUser() {
+  const org = buildUserOrgPayload();
+  const payload = {
+    request_user_email: getRequestUserEmail(),
+    user_email: editingUserEmail,
+    user_name: normalize(document.getElementById('userName')?.value),
 
-    <div class="page-grid">
+    clinic_code: org.clinic_code,
+    team_code: org.team_code,
 
-      <!-- 좌측: 등록폼 + 가입신청 관리 -->
-      <div class="page-col-left">
+    phone: normalize(document.getElementById('phone')?.value),
+    role: normalize(document.getElementById('globalRole')?.value) || 'user',
+    active: normalize(document.getElementById('userActive')?.value) || 'Y',
+    permissions: collectPermissions()
+  };
 
-        <section class="panel-card">
-          <div class="panel-header">
-            <h2 class="panel-title" id="formTitle">사용자 등록</h2>
-            <p class="panel-desc" id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
+  validateUserForm(payload);
+
+  const saveBtn = document.getElementById('saveUserBtn');
+  if (saveBtn) saveBtn.disabled = true;
+
+  showGlobalLoading('사용자 정보 수정 중...');
+  try {
+    const result = await apiPost('updateUser', payload);
+    setAdminMessage(result.message || '사용자 정보가 수정되었습니다.', 'success');
+
+    resetEditMode(false);
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+    }
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+    hideGlobalLoading();
+  }
+}
+
+async function searchUsers() {
+  const searchBtn = document.getElementById('searchUsersBtn');
+  if (searchBtn) searchBtn.disabled = true;
+
+  try {
+    await loadUsers();
+    hasLoadedUsers = true;
+  } catch (error) {
+    setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (searchBtn) searchBtn.disabled = false;
+  }
+}
+
+async function loadUsers() {
+  const listEl = document.getElementById('userList');
+  const countEl = document.getElementById('userListCount');
+
+  showGlobalLoading('사용자 목록을 불러오는 중입니다...');
+
+  try {
+    const result = await apiGet('listUsers', {
+      request_user_email: getRequestUserEmail()
+    });
+
+    allUsers = Array.isArray(result.data) ? result.data : [];
+    renderUserList();
+  } catch (error) {
+    allUsers = [];
+    if (countEl) countEl.textContent = '';
+
+    if (listEl) {
+      listEl.innerHTML = `
+        <div class="user-list-empty error">
+          ${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}
+        </div>
+      `;
+    }
+    throw error;
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+function renderUserList() {
+  const listEl = document.getElementById('userList');
+  const countEl = document.getElementById('userListCount');
+  if (!listEl) return;
+
+  const keyword = normalize(document.getElementById('userSearchKeyword')?.value).toLowerCase();
+  const activeFilter = normalize(document.getElementById('userFilterActive')?.value).toUpperCase();
+  const roleFilter = normalize(document.getElementById('userFilterRole')?.value).toLowerCase();
+  const clinicFilter = normalize(document.getElementById('userFilterClinic')?.value);
+
+  const filteredUsers = allUsers.filter((user) => {
+    const name = normalize(user.user_name).toLowerCase();
+    const email = normalize(user.user_email).toLowerCase();
+    const department = normalize(user.department).toLowerCase();
+    const clinicName = normalize(user.clinic_name).toLowerCase();
+    const teamName = normalize(user.team_name).toLowerCase();
+    const active = normalize(user.active).toUpperCase();
+    const role = normalize(user.role).toLowerCase();
+    const clinicCode = normalize(user.clinic_code);
+
+    const matchesKeyword =
+      !keyword ||
+      name.includes(keyword) ||
+      email.includes(keyword) ||
+      department.includes(keyword) ||
+      clinicName.includes(keyword) ||
+      teamName.includes(keyword);
+
+    const matchesActive = !activeFilter || active === activeFilter;
+    const matchesRole = !roleFilter || role === roleFilter;
+    const matchesClinic = !clinicFilter || clinicCode === clinicFilter;
+
+    return matchesKeyword && matchesActive && matchesRole && matchesClinic;
+  });
+
+  if (countEl) {
+    countEl.textContent = `총 ${filteredUsers.length}명 / 전체 ${allUsers.length}명`;
+  }
+
+  if (!filteredUsers.length) {
+    listEl.innerHTML = `<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>`;
+    return;
+  }
+
+  const rows = filteredUsers.map((user) => {
+    const isActive = normalize(user.active || 'Y').toUpperCase() === 'Y';
+    const statusClass = isActive ? 'active' : 'inactive';
+    const statusText = isActive ? '활성' : '비활성';
+    const clinicText = normalize(user.clinic_name) || '';
+    const teamText = normalize(user.team_name) || '';
+    const orgLine = clinicText && teamText
+      ? `${clinicText} / ${teamText}`
+      : (normalize(user.department) || '-');
+    const orgHtml = `<div class="user-tbl-org-main">${escapeHtml(orgLine)}</div>`;
+
+    return `
+      <tr class="user-tbl-row">
+        <td class="user-tbl-cell user-tbl-cell--name">
+          <div class="user-tbl-name">${escapeHtml(user.user_name || '-')}</div>
+          <div class="user-tbl-sub">${escapeHtml(user.user_email || '')}</div>
+        </td>
+        <td class="user-tbl-cell user-tbl-cell--org">${orgHtml}</td>
+        <td class="user-tbl-cell user-tbl-cell--role">${escapeHtml(user.role || 'user')}</td>
+        <td class="user-tbl-cell user-tbl-cell--status">
+          <span class="status-chip ${statusClass}">${statusText}</span>
+        </td>
+        <td class="user-tbl-cell user-tbl-cell--actions">
+          <div class="user-tbl-actions">
+            <button type="button" class="user-tbl-btn js-edit-user" data-email="${escapeHtml(user.user_email || '')}">수정</button>
+            <button type="button" class="user-tbl-btn js-reset-password" data-email="${escapeHtml(user.user_email || '')}">PW초기화</button>
+            <button type="button" class="user-tbl-btn ${isActive ? 'danger' : ''} js-toggle-active" data-email="${escapeHtml(user.user_email || '')}" data-active="${isActive ? 'N' : 'Y'}">
+              ${isActive ? '비활성화' : '활성화'}
+            </button>
           </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
-          <div class="panel-body">
-            <div id="adminUserMessage" class="message-box" aria-live="polite"></div>
+  listEl.innerHTML = `
+    <table class="user-tbl">
+      <thead>
+        <tr>
+          <th class="user-tbl-th user-tbl-th--name">이름 / 아이디</th>
+          <th class="user-tbl-th user-tbl-th--org">소속</th>
+          <th class="user-tbl-th user-tbl-th--role">역할</th>
+          <th class="user-tbl-th user-tbl-th--status">상태</th>
+          <th class="user-tbl-th user-tbl-th--actions">관리</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
 
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="userEmail" class="form-label">아이디 <span class="field-badge required">필수</span></label>
-                <input type="text" id="userEmail" class="input" placeholder="사번 또는 아이디 입력" />
-              </div>
+async function editUser(userEmail) {
+  if (!userEmail) return;
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="userName" class="form-label">이름 <span class="field-badge required">필수</span></label>
-                  <input type="text" id="userName" class="input" placeholder="사용자 이름" />
-                </div>
+  clearAdminMessage();
+  showGlobalLoading('사용자 정보를 불러오는 중...');
 
-                <div class="form-group">
-                  <label for="phone" class="form-label">연락처 <span class="field-badge optional">선택</span></label>
-                  <input type="text" id="phone" class="input" placeholder="연락처" />
-                </div>
-              </div>
+  try {
+    const result = await apiGet('getUserDetail', {
+      user_email: userEmail,
+      request_user_email: getRequestUserEmail()
+    });
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="clinic_code" class="form-label">의원 <span class="field-badge required">필수</span></label>
-                  <select id="clinic_code" class="select">
-                    <option value="">의원을 선택하세요</option>
-                  </select>
-                </div>
+    const data = result.data || {};
+    const user = data.user || {};
+    const permissions = Array.isArray(data.permissions) ? data.permissions : [];
 
-                <div class="form-group">
-                  <label for="team_code" class="form-label">팀 <span class="field-badge required">필수</span></label>
-                  <select id="team_code" class="select" disabled>
-                    <option value="">팀을 선택하세요</option>
-                  </select>
-                </div>
-              </div>
+    document.getElementById('userEmail').value = user.user_email || '';
+    document.getElementById('userName').value = user.user_name || '';
+    document.getElementById('phone').value = user.phone || '';
+    document.getElementById('globalRole').value = user.role || 'user';
+    document.getElementById('userActive').value = user.active || 'Y';
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="globalRole" class="form-label">기본 역할 <span class="field-badge optional">선택</span></label>
-                  <select id="globalRole" class="select">
-                    <option value="user">user</option>
-                    <option value="admin">admin</option>
-                  </select>
-                </div>
+    const clinicSelect = document.getElementById('clinic_code');
+    if (clinicSelect) {
+      clinicSelect.value = user.clinic_code || '';
+    }
 
-                <div class="form-group">
-                  <label for="userActive" class="form-label">사용 여부 <span class="field-badge optional">선택</span></label>
-                  <select id="userActive" class="select">
-                    <option value="Y">활성</option>
-                    <option value="N">비활성</option>
-                  </select>
-                </div>
-              </div>
+    if (orgBinder?.renderTeamsByClinic) {
+      orgBinder.renderTeamsByClinic(user.clinic_code || '', user.team_code || '');
+    } else {
+      window.orgSelect.fillSelectOptions(
+        document.getElementById('team_code'),
+        [],
+        { emptyText: '팀을 선택하세요' }
+      );
+      document.getElementById('team_code').value = user.team_code || '';
+    }
 
-              <div class="form-group">
-                <label class="form-label">앱별 권한 <span class="field-badge optional">선택</span></label>
-                <p class="form-help">권한을 선택하지 않으면 해당 앱에 접근할 수 없습니다.</p>
+    setPermissionValues(permissions);
+    setEditMode(user);
 
-                <div class="permission-grid">
-                  <div class="permission-card">
-                    <div>
-                      <p class="permission-title">의료장비 관리</p>
-                      <p class="permission-desc">장비 조회, 등록, 수정, 이력 및 재고조사 관련 기능</p>
-                    </div>
-                    <select class="select app-permission" data-app-id="equipment">
-                      <option value="">권한 없음</option>
-                      <option value="view">view</option>
-                      <option value="edit">edit</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  </div>
+    setAdminMessage(`사용자 ${user.user_name || user.user_email} 정보를 불러왔습니다.`, 'success');
+  } catch (error) {
+    setAdminMessage(error.message || '사용자 정보를 불러오지 못했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
 
-                  <div class="permission-card">
-                    <div>
-                      <p class="permission-title">사인물 신청</p>
-                      <p class="permission-desc">사인물, 명판 신청기능</p>
-                    </div>
-                    <select class="select app-permission" data-app-id="signage">
-                      <option value="">권한 없음</option>
-                      <option value="view">view</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  </div>
+async function resetUserPassword(userEmail) {
+  if (!userEmail) return;
 
-                  <div class="permission-card">
-                    <div>
-                      <p class="permission-title">로그 조회</p>
-                      <p class="permission-desc">시스템 작업 로그 및 변경 이력 확인</p>
-                    </div>
-                    <select class="select app-permission" data-app-id="logs">
-                      <option value="">권한 없음</option>
-                      <option value="view">view</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  </div>
+  const confirmed = confirm(`"${userEmail}" 계정의 비밀번호를 1111로 초기화하시겠습니까?`);
+  if (!confirmed) return;
 
-                  <div class="permission-card">
-                    <div>
-                      <p class="permission-title">사용자 관리</p>
-                      <p class="permission-desc">사용자 등록, 권한 관리, 비밀번호 초기화</p>
-                    </div>
-                    <select class="select app-permission" data-app-id="users_admin">
-                      <option value="">권한 없음</option>
-                      <option value="view">view</option>
-                      <option value="admin">admin</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
+  showGlobalLoading('비밀번호를 초기화하는 중...');
 
-              <p class="form-help" id="passwordHint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</p>
-              <p class="form-help required-guide"><span class="field-badge required">필수</span> 항목을 먼저 입력한 뒤 저장해 주세요.</p>
+  try {
+    const result = await apiPost('resetUserPassword', {
+      request_user_email: getRequestUserEmail(),
+      user_email: userEmail
+    });
 
-              <div class="form-actions">
-                <button type="button" id="saveUserBtn" class="admin-btn primary">사용자 등록</button>
-                <button type="button" id="cancelEditBtn" class="admin-btn secondary" style="display:none;">취소</button>
-              </div>
+    setAdminMessage(result.message || '비밀번호가 초기화되었습니다.', 'success');
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+    }
+  } catch (error) {
+    setAdminMessage(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+async function setUserActive(userEmail, active) {
+  if (!userEmail) return;
+
+  const actionLabel = active === 'Y' ? '활성화' : '비활성화';
+  const confirmed = confirm(`"${userEmail}" 사용자를 ${actionLabel}하시겠습니까?`);
+  if (!confirmed) return;
+
+  showGlobalLoading(`사용자 ${actionLabel} 처리 중...`);
+
+  try {
+    const result = await apiPost('setUserActive', {
+      request_user_email: getRequestUserEmail(),
+      user_email: userEmail,
+      active
+    });
+
+    setAdminMessage(result.message || `사용자 ${actionLabel} 처리가 완료되었습니다.`, 'success');
+
+    if (editingUserEmail && editingUserEmail === userEmail && active === 'N') {
+      resetEditMode(false);
+    }
+
+    if (hasLoadedUsers) {
+      await loadUsers();
+    }
+  } catch (error) {
+    setAdminMessage(error.message || `사용자 ${actionLabel} 중 오류가 발생했습니다.`, 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+function clearUserForm() {
+  ['userEmail', 'userName', 'phone'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const clinicSelect = document.getElementById('clinic_code');
+  const teamSelect = document.getElementById('team_code');
+
+  if (clinicSelect) {
+    clinicSelect.value = '';
+  }
+
+  if (teamSelect) {
+    window.orgSelect.fillSelectOptions(teamSelect, [], {
+      emptyText: '팀을 선택하세요'
+    });
+  }
+
+  const roleEl = document.getElementById('globalRole');
+  if (roleEl) roleEl.value = 'user';
+
+  const activeEl = document.getElementById('userActive');
+  if (activeEl) activeEl.value = 'Y';
+
+  document.querySelectorAll('.app-permission').forEach((el) => {
+    el.value = '';
+  });
+
+  clearFieldInvalid();
+}
+
+function setPermissionValues(permissions = []) {
+  const permissionMap = {};
+
+  permissions.forEach((item) => {
+    if (item?.app_id && normalize(item.active || 'Y') === 'Y') {
+      permissionMap[item.app_id] = item.permission || '';
+    }
+  });
+
+  document.querySelectorAll('.app-permission').forEach((el) => {
+    const appId = normalize(el.dataset.appId);
+    el.value = permissionMap[appId] || '';
+  });
+}
+
+function setEditMode(user) {
+  editingUserEmail = normalize(user.user_email).toLowerCase();
+
+  const formTitle = document.getElementById('formTitle');
+  const formDesc = document.getElementById('formDesc');
+  const saveBtn = document.getElementById('saveUserBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const emailInput = document.getElementById('userEmail');
+  const passwordHint = document.getElementById('passwordHint');
+
+  if (formTitle) formTitle.textContent = '사용자 수정';
+  if (formDesc) formDesc.textContent = '기존 사용자 정보를 수정하고 권한을 다시 저장합니다.';
+  if (saveBtn) saveBtn.textContent = '사용자 수정';
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  if (emailInput) emailInput.disabled = true;
+  if (passwordHint) {
+    passwordHint.innerHTML = '수정 모드에서는 아이디를 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
+  }
+
+  clearFieldInvalid();
+}
+
+function resetEditMode(clearMessage = true) {
+  editingUserEmail = '';
+
+  const formTitle = document.getElementById('formTitle');
+  const formDesc = document.getElementById('formDesc');
+  const saveBtn = document.getElementById('saveUserBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  const emailInput = document.getElementById('userEmail');
+  const passwordHint = document.getElementById('passwordHint');
+
+  if (formTitle) formTitle.textContent = '사용자 등록';
+  if (formDesc) formDesc.textContent = '신규 사용자를 등록하고 앱별 권한을 부여합니다.';
+  if (saveBtn) saveBtn.textContent = '사용자 등록';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (emailInput) emailInput.disabled = false;
+  if (passwordHint) {
+    passwordHint.innerHTML = '신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.';
+  }
+
+  clearUserForm();
+
+  if (clearMessage) {
+    clearAdminMessage();
+  }
+}
+
+
+// ── 가입 신청 관리 ──
+
+function setPendingMessage(message, type = '') {
+  const el = document.getElementById('pendingMessage');
+  if (!el) return;
+  el.textContent = message || '';
+  el.className = 'message-box';
+  if (type) el.classList.add(type);
+}
+
+async function loadPendingRegistrations() {
+  const listEl = document.getElementById('pendingList');
+  const countEl = document.getElementById('pendingListCount');
+  const btn = document.getElementById('loadPendingBtn');
+
+  if (btn) btn.disabled = true;
+  setPendingMessage('');
+  showGlobalLoading('가입 신청 목록을 불러오는 중...');
+
+  try {
+    const result = await apiGet('listPendingRegistrations', {
+      request_user_email: getRequestUserEmail()
+    });
+
+    const list = Array.isArray(result.data) ? result.data : [];
+
+    if (countEl) {
+      countEl.textContent = list.length > 0
+        ? `대기 중인 신청 ${list.length}건`
+        : '대기 중인 신청이 없습니다.';
+    }
+
+    if (!list.length) {
+      listEl.innerHTML = `<div class="user-list-empty">대기 중인 가입 신청이 없습니다.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = list.map(item => {
+      const id = escapeHtml(item.id || item.reg_id || '');
+      const name = escapeHtml(item.user_name || '');
+      const email = escapeHtml(item.user_email || '');
+      const org = escapeHtml(
+        item.clinic_name && item.team_name
+          ? `${item.clinic_name} / ${item.team_name}`
+          : item.clinic_name || item.team_name || '소속 미입력'
+      );
+      const phone = escapeHtml(item.phone || '연락처 없음');
+      const memo = item.memo ? `<div class="pending-item__memo">💬 ${escapeHtml(item.memo)}</div>` : '';
+      const appliedAt = escapeHtml(item.created_at || item.applied_at || '');
+
+      return `
+        <div class="pending-item" data-id="${id}">
+          <div class="pending-item__main">
+            <div class="pending-item__title">
+              <strong>${name}</strong>
+              <span>${email}</span>
             </div>
+            <div class="pending-item__meta">
+              <span>📍 ${org}</span>
+              <span>📞 ${phone}</span>
+              ${appliedAt ? `<span>🕐 ${appliedAt}</span>` : ''}
+            </div>
+            ${memo}
           </div>
-        </section>
-
-        <!-- 가입 신청 관리 -->
-        <section class="panel-card">
-          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <div>
-              <h2 class="panel-title">가입 신청 관리</h2>
-              <p class="panel-desc">사용자가 직접 신청한 가입 요청을 검토하고 승인 또는 거절합니다.</p>
-            </div>
-            <button type="button" id="loadPendingBtn" class="admin-btn secondary">신청 목록 새로고침</button>
+          <div class="pending-item__actions">
+            <button type="button" class="admin-btn small approve js-approve" data-id="${id}">✅ 승인</button>
+            <button type="button" class="admin-btn small danger js-reject" data-id="${id}">❌ 거절</button>
           </div>
+        </div>
+      `;
+    }).join('');
 
-          <div class="panel-body">
-            <div id="pendingMessage" class="message-box" aria-live="polite"></div>
-            <div id="pendingListCount" class="list-count" style="margin-bottom:12px;">아직 불러오지 않았습니다.</div>
-            <div id="pendingList" class="user-list">
-              <div class="user-list-empty">
-                <strong>신청 목록 새로고침</strong>을 눌러 대기 중인 신청을 확인해 주세요.
-              </div>
-            </div>
-          </div>
-        </section>
+  } catch (err) {
+    setPendingMessage(err.message || '신청 목록을 불러오지 못했습니다.', 'error');
+    if (listEl) listEl.innerHTML = `<div class="user-list-empty">불러오기 실패. 다시 시도해 주세요.</div>`;
+  } finally {
+    if (btn) btn.disabled = false;
+    hideGlobalLoading();
+  }
+}
 
-      </div><!-- /.page-col-left -->
+async function handleApprove(regId) {
+  if (!regId) return;
 
-      <!-- 우측: 사용자 목록 (내부 스크롤) -->
-      <div class="page-col-right">
-        <section class="panel-card">
-          <div class="panel-header">
-            <h2 class="panel-title">사용자 목록</h2>
-            <p class="panel-desc">처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 조회 버튼을 눌러 주세요.</p>
-          </div>
+  const confirmed = confirm('신청을 승인하시겠습니까?\n초기 비밀번호 1111로 계정이 생성됩니다.');
+  if (!confirmed) return;
 
-          <div class="panel-body">
-            <div class="filter-row">
-              <div class="form-group">
-                <label for="userSearchKeyword" class="form-label">검색어</label>
-                <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 아이디, 부서, 의원, 팀으로 검색" />
-              </div>
+  showGlobalLoading('승인 처리 중...');
+  setPendingMessage('');
 
-              <div class="form-group">
-                <label for="userFilterActive" class="form-label">상태</label>
-                <select id="userFilterActive" class="select">
-                  <option value="">전체</option>
-                  <option value="Y">활성</option>
-                  <option value="N">비활성</option>
-                </select>
-              </div>
+  try {
+    const result = await apiPost('approveRegistration', {
+      request_user_email: getRequestUserEmail(),
+      reg_id: regId
+    });
+    setPendingMessage(result.message || '승인이 완료되었습니다.', 'success');
+  } catch (err) {
+    setPendingMessage(err.message || '승인 처리 중 오류가 발생했습니다.', 'error');
+    return;
+  } finally {
+    hideGlobalLoading();
+  }
 
-              <div class="form-group">
-                <label for="userFilterRole" class="form-label">역할</label>
-                <select id="userFilterRole" class="select">
-                  <option value="">전체</option>
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
-                </select>
-              </div>
+  // 스피너를 완전히 끈 뒤 목록 새로고침 (loadPendingRegistrations가 자체 스피너 관리)
+  await loadPendingRegistrations();
+}
 
-              <div class="form-group">
-                <label for="userFilterClinic" class="form-label">의원</label>
-                <select id="userFilterClinic" class="select">
-                  <option value="">전체 의원</option>
-                </select>
-              </div>
+async function handleReject(regId) {
+  if (!regId) return;
 
-              <div class="form-group">
-                <label class="form-label">&nbsp;</label>
-                <button type="button" id="searchUsersBtn" class="admin-btn secondary">사용자 조회</button>
-              </div>
-            </div>
+  const reason = prompt('거절 사유를 입력하세요 (선택사항):');
+  if (reason === null) return;
 
-            <div class="list-topbar">
-              <div id="userListCount" class="list-count">아직 조회하지 않았습니다.</div>
-            </div>
+  showGlobalLoading('거절 처리 중...');
+  setPendingMessage('');
 
-            <div class="user-list-scroll">
-              <div id="userList" class="user-list">
-                <div class="user-list-empty">
-                  처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 <strong>사용자 조회</strong>를 눌러 주세요.
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div><!-- /.page-col-right -->
+  try {
+    const result = await apiPost('rejectRegistration', {
+      request_user_email: getRequestUserEmail(),
+      reg_id: regId,
+      reason: String(reason || '').trim()
+    });
+    setPendingMessage(result.message || '거절 처리가 완료되었습니다.', 'success');
+  } catch (err) {
+    setPendingMessage(err.message || '거절 처리 중 오류가 발생했습니다.', 'error');
+    return;
+  } finally {
+    hideGlobalLoading();
+  }
 
-    </div><!-- /.page-grid -->
-  </div>
-
-  <div id="globalLoading" aria-hidden="true">
-    <div class="global-loading__dialog">
-      <div class="global-loading__spinner" aria-hidden="true"></div>
-      <div class="global-loading__text" id="globalLoadingText">로딩 중...</div>
-    </div>
-  </div>
-
-  <script src="../../assets/js/core/config.js"></script>
-  <script src="../../assets/js/core/api.js"></script>
-  <script src="../../assets/js/core/auth.js"></script>
-  <script src="../../assets/js/core/utils.js"></script>
-  <script src="../../assets/js/core/org-select.js"></script>
-  <script src="../../assets/js/admin/admin-users.js"></script>
-</body>
-</html>
+  await loadPendingRegistrations();
+}
