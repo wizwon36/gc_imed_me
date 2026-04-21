@@ -1132,7 +1132,20 @@
     justify-content: space-between;
   }
 
-  .inline-field {
+  .filter-actions-right {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .filter-actions-right .btn-primary,
+  .filter-actions-right .btn-secondary {
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    font-size: 14px;
+    padding: 0 10px;
+  }
     width: 100%;
     justify-content: space-between;
   }
@@ -1168,47 +1181,75 @@
   .equipment-cards-wrap {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
 
   .equipment-card {
-    padding: 18px;
-    border-radius: 24px;
+    padding: 16px;
+    border-radius: 20px;
   }
 
   .equipment-card-head {
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
   .equipment-card-title {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .equipment-card-sub {
-    font-size: 13px;
+    font-size: 12px;
+    margin-top: 3px;
   }
 
+  /* 항목 2열로 배치해 카드 높이 줄이기 */
   .equipment-card-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .equipment-card-row {
-    padding: 13px 14px;
-    border-radius: 15px;
+    padding: 10px 12px;
+    border-radius: 12px;
   }
 
+  .equipment-card-label {
+    font-size: 11px;
+  }
+
+  .equipment-card-value {
+    font-size: 13px;
+  }
+
+  /* 버튼 3개 한 줄: 상세 | 수정 | 라벨출력 */
   .equipment-card-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: stretch;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  .equipment-card-actions-left {
+    display: flex;
+    flex: 1 1 0;
+    gap: 8px;
+  }
+
+  .equipment-card-actions-right {
+    margin-left: 0;
   }
 
   .equipment-card-actions .btn,
   .equipment-card-actions .btn-primary {
-    width: 100%;
+    flex: 1 1 0;
     min-width: 0;
+    min-height: 42px;
+    font-size: 13px;
+    border-radius: 12px;
   }
 
   .pagination-btn {
