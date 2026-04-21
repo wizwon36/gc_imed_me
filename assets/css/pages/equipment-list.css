@@ -11,6 +11,7 @@
 
 /* topbar */
 .equipment-list-topbar {
+  display: block;
   margin-bottom: 18px;
 }
 
@@ -988,6 +989,7 @@
 }
 
 .equipment-label-page .equipment-label-topbar {
+  display: block;
   margin-bottom: 18px;
 }
 
