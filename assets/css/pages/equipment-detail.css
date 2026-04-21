@@ -562,6 +562,12 @@
     font-size: 24px;
   }
 
+  .detail-top-actions .portal-header-btn {
+    min-height: 40px;
+    font-size: 12px;
+    padding: 0 6px;
+  }
+
   .detail-media-grid,
   .detail-history-grid {
     grid-template-columns: 1fr;
