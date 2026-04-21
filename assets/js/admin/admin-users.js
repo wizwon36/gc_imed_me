@@ -417,55 +417,59 @@ function renderUserList() {
   }
 
   if (!filteredUsers.length) {
-    listEl.innerHTML = `
-      <div class="user-list-empty">
-        조건에 맞는 사용자가 없습니다.
-      </div>
-    `;
+    listEl.innerHTML = `<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>`;
     return;
   }
 
-  listEl.innerHTML = filteredUsers.map((user) => {
+  const rows = filteredUsers.map((user) => {
     const isActive = normalize(user.active || 'Y').toUpperCase() === 'Y';
     const statusClass = isActive ? 'active' : 'inactive';
     const statusText = isActive ? '활성' : '비활성';
     const orgText =
       normalize(user.department) ||
-      (
-        normalize(user.clinic_name) && normalize(user.team_name)
-          ? `${normalize(user.clinic_name)} / ${normalize(user.team_name)}`
-          : ''
-      ) ||
-      '소속 없음';
+      (normalize(user.clinic_name) && normalize(user.team_name)
+        ? `${normalize(user.clinic_name)} / ${normalize(user.team_name)}`
+        : '') ||
+      '-';
 
     return `
-      <div class="user-item">
-        <div class="user-item__main">
-          <div class="user-item__title">
-            <strong>${escapeHtml(user.user_name || '')}</strong>
-            <span>${escapeHtml(user.user_email || '')}</span>
-            <span class="status-chip ${statusClass}">${statusText}</span>
+      <tr class="user-tbl-row">
+        <td class="user-tbl-cell user-tbl-cell--name">
+          <div class="user-tbl-name">${escapeHtml(user.user_name || '-')}</div>
+          <div class="user-tbl-sub">${escapeHtml(user.user_email || '')}</div>
+        </td>
+        <td class="user-tbl-cell user-tbl-cell--org">${escapeHtml(orgText)}</td>
+        <td class="user-tbl-cell user-tbl-cell--role">${escapeHtml(user.role || 'user')}</td>
+        <td class="user-tbl-cell user-tbl-cell--status">
+          <span class="status-chip ${statusClass}">${statusText}</span>
+        </td>
+        <td class="user-tbl-cell user-tbl-cell--actions">
+          <div class="user-tbl-actions">
+            <button type="button" class="user-tbl-btn js-edit-user" data-email="${escapeHtml(user.user_email || '')}">수정</button>
+            <button type="button" class="user-tbl-btn js-reset-password" data-email="${escapeHtml(user.user_email || '')}">PW초기화</button>
+            <button type="button" class="user-tbl-btn ${isActive ? 'danger' : ''} js-toggle-active" data-email="${escapeHtml(user.user_email || '')}" data-active="${isActive ? 'N' : 'Y'}">
+              ${isActive ? '비활성화' : '활성화'}
+            </button>
           </div>
-
-          <div class="user-item__meta">
-            <span>역할: ${escapeHtml(user.role || 'user')}</span>
-            <span>첫 로그인: ${escapeHtml(user.first_login || 'N')}</span>
-          </div>
-
-          <div class="user-item__sub">${escapeHtml(orgText)}</div>
-          <div class="user-item__sub">${escapeHtml(user.phone || '연락처 없음')}</div>
-        </div>
-
-        <div class="user-item__actions">
-          <button type="button" class="admin-btn small js-edit-user" data-email="${escapeHtml(user.user_email || '')}">수정</button>
-          <button type="button" class="admin-btn small js-reset-password" data-email="${escapeHtml(user.user_email || '')}">비밀번호 초기화</button>
-          <button type="button" class="admin-btn small ${isActive ? 'danger' : 'secondary'} js-toggle-active" data-email="${escapeHtml(user.user_email || '')}" data-active="${isActive ? 'N' : 'Y'}">
-            ${isActive ? '비활성화' : '활성화'}
-          </button>
-        </div>
-      </div>
+        </td>
+      </tr>
     `;
   }).join('');
+
+  listEl.innerHTML = `
+    <table class="user-tbl">
+      <thead>
+        <tr>
+          <th class="user-tbl-th user-tbl-th--name">이름 / 아이디</th>
+          <th class="user-tbl-th user-tbl-th--org">소속</th>
+          <th class="user-tbl-th user-tbl-th--role">역할</th>
+          <th class="user-tbl-th user-tbl-th--status">상태</th>
+          <th class="user-tbl-th user-tbl-th--actions">관리</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 async function editUser(userEmail) {
