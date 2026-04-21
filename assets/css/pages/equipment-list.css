@@ -1025,9 +1025,9 @@
     margin-bottom: 16px;
   }
 
-  /* portal-top-actions는 common.css에서 1fr 1fr(2열)이므로 3버튼용으로 오버라이드 */
-  .equipment-list-top-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* specificity 높여서 common.css의 1fr 1fr 오버라이드 */
+  .equipment-list-page .equipment-list-top-actions {
+    grid-template-columns: 1fr;
   }
 
   .equipment-list-page .page-hero-simple {
