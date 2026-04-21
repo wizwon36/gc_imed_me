@@ -226,13 +226,21 @@
 }
 
 .info-row--wide .info-cell {
-  grid-template-columns: 96px minmax(0, 1fr);
-  padding: 9px 4px;
+  grid-template-columns: 1fr;
+  padding: 10px 4px 12px;
+  gap: 4px;
+}
+
+.info-row--wide .info-cell-label {
+  font-size: 12px;
 }
 
 .info-row--wide .info-cell-value {
   font-size: 13.5px;
   color: #334155;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* qr */
@@ -452,9 +460,16 @@
     width: 100%;
   }
 
+  .equipment-detail-page .top-brand-logo {
+    flex-shrink: 0;
+  }
+
   .equipment-detail-page .top-brand-texts {
     min-width: 0;
     flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .equipment-detail-page .top-brand-title {
@@ -555,6 +570,8 @@
 
   .info-row--wide .info-cell {
     border-bottom: none;
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
   .info-cell {
@@ -607,7 +624,13 @@
   }
 
   .detail-top-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .detail-top-actions .portal-header-btn {
+    min-height: 40px;
+    font-size: 12px;
+    padding: 0 6px;
   }
 
   .equipment-detail-page .page-title {
