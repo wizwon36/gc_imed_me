@@ -435,11 +435,11 @@
       white-space: nowrap;
     }
 
-    .user-tbl-th--name    { width: 17%; }
-    .user-tbl-th--org     { width: 26%; }
+    .user-tbl-th--name    { width: 18%; }
+    .user-tbl-th--org     { width: 20%; }
     .user-tbl-th--role    { width: 10%; text-align: center; }
     .user-tbl-th--status  { width: 10%; text-align: center; }
-    .user-tbl-th--actions { width: 37%; text-align: center; }
+    .user-tbl-th--actions { width: 42%; text-align: center; }
 
     .user-tbl-row { transition: background-color 0.12s ease; }
     .user-tbl-row:not(:last-child) td { border-bottom: 1px solid #eef2f6; }
@@ -456,22 +456,18 @@
     }
 
     .user-tbl-cell--org {
-      white-space: normal;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       vertical-align: middle;
     }
 
     .user-tbl-org-main {
       font-size: 13px;
-      font-weight: 600;
       color: #1e293b;
-      line-height: 1.4;
-    }
-
-    .user-tbl-org-sub {
-      margin-top: 2px;
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .user-tbl-cell--status { text-align: center; overflow: visible; white-space: nowrap; }
@@ -730,12 +726,25 @@
       }
 
       .user-tbl-th--org,
-      .user-tbl-cell--org { display: none; }
+      .user-tbl-cell--org,
+      .user-tbl-th--role,
+      .user-tbl-cell--role,
+      .user-tbl-th--status,
+      .user-tbl-cell--status { display: none; }
 
-      .user-tbl-th--name   { width: 30%; }
-      .user-tbl-th--role   { width: 12%; }
-      .user-tbl-th--status { width: 12%; }
-      .user-tbl-th--actions { width: 46%; }
+      .user-tbl-th--name    { width: 40%; }
+      .user-tbl-th--actions { width: 60%; }
+
+      .user-tbl-cell--actions {
+        overflow: visible;
+        white-space: nowrap;
+      }
+
+      .user-tbl-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+      }
 
       .list-topbar {
         flex-direction: column;
