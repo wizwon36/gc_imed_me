@@ -209,7 +209,8 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     const dateText = textSafe(formatDisplayDate(item[options.dateField]));
     const model = textSafe(item.model_name || '-');
     const deptRaw = item.department_display || item.department || '-';
-    const dept = textSafe(deptRaw).replace(' / ', '<br>');
+    const dept = textSafe(deptRaw);
+    const deptMobile = dept.replace(' / ', '<br>');
     const id = encodeURIComponent(item.equipment_id || '');
 
     let sideHtml = '';
@@ -223,7 +224,10 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
           <div class="dash-tbl-name">${title}</div>
           <div class="dash-tbl-sub">${model}</div>
         </td>
-        ${showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept">${dept}</td>` : ''}
+        ${showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept">
+          <span class="dept-pc">${dept}</span>
+          <span class="dept-mobile">${deptMobile}</span>
+        </td>` : ''}
         ${showDate ? `<td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>` : ''}
         ${sideHtml}
       </tr>
