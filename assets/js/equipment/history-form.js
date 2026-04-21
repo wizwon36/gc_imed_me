@@ -287,6 +287,9 @@ async function handleSubmit(event) {
       alert('이력이 등록되었습니다.');
     }
 
+    if (typeof window.invalidateDashboardSessionCache === 'function') {
+      window.invalidateDashboardSessionCache();
+    }
     location.href = `detail.html?id=${encodeURIComponent(payload.equipment_id)}`;
   } catch (error) {
     const msg = error.message || '이력 저장 중 오류가 발생했습니다.';
