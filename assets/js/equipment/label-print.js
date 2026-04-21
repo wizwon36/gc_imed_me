@@ -84,6 +84,11 @@ async function loadLabelData() {
     backBtn.href = 'detail.html?id=' + encodeURIComponent(equipmentId);
   }
 
+  var mobileBackBtn = qs('#mobileBackBtn');
+  if (mobileBackBtn) {
+    mobileBackBtn.href = 'detail.html?id=' + encodeURIComponent(equipmentId);
+  }
+
   var user = {};
   if (window.auth && typeof window.auth.getSession === 'function') {
     user = window.auth.getSession() || {};
