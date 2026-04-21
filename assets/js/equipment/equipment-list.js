@@ -174,7 +174,9 @@ function buildEquipmentCard(item) {
     leftActions += '<a class="btn btn-primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
   }
 
-  rightActions = '<a class="btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨출력</a>';
+  rightActions = window.innerWidth > 768
+    ? '<a class="btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨출력</a>'
+    : '';
 
   return (
     '<article class="equipment-card">' +
@@ -231,7 +233,9 @@ function buildEquipmentRow(item) {
     actions += '<a class="tbl-btn tbl-btn--primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
   }
 
-  actions += '<a class="tbl-btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨</a>';
+  if (window.innerWidth > 768) {
+    actions += '<a class="tbl-btn" href="label-print.html?equipment_id=' + encodeURIComponent(item.equipment_id || '') + '">라벨</a>';
+  }
 
   return (
     '<tr class="equipment-tbl-row">' +
