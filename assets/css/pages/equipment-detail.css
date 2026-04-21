@@ -442,6 +442,11 @@
     margin-bottom: 16px;
   }
 
+  /* portal-top-actions는 common.css에서 1fr 1fr(2열)이므로 3버튼용으로 오버라이드 */
+  .detail-top-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .equipment-detail-page .page-title {
     font-size: 32px;
   }
