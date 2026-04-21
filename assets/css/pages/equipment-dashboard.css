@@ -387,6 +387,12 @@
   white-space: nowrap;
 }
 
+.dash-tbl-cell--dept {
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.4;
+}
+
 .dash-tbl-cell--side {
   text-align: center;
   overflow: visible;
