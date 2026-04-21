@@ -1217,25 +1217,21 @@
     font-size: 13px;
   }
 
-  /* 버튼 3개 한 줄: 상세 | 수정 | 라벨출력 */
+  /* 버튼 3개 균등 너비 */
   .equipment-card-actions {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: stretch;
     gap: 8px;
     margin-top: 14px;
     padding-top: 14px;
   }
 
   .equipment-card-actions-left {
-    display: flex;
-    flex: 1 1 0;
-    gap: 8px;
+    display: contents;
   }
 
   .equipment-card-actions-right {
-    flex: 0 0 auto;
     margin-left: 0;
   }
 
