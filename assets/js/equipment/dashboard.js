@@ -201,6 +201,8 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   if (emptyEl) emptyEl.style.display = 'none';
 
   const hasSide = typeof options.sideRenderer === 'function';
+  const showDept = options.showDept !== false;
+  const showDate = options.showDate !== false;
 
   const rows = list.map(function (item) {
     const title = textSafe(item.equipment_name || '-');
@@ -220,13 +222,15 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
           <div class="dash-tbl-name">${title}</div>
           <div class="dash-tbl-sub">${model}</div>
         </td>
-        <td class="dash-tbl-cell dash-tbl-cell--dept">${dept}</td>
-        <td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>
+        ${showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept">${dept}</td>` : ''}
+        ${showDate ? `<td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>` : ''}
         ${sideHtml}
       </tr>
     `;
   }).join('');
 
+  const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
+  const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
   const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
 
   container.innerHTML = `
@@ -234,8 +238,8 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
       <thead>
         <tr>
           <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-          <th class="dash-tbl-th dash-tbl-th--dept">부서</th>
-          <th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>
+          ${deptHeader}
+          ${dateHeader}
           ${sideHeader}
         </tr>
       </thead>
@@ -247,7 +251,9 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 function renderMaintenanceAlerts(items) {
   renderRecordList('#maintenanceAlertList', '#maintenanceAlertEmpty', items, {
     dateField: 'maintenance_end_date',
-    dateLabel: '유지보수 만료일',
+    dateLabel: '',
+    showDept: true,
+    showDate: false,   // 날짜 제거 — D-Day 뱃지로 충분
     sideRenderer: function (item) {
       const dday = Number(item.dday || 0);
       const ddayText =
@@ -274,14 +280,18 @@ function renderMaintenanceAlerts(items) {
 function renderRecentRepairList(items) {
   renderRecordList('#recentRepairList', '#recentRepairEmpty', items, {
     dateField: 'work_date',
-    dateLabel: '최근 수리일'
+    dateLabel: '수리일',
+    showDept: false,   // 부서 제거 — 공간 확보
+    showDate: true
   });
 }
 
 function renderRecentRegisteredList(items) {
   renderRecordList('#recentRegisteredList', '#recentRegisteredEmpty', items, {
     dateField: 'created_at',
-    dateLabel: '등록일'
+    dateLabel: '등록일',
+    showDept: false,   // 부서 제거 — 공간 확보
+    showDate: true
   });
 }
 
