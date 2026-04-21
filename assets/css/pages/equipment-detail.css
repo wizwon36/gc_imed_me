@@ -167,15 +167,21 @@
 .info-tile-grid {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .info-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-bottom: 1px solid #eef2f7;
+  flex: 1 1 0;
+  align-content: center;
 }
 
-.info-row:last-child { border-bottom: none; }
+.info-row:last-child {
+  border-bottom: none;
+  flex: 0 0 auto;
+}
 
 .info-row--wide {
   grid-template-columns: 1fr;
@@ -334,7 +340,7 @@
 }
 
 .det-tbl-th--type  { width: 110px; }
-.det-tbl-th--desc  { min-width: 140px; }
+.det-tbl-th--desc  { min-width: 120px; }
 
 .det-tbl-row { transition: background-color 0.12s ease; }
 .det-tbl-row:not(:last-child) td { border-bottom: 1px solid #eef2f6; }
@@ -527,6 +533,7 @@
 
   .info-row {
     grid-template-columns: 1fr;
+    flex: 0 0 auto;
   }
 
   .info-row:not(.info-row--wide) .info-cell:first-child {
@@ -568,15 +575,7 @@
 
   .det-tbl-main { font-size: 12px; }
 
-  /* 모바일: 처리업체·금액·재고메모 숨김 */
-  .det-tbl-cell--vendor,
-  .det-tbl-th--vendor,
-  .det-tbl-cell--amount,
-  .det-tbl-th--amount,
-  .det-tbl-cell--inv-memo,
-  .det-tbl-th--inv-memo {
-    display: none;
-  }
+  /* 모바일: 테이블 스크롤 높이 축소 */
 
   .qr-panel {
     min-height: auto;
