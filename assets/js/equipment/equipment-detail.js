@@ -407,9 +407,9 @@ function renderDetailInfo(item) {
     { label: '담당자',        value: item.manager_name },
     { label: '연락처',        value: item.manager_phone },
     { label: '유지보수 종료', value: formatDisplayDate(item.maintenance_end_date) },
+    { label: '현재 상태',     value: item.status, isStatus: true },
     { label: '현재 위치',     value: item.location },
     { label: '현재 사용자',   value: item.current_user },
-    { label: '현재 상태',     value: item.status, isStatus: true },
     { label: '등록일시',      value: formatDisplayDateTime(item.created_at) },
     { label: '수정일시',      value: formatDisplayDateTime(item.updated_at) },
     { label: '비고',          value: item.memo || '-', wide: true }
@@ -511,8 +511,8 @@ function renderHistories(items) {
           '</span>' +
         '</td>' +
         '<td class="det-tbl-cell">' + safeValue(item.request_department) + '</td>' +
-        '<td class="det-tbl-cell">' + safeValue(item.vendor_name) + '</td>' +
-        '<td class="det-tbl-cell">' + safeNumber(item.amount) + '</td>' +
+        '<td class="det-tbl-cell det-tbl-cell--vendor">' + safeValue(item.vendor_name) + '</td>' +
+        '<td class="det-tbl-cell det-tbl-cell--amount">' + safeNumber(item.amount) + '</td>' +
         '<td class="det-tbl-cell det-tbl-cell--desc">' + nl2br(item.description || '-') + '</td>' +
         (actionBtns
           ? '<td class="det-tbl-cell det-tbl-cell--actions">' + actionBtns + '</td>'
@@ -532,8 +532,8 @@ function renderHistories(items) {
           '<th class="det-tbl-th det-tbl-th--type">구분 / 날짜</th>' +
           '<th class="det-tbl-th">상태</th>' +
           '<th class="det-tbl-th">요청부서</th>' +
-          '<th class="det-tbl-th">처리업체</th>' +
-          '<th class="det-tbl-th">금액</th>' +
+          '<th class="det-tbl-th det-tbl-th--vendor">처리업체</th>' +
+          '<th class="det-tbl-th det-tbl-th--amount">금액</th>' +
           '<th class="det-tbl-th det-tbl-th--desc">내용</th>' +
           actionHeader +
         '</tr></thead>' +
@@ -567,7 +567,7 @@ function renderInventoryLogs(items) {
         '<td class="det-tbl-cell">' + safeValue(item.checked_by_name || item.checked_by) + '</td>' +
         '<td class="det-tbl-cell">' + safeValue(item.department_at_check) + '</td>' +
         '<td class="det-tbl-cell">' + safeValue(item.location_at_check) + '</td>' +
-        '<td class="det-tbl-cell det-tbl-cell--desc">' + nl2br(item.memo || '-') + '</td>' +
+        '<td class="det-tbl-cell det-tbl-cell--inv-memo">' + nl2br(item.memo || '-') + '</td>' +
       '</tr>'
     );
   }).join('');
@@ -580,7 +580,7 @@ function renderInventoryLogs(items) {
           '<th class="det-tbl-th">점검자</th>' +
           '<th class="det-tbl-th">부서</th>' +
           '<th class="det-tbl-th">위치</th>' +
-          '<th class="det-tbl-th det-tbl-th--desc">메모</th>' +
+          '<th class="det-tbl-th det-tbl-th--inv-memo">메모</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>' +
