@@ -117,7 +117,8 @@ function applyActionVisibility() {
   if (deleteBtn) deleteBtn.style.display = detailPermission.canDelete ? '' : 'none';
   if (addHistoryBtn) addHistoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
   if (addInventoryBtn) addInventoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
-  if (printLabelBtn) printLabelBtn.style.display = detailPermission.canView ? '' : 'none';
+  const isMobile = window.innerWidth <= 768;
+  if (printLabelBtn) printLabelBtn.style.display = (detailPermission.canView && !isMobile) ? '' : 'none';
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
