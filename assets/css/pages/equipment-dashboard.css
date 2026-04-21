@@ -361,9 +361,11 @@
 
 /* 수리/등록: 장비명 + 날짜 (부서 없음) */
 .dashboard-panel--repair .dash-tbl-th--name,
-.dashboard-panel--registered .dash-tbl-th--name { width: 62%; }
+.dashboard-panel--registered .dash-tbl-th--name { width: 52%; }
 .dashboard-panel--repair .dash-tbl-th--date,
-.dashboard-panel--registered .dash-tbl-th--date { width: 38%; }
+.dashboard-panel--registered .dash-tbl-th--date { width: 30%; }
+.dashboard-panel--repair .dash-tbl-th--status { width: 18%; text-align: center; }
+.dash-tbl-cell--status { text-align: center; }
 
 .dash-tbl-row {
   transition: background-color 0.12s ease;
