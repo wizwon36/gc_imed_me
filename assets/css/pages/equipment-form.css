@@ -270,7 +270,7 @@
 /* mobile */
 @media (max-width: 768px) {
   .page-shell .top-brand-bar {
-    display: block;
+    display: block !important;
     padding: 16px 18px 18px;
     border-radius: 22px;
     margin-bottom: 16px;
@@ -433,7 +433,13 @@
   }
 
   .form-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form-actions .btn,
+  .form-actions .btn-primary {
+    min-height: 48px;
+    font-size: 14px;
   }
 }
 
