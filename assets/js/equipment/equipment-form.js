@@ -555,6 +555,10 @@ async function handleSubmit(event) {
 
     alert(isEditMode ? '장비 정보가 수정되었습니다.' : '장비가 등록되었습니다.');
 
+    if (typeof window.invalidateDashboardSessionCache === 'function') {
+      window.invalidateDashboardSessionCache();
+    }
+
     if (equipmentId) {
       location.href = `detail.html?id=${encodeURIComponent(equipmentId)}`;
     } else {
