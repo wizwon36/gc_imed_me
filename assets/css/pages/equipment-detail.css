@@ -90,7 +90,6 @@
 
 .detail-info-card {
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .detail-sub-grid {
@@ -174,13 +173,16 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-bottom: 1px solid #eef2f7;
-  flex: 1 1 0;
+  flex: 1 1 auto;
   align-content: center;
+  min-height: 0;
 }
 
 .info-row:last-child {
   border-bottom: none;
   flex: 0 0 auto;
+  align-content: start;
+  padding-bottom: 4px;
 }
 
 .info-row--wide {
