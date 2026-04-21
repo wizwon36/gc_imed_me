@@ -150,7 +150,7 @@
             <div class="form-photo-preview" id="photoPreviewWrap">
               <img id="photoPreviewImage" class="photo-preview-image is-hidden" alt="장비 사진 미리보기" />
               <div id="photoPreviewEmpty" class="photo-preview-empty">
-                등록된 사진이 없습니다.
+                사진을 불러오지 못했습니다.
               </div>
             </div>
             
@@ -163,13 +163,11 @@
                 <input type="file" id="photoInput" class="photo-file-input" accept="image/*" />
                 <label for="photoInput" class="photo-file-trigger">사진 선택</label>
                 <div id="photoFileName" class="photo-file-name">선택된 파일 없음</div>
+                <button type="button" class="btn photo-remove-btn" id="removePhotoBtn">사진 제거</button>
               </div>
-              
+
               <div class="photo-upload-help">
                 업로드 전에 자동 압축됩니다. 장비 식별이 가능한 정도의 사진만 올려주세요.
-              </div>
-              <div class="photo-upload-button-row">
-                <button type="button" class="btn" id="removePhotoBtn">사진 제거</button>
               </div>
             </div>
           </div>
