@@ -242,7 +242,6 @@ function buildEquipmentRow(item) {
       '<td class="equipment-tbl-cell">' + escapeHtml(item.manufacturer || '-') + '</td>' +
       '<td class="equipment-tbl-cell equipment-tbl-cell--serial">' + escapeHtml(item.serial_no || '-') + '</td>' +
       '<td class="equipment-tbl-cell">' + escapeHtml(item.location || '-') + '</td>' +
-      '<td class="equipment-tbl-cell">' + escapeHtml(formatDisplayDate(item.maintenance_end_date || '')) + '</td>' +
       '<td class="equipment-tbl-cell equipment-tbl-cell--status">' +
         '<span class="status-badge ' + statusClass(item.status || '') + '">' +
           escapeHtml(statusLabel(item.status || '')) +
@@ -287,7 +286,6 @@ function renderEquipmentList(items) {
             '<th class="equipment-tbl-th">제조사</th>' +
             '<th class="equipment-tbl-th">시리얼</th>' +
             '<th class="equipment-tbl-th">위치</th>' +
-            '<th class="equipment-tbl-th">유지보수 종료</th>' +
             '<th class="equipment-tbl-th">상태</th>' +
             '<th class="equipment-tbl-th equipment-tbl-th--actions">액션</th>' +
           '</tr>' +
