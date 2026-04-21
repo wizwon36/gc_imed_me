@@ -427,9 +427,10 @@ function renderUserList() {
     const statusText = isActive ? '활성' : '비활성';
     const clinicText = normalize(user.clinic_name) || '';
     const teamText = normalize(user.team_name) || '';
-    const orgHtml = clinicText && teamText
-      ? `<div class="user-tbl-org-main">${escapeHtml(clinicText)}</div><div class="user-tbl-org-sub">${escapeHtml(teamText)}</div>`
-      : `<div class="user-tbl-org-main">${escapeHtml(normalize(user.department) || '-')}</div>`;
+    const orgLine = clinicText && teamText
+      ? `${clinicText} / ${teamText}`
+      : (normalize(user.department) || '-');
+    const orgHtml = `<div class="user-tbl-org-main">${escapeHtml(orgLine)}</div>`;
 
     return `
       <tr class="user-tbl-row">
