@@ -212,8 +212,8 @@ function buildEquipmentCard(item) {
         '</div>' +
       '</div>' +
       '<div class="equipment-card-actions">' +
-        '<div class="equipment-card-actions-left">' + leftActions + '</div>' +
-        '<div class="equipment-card-actions-right">' + rightActions + '</div>' +
+        leftActions +
+        rightActions +
       '</div>' +
     '</article>'
   );
