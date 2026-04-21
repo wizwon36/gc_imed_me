@@ -156,10 +156,23 @@
   background: #fff;
   color: #0b1f44;
   cursor: pointer;
+  outline: none;
 }
 
 .btn-card-action:hover {
   background: #f1f5fb;
+  border-color: #b0bac8;
+}
+
+.btn-card-action:focus {
+  outline: none;
+  border-color: #b0bac8;
+  background: #f1f5fb;
+}
+
+.btn-card-action:active {
+  background: #e8edf5;
+  border-color: #9aa3b2;
 }
 
 .detail-info-card .section-title,
