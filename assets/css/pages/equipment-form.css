@@ -392,6 +392,14 @@
     min-height: 50px;
     border-radius: 16px;
   }
+
+  .photo-file-control {
+    flex-wrap: wrap;
+  }
+
+  .photo-remove-btn {
+    margin-left: 0;
+  }
 }
 
 /* narrow mobile */
@@ -664,12 +672,6 @@
   color: #64748b;
 }
 
-.photo-upload-button-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .photo-file-control {
   display: flex;
   align-items: center;
@@ -722,6 +724,30 @@
   min-width: 220px;
   max-width: 100%;
   word-break: break-all;
+}
+
+/* 사진 제거 버튼 — 사진 선택과 같은 줄 */
+.photo-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid #fca5a5;
+  background: #fff;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.photo-remove-btn:hover {
+  background: #fef2f2;
+  border-color: #f87171;
 }
 
 .form-photo-preview {
