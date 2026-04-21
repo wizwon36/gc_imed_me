@@ -8,7 +8,9 @@ var equipmentListState = {
   hasPrev: false,
   loading: false,
   canEdit: false,
-  isRecentMode: false
+  isRecentMode: false,
+  isAdmin: false,        // ★ admin 여부
+  userClinicCode: ''     // ★ 본인 소속 의원 코드
 };
 
 function el(selector) {
@@ -372,6 +374,12 @@ function applyListPermissionUi() {
   if (createBtn) {
     createBtn.style.display = equipmentListState.canEdit ? '' : 'none';
   }
+
+  // ★ user 권한이면 엑셀 다운로드 버튼 숨김
+  var exportBtn = document.getElementById('exportExcelBtn');
+  if (exportBtn) {
+    exportBtn.style.display = (equipmentListState.canEdit || equipmentListState.isAdmin) ? '' : 'none';
+  }
 }
 
 function buildListRequestParams(filters, nextPage) {
@@ -483,26 +491,52 @@ async function initListFilters() {
 
   if (window.orgSelect && clinicEl && teamEl) {
     await window.orgSelect.loadOrgData();
-    window.orgSelect.fillSelectOptions(clinicEl, window.orgSelect.getClinics(), {
-      emptyText: '전체 의원'
-    });
-    window.orgSelect.bindClinicTeamSelects({
-      clinicSelect: clinicEl,
-      teamSelect: teamEl,
-      teamEmptyText: '전체 팀',
-      onTeamChanged: null
-    });
-    if (query.clinic_code) {
-      clinicEl.value = query.clinic_code;
+
+    var userClinicCode = equipmentListState.userClinicCode;
+    var isAdmin = equipmentListState.isAdmin;
+
+    if (!isAdmin && userClinicCode) {
+      // ★ 일반 user: 본인 소속 의원만 표시하고 선택 고정
+      var userClinic = window.orgSelect.getClinics().filter(function(c) {
+        return c.code_value === userClinicCode;
+      });
+      window.orgSelect.fillSelectOptions(clinicEl, userClinic, {
+        emptyText: ''
+      });
+      clinicEl.value = userClinicCode;
+      clinicEl.disabled = true;
+
+      // 팀은 소속 의원 팀만 표시
       window.orgSelect.fillSelectOptions(
         teamEl,
-        window.orgSelect.getFilteredTeams(query.clinic_code),
+        window.orgSelect.getFilteredTeams(userClinicCode),
         { emptyText: '전체 팀' }
       );
       if (query.team_code) teamEl.value = query.team_code;
+
     } else {
-      teamEl.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
-      teamEl.disabled = true;
+      // admin: 전체 의원 선택 가능
+      window.orgSelect.fillSelectOptions(clinicEl, window.orgSelect.getClinics(), {
+        emptyText: '전체 의원'
+      });
+      window.orgSelect.bindClinicTeamSelects({
+        clinicSelect: clinicEl,
+        teamSelect: teamEl,
+        teamEmptyText: '전체 팀',
+        onTeamChanged: null
+      });
+      if (query.clinic_code) {
+        clinicEl.value = query.clinic_code;
+        window.orgSelect.fillSelectOptions(
+          teamEl,
+          window.orgSelect.getFilteredTeams(query.clinic_code),
+          { emptyText: '전체 팀' }
+        );
+        if (query.team_code) teamEl.value = query.team_code;
+      } else {
+        teamEl.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
+        teamEl.disabled = true;
+      }
     }
   }
 
@@ -527,21 +561,33 @@ function bindListEvents() {
   if (resetBtn) {
     resetBtn.addEventListener('click', async function() {
       setValue('keyword', '');
-      setValue('clinic_code', '');
-      setValue('team_code', '');
+      // ★ admin이 아니면 의원 선택 초기화 안 함 (고정)
+      if (equipmentListState.isAdmin) {
+        setValue('clinic_code', '');
+        setValue('team_code', '');
+        if (window.orgSelect) {
+          window.orgSelect.fillSelectOptions(
+            document.getElementById('team_code'),
+            [],
+            { emptyText: '의원을 먼저 선택하세요' }
+          );
+          document.getElementById('team_code').disabled = true;
+        }
+      } else {
+        setValue('team_code', '');
+        if (window.orgSelect) {
+          window.orgSelect.fillSelectOptions(
+            document.getElementById('team_code'),
+            window.orgSelect.getFilteredTeams(equipmentListState.userClinicCode),
+            { emptyText: '전체 팀' }
+          );
+        }
+      }
       setValue('status', '');
       setValue('manufacturer', '');
 
       equipmentListState.pageSize = Number(getValue('page_size') || equipmentListState.pageSize || 20) || 20;
       setValue('page_size', String(equipmentListState.pageSize));
-
-      if (window.orgSelect) {
-        window.orgSelect.fillSelectOptions(
-          document.getElementById('team_code'),
-          [],
-          { emptyText: '전체 팀' }
-        );
-      }
 
       await loadEquipmentList(1);
     });
@@ -677,6 +723,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     if (!equipmentListState.user) return;
+
+    // ★ admin 여부 및 소속 의원 코드 세팅
+    var userRole = String(equipmentListState.user.role || '').trim().toLowerCase();
+    equipmentListState.isAdmin = (userRole === 'admin');
+    equipmentListState.userClinicCode = String(equipmentListState.user.clinic_code || '').trim();
 
     if (window.appPermission && typeof window.appPermission.requirePermission === 'function') {
       var canView = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
