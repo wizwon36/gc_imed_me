@@ -164,6 +164,12 @@ function applyDashboardPermissionUi() {
   if (createAction) {
     createAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
   }
+
+  const exportAction = dq('#dashboardExportBtn');
+  if (exportAction) {
+    exportAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
+    exportAction.addEventListener('click', exportAllEquipmentsExcel);
+  }
 }
 
 function renderDashboardSkeleton() {
@@ -457,3 +463,71 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   }
 });
+
+// ─────────────────────────────────────────────
+// 장비대장 전체 엑셀 다운로드
+// ─────────────────────────────────────────────
+async function exportAllEquipmentsExcel() {
+  const btn = document.getElementById('dashboardExportBtn');
+
+  if (!window.XLSX) {
+    if (typeof showMessage === 'function') showMessage('엑셀 라이브러리를 불러오지 못했습니다.', 'error');
+    return;
+  }
+
+  try {
+    if (btn) { btn.disabled = true; btn.querySelector('.dashboard-action-desc').textContent = '다운로드 중...'; }
+    if (typeof showGlobalLoading === 'function') showGlobalLoading('장비 데이터를 불러오는 중...');
+
+    const userEmail = getCurrentUserEmail();
+    const result = await apiGet('exportEquipments', { request_user_email: userEmail });
+    const data = Array.isArray(result.data) ? result.data : [];
+
+    if (!data.length) {
+      if (typeof showMessage === 'function') showMessage('다운로드할 데이터가 없습니다.', 'error');
+      return;
+    }
+
+    const statusMap = { IN_USE: '사용중', REPAIRING: '수리중', INSPECTING: '점검중', STORED: '보관', DISPOSED: '폐기' };
+    const toStatus = v => statusMap[String(v || '').trim()] || (v || '');
+
+    const headers = [
+      '장비번호', '장비명', '모델명', '제조사', '시리얼번호',
+      '사용부서', '의원', '팀', '현재위치', '현재상태',
+      '담당자', '연락처', '구매처', '취득가액',
+      '취득일자', '제조일자', '유지보수종료일', '현재사용자', '비고', '등록일시'
+    ];
+
+    const rows = data.map(item => [
+      item.equipment_id || '', item.equipment_name || '', item.model_name || '',
+      item.manufacturer || '', item.serial_no || '', item.department || '',
+      item.clinic_name || '', item.team_name || '', item.location || '',
+      toStatus(item.status), item.manager_name || '', item.manager_phone || '',
+      item.vendor || '',
+      (item.acquisition_cost !== '' && item.acquisition_cost != null) ? Number(item.acquisition_cost) : '',
+      item.purchase_date || '', item.manufacture_date || '', item.maintenance_end_date || '',
+      item.current_user || '', item.memo || '', item.created_at || ''
+    ]);
+
+    const ws = window.XLSX.utils.aoa_to_sheet([headers].concat(rows));
+    ws['!cols'] = [
+      {wch:14},{wch:20},{wch:16},{wch:14},{wch:16},
+      {wch:20},{wch:12},{wch:12},{wch:12},{wch:8},
+      {wch:10},{wch:14},{wch:14},{wch:12},
+      {wch:12},{wch:12},{wch:14},{wch:10},{wch:20},{wch:18}
+    ];
+
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, '장비대장');
+
+    const now = new Date();
+    const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+    window.XLSX.writeFile(wb, '장비대장_' + dateStr + '.xlsx');
+
+  } catch (error) {
+    if (typeof showMessage === 'function') showMessage(error.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.querySelector('.dashboard-action-desc').textContent = '전체 장비 다운로드'; }
+    if (typeof hideGlobalLoading === 'function') hideGlobalLoading(true);
+  }
+}
