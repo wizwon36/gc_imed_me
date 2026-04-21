@@ -93,7 +93,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* 이력 2열 */
@@ -230,9 +230,9 @@
 }
 
 .info-row--wide .info-cell {
-  grid-template-columns: 1fr;
+  grid-template-columns: 96px minmax(0, 1fr);
   padding: 10px 4px 12px;
-  gap: 4px;
+  gap: 0 12px;
 }
 
 .info-row--wide .info-cell-label {
@@ -442,9 +442,9 @@
     margin-bottom: 16px;
   }
 
-  /* portal-top-actions는 common.css에서 1fr 1fr(2열)이므로 3버튼용으로 오버라이드 */
-  .detail-top-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* specificity 높여서 common.css의 1fr 1fr 오버라이드 */
+  .equipment-detail-page .detail-top-actions {
+    grid-template-columns: 1fr;
   }
 
   .equipment-detail-page .page-title {
@@ -603,6 +603,8 @@
   border-radius: 24px;
   background: #fff;
   box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-photo-card:hover,
@@ -639,7 +641,7 @@
 .detail-photo-wrap {
   position: relative;
   width: 100%;
-  min-height: 140px;
+  flex: 1 1 auto;
   border: 1px dashed #d9dee7;
   border-radius: 18px;
   background: #f8fafc;
