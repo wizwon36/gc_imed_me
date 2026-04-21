@@ -354,10 +354,16 @@
   z-index: 1;
 }
 
-.dash-tbl-th--name { width: 40%; }
-.dash-tbl-th--dept { width: 28%; }
-.dash-tbl-th--date { width: 22%; }
-.dash-tbl-th--side { width: 10%; text-align: center; }
+/* 유지보수: 장비명 + 부서 + D-Day (날짜 없음) */
+.dashboard-panel--maintenance .dash-tbl-th--name { width: 42%; }
+.dashboard-panel--maintenance .dash-tbl-th--dept { width: 36%; }
+.dashboard-panel--maintenance .dash-tbl-th--side { width: 22%; text-align: center; }
+
+/* 수리/등록: 장비명 + 날짜 (부서 없음) */
+.dashboard-panel--repair .dash-tbl-th--name,
+.dashboard-panel--registered .dash-tbl-th--name { width: 62%; }
+.dashboard-panel--repair .dash-tbl-th--date,
+.dashboard-panel--registered .dash-tbl-th--date { width: 38%; }
 
 .dash-tbl-row {
   transition: background-color 0.12s ease;
@@ -638,10 +644,16 @@
     padding-right: 2px;
   }
 
-  .dash-tbl-th--name { width: 38%; }
-  .dash-tbl-th--dept { width: 30%; }
-  .dash-tbl-th--date { width: 20%; }
-  .dash-tbl-th--side { width: 12%; }
+  /* 모바일: 유지보수 */
+  .dashboard-panel--maintenance .dash-tbl-th--name { width: 40%; }
+  .dashboard-panel--maintenance .dash-tbl-th--dept { width: 34%; }
+  .dashboard-panel--maintenance .dash-tbl-th--side { width: 26%; }
+
+  /* 모바일: 수리/등록 */
+  .dashboard-panel--repair .dash-tbl-th--name,
+  .dashboard-panel--registered .dash-tbl-th--name { width: 58%; }
+  .dashboard-panel--repair .dash-tbl-th--date,
+  .dashboard-panel--registered .dash-tbl-th--date { width: 42%; }
 
   .dash-tbl-cell,
   .dash-tbl-th {
