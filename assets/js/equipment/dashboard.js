@@ -197,36 +197,51 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     return;
   }
 
-  container.style.display = 'grid';
+  container.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
 
-  container.innerHTML = list.map(function (item) {
+  const hasSide = typeof options.sideRenderer === 'function';
+
+  const rows = list.map(function (item) {
     const title = textSafe(item.equipment_name || '-');
     const dateText = textSafe(formatDisplayDate(item[options.dateField]));
-    const desc = textSafe(`${options.dateLabel} ${dateText}`);
     const model = textSafe(item.model_name || '-');
     const dept = textSafe(item.department_display || item.department || '-');
     const id = encodeURIComponent(item.equipment_id || '');
 
     let sideHtml = '';
-    if (typeof options.sideRenderer === 'function') {
-      sideHtml = options.sideRenderer(item) || '';
+    if (hasSide) {
+      sideHtml = `<td class="dash-tbl-cell dash-tbl-cell--side">${options.sideRenderer(item) || ''}</td>`;
     }
 
     return `
-      <a class="dashboard-record-item" href="detail.html?id=${id}">
-        <div class="dashboard-record-main">
-          <div class="dashboard-record-title">${title}</div>
-          <div class="dashboard-record-desc">${desc}</div>
-          <div class="dashboard-record-meta">
-            <span class="dashboard-meta-chip">${model}</span>
-            <span class="dashboard-meta-chip">${dept}</span>
-          </div>
-        </div>
+      <tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
+        <td class="dash-tbl-cell dash-tbl-cell--name">
+          <div class="dash-tbl-name">${title}</div>
+          <div class="dash-tbl-sub">${model}</div>
+        </td>
+        <td class="dash-tbl-cell dash-tbl-cell--dept">${dept}</td>
+        <td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>
         ${sideHtml}
-      </a>
+      </tr>
     `;
   }).join('');
+
+  const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
+
+  container.innerHTML = `
+    <table class="dash-tbl">
+      <thead>
+        <tr>
+          <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+          <th class="dash-tbl-th dash-tbl-th--dept">부서</th>
+          <th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>
+          ${sideHeader}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
 }
 
 function renderMaintenanceAlerts(items) {
