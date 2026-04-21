@@ -546,6 +546,16 @@
 
   .det-tbl-main { font-size: 12px; }
 
+  /* 모바일: 처리업체·금액·재고메모 숨김 */
+  .det-tbl-cell--vendor,
+  .det-tbl-th--vendor,
+  .det-tbl-cell--amount,
+  .det-tbl-th--amount,
+  .det-tbl-cell--inv-memo,
+  .det-tbl-th--inv-memo {
+    display: none;
+  }
+
   .qr-panel {
     min-height: auto;
   }
@@ -653,7 +663,7 @@
 .detail-photo-wrap {
   position: relative;
   width: 100%;
-  min-height: 260px;
+  min-height: 140px;
   border: 1px dashed #d9dee7;
   border-radius: 18px;
   background: #f8fafc;
@@ -680,13 +690,13 @@
 }
 
 .detail-photo-empty {
-  min-height: 260px;
+  min-height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   color: #64748b;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
 }
 
