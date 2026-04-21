@@ -89,8 +89,8 @@
 }
 
 .detail-info-card {
-  height: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .detail-sub-grid {
@@ -167,13 +167,6 @@
 .info-tile-grid {
   display: flex;
   flex-direction: column;
-  height: 100%;
-}
-
-/* 마지막 행(비고)이 카드 밖으로 나가지 않도록 */
-.info-row:last-child {
-  margin-top: auto;
-  padding-top: 4px;
 }
 
 .info-row {
@@ -439,7 +432,7 @@
   }
 
   .equipment-detail-page .top-brand-bar {
-    display: block !important;
+    display: block;
     padding: 16px 18px 18px;
     border-radius: 22px;
   }
@@ -536,11 +529,6 @@
     grid-template-columns: 1fr;
   }
 
-  /* 모바일 1열에서 마지막 행 margin-top auto 제거 */
-  .info-row:last-child {
-    margin-top: 0;
-  }
-
   .info-row:not(.info-row--wide) .info-cell:first-child {
     border-right: none;
     border-bottom: 1px solid #eef2f7;
@@ -549,6 +537,15 @@
 
   .info-row:not(.info-row--wide) .info-cell:last-child {
     padding-left: 4px;
+  }
+
+  /* 모바일에서 마지막 info-row 안의 첫 셀도 구분선 제거 */
+  .info-row:last-child .info-cell:first-child {
+    border-bottom: 1px solid #eef2f7;
+  }
+
+  .info-row--wide .info-cell {
+    border-bottom: none;
   }
 
   .info-cell {
