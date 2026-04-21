@@ -1035,9 +1035,16 @@
     width: 100%;
   }
 
+  .equipment-list-page .top-brand-logo {
+    flex-shrink: 0;
+  }
+
   .equipment-list-page .top-brand-texts {
     min-width: 0;
     flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .equipment-list-page .top-brand-title {
@@ -1343,7 +1350,13 @@
   }
 
   .equipment-list-top-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .equipment-list-top-actions .portal-header-btn {
+    min-height: 40px;
+    font-size: 12px;
+    padding: 0 6px;
   }
 
   .equipment-list-page .page-title {
