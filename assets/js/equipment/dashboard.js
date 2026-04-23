@@ -429,14 +429,19 @@ document.addEventListener('DOMContentLoaded', async function () {
     const user = window.auth?.requireAuth?.();
     if (!user) return;
 
+    // 서울숲의원 외 접근 제한 - 링크/버튼만 비활성화, 되돌리려면 이 블록 제거
     const EQUIPMENT_ALLOWED_CLINICS = ['서울숲의원'];
     const userClinicName = String(user.clinic_name || '').trim();
     if (!EQUIPMENT_ALLOWED_CLINICS.some(name => userClinicName.includes(name))) {
-      if (typeof showMessage === 'function') {
-        showMessage('현재 의료장비 관리는 서울숲의원만 사용 가능합니다. 다른 의원은 순차적으로 오픈될 예정입니다.', 'error');
-      }
+      showMessage('현재 의료장비 관리는 서울숲의원만 사용 가능합니다. 다른 의원은 순차적으로 오픈될 예정입니다.', 'error');
+      document.querySelectorAll('a[href]:not([href="../../portal.html"]), button').forEach(el => {
+        el.style.opacity = '0.4';
+        el.style.pointerEvents = 'none';
+        el.style.cursor = 'not-allowed';
+      });
       return;
     }
+    // 서울숲의원 외 접근 제한 끝
 
     const permissionPromise = getEquipmentPermissionContext();
     const dashboardPromise = fetchDashboardData();
