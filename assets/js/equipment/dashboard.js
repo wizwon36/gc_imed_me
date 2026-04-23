@@ -429,6 +429,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     const user = window.auth?.requireAuth?.();
     if (!user) return;
 
+    const EQUIPMENT_ALLOWED_CLINICS = ['서울숲의원'];
+    const userClinicName = String(user.clinic_name || '').trim();
+    if (!EQUIPMENT_ALLOWED_CLINICS.some(name => userClinicName.includes(name))) {
+      if (typeof showMessage === 'function') {
+        showMessage('현재 의료장비 관리는 서울숲의원만 사용 가능합니다. 다른 의원은 순차적으로 오픈될 예정입니다.', 'error');
+      }
+      return;
+    }
+
     const permissionPromise = getEquipmentPermissionContext();
     const dashboardPromise = fetchDashboardData();
 
