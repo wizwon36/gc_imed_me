@@ -343,7 +343,11 @@
   background: #e5e7eb;
 }
 
-/* ── 자석 유무 선택 ── */
+/* ── 자석 유무 선택 (현재 미사용 — 추후 활성화 가능) ── */
+#magnetField {
+  display: none;
+}
+
 .signage-magnet-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
