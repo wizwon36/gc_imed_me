@@ -46,37 +46,50 @@ function renderPublicInfo(item) {
   if (!grid) return;
 
   var fields = [
-    { label: '장비번호', value: item.equipment_id },
-    { label: '장비명', value: item.equipment_name },
-    { label: '모델명', value: item.model_name },
-    { label: '제조사', value: item.manufacturer },
-    { label: '사용부서', value: item.department },
-    { label: '현재 위치', value: item.location },
-    { label: '유지보수 종료일', value: formatDisplayDate(item.maintenance_end_date) },
-    { label: '현재 상태', value: item.status, isStatus: true },
-    { label: '담당자', value: item.manager_name },
-    { label: '연락처', value: item.manager_phone }
+    { label: '장비번호',      value: item.equipment_id },
+    { label: '장비명',        value: item.equipment_name },
+    { label: '모델명',        value: item.model_name },
+    { label: '제조사',        value: item.manufacturer },
+    { label: '사용부서',      value: item.department },
+    { label: '현재 위치',     value: item.location },
+    { label: '유지보수 종료', value: formatDisplayDate(item.maintenance_end_date) },
+    { label: '현재 상태',     value: item.status, isStatus: true },
+    { label: '담당자',        value: item.manager_name },
+    { label: '연락처',        value: item.manager_phone }
   ];
 
-  grid.innerHTML = fields.map(function(field) {
+  function buildInfoCell(field) {
     var valueHtml;
-
     if (field.isStatus) {
       valueHtml = '<span class="status-badge ' + statusClassPublic(field.value) + '">' +
-        escapeHtml(statusLabelPublic(field.value)) +
-        '</span>';
+        escapeHtml(statusLabelPublic(field.value)) + '</span>';
     } else {
       var display = (!field.value || field.value === '') ? '-' : field.value;
       valueHtml = escapeHtml(display);
     }
-
     return (
-      '<div class="info-tile">' +
-        '<div class="info-tile-label">' + escapeHtml(field.label) + '</div>' +
-        '<div class="info-tile-value">' + valueHtml + '</div>' +
+      '<div class="info-cell">' +
+        '<span class="info-cell-label">' + escapeHtml(field.label) + '</span>' +
+        '<span class="info-cell-value">' + valueHtml + '</span>' +
       '</div>'
     );
-  }).join('');
+  }
+
+  var rows = [];
+  var i = 0;
+  while (i < fields.length) {
+    var f = fields[i];
+    var next = (fields[i + 1]) ? fields[i + 1] : null;
+    if (next) {
+      rows.push('<div class="info-row">' + buildInfoCell(f) + buildInfoCell(next) + '</div>');
+      i += 2;
+    } else {
+      rows.push('<div class="info-row">' + buildInfoCell(f) + '</div>');
+      i++;
+    }
+  }
+
+  grid.innerHTML = rows.join('');
 }
 
 function renderPublicHero(item) {
