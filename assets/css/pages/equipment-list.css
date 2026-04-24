@@ -1634,3 +1634,66 @@
     border-radius: 2mm;
   }
 }
+
+/* ===== 라벨 일괄 출력 - 목록 툴바 ===== */
+
+.equipment-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.equipment-list-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bulk-check-all-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bulk-check-all-wrap input { cursor: pointer; }
+
+.tbl-th--check,
+.tbl-td--check {
+  width: 36px;
+  text-align: center;
+  padding: 0 6px !important;
+}
+
+/* ===== 라벨 일괄 출력 - 인쇄 그리드 ===== */
+
+.bulk-label-wrap {
+  padding: 12px 0;
+}
+
+.bulk-label-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.bulk-label-item {
+  flex-shrink: 0;
+}
+
+@media print {
+  .bulk-label-grid {
+    gap: 0;
+  }
+  .bulk-label-item {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 2mm;
+  }
+}
