@@ -35,6 +35,12 @@
 
     <div id="messageBox" class="message-box"></div>
 
+    <!-- 탭 (단건 등록 / 일괄 등록) — 신규 등록 모드에서만 표시 -->
+    <div class="form-tabs" id="formTabs">
+      <button type="button" class="form-tab is-active" id="tabSingle" onclick="switchFormTab('single')">단건 등록</button>
+      <button type="button" class="form-tab" id="tabBulk" onclick="switchFormTab('bulk')">일괄 등록</button>
+    </div>
+
     <form id="equipmentForm" class="card form-card equipment-form-card">
       <div class="section-head equipment-form-section-head">
         <div>
@@ -182,6 +188,50 @@
         </button>
       </div>
     </form>
+
+    <!-- 일괄 등록 섹션 -->
+    <div id="bulkSection" class="card form-card equipment-form-card bulk-section" style="display:none;">
+      <div class="section-head equipment-form-section-head">
+        <div>
+          <span class="portal-section-kicker">BULK IMPORT</span>
+          <h2 class="section-title">엑셀 일괄 등록</h2>
+          <div class="sub-text equipment-form-section-desc">
+            엑셀 파일로 여러 장비를 한 번에 등록합니다. 오류 발생 시 전체 롤백됩니다.
+          </div>
+        </div>
+      </div>
+
+      <!-- 템플릿 다운로드 -->
+      <div class="bulk-template-row">
+        <button type="button" class="btn btn-light" id="downloadTemplateBtn">템플릿 다운로드</button>
+        <span class="bulk-template-desc">템플릿을 내려받아 작성 후 업로드해 주세요. <strong>굵은 항목</strong>은 필수값입니다.</span>
+      </div>
+
+      <!-- 파일 업로드 -->
+      <div class="bulk-upload-row">
+        <input type="file" id="bulkFileInput" class="photo-file-input" accept=".xlsx,.xls" />
+        <label for="bulkFileInput" class="photo-file-trigger">파일 선택</label>
+        <span id="bulkFileName" class="photo-file-name">선택된 파일 없음</span>
+      </div>
+
+      <!-- 미리보기 테이블 -->
+      <div id="bulkPreviewWrap" style="display:none;">
+        <div class="bulk-preview-header">
+          <span id="bulkPreviewCount" class="bulk-preview-count"></span>
+          <span id="bulkPreviewError" class="bulk-preview-error"></span>
+        </div>
+        <div class="bulk-table-wrap">
+          <table class="bulk-table" id="bulkPreviewTable"></table>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="list.html" class="btn">목록으로</a>
+        <button type="button" id="bulkSubmitBtn" class="btn btn-primary" style="display:none;">
+          일괄 등록
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="../../assets/js/core/config.js"></script>
@@ -189,6 +239,7 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/org-select.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../../assets/js/equipment/equipment-form.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
