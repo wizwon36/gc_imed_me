@@ -489,7 +489,7 @@ async function exportAllEquipmentsExcel() {
     }
 
     const statusMap = { IN_USE: '사용중', REPAIRING: '수리중', INSPECTING: '점검중', STORED: '보관', DISPOSED: '폐기' };
-    const toStatus = v => statusMap[String(v || '').trim()] || (v || '');
+    const toStatus   = v => statusMap[String(v || '').trim()] || (v || '');
     const toDateOnly = v => v ? String(v).substring(0, 10) : '';
 
     const headers = [
@@ -498,6 +498,10 @@ async function exportAllEquipmentsExcel() {
       '담당자', '연락처', '구매처', '취득가액',
       '취득일자', '제조일자', '유지보수종료일', '현재사용자', '비고', '등록일시'
     ];
+
+    // 컬럼 유형 (0-based index)
+    const COL_NUM  = new Set([13]);         // 취득가액
+    const COL_DATE = new Set([14, 15, 16]); // 취득일자, 제조일자, 유지보수종료일
 
     const rows = data.map(item => [
       item.equipment_id || '', item.equipment_name || '', item.model_name || '',
@@ -510,13 +514,68 @@ async function exportAllEquipmentsExcel() {
       item.current_user || '', item.memo || '', item.created_at || ''
     ]);
 
-    const ws = window.XLSX.utils.aoa_to_sheet([headers].concat(rows));
+    // ── 스타일 정의 ──────────────────────────────────────────────
+    const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
+    const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+    const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+    const BORDER = {
+      top:    { style: 'thin', color: { rgb: 'BFBFBF' } },
+      bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+      left:   { style: 'thin', color: { rgb: 'BFBFBF' } },
+      right:  { style: 'thin', color: { rgb: 'BFBFBF' } }
+    };
+    const ALIGN_LEFT   = { horizontal: 'left',   vertical: 'center' };
+    const ALIGN_CENTER = { horizontal: 'center', vertical: 'center' };
+    const ALIGN_RIGHT  = { horizontal: 'right',  vertical: 'center' };
+    const FMT_NUM  = '#,##0';
+    const FMT_DATE = 'yyyy-mm-dd';
+
+    // ── 워크시트 수동 생성 ───────────────────────────────────────
+    const ws = {};
+    const totalCols = headers.length;
+    const totalRows = rows.length + 1;
+
+    // 헤더 행
+    headers.forEach(function(h, c) {
+      const addr = window.XLSX.utils.encode_cell({ r: 0, c });
+      ws[addr] = {
+        v: h, t: 's',
+        s: { font: FONT_HEADER, fill: FILL_HEADER, border: BORDER, alignment: ALIGN_CENTER }
+      };
+    });
+
+    // 데이터 행
+    rows.forEach(function(row, r) {
+      row.forEach(function(val, c) {
+        const addr  = window.XLSX.utils.encode_cell({ r: r + 1, c });
+        const isNum  = COL_NUM.has(c);
+        const isDate = COL_DATE.has(c);
+
+        const cell = {
+          v: val,
+          t: isNum && val !== '' ? 'n' : 's',
+          s: {
+            font:      FONT_BASE,
+            border:    BORDER,
+            alignment: isNum ? ALIGN_RIGHT : isDate ? ALIGN_CENTER : ALIGN_LEFT
+          }
+        };
+
+        if (isNum && val !== '') { cell.z = FMT_NUM;  cell.s.numFmt = FMT_NUM;  }
+        if (isDate && val)       { cell.z = FMT_DATE; cell.s.numFmt = FMT_DATE; }
+
+        ws[addr] = cell;
+      });
+    });
+
+    ws['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: totalRows - 1, c: totalCols - 1 });
     ws['!cols'] = [
       {wch:14},{wch:20},{wch:16},{wch:14},{wch:16},
       {wch:20},{wch:12},{wch:12},{wch:12},{wch:8},
       {wch:10},{wch:14},{wch:14},{wch:12},
       {wch:12},{wch:12},{wch:14},{wch:10},{wch:20},{wch:18}
     ];
+    ws['!rows'] = Array(totalRows).fill({ hpt: 18 });
 
     const wb = window.XLSX.utils.book_new();
     window.XLSX.utils.book_append_sheet(wb, ws, '장비대장');
