@@ -493,13 +493,51 @@ function buildEquipmentPayload() {
   return payload;
 }
 
+// 필드 에러 표시 헬퍼
+function setFieldError(fieldId, message) {
+  const el = qs('#' + fieldId);
+  if (!el) return;
+  el.classList.add('is-field-error');
+
+  // 기존 에러 메시지 제거 후 재삽입
+  const existing = el.parentElement.querySelector('.field-error-msg');
+  if (existing) existing.remove();
+
+  const msg = document.createElement('span');
+  msg.className = 'field-error-msg';
+  msg.textContent = message;
+  el.insertAdjacentElement('afterend', msg);
+}
+
+function clearFieldErrors() {
+  document.querySelectorAll('.input.is-field-error').forEach(el => {
+    el.classList.remove('is-field-error');
+  });
+  document.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+}
+
 function validateEquipmentForm(payload) {
-  if (!payload.equipment_name) { showMessage('장비명을 입력하세요.', 'error'); qs('#equipment_name')?.focus(); return false; }
-  if (!payload.model_name) { showMessage('모델명을 입력하세요.', 'error'); qs('#model_name')?.focus(); return false; }
-  if (!payload.serial_no) { showMessage('시리얼번호를 입력하세요.', 'error'); qs('#serial_no')?.focus(); return false; }
-  if (!payload.clinic_code) { showMessage('의원을 선택하세요.', 'error'); qs('#clinic_code')?.focus(); return false; }
-  if (!payload.team_code) { showMessage('팀을 선택하세요.', 'error'); qs('#team_code')?.focus(); return false; }
-  if (!payload.created_by && !payload.updated_by) { showMessage('로그인 사용자 정보가 없습니다.', 'error'); return false; }
+  clearFieldErrors();
+
+  const errors = [];
+
+  if (!payload.equipment_name) { setFieldError('equipment_name', '장비명을 입력하세요.'); errors.push('equipment_name'); }
+  if (!payload.model_name)     { setFieldError('model_name', '모델명을 입력하세요.');    errors.push('model_name'); }
+  if (!payload.serial_no)      { setFieldError('serial_no', '시리얼번호를 입력하세요.'); errors.push('serial_no'); }
+  if (!payload.clinic_code)    { setFieldError('clinic_code', '의원을 선택하세요.');     errors.push('clinic_code'); }
+  if (!payload.team_code)      { setFieldError('team_code', '팀을 선택하세요.');         errors.push('team_code'); }
+
+  if (!payload.created_by && !payload.updated_by) {
+    showMessage('로그인 사용자 정보가 없습니다.', 'error');
+    return false;
+  }
+
+  if (errors.length > 0) {
+    showMessage('필수 항목을 모두 입력해 주세요.', 'error');
+    qs('#' + errors[0])?.focus();
+    return false;
+  }
+
   return true;
 }
 
@@ -524,6 +562,7 @@ async function refreshCurrentEquipment() {
 async function handleSubmit(event) {
   event.preventDefault();
   clearMessage();
+  clearFieldErrors();
 
   const submitBtn = qs('#submitButton');
   const payload = buildEquipmentPayload();
