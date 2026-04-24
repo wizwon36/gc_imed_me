@@ -19,14 +19,12 @@ function toggleRowsBySize(sizeClass) {
   var modelRow = qs('#labelRowModel');
   var deptRow = qs('#labelRowDepartment');
   var locationRow = qs('#labelRowLocation');
-  var statusRow = qs('#labelRowStatus');
 
-  if (!modelRow || !deptRow || !locationRow || !statusRow) return;
+  if (!modelRow || !deptRow || !locationRow) return;
 
   modelRow.style.display = '';
   deptRow.style.display = '';
   locationRow.style.display = '';
-  statusRow.style.display = '';
 
   if (sizeClass === 'size-70x40') {
     locationRow.style.display = 'none';
@@ -36,7 +34,6 @@ function toggleRowsBySize(sizeClass) {
     modelRow.style.display = 'none';
     deptRow.style.display = 'none';
     locationRow.style.display = 'none';
-    statusRow.style.display = 'none';
   }
 }
 
@@ -44,12 +41,12 @@ function renderLabelQr(equipmentId) {
   var qrArea = qs('#labelQr');
   var qrValue = buildEquipmentDetailUrl(equipmentId);
   var sizeClass = getSelectedLabelSize();
-  var qrSize = 124;
+  var qrSize = 86; // 90x48: box 98px - padding 12px
 
   if (!qrArea) return;
 
-  if (sizeClass === 'size-70x40') qrSize = 98;
-  if (sizeClass === 'size-50x30') qrSize = 72;
+  if (sizeClass === 'size-70x40') qrSize = 66; // box 76px - padding 10px
+  if (sizeClass === 'size-50x30') qrSize = 48;
 
   qrArea.innerHTML = '';
 
@@ -107,7 +104,6 @@ async function loadLabelData() {
     qs('#labelModelName').textContent = item.model_name || '-';
     qs('#labelDepartment').textContent = item.department || '-';
     qs('#labelLocation').textContent = item.location || '-';
-    qs('#labelStatus').textContent = statusLabel(item.status || '');
 
     refreshLabelPreview(item.equipment_id || equipmentId);
   } catch (error) {
