@@ -847,16 +847,14 @@ function initBulkLabelFeature() {
 
   if (!bulkBtn) return;
 
-  // 라벨 일괄 출력 버튼 클릭
+  // 라벨 일괄 출력 버튼 클릭 → 오버레이 인쇄
   bulkBtn.addEventListener('click', function() {
     if (!bulkSelectedIds.size) return;
     var ids        = Array.from(bulkSelectedIds);
-    var sizeParam  = getSelectedLabelSizeForBulk();
+    var sizeClass  = getSelectedLabelSizeForBulk();
     var layoutSelect = document.getElementById('bulkLayoutSelect');
     var layout     = layoutSelect ? layoutSelect.value : '';
-    var url = 'label-print.html?equipment_ids=' + encodeURIComponent(ids.join(',')) + '&size=' + sizeParam;
-    if (layout) url += '&layout=' + layout;
-    location.href = url;
+    printLabelsOverlay(ids, sizeClass, layout);
   });
 
   // 사이즈 변경 시 격자 옵션 갱신
@@ -939,6 +937,9 @@ function getSelectedLabelSizeForBulk() {
 // 목록 렌더링 후 체크 상태 초기화
 var _origRenderEquipmentList = renderEquipmentList;
 renderEquipmentList = function(items) {
+  // 현재 페이지 데이터 저장 (일괄 출력용)
+  equipmentListState.currentItems = Array.isArray(items) ? items : [];
+
   _origRenderEquipmentList(items);
   bulkSelectedIds.clear();
   updateBulkUI();
@@ -950,3 +951,127 @@ document.addEventListener('DOMContentLoaded', function() {
   // 기존 DOMContentLoaded 이후 초기화
   setTimeout(initBulkLabelFeature, 100);
 });
+
+// ================================================================
+// 라벨 인쇄 오버레이 (페이지 이동 없이 직접 출력)
+// ================================================================
+
+var GRID_SPECS_LIST = {
+  '2x5': { cols: 2, rows: 5, colGap: '4mm', rowGap: '0mm', padT: '10mm', padS: '8mm' },
+  '2x4': { cols: 2, rows: 4, colGap: '4mm', rowGap: '2mm', padT: '14mm', padS: '8mm' },
+  '2x6': { cols: 2, rows: 6, colGap: '4mm', rowGap: '0mm', padT: '8mm',  padS: '8mm' },
+  '3x6': { cols: 3, rows: 6, colGap: '3mm', rowGap: '0mm', padT: '8mm',  padS: '5mm' }
+};
+
+function buildLabelHtmlForList(item, sizeClass, qrId) {
+  var showLocation = sizeClass !== 'size-70x40' && sizeClass !== 'size-50x30';
+  var showModel    = sizeClass !== 'size-50x30';
+  var showDept     = sizeClass !== 'size-50x30';
+
+  return (
+    '<div class="device-label ' + sizeClass + '">' +
+      '<div class="label-content-panel">' +
+        '<div class="label-hospital">녹십자아이메드 의료장비 관리시스템</div>' +
+        '<h2 class="label-title">' + escapeHtml(item.equipment_name || '-') + '</h2>' +
+        '<div class="label-info-block">' +
+          '<div class="label-row label-row-emphasis">' +
+            '<div class="label-key">관리번호</div>' +
+            '<div class="label-value label-value-id">' + escapeHtml(item.equipment_id || '-') + '</div>' +
+          '</div>' +
+          (showModel ? '<div class="label-row"><div class="label-key">모델명</div><div class="label-value">' + escapeHtml(item.model_name || '-') + '</div></div>' : '') +
+          (showDept  ? '<div class="label-row"><div class="label-key">사용부서</div><div class="label-value">' + escapeHtml(item.department || '-') + '</div></div>' : '') +
+          (showLocation ? '<div class="label-row"><div class="label-key">위치</div><div class="label-value">' + escapeHtml(item.location || '-') + '</div></div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="qr-panel">' +
+        '<div class="label-qr-box" id="' + escapeHtml(qrId) + '"></div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function printLabelsOverlay(ids, sizeClass, layout) {
+  // 선택된 ID에 해당하는 장비 데이터 추출
+  var allItems = equipmentListState.currentItems || [];
+  var idSet = new Set(ids);
+  var items = allItems.filter(function(item) { return idSet.has(item.equipment_id); });
+
+  // currentItems에 없는 ID는 최소 정보로 생성
+  ids.forEach(function(id) {
+    if (!items.find(function(i) { return i.equipment_id === id; })) {
+      items.push({ equipment_id: id, equipment_name: id, model_name: '', department: '', location: '', qr_value: id });
+    }
+  });
+
+  // 오버레이 생성
+  var overlay = document.getElementById('printLabelOverlay');
+  if (overlay) overlay.remove();
+
+  overlay = document.createElement('div');
+  overlay.id = 'printLabelOverlay';
+  overlay.className = 'print-label-overlay';
+
+  var isGrid = !!layout;
+  var spec   = GRID_SPECS_LIST[layout];
+  var perPage = spec ? spec.cols * spec.rows : items.length;
+
+  var pagesHtml = '';
+
+  if (isGrid && spec) {
+    for (var p = 0; p < items.length; p += perPage) {
+      var pageItems = items.slice(p, p + perPage);
+      while (pageItems.length < perPage) pageItems.push(null);
+
+      var cells = pageItems.map(function(item, idx) {
+        if (!item) return '<div class="print-grid-cell print-grid-cell--empty"></div>';
+        var qrId = 'pqr-' + p + '-' + idx;
+        return '<div class="print-grid-cell">' + buildLabelHtmlForList(item, sizeClass, qrId) + '</div>';
+      }).join('');
+
+      pagesHtml += (
+        '<div class="print-label-page print-label-page--grid" style="' +
+          'grid-template-columns:repeat(' + spec.cols + ',auto);' +
+          'gap:' + spec.rowGap + ' ' + spec.colGap + ';' +
+          'padding:' + spec.padT + ' ' + spec.padS + ' 0 ' + spec.padS +
+        '">' + cells + '</div>'
+      );
+    }
+  } else {
+    // 단일 순서 출력 — 한 페이지에 하나
+    pagesHtml = items.map(function(item, idx) {
+      var qrId = 'pqr-single-' + idx;
+      return '<div class="print-label-page print-label-page--single">' +
+        buildLabelHtmlForList(item, sizeClass, qrId) +
+      '</div>';
+    }).join('');
+  }
+
+  overlay.innerHTML = pagesHtml;
+  document.body.appendChild(overlay);
+
+  // QR 코드 생성
+  var baseUrl = (typeof CONFIG !== 'undefined' ? CONFIG.SITE_BASE_URL : '') + '/pages/equipment/public-detail.html?id=';
+  items.forEach(function(item, idx) {
+    if (!item) return;
+    var pageIdx = isGrid ? Math.floor(idx / perPage) : idx;
+    var cellIdx = isGrid ? idx % perPage : idx;
+    var qrId    = isGrid ? ('pqr-' + (pageIdx * perPage) + '-' + cellIdx) : ('pqr-single-' + idx);
+    var qrEl    = document.getElementById(qrId);
+    if (!qrEl) return;
+    var qrSize  = sizeClass === 'size-70x40' ? 64 : sizeClass === 'size-50x30' ? 48 : 84;
+    var qrValue = (item.qr_value || item.equipment_id || '');
+    if (qrValue && typeof QRCode !== 'undefined') {
+      new QRCode(qrEl, { text: baseUrl + encodeURIComponent(qrValue), width: qrSize, height: qrSize });
+    }
+  });
+
+  // 약간의 지연 후 인쇄 (QR 렌더 완료 대기)
+  setTimeout(function() {
+    window.print();
+    // 인쇄 창 닫힌 후 오버레이 제거
+    setTimeout(function() {
+      var el = document.getElementById('printLabelOverlay');
+      if (el) el.remove();
+    }, 1000);
+  }, 300);
+}
