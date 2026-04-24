@@ -658,6 +658,12 @@ async function exportEquipmentExcel() {
       '취득일자', '제조일자', '유지보수종료일', '현재사용자', '비고', '등록일시'
     ];
 
+    // 컬럼 유형 (0-based index)
+    var COL_NUM  = new Set([13]);         // 취득가액
+    var COL_DATE = new Set([14, 15, 16]); // 취득일자, 제조일자, 유지보수종료일
+
+    var toDateOnly = function(v) { return v ? String(v).substring(0, 10) : ''; };
+
     var rows = data.map(function(item) {
       return [
         item.equipment_id || '',
@@ -675,25 +681,77 @@ async function exportEquipmentExcel() {
         item.vendor || '',
         item.acquisition_cost !== '' && item.acquisition_cost !== null && item.acquisition_cost !== undefined
           ? Number(item.acquisition_cost) : '',
-        item.purchase_date || '',
-        item.manufacture_date || '',
-        item.maintenance_end_date || '',
+        toDateOnly(item.purchase_date),
+        toDateOnly(item.manufacture_date),
+        toDateOnly(item.maintenance_end_date),
         item.current_user || '',
         item.memo || '',
         item.created_at || ''
       ];
     });
 
-    var wsData = [headers].concat(rows);
-    var ws = window.XLSX.utils.aoa_to_sheet(wsData);
+    // ── 스타일 정의 ──────────────────────────────────────────────
+    var FONT_BASE   = { name: '맑은 고딕', sz: 10 };
+    var FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+    var FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+    var BORDER = {
+      top:    { style: 'thin', color: { rgb: 'BFBFBF' } },
+      bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+      left:   { style: 'thin', color: { rgb: 'BFBFBF' } },
+      right:  { style: 'thin', color: { rgb: 'BFBFBF' } }
+    };
+    var ALIGN_LEFT   = { horizontal: 'left',   vertical: 'center' };
+    var ALIGN_CENTER = { horizontal: 'center', vertical: 'center' };
+    var ALIGN_RIGHT  = { horizontal: 'right',  vertical: 'center' };
+    var FMT_NUM  = '#,##0';
+    var FMT_DATE = 'yyyy-mm-dd';
 
-    // 컬럼 너비 설정
+    // ── 워크시트 수동 생성 ───────────────────────────────────────
+    var ws = {};
+    var totalCols = headers.length;
+    var totalRows = rows.length + 1;
+
+    // 헤더 행
+    headers.forEach(function(h, c) {
+      var addr = window.XLSX.utils.encode_cell({ r: 0, c: c });
+      ws[addr] = {
+        v: h, t: 's',
+        s: { font: FONT_HEADER, fill: FILL_HEADER, border: BORDER, alignment: ALIGN_CENTER }
+      };
+    });
+
+    // 데이터 행
+    rows.forEach(function(row, r) {
+      row.forEach(function(val, c) {
+        var addr   = window.XLSX.utils.encode_cell({ r: r + 1, c: c });
+        var isNum  = COL_NUM.has(c);
+        var isDate = COL_DATE.has(c);
+
+        var cell = {
+          v: val,
+          t: isNum && val !== '' ? 'n' : 's',
+          s: {
+            font:      FONT_BASE,
+            border:    BORDER,
+            alignment: isNum ? ALIGN_RIGHT : isDate ? ALIGN_CENTER : ALIGN_LEFT
+          }
+        };
+
+        if (isNum && val !== '') { cell.z = FMT_NUM;  cell.s.numFmt = FMT_NUM;  }
+        if (isDate && val)       { cell.z = FMT_DATE; cell.s.numFmt = FMT_DATE; }
+
+        ws[addr] = cell;
+      });
+    });
+
+    ws['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: totalRows - 1, c: totalCols - 1 });
     ws['!cols'] = [
       { wch: 14 }, { wch: 20 }, { wch: 16 }, { wch: 14 }, { wch: 16 },
       { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 8 },
       { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 12 },
       { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 18 }
     ];
+    ws['!rows'] = Array(totalRows).fill({ hpt: 18 });
 
     var wb = window.XLSX.utils.book_new();
     window.XLSX.utils.book_append_sheet(wb, ws, '장비대장');
@@ -705,6 +763,7 @@ async function exportEquipmentExcel() {
     var fileName = '장비대장_' + dateStr + '.xlsx';
 
     window.XLSX.writeFile(wb, fileName);
+
   } catch (error) {
     showMessage(error.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
   } finally {
