@@ -32,12 +32,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchLogs();
   });
 
-  // 날짜 필터 기본값: 오늘 기준 최근 7일
+  // 날짜 필터 기본값: 오늘 기준 최근 30일
   const today = getTodayYmd();
-  const weekAgo = getDateOffsetYmd(-7);
+  const monthAgo = getDateOffsetYmd(-30);
   const fromEl = document.getElementById('filterDateFrom');
   const toEl   = document.getElementById('filterDateTo');
-  if (fromEl) fromEl.value = weekAgo;
+  if (fromEl) fromEl.value = monthAgo;
   if (toEl)   toEl.value   = today;
 
   // Enter 키로 조회
@@ -76,15 +76,31 @@ async function fetchLogs() {
     showMessage('로그인 세션에서 사용자 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', 'error');
     return;
   }
-  
+
+  // 기간 필수 체크
+  if (!dateFrom || !dateTo) {
+    showMessage('조회 기간을 입력해 주세요.', 'error');
+    return;
+  }
+
+  // 최대 3개월(90일) 제한
+  const diffDays = (new Date(dateTo) - new Date(dateFrom)) / (1000 * 60 * 60 * 24);
+  if (diffDays < 0) {
+    showMessage('종료일이 시작일보다 앞에 있습니다.', 'error');
+    return;
+  }
+  if (diffDays > 90) {
+    showMessage('조회 기간은 최대 3개월(90일)까지 가능합니다.', 'error');
+    return;
+  }
+
   const params = {
     request_user_email: userEmail,
     keyword,
     action_type: actionType,
     target_type: targetType,
     date_from:   dateFrom,
-    date_to:     dateTo,
-    limit:       '200'   // ← 문자열로 명시 (숫자도 동작하지만 일관성)
+    date_to:     dateTo
   };
 
   const searchBtn = document.getElementById('searchBtn');
