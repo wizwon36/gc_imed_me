@@ -1735,3 +1735,69 @@
     display: none;
   }
 }
+
+/* ===== 일괄 라벨 출력 컨테이너 ===== */
+
+.stack-label-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.stack-label-item { flex-shrink: 0; }
+
+/* 격자 출력 */
+.grid-label-wrap { width: 100%; }
+
+.grid-label-page {
+  display: grid;
+  width: 210mm;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.grid-label-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-label-cell--empty {
+  visibility: hidden;
+}
+
+/* 인쇄 시 */
+@media print {
+  .bulk-label-container,
+  #bulkLabelContainer {
+    margin: 0;
+    padding: 0;
+  }
+
+  .stack-label-wrap {
+    display: block;
+  }
+
+  .stack-label-item {
+    page-break-after: always;
+    break-after: page;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .grid-label-wrap { margin: 0; padding: 0; }
+
+  .grid-label-page {
+    page-break-after: always;
+    break-after: page;
+    margin: 0;
+  }
+
+  .grid-label-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+}
