@@ -805,3 +805,128 @@
   color: #ef4444;
   font-weight: 500;
 }
+
+/* ===== 탭 ===== */
+
+.form-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e5e9f0;
+  padding-bottom: 0;
+}
+
+.form-tab {
+  padding: 9px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.form-tab:hover { color: #2563eb; }
+
+.form-tab.is-active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  background: #f0f5ff;
+}
+
+/* ===== 일괄등록 섹션 ===== */
+
+.bulk-section {
+  margin-top: 0;
+}
+
+.bulk-template-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.bulk-template-desc {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.bulk-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.bulk-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.bulk-preview-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.bulk-preview-error {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.bulk-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.bulk-table th {
+  background: #f1f5f9;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.bulk-table th.is-required {
+  color: #1e40af;
+}
+
+.bulk-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.bulk-table tr:last-child td { border-bottom: none; }
+
+.bulk-table tr.is-row-error td {
+  background: #fff5f5;
+  color: #dc2626;
+}
+
+.bulk-table .cell-error {
+  color: #ef4444;
+  font-size: 11px;
+  display: block;
+}
