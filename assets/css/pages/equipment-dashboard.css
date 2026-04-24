@@ -1,989 +1,694 @@
-/* =========================================
- * equipment-dashboard.css
- * compact portal-aligned dashboard
- * ========================================= */
+const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v2';
+const DASHBOARD_SESSION_TTL = 1000 * 60 * 5;
 
-.dashboard-page {
-  padding-bottom: 20px;
+const DASHBOARD_PERMISSION_CACHE_KEY = 'gc_imed_dashboard_permission_v1';
+const DASHBOARD_PERMISSION_CACHE_TTL = 1000 * 60 * 5;
+
+let DASHBOARD_BOOTSTRAPPED = false;
+let DASHBOARD_PERMISSION = { canView: false, canEdit: false, canDelete: false };
+
+function dq(selector) {
+  return document.querySelector(selector);
 }
 
-.dashboard-page .dashboard-page-shell {
-  padding-top: 0;
-  gap: 16px;
+function textSafe(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-/* header */
-.dashboard-page .dashboard-topbar {
-  margin-top: 8px;
+function formatNumberLocal(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? num.toLocaleString('ko-KR') : '0';
 }
 
-.dashboard-page .dashboard-top-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+function formatDisplayDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '-';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
 
-.dashboard-page .dashboard-top-actions .portal-header-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
+  const dateOnlyMatch = raw.match(/^(\d{4}-\d{2}-\d{2})[T\s]/);
+  if (dateOnlyMatch) return dateOnlyMatch[1];
 
-.dashboard-page #messageBox.message-box {
-  margin: 0;
-}
-
-/* KPI */
-/* KPI - 한 줄 요약형 */
-.dashboard-page .dashboard-kpi-grid--portal {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0 0 12px;
-  align-items: stretch;
-}
-
-.dashboard-page .dashboard-kpi-card {
-  min-height: 68px;
-  max-height: 68px;
-  padding: 10px 14px;
-  border: 1px solid #d9dee7;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 3px 10px rgba(16, 24, 40, 0.04);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.dashboard-page .dashboard-kpi-label {
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #6b7a90;
-  line-height: 1.15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dashboard-page .dashboard-kpi-value {
-  font-size: 18px;
-  line-height: 1;
-  font-weight: 800;
-  color: #0b1f44;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* panel area */
-.dashboard-panels-carousel-wrap {
-  width: 100%;
-  margin-top: 4px;
-}
-
-.dashboard-panels-scroll {
-  width: 100%;
-}
-
-.dashboard-panels-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  align-items: stretch;
-}
-
-.dashboard-page .dashboard-panel--portal {
-  display: flex;
-  flex-direction: column;
-  min-height: 360px;
-  height: 100%;
-  padding: 18px;
-  border: 1px solid #d9dee7;
-  border-radius: 22px;
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
-}
-
-.dashboard-page .dashboard-section-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  flex: 0 0 auto;
-}
-
-.dashboard-page .dashboard-section-head > div {
-  position: relative;
-  padding-left: 14px;
-}
-
-.dashboard-page .dashboard-section-head > div::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 4px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 100%);
-}
-
-.dashboard-page .dashboard-section-title {
-  margin: 2px 0 0;
-  font-size: 18px;
-  line-height: 1.2;
-}
-
-.dashboard-page .dashboard-section-desc {
-  margin-top: 4px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: #667085;
-  word-break: keep-all;
-}
-
-/* quick actions */
-.dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
-.dashboard-page .dashboard-panel--actions .dashboard-action-grid--enhanced {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  align-content: start;
-  flex: 1 1 auto;
-}
-
-.dashboard-page .dashboard-action-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 68px;
-  padding: 14px;
-  border: 1px solid #d5ddeb;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.05);
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.dashboard-page .dashboard-action-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
-  border-color: #bfd0ea;
-}
-
-.dashboard-page .dashboard-action-card--primary {
-  grid-column: 1 / -1;
-  min-height: 74px;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  border-color: #2563eb;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
-  color: #fff;
-}
-
-.dashboard-page .dashboard-action-card--primary:hover {
-  border-color: #1d4ed8;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
-}
-
-.dashboard-page .dashboard-action-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 13px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 18px;
-  background: #f3f6fb;
-}
-
-.dashboard-page .dashboard-action-card--primary .dashboard-action-icon {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
-
-.dashboard-page .dashboard-action-body {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.dashboard-page .dashboard-action-title {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.3;
-  font-weight: 800;
-  color: #0b1f44;
-  word-break: keep-all;
-}
-
-.dashboard-page .dashboard-action-card--primary .dashboard-action-title {
-  color: #fff;
-}
-
-.dashboard-page .dashboard-action-desc {
-  margin-top: 3px;
-  font-size: 12px;
-  line-height: 1.35;
-  color: #667085;
-  word-break: keep-all;
-}
-
-.dashboard-page .dashboard-action-card--primary .dashboard-action-desc {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* record cards */
-.dashboard-list-stack {
-  display: grid;
-  gap: 10px;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.dashboard-record-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 72px;
-  padding: 12px 13px;
-  border: 1px solid #d9dee7;
-  border-radius: 18px;
-  background: #fff;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.dashboard-record-item:hover {
-  transform: translateY(-1px);
-  border-color: #bfd0ea;
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
-}
-
-.dashboard-record-main {
-  min-width: 0;
-}
-
-.dashboard-record-title {
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1.3;
-  color: #0b1f44;
-  word-break: keep-all;
-}
-
-.dashboard-record-desc {
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 1.35;
-  color: #667085;
-}
-
-.dashboard-record-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.dashboard-record-side {
-  width: auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  align-self: center;
-}
-
-/* scroll panels */
-.dashboard-page .dashboard-panel--maintenance,
-.dashboard-page .dashboard-panel--registered,
-.dashboard-page .dashboard-panel--repair {
-  overflow: hidden;
-}
-
-.dashboard-page .dashboard-panel--maintenance .dashboard-list-stack,
-.dashboard-page .dashboard-panel--registered .dashboard-list-stack,
-.dashboard-page .dashboard-panel--repair .dashboard-list-stack {
-  max-height: 280px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.dashboard-page .dashboard-panel--maintenance .dashboard-list-stack::-webkit-scrollbar,
-.dashboard-page .dashboard-panel--registered .dashboard-list-stack::-webkit-scrollbar,
-.dashboard-page .dashboard-panel--repair .dashboard-list-stack::-webkit-scrollbar {
-  width: 4px;
-}
-
-.dashboard-page .dashboard-panel--maintenance .dashboard-list-stack::-webkit-scrollbar-thumb,
-.dashboard-page .dashboard-panel--registered .dashboard-list-stack::-webkit-scrollbar-thumb,
-.dashboard-page .dashboard-panel--repair .dashboard-list-stack::-webkit-scrollbar-thumb {
-  background: #d0d7e2;
-  border-radius: 999px;
-}
-
-/* ── 패널 내부 테이블 그리드 ── */
-.dash-tbl {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  table-layout: fixed;
-}
-
-.dash-tbl-th {
-  position: sticky;
-  top: 0;
-  padding: 8px 10px;
-  background: #f1f5fb;
-  border-bottom: 1px solid #d9dee7;
-  font-size: 11px;
-  font-weight: 800;
-  color: #516274;
-  text-align: left;
-  white-space: nowrap;
-  z-index: 1;
-}
-
-/* 유지보수: 장비명 + 부서 + D-Day (날짜 없음) */
-.dashboard-panel--maintenance .dash-tbl-th--name { width: 42%; }
-.dashboard-panel--maintenance .dash-tbl-th--dept { width: 36%; }
-.dashboard-panel--maintenance .dash-tbl-th--side { width: 22%; text-align: center; }
-
-/* 수리/등록: 장비명 + 날짜 (부서 없음) */
-.dashboard-panel--repair .dash-tbl-th--name,
-.dashboard-panel--registered .dash-tbl-th--name { width: 52%; }
-.dashboard-panel--repair .dash-tbl-th--date,
-.dashboard-panel--registered .dash-tbl-th--date { width: 30%; }
-.dashboard-panel--repair .dash-tbl-th--status { width: 18%; text-align: center; }
-.dash-tbl-cell--status { text-align: center; }
-
-.dash-tbl-row {
-  transition: background-color 0.12s ease;
-}
-
-.dash-tbl-row:not(:last-child) td {
-  border-bottom: 1px solid #eef2f6;
-}
-
-.dash-tbl-row:hover {
-  background: #f7f9fd;
-}
-
-.dash-tbl-cell {
-  padding: 10px 10px;
-  font-size: 13px;
-  color: #1e293b;
-  vertical-align: middle;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* PC: 부서 한 줄 유지 */
-.dash-tbl-cell--dept {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dept-pc   { display: inline; }
-.dept-mobile { display: none; }
-
-.dash-tbl-cell--side {
-  text-align: center;
-  overflow: visible;
-  white-space: nowrap;
-}
-
-.dash-tbl-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #0b1f44;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dash-tbl-sub {
-  margin-top: 2px;
-  font-size: 11px;
-  color: #94a3b8;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* chips */
-.dashboard-meta-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  border: 1px solid #d9e2f2;
-  background: #f8fbff;
-  color: #4b5d79;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.dashboard-dday-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 54px;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #fff7ed;
-  border: 1px solid #fdba74;
-  color: #c2410c;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.dashboard-dday-badge.is-normal {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
-}
-
-.dashboard-dday-badge.is-overdue {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #b42318;
-}
-
-#maintenanceAlertEmpty.empty-box,
-#recentRepairEmpty.empty-box,
-#recentRegisteredEmpty.empty-box {
-  margin-top: 0;
-}
-
-.dashboard-panel-dots {
-  display: none;
-  margin-bottom: 10px;
-}
-
-/* tablet */
-@media (max-width: 1024px) {
-  .dashboard-page .dashboard-kpi-grid--portal {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
-  .dashboard-panels-grid {
-    grid-template-columns: 1fr;
-  }
+  return raw;
+}
 
-  .dashboard-page .dashboard-panel--portal {
-    min-height: 340px;
-  }
+function getCurrentUserEmail() {
+  const user = window.auth?.getSession?.() || {};
+  return String(user.email || user.user_email || '').trim().toLowerCase();
+}
 
-  .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack,
-  .dashboard-page .dashboard-panel--registered .dashboard-list-stack {
-    max-height: 300px;
+function getDashboardSessionCache() {
+  try {
+    const raw = sessionStorage.getItem(DASHBOARD_SESSION_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.savedAt) return null;
+    if (Date.now() - parsed.savedAt > DASHBOARD_SESSION_TTL) return null;
+
+    return parsed.data || null;
+  } catch (error) {
+    return null;
   }
 }
 
-/* mobile */
-@media (max-width: 768px) {
-  .dashboard-page .dashboard-topbar {
-    display: block;
-    padding: 18px 18px 20px;
-    border-radius: 24px;
-  }
+function setDashboardSessionCache(data) {
+  try {
+    sessionStorage.setItem(
+      DASHBOARD_SESSION_KEY,
+      JSON.stringify({
+        savedAt: Date.now(),
+        data
+      })
+    );
+  } catch (error) {}
+}
 
-  .dashboard-page .top-brand-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-  }
+function invalidateDashboardSessionCache() {
+  try {
+    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+  } catch (error) {}
+}
 
-  .dashboard-page .top-brand-texts {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
+window.invalidateDashboardSessionCache = invalidateDashboardSessionCache;
 
-  .dashboard-page .top-brand-title {
-    display: block;
-    font-size: 18px;
-    line-height: 1.25;
-    word-break: keep-all;
-  }
+function getDashboardPermissionCache() {
+  try {
+    const raw = sessionStorage.getItem(DASHBOARD_PERMISSION_CACHE_KEY);
+    if (!raw) return null;
 
-  .dashboard-page .top-brand-sub {
-    display: block;
-    margin-top: 6px;
-    font-size: 14px;
-    line-height: 1.45;
-    color: #667085;
-    white-space: normal;
-  }
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.savedAt) return null;
+    if (Date.now() - parsed.savedAt > DASHBOARD_PERMISSION_CACHE_TTL) return null;
 
-  .dashboard-page .dashboard-top-actions {
-    width: 100%;
-    margin-top: 18px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .dashboard-page .dashboard-top-actions .portal-header-btn {
-    width: 100%;
-    min-height: 50px;
-    padding: 0 14px;
-    border-radius: 18px;
-    font-size: 16px;
-    font-weight: 800;
-  }
-
-  /* KPI mobile: PC처럼 한 줄 4칸 */
-  .dashboard-page .dashboard-kpi-grid--portal {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  
-  .dashboard-page .dashboard-kpi-card {
-    min-height: 62px;
-    max-height: 62px;
-    padding: 8px 10px;
-    border-radius: 14px;
-  }
-  
-  .dashboard-page .dashboard-kpi-label {
-    margin: 0 0 5px;
-    font-size: 10px;
-    line-height: 1.1;
-  }
-  
-  .dashboard-page .dashboard-kpi-value {
-    font-size: 16px;
-    line-height: 1;
-  }
-
-  /* dots visible on top */
-  .dashboard-panel-dots {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
-  .dashboard-panel-dot {
-    width: 8px;
-    height: 8px;
-    border: 0;
-    border-radius: 999px;
-    background: #cfd8e6;
-    padding: 0;
-    appearance: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .dashboard-panel-dot.is-active {
-    width: 20px;
-    background: #2563eb;
-  }
-
-  /* bottom panels swipe */
-  .dashboard-panels-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 4px;
-  }
-
-  .dashboard-panels-scroll::-webkit-scrollbar {
-    display: none;
-  }
-
-  .dashboard-panels-grid {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 92%;
-    grid-template-columns: none;
-    gap: 12px;
-  }
-
-  .dashboard-page .dashboard-panel--portal {
-    scroll-snap-align: start;
-    min-height: 0;
-    height: auto;
-    border-radius: 20px;
-    padding: 16px;
-  }
-
-  .dashboard-page .dashboard-section-title {
-    font-size: 18px;
-  }
-
-  .dashboard-page .dashboard-section-desc {
-    font-size: 12px;
-  }
-
-  .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
-  .dashboard-page .dashboard-panel--actions .dashboard-action-grid--enhanced {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .dashboard-page .dashboard-panel--maintenance,
-  .dashboard-page .dashboard-panel--registered,
-  .dashboard-page .dashboard-panel--repair {
-    min-height: 400px;
-  }
-
-  .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack,
-  .dashboard-page .dashboard-panel--registered .dashboard-list-stack,
-  .dashboard-page .dashboard-panel--repair .dashboard-list-stack {
-    max-height: 300px;
-    padding-right: 2px;
-  }
-
-  /* 모바일: 유지보수 */
-  .dashboard-panel--maintenance .dash-tbl-th--name { width: 40%; }
-  .dashboard-panel--maintenance .dash-tbl-th--dept { width: 34%; }
-  .dashboard-panel--maintenance .dash-tbl-th--side { width: 26%; }
-
-  /* 모바일: 수리/등록 */
-  .dashboard-panel--repair .dash-tbl-th--name,
-  .dashboard-panel--registered .dash-tbl-th--name { width: 58%; }
-  .dashboard-panel--repair .dash-tbl-th--date,
-  .dashboard-panel--registered .dash-tbl-th--date { width: 42%; }
-
-  /* 모바일: 부서 두 줄 */
-  .dept-pc     { display: none; }
-  .dept-mobile { display: inline; }
-
-  .dash-tbl-cell--dept {
-    white-space: normal;
-    line-height: 1.4;
-  }
-
-  .dash-tbl-cell,
-  .dash-tbl-th {
-    padding: 8px 8px;
-    font-size: 12px;
-  }
-
-  .dash-tbl-name {
-    font-size: 12px;
-  }
-
-  .dash-tbl-sub {
-    font-size: 10px;
-  }
-
-  .dashboard-record-item {
-    gap: 10px;
-    min-height: 72px;
-    padding: 12px 13px;
-    border-radius: 16px;
-  }
-
-  .dashboard-record-title {
-    font-size: 14px;
-  }
-
-  .dashboard-record-desc {
-    margin-top: 3px;
-    font-size: 12px;
-  }
-
-  .dashboard-record-meta {
-    margin-top: 7px;
-    gap: 5px;
+    return parsed.data || null;
+  } catch (error) {
+    return null;
   }
 }
 
-/* ===== 부서별 장비 현황 차트 패널 ===== */
-
-.dashboard-page .dashboard-panel--dept-chart {
-  display: flex;
-  flex-direction: column;
+function setDashboardPermissionCache(data) {
+  try {
+    sessionStorage.setItem(
+      DASHBOARD_PERMISSION_CACHE_KEY,
+      JSON.stringify({
+        savedAt: Date.now(),
+        data
+      })
+    );
+  } catch (error) {}
 }
 
-.dept-chart-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 4px 0;
-  overflow-y: auto;
+function invalidateDashboardPermissionCache() {
+  try {
+    sessionStorage.removeItem(DASHBOARD_PERMISSION_CACHE_KEY);
+  } catch (error) {}
 }
 
-.dept-chart-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+async function getEquipmentPermissionContext() {
+  const user = window.auth?.getSession?.() || null;
+  const userEmail = getCurrentUserEmail();
 
-.dept-chart-row {
-  display: grid;
-  grid-template-columns: 110px 1fr 36px;
-  align-items: center;
-  gap: 10px;
-}
-
-.dept-chart-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #475569;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: right;
-}
-
-.dept-chart-bar-wrap {
-  background: #f1f5f9;
-  border-radius: 999px;
-  height: 10px;
-  overflow: hidden;
-}
-
-.dept-chart-bar {
-  height: 100%;
-  border-radius: 999px;
-  min-width: 4px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dept-chart-count {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: right;
-}
-
-/* ===== 부서별 장비 현황 차트 패널 ===== */
-
-/* PC: 2칸 full-width */
-.dashboard-page .dashboard-panel--dept-chart {
-  grid-column: span 2;
-  min-height: 240px;
-}
-
-.dept-chart-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 4px 0;
-  overflow-y: auto;
-}
-
-.dept-chart-list {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-
-.dept-chart-row {
-  display: grid;
-  grid-template-columns: 130px 1fr 40px;
-  align-items: center;
-  gap: 12px;
-}
-
-.dept-chart-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #475569;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: right;
-}
-
-.dept-chart-bar-wrap {
-  background: #f1f5f9;
-  border-radius: 999px;
-  height: 10px;
-  overflow: hidden;
-}
-
-.dept-chart-bar {
-  height: 100%;
-  border-radius: 999px;
-  min-width: 4px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dept-chart-count {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: right;
-}
-
-/* 모바일: span 해제, 일반 카드로 */
-@media (max-width: 700px) {
-  .dashboard-page .dashboard-panel--dept-chart {
-    grid-column: span 1;
-    min-height: 0;
+  if (!user || !userEmail) {
+    return { canView: false, canEdit: false, canDelete: false };
   }
 
-  .dept-chart-row {
-    grid-template-columns: 90px 1fr 32px;
-    gap: 8px;
+  const cached = getDashboardPermissionCache();
+  if (cached) {
+    return cached;
   }
 
-  .dept-chart-label {
-    font-size: 11.5px;
+  const role = String(user.role || '').trim().toLowerCase();
+  if (role === 'admin') {
+    const adminPermission = { canView: true, canEdit: true, canDelete: true };
+    setDashboardPermissionCache(adminPermission);
+    return adminPermission;
   }
 
-  .dept-chart-count {
-    font-size: 12px;
+  try {
+    const result = await apiGet('getUserAppPermission', {
+      user_email: userEmail,
+      app_id: 'equipment',
+      request_user_email: userEmail
+    });
+
+    const permission = String(result?.data?.permission || '').trim().toLowerCase();
+
+    const normalized = {
+      canView: ['view', 'edit', 'admin'].includes(permission),
+      canEdit: ['edit', 'admin'].includes(permission),
+      canDelete: false
+    };
+
+    setDashboardPermissionCache(normalized);
+    return normalized;
+  } catch (error) {
+    return { canView: false, canEdit: false, canDelete: false };
   }
 }
 
-/* ===== 도넛 차트 (부서별 장비 현황) ===== */
-
-.dept-chart-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding: 4px 0 8px;
-}
-
-.donut-chart-inner {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  width: 100%;
-}
-
-/* SVG 도넛 */
-.donut-svg-wrap {
-  flex-shrink: 0;
-  width: 140px;
-  height: 140px;
-}
-
-.donut-svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.donut-slice {
-  opacity: 0;
-  animation: donutFadeIn 0.35s ease forwards;
-  transition: opacity 0.2s;
-  cursor: default;
-}
-
-.donut-slice:hover {
-  filter: brightness(1.12);
-}
-
-@keyframes donutFadeIn {
-  from { opacity: 0; transform-origin: 70px 70px; transform: scale(0.82); }
-  to   { opacity: 1; transform-origin: 70px 70px; transform: scale(1); }
-}
-
-.donut-center-label {
-  font-size: 10px;
-  fill: #94a3b8;
-  text-anchor: middle;
-  font-weight: 500;
-}
-
-.donut-center-value {
-  font-size: 18px;
-  fill: #1e293b;
-  text-anchor: middle;
-  font-weight: 800;
-}
-
-/* 범례 */
-.donut-legend {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.donut-legend-item {
-  display: grid;
-  grid-template-columns: 10px 1fr auto auto;
-  align-items: center;
-  gap: 7px;
-}
-
-.donut-legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.donut-legend-label {
-  font-size: 12.5px;
-  color: #475569;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.donut-legend-count {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.donut-legend-pct {
-  font-size: 11.5px;
-  color: #94a3b8;
-  text-align: right;
-  white-space: nowrap;
-  min-width: 32px;
-}
-
-/* 모바일: 도넛 위, 범례 아래 */
-@media (max-width: 700px) {
-  .dashboard-page .dashboard-panel--dept-chart {
-    grid-column: span 1;
-    min-height: 0;
+function applyDashboardPermissionUi() {
+  const createAction = dq('#dashboardCreateEquipmentAction');
+  if (createAction) {
+    createAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
   }
 
-  .donut-chart-inner {
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
+  const exportAction = dq('#dashboardExportBtn');
+  if (exportAction) {
+    exportAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
+    exportAction.addEventListener('click', exportAllEquipmentsExcel);
+  }
+}
+
+function renderDashboardSkeleton() {
+  ['#maintenanceAlertList', '#recentRepairList', '#recentRegisteredList'].forEach(function (selector) {
+    const el = dq(selector);
+    if (!el) return;
+    el.innerHTML = '<div class="empty-box">불러오는 중...</div>';
+  });
+}
+
+function renderKpis(summary) {
+  const kpis = summary?.kpis || {};
+  if (dq('#totalCount')) dq('#totalCount').textContent = formatNumberLocal(kpis.total || 0);
+  if (dq('#inUseCount')) dq('#inUseCount').textContent = formatNumberLocal(kpis.in_use || 0);
+  if (dq('#repairingCount')) dq('#repairingCount').textContent = formatNumberLocal(kpis.repairing || 0);
+  if (dq('#inspectingCount')) dq('#inspectingCount').textContent = formatNumberLocal(kpis.inspecting || 0);
+  if (dq('#recentRepairCount')) dq('#recentRepairCount').textContent = formatNumberLocal(kpis.recent_repairs || 0);
+  if (dq('#recentRegisterCount')) dq('#recentRegisterCount').textContent = formatNumberLocal(kpis.recent_registrations || 0);
+}
+
+function renderRecordList(containerSelector, emptySelector, items, options) {
+  const container = dq(containerSelector);
+  const emptyEl = dq(emptySelector);
+  if (!container) return;
+
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
   }
 
-  .donut-svg-wrap {
-    width: 130px;
-    height: 130px;
+  container.style.display = 'block';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const hasSide = typeof options.sideRenderer === 'function';
+  const showDept = options.showDept !== false;
+  const showDate = options.showDate !== false;
+  const showStatus = options.showStatus === true;
+
+  const rows = list.map(function (item) {
+    const title = textSafe(item.equipment_name || '-');
+    const dateText = textSafe(formatDisplayDate(item[options.dateField]));
+    const model = textSafe(item.model_name || '-');
+    const deptRaw = item.department_display || item.department || '-';
+    const dept = textSafe(deptRaw);
+    const deptMobile = dept.replace(' / ', '<br>');
+    const id = encodeURIComponent(item.equipment_id || '');
+
+    let sideHtml = '';
+    if (hasSide) {
+      sideHtml = `<td class="dash-tbl-cell dash-tbl-cell--side">${options.sideRenderer(item) || ''}</td>`;
+    }
+
+    let statusHtml = '';
+    if (showStatus) {
+      const st = item.status || '';
+      const stLabel = st === 'IN_USE' ? '사용중'
+        : st === 'REPAIRING' ? '수리중'
+        : st === 'INSPECTING' ? '점검중'
+        : st === 'STORED' ? '보관'
+        : st === 'DISPOSED' ? '폐기' : (st || '-');
+      const stClass = st === 'IN_USE' ? 'status-badge is-in-use'
+        : st === 'REPAIRING' ? 'status-badge is-repairing'
+        : st === 'INSPECTING' ? 'status-badge is-inspecting'
+        : st === 'STORED' ? 'status-badge is-stored'
+        : st === 'DISPOSED' ? 'status-badge is-disposed' : 'status-badge';
+      statusHtml = `<td class="dash-tbl-cell dash-tbl-cell--status"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
+    }
+
+    return `
+      <tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
+        <td class="dash-tbl-cell dash-tbl-cell--name">
+          <div class="dash-tbl-name">${title}</div>
+          <div class="dash-tbl-sub">${model}</div>
+        </td>
+        ${showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept">
+          <span class="dept-pc">${dept}</span>
+          <span class="dept-mobile">${deptMobile}</span>
+        </td>` : ''}
+        ${showDate ? `<td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>` : ''}
+        ${statusHtml}
+        ${sideHtml}
+      </tr>
+    `;
+  }).join('');
+
+  const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
+  const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
+  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
+  const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
+
+  container.innerHTML = `
+    <table class="dash-tbl">
+      <thead>
+        <tr>
+          <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+          ${deptHeader}
+          ${dateHeader}
+          ${statusHeader}
+          ${sideHeader}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderMaintenanceAlerts(items) {
+  renderRecordList('#maintenanceAlertList', '#maintenanceAlertEmpty', items, {
+    dateField: 'maintenance_end_date',
+    dateLabel: '',
+    showDept: true,
+    showDate: false,   // 날짜 제거 — D-Day 뱃지로 충분
+    sideRenderer: function (item) {
+      const dday = Number(item.dday || 0);
+      const ddayText =
+        dday < 0 ? `D+${Math.abs(dday)}`
+        : dday === 0 ? 'D-DAY'
+        : `D-${dday}`;
+
+      const badgeClass =
+        dday < 0
+          ? 'dashboard-dday-badge is-overdue'
+          : dday <= 30
+          ? 'dashboard-dday-badge'
+          : 'dashboard-dday-badge is-normal';
+
+      return `
+        <div class="dashboard-record-side">
+          <span class="${badgeClass}">${textSafe(ddayText)}</span>
+        </div>
+      `;
+    }
+  });
+}
+
+function renderRecentRepairList(items) {
+  renderRecordList('#recentRepairList', '#recentRepairEmpty', items, {
+    dateField: 'work_date',
+    dateLabel: '수리일',
+    showDept: false,
+    showDate: true,
+    showStatus: true
+  });
+}
+
+function renderRecentRegisteredList(items) {
+  renderRecordList('#recentRegisteredList', '#recentRegisteredEmpty', items, {
+    dateField: 'created_at',
+    dateLabel: '등록일',
+    showDept: false,   // 부서 제거 — 공간 확보
+    showDate: true
+  });
+}
+
+function renderDashboardData(summary) {
+  renderKpis(summary || {});
+  renderMaintenanceAlerts(summary?.maintenance_alerts || []);
+  renderRecentRepairList(summary?.recent_repairs || []);
+  renderRecentRegisteredList(summary?.recent_registrations || []);
+  renderDeptChart(summary?.department_summary || []);
+}
+
+async function fetchDashboardData() {
+  const userEmail = getCurrentUserEmail();
+
+  const summaryResult = await apiGet('getEquipmentDashboardSummary', {
+    request_user_email: userEmail
+  });
+
+  return {
+    summary: summaryResult?.data || {}
+  };
+}
+
+function renderDeptChart(data) {
+  const wrap = document.getElementById('deptChartWrap');
+  const empty = document.getElementById('deptChartEmpty');
+  if (!wrap) return;
+
+  if (!data || data.length === 0) {
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const COLORS = [
+    '#3b82f6','#10b981','#f59e0b','#ef4444',
+    '#8b5cf6','#06b6d4','#f97316','#84cc16'
+  ];
+
+  const total = data.reduce((s, d) => s + Number(d.count || 0), 0);
+  if (total === 0) { if (empty) empty.style.display = ''; return; }
+
+  const R = 58, r = 36, CX = 74, CY = 74;
+
+  function polarToXY(cx, cy, radius, angleDeg) {
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
   }
 
-  .donut-legend {
-    width: 100%;
-    gap: 7px;
+  function donutSlicePath(cx, cy, outerR, innerR, startDeg, endDeg) {
+    const o1 = polarToXY(cx, cy, outerR, startDeg);
+    const o2 = polarToXY(cx, cy, outerR, endDeg);
+    const i1 = polarToXY(cx, cy, innerR, endDeg);
+    const i2 = polarToXY(cx, cy, innerR, startDeg);
+    const large = (endDeg - startDeg) > 180 ? 1 : 0;
+    return [
+      `M ${o1.x} ${o1.y}`,
+      `A ${outerR} ${outerR} 0 ${large} 1 ${o2.x} ${o2.y}`,
+      `L ${i1.x} ${i1.y}`,
+      `A ${innerR} ${innerR} 0 ${large} 0 ${i2.x} ${i2.y}`,
+      'Z'
+    ].join(' ');
   }
 
-  .donut-legend-label {
-    font-size: 12px;
+  let currentDeg = 0;
+  const slices = data.map((d, i) => {
+    const count = Number(d.count || 0);
+    const deg   = (count / total) * 360;
+    const start = currentDeg;
+    const end   = currentDeg + deg - 0.4;
+    currentDeg += deg;
+    return { ...d, count, deg, start, end, color: COLORS[i % COLORS.length] };
+  });
+
+  const svgSlices = slices.map((s, i) => `
+    <path class="donut-slice" d="${donutSlicePath(CX, CY, R, r, s.start, s.end)}"
+      fill="${s.color}" style="animation-delay:${i * 60}ms"/>`
+  ).join('');
+
+  // 범례 (모바일용 + PC 도넛 아래)
+  const legendItems = slices.map(s => {
+    const pct  = Math.round((s.count / total) * 100);
+    const name = textSafe(s.department_display || s.department || '-');
+    return `
+      <div class="donut-legend-item">
+        <span class="donut-legend-dot" style="background:${s.color};"></span>
+        <span class="donut-legend-label" title="${name}">${name}</span>
+        <span class="donut-legend-count">${s.count}</span>
+        <span class="donut-legend-pct">${pct}%</span>
+      </div>`;
+  }).join('');
+
+  // 가로 막대 (PC 오른쪽 전용)
+  const maxCount = Math.max(...slices.map(s => s.count));
+  const barRows = slices.map(s => {
+    const pct  = maxCount > 0 ? Math.round((s.count / maxCount) * 100) : 0;
+    const name = textSafe(s.department_display || s.department || '-');
+    return `
+      <div class="dept-bar-row">
+        <div class="dept-bar-label" title="${name}">${name}</div>
+        <div class="dept-bar-track">
+          <div class="dept-bar-fill" style="width:${pct}%;background:${s.color};"></div>
+        </div>
+        <div class="dept-bar-count">${s.count}</div>
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="donut-chart-inner">
+      <div class="donut-left">
+        <div class="donut-svg-wrap">
+          <svg viewBox="0 0 148 148" xmlns="http://www.w3.org/2000/svg" class="donut-svg">
+            ${svgSlices}
+            <text x="${CX}" y="${CY - 8}" class="donut-center-label">전체</text>
+            <text x="${CX}" y="${CY + 15}" class="donut-center-value">${total}</text>
+          </svg>
+        </div>
+        <div class="donut-legend">${legendItems}</div>
+      </div>
+      <div class="dept-bar-chart">${barRows}</div>
+    </div>`;
+}
+
+function initPanelCarousel() {
+  const scrollEl = dq('#dashboardPanelsScroll');
+  const dotsWrap = dq('#dashboardPanelDots');
+  if (!scrollEl || !dotsWrap) return;
+
+  const dots = Array.from(dotsWrap.querySelectorAll('.dashboard-panel-dot'));
+
+  function setActive(index) {
+    dots.forEach(function (dot, i) {
+      dot.classList.toggle('is-active', i === index);
+    });
+  }
+
+  function getPanelWidth() {
+    const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
+    const grid = scrollEl.querySelector('.dashboard-panels-grid');
+    if (!firstCard || !grid) return 1;
+
+    const styles = window.getComputedStyle(grid);
+    const gap = parseFloat(styles.columnGap || styles.gap || 0);
+    return firstCard.offsetWidth + gap;
+  }
+
+  function updateActiveByScroll() {
+    if (window.innerWidth > 768) {
+      setActive(0);
+      return;
+    }
+
+    const width = getPanelWidth();
+    const index = Math.round(scrollEl.scrollLeft / width);
+    setActive(Math.max(0, Math.min(index, dots.length - 1)));
+  }
+
+  dots.forEach(function (dot) {
+    dot.addEventListener('click', function () {
+      if (window.innerWidth > 768) return;
+
+      const index = Number(dot.dataset.index || 0);
+      const width = getPanelWidth();
+
+      scrollEl.scrollTo({
+        left: width * index,
+        behavior: 'smooth'
+      });
+
+      setActive(index);
+    });
+  });
+
+  scrollEl.addEventListener('scroll', updateActiveByScroll, { passive: true });
+  window.addEventListener('resize', updateActiveByScroll);
+  updateActiveByScroll();
+}
+
+async function loadDashboard() {
+  if (typeof clearMessage === 'function') clearMessage();
+
+  renderDashboardSkeleton();
+
+  const cached = getDashboardSessionCache();
+  if (cached) {
+    renderDashboardData(cached.summary || {});
+    return;
+  }
+
+  const loaded = await fetchDashboardData();
+  renderDashboardData(loaded.summary || {});
+  setDashboardSessionCache(loaded);
+}
+
+document.addEventListener('DOMContentLoaded', async function () {
+  if (DASHBOARD_BOOTSTRAPPED) return;
+  DASHBOARD_BOOTSTRAPPED = true;
+
+  try {
+    if (typeof showGlobalLoading === 'function') {
+      showGlobalLoading('대시보드를 불러오는 중...');
+    }
+
+    const user = window.auth?.requireAuth?.();
+    if (!user) return;
+
+    const permissionPromise = getEquipmentPermissionContext();
+    const dashboardPromise = fetchDashboardData();
+
+    DASHBOARD_PERMISSION = await permissionPromise;
+    if (!DASHBOARD_PERMISSION.canView) {
+      throw new Error('장비 메뉴 접근 권한이 없습니다.');
+    }
+
+    applyDashboardPermissionUi();
+
+    const cached = getDashboardSessionCache();
+    if (cached) {
+      renderDashboardData(cached.summary || {});
+      initPanelCarousel();
+      return;
+    }
+
+    const loaded = await dashboardPromise;
+    renderDashboardData(loaded.summary || {});
+    setDashboardSessionCache(loaded);
+
+    initPanelCarousel();
+  } catch (error) {
+    if (typeof showMessage === 'function') {
+      showMessage(error.message || '대시보드를 불러오는 중 오류가 발생했습니다.', 'error');
+    } else {
+      console.error(error);
+    }
+  } finally {
+    if (typeof hideGlobalLoading === 'function') {
+      hideGlobalLoading();
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 장비대장 전체 엑셀 다운로드
+// ─────────────────────────────────────────────
+async function exportAllEquipmentsExcel() {
+  const btn = document.getElementById('dashboardExportBtn');
+
+  if (!window.XLSX) {
+    if (typeof showMessage === 'function') showMessage('엑셀 라이브러리를 불러오지 못했습니다.', 'error');
+    return;
+  }
+
+  try {
+    if (btn) { btn.disabled = true; btn.querySelector('.dashboard-action-desc').textContent = '다운로드 중...'; }
+    if (typeof showGlobalLoading === 'function') showGlobalLoading('장비 데이터를 불러오는 중...');
+
+    const userEmail = getCurrentUserEmail();
+    const result = await apiGet('exportEquipments', { request_user_email: userEmail });
+    const data = Array.isArray(result.data) ? result.data : [];
+
+    if (!data.length) {
+      if (typeof showMessage === 'function') showMessage('다운로드할 데이터가 없습니다.', 'error');
+      return;
+    }
+
+    const statusMap = { IN_USE: '사용중', REPAIRING: '수리중', INSPECTING: '점검중', STORED: '보관', DISPOSED: '폐기' };
+    const toStatus   = v => statusMap[String(v || '').trim()] || (v || '');
+    const toDateOnly = v => v ? String(v).substring(0, 10) : '';
+
+    const headers = [
+      '장비번호', '장비명', '모델명', '제조사', '시리얼번호',
+      '사용부서', '의원', '팀', '현재위치', '현재상태',
+      '담당자', '연락처', '구매처', '취득가액',
+      '취득일자', '제조일자', '유지보수종료일', '현재사용자', '비고', '등록일시'
+    ];
+
+    // 컬럼 유형 (0-based index)
+    const COL_NUM  = new Set([13]);         // 취득가액
+    const COL_DATE = new Set([14, 15, 16]); // 취득일자, 제조일자, 유지보수종료일
+
+    const rows = data.map(item => [
+      item.equipment_id || '', item.equipment_name || '', item.model_name || '',
+      item.manufacturer || '', item.serial_no || '', item.department || '',
+      item.clinic_name || '', item.team_name || '', item.location || '',
+      toStatus(item.status), item.manager_name || '', item.manager_phone || '',
+      item.vendor || '',
+      (item.acquisition_cost !== '' && item.acquisition_cost != null) ? Number(item.acquisition_cost) : '',
+      toDateOnly(item.purchase_date), toDateOnly(item.manufacture_date), toDateOnly(item.maintenance_end_date),
+      item.current_user || '', item.memo || '', item.created_at || ''
+    ]);
+
+    // ── 스타일 정의 ──────────────────────────────────────────────
+    const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
+    const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+    const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+    const BORDER = {
+      top:    { style: 'thin', color: { rgb: 'BFBFBF' } },
+      bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+      left:   { style: 'thin', color: { rgb: 'BFBFBF' } },
+      right:  { style: 'thin', color: { rgb: 'BFBFBF' } }
+    };
+    const ALIGN_LEFT   = { horizontal: 'left',   vertical: 'center' };
+    const ALIGN_CENTER = { horizontal: 'center', vertical: 'center' };
+    const ALIGN_RIGHT  = { horizontal: 'right',  vertical: 'center' };
+    const FMT_NUM  = '#,##0';
+    const FMT_DATE = 'yyyy-mm-dd';
+
+    // ── 워크시트 수동 생성 ───────────────────────────────────────
+    const ws = {};
+    const totalCols = headers.length;
+    const totalRows = rows.length + 1;
+
+    // 헤더 행
+    headers.forEach(function(h, c) {
+      const addr = window.XLSX.utils.encode_cell({ r: 0, c });
+      ws[addr] = {
+        v: h, t: 's',
+        s: { font: FONT_HEADER, fill: FILL_HEADER, border: BORDER, alignment: ALIGN_CENTER }
+      };
+    });
+
+    // 데이터 행
+    rows.forEach(function(row, r) {
+      row.forEach(function(val, c) {
+        const addr  = window.XLSX.utils.encode_cell({ r: r + 1, c });
+        const isNum  = COL_NUM.has(c);
+        const isDate = COL_DATE.has(c);
+
+        const cell = {
+          v: val,
+          t: isNum && val !== '' ? 'n' : 's',
+          s: {
+            font:      FONT_BASE,
+            border:    BORDER,
+            alignment: isNum ? ALIGN_RIGHT : isDate ? ALIGN_CENTER : ALIGN_LEFT
+          }
+        };
+
+        if (isNum && val !== '') { cell.z = FMT_NUM;  cell.s.numFmt = FMT_NUM;  }
+        if (isDate && val)       { cell.z = FMT_DATE; cell.s.numFmt = FMT_DATE; }
+
+        ws[addr] = cell;
+      });
+    });
+
+    ws['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: totalRows - 1, c: totalCols - 1 });
+    ws['!cols'] = [
+      {wch:14},{wch:20},{wch:16},{wch:14},{wch:16},
+      {wch:20},{wch:12},{wch:12},{wch:12},{wch:8},
+      {wch:10},{wch:14},{wch:14},{wch:12},
+      {wch:12},{wch:12},{wch:14},{wch:10},{wch:20},{wch:18}
+    ];
+    ws['!rows'] = Array(totalRows).fill({ hpt: 18 });
+
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, '장비대장');
+
+    const now = new Date();
+    const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+    window.XLSX.writeFile(wb, '장비대장_' + dateStr + '.xlsx');
+
+  } catch (error) {
+    if (typeof showMessage === 'function') showMessage(error.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.querySelector('.dashboard-action-desc').textContent = '전체 장비 다운로드'; }
+    if (typeof hideGlobalLoading === 'function') hideGlobalLoading(true);
   }
 }
