@@ -1,6 +1,6 @@
 (function () {
   const STORAGE_KEY = 'imed_portal_user';
-  const SESSION_MAX_AGE = 8 * 60 * 60 * 1000; // 8시간
+  const IDLE_TIMEOUT = 30 * 60 * 1000; // 유휴 만료: 30분
 
   function setMessage(message, type = '') {
     const el = document.getElementById('authMessage');
@@ -42,6 +42,7 @@
 
   function saveSession(user) {
     const normalized = normalizeSessionUser(user);
+    normalized.lastActiveAt = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
   }
 
@@ -50,7 +51,9 @@
       const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (!raw) return null;
 
-      if (raw.loginAt && Date.now() - raw.loginAt > SESSION_MAX_AGE) {
+      // 유휴 만료 체크: 마지막 활동 후 30분 경과 시 세션 삭제
+      const lastActive = raw.lastActiveAt || raw.loginAt || 0;
+      if (Date.now() - lastActive > IDLE_TIMEOUT) {
         clearSession();
         return null;
       }
@@ -72,6 +75,16 @@
     } catch (error) {
       return null;
     }
+  }
+
+  // 사용자 활동 시 lastActiveAt 갱신
+  function refreshActivity() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!raw) return;
+      raw.lastActiveAt = Date.now();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(raw));
+    } catch (e) {}
   }
 
   function clearSession() {
@@ -230,6 +243,20 @@
   document.addEventListener('DOMContentLoaded', () => {
     bindLoginPage();
     bindHistoryGuard();
+
+    // 사용자 활동 감지 → lastActiveAt 갱신 (클릭, 키 입력, 스크롤)
+    // throttle: 1분에 한 번만 저장해서 localStorage 과부하 방지
+    let lastRefresh = 0;
+    function onActivity() {
+      const now = Date.now();
+      if (now - lastRefresh < 60 * 1000) return;
+      lastRefresh = now;
+      refreshActivity();
+    }
+
+    ['click', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+      document.addEventListener(evt, onActivity, { passive: true });
+    });
   });
 
   window.auth = {
