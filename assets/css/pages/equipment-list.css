@@ -849,58 +849,63 @@
 
 /* ===== size: 90 x 48 ===== */
 .equipment-label-page .device-label.size-90x48 {
-  width: 340px;
+  width: 360px;
   min-height: 181px;
-  padding: 15px;
-  grid-template-columns: minmax(0, 1fr) 98px;
-  gap: 15px;
+  padding: 14px 16px;
+  grid-template-columns: minmax(0, 1fr) 94px;
+  gap: 12px;
   align-items: center;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-hospital {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.3;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-title {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.15;
   margin: 0 0 6px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-info-block {
-  gap: 5px;
+  gap: 4px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-row {
-  grid-template-columns: 68px minmax(0, 1fr);
-  gap: 5px 7px;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 3px 6px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-key {
-  font-size: 11px;
-  line-height: 1.45;
+  font-size: 10.5px;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-value {
-  font-size: 11.5px;
-  line-height: 1.45;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-value-id {
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-qr-box {
-  width: 98px;
-  height: 98px;
-  min-width: 98px;
-  min-height: 98px;
-  padding: 6px;
-  border-radius: 11px;
-  margin-top: 7px;
+  width: 94px;
+  height: 94px;
+  min-width: 94px;
+  min-height: 94px;
+  padding: 5px;
+  border-radius: 10px;
+  margin-top: 0;
 }
 
 .equipment-label-page .device-label.size-90x48 .qr-panel {
@@ -909,66 +914,72 @@
 
 /* ===== size: 70 x 40 ===== */
 .equipment-label-page .device-label.size-70x40 {
-  width: 264px;
+  width: 280px;
   min-height: 151px;
-  padding: 11px;
-  grid-template-columns: minmax(0, 1fr) 83px;
-  gap: 11px;
+  padding: 10px 12px;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 10px;
   align-items: center;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-hospital {
-  margin-bottom: 6px;
-  font-size: 11px;
-  line-height: 1.25;
+  margin-bottom: 4px;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-title {
-  margin-bottom: 7px;
-  font-size: 16px;
+  margin-bottom: 5px;
+  font-size: 15px;
   line-height: 1.15;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-info-block {
-  gap: 5px;
+  gap: 3px;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-row {
-  grid-template-columns: 53px minmax(0, 1fr);
-  gap: 5px 6px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 3px 5px;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-row-emphasis {
-  grid-template-columns: 53px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   align-items: center;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-key {
-  font-size: 9px;
-  line-height: 1.35;
+  font-size: 8.5px;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-value {
-  font-size: 9.5px;
-  line-height: 1.35;
+  font-size: 9px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-value-id {
-  font-size: 11.5px;
+  font-size: 11px;
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   white-space: nowrap;
-  word-break: keep-all;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-qr-box {
-  width: 76px;
-  height: 76px;
-  min-width: 76px;
-  min-height: 76px;
-  padding: 5px;
-  border-radius: 9px;
-  margin-top: 8px;
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  min-height: 72px;
+  padding: 4px;
+  border-radius: 8px;
+  margin-top: 0;
 }
 
 .equipment-label-page .device-label.size-70x40 .qr-panel {
