@@ -426,7 +426,7 @@
 }
 
 /* 컬럼 너비 고정 */
-.equipment-tbl-th:nth-child(1) { width: 28px; padding: 0 4px; }  /* 체크박스 */
+.equipment-tbl-th:nth-child(1) { width: 44px; }  /* 체크박스 */
 .equipment-tbl-th:nth-child(2) { width: 17%; }  /* 장비명/번호 */
 .equipment-tbl-th:nth-child(3) { width: 11%; }  /* 모델명 */
 .equipment-tbl-th:nth-child(4) { width: 14%; }  /* 부서 */
@@ -1670,15 +1670,16 @@
 
 .tbl-th--check,
 .tbl-td--check {
-  width: 28px;
-  min-width: 28px;
+  width: 44px;
+  min-width: 44px;
   text-align: center;
-  padding: 0 4px !important;
+  padding: 0 !important;
 }
 
 .tbl-th--check input[type="checkbox"],
 .tbl-td--check input[type="checkbox"] {
-  margin: 0;
+  margin: 0 auto;
+  display: block;
   cursor: pointer;
   width: 15px;
   height: 15px;
