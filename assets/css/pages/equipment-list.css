@@ -1467,46 +1467,54 @@
     min-height: 48mm;
     padding: 4mm;
     border-radius: 4mm;
-    gap: 4mm;
-    grid-template-columns: 1fr 28mm;
+    gap: 3.5mm;
+    grid-template-columns: 1fr 26mm;
     align-items: center;
   }
 
   .equipment-label-page .device-label.size-90x48 .label-hospital {
-    margin-bottom: 2mm;
-    font-size: 10pt;
+    margin-bottom: 1.5mm;
+    font-size: 7.5pt;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .equipment-label-page .device-label.size-90x48 .label-title {
     margin: 0 0 2mm;
-    font-size: 18pt;
+    font-size: 15pt;
   }
 
   .equipment-label-page .device-label.size-90x48 .label-row {
-    grid-template-columns: 18mm 1fr;
-    gap: 1.6mm 2mm;
+    grid-template-columns: 13mm 1fr;
+    gap: 1.4mm 2mm;
   }
 
   .equipment-label-page .device-label.size-90x48 .label-key {
-    font-size: 8pt;
+    font-size: 7.5pt;
+    white-space: nowrap;
   }
 
   .equipment-label-page .device-label.size-90x48 .label-value {
-    font-size: 8.5pt;
+    font-size: 8pt;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .equipment-label-page .device-label.size-90x48 .label-value-id {
-    font-size: 13pt;
+    font-size: 11pt;
+    white-space: nowrap;
   }
 
   .equipment-label-page .device-label.size-90x48 .label-qr-box {
-    width: 26mm;
-    height: 26mm;
-    min-width: 26mm;
-    min-height: 26mm;
-    padding: 1.5mm;
+    width: 24mm;
+    height: 24mm;
+    min-width: 24mm;
+    min-height: 24mm;
+    padding: 1.2mm;
     border-radius: 3mm;
-    margin-top: 2mm;
+    margin-top: 0;
   }
 
   .equipment-label-page .device-label.size-90x48 .qr-panel {
@@ -1517,57 +1525,63 @@
   .equipment-label-page .device-label.size-70x40 {
     width: 70mm;
     min-height: 40mm;
-    padding: 3mm;
+    padding: 2.8mm;
     border-radius: 3mm;
-    gap: 3mm;
-    grid-template-columns: 1fr 22mm;
+    gap: 2.5mm;
+    grid-template-columns: 1fr 19mm;
     align-items: center;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-hospital {
-    margin-bottom: 1.6mm;
-    font-size: 8pt;
+    margin-bottom: 1.2mm;
+    font-size: 6pt;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-title {
-    margin: 0 0 1.8mm;
-    font-size: 13pt;
+    margin: 0 0 1.5mm;
+    font-size: 11pt;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-row {
-    grid-template-columns: 14mm 1fr;
-    gap: 1.2mm 1.6mm;
+    grid-template-columns: 11mm 1fr;
+    gap: 1mm 1.4mm;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-row-emphasis {
-    grid-template-columns: 14mm 1fr;
+    grid-template-columns: 11mm 1fr;
     align-items: center;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-key {
-    font-size: 6.8pt;
+    font-size: 6pt;
+    white-space: nowrap;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-value {
-    font-size: 7.2pt;
+    font-size: 6.5pt;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-value-id {
-    font-size: 8.8pt;
+    font-size: 8pt;
     line-height: 1.05;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     white-space: nowrap;
-    word-break: keep-all;
   }
 
   .equipment-label-page .device-label.size-70x40 .label-qr-box {
-    width: 20mm;
-    height: 20mm;
-    min-width: 20mm;
-    min-height: 20mm;
-    padding: 1.2mm;
-    border-radius: 2.5mm;
-    margin-top: 2.2mm;
+    width: 17mm;
+    height: 17mm;
+    min-width: 17mm;
+    min-height: 17mm;
+    padding: 1mm;
+    border-radius: 2mm;
+    margin-top: 0;
   }
 
   .equipment-label-page .device-label.size-70x40 .qr-panel {
