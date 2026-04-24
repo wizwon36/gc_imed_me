@@ -81,6 +81,7 @@ function setPageMode() {
   const descEl = document.querySelector('.page-desc');
   const submitBtn = qs('#submitButton');
   const submitBtnText = qs('#submitButtonText');
+  const formTabs = qs('#formTabs');
 
   if (isEditMode) {
     if (titleEl) titleEl.textContent = '장비 수정';
@@ -90,6 +91,8 @@ function setPageMode() {
     } else if (submitBtn) {
       submitBtn.textContent = '수정 저장';
     }
+    // 수정 모드에서는 탭 숨김
+    if (formTabs) formTabs.style.display = 'none';
   } else {
     if (titleEl) titleEl.textContent = '장비 등록';
     if (descEl) descEl.textContent = '신규 의료장비 정보를 등록합니다.';
@@ -98,6 +101,7 @@ function setPageMode() {
     } else if (submitBtn) {
       submitBtn.textContent = '장비 등록';
     }
+    if (formTabs) formTabs.style.display = '';
   }
 }
 
@@ -632,9 +636,273 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadEquipmentIfEditMode();
     updateDepartmentPreview();
     document.querySelector('#equipmentForm')?.addEventListener('submit', handleSubmit);
+    initBulkSection(user);
   } catch (error) {
     showMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
   }
 });
+
+// ================================================================
+// 일괄 등록 (Bulk Import)
+// ================================================================
+
+// 탭 전환
+function switchFormTab(tab) {
+  const singleForm = qs('#equipmentForm');
+  const bulkSection = qs('#bulkSection');
+  const tabSingle = qs('#tabSingle');
+  const tabBulk = qs('#tabBulk');
+
+  if (tab === 'bulk') {
+    if (singleForm) singleForm.style.display = 'none';
+    if (bulkSection) bulkSection.style.display = '';
+    tabSingle?.classList.remove('is-active');
+    tabBulk?.classList.add('is-active');
+  } else {
+    if (singleForm) singleForm.style.display = '';
+    if (bulkSection) bulkSection.style.display = 'none';
+    tabSingle?.classList.add('is-active');
+    tabBulk?.classList.remove('is-active');
+  }
+  clearMessage();
+}
+
+// 엑셀 컬럼 정의
+const BULK_COLUMNS = [
+  { key: 'equipment_name',     label: '장비명',          required: true  },
+  { key: 'model_name',         label: '모델명',          required: true  },
+  { key: 'clinic_code',        label: '의원코드',        required: true  },
+  { key: 'team_code',          label: '팀코드',          required: true  },
+  { key: 'serial_no',          label: '시리얼번호',      required: true  },
+  { key: 'manufacturer',       label: '제조사',          required: false },
+  { key: 'manufacture_date',   label: '제조일자',        required: false },
+  { key: 'purchase_date',      label: '취득일자',        required: false },
+  { key: 'vendor',             label: '구매처',          required: false },
+  { key: 'acquisition_cost',   label: '취득가액',        required: false },
+  { key: 'manager_name',       label: '담당자',          required: false },
+  { key: 'manager_phone',      label: '담당자연락처',    required: false },
+  { key: 'maintenance_end_date', label: '유지보수종료일', required: false },
+  { key: 'status',             label: '상태',            required: false },
+  { key: 'location',           label: '위치',            required: false },
+  { key: 'current_user',       label: '현재사용자',      required: false },
+  { key: 'memo',               label: '메모',            required: false }
+];
+
+// 템플릿 다운로드
+function downloadBulkTemplate() {
+  if (!window.XLSX) { alert('엑셀 라이브러리를 불러오지 못했습니다.'); return; }
+
+  const ws = {};
+  const headers = BULK_COLUMNS.map(c => c.label);
+  const FONT = { name: '맑은 고딕', sz: 10 };
+  const FONT_REQ = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+  const FILL_REQ = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+  const FILL_OPT = { patternType: 'solid', fgColor: { rgb: 'F1F5F9' } };
+  const BORDER = {
+    top: { style: 'thin', color: { rgb: 'BFBFBF' } }, bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+    left: { style: 'thin', color: { rgb: 'BFBFBF' } }, right: { style: 'thin', color: { rgb: 'BFBFBF' } }
+  };
+
+  headers.forEach((h, c) => {
+    const col = BULK_COLUMNS[c];
+    const addr = window.XLSX.utils.encode_cell({ r: 0, c });
+    ws[addr] = {
+      v: col.required ? `${h} *` : h, t: 's',
+      s: { font: col.required ? FONT_REQ : FONT, fill: col.required ? FILL_REQ : FILL_OPT, border: BORDER, alignment: { horizontal: 'center', vertical: 'center' } }
+    };
+  });
+
+  // 예시 행
+  const example = {
+    equipment_name: '초음파 진단기', model_name: 'US-100', clinic_code: '(codes 시트 참고)',
+    team_code: '(codes 시트 참고)', serial_no: 'SN-000001', manufacturer: '메디텍',
+    manufacture_date: '2023-01-01', purchase_date: '2024-03-01', vendor: '(주)의료기기',
+    acquisition_cost: '5000000', manager_name: '홍길동', manager_phone: '010-1234-5678',
+    maintenance_end_date: '2026-12-31', status: 'IN_USE', location: '3층 진료실',
+    current_user: '홍길동', memo: ''
+  };
+
+  BULK_COLUMNS.forEach((col, c) => {
+    const addr = window.XLSX.utils.encode_cell({ r: 1, c });
+    ws[addr] = { v: example[col.key] || '', t: 's', s: { font: FONT, border: BORDER } };
+  });
+
+  ws['!ref'] = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: 1, c: BULK_COLUMNS.length - 1 });
+  ws['!cols'] = BULK_COLUMNS.map(c => ({ wch: c.key === 'memo' ? 24 : 16 }));
+  ws['!rows'] = [{ hpt: 18 }, { hpt: 16 }];
+
+  const wb = window.XLSX.utils.book_new();
+  window.XLSX.utils.book_append_sheet(wb, ws, '장비일괄등록');
+  window.XLSX.writeFile(wb, '장비일괄등록_템플릿.xlsx');
+}
+
+// 엑셀 파싱 및 유효성 검사
+function parseBulkExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = window.XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = window.XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+        if (!raw.length) { reject(new Error('데이터가 없습니다.')); return; }
+
+        // 헤더 매핑 (label 또는 label * → key)
+        const labelToKey = {};
+        BULK_COLUMNS.forEach(c => {
+          labelToKey[c.label] = c.key;
+          labelToKey[`${c.label} *`] = c.key;
+        });
+
+        const rows = raw.map((rawRow, idx) => {
+          const row = { _rowNum: idx + 2, _errors: [] };
+          Object.entries(rawRow).forEach(([label, val]) => {
+            const key = labelToKey[label.trim()];
+            if (key) row[key] = String(val || '').trim();
+          });
+
+          // 필수값 검사
+          BULK_COLUMNS.filter(c => c.required).forEach(c => {
+            if (!row[c.key]) row._errors.push(`${c.label} 누락`);
+          });
+
+          // 날짜 정규화
+          ['manufacture_date', 'purchase_date', 'maintenance_end_date'].forEach(k => {
+            if (row[k]) {
+              const d = new Date(row[k]);
+              if (!isNaN(d)) {
+                row[k] = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+              }
+            }
+          });
+
+          return row;
+        });
+
+        resolve(rows);
+      } catch (err) {
+        reject(new Error('엑셀 파일을 읽지 못했습니다: ' + err.message));
+      }
+    };
+    reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// 미리보기 테이블 렌더링
+function renderBulkPreview(rows) {
+  const wrap = qs('#bulkPreviewWrap');
+  const table = qs('#bulkPreviewTable');
+  const countEl = qs('#bulkPreviewCount');
+  const errorEl = qs('#bulkPreviewError');
+  const submitBtn = qs('#bulkSubmitBtn');
+  if (!wrap || !table) return;
+
+  const errorRows = rows.filter(r => r._errors.length > 0);
+  countEl.textContent = `총 ${rows.length}건`;
+  errorEl.textContent = errorRows.length ? `오류 ${errorRows.length}건 — 수정 후 다시 업로드해 주세요.` : '';
+  submitBtn.style.display = errorRows.length === 0 ? '' : 'none';
+
+  const displayCols = BULK_COLUMNS.slice(0, 8); // 미리보기는 주요 컬럼만
+
+  const thead = `<thead><tr>${displayCols.map(c =>
+    `<th class="${c.required ? 'is-required' : ''}">${c.label}${c.required ? ' *' : ''}</th>`
+  ).join('')}<th>오류</th></tr></thead>`;
+
+  const tbody = `<tbody>${rows.map(row => {
+    const hasErr = row._errors.length > 0;
+    const cells = displayCols.map(c => `<td>${escapeHtml(row[c.key] || '-')}</td>`).join('');
+    const errCell = `<td>${hasErr ? `<span class="cell-error">${escapeHtml(row._errors.join(', '))}</span>` : '✓'}</td>`;
+    return `<tr class="${hasErr ? 'is-row-error' : ''}">${cells}${errCell}</tr>`;
+  }).join('')}</tbody>`;
+
+  table.innerHTML = thead + tbody;
+  wrap.style.display = '';
+}
+
+// 일괄 등록 제출
+async function handleBulkSubmit(rows, userEmail) {
+  const submitBtn = qs('#bulkSubmitBtn');
+
+  try {
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '등록 중...'; }
+    showGlobalLoading(`${rows.length}건을 등록하는 중...`);
+
+    const items = rows.map(row => ({
+      equipment_name:       row.equipment_name     || '',
+      model_name:           row.model_name         || '',
+      clinic_code:          row.clinic_code        || '',
+      team_code:            row.team_code          || '',
+      serial_no:            row.serial_no          || '',
+      manufacturer:         row.manufacturer       || '',
+      manufacture_date:     row.manufacture_date   || '',
+      purchase_date:        row.purchase_date      || '',
+      vendor:               row.vendor             || '',
+      acquisition_cost:     row.acquisition_cost   || '',
+      manager_name:         row.manager_name       || '',
+      manager_phone:        row.manager_phone      || '',
+      maintenance_end_date: row.maintenance_end_date || '',
+      status:               row.status             || 'IN_USE',
+      location:             row.location           || '',
+      current_user:         row.current_user       || '',
+      memo:                 row.memo               || '',
+      created_by:           userEmail
+    }));
+
+    const result = await apiPost('bulkCreateEquipments', {
+      request_user_email: userEmail,
+      items
+    });
+
+    alert(`${result.data?.created_count || items.length}건이 등록되었습니다.`);
+    location.href = 'list.html';
+
+  } catch (error) {
+    showMessage(error.message || '일괄 등록 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '일괄 등록'; }
+    hideGlobalLoading();
+  }
+}
+
+// 일괄등록 섹션 초기화
+function initBulkSection(user) {
+  const userEmail = user.email || user.user_email || '';
+
+  // 관리자가 아니면 탭 자체를 숨김
+  if (String(user.role || '').toLowerCase() !== 'admin') {
+    const tabBulk = qs('#tabBulk');
+    if (tabBulk) tabBulk.style.display = 'none';
+    return;
+  }
+
+  let parsedRows = [];
+
+  qs('#downloadTemplateBtn')?.addEventListener('click', downloadBulkTemplate);
+
+  qs('#bulkFileInput')?.addEventListener('change', async function() {
+    const file = this.files?.[0];
+    if (!file) return;
+    qs('#bulkFileName').textContent = file.name;
+    clearMessage();
+
+    try {
+      showGlobalLoading('파일을 분석하는 중...');
+      parsedRows = await parseBulkExcel(file);
+      renderBulkPreview(parsedRows);
+    } catch (err) {
+      showMessage(err.message, 'error');
+    } finally {
+      hideGlobalLoading();
+    }
+  });
+
+  qs('#bulkSubmitBtn')?.addEventListener('click', () => {
+    if (!parsedRows.length) return;
+    if (!confirm(`${parsedRows.length}건을 일괄 등록하시겠습니까?\n오류 발생 시 전체 롤백됩니다.`)) return;
+    handleBulkSubmit(parsedRows, userEmail);
+  });
+}
