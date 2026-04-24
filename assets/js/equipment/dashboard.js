@@ -366,9 +366,7 @@ function renderDeptChart(data) {
   const total = data.reduce((s, d) => s + Number(d.count || 0), 0);
   if (total === 0) { if (empty) empty.style.display = ''; return; }
 
-  // ── 도넛 SVG 계산 ──────────────────────────────────────────────
-  const R = 54, r = 34, CX = 70, CY = 70;
-  const circumference = 2 * Math.PI * ((R + r) / 2);
+  const R = 58, r = 36, CX = 74, CY = 74;
 
   function polarToXY(cx, cy, radius, angleDeg) {
     const rad = (angleDeg - 90) * Math.PI / 180;
@@ -392,24 +390,20 @@ function renderDeptChart(data) {
 
   let currentDeg = 0;
   const slices = data.map((d, i) => {
-    const count  = Number(d.count || 0);
-    const deg    = (count / total) * 360;
-    const start  = currentDeg;
-    const end    = currentDeg + deg - 0.4; // 슬라이스 간 gap
-    currentDeg  += deg;
+    const count = Number(d.count || 0);
+    const deg   = (count / total) * 360;
+    const start = currentDeg;
+    const end   = currentDeg + deg - 0.4;
+    currentDeg += deg;
     return { ...d, count, deg, start, end, color: COLORS[i % COLORS.length] };
   });
 
   const svgSlices = slices.map((s, i) => `
-    <path
-      class="donut-slice"
-      d="${donutSlicePath(CX, CY, R, r, s.start, s.end)}"
-      fill="${s.color}"
-      style="animation-delay:${i * 60}ms"
-    />`
+    <path class="donut-slice" d="${donutSlicePath(CX, CY, R, r, s.start, s.end)}"
+      fill="${s.color}" style="animation-delay:${i * 60}ms"/>`
   ).join('');
 
-  // ── 범례 ──────────────────────────────────────────────────────
+  // 범례 (모바일용 + PC 도넛 아래)
   const legendItems = slices.map(s => {
     const pct  = Math.round((s.count / total) * 100);
     const name = textSafe(s.department_display || s.department || '-');
@@ -422,16 +416,34 @@ function renderDeptChart(data) {
       </div>`;
   }).join('');
 
+  // 가로 막대 (PC 오른쪽 전용)
+  const maxCount = Math.max(...slices.map(s => s.count));
+  const barRows = slices.map(s => {
+    const pct  = maxCount > 0 ? Math.round((s.count / maxCount) * 100) : 0;
+    const name = textSafe(s.department_display || s.department || '-');
+    return `
+      <div class="dept-bar-row">
+        <div class="dept-bar-label" title="${name}">${name}</div>
+        <div class="dept-bar-track">
+          <div class="dept-bar-fill" style="width:${pct}%;background:${s.color};"></div>
+        </div>
+        <div class="dept-bar-count">${s.count}</div>
+      </div>`;
+  }).join('');
+
   wrap.innerHTML = `
     <div class="donut-chart-inner">
-      <div class="donut-svg-wrap">
-        <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" class="donut-svg">
-          ${svgSlices}
-          <text x="${CX}" y="${CY - 7}" class="donut-center-label">전체</text>
-          <text x="${CX}" y="${CY + 14}" class="donut-center-value">${total}</text>
-        </svg>
+      <div class="donut-left">
+        <div class="donut-svg-wrap">
+          <svg viewBox="0 0 148 148" xmlns="http://www.w3.org/2000/svg" class="donut-svg">
+            ${svgSlices}
+            <text x="${CX}" y="${CY - 8}" class="donut-center-label">전체</text>
+            <text x="${CX}" y="${CY + 15}" class="donut-center-value">${total}</text>
+          </svg>
+        </div>
+        <div class="donut-legend">${legendItems}</div>
       </div>
-      <div class="donut-legend">${legendItems}</div>
+      <div class="dept-bar-chart">${barRows}</div>
     </div>`;
 }
 
