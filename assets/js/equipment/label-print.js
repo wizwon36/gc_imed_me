@@ -41,11 +41,11 @@ function renderLabelQr(equipmentId) {
   var qrArea = qs('#labelQr');
   var qrValue = buildEquipmentDetailUrl(equipmentId);
   var sizeClass = getSelectedLabelSize();
-  var qrSize = 86; // 90x48: box 98px - padding 12px
+  var qrSize = 84; // 90x48: box 94px - padding 10px
 
   if (!qrArea) return;
 
-  if (sizeClass === 'size-70x40') qrSize = 66; // box 76px - padding 10px
+  if (sizeClass === 'size-70x40') qrSize = 64; // box 72px - padding 8px
   if (sizeClass === 'size-50x30') qrSize = 48;
 
   qrArea.innerHTML = '';
