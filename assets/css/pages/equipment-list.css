@@ -1027,8 +1027,10 @@
 }
 
 .equipment-label-page .device-label.size-50x30 .label-value-id {
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.1;
+  white-space: nowrap;
+  letter-spacing: -0.03em;
 }
 
 .equipment-label-page .device-label.size-50x30 .label-qr-box {
@@ -1622,7 +1624,9 @@
   }
 
   .equipment-label-page .device-label.size-50x30 .label-value-id {
-    font-size: 7.8pt;
+    font-size: 6.8pt;
+    white-space: nowrap;
+    letter-spacing: -0.03em;
   }
 
   .equipment-label-page .device-label.size-50x30 .label-qr-box {
