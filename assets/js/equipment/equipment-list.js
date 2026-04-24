@@ -891,16 +891,18 @@ function updateBulkUI() {
   var btn          = document.getElementById('bulkLabelBtn');
   var countEl      = document.getElementById('bulkLabelCount');
   var checkAllWrap = document.getElementById('bulkCheckAllWrap');
+  var sizeSelect   = document.getElementById('bulkLabelSizeSelect');
   var count        = bulkSelectedIds.size;
 
-  if (btn) btn.style.display = count > 0 ? '' : 'none';
-  if (countEl) countEl.textContent = count;
+  if (btn)        btn.style.display        = count > 0 ? '' : 'none';
+  if (sizeSelect) sizeSelect.style.display = count > 0 ? '' : 'none';
+  if (countEl)    countEl.textContent      = count;
   if (checkAllWrap) checkAllWrap.style.display = '';
 }
 
-// 라벨 크기 기본값 반환 (label-print 페이지 기본값과 맞춤)
 function getSelectedLabelSizeForBulk() {
-  return 'size-90x48';
+  var sizeSelect = document.getElementById('bulkLabelSizeSelect');
+  return sizeSelect ? sizeSelect.value : 'size-90x48';
 }
 
 // 목록 렌더링 후 체크 상태 초기화
