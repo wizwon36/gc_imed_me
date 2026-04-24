@@ -332,6 +332,7 @@ function renderDashboardData(summary) {
   renderMaintenanceAlerts(summary?.maintenance_alerts || []);
   renderRecentRepairList(summary?.recent_repairs || []);
   renderRecentRegisteredList(summary?.recent_registrations || []);
+  renderDeptChart(summary?.department_summary || []);
 }
 
 async function fetchDashboardData() {
@@ -344,6 +345,42 @@ async function fetchDashboardData() {
   return {
     summary: summaryResult?.data || {}
   };
+}
+
+function renderDeptChart(data) {
+  const wrap = document.getElementById('deptChartWrap');
+  const empty = document.getElementById('deptChartEmpty');
+  if (!wrap) return;
+
+  if (!data || data.length === 0) {
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const max = Math.max(...data.map(d => Number(d.count || 0)));
+  const COLORS = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+    '#8b5cf6', '#06b6d4', '#f97316', '#84cc16'
+  ];
+
+  const rows = data.map((d, i) => {
+    const count  = Number(d.count || 0);
+    const pct    = max > 0 ? Math.round((count / max) * 100) : 0;
+    const label  = textSafe(d.department_display || d.department || '-');
+    const color  = COLORS[i % COLORS.length];
+
+    return `
+      <div class="dept-chart-row">
+        <div class="dept-chart-label" title="${label}">${label}</div>
+        <div class="dept-chart-bar-wrap">
+          <div class="dept-chart-bar" style="width:${pct}%; background:${color};"></div>
+        </div>
+        <div class="dept-chart-count">${count}</div>
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = `<div class="dept-chart-list">${rows}</div>`;
 }
 
 function initPanelCarousel() {
