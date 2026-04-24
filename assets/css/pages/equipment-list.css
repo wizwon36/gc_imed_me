@@ -426,14 +426,15 @@
 }
 
 /* 컬럼 너비 고정 */
-.equipment-tbl-th:nth-child(1) { width: 17%; }  /* 장비명/번호 */
-.equipment-tbl-th:nth-child(2) { width: 11%; }  /* 모델명 */
-.equipment-tbl-th:nth-child(3) { width: 14%; }  /* 부서 */
-.equipment-tbl-th:nth-child(4) { width: 11%; }  /* 제조사 */
-.equipment-tbl-th:nth-child(5) { width: 13%; }  /* 시리얼 */
-.equipment-tbl-th:nth-child(6) { width: 7%; }   /* 위치 */
-.equipment-tbl-th:nth-child(7) { width: 9%; text-align: center; }  /* 상태 */
-.equipment-tbl-th:nth-child(8) { width: 18%; text-align: center; } /* 액션 */
+.equipment-tbl-th:nth-child(1) { width: 28px; padding: 0 4px; }  /* 체크박스 */
+.equipment-tbl-th:nth-child(2) { width: 17%; }  /* 장비명/번호 */
+.equipment-tbl-th:nth-child(3) { width: 11%; }  /* 모델명 */
+.equipment-tbl-th:nth-child(4) { width: 14%; }  /* 부서 */
+.equipment-tbl-th:nth-child(5) { width: 11%; }  /* 제조사 */
+.equipment-tbl-th:nth-child(6) { width: 13%; }  /* 시리얼 */
+.equipment-tbl-th:nth-child(7) { width: 7%; }   /* 위치 */
+.equipment-tbl-th:nth-child(8) { width: 9%; text-align: center; }  /* 상태 */
+.equipment-tbl-th:nth-child(9) { width: 18%; text-align: center; } /* 액션 */
 
 .equipment-tbl-row {
   transition: background-color 0.12s ease;
