@@ -691,51 +691,108 @@ const BULK_COLUMNS = [
 ];
 
 // 템플릿 다운로드
-function downloadBulkTemplate() {
+async function downloadBulkTemplate() {
   if (!window.XLSX) { alert('엑셀 라이브러리를 불러오지 못했습니다.'); return; }
 
-  const ws = {};
-  const headers = BULK_COLUMNS.map(c => c.label);
-  const FONT = { name: '맑은 고딕', sz: 10 };
-  const FONT_REQ = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
-  const FILL_REQ = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
-  const FILL_OPT = { patternType: 'solid', fgColor: { rgb: 'F1F5F9' } };
-  const BORDER = {
-    top: { style: 'thin', color: { rgb: 'BFBFBF' } }, bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
-    left: { style: 'thin', color: { rgb: 'BFBFBF' } }, right: { style: 'thin', color: { rgb: 'BFBFBF' } }
-  };
+  const btn = qs('#downloadTemplateBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
 
-  headers.forEach((h, c) => {
-    const col = BULK_COLUMNS[c];
-    const addr = window.XLSX.utils.encode_cell({ r: 0, c });
-    ws[addr] = {
-      v: col.required ? `${h} *` : h, t: 's',
-      s: { font: col.required ? FONT_REQ : FONT, fill: col.required ? FILL_REQ : FILL_OPT, border: BORDER, alignment: { horizontal: 'center', vertical: 'center' } }
+  try {
+    // 의원/팀 목록 로드
+    const orgData = await apiGet('getOrgData');
+    const clinics = Array.isArray(orgData?.data?.clinics) ? orgData.data.clinics : [];
+    const teams   = Array.isArray(orgData?.data?.teams)   ? orgData.data.teams   : [];
+
+    const FONT     = { name: '맑은 고딕', sz: 10 };
+    const FONT_REQ = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+    const FILL_REQ = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+    const FILL_OPT = { patternType: 'solid', fgColor: { rgb: 'F1F5F9' } };
+    const FILL_ORG = { patternType: 'solid', fgColor: { rgb: 'E2EFDA' } };
+    const BORDER = {
+      top:    { style: 'thin', color: { rgb: 'BFBFBF' } },
+      bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+      left:   { style: 'thin', color: { rgb: 'BFBFBF' } },
+      right:  { style: 'thin', color: { rgb: 'BFBFBF' } }
     };
-  });
+    const ALIGN_C = { horizontal: 'center', vertical: 'center' };
+    const ALIGN_L = { horizontal: 'left',   vertical: 'center' };
 
-  // 예시 행
-  const example = {
-    equipment_name: '초음파 진단기', model_name: 'US-100', clinic_code: '(codes 시트 참고)',
-    team_code: '(codes 시트 참고)', serial_no: 'SN-000001', manufacturer: '메디텍',
-    manufacture_date: '2023-01-01', purchase_date: '2024-03-01', vendor: '(주)의료기기',
-    acquisition_cost: '5000000', manager_name: '홍길동', manager_phone: '010-1234-5678',
-    maintenance_end_date: '2026-12-31', status: 'IN_USE', location: '3층 진료실',
-    current_user: '홍길동', memo: ''
-  };
+    // ── 시트1: 장비일괄등록 ──────────────────────────────────────
+    const ws1 = {};
 
-  BULK_COLUMNS.forEach((col, c) => {
-    const addr = window.XLSX.utils.encode_cell({ r: 1, c });
-    ws[addr] = { v: example[col.key] || '', t: 's', s: { font: FONT, border: BORDER } };
-  });
+    BULK_COLUMNS.forEach((col, c) => {
+      const addr = window.XLSX.utils.encode_cell({ r: 0, c });
+      ws1[addr] = {
+        v: col.required ? `${col.label} *` : col.label, t: 's',
+        s: { font: col.required ? FONT_REQ : FONT, fill: col.required ? FILL_REQ : FILL_OPT, border: BORDER, alignment: ALIGN_C }
+      };
+    });
 
-  ws['!ref'] = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: 1, c: BULK_COLUMNS.length - 1 });
-  ws['!cols'] = BULK_COLUMNS.map(c => ({ wch: c.key === 'memo' ? 24 : 16 }));
-  ws['!rows'] = [{ hpt: 18 }, { hpt: 16 }];
+    // 예시 행 — 의원/팀 코드를 실제 첫 번째 값으로 채움
+    const exampleClinicCode = clinics[0]?.code_value || '';
+    const exampleTeamCode   = teams[0]?.code_value   || '';
+    const example = {
+      equipment_name: '초음파 진단기', model_name: 'US-100',
+      clinic_code: exampleClinicCode, team_code: exampleTeamCode,
+      serial_no: 'SN-000001', manufacturer: '메디텍',
+      manufacture_date: '2023-01-01', purchase_date: '2024-03-01',
+      vendor: '(주)의료기기', acquisition_cost: '5000000',
+      manager_name: '홍길동', manager_phone: '010-1234-5678',
+      maintenance_end_date: '2026-12-31', status: 'IN_USE',
+      location: '3층 진료실', current_user: '홍길동', memo: ''
+    };
 
-  const wb = window.XLSX.utils.book_new();
-  window.XLSX.utils.book_append_sheet(wb, ws, '장비일괄등록');
-  window.XLSX.writeFile(wb, '장비일괄등록_템플릿.xlsx');
+    BULK_COLUMNS.forEach((col, c) => {
+      const addr = window.XLSX.utils.encode_cell({ r: 1, c });
+      ws1[addr] = { v: example[col.key] || '', t: 's', s: { font: FONT, border: BORDER, alignment: ALIGN_L } };
+    });
+
+    ws1['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: 1, c: BULK_COLUMNS.length - 1 });
+    ws1['!cols'] = BULK_COLUMNS.map(c => ({ wch: c.key === 'memo' ? 24 : 16 }));
+    ws1['!rows'] = [{ hpt: 18 }, { hpt: 16 }];
+
+    // ── 시트2: 의원_팀코드 ──────────────────────────────────────
+    const ws2 = {};
+    const orgHeaders = ['구분', '코드 (clinic_code / team_code 에 입력)', '이름'];
+
+    orgHeaders.forEach((h, c) => {
+      const addr = window.XLSX.utils.encode_cell({ r: 0, c });
+      ws2[addr] = { v: h, t: 's', s: { font: { ...FONT, bold: true }, fill: FILL_ORG, border: BORDER, alignment: ALIGN_C } };
+    });
+
+    let r = 1;
+
+    clinics.forEach(clinic => {
+      const row = ['의원', clinic.code_value || '', clinic.code_name || ''];
+      row.forEach((v, c) => {
+        ws2[window.XLSX.utils.encode_cell({ r, c })] = { v, t: 's', s: { font: FONT, border: BORDER, alignment: ALIGN_L } };
+      });
+      r++;
+    });
+
+    teams.forEach(team => {
+      const row = ['팀', team.code_value || '', team.code_name || ''];
+      row.forEach((v, c) => {
+        ws2[window.XLSX.utils.encode_cell({ r, c })] = { v, t: 's', s: { font: FONT, border: BORDER, alignment: ALIGN_L } };
+      });
+      r++;
+    });
+
+    ws2['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: r - 1, c: 2 });
+    ws2['!cols'] = [{ wch: 8 }, { wch: 28 }, { wch: 20 }];
+    ws2['!rows'] = Array(r).fill({ hpt: 16 });
+
+    // ── 워크북 조합 ─────────────────────────────────────────────
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws1, '장비일괄등록');
+    window.XLSX.utils.book_append_sheet(wb, ws2, '의원_팀코드');
+    window.XLSX.writeFile(wb, '장비일괄등록_템플릿.xlsx');
+
+  } catch (err) {
+    alert('템플릿 생성 중 오류가 발생했습니다: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '템플릿 다운로드'; }
+  }
 }
 
 // 엑셀 파싱 및 유효성 검사
@@ -888,6 +945,13 @@ function initBulkSection(user) {
     if (!file) return;
     qs('#bulkFileName').textContent = file.name;
     clearMessage();
+
+    // 파일 재선택 시 미리보기/버튼 초기화
+    const previewWrap = qs('#bulkPreviewWrap');
+    const submitBtn = qs('#bulkSubmitBtn');
+    if (previewWrap) previewWrap.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'none';
+    parsedRows = [];
 
     try {
       showGlobalLoading('파일을 분석하는 중...');
