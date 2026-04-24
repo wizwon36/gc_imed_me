@@ -853,3 +853,137 @@
     font-size: 12px;
   }
 }
+
+/* ===== 도넛 차트 (부서별 장비 현황) ===== */
+
+.dept-chart-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 4px 0 8px;
+}
+
+.donut-chart-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+/* SVG 도넛 */
+.donut-svg-wrap {
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+}
+
+.donut-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.donut-slice {
+  opacity: 0;
+  animation: donutFadeIn 0.35s ease forwards;
+  transition: opacity 0.2s;
+  cursor: default;
+}
+
+.donut-slice:hover {
+  filter: brightness(1.12);
+}
+
+@keyframes donutFadeIn {
+  from { opacity: 0; transform-origin: 70px 70px; transform: scale(0.82); }
+  to   { opacity: 1; transform-origin: 70px 70px; transform: scale(1); }
+}
+
+.donut-center-label {
+  font-size: 10px;
+  fill: #94a3b8;
+  text-anchor: middle;
+  font-weight: 500;
+}
+
+.donut-center-value {
+  font-size: 18px;
+  fill: #1e293b;
+  text-anchor: middle;
+  font-weight: 800;
+}
+
+/* 범례 */
+.donut-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.donut-legend-item {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.donut-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donut-legend-label {
+  font-size: 12.5px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.donut-legend-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.donut-legend-pct {
+  font-size: 11.5px;
+  color: #94a3b8;
+  text-align: right;
+  white-space: nowrap;
+  min-width: 32px;
+}
+
+/* 모바일: 도넛 위, 범례 아래 */
+@media (max-width: 700px) {
+  .dashboard-page .dashboard-panel--dept-chart {
+    grid-column: span 1;
+    min-height: 0;
+  }
+
+  .donut-chart-inner {
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .donut-svg-wrap {
+    width: 130px;
+    height: 130px;
+  }
+
+  .donut-legend {
+    width: 100%;
+    gap: 7px;
+  }
+
+  .donut-legend-label {
+    font-size: 12px;
+  }
+}
