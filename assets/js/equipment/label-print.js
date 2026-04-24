@@ -128,29 +128,30 @@ document.addEventListener('DOMContentLoaded', async function () {
     var ok = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
     if (!ok) return;
 
-    var sizeSelect = qs('#labelSizeSelect');
-    var printBtn = qs('#printBtn');
+    var sizeSelect   = qs('#labelSizeSelect');
+    var printBtn     = qs('#printBtn');
     var equipmentId  = getQueryParam('equipment_id');
-    var equipmentIds = getQueryParam('equipment_ids'); // 일괄 출력
+    var equipmentIds = getQueryParam('equipment_ids');
     var sizeParam    = getQueryParam('size');
+    var layoutParam  = getQueryParam('layout'); // 2x5, 2x4, 2x6, 3x6
 
-    // 일괄 출력 모드
+    // ── 일괄 출력 모드 ──────────────────────────────────────────
     if (equipmentIds) {
       var ids = equipmentIds.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
       if (sizeParam && sizeSelect) sizeSelect.value = sizeParam;
       var sizeClass = sizeSelect ? sizeSelect.value : 'size-90x48';
-      await loadBulkLabelData(ids, sizeClass, user);
 
-      if (sizeSelect) {
-        sizeSelect.addEventListener('change', function() {
-          loadBulkLabelData(ids, sizeSelect.value, user);
-        });
-      }
+      // 단건 미리보기 영역 숨김
+      var labelSheet = qs('#labelSheet') || qs('.label-sheet');
+      if (labelSheet) labelSheet.style.display = 'none';
+
+      await loadBulkLabels(ids, sizeClass, layoutParam, user);
+
       if (printBtn) printBtn.addEventListener('click', function() { window.print(); });
       return;
     }
 
-    // 단건 출력 모드 (기존)
+    // ── 단건 출력 모드 ──────────────────────────────────────────
     if (sizeSelect) {
       sizeSelect.addEventListener('change', function () {
         if (equipmentId) refreshLabelPreview(equipmentId);
@@ -166,25 +167,27 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 });
 
-// 일괄 라벨 로딩
-async function loadBulkLabelData(ids, sizeClass, user) {
-  var previewWrap = qs('#labelPreviewWrap') || qs('.label-preview-section');
-  var userEmail = user.email || user.user_email || '';
+// ── 일괄 라벨 로드 ────────────────────────────────────────────────
 
-  // 단건 미리보기 영역 숨김
-  var singlePreview = qs('#labelPreviewWrap');
-  if (singlePreview) singlePreview.style.display = 'none';
+async function loadBulkLabels(ids, sizeClass, layout, user) {
+  var userEmail = String((user && (user.email || user.user_email)) || '').trim();
+  var isGrid = !!layout;
 
-  // 일괄 컨테이너 생성 또는 재활용
-  var bulkWrap = document.getElementById('bulkLabelWrap');
-  if (!bulkWrap) {
-    bulkWrap = document.createElement('div');
-    bulkWrap.id = 'bulkLabelWrap';
-    bulkWrap.className = 'bulk-label-wrap';
-    var mainContent = qs('.label-print-main') || qs('.page-shell') || document.body;
-    mainContent.appendChild(bulkWrap);
+  // 페이지 타이틀 변경
+  var titleEl = qs('.label-hero-title');
+  if (titleEl) titleEl.textContent = isGrid
+    ? 'QR 포함 장비 라벨 — 격자 출력 (' + ids.length + '건)'
+    : 'QR 포함 장비 라벨 — 일괄 출력 (' + ids.length + '건)';
+
+  // 컨테이너 생성
+  var container = document.getElementById('bulkLabelContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'bulkLabelContainer';
+    var wrap = qs('.label-preview-wrap') || qs('.label-preview-card') || document.body;
+    wrap.appendChild(container);
   }
-  bulkWrap.innerHTML = '<div class="empty-box">라벨을 불러오는 중...</div>';
+  container.innerHTML = '<div class="empty-box">라벨을 불러오는 중...</div>';
 
   try {
     showGlobalLoading('라벨 정보를 불러오는 중...');
@@ -195,66 +198,146 @@ async function loadBulkLabelData(ids, sizeClass, user) {
     }
 
     if (!items.length) {
-      bulkWrap.innerHTML = '<div class="empty-box">불러올 장비 정보가 없습니다.</div>';
+      container.innerHTML = '<div class="empty-box">불러올 장비 정보가 없습니다.</div>';
       return;
     }
 
-    var labelsHtml = items.map(function(item) {
-      return buildLabelHtml(item, sizeClass);
-    }).join('');
-
-    bulkWrap.innerHTML = '<div class="bulk-label-grid">' + labelsHtml + '</div>';
-
-    // QR 코드 생성
-    items.forEach(function(item) {
-      var qrEl = document.getElementById('qrBulk-' + item.equipment_id);
-      if (qrEl && item.qr_value) {
-        var qrSize = sizeClass === 'size-70x40' ? 64 : 84;
-        new QRCode(qrEl, { text: item.qr_value, width: qrSize, height: qrSize });
-      }
-    });
-
-    // 건수 표시
-    var pageTitle = qs('.page-title');
-    if (pageTitle) pageTitle.textContent = 'QR 포함 장비 라벨 (' + items.length + '건)';
+    if (isGrid) {
+      renderGridLabels(container, items, sizeClass, layout);
+    } else {
+      renderStackLabels(container, items, sizeClass);
+    }
 
   } catch (err) {
-    bulkWrap.innerHTML = '<div class="empty-box">' + (err.message || '오류가 발생했습니다.') + '</div>';
+    container.innerHTML = '<div class="empty-box">' + escapeHtml(err.message || '오류가 발생했습니다.') + '</div>';
   } finally {
     hideGlobalLoading();
   }
 }
 
-// 라벨 HTML 빌더 (일괄용)
-function buildLabelHtml(item, sizeClass) {
-  return (
-    '<div class="device-label ' + sizeClass + ' bulk-label-item">' +
-      '<div class="label-content-panel">' +
-        '<div class="label-hospital">녹십자아이메드 의료장비 관리시스템</div>' +
-        '<h2 class="label-title">' + escapeHtml(item.equipment_name || '-') + '</h2>' +
-        '<div class="label-info-block">' +
-          '<div class="label-row label-row-emphasis">' +
-            '<div class="label-key">관리번호</div>' +
-            '<div class="label-value label-value-id">' + escapeHtml(item.equipment_id || '-') + '</div>' +
+// ── 격자 출력 렌더링 ──────────────────────────────────────────────
+
+// layout: '2x5', '2x4', '2x6', '3x6'
+var GRID_SPECS = {
+  '2x5': { cols: 2, rows: 5, colGap: '4mm', rowGap: '0mm', padT: '10mm', padL: '8mm', padR: '8mm' },
+  '2x4': { cols: 2, rows: 4, colGap: '4mm', rowGap: '2mm', padT: '14mm', padL: '8mm', padR: '8mm' },
+  '2x6': { cols: 2, rows: 6, colGap: '4mm', rowGap: '0mm', padT: '8mm',  padL: '8mm', padR: '8mm' },
+  '3x6': { cols: 3, rows: 6, colGap: '3mm', rowGap: '0mm', padT: '8mm',  padL: '5mm', padR: '5mm' }
+};
+
+function renderGridLabels(container, items, sizeClass, layout) {
+  var spec = GRID_SPECS[layout] || GRID_SPECS['2x5'];
+  var perPage = spec.cols * spec.rows;
+
+  // 페이지 단위로 나누기
+  var pages = [];
+  for (var i = 0; i < items.length; i += perPage) {
+    pages.push(items.slice(i, i + perPage));
+  }
+
+  var pagesHtml = pages.map(function(pageItems, pageIdx) {
+    // 빈 칸 채우기
+    while (pageItems.length < perPage) pageItems.push(null);
+
+    var cells = pageItems.map(function(item, idx) {
+      if (!item) return '<div class="grid-label-cell grid-label-cell--empty"></div>';
+      return (
+        '<div class="grid-label-cell">' +
+          '<div class="device-label ' + sizeClass + '">' +
+            buildLabelInner(item, sizeClass, 'grid-' + pageIdx + '-' + idx) +
           '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    return (
+      '<div class="grid-label-page" ' +
+        'style="' +
+          'grid-template-columns: repeat(' + spec.cols + ', 1fr);' +
+          'gap: ' + spec.rowGap + ' ' + spec.colGap + ';' +
+          'padding: ' + spec.padT + ' ' + spec.padR + ' 0 ' + spec.padL + ';' +
+        '">' +
+        cells +
+      '</div>'
+    );
+  }).join('');
+
+  container.innerHTML = '<div class="grid-label-wrap">' + pagesHtml + '</div>';
+
+  // QR 생성
+  items.forEach(function(item, idx) {
+    var pageIdx = Math.floor(idx / perPage);
+    var cellIdx = idx % perPage;
+    var qrEl = document.getElementById('qr-grid-' + pageIdx + '-' + cellIdx);
+    if (qrEl && item && item.qr_value) {
+      var qrSize = sizeClass === 'size-70x40' ? 64 : 84;
+      new QRCode(qrEl, { text: buildEquipmentDetailUrl(item.equipment_id), width: qrSize, height: qrSize });
+    }
+  });
+}
+
+// ── 일반 일괄 출력 (격자 아님) ────────────────────────────────────
+
+function renderStackLabels(container, items, sizeClass) {
+  var html = items.map(function(item, idx) {
+    return (
+      '<div class="stack-label-item">' +
+        '<div class="device-label ' + sizeClass + '">' +
+          buildLabelInner(item, sizeClass, 'stack-' + idx) +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+
+  container.innerHTML = '<div class="stack-label-wrap">' + html + '</div>';
+
+  items.forEach(function(item, idx) {
+    var qrEl = document.getElementById('qr-stack-' + idx);
+    if (qrEl && item && item.qr_value) {
+      var qrSize = sizeClass === 'size-70x40' ? 64 : sizeClass === 'size-50x30' ? 48 : 84;
+      new QRCode(qrEl, { text: buildEquipmentDetailUrl(item.equipment_id), width: qrSize, height: qrSize });
+    }
+  });
+}
+
+// ── 라벨 내부 HTML ────────────────────────────────────────────────
+
+function buildLabelInner(item, sizeClass, qrId) {
+  var showLocation = sizeClass !== 'size-70x40' && sizeClass !== 'size-50x30';
+  var showModel    = sizeClass !== 'size-50x30';
+  var showDept     = sizeClass !== 'size-50x30';
+
+  return (
+    '<div class="label-content-panel">' +
+      '<div class="label-hospital">녹십자아이메드 의료장비 관리시스템</div>' +
+      '<h2 class="label-title">' + escapeHtml(item.equipment_name || '-') + '</h2>' +
+      '<div class="label-info-block">' +
+        '<div class="label-row label-row-emphasis">' +
+          '<div class="label-key">관리번호</div>' +
+          '<div class="label-value label-value-id">' + escapeHtml(item.equipment_id || '-') + '</div>' +
+        '</div>' +
+        (showModel ? (
           '<div class="label-row">' +
             '<div class="label-key">모델명</div>' +
             '<div class="label-value">' + escapeHtml(item.model_name || '-') + '</div>' +
-          '</div>' +
+          '</div>'
+        ) : '') +
+        (showDept ? (
           '<div class="label-row">' +
             '<div class="label-key">사용부서</div>' +
             '<div class="label-value">' + escapeHtml(item.department || '-') + '</div>' +
-          '</div>' +
-          (sizeClass !== 'size-70x40' ? (
+          '</div>'
+        ) : '') +
+        (showLocation ? (
           '<div class="label-row">' +
             '<div class="label-key">위치</div>' +
             '<div class="label-value">' + escapeHtml(item.location || '-') + '</div>' +
-          '</div>') : '') +
-        '</div>' +
+          '</div>'
+        ) : '') +
       '</div>' +
-      '<div class="qr-panel">' +
-        '<div class="label-qr-box" id="qrBulk-' + escapeHtml(item.equipment_id || '') + '"></div>' +
-      '</div>' +
+    '</div>' +
+    '<div class="qr-panel">' +
+      '<div class="label-qr-box" id="qr-' + escapeHtml(qrId) + '"></div>' +
     '</div>'
   );
 }
