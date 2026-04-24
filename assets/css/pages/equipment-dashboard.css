@@ -711,3 +711,145 @@
     gap: 5px;
   }
 }
+
+/* ===== 부서별 장비 현황 차트 패널 ===== */
+
+.dashboard-page .dashboard-panel--dept-chart {
+  display: flex;
+  flex-direction: column;
+}
+
+.dept-chart-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4px 0;
+  overflow-y: auto;
+}
+
+.dept-chart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dept-chart-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 36px;
+  align-items: center;
+  gap: 10px;
+}
+
+.dept-chart-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.dept-chart-bar-wrap {
+  background: #f1f5f9;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.dept-chart-bar {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dept-chart-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: right;
+}
+
+/* ===== 부서별 장비 현황 차트 패널 ===== */
+
+/* PC: 2칸 full-width */
+.dashboard-page .dashboard-panel--dept-chart {
+  grid-column: span 2;
+  min-height: 240px;
+}
+
+.dept-chart-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4px 0;
+  overflow-y: auto;
+}
+
+.dept-chart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.dept-chart-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+}
+
+.dept-chart-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.dept-chart-bar-wrap {
+  background: #f1f5f9;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.dept-chart-bar {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dept-chart-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: right;
+}
+
+/* 모바일: span 해제, 일반 카드로 */
+@media (max-width: 700px) {
+  .dashboard-page .dashboard-panel--dept-chart {
+    grid-column: span 1;
+    min-height: 0;
+  }
+
+  .dept-chart-row {
+    grid-template-columns: 90px 1fr 32px;
+    gap: 8px;
+  }
+
+  .dept-chart-label {
+    font-size: 11.5px;
+  }
+
+  .dept-chart-count {
+    font-size: 12px;
+  }
+}
