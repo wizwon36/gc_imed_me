@@ -239,6 +239,9 @@ function buildEquipmentRow(item) {
 
   return (
     '<tr class="equipment-tbl-row">' +
+      '<td class="equipment-tbl-cell tbl-td--check">' +
+        '<input type="checkbox" class="bulk-item-check" data-id="' + escapeHtml(item.equipment_id || '') + '" />' +
+      '</td>' +
       '<td class="equipment-tbl-cell equipment-tbl-cell--name">' +
         '<div class="equipment-tbl-name">' + escapeHtml(item.equipment_name || '-') + '</div>' +
         '<div class="equipment-tbl-id">' + escapeHtml(item.equipment_id || '') + '</div>' +
@@ -286,6 +289,7 @@ function renderEquipmentList(items) {
       '<table class="equipment-table">' +
         '<thead>' +
           '<tr>' +
+            '<th class="equipment-tbl-th tbl-th--check"></th>' +
             '<th class="equipment-tbl-th equipment-tbl-th--name">장비명 / 번호</th>' +
             '<th class="equipment-tbl-th">모델명</th>' +
             '<th class="equipment-tbl-th">부서</th>' +
@@ -821,4 +825,97 @@ document.addEventListener('DOMContentLoaded', async function() {
       hideGlobalLoading();
     }
   }
+});
+
+// ================================================================
+// 라벨 일괄 출력
+// ================================================================
+
+var bulkSelectedIds = new Set();
+
+function initBulkLabelFeature() {
+  var bulkBtn     = document.getElementById('bulkLabelBtn');
+  var checkAllEl  = document.getElementById('bulkCheckAll');
+  var checkAllWrap = document.getElementById('bulkCheckAllWrap');
+
+  if (!bulkBtn) return;
+
+  // 라벨 일괄 출력 버튼 클릭
+  bulkBtn.addEventListener('click', function() {
+    if (!bulkSelectedIds.size) return;
+    var ids = Array.from(bulkSelectedIds);
+    var sizeParam = getSelectedLabelSizeForBulk();
+    location.href = 'label-print.html?equipment_ids=' + encodeURIComponent(ids.join(',')) + '&size=' + sizeParam;
+  });
+
+  // 전체 선택 체크박스
+  if (checkAllEl) {
+    checkAllEl.addEventListener('change', function() {
+      var checks = document.querySelectorAll('.bulk-item-check');
+      checks.forEach(function(cb) {
+        cb.checked = checkAllEl.checked;
+        var id = cb.dataset.id;
+        if (checkAllEl.checked) bulkSelectedIds.add(id);
+        else bulkSelectedIds.delete(id);
+      });
+      updateBulkUI();
+    });
+  }
+
+  // 목록 갱신 시 체크박스 이벤트 위임
+  var listEl = document.getElementById('equipmentList');
+  if (listEl) {
+    listEl.addEventListener('change', function(e) {
+      if (!e.target.classList.contains('bulk-item-check')) return;
+      var id = e.target.dataset.id;
+      if (e.target.checked) bulkSelectedIds.add(id);
+      else bulkSelectedIds.delete(id);
+
+      // 전체선택 체크박스 상태 동기화
+      if (checkAllEl) {
+        var allChecks = document.querySelectorAll('.bulk-item-check');
+        var checkedCount = document.querySelectorAll('.bulk-item-check:checked').length;
+        checkAllEl.checked = allChecks.length > 0 && checkedCount === allChecks.length;
+        checkAllEl.indeterminate = checkedCount > 0 && checkedCount < allChecks.length;
+      }
+
+      updateBulkUI();
+    });
+
+    // 목록 재렌더 시 이전 체크 상태 복원 + UI 초기화
+    var origRender = window.renderEquipmentList;
+  }
+}
+
+function updateBulkUI() {
+  var btn          = document.getElementById('bulkLabelBtn');
+  var countEl      = document.getElementById('bulkLabelCount');
+  var checkAllWrap = document.getElementById('bulkCheckAllWrap');
+  var count        = bulkSelectedIds.size;
+
+  if (btn) btn.style.display = count > 0 ? '' : 'none';
+  if (countEl) countEl.textContent = count;
+  if (checkAllWrap) checkAllWrap.style.display = '';
+}
+
+// 라벨 크기 기본값 반환 (label-print 페이지 기본값과 맞춤)
+function getSelectedLabelSizeForBulk() {
+  return 'size-90x48';
+}
+
+// 목록 렌더링 후 체크 상태 초기화
+var _origRenderEquipmentList = renderEquipmentList;
+renderEquipmentList = function(items) {
+  _origRenderEquipmentList(items);
+  bulkSelectedIds.clear();
+  updateBulkUI();
+  var checkAll = document.getElementById('bulkCheckAll');
+  if (checkAll) { checkAll.checked = false; checkAll.indeterminate = false; }
+  var checkAllWrap = document.getElementById('bulkCheckAllWrap');
+  if (checkAllWrap) checkAllWrap.style.display = items && items.length ? '' : 'none';
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 기존 DOMContentLoaded 이후 초기화
+  setTimeout(initBulkLabelFeature, 100);
 });
