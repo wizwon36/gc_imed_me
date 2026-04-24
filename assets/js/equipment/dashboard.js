@@ -358,29 +358,81 @@ function renderDeptChart(data) {
   }
   if (empty) empty.style.display = 'none';
 
-  const max = Math.max(...data.map(d => Number(d.count || 0)));
   const COLORS = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#06b6d4', '#f97316', '#84cc16'
+    '#3b82f6','#10b981','#f59e0b','#ef4444',
+    '#8b5cf6','#06b6d4','#f97316','#84cc16'
   ];
 
-  const rows = data.map((d, i) => {
-    const count  = Number(d.count || 0);
-    const pct    = max > 0 ? Math.round((count / max) * 100) : 0;
-    const label  = textSafe(d.department_display || d.department || '-');
-    const color  = COLORS[i % COLORS.length];
+  const total = data.reduce((s, d) => s + Number(d.count || 0), 0);
+  if (total === 0) { if (empty) empty.style.display = ''; return; }
 
+  // ── 도넛 SVG 계산 ──────────────────────────────────────────────
+  const R = 54, r = 34, CX = 70, CY = 70;
+  const circumference = 2 * Math.PI * ((R + r) / 2);
+
+  function polarToXY(cx, cy, radius, angleDeg) {
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
+  }
+
+  function donutSlicePath(cx, cy, outerR, innerR, startDeg, endDeg) {
+    const o1 = polarToXY(cx, cy, outerR, startDeg);
+    const o2 = polarToXY(cx, cy, outerR, endDeg);
+    const i1 = polarToXY(cx, cy, innerR, endDeg);
+    const i2 = polarToXY(cx, cy, innerR, startDeg);
+    const large = (endDeg - startDeg) > 180 ? 1 : 0;
+    return [
+      `M ${o1.x} ${o1.y}`,
+      `A ${outerR} ${outerR} 0 ${large} 1 ${o2.x} ${o2.y}`,
+      `L ${i1.x} ${i1.y}`,
+      `A ${innerR} ${innerR} 0 ${large} 0 ${i2.x} ${i2.y}`,
+      'Z'
+    ].join(' ');
+  }
+
+  let currentDeg = 0;
+  const slices = data.map((d, i) => {
+    const count  = Number(d.count || 0);
+    const deg    = (count / total) * 360;
+    const start  = currentDeg;
+    const end    = currentDeg + deg - 0.4; // 슬라이스 간 gap
+    currentDeg  += deg;
+    return { ...d, count, deg, start, end, color: COLORS[i % COLORS.length] };
+  });
+
+  const svgSlices = slices.map((s, i) => `
+    <path
+      class="donut-slice"
+      d="${donutSlicePath(CX, CY, R, r, s.start, s.end)}"
+      fill="${s.color}"
+      style="animation-delay:${i * 60}ms"
+    />`
+  ).join('');
+
+  // ── 범례 ──────────────────────────────────────────────────────
+  const legendItems = slices.map(s => {
+    const pct  = Math.round((s.count / total) * 100);
+    const name = textSafe(s.department_display || s.department || '-');
     return `
-      <div class="dept-chart-row">
-        <div class="dept-chart-label" title="${label}">${label}</div>
-        <div class="dept-chart-bar-wrap">
-          <div class="dept-chart-bar" style="width:${pct}%; background:${color};"></div>
-        </div>
-        <div class="dept-chart-count">${count}</div>
+      <div class="donut-legend-item">
+        <span class="donut-legend-dot" style="background:${s.color};"></span>
+        <span class="donut-legend-label" title="${name}">${name}</span>
+        <span class="donut-legend-count">${s.count}</span>
+        <span class="donut-legend-pct">${pct}%</span>
       </div>`;
   }).join('');
 
-  wrap.innerHTML = `<div class="dept-chart-list">${rows}</div>`;
+  wrap.innerHTML = `
+    <div class="donut-chart-inner">
+      <div class="donut-svg-wrap">
+        <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" class="donut-svg">
+          ${svgSlices}
+          <text x="${CX}" y="${CY - 7}" class="donut-center-label">전체</text>
+          <text x="${CX}" y="${CY + 14}" class="donut-center-value">${total}</text>
+        </svg>
+      </div>
+      <div class="donut-legend">${legendItems}</div>
+    </div>`;
 }
 
 function initPanelCarousel() {
