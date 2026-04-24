@@ -350,6 +350,40 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    .success-password-notice {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 14px 0 0;
+      padding: 12px 18px;
+      background: #fef9ec;
+      border: 1px solid #fcd34d;
+      border-radius: 10px;
+      font-size: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .success-password-label {
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    .success-password-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #b45309;
+      letter-spacing: 0.12em;
+    }
+
+    .success-password-desc {
+      color: #92400e;
+      font-size: 12px;
+      width: 100%;
+      text-align: center;
+      margin-top: 2px;
+    }
+
     @media (max-width: 520px) {
       .auth-card { padding: 24px 18px; border-radius: 20px; }
       .form-row { grid-template-columns: 1fr; }
@@ -440,6 +474,11 @@
         <div class="success-badge">신청 접수 완료</div>
         <h2>가입 신청이 완료되었습니다</h2>
         <p>관리자 검토 후 승인 처리됩니다.<br>승인되면 등록하신 아이디로 로그인할 수 있습니다.</p>
+        <div class="success-password-notice">
+          <span class="success-password-label">초기 비밀번호</span>
+          <strong class="success-password-value">1111</strong>
+          <span class="success-password-desc">로그인 후 반드시 변경해 주세요.</span>
+        </div>
         <a href="../../index.html" class="back-btn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           로그인 페이지로
