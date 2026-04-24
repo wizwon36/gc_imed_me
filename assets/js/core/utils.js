@@ -230,3 +230,13 @@ function formatDateTimeKR(value) {
     second: '2-digit'
   });
 }
+
+// ============================
+// 의원별 앱 접근 제한
+// ============================
+
+function isEquipmentClinicAllowed(user) {
+  var ALLOWED = ['서울숲의원'];
+  var clinicName = String((user && user.clinic_name) || '').trim();
+  return ALLOWED.some(function(name) { return clinicName.indexOf(name) !== -1; });
+}
