@@ -791,7 +791,10 @@ document.addEventListener('DOMContentLoaded', async function() {
       equipmentListState.user = window.auth.requireAuth();
     }
 
-    if (!equipmentListState.user) return;
+    if (!equipmentListState.user) {
+      if (typeof hideGlobalLoading === 'function') hideGlobalLoading();
+      return;
+    }
 
     // ★ admin 여부 및 소속 의원 코드 세팅
     var userRole = String(equipmentListState.user.role || '').trim().toLowerCase();
@@ -800,7 +803,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     if (window.appPermission && typeof window.appPermission.requirePermission === 'function') {
       var canView = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
-      if (!canView) return;
+      if (!canView) {
+        if (typeof hideGlobalLoading === 'function') hideGlobalLoading();
+        return;
+      }
     }
 
     if (window.appPermission && typeof window.appPermission.hasPermission === 'function') {
