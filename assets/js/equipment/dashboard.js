@@ -429,20 +429,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     const user = window.auth?.requireAuth?.();
     if (!user) return;
 
-    // 서울숲의원 외 접근 제한 - 링크/버튼만 비활성화, 되돌리려면 이 블록 제거
-    const EQUIPMENT_ALLOWED_CLINICS = ['서울숲의원'];
-    const userClinicName = String(user.clinic_name || '').trim();
-    if (!EQUIPMENT_ALLOWED_CLINICS.some(name => userClinicName.includes(name))) {
-      showMessage('현재 의료장비 관리는 서울숲의원만 사용 가능합니다. 다른 의원은 순차적으로 오픈될 예정입니다.', 'error');
-      document.querySelectorAll('a[href]:not([href="../../portal.html"]), button').forEach(el => {
-        el.style.opacity = '0.4';
-        el.style.pointerEvents = 'none';
-        el.style.cursor = 'not-allowed';
-      });
-      return;
-    }
-    // 서울숲의원 외 접근 제한 끝
-
     const permissionPromise = getEquipmentPermissionContext();
     const dashboardPromise = fetchDashboardData();
 
@@ -504,6 +490,7 @@ async function exportAllEquipmentsExcel() {
 
     const statusMap = { IN_USE: '사용중', REPAIRING: '수리중', INSPECTING: '점검중', STORED: '보관', DISPOSED: '폐기' };
     const toStatus = v => statusMap[String(v || '').trim()] || (v || '');
+    const toDateOnly = v => v ? String(v).substring(0, 10) : '';
 
     const headers = [
       '장비번호', '장비명', '모델명', '제조사', '시리얼번호',
@@ -519,7 +506,7 @@ async function exportAllEquipmentsExcel() {
       toStatus(item.status), item.manager_name || '', item.manager_phone || '',
       item.vendor || '',
       (item.acquisition_cost !== '' && item.acquisition_cost != null) ? Number(item.acquisition_cost) : '',
-      item.purchase_date || '', item.manufacture_date || '', item.maintenance_end_date || '',
+      toDateOnly(item.purchase_date), toDateOnly(item.manufacture_date), toDateOnly(item.maintenance_end_date),
       item.current_user || '', item.memo || '', item.created_at || ''
     ]);
 
