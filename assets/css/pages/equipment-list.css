@@ -849,56 +849,58 @@
 
 /* ===== size: 90 x 48 ===== */
 .equipment-label-page .device-label.size-90x48 {
-  width: 440px;
-  min-height: 220px;
-  padding: 20px;
-  grid-template-columns: minmax(0, 1fr) 132px;
-  gap: 18px;
+  width: 340px;
+  min-height: 181px;
+  padding: 15px;
+  grid-template-columns: minmax(0, 1fr) 98px;
+  gap: 15px;
   align-items: center;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-hospital {
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.3;
+  margin-bottom: 6px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-title {
   font-size: 22px;
   line-height: 1.15;
+  margin: 0 0 6px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-info-block {
-  gap: 7px;
+  gap: 5px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-row {
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 5px 7px;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-key {
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.45;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-value {
-  font-size: 14px;
+  font-size: 11.5px;
   line-height: 1.45;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-value-id {
-  font-size: 20px;
+  font-size: 17px;
   line-height: 1.2;
 }
 
 .equipment-label-page .device-label.size-90x48 .label-qr-box {
-  width: 124px;
-  height: 124px;
-  min-width: 124px;
-  min-height: 124px;
-  padding: 8px;
-  border-radius: 18px;
-  margin-top: 10px;
+  width: 98px;
+  height: 98px;
+  min-width: 98px;
+  min-height: 98px;
+  padding: 6px;
+  border-radius: 11px;
+  margin-top: 7px;
 }
 
 .equipment-label-page .device-label.size-90x48 .qr-panel {
@@ -907,52 +909,52 @@
 
 /* ===== size: 70 x 40 ===== */
 .equipment-label-page .device-label.size-70x40 {
-  width: 340px;
-  min-height: 190px;
-  padding: 16px;
-  grid-template-columns: minmax(0, 1fr) 108px;
-  gap: 14px;
+  width: 264px;
+  min-height: 151px;
+  padding: 11px;
+  grid-template-columns: minmax(0, 1fr) 83px;
+  gap: 11px;
   align-items: center;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-hospital {
-  margin-bottom: 8px;
-  font-size: 13px;
+  margin-bottom: 6px;
+  font-size: 11px;
   line-height: 1.25;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-title {
-  margin-bottom: 10px;
-  font-size: 18px;
+  margin-bottom: 7px;
+  font-size: 16px;
   line-height: 1.15;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-info-block {
-  gap: 6px;
+  gap: 5px;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-row {
-  grid-template-columns: 58px minmax(0, 1fr);
-  gap: 6px;
+  grid-template-columns: 53px minmax(0, 1fr);
+  gap: 5px 6px;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-row-emphasis {
-  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-columns: 53px minmax(0, 1fr);
   align-items: center;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-key {
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1.35;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-value {
-  font-size: 12px;
+  font-size: 9.5px;
   line-height: 1.35;
 }
 
 .equipment-label-page .device-label.size-70x40 .label-value-id {
-  font-size: 14px;
+  font-size: 11.5px;
   line-height: 1.1;
   letter-spacing: -0.03em;
   white-space: nowrap;
@@ -960,13 +962,13 @@
 }
 
 .equipment-label-page .device-label.size-70x40 .label-qr-box {
-  width: 98px;
-  height: 98px;
-  min-width: 98px;
-  min-height: 98px;
-  padding: 6px;
-  border-radius: 16px;
-  margin-top: 12px;
+  width: 76px;
+  height: 76px;
+  min-width: 76px;
+  min-height: 76px;
+  padding: 5px;
+  border-radius: 9px;
+  margin-top: 8px;
 }
 
 .equipment-label-page .device-label.size-70x40 .qr-panel {
