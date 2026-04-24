@@ -40,6 +40,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (fromEl) fromEl.value = monthAgo;
   if (toEl)   toEl.value   = today;
 
+  // 날짜 범위 제한: 시작일 변경 시 종료일 max를 시작일 + 90일로 설정
+  function updateDateConstraints() {
+    if (!fromEl || !toEl) return;
+    const fromVal = fromEl.value;
+    if (!fromVal) return;
+
+    const maxTo = getDateOffsetFromYmd(fromVal, 90);
+    toEl.max = maxTo;
+
+    // 종료일이 max를 초과하면 max값으로 자동 조정
+    if (toEl.value > maxTo) toEl.value = maxTo;
+  }
+
+  if (fromEl) {
+    fromEl.max = today;
+    fromEl.addEventListener('change', updateDateConstraints);
+  }
+  if (toEl) {
+    toEl.max = today;
+  }
+  updateDateConstraints();
+
   // Enter 키로 조회
   ['filterKeyword','filterActionType','filterTargetType','filterDateFrom','filterDateTo']
     .forEach(id => {
@@ -223,6 +245,12 @@ function getTodayYmd() {
 
 function getDateOffsetYmd(offsetDays) {
   const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+
+function getDateOffsetFromYmd(baseYmd, offsetDays) {
+  const d = new Date(baseYmd);
   d.setDate(d.getDate() + offsetDays);
   return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
 }
