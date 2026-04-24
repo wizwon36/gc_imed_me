@@ -844,10 +844,18 @@ function initBulkLabelFeature() {
   // 라벨 일괄 출력 버튼 클릭
   bulkBtn.addEventListener('click', function() {
     if (!bulkSelectedIds.size) return;
-    var ids = Array.from(bulkSelectedIds);
-    var sizeParam = getSelectedLabelSizeForBulk();
-    location.href = 'label-print.html?equipment_ids=' + encodeURIComponent(ids.join(',')) + '&size=' + sizeParam;
+    var ids        = Array.from(bulkSelectedIds);
+    var sizeParam  = getSelectedLabelSizeForBulk();
+    var layoutSelect = document.getElementById('bulkLayoutSelect');
+    var layout     = layoutSelect ? layoutSelect.value : '';
+    var url = 'label-print.html?equipment_ids=' + encodeURIComponent(ids.join(',')) + '&size=' + sizeParam;
+    if (layout) url += '&layout=' + layout;
+    location.href = url;
   });
+
+  // 사이즈 변경 시 격자 옵션 갱신
+  var sizeSelectEl = document.getElementById('bulkLabelSizeSelect');
+  if (sizeSelectEl) sizeSelectEl.addEventListener('change', updateLayoutOptions);
 
   // 전체 선택 체크박스 (헤더)
   document.addEventListener('change', function(e) {
@@ -886,14 +894,35 @@ function initBulkLabelFeature() {
 }
 
 function updateBulkUI() {
-  var btn        = document.getElementById('bulkLabelBtn');
-  var countEl    = document.getElementById('bulkLabelCount');
-  var sizeSelect = document.getElementById('bulkLabelSizeSelect');
-  var count      = bulkSelectedIds.size;
+  var btn          = document.getElementById('bulkLabelBtn');
+  var countEl      = document.getElementById('bulkLabelCount');
+  var sizeSelect   = document.getElementById('bulkLabelSizeSelect');
+  var layoutSelect = document.getElementById('bulkLayoutSelect');
+  var count        = bulkSelectedIds.size;
 
-  if (btn)        btn.style.display        = count > 0 ? '' : 'none';
-  if (sizeSelect) sizeSelect.style.display = count > 0 ? '' : 'none';
-  if (countEl)    countEl.textContent      = count;
+  if (btn)          btn.style.display          = count > 0 ? '' : 'none';
+  if (sizeSelect)   sizeSelect.style.display   = count > 0 ? '' : 'none';
+  if (layoutSelect) layoutSelect.style.display = count > 0 ? '' : 'none';
+  if (countEl)      countEl.textContent        = count;
+}
+
+function updateLayoutOptions() {
+  var sizeSelect   = document.getElementById('bulkLabelSizeSelect');
+  var layoutSelect = document.getElementById('bulkLayoutSelect');
+  if (!layoutSelect || !sizeSelect) return;
+
+  var size = sizeSelect.value;
+  if (size === 'size-70x40') {
+    layoutSelect.innerHTML =
+      '<option value="">단일 출력</option>' +
+      '<option value="2x6">격자 — 2×6 (12칸)</option>' +
+      '<option value="3x6">격자 — 3×6 (18칸)</option>';
+  } else {
+    layoutSelect.innerHTML =
+      '<option value="">단일 출력</option>' +
+      '<option value="2x5">격자 — 2×5 (10칸)</option>' +
+      '<option value="2x4">격자 — 2×4 (8칸)</option>';
+  }
 }
 
 function getSelectedLabelSizeForBulk() {
