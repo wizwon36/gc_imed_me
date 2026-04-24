@@ -1669,9 +1669,18 @@
 
 .tbl-th--check,
 .tbl-td--check {
-  width: 36px;
+  width: 28px;
+  min-width: 28px;
   text-align: center;
-  padding: 0 6px !important;
+  padding: 0 4px !important;
+}
+
+.tbl-th--check input[type="checkbox"],
+.tbl-td--check input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
 }
 
 /* ===== 라벨 일괄 출력 - 인쇄 그리드 ===== */
@@ -1716,4 +1725,11 @@
   font-size: 13px;
   border-radius: 8px;
   white-space: nowrap;
+}
+
+/* 모바일에서 라벨 일괄 출력 UI 숨김 */
+@media (max-width: 768px) {
+  .equipment-list-toolbar-actions {
+    display: none;
+  }
 }
