@@ -1,5 +1,5 @@
 const CONFIG = {
   APP_NAME: 'MSO관리팀 업무지원 시스템',
-  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbzj37WZryn_10n_E7NMfCuLBqMEhFsGYC1dyQxJXHCvjzO3UIv91whx1ijjb_rt4m5y/exec',
+  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxK8y0EZ8JaNHbhaGkHwBcLYfa0zVNPPt9_MVXjsOYh_6Yar47niXjQGa_b1E5igBo-/exec',
   SITE_BASE_URL: 'https://wizwon36.github.io/gc_imed_me'
 };
