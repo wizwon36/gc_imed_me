@@ -1,6 +1,6 @@
 (function () {
   const STORAGE_KEY = 'imed_portal_user';
-  const IDLE_TIMEOUT = 30 * 60 * 1000; // 유휴 만료: 30분
+  const IDLE_TIMEOUT = 2 * 60 * 60 * 1000; // 유휴 만료: 2시간
 
   function setMessage(message, type = '') {
     const el = document.getElementById('authMessage');
