@@ -1801,3 +1801,71 @@
     break-after: avoid;
   }
 }
+
+/* ===== 라벨 인쇄 오버레이 ===== */
+
+.print-label-overlay {
+  display: none; /* 화면에서는 숨김 */
+}
+
+.print-label-page--single {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10mm;
+}
+
+.print-label-page--grid {
+  display: grid;
+  width: 210mm;
+  box-sizing: border-box;
+}
+
+.print-grid-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.print-grid-cell--empty { visibility: hidden; }
+
+@media print {
+  /* 오버레이가 있으면 나머지 모두 숨김 */
+  body:has(#printLabelOverlay) > *:not(#printLabelOverlay) {
+    display: none !important;
+  }
+
+  .print-label-overlay {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    background: white;
+    z-index: 99999;
+  }
+
+  .print-label-page--single {
+    page-break-after: always;
+    break-after: page;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+  }
+
+  .print-label-page--single:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .print-label-page--grid {
+    page-break-after: always;
+    break-after: page;
+    margin: 0;
+  }
+
+  .print-label-page--grid:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+}
