@@ -55,7 +55,7 @@
       <tr>
         <th>작 성 일 자</th>
         <td colspan="3">
-          <input type="text" class="date-input" id="writtenDate" value="${todayLabel()}" />
+          <input type="text" class="date-input" id="writtenDate" value="${eq.purchase_date ? fmtDate(eq.purchase_date) : todayLabel()}" />
         </td>
       </tr>`;
 
