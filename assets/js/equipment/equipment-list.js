@@ -857,6 +857,21 @@ function initBulkLabelFeature() {
     printLabelsOverlay(ids, sizeClass, layout);
   });
 
+  // 검수확인서 일괄 출력 버튼
+  var certBtn = document.getElementById('bulkInspectionCertBtn');
+  if (certBtn) {
+    certBtn.addEventListener('click', function() {
+      if (!bulkSelectedIds.size) return;
+      var ids = Array.from(bulkSelectedIds);
+      var items = (equipmentListState.currentItems || []).filter(function(item) {
+        return ids.indexOf(String(item.equipment_id)) > -1;
+      });
+      if (typeof generateInspectionCertPDF === 'function') {
+        generateInspectionCertPDF(items);
+      }
+    });
+  }
+
   // 사이즈 변경 시 격자 옵션 갱신
   var sizeSelectEl = document.getElementById('bulkLabelSizeSelect');
   if (sizeSelectEl) sizeSelectEl.addEventListener('change', updateLayoutOptions);
@@ -898,16 +913,20 @@ function initBulkLabelFeature() {
 }
 
 function updateBulkUI() {
-  var btn          = document.getElementById('bulkLabelBtn');
-  var countEl      = document.getElementById('bulkLabelCount');
-  var sizeSelect   = document.getElementById('bulkLabelSizeSelect');
-  var layoutSelect = document.getElementById('bulkLayoutSelect');
-  var count        = bulkSelectedIds.size;
+  var btn                 = document.getElementById('bulkLabelBtn');
+  var countEl             = document.getElementById('bulkLabelCount');
+  var sizeSelect          = document.getElementById('bulkLabelSizeSelect');
+  var layoutSelect        = document.getElementById('bulkLayoutSelect');
+  var certBtn             = document.getElementById('bulkInspectionCertBtn');
+  var certCountEl         = document.getElementById('bulkInspectionCertCount');
+  var count               = bulkSelectedIds.size;
 
   if (btn)          btn.style.display          = count > 0 ? '' : 'none';
   if (sizeSelect)   sizeSelect.style.display   = count > 0 ? '' : 'none';
   if (layoutSelect) layoutSelect.style.display = count > 0 ? '' : 'none';
   if (countEl)      countEl.textContent        = count;
+  if (certBtn)      certBtn.style.display      = count > 0 ? '' : 'none';
+  if (certCountEl)  certCountEl.textContent    = count;
 }
 
 function updateLayoutOptions() {
