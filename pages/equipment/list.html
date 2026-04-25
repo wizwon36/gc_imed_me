@@ -10,54 +10,64 @@
     @media print {
       @page { size: A4 portrait; margin: 0; }
 
-      body > *:not(#printLabelOverlay) { display: none !important; visibility: hidden !important; }
-      #printLabelOverlay { display: block !important; visibility: visible !important; position: static !important; margin: 0 !important; padding: 0 !important; }
+      body > *:not(#printLabelOverlay) { display: none !important; }
+      #printLabelOverlay { display: block !important; margin: 0; padding: 0; }
 
       .plabel-page { page-break-after: always; break-after: page; }
       .plabel-page:last-child { page-break-after: avoid; break-after: avoid; }
-      .plabel-page--grid { display: grid !important; box-sizing: border-box; width: 210mm; }
-      .plabel-page--single { display: flex !important; justify-content: center; padding: 20mm 0; }
+      .plabel-page--grid   { display: grid !important; width: 210mm; box-sizing: border-box; }
+      .plabel-page--single { display: flex !important; justify-content: center; align-items: flex-start; padding: 20mm 0; }
       .plabel-empty { visibility: hidden; }
 
-      /* 라벨 공통 */
-      #printLabelOverlay .device-label {
-        display: grid !important; box-sizing: border-box !important;
-        border: 0.3mm solid #bbb !important; border-radius: 3mm !important;
-        background: white !important; overflow: hidden !important;
-        page-break-inside: avoid !important; break-inside: avoid !important;
+      .prlabel {
+        display: grid; box-sizing: border-box;
+        border: 0.3mm solid #aaa; border-radius: 3mm;
+        background: white; overflow: hidden;
+        page-break-inside: avoid; break-inside: avoid;
       }
+      .prlabel-body    { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+      .prlabel-rows    { display: flex; flex-direction: column; }
+      .prlabel-row     { display: flex; align-items: baseline; }
+      .prlabel-hospital { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #475569; }
+      .prlabel-title   { font-weight: 800; color: #1e293b; line-height: 1.1; }
+      .prlabel-key     { flex-shrink: 0; color: #64748b; }
+      .prlabel-val     { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #1e293b; font-weight: 500; }
+      .prlabel-id      { flex: 1; overflow: hidden; white-space: nowrap; color: #1e40af; font-weight: 700; }
+      .prlabel-qr      { display: flex; align-items: center; justify-content: center; }
+      .prlabel-qr img  { display: block; }
 
-      /* 90×48mm */
-      #printLabelOverlay .size-90x48 {
-        width: 90mm !important; height: 48mm !important;
-        padding: 3.5mm !important; grid-template-columns: 1fr 22mm !important;
-        gap: 3mm !important; align-items: center !important;
-      }
-      #printLabelOverlay .size-90x48 .label-hospital   { font-size: 6pt !important; line-height: 1.2 !important; margin-bottom: 1.5mm !important; white-space: nowrap !important; overflow: hidden !important; }
-      #printLabelOverlay .size-90x48 .label-title      { font-size: 12pt !important; line-height: 1.1 !important; margin: 0 0 1.5mm !important; }
-      #printLabelOverlay .size-90x48 .label-info-block { gap: 1.2mm !important; }
-      #printLabelOverlay .size-90x48 .label-row        { display: grid !important; grid-template-columns: 12mm 1fr !important; gap: 0.8mm 1.5mm !important; }
-      #printLabelOverlay .size-90x48 .label-key        { font-size: 6.5pt !important; white-space: nowrap !important; }
-      #printLabelOverlay .size-90x48 .label-value      { font-size: 7pt !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-      #printLabelOverlay .size-90x48 .label-value-id   { font-size: 9pt !important; white-space: nowrap !important; }
-      #printLabelOverlay .size-90x48 .label-qr-box     { width: 20mm !important; height: 20mm !important; min-width: 20mm !important; min-height: 20mm !important; padding: 1mm !important; border-radius: 2mm !important; }
-      #printLabelOverlay .size-90x48 .label-qr-box img { width: 18mm !important; height: 18mm !important; }
+      .prlabel--90x48 { width: 90mm; height: 48mm; grid-template-columns: 1fr 22mm; gap: 3mm; padding: 4mm 3.5mm; align-items: center; }
+      .prlabel--90x48 .prlabel-hospital { font-size: 6pt; margin-bottom: 1.5mm; }
+      .prlabel--90x48 .prlabel-title    { font-size: 13pt; margin-bottom: 1.5mm; }
+      .prlabel--90x48 .prlabel-rows     { gap: 1.2mm; }
+      .prlabel--90x48 .prlabel-row      { gap: 1.5mm; }
+      .prlabel--90x48 .prlabel-key      { font-size: 6.5pt; width: 12mm; }
+      .prlabel--90x48 .prlabel-val      { font-size: 7pt; }
+      .prlabel--90x48 .prlabel-id       { font-size: 9.5pt; }
+      .prlabel--90x48 .prlabel-qr       { width: 20mm; height: 20mm; }
+      .prlabel--90x48 .prlabel-qr img   { width: 18mm; height: 18mm; }
 
-      /* 70×40mm */
-      #printLabelOverlay .size-70x40 {
-        width: 70mm !important; height: 40mm !important;
-        padding: 2.5mm !important; grid-template-columns: 1fr 16mm !important;
-        gap: 2mm !important; align-items: center !important;
-      }
-      #printLabelOverlay .size-70x40 .label-hospital   { font-size: 5pt !important; line-height: 1.2 !important; margin-bottom: 1mm !important; white-space: nowrap !important; overflow: hidden !important; }
-      #printLabelOverlay .size-70x40 .label-title      { font-size: 9pt !important; line-height: 1.1 !important; margin: 0 0 1mm !important; }
-      #printLabelOverlay .size-70x40 .label-info-block { gap: 0.8mm !important; }
-      #printLabelOverlay .size-70x40 .label-row        { display: grid !important; grid-template-columns: 9mm 1fr !important; gap: 0.6mm 1mm !important; }
-      #printLabelOverlay .size-70x40 .label-key        { font-size: 5.5pt !important; white-space: nowrap !important; }
-      #printLabelOverlay .size-70x40 .label-value      { font-size: 5.8pt !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-      #printLabelOverlay .size-70x40 .label-value-id   { font-size: 7pt !important; white-space: nowrap !important; }
-      #printLabelOverlay .size-70x40 .label-qr-box     { width: 13mm !important; height: 13mm !important; min-width: 13mm !important; min-height: 13mm !important; padding: 0.8mm !important; border-radius: 1.5mm !important; }
-      #printLabelOverlay .size-70x40 .label-qr-box img { width: 11.4mm !important; height: 11.4mm !important; }
+      .prlabel--70x40 { width: 70mm; height: 40mm; grid-template-columns: 1fr 17mm; gap: 2mm; padding: 3mm 2.5mm; align-items: center; }
+      .prlabel--70x40 .prlabel-hospital { font-size: 5pt; margin-bottom: 1mm; }
+      .prlabel--70x40 .prlabel-title    { font-size: 10pt; margin-bottom: 1mm; }
+      .prlabel--70x40 .prlabel-rows     { gap: 0.8mm; }
+      .prlabel--70x40 .prlabel-row      { gap: 1.2mm; }
+      .prlabel--70x40 .prlabel-key      { font-size: 5.5pt; width: 9mm; }
+      .prlabel--70x40 .prlabel-val      { font-size: 5.8pt; }
+      .prlabel--70x40 .prlabel-id       { font-size: 7.5pt; }
+      .prlabel--70x40 .prlabel-qr       { width: 15mm; height: 15mm; }
+      .prlabel--70x40 .prlabel-qr img   { width: 13mm; height: 13mm; }
+
+      .prlabel--50x30 { width: 50mm; height: 30mm; grid-template-columns: 1fr 13mm; gap: 1.5mm; padding: 2mm; align-items: center; }
+      .prlabel--50x30 .prlabel-hospital { display: none; }
+      .prlabel--50x30 .prlabel-title    { font-size: 8pt; margin-bottom: 0.8mm; }
+      .prlabel--50x30 .prlabel-rows     { gap: 0.6mm; }
+      .prlabel--50x30 .prlabel-row      { gap: 1mm; }
+      .prlabel--50x30 .prlabel-key      { font-size: 4.5pt; width: 8mm; }
+      .prlabel--50x30 .prlabel-val      { font-size: 4.8pt; }
+      .prlabel--50x30 .prlabel-id       { font-size: 6pt; letter-spacing: -0.03em; }
+      .prlabel--50x30 .prlabel-qr       { width: 11mm; height: 11mm; }
+      .prlabel--50x30 .prlabel-qr img   { width: 10mm; height: 10mm; }
     }
   </style>
 </head>
