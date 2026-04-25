@@ -1006,28 +1006,28 @@ function buildLabelHtmlForList(item, sizeClass, qrId) {
   var showLocation = sizeClass !== 'size-70x40' && sizeClass !== 'size-50x30';
   var showModel    = sizeClass !== 'size-50x30';
   var showDept     = sizeClass !== 'size-50x30';
+  var sc           = sizeClass.replace('size-', ''); // '90x48', '70x40', '50x30'
 
   return (
-    '<div class="device-label ' + sizeClass + '">' +
-      '<div class="label-content-panel">' +
-        '<div class="label-hospital">녹십자아이메드 의료장비 관리시스템</div>' +
-        '<h2 class="label-title">' + escapeHtml(item.equipment_name || '-') + '</h2>' +
-        '<div class="label-info-block">' +
-          '<div class="label-row label-row-emphasis">' +
-            '<div class="label-key">관리번호</div>' +
-            '<div class="label-value label-value-id">' + escapeHtml(item.equipment_id || '-') + '</div>' +
+    '<div class="prlabel prlabel--' + sc + '">' +
+      '<div class="prlabel-body">' +
+        '<div class="prlabel-hospital">녹십자아이메드 의료장비 관리시스템</div>' +
+        '<div class="prlabel-title">' + escapeHtml(item.equipment_name || '-') + '</div>' +
+        '<div class="prlabel-rows">' +
+          '<div class="prlabel-row">' +
+            '<span class="prlabel-key">관리번호</span>' +
+            '<span class="prlabel-id">' + escapeHtml(item.equipment_id || '-') + '</span>' +
           '</div>' +
-          (showModel ? '<div class="label-row"><div class="label-key">모델명</div><div class="label-value">' + escapeHtml(item.model_name || '-') + '</div></div>' : '') +
-          (showDept  ? '<div class="label-row"><div class="label-key">사용부서</div><div class="label-value">' + escapeHtml(item.department || '-') + '</div></div>' : '') +
-          (showLocation ? '<div class="label-row"><div class="label-key">위치</div><div class="label-value">' + escapeHtml(item.location || '-') + '</div></div>' : '') +
+          (showModel ? '<div class="prlabel-row"><span class="prlabel-key">모델명</span><span class="prlabel-val">' + escapeHtml(item.model_name || '-') + '</span></div>' : '') +
+          (showDept  ? '<div class="prlabel-row"><span class="prlabel-key">사용부서</span><span class="prlabel-val">' + escapeHtml(item.department || '-') + '</span></div>' : '') +
+          (showLocation ? '<div class="prlabel-row"><span class="prlabel-key">위치</span><span class="prlabel-val">' + escapeHtml(item.location || '-') + '</span></div>' : '') +
         '</div>' +
       '</div>' +
-      '<div class="qr-panel">' +
-        '<div class="label-qr-box" id="' + escapeHtml(qrId) + '"></div>' +
-      '</div>' +
+      '<div class="prlabel-qr" id="' + escapeHtml(qrId) + '"></div>' +
     '</div>'
   );
 }
+
 
 function printLabelsOverlay(ids, sizeClass, layout) {
   var allItems = equipmentListState.currentItems || [];
