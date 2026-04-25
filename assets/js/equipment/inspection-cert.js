@@ -20,11 +20,6 @@
     return n.toLocaleString('ko-KR') + ' 원';
   }
 
-  function todayStr() {
-    const d = new Date();
-    return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
-  }
-
   function statusLabel(v) {
     const map = {
       IN_USE: '사용중', REPAIRING: '수리중',
@@ -35,12 +30,12 @@
 
   function buildCertHTML(eq) {
     const rows = [
-      ['장  비  명', safeVal(eq.equipment_name), '모  델  명',  safeVal(eq.model_name)],
-      ['제  조  사', safeVal(eq.manufacturer),   '시리얼번호',  safeVal(eq.serial_no)],
-      ['제 조 일 자', fmtDate(eq.manufacture_date), '취 득 일 자', fmtDate(eq.purchase_date)],
-      ['구  매  처', safeVal(eq.vendor),          '취 득 가 액', fmtCost(eq.acquisition_cost)],
-      ['사 용 부 서', safeVal(eq.department),      '현재 상태',   statusLabel(eq.status)],
-      ['담  당  자', safeVal(eq.manager_name),    '담당자연락처', safeVal(eq.manager_phone)],
+      ['장  비  명',  safeVal(eq.equipment_name),       '모  델  명',  safeVal(eq.model_name)],
+      ['제  조  사',  safeVal(eq.manufacturer),         '시리얼번호',  safeVal(eq.serial_no)],
+      ['제 조 일 자', fmtDate(eq.manufacture_date),     '취 득 일 자', fmtDate(eq.purchase_date)],
+      ['구  매  처',  safeVal(eq.vendor),               '취 득 가 액', fmtCost(eq.acquisition_cost)],
+      ['사 용 부 서', safeVal(eq.department),           '현재 상태',   statusLabel(eq.status)],
+      ['담  당  자',  safeVal(eq.manager_name),         '담당자연락처', safeVal(eq.manager_phone)],
     ];
 
     const tableRows = rows.map(([l1, v1, l2, v2]) => `
@@ -71,14 +66,14 @@
     .cert-header {
       border-bottom: 3px solid #1B4F8A;
       padding-bottom: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       text-align: center;
     }
     .cert-title {
       font-size: 22pt;
       font-weight: bold;
       color: #1B4F8A;
-      letter-spacing: 6px;
+      letter-spacing: 8px;
     }
 
     /* ── 섹션 제목 ── */
@@ -96,7 +91,7 @@
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
     .info-table th, .info-table td {
       border: 1px solid #b0c4de;
@@ -117,19 +112,19 @@
       background: #fff;
     }
 
-    /* ── 빈칸 박스 (비고, 검수의견) ── */
+    /* ── 빈칸 박스 ── */
     .blank-box {
       border: 1px solid #b0c4de;
-      height: 80px;
+      height: 90px;
       background: #fff;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     /* ── 서명란 ── */
     .sign-section {
       display: flex;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 16px;
+      margin-bottom: 16px;
     }
     .sign-box {
       flex: 1;
@@ -147,7 +142,7 @@
       letter-spacing: 2px;
     }
     .sign-box-body {
-      height: 70px;
+      height: 80px;
       background: #F5F7FA;
     }
 
@@ -155,8 +150,8 @@
     .confirm-statement {
       border: 1.5px solid #1B4F8A;
       border-radius: 4px;
-      padding: 10px 16px;
-      font-size: 9.5pt;
+      padding: 12px 16px;
+      font-size: 10pt;
       color: #1B4F8A;
       text-align: center;
       font-weight: bold;
@@ -178,7 +173,7 @@
     ${tableRows}
   </table>
 
-  <!-- 비고 -->
+  <!-- 비고 / 특이사항 -->
   <div class="section-label">■ 비고 / 특이사항</div>
   <div class="blank-box"></div>
 
@@ -214,6 +209,7 @@
     }
 
     const html = buildCertHTML(equipmentData);
+
     const win = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
     if (!win) {
       alert('팝업이 차단되었습니다.\n브라우저 팝업 허용 설정을 확인해 주세요.');
