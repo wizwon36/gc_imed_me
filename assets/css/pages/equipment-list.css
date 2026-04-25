@@ -1736,181 +1736,114 @@
   }
 }
 
-/* ===== 일괄 라벨 출력 컨테이너 ===== */
-
-.stack-label-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px 0;
-}
-
-.stack-label-item { flex-shrink: 0; }
-
-/* 격자 출력 */
-.grid-label-wrap { width: 100%; }
-
-.grid-label-page {
-  display: grid;
-  width: 210mm;
-  box-sizing: border-box;
-  background: #fff;
-}
-
-.grid-label-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.grid-label-cell--empty {
-  visibility: hidden;
-}
-
-/* 인쇄 시 */
-@media print {
-  .bulk-label-container,
-  #bulkLabelContainer {
-    margin: 0;
-    padding: 0;
-  }
-
-  .stack-label-wrap {
-    display: block;
-  }
-
-  .stack-label-item {
-    page-break-after: always;
-    break-after: page;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-
-  .grid-label-wrap { margin: 0; padding: 0; }
-
-  .grid-label-page {
-    page-break-after: always;
-    break-after: page;
-    margin: 0;
-  }
-
-  .grid-label-page:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-}
-
 /* ===== 라벨 인쇄 오버레이 ===== */
 
-.print-label-overlay {
-  display: none; /* 화면에서는 숨김 */
+#printLabelOverlay {
+  display: none; /* 화면에서는 완전히 숨김 */
 }
-
-.print-label-page--single {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10mm;
-}
-
-.print-label-page--grid {
-  display: grid;
-  width: 210mm;
-  box-sizing: border-box;
-}
-
-.print-grid-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.print-grid-cell--empty { visibility: hidden; }
 
 @media print {
-  /* 오버레이가 있으면 나머지 모두 숨김 */
-  body:has(#printLabelOverlay) > *:not(#printLabelOverlay) {
+  /* 오버레이 있을 때 body 직계 자식 모두 숨기고 오버레이만 표시 */
+  body > *:not(#printLabelOverlay) {
     display: none !important;
+    visibility: hidden !important;
   }
 
-  .print-label-overlay {
+  #printLabelOverlay {
     display: block !important;
-    position: fixed;
-    inset: 0;
-    background: white;
-    z-index: 99999;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
   }
 
-  .print-label-page--single {
+  /* 페이지 단위 */
+  .plabel-page {
+    margin: 0;
+    padding: 0;
     page-break-after: always;
     break-after: page;
-    min-height: 100vh;
-    display: flex;
+  }
+
+  .plabel-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* 격자 */
+  .plabel-page--grid {
+    display: grid !important;
+    box-sizing: border-box;
+  }
+
+  /* 단일 */
+  .plabel-page--single {
+    display: flex !important;
     justify-content: center;
     align-items: center;
-    padding: 0;
+    min-height: auto;
+    padding: 10mm;
   }
 
-  .print-label-page--single:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
+  /* 셀 */
+  .plabel-cell {
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
-  .print-label-page--grid {
-    page-break-after: always;
-    break-after: page;
-    margin: 0;
+  .plabel-cell--empty {
+    visibility: hidden;
   }
 
-  .print-label-page--grid:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
+  /* 라벨 공통 */
+  .plabel-cell .device-label {
+    display: grid !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    border-radius: 3mm !important;
+    border: 0.3mm solid #ccc !important;
+    background: white !important;
   }
-}
 
-/* ===== 격자 출력 시 라벨 실제 mm 크기 강제 적용 ===== */
-@media print {
-  .print-label-overlay .device-label.size-90x48 {
-    width: 90mm !important;
-    min-height: 48mm !important;
-    height: 48mm !important;
-    padding: 4mm !important;
-    gap: 3.5mm !important;
+  /* 90x48 인쇄 스타일 */
+  .plabel-cell .size-90x48 {
     grid-template-columns: 1fr 24mm !important;
-    box-sizing: border-box !important;
-    border-radius: 3mm !important;
-    overflow: hidden !important;
+    gap: 3mm !important;
+    padding: 4mm !important;
+    align-items: center !important;
   }
+  .plabel-cell .size-90x48 .label-hospital    { font-size: 6.5pt !important; white-space: nowrap !important; overflow: hidden !important; margin-bottom: 1.5mm !important; }
+  .plabel-cell .size-90x48 .label-title       { font-size: 13pt !important; line-height: 1.1 !important; margin: 0 0 2mm !important; }
+  .plabel-cell .size-90x48 .label-info-block  { gap: 1.5mm !important; }
+  .plabel-cell .size-90x48 .label-row         { grid-template-columns: 13mm 1fr !important; gap: 1mm 2mm !important; }
+  .plabel-cell .size-90x48 .label-key         { font-size: 7pt !important; white-space: nowrap !important; }
+  .plabel-cell .size-90x48 .label-value       { font-size: 7.5pt !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  .plabel-cell .size-90x48 .label-value-id    { font-size: 10pt !important; white-space: nowrap !important; }
+  .plabel-cell .size-90x48 .label-qr-box      { width: 22mm !important; height: 22mm !important; min-width: 22mm !important; min-height: 22mm !important; padding: 1mm !important; border-radius: 2mm !important; }
 
-  .print-label-overlay .device-label.size-70x40 {
-    width: 70mm !important;
-    min-height: 40mm !important;
-    height: 40mm !important;
-    padding: 2.8mm !important;
-    gap: 2.5mm !important;
-    grid-template-columns: 1fr 19mm !important;
-    box-sizing: border-box !important;
-    border-radius: 3mm !important;
-    overflow: hidden !important;
+  /* 70x40 인쇄 스타일 */
+  .plabel-cell .size-70x40 {
+    grid-template-columns: 1fr 18mm !important;
+    gap: 2mm !important;
+    padding: 3mm !important;
+    align-items: center !important;
   }
+  .plabel-cell .size-70x40 .label-hospital    { font-size: 5.5pt !important; white-space: nowrap !important; overflow: hidden !important; margin-bottom: 1mm !important; }
+  .plabel-cell .size-70x40 .label-title       { font-size: 10pt !important; line-height: 1.1 !important; margin: 0 0 1.5mm !important; }
+  .plabel-cell .size-70x40 .label-info-block  { gap: 1mm !important; }
+  .plabel-cell .size-70x40 .label-row         { grid-template-columns: 10mm 1fr !important; gap: 0.8mm 1.5mm !important; }
+  .plabel-cell .size-70x40 .label-key         { font-size: 5.8pt !important; white-space: nowrap !important; }
+  .plabel-cell .size-70x40 .label-value       { font-size: 6pt !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  .plabel-cell .size-70x40 .label-value-id    { font-size: 7.5pt !important; white-space: nowrap !important; }
+  .plabel-cell .size-70x40 .label-qr-box      { width: 15mm !important; height: 15mm !important; min-width: 15mm !important; min-height: 15mm !important; padding: 0.8mm !important; border-radius: 2mm !important; }
 
-  .print-label-overlay .label-hospital { font-size: 6pt !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-  .print-label-overlay .size-90x48 .label-title  { font-size: 15pt !important; margin: 0 0 2mm !important; }
-  .print-label-overlay .size-70x40 .label-title  { font-size: 11pt !important; margin: 0 0 1.5mm !important; }
-  .print-label-overlay .size-90x48 .label-key    { font-size: 7.5pt !important; white-space: nowrap !important; }
-  .print-label-overlay .size-70x40 .label-key    { font-size: 6pt !important; white-space: nowrap !important; }
-  .print-label-overlay .size-90x48 .label-value  { font-size: 8pt !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-  .print-label-overlay .size-70x40 .label-value  { font-size: 6.5pt !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-  .print-label-overlay .size-90x48 .label-value-id { font-size: 11pt !important; white-space: nowrap !important; }
-  .print-label-overlay .size-70x40 .label-value-id { font-size: 8pt !important; white-space: nowrap !important; }
-  .print-label-overlay .size-90x48 .label-row { grid-template-columns: 13mm 1fr !important; gap: 1.4mm 2mm !important; }
-  .print-label-overlay .size-70x40 .label-row { grid-template-columns: 11mm 1fr !important; gap: 1mm 1.4mm !important; }
-  .print-label-overlay .size-90x48 .label-info-block { gap: 1.5mm !important; }
-  .print-label-overlay .size-70x40 .label-info-block { gap: 1mm !important; }
-  .print-label-overlay .size-90x48 .label-qr-box { width: 24mm !important; height: 24mm !important; min-width: 24mm !important; min-height: 24mm !important; padding: 1.2mm !important; }
-  .print-label-overlay .size-70x40 .label-qr-box { width: 17mm !important; height: 17mm !important; min-width: 17mm !important; min-height: 17mm !important; padding: 1mm !important; }
-
-  .print-grid-cell { padding: 0 !important; margin: 0 !important; }
+  /* QR 이미지 크기 맞춤 */
+  .plabel-cell .label-qr-box img { width: 100% !important; height: 100% !important; }
 }
