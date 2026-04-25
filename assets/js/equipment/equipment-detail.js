@@ -107,6 +107,7 @@ function applyActionVisibility() {
   const addHistoryBtn = qs('#addHistoryBtn');
   const addInventoryBtn = qs('#addInventoryBtn');
   const printLabelBtn = qs('#printLabelBtn');
+  const inspectionCertBtn = qs('#inspectionCertBtn');
 
   const isDeleted =
     String((currentEquipmentData && currentEquipmentData.deleted_yn) || 'N')
@@ -119,6 +120,7 @@ function applyActionVisibility() {
   if (addInventoryBtn) addInventoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
   const isMobile = window.innerWidth <= 768;
   if (printLabelBtn) printLabelBtn.style.display = (detailPermission.canView && !isMobile) ? '' : 'none';
+  if (inspectionCertBtn) inspectionCertBtn.style.display = detailPermission.canView ? '' : 'none';
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
@@ -805,6 +807,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (printLabelBtn) {
       printLabelBtn.addEventListener('click', function() {
         location.href = 'label-print.html?equipment_id=' + encodeURIComponent(currentEquipmentId);
+      });
+    }
+
+    const inspectionCertBtn = qs('#inspectionCertBtn');
+    if (inspectionCertBtn) {
+      inspectionCertBtn.addEventListener('click', function() {
+        if (typeof generateInspectionCertPDF === 'function' && currentEquipmentData) {
+          generateInspectionCertPDF(currentEquipmentData);
+        }
       });
     }
   } catch (error) {
