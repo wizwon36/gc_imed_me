@@ -1,6 +1,6 @@
 let currentEquipmentId = '';
 let currentEquipmentData = null;
-let detailPermission = { canView: false, canEdit: false, canDelete: false };
+let detailPermission = { canView: false, canEdit: false, canDelete: false, isAdmin: false };
 
 function getCurrentUser() {
   if (window.auth && typeof window.auth.getSession === 'function') {
@@ -12,12 +12,12 @@ function getCurrentUser() {
 async function getEquipmentPermissionContext() {
   const user = getCurrentUser();
   if (!user || !user.email) {
-    return { canView: false, canEdit: false, canDelete: false };
+    return { canView: false, canEdit: false, canDelete: false, isAdmin: false };
   }
 
   const role = String(user.role || '').trim().toLowerCase();
   if (role === 'admin') {
-    return { canView: true, canEdit: true, canDelete: true };
+    return { canView: true, canEdit: true, canDelete: true, isAdmin: true };
   }
 
   try {
@@ -34,10 +34,11 @@ async function getEquipmentPermissionContext() {
     return {
       canView: ['view', 'edit', 'admin'].indexOf(permission) > -1,
       canEdit: ['edit', 'admin'].indexOf(permission) > -1,
-      canDelete: false
+      canDelete: false,
+      isAdmin: false
     };
   } catch (error) {
-    return { canView: false, canEdit: false, canDelete: false };
+    return { canView: false, canEdit: false, canDelete: false, isAdmin: false };
   }
 }
 
@@ -120,7 +121,7 @@ function applyActionVisibility() {
   if (addInventoryBtn) addInventoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
   const isMobile = window.innerWidth <= 768;
   if (printLabelBtn) printLabelBtn.style.display = (detailPermission.canView && !isMobile) ? '' : 'none';
-  if (inspectionCertBtn) inspectionCertBtn.style.display = detailPermission.canView ? '' : 'none';
+  if (inspectionCertBtn) inspectionCertBtn.style.display = detailPermission.isAdmin ? '' : 'none';
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
