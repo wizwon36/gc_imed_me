@@ -860,14 +860,34 @@ function initBulkLabelFeature() {
   // 검수확인서 일괄 출력 버튼
   var certBtn = document.getElementById('bulkInspectionCertBtn');
   if (certBtn) {
-    certBtn.addEventListener('click', function() {
+    certBtn.addEventListener('click', async function() {
       if (!bulkSelectedIds.size) return;
       var ids = Array.from(bulkSelectedIds);
-      var items = (equipmentListState.currentItems || []).filter(function(item) {
-        return ids.indexOf(String(item.equipment_id)) > -1;
-      });
-      if (typeof generateInspectionCertPDF === 'function') {
-        generateInspectionCertPDF(items);
+
+      try {
+        showGlobalLoading('장비 정보를 불러오는 중...');
+
+        var user = equipmentListState.user;
+        var userEmail = (user && user.email) ? user.email : '';
+
+        var items = await Promise.all(
+          ids.map(function(id) {
+            return apiGet('getEquipment', {
+              id: id,
+              request_user_email: userEmail
+            }).then(function(result) {
+              return result.data || {};
+            });
+          })
+        );
+
+        if (typeof generateInspectionCertPDF === 'function') {
+          generateInspectionCertPDF(items);
+        }
+      } catch (error) {
+        showMessage(error.message || '장비 정보를 불러오는 중 오류가 발생했습니다.', 'error');
+      } finally {
+        hideGlobalLoading();
       }
     });
   }
