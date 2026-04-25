@@ -16,58 +16,74 @@
       .plabel-page { page-break-after: always; break-after: page; }
       .plabel-page:last-child { page-break-after: avoid; break-after: avoid; }
       .plabel-page--grid   { display: grid !important; width: 210mm; box-sizing: border-box; }
-      .plabel-page--single { display: flex !important; justify-content: center; align-items: flex-start; padding: 20mm 0; }
+      .plabel-page--single { display: flex !important; justify-content: center; align-items: flex-start; padding: 10mm 0; }
       .plabel-empty { visibility: hidden; }
 
+      /* ── prlabel 공통 ── */
       .prlabel {
         display: grid; box-sizing: border-box;
-        border: 0.3mm solid #aaa; border-radius: 3mm;
+        border: 1px solid #111827;
         background: white; overflow: hidden;
         page-break-inside: avoid; break-inside: avoid;
       }
       .prlabel-body    { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
       .prlabel-rows    { display: flex; flex-direction: column; }
-      .prlabel-row     { display: flex; align-items: baseline; }
-      .prlabel-hospital { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #475569; }
+      .prlabel-row     { display: grid; align-items: center; }
+      .prlabel-hospital { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
       .prlabel-title   { font-weight: 800; color: #1e293b; line-height: 1.1; }
-      .prlabel-key     { flex-shrink: 0; color: #64748b; }
-      .prlabel-val     { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #1e293b; font-weight: 500; }
-      .prlabel-id      { flex: 1; overflow: hidden; white-space: nowrap; color: #1e40af; font-weight: 700; }
-      .prlabel-qr      { display: flex; align-items: center; justify-content: center; }
-      .prlabel-qr img  { display: block; }
+      .prlabel-key     { color: #64748b; white-space: nowrap; }
+      .prlabel-val     { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
+      .prlabel-id      { overflow: hidden; white-space: nowrap; color: #1e40af; font-weight: 700; }
+      .prlabel-qr      { display: flex; align-items: center; justify-content: center; align-self: center; }
+      .prlabel-qr img  { display: block; width: 100%; height: 100%; }
 
-      .prlabel--90x48 { width: 90mm; height: 48mm; grid-template-columns: 1fr 22mm; gap: 3mm; padding: 4mm 3.5mm; align-items: center; }
-      .prlabel--90x48 .prlabel-hospital { font-size: 6pt; margin-bottom: 1.5mm; }
-      .prlabel--90x48 .prlabel-title    { font-size: 13pt; margin-bottom: 1.5mm; }
-      .prlabel--90x48 .prlabel-rows     { gap: 1.2mm; }
-      .prlabel--90x48 .prlabel-row      { gap: 1.5mm; }
-      .prlabel--90x48 .prlabel-key      { font-size: 6.5pt; width: 12mm; }
-      .prlabel--90x48 .prlabel-val      { font-size: 7pt; }
-      .prlabel--90x48 .prlabel-id       { font-size: 9.5pt; }
-      .prlabel--90x48 .prlabel-qr       { width: 20mm; height: 20mm; }
-      .prlabel--90x48 .prlabel-qr img   { width: 18mm; height: 18mm; }
+      /* ── 90×48mm — label-print 기준 ── */
+      .prlabel--90x48 {
+        width: 90mm; min-height: 48mm;
+        padding: 4mm; border-radius: 4mm;
+        gap: 3.5mm; grid-template-columns: 1fr 26mm;
+        align-items: center;
+      }
+      .prlabel--90x48 .prlabel-hospital { font-size: 7.5pt; margin-bottom: 1.5mm; }
+      .prlabel--90x48 .prlabel-title    { font-size: 15pt;  margin: 0 0 2mm; }
+      .prlabel--90x48 .prlabel-rows     { gap: 1.4mm; }
+      .prlabel--90x48 .prlabel-row      { grid-template-columns: 13mm 1fr; gap: 1.4mm 2mm; }
+      .prlabel--90x48 .prlabel-key      { font-size: 7.5pt; }
+      .prlabel--90x48 .prlabel-val      { font-size: 8pt; }
+      .prlabel--90x48 .prlabel-id       { font-size: 11pt; }
+      .prlabel--90x48 .prlabel-qr       { width: 24mm; height: 24mm; padding: 1.2mm; border-radius: 3mm; }
 
-      .prlabel--70x40 { width: 70mm; height: 40mm; grid-template-columns: 1fr 17mm; gap: 2mm; padding: 3mm 2.5mm; align-items: center; }
-      .prlabel--70x40 .prlabel-hospital { font-size: 5pt; margin-bottom: 1mm; }
-      .prlabel--70x40 .prlabel-title    { font-size: 10pt; margin-bottom: 1mm; }
-      .prlabel--70x40 .prlabel-rows     { gap: 0.8mm; }
-      .prlabel--70x40 .prlabel-row      { gap: 1.2mm; }
-      .prlabel--70x40 .prlabel-key      { font-size: 5.5pt; width: 9mm; }
-      .prlabel--70x40 .prlabel-val      { font-size: 5.8pt; }
-      .prlabel--70x40 .prlabel-id       { font-size: 7.5pt; }
-      .prlabel--70x40 .prlabel-qr       { width: 15mm; height: 15mm; }
-      .prlabel--70x40 .prlabel-qr img   { width: 13mm; height: 13mm; }
+      /* ── 70×40mm — label-print 기준 ── */
+      .prlabel--70x40 {
+        width: 70mm; min-height: 40mm;
+        padding: 2.8mm; border-radius: 3mm;
+        gap: 2.5mm; grid-template-columns: 1fr 19mm;
+        align-items: center;
+      }
+      .prlabel--70x40 .prlabel-hospital { font-size: 6pt;   margin-bottom: 1.2mm; }
+      .prlabel--70x40 .prlabel-title    { font-size: 11pt;  margin: 0 0 1.5mm; }
+      .prlabel--70x40 .prlabel-rows     { gap: 1mm; }
+      .prlabel--70x40 .prlabel-row      { grid-template-columns: 11mm 1fr; gap: 1mm 1.4mm; }
+      .prlabel--70x40 .prlabel-key      { font-size: 6pt; }
+      .prlabel--70x40 .prlabel-val      { font-size: 6.5pt; }
+      .prlabel--70x40 .prlabel-id       { font-size: 8pt;   letter-spacing: -0.02em; line-height: 1.05; }
+      .prlabel--70x40 .prlabel-qr       { width: 17mm; height: 17mm; padding: 1mm; border-radius: 2mm; }
 
-      .prlabel--50x30 { width: 50mm; height: 30mm; grid-template-columns: 1fr 13mm; gap: 1.5mm; padding: 2mm; align-items: center; }
-      .prlabel--50x30 .prlabel-hospital { display: none; }
-      .prlabel--50x30 .prlabel-title    { font-size: 8pt; margin-bottom: 0.8mm; }
-      .prlabel--50x30 .prlabel-rows     { gap: 0.6mm; }
-      .prlabel--50x30 .prlabel-row      { gap: 1mm; }
-      .prlabel--50x30 .prlabel-key      { font-size: 4.5pt; width: 8mm; }
-      .prlabel--50x30 .prlabel-val      { font-size: 4.8pt; }
-      .prlabel--50x30 .prlabel-id       { font-size: 6pt; letter-spacing: -0.03em; }
-      .prlabel--50x30 .prlabel-qr       { width: 11mm; height: 11mm; }
-      .prlabel--50x30 .prlabel-qr img   { width: 10mm; height: 10mm; }
+      /* ── 50×30mm — label-print 기준 ── */
+      .prlabel--50x30 {
+        width: 50mm; min-height: 30mm;
+        padding: 2.2mm; border-radius: 2.6mm;
+        gap: 2mm; grid-template-columns: 1fr 15mm;
+        align-items: center;
+      }
+      .prlabel--50x30 .prlabel-hospital { font-size: 5.8pt; margin-bottom: 1mm; }
+      .prlabel--50x30 .prlabel-title    { font-size: 9.5pt; margin: 0 0 1.2mm; }
+      .prlabel--50x30 .prlabel-rows     { gap: 1mm; }
+      .prlabel--50x30 .prlabel-row      { grid-template-columns: 10mm 1fr; gap: 1mm 1.2mm; }
+      .prlabel--50x30 .prlabel-key      { font-size: 5.4pt; }
+      .prlabel--50x30 .prlabel-val      { font-size: 5.8pt; }
+      .prlabel--50x30 .prlabel-id       { font-size: 6.8pt; white-space: nowrap; letter-spacing: -0.03em; }
+      .prlabel--50x30 .prlabel-qr       { width: 13mm; height: 13mm; padding: 0.8mm; border-radius: 2mm; }
     }
   </style>
 </head>
