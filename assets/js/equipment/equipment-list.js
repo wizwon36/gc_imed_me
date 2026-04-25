@@ -1080,7 +1080,7 @@ function printLabelsOverlay(ids, sizeClass, layout) {
 
   var baseUrl = (typeof CONFIG !== 'undefined' ? CONFIG.SITE_BASE_URL : '') +
                 '/pages/equipment/public-detail.html?id=';
-  var qrSize = sizeClass === 'size-70x40' ? 56 : sizeClass === 'size-50x30' ? 40 : 72;
+  var qrSize = sizeClass === 'size-70x40' ? 64 : sizeClass === 'size-50x30' ? 48 : 84;
 
   items.forEach(function(item, idx) {
     if (!item) return;
@@ -1089,7 +1089,7 @@ function printLabelsOverlay(ids, sizeClass, layout) {
       : ('pqr-s-' + idx);
     var qrEl = document.getElementById(qrId);
     if (!qrEl) return;
-    var qrValue = item.qr_value || item.equipment_id || '';
+    var qrValue = item.equipment_id || '';
     if (qrValue && typeof QRCode !== 'undefined') {
       new QRCode(qrEl, { text: baseUrl + encodeURIComponent(qrValue), width: qrSize, height: qrSize });
     }
