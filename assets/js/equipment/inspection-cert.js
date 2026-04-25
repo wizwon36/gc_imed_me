@@ -182,57 +182,93 @@
 </html>`;
   }
 
+  /* ── 다중 장비 → 단일 양식용 합성 객체 생성 ── */
+  function mergeEquipmentList(eqList) {
+    const first = eqList[0];
+    const count = eqList.length;
+
+    // 모델명: 고유값이 1개면 그대로, 여러 개면 "대표값 외 N건"
+    const models = [...new Set(eqList.map(function(e) { return String(e.model_name || '').trim(); }).filter(Boolean))];
+    const modelDisplay = models.length === 0 ? '-'
+      : models.length === 1 ? models[0]
+      : models[0] + ' 외 ' + (models.length - 1) + '건';
+
+    // 시리얼번호: 첫 번째 외 N건
+    const serials = eqList.map(function(e) { return String(e.serial_no || '').trim(); }).filter(Boolean);
+    const serialDisplay = serials.length === 0 ? '-'
+      : serials.length === 1 ? serials[0]
+      : serials[0] + ' 외 ' + (serials.length - 1) + '건';
+
+    // 장비명: 고유값이 1개면 그대로, 여러 개면 "대표값 외 N건"
+    const names = [...new Set(eqList.map(function(e) { return String(e.equipment_name || '').trim(); }).filter(Boolean))];
+    const nameDisplay = names.length === 0 ? '-'
+      : names.length === 1 ? names[0]
+      : names[0] + ' 외 ' + (names.length - 1) + '건';
+
+    // 제조사: 고유값이 1개면 그대로, 여러 개면 나열 (최대 2개 + 외 N건)
+    const manufacturers = [...new Set(eqList.map(function(e) { return String(e.manufacturer || '').trim(); }).filter(Boolean))];
+    const mfrDisplay = manufacturers.length === 0 ? '-'
+      : manufacturers.length === 1 ? manufacturers[0]
+      : manufacturers[0] + ' 외 ' + (manufacturers.length - 1) + '건';
+
+    // 취득가액: 전체 합산
+    const totalCost = eqList.reduce(function(sum, e) {
+      const n = Number(String(e.acquisition_cost || '0').replace(/,/g, ''));
+      return sum + (isNaN(n) ? 0 : n);
+    }, 0);
+
+    // 취득일자: 가장 최근 날짜
+    const dates = eqList.map(function(e) { return String(e.purchase_date || '').trim(); }).filter(Boolean).sort();
+    const latestDate = dates.length ? dates[dates.length - 1] : '';
+
+    // 제조일자: 가장 최근 날짜
+    const mfgDates = eqList.map(function(e) { return String(e.manufacture_date || '').trim(); }).filter(Boolean).sort();
+    const latestMfgDate = mfgDates.length ? mfgDates[mfgDates.length - 1] : '';
+
+    // 부서: 고유값 나열
+    const depts = [...new Set(eqList.map(function(e) { return String(e.department || '').trim(); }).filter(Boolean))];
+    const deptDisplay = depts.length === 0 ? '-'
+      : depts.length === 1 ? depts[0]
+      : depts[0] + ' 외 ' + (depts.length - 1) + '건';
+
+    return {
+      equipment_name:   nameDisplay + ' (총 ' + count + '대)',
+      model_name:       modelDisplay,
+      manufacturer:     mfrDisplay,
+      serial_no:        serialDisplay,
+      manufacture_date: latestMfgDate,
+      purchase_date:    latestDate,
+      vendor:           first.vendor,
+      acquisition_cost: totalCost > 0 ? totalCost : '',
+      department:       deptDisplay,
+      status:           first.status,
+      manager_name:     first.manager_name,
+      manager_phone:    first.manager_phone,
+    };
+  }
+
   /* ── 다중 장비 HTML ── */
   function buildMultiHTML(eqList) {
-    // 구매처/담당자는 목록 상단에 공통 정보로 표시 (첫 번째 항목 기준)
-    const first = eqList[0];
-    const vendor      = safeVal(first.vendor);
-    const manager     = safeVal(first.manager_name);
-    const managerTel  = safeVal(first.manager_phone);
+    const merged = mergeEquipmentList(eqList);
 
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
   <title>의료장비 검수확인서</title>
-  <style>
-    ${buildStyles(true)}
-    .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-    .meta-table th, .meta-table td {
-      border: 1px solid #b0c4de; padding: 6px 10px; font-size: 9.5pt; vertical-align: middle;
-    }
-    .meta-table th {
-      background: #EAF0F8; font-weight: bold; color: #1B4F8A;
-      width: 13%; text-align: center; white-space: nowrap;
-    }
-    .meta-table td { background: #fff; }
-  </style>
+  <style>${buildStyles(false)}</style>
 </head>
 <body>
   <div class="cert-header">
     <div class="cert-title">의료장비 검수확인서</div>
   </div>
-
-  <div class="section-label">■ 납품 공통 정보</div>
-  <table class="meta-table">
-    <tr>
-      <th>구  매  처</th><td>${vendor}</td>
-      <th>담  당  자</th><td>${manager}</td>
-      <th>담당자연락처</th><td>${managerTel}</td>
-    </tr>
-  </table>
-
-  <div class="section-label">■ 납품 장비 목록 (총 ${eqList.length}대)</div>
-  <table class="info-table">${buildMultiInfoTable(eqList)}</table>
-
+  <div class="section-label">■ 장비 기본 정보</div>
+  <table class="info-table">${buildSingleInfoTable(merged)}</table>
   <div class="section-label">■ 비고 / 특이사항</div>
   <textarea class="input-box">특이사항 없음</textarea>
-
   <div class="section-label">■ 검수 확인 의견</div>
   <textarea class="input-box">장비 정상 입고 확인</textarea>
-
   <button class="print-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
-
   <div class="sign-section">
     <div class="sign-box">
       <div class="sign-box-title">검 수 자</div>
