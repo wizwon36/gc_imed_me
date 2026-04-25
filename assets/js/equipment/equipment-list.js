@@ -996,16 +996,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // ================================================================
 
 var GRID_SPECS_LIST = {
-  '2x5': { cols: 2, rows: 5, colGap: '3mm', rowGap: '2mm', padT: '8mm',  padS: '7mm'  },
-  '2x4': { cols: 2, rows: 4, colGap: '3mm', rowGap: '4mm', padT: '12mm', padS: '7mm'  },
-  '2x6': { cols: 2, rows: 6, colGap: '3mm', rowGap: '1mm', padT: '6mm',  padS: '7mm'  },
-  '3x6': { cols: 3, rows: 6, colGap: '2mm', rowGap: '1mm', padT: '6mm',  padS: '4mm'  }
-};
-
-var LABEL_WH = {
-  'size-90x48': { w: '90mm', h: '48mm' },
-  'size-70x40': { w: '70mm', h: '40mm' },
-  'size-50x30': { w: '50mm', h: '30mm' }
+  '2x5': { cols: 2, rows: 5, colGap: '3mm', rowGap: '2mm', padT: '10mm', padS: '8mm' },
+  '2x4': { cols: 2, rows: 4, colGap: '3mm', rowGap: '5mm', padT: '15mm', padS: '8mm' },
+  '2x6': { cols: 2, rows: 6, colGap: '3mm', rowGap: '1mm', padT: '7mm',  padS: '8mm' },
+  '3x6': { cols: 3, rows: 6, colGap: '2mm', rowGap: '1mm', padT: '7mm',  padS: '4mm' }
 };
 
 function buildLabelHtmlForList(item, sizeClass, qrId) {
@@ -1014,7 +1008,7 @@ function buildLabelHtmlForList(item, sizeClass, qrId) {
   var showDept     = sizeClass !== 'size-50x30';
 
   return (
-    '<div class="device-label ' + sizeClass + ' print-device-label">' +
+    '<div class="device-label ' + sizeClass + '">' +
       '<div class="label-content-panel">' +
         '<div class="label-hospital">녹십자아이메드 의료장비 관리시스템</div>' +
         '<h2 class="label-title">' + escapeHtml(item.equipment_name || '-') + '</h2>' +
@@ -1037,26 +1031,20 @@ function buildLabelHtmlForList(item, sizeClass, qrId) {
 
 function printLabelsOverlay(ids, sizeClass, layout) {
   var allItems = equipmentListState.currentItems || [];
-  var idSet    = new Set(ids);
-
-  // 선택 순서 유지
   var items = ids.map(function(id) {
     return allItems.find(function(i) { return i.equipment_id === id; }) ||
       { equipment_id: id, equipment_name: id, model_name: '', department: '', location: '', qr_value: id };
   });
 
-  // 기존 오버레이 제거
   var prev = document.getElementById('printLabelOverlay');
   if (prev) prev.remove();
 
   var overlay = document.createElement('div');
-  overlay.id  = 'printLabelOverlay';
+  overlay.id = 'printLabelOverlay';
 
   var isGrid  = !!(layout && GRID_SPECS_LIST[layout]);
   var spec    = isGrid ? GRID_SPECS_LIST[layout] : null;
   var perPage = spec ? spec.cols * spec.rows : 1;
-  var wh      = LABEL_WH[sizeClass] || LABEL_WH['size-90x48'];
-
   var pagesHtml = '';
 
   if (isGrid) {
@@ -1065,44 +1053,34 @@ function printLabelsOverlay(ids, sizeClass, layout) {
       while (pageItems.length < perPage) pageItems.push(null);
 
       var cells = pageItems.map(function(item, cellIdx) {
-        if (!item) return '<div class="plabel-cell plabel-cell--empty" style="width:' + wh.w + ';height:' + wh.h + ';"></div>';
+        if (!item) return '<div class="plabel-empty"></div>';
         var qrId = 'pqr-g-' + p + '-' + cellIdx;
-        return (
-          '<div class="plabel-cell" style="width:' + wh.w + ';height:' + wh.h + ';">' +
-            buildLabelHtmlForList(item, sizeClass, qrId) +
-          '</div>'
-        );
+        return buildLabelHtmlForList(item, sizeClass, qrId);
       }).join('');
 
       pagesHtml += (
         '<div class="plabel-page plabel-page--grid" style="' +
-          'grid-template-columns:repeat(' + spec.cols + ',' + wh.w + ');' +
+          'grid-template-columns:repeat(' + spec.cols + ',auto);' +
           'gap:' + spec.rowGap + ' ' + spec.colGap + ';' +
           'padding:' + spec.padT + ' ' + spec.padS + ';' +
         '">' + cells + '</div>'
       );
     }
   } else {
-    // 단일: 한 장에 하나
     pagesHtml = items.map(function(item, idx) {
       var qrId = 'pqr-s-' + idx;
-      return (
-        '<div class="plabel-page plabel-page--single">' +
-          '<div class="plabel-cell" style="width:' + wh.w + ';height:' + wh.h + ';">' +
-            buildLabelHtmlForList(item, sizeClass, qrId) +
-          '</div>' +
-        '</div>'
-      );
+      return '<div class="plabel-page plabel-page--single">' +
+        buildLabelHtmlForList(item, sizeClass, qrId) +
+      '</div>';
     }).join('');
   }
 
   overlay.innerHTML = pagesHtml;
   document.body.appendChild(overlay);
 
-  // QR 생성
   var baseUrl = (typeof CONFIG !== 'undefined' ? CONFIG.SITE_BASE_URL : '') +
                 '/pages/equipment/public-detail.html?id=';
-  var qrSize  = sizeClass === 'size-70x40' ? 56 : sizeClass === 'size-50x30' ? 40 : 72;
+  var qrSize = sizeClass === 'size-70x40' ? 56 : sizeClass === 'size-50x30' ? 40 : 72;
 
   items.forEach(function(item, idx) {
     if (!item) return;
@@ -1117,7 +1095,6 @@ function printLabelsOverlay(ids, sizeClass, layout) {
     }
   });
 
-  // QR 렌더 완료 후 인쇄
   setTimeout(function() {
     window.print();
     setTimeout(function() {
