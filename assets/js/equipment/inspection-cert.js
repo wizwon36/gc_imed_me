@@ -28,21 +28,38 @@
     return map[String(v).trim().toUpperCase()] || safeVal(v);
   }
 
+  /* ── 오늘 날짜 기본값 (yyyy년 mm월 dd일) ── */
+  function todayLabel() {
+    const d = new Date();
+    return d.getFullYear() + '년 ' +
+      String(d.getMonth() + 1).padStart(2, '0') + '월 ' +
+      String(d.getDate()).padStart(2, '0') + '일';
+  }
+
   /* ── 단일 장비 기본정보 테이블 ── */
   function buildSingleInfoTable(eq) {
     const rows = [
       ['장  비  명',  safeVal(eq.equipment_name),   '모  델  명',   safeVal(eq.model_name)],
       ['제  조  사',  safeVal(eq.manufacturer),     '시리얼번호',   safeVal(eq.serial_no)],
-      ['제 조 일 자', fmtDate(eq.manufacture_date), '취 득 일 자',  fmtDate(eq.purchase_date)],
-      ['구  매  처',  safeVal(eq.vendor),           '취 득 가 액',  fmtCost(eq.acquisition_cost)],
+      ['구  매  처',  safeVal(eq.vendor),           '취 득 일 자',  fmtDate(eq.purchase_date)],
       ['사 용 부 서', safeVal(eq.department),       '현재 상태',    statusLabel(eq.status)],
       ['담  당  자',  safeVal(eq.manager_name),     '담당자연락처', safeVal(eq.manager_phone)],
     ];
-    return rows.map(([l1, v1, l2, v2]) => `
+    const tableRows = rows.map(([l1, v1, l2, v2]) => `
       <tr>
         <th>${l1}</th><td>${v1}</td>
         <th>${l2}</th><td>${v2}</td>
       </tr>`).join('');
+
+    const dateRow = `
+      <tr>
+        <th>작 성 일 자</th>
+        <td colspan="3">
+          <input type="text" class="date-input" id="writtenDate" value="${todayLabel()}" />
+        </td>
+      </tr>`;
+
+    return tableRows + dateRow;
   }
 
   /* ── 다중 장비 목록 테이블 ── */
@@ -132,10 +149,22 @@
       font-size: 10pt; color: #1B4F8A; text-align: center;
       font-weight: bold; letter-spacing: 0.5px; background: #F0F4FA;
     }
+    .date-input {
+      border: none; border-bottom: 1.5px solid #2E75B6; outline: none;
+      font-family: 'Malgun Gothic', '맑은 고딕', 'NanumGothic', Arial, sans-serif;
+      font-size: 9.5pt; color: #1a1a2e; background: transparent;
+      width: 100%; padding: 2px 4px;
+    }
+    .date-input:focus { border-bottom-color: #1B4F8A; background: #f8fbff; }
     @media print {
       .print-btn { display: none !important; }
       .input-box {
         border: 1px solid #b0c4de !important; border-top: none !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+      .date-input {
+        border-bottom: 1px solid #b0c4de !important;
         background: #fff !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
