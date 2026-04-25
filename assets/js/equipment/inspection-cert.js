@@ -232,11 +232,11 @@
 
   <!-- 비고 / 특이사항 -->
   <div class="section-label">■ 비고 / 특이사항</div>
-  <textarea class="input-box" placeholder="비고 및 특이사항을 입력하세요..."></textarea>
+  <textarea class="input-box">특이사항 없음</textarea>
 
   <!-- 검수 확인 의견 -->
   <div class="section-label">■ 검수 확인 의견</div>
-  <textarea class="input-box" placeholder="검수 확인 의견을 입력하세요..."></textarea>
+  <textarea class="input-box">장비 정상 입고 확인</textarea>
 
   <!-- 인쇄 버튼 -->
   <button class="print-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
