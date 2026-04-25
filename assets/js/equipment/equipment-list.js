@@ -957,13 +957,10 @@ function updateLayoutOptions() {
   var size = sizeSelect.value;
   if (size === 'size-70x40') {
     layoutSelect.innerHTML =
-      '<option value="">단일 출력</option>' +
       '<option value="2x6">격자 — 2×6 (12칸)</option>';
   } else {
     layoutSelect.innerHTML =
-      '<option value="">단일 출력</option>' +
-      '<option value="2x5">격자 — 2×5 (10칸)</option>' +
-      '<option value="2x4">격자 — 2×4 (8칸)</option>';
+      '<option value="2x5">격자 — 2×5 (10칸)</option>';
   }
 }
 
@@ -996,7 +993,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 var GRID_SPECS_LIST = {
   '2x5': { cols: 2, rows: 5, colGap: '3mm', rowGap: '2mm', padT: '10mm', padS: '8mm' },
-  '2x4': { cols: 2, rows: 4, colGap: '3mm', rowGap: '5mm', padT: '15mm', padS: '8mm' },
   '2x6': { cols: 2, rows: 6, colGap: '3mm', rowGap: '1mm', padT: '7mm',  padS: '8mm' }
 };
 
