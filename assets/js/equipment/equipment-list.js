@@ -882,6 +882,16 @@ function initBulkLabelFeature() {
         );
 
         if (typeof generateInspectionCertPDF === 'function') {
+          // 구매처 동일 여부 체크
+          var vendors = [...new Set(items.map(function(e) { return String(e.vendor || '').trim(); }).filter(Boolean))];
+
+          if (vendors.length > 1) {
+            alert('⚠️ 선택한 장비의 구매처가 다릅니다.\n\n' +
+              vendors.join(', ') +
+              '\n\n검수확인서는 구매처가 동일한 장비만 함께 출력할 수 있습니다.');
+            return;
+          }
+
           generateInspectionCertPDF(items);
         }
       } catch (error) {
