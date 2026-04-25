@@ -999,7 +999,7 @@ var GRID_SPECS_LIST = {
   '2x5': { cols: 2, rows: 5, colGap: '3mm', rowGap: '2mm', padT: '10mm', padS: '8mm' },
   '2x4': { cols: 2, rows: 4, colGap: '3mm', rowGap: '5mm', padT: '15mm', padS: '8mm' },
   '2x6': { cols: 2, rows: 6, colGap: '3mm', rowGap: '1mm', padT: '7mm',  padS: '8mm' },
-  '3x6': { cols: 3, rows: 6, colGap: '2mm', rowGap: '1mm', padT: '7mm',  padS: '4mm' }
+  '3x6': { cols: 3, rows: 6, colGap: '0mm', rowGap: '1mm', padT: '7mm',  padS: '0mm' }
 };
 
 function buildLabelHtmlForList(item, sizeClass, qrId) {
