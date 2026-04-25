@@ -30,12 +30,12 @@
 
   function buildCertHTML(eq) {
     const rows = [
-      ['장  비  명',  safeVal(eq.equipment_name),       '모  델  명',  safeVal(eq.model_name)],
-      ['제  조  사',  safeVal(eq.manufacturer),         '시리얼번호',  safeVal(eq.serial_no)],
-      ['제 조 일 자', fmtDate(eq.manufacture_date),     '취 득 일 자', fmtDate(eq.purchase_date)],
-      ['구  매  처',  safeVal(eq.vendor),               '취 득 가 액', fmtCost(eq.acquisition_cost)],
-      ['사 용 부 서', safeVal(eq.department),           '현재 상태',   statusLabel(eq.status)],
-      ['담  당  자',  safeVal(eq.manager_name),         '담당자연락처', safeVal(eq.manager_phone)],
+      ['장  비  명',  safeVal(eq.equipment_name),   '모  델  명',   safeVal(eq.model_name)],
+      ['제  조  사',  safeVal(eq.manufacturer),     '시리얼번호',   safeVal(eq.serial_no)],
+      ['제 조 일 자', fmtDate(eq.manufacture_date), '취 득 일 자',  fmtDate(eq.purchase_date)],
+      ['구  매  처',  safeVal(eq.vendor),           '취 득 가 액',  fmtCost(eq.acquisition_cost)],
+      ['사 용 부 서', safeVal(eq.department),       '현재 상태',    statusLabel(eq.status)],
+      ['담  당  자',  safeVal(eq.manager_name),     '담당자연락처', safeVal(eq.manager_phone)],
     ];
 
     const tableRows = rows.map(([l1, v1, l2, v2]) => `
@@ -112,13 +112,42 @@
       background: #fff;
     }
 
-    /* ── 빈칸 박스 ── */
-    .blank-box {
-      border: 1px solid #b0c4de;
+    /* ── textarea ── */
+    .input-box {
+      width: 100%;
       height: 90px;
-      background: #fff;
+      border: 1px solid #b0c4de;
+      border-top: none;
+      padding: 8px 10px;
+      font-family: 'Malgun Gothic', '맑은 고딕', 'NanumGothic', Arial, sans-serif;
+      font-size: 9.5pt;
+      color: #1a1a2e;
+      resize: none;
+      outline: none;
       margin-bottom: 16px;
+      display: block;
+      background: #fff;
     }
+    .input-box:focus {
+      border-color: #2E75B6;
+      background: #f8fbff;
+    }
+
+    /* ── 인쇄 버튼 ── */
+    .print-btn {
+      display: block;
+      margin: 16px auto 20px;
+      padding: 9px 32px;
+      background: #1B4F8A;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 10pt;
+      font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    .print-btn:hover { background: #2E75B6; }
 
     /* ── 서명란 ── */
     .sign-section {
@@ -158,6 +187,34 @@
       letter-spacing: 0.5px;
       background: #F0F4FA;
     }
+
+    /* ── 인쇄 시 ── */
+    @media print {
+      .print-btn { display: none !important; }
+      .input-box {
+        border: 1px solid #b0c4de !important;
+        border-top: none !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .info-table th {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .section-label {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .sign-box-title {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .confirm-statement {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
   </style>
 </head>
 <body>
@@ -175,11 +232,14 @@
 
   <!-- 비고 / 특이사항 -->
   <div class="section-label">■ 비고 / 특이사항</div>
-  <div class="blank-box"></div>
+  <textarea class="input-box" placeholder="비고 및 특이사항을 입력하세요..."></textarea>
 
   <!-- 검수 확인 의견 -->
   <div class="section-label">■ 검수 확인 의견</div>
-  <div class="blank-box"></div>
+  <textarea class="input-box" placeholder="검수 확인 의견을 입력하세요..."></textarea>
+
+  <!-- 인쇄 버튼 -->
+  <button class="print-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
 
   <!-- 서명란 -->
   <div class="sign-section">
@@ -219,13 +279,6 @@
     win.document.open();
     win.document.write(html);
     win.document.close();
-
-    win.addEventListener('load', function () {
-      setTimeout(function () {
-        win.focus();
-        win.print();
-      }, 300);
-    });
   }
 
   window.generateInspectionCertPDF = generateInspectionCertPDF;
