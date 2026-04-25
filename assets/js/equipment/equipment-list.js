@@ -945,7 +945,7 @@ function updateBulkUI() {
   if (sizeSelect)   sizeSelect.style.display   = count > 0 ? '' : 'none';
   if (layoutSelect) layoutSelect.style.display = count > 0 ? '' : 'none';
   if (countEl)      countEl.textContent        = count;
-  if (certBtn)      certBtn.style.display      = count > 0 ? '' : 'none';
+  if (certBtn)      certBtn.style.display      = (count > 0 && equipmentListState.isAdmin) ? '' : 'none';
   if (certCountEl)  certCountEl.textContent    = count;
 }
 
