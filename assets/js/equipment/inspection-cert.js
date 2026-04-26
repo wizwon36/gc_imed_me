@@ -42,8 +42,7 @@
       ['장  비  명',  safeVal(eq.equipment_name),   '모  델  명',   safeVal(eq.model_name)],
       ['제  조  사',  safeVal(eq.manufacturer),     '시리얼번호',   safeVal(eq.serial_no)],
       ['구  매  처',  safeVal(eq.vendor),           '취 득 일 자',  fmtDate(eq.purchase_date)],
-      ['사 용 부 서', safeVal(eq.department),       '현재 상태',    statusLabel(eq.status)],
-      ['담  당  자',  safeVal(eq.manager_name),     '담당자연락처', safeVal(eq.manager_phone)],
+      ['사 용 부 서', safeVal(eq.department),       '담  당  자',   safeVal(eq.manager_name)],
     ];
     const tableRows = rows.map(([l1, v1, l2, v2]) => `
       <tr>
@@ -73,7 +72,6 @@
         <th style="text-align:center;">시리얼번호</th>
         <th style="text-align:center;">취득일자</th>
         <th style="text-align:center;">취득가액</th>
-        <th style="text-align:center;">상태</th>
       </tr>`;
     const dataRows = eqList.map((eq, i) => `
       <tr>
@@ -84,7 +82,6 @@
         <td>${safeVal(eq.serial_no)}</td>
         <td style="text-align:center;">${fmtDate(eq.purchase_date)}</td>
         <td style="text-align:right;">${fmtCost(eq.acquisition_cost)}</td>
-        <td style="text-align:center;">${statusLabel(eq.status)}</td>
       </tr>`).join('');
     return headerRow + dataRows;
   }
@@ -270,7 +267,6 @@
       vendor:           first.vendor,
       acquisition_cost: totalCost > 0 ? totalCost : '',
       department:       deptDisplay,
-      status:           first.status,
       manager_name:     first.manager_name,
       manager_phone:    first.manager_phone,
     };
