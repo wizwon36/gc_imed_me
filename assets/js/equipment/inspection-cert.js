@@ -42,18 +42,14 @@
       ['장  비  명',  safeVal(eq.equipment_name),   '모  델  명',   safeVal(eq.model_name)],
       ['제  조  사',  safeVal(eq.manufacturer),     '시리얼번호',   safeVal(eq.serial_no)],
       ['구  매  처',  safeVal(eq.vendor),           '취 득 일 자',  fmtDate(eq.purchase_date)],
-      ['사 용 부 서', safeVal(eq.department),       '담  당  자',   safeVal(eq.manager_name)],
     ];
-    return rows.map(([l1, v1, l2, v2]) => `
+    const tableRows = rows.map(([l1, v1, l2, v2]) => `
       <tr>
         <th>${l1}</th><td>${v1}</td>
         <th>${l2}</th><td>${v2}</td>
       </tr>`).join('');
-  }
 
-  function buildWrittenDateRow(eq) {
-    const val = eq.purchase_date ? fmtDate(eq.purchase_date) : todayLabel();
-    return `<input type="text" class="date-input" id="writtenDate" value="${val}" />`;
+    return tableRows;
   }
 
   /* ── 다중 장비 목록 테이블 ── */
@@ -149,12 +145,10 @@
     }
     .date-input:focus { border-bottom-color: #1B4F8A; background: #f8fbff; }
     .written-date-wrap {
-      margin-top: 14px; display: flex; align-items: center; gap: 12px;
-      justify-content: flex-end;
+      margin-top: 14px; display: flex; align-items: center;
+      gap: 12px; justify-content: flex-end;
     }
-    .written-date-label {
-      font-size: 9.5pt; font-weight: bold; color: #1B4F8A; white-space: nowrap;
-    }
+    .written-date-label { font-size: 9.5pt; font-weight: bold; color: #1B4F8A; white-space: nowrap; }
     .written-date-wrap .date-input { width: 160px; }
     @media print {
       .print-btn { display: none !important; }
@@ -172,6 +166,11 @@
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
     }`;
+  }
+
+  function buildWrittenDateInput(eq) {
+    const val = eq.purchase_date ? fmtDate(eq.purchase_date) : todayLabel();
+    return '<input type="text" class="date-input" id="writtenDate" value="' + val + '" />';
   }
 
   /* ── 단일 장비 HTML ── */
@@ -209,9 +208,13 @@
   </div>
   <div class="written-date-wrap">
     <span class="written-date-label">작 성 일 자</span>
-    ${buildWrittenDateRow(eq)}
+    ${buildWrittenDateInput(eq)}
   </div>
-</body> */
+</body>
+</html>`;
+  }
+
+  /* ── 다중 장비 → 단일 양식용 합성 객체 생성 ── */
   function mergeEquipmentList(eqList) {
     const first = eqList[0];
     const count = eqList.length;
@@ -312,7 +315,7 @@
   </div>
   <div class="written-date-wrap">
     <span class="written-date-label">작 성 일 자</span>
-    ${buildWrittenDateRow(merged)}
+    ${buildWrittenDateInput(merged)}
   </div>
 </body>
 </html>`;
