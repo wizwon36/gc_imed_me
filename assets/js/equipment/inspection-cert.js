@@ -146,10 +146,10 @@
     .date-input:focus { border-bottom-color: #1B4F8A; background: #f8fbff; }
     .written-date-wrap {
       margin-top: 14px; display: flex; align-items: center;
-      gap: 12px; justify-content: flex-end;
+      gap: 12px; justify-content: center;
     }
-    .written-date-label { font-size: 9.5pt; font-weight: bold; color: #1B4F8A; white-space: nowrap; }
-    .written-date-wrap .date-input { width: 160px; }
+    .written-date-label { font-size: 11pt; font-weight: bold; color: #1B4F8A; white-space: nowrap; }
+    .written-date-wrap .date-input { width: 200px; font-size: 11pt; text-align: center; }
     @media print {
       .print-btn { display: none !important; }
       .input-box {
@@ -158,7 +158,8 @@
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
       .date-input {
-        border-bottom: 1px solid #b0c4de !important;
+        border: none !important;
+        border-bottom: none !important;
         background: #fff !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
