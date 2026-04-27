@@ -577,6 +577,7 @@
   /* 모바일: KPI + dots + 카드가 화면을 꽉 채우도록 */
   .dashboard-page {
     padding-bottom: 0;
+    overflow: hidden;
   }
 
   .dashboard-page .dashboard-page-shell {
