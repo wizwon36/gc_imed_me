@@ -168,6 +168,7 @@
   width: 100%;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
   background: #f7f9fd;
   border-top: 1.5px solid #e0e7f2;
   border-bottom: 1.5px solid #e0e7f2;
@@ -499,8 +500,28 @@
   border-radius: 999px;
 }
 
-/* ── 패널 내부 테이블 그리드 ── */
-.dash-tbl {
+/* ── 단일 테이블 sticky thead 방식 ── */
+.dash-tbl--scroll {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.dash-tbl-thead-sticky th {
+  position: sticky;
+  top: 0;
+  background: #f7f9fd;
+  border-bottom: 1.5px solid #e0e7f2;
+  z-index: 2;
+  padding: 9px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #3d5068;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
