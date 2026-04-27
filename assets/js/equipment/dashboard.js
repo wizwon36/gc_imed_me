@@ -181,6 +181,55 @@ function applyDashboardPermissionUi() {
   if (createActionBar) {
     createActionBar.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
   }
+
+  // ── 의원별 조회 접근 제한 ──
+  // 서울숲의원 외 의원은 조회/목록 버튼 비활성화
+  const user = window.auth?.getSession?.() || null;
+  const clinicAllowed = isEquipmentClinicAllowed(user);
+
+  if (!clinicAllowed) {
+    const BLOCK_MSG = '현재 의료장비 관리는 서울숲의원만 사용 가능합니다.\n다른 의원은 순차적으로 오픈될 예정입니다.';
+
+    // 장비목록 (헤더 nav)
+    const navList = dq('a[href="list.html"].portal-header-btn');
+    if (navList) {
+      navList.removeAttribute('href');
+      navList.style.opacity = '0.4';
+      navList.style.cursor = 'not-allowed';
+      navList.style.pointerEvents = 'none';
+    }
+
+    // 장비 조회 (PC 액션바)
+    const listActionBar = dq('#dashboardActionBarList');
+    if (listActionBar) {
+      listActionBar.removeAttribute('href');
+      listActionBar.style.opacity = '0.4';
+      listActionBar.style.cursor = 'not-allowed';
+      listActionBar.style.pointerEvents = 'none';
+      listActionBar.addEventListener('click', function(e) {
+        e.preventDefault();
+        alert(BLOCK_MSG);
+      });
+    }
+
+    // 장비 조회 (모바일 액션카드)
+    const listActionCard = dq('#dashboardActionCardList');
+    if (listActionCard) {
+      listActionCard.removeAttribute('href');
+      listActionCard.style.opacity = '0.4';
+      listActionCard.style.cursor = 'not-allowed';
+      listActionCard.style.pointerEvents = 'none';
+      listActionCard.addEventListener('click', function(e) {
+        e.preventDefault();
+        alert(BLOCK_MSG);
+      });
+    }
+
+    // 안내 메시지 표시
+    if (typeof showMessage === 'function') {
+      showMessage('현재 의료장비 관리는 서울숲의원만 사용 가능합니다. 다른 의원은 순차적으로 오픈될 예정입니다.', 'info');
+    }
+  }
 }
 
 function renderDashboardSkeleton() {
