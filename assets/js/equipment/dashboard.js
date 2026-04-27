@@ -53,11 +53,9 @@ function getDashboardSessionCache() {
   try {
     const raw = sessionStorage.getItem(DASHBOARD_SESSION_KEY);
     if (!raw) return null;
-
     const parsed = JSON.parse(raw);
     if (!parsed || !parsed.savedAt) return null;
     if (Date.now() - parsed.savedAt > DASHBOARD_SESSION_TTL) return null;
-
     return parsed.data || null;
   } catch (error) {
     return null;
@@ -66,20 +64,12 @@ function getDashboardSessionCache() {
 
 function setDashboardSessionCache(data) {
   try {
-    sessionStorage.setItem(
-      DASHBOARD_SESSION_KEY,
-      JSON.stringify({
-        savedAt: Date.now(),
-        data
-      })
-    );
+    sessionStorage.setItem(DASHBOARD_SESSION_KEY, JSON.stringify({ savedAt: Date.now(), data }));
   } catch (error) {}
 }
 
 function invalidateDashboardSessionCache() {
-  try {
-    sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
-  } catch (error) {}
+  try { sessionStorage.removeItem(DASHBOARD_SESSION_KEY); } catch (error) {}
 }
 
 window.invalidateDashboardSessionCache = invalidateDashboardSessionCache;
@@ -88,11 +78,9 @@ function getDashboardPermissionCache() {
   try {
     const raw = sessionStorage.getItem(DASHBOARD_PERMISSION_CACHE_KEY);
     if (!raw) return null;
-
     const parsed = JSON.parse(raw);
     if (!parsed || !parsed.savedAt) return null;
     if (Date.now() - parsed.savedAt > DASHBOARD_PERMISSION_CACHE_TTL) return null;
-
     return parsed.data || null;
   } catch (error) {
     return null;
@@ -101,34 +89,21 @@ function getDashboardPermissionCache() {
 
 function setDashboardPermissionCache(data) {
   try {
-    sessionStorage.setItem(
-      DASHBOARD_PERMISSION_CACHE_KEY,
-      JSON.stringify({
-        savedAt: Date.now(),
-        data
-      })
-    );
+    sessionStorage.setItem(DASHBOARD_PERMISSION_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), data }));
   } catch (error) {}
 }
 
 function invalidateDashboardPermissionCache() {
-  try {
-    sessionStorage.removeItem(DASHBOARD_PERMISSION_CACHE_KEY);
-  } catch (error) {}
+  try { sessionStorage.removeItem(DASHBOARD_PERMISSION_CACHE_KEY); } catch (error) {}
 }
 
 async function getEquipmentPermissionContext() {
   const user = window.auth?.getSession?.() || null;
   const userEmail = getCurrentUserEmail();
-
-  if (!user || !userEmail) {
-    return { canView: false, canEdit: false, canDelete: false };
-  }
+  if (!user || !userEmail) return { canView: false, canEdit: false, canDelete: false };
 
   const cached = getDashboardPermissionCache();
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
 
   const role = String(user.role || '').trim().toLowerCase();
   if (role === 'admin') {
@@ -143,15 +118,12 @@ async function getEquipmentPermissionContext() {
       app_id: 'equipment',
       request_user_email: userEmail
     });
-
     const permission = String(result?.data?.permission || '').trim().toLowerCase();
-
     const normalized = {
       canView: ['view', 'edit', 'admin'].includes(permission),
       canEdit: ['edit', 'admin'].includes(permission),
       canDelete: false
     };
-
     setDashboardPermissionCache(normalized);
     return normalized;
   } catch (error) {
@@ -164,7 +136,6 @@ function applyDashboardPermissionUi() {
   if (createAction) {
     createAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
   }
-
   const exportAction = dq('#dashboardExportBtn');
   if (exportAction) {
     exportAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
@@ -180,19 +151,115 @@ function renderDashboardSkeleton() {
   });
 }
 
+/* ─────────────────────────────────────────
+   KPI
+───────────────────────────────────────── */
 function renderKpis(summary) {
   const kpis = summary?.kpis || {};
-  if (dq('#totalCount')) dq('#totalCount').textContent = formatNumberLocal(kpis.total || 0);
-  if (dq('#inUseCount')) dq('#inUseCount').textContent = formatNumberLocal(kpis.in_use || 0);
+  if (dq('#totalCount'))     dq('#totalCount').textContent     = formatNumberLocal(kpis.total || 0);
+  if (dq('#inUseCount'))     dq('#inUseCount').textContent     = formatNumberLocal(kpis.in_use || 0);
   if (dq('#repairingCount')) dq('#repairingCount').textContent = formatNumberLocal(kpis.repairing || 0);
-  if (dq('#inspectingCount')) dq('#inspectingCount').textContent = formatNumberLocal(kpis.inspecting || 0);
-  if (dq('#recentRepairCount')) dq('#recentRepairCount').textContent = formatNumberLocal(kpis.recent_repairs || 0);
-  if (dq('#recentRegisterCount')) dq('#recentRegisterCount').textContent = formatNumberLocal(kpis.recent_registrations || 0);
+  if (dq('#inspectingCount'))dq('#inspectingCount').textContent= formatNumberLocal(kpis.inspecting || 0);
 }
 
-function renderRecordList(containerSelector, emptySelector, items, options) {
-  const container = dq(containerSelector);
-  const emptyEl = dq(emptySelector);
+/* ─────────────────────────────────────────
+   패널 0: 부서별 장비 현황 — C형 인라인 막대
+   (바 안에 대수+비율 인라인 표시)
+───────────────────────────────────────── */
+function renderDeptChart(data) {
+  const wrap  = document.getElementById('deptChartWrap');
+  const empty = document.getElementById('deptChartEmpty');
+  if (!wrap) return;
+
+  if (!data || data.length === 0) {
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+  const total = data.reduce((s, d) => s + Number(d.count || 0), 0);
+  if (total === 0) { if (empty) empty.style.display = ''; return; }
+
+  const rows = data.map(function (d, i) {
+    const count  = Number(d.count || 0);
+    const pct    = Math.round((count / total) * 100);
+    const color  = COLORS[i % COLORS.length];
+    const name   = textSafe(d.department_display || d.department || '-');
+    const barPct = Math.max(pct, 6);
+
+    return `
+      <div class="dept-cbar-row">
+        <div class="dept-cbar-label" title="${name}">${name}</div>
+        <div class="dept-cbar-track">
+          <div class="dept-cbar-fill" style="width:${barPct}%;background:${color};">
+            <span class="dept-cbar-inline">${count}대 &nbsp;${pct}%</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = `<div class="dept-cbar-list">${rows}</div>`;
+}
+
+/* ─────────────────────────────────────────
+   패널 1: 부서별 상태 현황 — 히트맵
+───────────────────────────────────────── */
+function renderHeatmap(data) {
+  const wrap  = document.getElementById('heatmapWrap');
+  const empty = document.getElementById('heatmapEmpty');
+  if (!wrap) return;
+
+  if (!data || data.length === 0) {
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const STATUS_COLS = [
+    { key: 'in_use',     label: '사용중', bg: '#dbeafe', text: '#1d4ed8', emptyBg: '#f8fafc' },
+    { key: 'repairing',  label: '수리중', bg: '#fee2e2', text: '#dc2626', emptyBg: '#f8fafc' },
+    { key: 'inspecting', label: '점검중', bg: '#fef9c3', text: '#ca8a04', emptyBg: '#f8fafc' },
+    { key: 'stored',     label: '보관',   bg: '#dcfce7', text: '#16a34a', emptyBg: '#f8fafc' }
+  ];
+
+  const headerCells = STATUS_COLS.map(function (col) {
+    return `<div class="hm-th">${col.label}</div>`;
+  }).join('');
+
+  const dataRows = data.map(function (dept) {
+    const name = textSafe(dept.department_display || dept.department || '-');
+    const cells = STATUS_COLS.map(function (col) {
+      const val = Number(dept[col.key] || 0);
+      if (val === 0) {
+        return `<div class="hm-cell hm-cell--empty">—</div>`;
+      }
+      return `<div class="hm-cell" style="background:${col.bg};color:${col.text};">${val}</div>`;
+    }).join('');
+
+    return `
+      <div class="hm-row">
+        <div class="hm-dept" title="${name}">${name}</div>
+        ${cells}
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="hm-table">
+      <div class="hm-header-row">
+        <div class="hm-dept-th"></div>
+        ${headerCells}
+      </div>
+      ${dataRows}
+    </div>`;
+}
+
+/* ─────────────────────────────────────────
+   패널 3: 유지보수 만료 예정 — D-Day 게이지
+───────────────────────────────────────── */
+function renderMaintenanceAlerts(items) {
+  const container = dq('#maintenanceAlertList');
+  const emptyEl   = dq('#maintenanceAlertEmpty');
   if (!container) return;
 
   const list = Array.isArray(items) ? items : [];
@@ -206,276 +273,144 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   container.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
 
-  const hasSide = typeof options.sideRenderer === 'function';
-  const showDept = options.showDept !== false;
-  const showDate = options.showDate !== false;
-  const showStatus = options.showStatus === true;
-
   const rows = list.map(function (item) {
-    const title = textSafe(item.equipment_name || '-');
-    const dateText = textSafe(formatDisplayDate(item[options.dateField]));
-    const model = textSafe(item.model_name || '-');
-    const deptRaw = item.department_display || item.department || '-';
-    const dept = textSafe(deptRaw);
-    const deptMobile = dept.replace(' / ', '<br>');
-    const id = encodeURIComponent(item.equipment_id || '');
+    const dday     = Number(item.dday || 0);
+    const isOver   = dday < 0;
+    const isUrgent = !isOver && dday <= 14;
+    const isWarn   = !isOver && dday <= 30;
 
-    let sideHtml = '';
-    if (hasSide) {
-      sideHtml = `<td class="dash-tbl-cell dash-tbl-cell--side">${options.sideRenderer(item) || ''}</td>`;
-    }
+    const ddayText = isOver ? `D+${Math.abs(dday)}` : dday === 0 ? 'D-DAY' : `D-${dday}`;
+    const badgeCls = isOver ? 'maint-badge maint-badge--over'
+                   : isUrgent ? 'maint-badge maint-badge--urgent'
+                   : isWarn   ? 'maint-badge maint-badge--warn'
+                   : 'maint-badge maint-badge--normal';
 
-    let statusHtml = '';
-    if (showStatus) {
-      const st = item.status || '';
-      const stLabel = st === 'IN_USE' ? '사용중'
-        : st === 'REPAIRING' ? '수리중'
-        : st === 'INSPECTING' ? '점검중'
-        : st === 'STORED' ? '보관'
-        : st === 'DISPOSED' ? '폐기' : (st || '-');
-      const stClass = st === 'IN_USE' ? 'status-badge is-in-use'
-        : st === 'REPAIRING' ? 'status-badge is-repairing'
-        : st === 'INSPECTING' ? 'status-badge is-inspecting'
-        : st === 'STORED' ? 'status-badge is-stored'
-        : st === 'DISPOSED' ? 'status-badge is-disposed' : 'status-badge';
-      statusHtml = `<td class="dash-tbl-cell dash-tbl-cell--status"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
+    const gaugePct = isOver ? 100
+                   : Math.round(Math.max(0, Math.min(100, (1 - dday / 60) * 100)));
+    const gaugeColor = isOver ? '#dc2626' : isUrgent ? '#dc2626' : isWarn ? '#d97706' : '#16a34a';
+
+    const name  = textSafe(item.equipment_name || '-');
+    const model = textSafe(item.model_name || '');
+    const dept  = textSafe(item.department_display || item.department || '');
+    const id    = encodeURIComponent(item.equipment_id || '');
+
+    return `
+      <div class="maint-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
+        <div class="maint-info">
+          <div class="maint-name">${name}</div>
+          <div class="maint-sub">${model}${dept ? ' · ' + dept : ''}</div>
+          <div class="maint-gauge-track">
+            <div class="maint-gauge-fill" style="width:${gaugePct}%;background:${gaugeColor};"></div>
+          </div>
+        </div>
+        <div class="${badgeCls}">${ddayText}</div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="maint-list">${rows}</div>`;
+}
+
+/* ─────────────────────────────────────────
+   패널 4·5: 수리·등록 장비 — 타임라인
+───────────────────────────────────────── */
+function renderTimeline(containerSelector, emptySelector, items, options) {
+  const container = dq(containerSelector);
+  const emptyEl   = dq(emptySelector);
+  if (!container) return;
+
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+
+  container.style.display = 'block';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const STATUS_MAP = {
+    IN_USE: { label: '사용중', cls: 'tl-badge--use' },
+    REPAIRING: { label: '수리중', cls: 'tl-badge--repair' },
+    INSPECTING: { label: '점검중', cls: 'tl-badge--inspect' },
+    STORED: { label: '보관', cls: 'tl-badge--stored' },
+    DISPOSED: { label: '폐기', cls: 'tl-badge--disposed' }
+  };
+
+  const rows = list.map(function (item, idx) {
+    const name  = textSafe(item.equipment_name || '-');
+    const model = textSafe(item.model_name || '');
+    const dept  = textSafe(item.department_display || item.department || '');
+    const date  = textSafe(formatDisplayDate(item[options.dateField]));
+    const id    = encodeURIComponent(item.equipment_id || '');
+    const isLast = idx === list.length - 1;
+
+    let badgeHtml = '';
+    if (options.showStatus && item.status) {
+      const st = STATUS_MAP[item.status] || { label: item.status, cls: '' };
+      badgeHtml = `<span class="tl-badge ${st.cls}">${textSafe(st.label)}</span>`;
     }
 
     return `
-      <tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
-        <td class="dash-tbl-cell dash-tbl-cell--name">
-          <div class="dash-tbl-name">${title}</div>
-          <div class="dash-tbl-sub">${model}</div>
-        </td>
-        ${showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept">
-          <span class="dept-pc">${dept}</span>
-          <span class="dept-mobile">${deptMobile}</span>
-        </td>` : ''}
-        ${showDate ? `<td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>` : ''}
-        ${statusHtml}
-        ${sideHtml}
-      </tr>
-    `;
+      <div class="tl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
+        <div class="tl-line-wrap">
+          <div class="tl-dot"></div>
+          ${isLast ? '' : '<div class="tl-connector"></div>'}
+        </div>
+        <div class="tl-body">
+          <div class="tl-top">
+            <span class="tl-name">${name}</span>
+            ${badgeHtml}
+          </div>
+          <div class="tl-meta">
+            ${model ? `<span>${model}</span>` : ''}
+            ${dept  ? `<span>${dept}</span>`  : ''}
+            <span class="tl-date">${date}</span>
+          </div>
+        </div>
+      </div>`;
   }).join('');
 
-  const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
-  const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
-  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
-  const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
-
-  container.innerHTML = `
-    <table class="dash-tbl">
-      <thead>
-        <tr>
-          <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-          ${deptHeader}
-          ${dateHeader}
-          ${statusHeader}
-          ${sideHeader}
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-}
-
-function renderMaintenanceAlerts(items) {
-  renderRecordList('#maintenanceAlertList', '#maintenanceAlertEmpty', items, {
-    dateField: 'maintenance_end_date',
-    dateLabel: '',
-    showDept: true,
-    showDate: false,   // 날짜 제거 — D-Day 뱃지로 충분
-    sideRenderer: function (item) {
-      const dday = Number(item.dday || 0);
-      const ddayText =
-        dday < 0 ? `D+${Math.abs(dday)}`
-        : dday === 0 ? 'D-DAY'
-        : `D-${dday}`;
-
-      const badgeClass =
-        dday < 0
-          ? 'dashboard-dday-badge is-overdue'
-          : dday <= 30
-          ? 'dashboard-dday-badge'
-          : 'dashboard-dday-badge is-normal';
-
-      return `
-        <div class="dashboard-record-side">
-          <span class="${badgeClass}">${textSafe(ddayText)}</span>
-        </div>
-      `;
-    }
-  });
+  container.innerHTML = `<div class="tl-list">${rows}</div>`;
 }
 
 function renderRecentRepairList(items) {
-  renderRecordList('#recentRepairList', '#recentRepairEmpty', items, {
+  renderTimeline('#recentRepairList', '#recentRepairEmpty', items, {
     dateField: 'work_date',
-    dateLabel: '수리일',
-    showDept: false,
-    showDate: true,
     showStatus: true
   });
 }
 
 function renderRecentRegisteredList(items) {
-  renderRecordList('#recentRegisteredList', '#recentRegisteredEmpty', items, {
+  renderTimeline('#recentRegisteredList', '#recentRegisteredEmpty', items, {
     dateField: 'created_at',
-    dateLabel: '등록일',
-    showDept: false,   // 부서 제거 — 공간 확보
-    showDate: true
+    showStatus: false
   });
 }
 
+/* ─────────────────────────────────────────
+   전체 렌더
+───────────────────────────────────────── */
 function renderDashboardData(summary) {
   renderKpis(summary || {});
+  renderDeptChart(summary?.department_summary || []);
+  renderHeatmap(summary?.department_summary || []);
   renderMaintenanceAlerts(summary?.maintenance_alerts || []);
   renderRecentRepairList(summary?.recent_repairs || []);
   renderRecentRegisteredList(summary?.recent_registrations || []);
-  renderDeptChart(summary?.department_summary || []);
-  renderStatusChart(summary?.kpis || {});
 }
 
 async function fetchDashboardData() {
   const userEmail = getCurrentUserEmail();
-
   const summaryResult = await apiGet('getEquipmentDashboardSummary', {
     request_user_email: userEmail
   });
-
-  return {
-    summary: summaryResult?.data || {}
-  };
+  return { summary: summaryResult?.data || {} };
 }
 
-function renderDeptChart(data) {
-  const wrap = document.getElementById('deptChartWrap');
-  const empty = document.getElementById('deptChartEmpty');
-  if (!wrap) return;
-
-  if (!data || data.length === 0) {
-    if (empty) empty.style.display = '';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-
-  const COLORS = [
-    '#3b82f6','#10b981','#f59e0b','#ef4444',
-    '#8b5cf6','#06b6d4','#f97316','#84cc16'
-  ];
-
-  const total = data.reduce((s, d) => s + Number(d.count || 0), 0);
-  if (total === 0) { if (empty) empty.style.display = ''; return; }
-
-  const maxCount = Math.max(...data.map(d => Number(d.count || 0)));
-
-  const barRows = data.map((d, i) => {
-    const count = Number(d.count || 0);
-    const pct   = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
-    const color = COLORS[i % COLORS.length];
-    const name  = textSafe(d.department_display || d.department || '-');
-    return `
-      <div class="dept-bar-row">
-        <div class="dept-bar-label" title="${name}">${name}</div>
-        <div class="dept-bar-track">
-          <div class="dept-bar-fill" style="width:${pct}%;background:${color};"></div>
-        </div>
-        <div class="dept-bar-count">${count}</div>
-      </div>`;
-  }).join('');
-
-  wrap.innerHTML = `<div class="dept-bar-list">${barRows}</div>`;
-}
-
-function renderStatusChart(kpis) {
-  const wrap  = document.getElementById('statusChartWrap');
-  const empty = document.getElementById('statusChartEmpty');
-  if (!wrap) return;
-
-  const STATUS_ITEMS = [
-    { key: 'in_use',      label: '사용중', color: '#3b82f6' },
-    { key: 'repairing',   label: '수리중', color: '#ef4444' },
-    { key: 'inspecting',  label: '점검중', color: '#f59e0b' },
-    { key: 'stored',      label: '보관',   color: '#10b981' },
-    { key: 'disposed',    label: '폐기',   color: '#94a3b8' }
-  ];
-
-  const data = STATUS_ITEMS.map(s => ({
-    ...s,
-    count: Number(kpis?.[s.key] || 0)
-  })).filter(s => s.count > 0);
-
-  if (data.length === 0) {
-    if (empty) empty.style.display = '';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-
-  const total = data.reduce((s, d) => s + d.count, 0);
-  if (total === 0) { if (empty) empty.style.display = ''; return; }
-
-  const R = 58, r = 36, CX = 74, CY = 74;
-
-  function polarToXY(cx, cy, radius, angleDeg) {
-    const rad = (angleDeg - 90) * Math.PI / 180;
-    return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
-  }
-
-  function slicePath(cx, cy, outerR, innerR, startDeg, endDeg) {
-    const o1 = polarToXY(cx, cy, outerR, startDeg);
-    const o2 = polarToXY(cx, cy, outerR, endDeg);
-    const i1 = polarToXY(cx, cy, innerR, endDeg);
-    const i2 = polarToXY(cx, cy, innerR, startDeg);
-    const large = (endDeg - startDeg) > 180 ? 1 : 0;
-    return [
-      `M ${o1.x} ${o1.y}`,
-      `A ${outerR} ${outerR} 0 ${large} 1 ${o2.x} ${o2.y}`,
-      `L ${i1.x} ${i1.y}`,
-      `A ${innerR} ${innerR} 0 ${large} 0 ${i2.x} ${i2.y}`,
-      'Z'
-    ].join(' ');
-  }
-
-  let deg = 0;
-  const slices = data.map((d, i) => {
-    const sweep = (d.count / total) * 360;
-    const start = deg;
-    const end   = deg + sweep - 0.4;
-    deg += sweep;
-    return { ...d, start, end };
-  });
-
-  const svgSlices = slices.map((s, i) => `
-    <path class="status-donut-slice" d="${slicePath(CX, CY, R, r, s.start, s.end)}"
-      fill="${s.color}" style="animation-delay:${i * 60}ms"/>`
-  ).join('');
-
-  const legendItems = slices.map(s => {
-    const pct = Math.round((s.count / total) * 100);
-    return `
-      <div class="status-legend-item">
-        <span class="status-legend-dot" style="background:${s.color};"></span>
-        <span class="status-legend-label">${textSafe(s.label)}</span>
-        <span class="status-legend-count">${s.count}</span>
-        <span class="status-legend-pct">${pct}%</span>
-      </div>`;
-  }).join('');
-
-  wrap.innerHTML = `
-    <div class="status-donut-inner">
-      <div class="status-donut-left">
-        <div class="status-donut-svg-wrap">
-          <svg viewBox="0 0 148 148" xmlns="http://www.w3.org/2000/svg" class="status-donut-svg">
-            ${svgSlices}
-            <text x="${CX}" y="${CY - 8}" class="status-donut-center-label">전체</text>
-            <text x="${CX}" y="${CY + 15}" class="status-donut-center-value">${total}</text>
-          </svg>
-        </div>
-      </div>
-      <div class="status-legend">${legendItems}</div>
-    </div>`;
-}
-
+/* ─────────────────────────────────────────
+   모바일 캐러셀
+───────────────────────────────────────── */
 function initPanelCarousel() {
   const scrollEl = dq('#dashboardPanelsScroll');
   const dotsWrap = dq('#dashboardPanelDots');
@@ -493,18 +428,13 @@ function initPanelCarousel() {
     const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
     const grid = scrollEl.querySelector('.dashboard-panels-grid');
     if (!firstCard || !grid) return 1;
-
     const styles = window.getComputedStyle(grid);
     const gap = parseFloat(styles.columnGap || styles.gap || 0);
     return firstCard.offsetWidth + gap;
   }
 
   function updateActiveByScroll() {
-    if (window.innerWidth > 768) {
-      setActive(0);
-      return;
-    }
-
+    if (window.innerWidth > 768) { setActive(0); return; }
     const width = getPanelWidth();
     const index = Math.round(scrollEl.scrollLeft / width);
     setActive(Math.max(0, Math.min(index, dots.length - 1)));
@@ -513,15 +443,8 @@ function initPanelCarousel() {
   dots.forEach(function (dot) {
     dot.addEventListener('click', function () {
       if (window.innerWidth > 768) return;
-
       const index = Number(dot.dataset.index || 0);
-      const width = getPanelWidth();
-
-      scrollEl.scrollTo({
-        left: width * index,
-        behavior: 'smooth'
-      });
-
+      scrollEl.scrollTo({ left: getPanelWidth() * index, behavior: 'smooth' });
       setActive(index);
     });
   });
@@ -531,9 +454,11 @@ function initPanelCarousel() {
   updateActiveByScroll();
 }
 
+/* ─────────────────────────────────────────
+   부트스트랩
+───────────────────────────────────────── */
 async function loadDashboard() {
   if (typeof clearMessage === 'function') clearMessage();
-
   renderDashboardSkeleton();
 
   const cached = getDashboardSessionCache();
@@ -552,20 +477,16 @@ document.addEventListener('DOMContentLoaded', async function () {
   DASHBOARD_BOOTSTRAPPED = true;
 
   try {
-    if (typeof showGlobalLoading === 'function') {
-      showGlobalLoading('대시보드를 불러오는 중...');
-    }
+    if (typeof showGlobalLoading === 'function') showGlobalLoading('대시보드를 불러오는 중...');
 
     const user = window.auth?.requireAuth?.();
     if (!user) return;
 
     const permissionPromise = getEquipmentPermissionContext();
-    const dashboardPromise = fetchDashboardData();
+    const dashboardPromise  = fetchDashboardData();
 
     DASHBOARD_PERMISSION = await permissionPromise;
-    if (!DASHBOARD_PERMISSION.canView) {
-      throw new Error('장비 메뉴 접근 권한이 없습니다.');
-    }
+    if (!DASHBOARD_PERMISSION.canView) throw new Error('장비 메뉴 접근 권한이 없습니다.');
 
     applyDashboardPermissionUi();
 
@@ -579,8 +500,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const loaded = await dashboardPromise;
     renderDashboardData(loaded.summary || {});
     setDashboardSessionCache(loaded);
-
     initPanelCarousel();
+
   } catch (error) {
     if (typeof showMessage === 'function') {
       showMessage(error.message || '대시보드를 불러오는 중 오류가 발생했습니다.', 'error');
@@ -588,15 +509,13 @@ document.addEventListener('DOMContentLoaded', async function () {
       console.error(error);
     }
   } finally {
-    if (typeof hideGlobalLoading === 'function') {
-      hideGlobalLoading();
-    }
+    if (typeof hideGlobalLoading === 'function') hideGlobalLoading();
   }
 });
 
-// ─────────────────────────────────────────────
-// 장비대장 전체 엑셀 다운로드
-// ─────────────────────────────────────────────
+/* ─────────────────────────────────────────
+   장비대장 엑셀 다운로드
+───────────────────────────────────────── */
 async function exportAllEquipmentsExcel() {
   const btn = document.getElementById('dashboardExportBtn');
 
@@ -629,9 +548,8 @@ async function exportAllEquipmentsExcel() {
       '취득일자', '제조일자', '유지보수종료일', '현재사용자', '비고', '등록일시'
     ];
 
-    // 컬럼 유형 (0-based index)
-    const COL_NUM  = new Set([13]);         // 취득가액
-    const COL_DATE = new Set([14, 15, 16]); // 취득일자, 제조일자, 유지보수종료일
+    const COL_NUM  = new Set([13]);
+    const COL_DATE = new Set([14, 15, 16]);
 
     const rows = data.map(item => [
       item.equipment_id || '', item.equipment_name || '', item.model_name || '',
@@ -644,7 +562,6 @@ async function exportAllEquipmentsExcel() {
       item.current_user || '', item.memo || '', item.created_at || ''
     ]);
 
-    // ── 스타일 정의 ──────────────────────────────────────────────
     const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
     const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
     const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
@@ -660,40 +577,27 @@ async function exportAllEquipmentsExcel() {
     const FMT_NUM  = '#,##0';
     const FMT_DATE = 'yyyy-mm-dd';
 
-    // ── 워크시트 수동 생성 ───────────────────────────────────────
     const ws = {};
     const totalCols = headers.length;
     const totalRows = rows.length + 1;
 
-    // 헤더 행
     headers.forEach(function(h, c) {
       const addr = window.XLSX.utils.encode_cell({ r: 0, c });
-      ws[addr] = {
-        v: h, t: 's',
-        s: { font: FONT_HEADER, fill: FILL_HEADER, border: BORDER, alignment: ALIGN_CENTER }
-      };
+      ws[addr] = { v: h, t: 's', s: { font: FONT_HEADER, fill: FILL_HEADER, border: BORDER, alignment: ALIGN_CENTER } };
     });
 
-    // 데이터 행
     rows.forEach(function(row, r) {
       row.forEach(function(val, c) {
-        const addr  = window.XLSX.utils.encode_cell({ r: r + 1, c });
+        const addr   = window.XLSX.utils.encode_cell({ r: r + 1, c });
         const isNum  = COL_NUM.has(c);
         const isDate = COL_DATE.has(c);
-
         const cell = {
           v: val,
           t: isNum && val !== '' ? 'n' : 's',
-          s: {
-            font:      FONT_BASE,
-            border:    BORDER,
-            alignment: isNum ? ALIGN_RIGHT : isDate ? ALIGN_CENTER : ALIGN_LEFT
-          }
+          s: { font: FONT_BASE, border: BORDER, alignment: isNum ? ALIGN_RIGHT : isDate ? ALIGN_CENTER : ALIGN_LEFT }
         };
-
         if (isNum && val !== '') { cell.z = FMT_NUM;  cell.s.numFmt = FMT_NUM;  }
         if (isDate && val)       { cell.z = FMT_DATE; cell.s.numFmt = FMT_DATE; }
-
         ws[addr] = cell;
       });
     });
