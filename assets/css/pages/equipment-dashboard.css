@@ -549,11 +549,10 @@
 .dashboard-panel--repair .dash-tbl-th--date { width: 22%; }
 .dashboard-panel--repair .dash-tbl-th--status { width: 13%; text-align: center; }
 
-/* 등록: 장비명 + 부서 + 등록일 + 상태(PC) */
-.dashboard-panel--registered .dash-tbl-th--name { width: 28%; }
-.dashboard-panel--registered .dash-tbl-th--dept { width: 28%; }
-.dashboard-panel--registered .dash-tbl-th--date { width: 22%; }
-.dashboard-panel--registered .dash-tbl-th--extra { width: 22%; text-align: center; }
+/* 등록: 장비명 + 부서 + 등록일 — 전체 폭 균등 배분 */
+.dashboard-panel--registered .dash-tbl-th--name { width: 38%; }
+.dashboard-panel--registered .dash-tbl-th--dept { width: 36%; }
+.dashboard-panel--registered .dash-tbl-th--date { width: 26%; }
 
 .dash-tbl-cell--status { text-align: center; }
 .dash-tbl-cell--extra.pc-only { text-align: center; }
