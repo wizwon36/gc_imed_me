@@ -380,7 +380,7 @@ function renderRecentRepairList(items) {
   renderRecordList('#recentRepairList', '#recentRepairEmpty', items, {
     dateField: 'work_date',
     dateLabel: '수리일',
-    showDept: false,
+    showDept: true,
     showDate: true,
     showStatus: true
   });
@@ -390,7 +390,7 @@ function renderRecentRegisteredList(items) {
   renderRecordList('#recentRegisteredList', '#recentRegisteredEmpty', items, {
     dateField: 'created_at',
     dateLabel: '등록일',
-    showDept: false,   // 부서 제거 — 공간 확보
+    showDept: true,
     showDate: true
   });
 }
