@@ -333,6 +333,7 @@ function renderDashboardData(summary) {
   renderRecentRepairList(summary?.recent_repairs || []);
   renderRecentRegisteredList(summary?.recent_registrations || []);
   renderDeptChart(summary?.department_summary || []);
+  renderStatusChart(summary?.kpis || {});
 }
 
 async function fetchDashboardData() {
@@ -366,6 +367,53 @@ function renderDeptChart(data) {
   const total = data.reduce((s, d) => s + Number(d.count || 0), 0);
   if (total === 0) { if (empty) empty.style.display = ''; return; }
 
+  const maxCount = Math.max(...data.map(d => Number(d.count || 0)));
+
+  const barRows = data.map((d, i) => {
+    const count = Number(d.count || 0);
+    const pct   = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+    const color = COLORS[i % COLORS.length];
+    const name  = textSafe(d.department_display || d.department || '-');
+    return `
+      <div class="dept-bar-row">
+        <div class="dept-bar-label" title="${name}">${name}</div>
+        <div class="dept-bar-track">
+          <div class="dept-bar-fill" style="width:${pct}%;background:${color};"></div>
+        </div>
+        <div class="dept-bar-count">${count}</div>
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = `<div class="dept-bar-list">${barRows}</div>`;
+}
+
+function renderStatusChart(kpis) {
+  const wrap  = document.getElementById('statusChartWrap');
+  const empty = document.getElementById('statusChartEmpty');
+  if (!wrap) return;
+
+  const STATUS_ITEMS = [
+    { key: 'in_use',      label: '사용중', color: '#3b82f6' },
+    { key: 'repairing',   label: '수리중', color: '#ef4444' },
+    { key: 'inspecting',  label: '점검중', color: '#f59e0b' },
+    { key: 'stored',      label: '보관',   color: '#10b981' },
+    { key: 'disposed',    label: '폐기',   color: '#94a3b8' }
+  ];
+
+  const data = STATUS_ITEMS.map(s => ({
+    ...s,
+    count: Number(kpis?.[s.key] || 0)
+  })).filter(s => s.count > 0);
+
+  if (data.length === 0) {
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const total = data.reduce((s, d) => s + d.count, 0);
+  if (total === 0) { if (empty) empty.style.display = ''; return; }
+
   const R = 58, r = 36, CX = 74, CY = 74;
 
   function polarToXY(cx, cy, radius, angleDeg) {
@@ -373,7 +421,7 @@ function renderDeptChart(data) {
     return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
   }
 
-  function donutSlicePath(cx, cy, outerR, innerR, startDeg, endDeg) {
+  function slicePath(cx, cy, outerR, innerR, startDeg, endDeg) {
     const o1 = polarToXY(cx, cy, outerR, startDeg);
     const o2 = polarToXY(cx, cy, outerR, endDeg);
     const i1 = polarToXY(cx, cy, innerR, endDeg);
@@ -388,62 +436,43 @@ function renderDeptChart(data) {
     ].join(' ');
   }
 
-  let currentDeg = 0;
+  let deg = 0;
   const slices = data.map((d, i) => {
-    const count = Number(d.count || 0);
-    const deg   = (count / total) * 360;
-    const start = currentDeg;
-    const end   = currentDeg + deg - 0.4;
-    currentDeg += deg;
-    return { ...d, count, deg, start, end, color: COLORS[i % COLORS.length] };
+    const sweep = (d.count / total) * 360;
+    const start = deg;
+    const end   = deg + sweep - 0.4;
+    deg += sweep;
+    return { ...d, start, end };
   });
 
   const svgSlices = slices.map((s, i) => `
-    <path class="donut-slice" d="${donutSlicePath(CX, CY, R, r, s.start, s.end)}"
+    <path class="status-donut-slice" d="${slicePath(CX, CY, R, r, s.start, s.end)}"
       fill="${s.color}" style="animation-delay:${i * 60}ms"/>`
   ).join('');
 
-  // 범례 (모바일용 + PC 도넛 아래)
   const legendItems = slices.map(s => {
-    const pct  = Math.round((s.count / total) * 100);
-    const name = textSafe(s.department_display || s.department || '-');
+    const pct = Math.round((s.count / total) * 100);
     return `
-      <div class="donut-legend-item">
-        <span class="donut-legend-dot" style="background:${s.color};"></span>
-        <span class="donut-legend-label" title="${name}">${name}</span>
-        <span class="donut-legend-count">${s.count}</span>
-        <span class="donut-legend-pct">${pct}%</span>
-      </div>`;
-  }).join('');
-
-  // 가로 막대 (PC 오른쪽 전용)
-  const maxCount = Math.max(...slices.map(s => s.count));
-  const barRows = slices.map(s => {
-    const pct  = maxCount > 0 ? Math.round((s.count / maxCount) * 100) : 0;
-    const name = textSafe(s.department_display || s.department || '-');
-    return `
-      <div class="dept-bar-row">
-        <div class="dept-bar-label" title="${name}">${name}</div>
-        <div class="dept-bar-track">
-          <div class="dept-bar-fill" style="width:${pct}%;background:${s.color};"></div>
-        </div>
-        <div class="dept-bar-count">${s.count}</div>
+      <div class="status-legend-item">
+        <span class="status-legend-dot" style="background:${s.color};"></span>
+        <span class="status-legend-label">${textSafe(s.label)}</span>
+        <span class="status-legend-count">${s.count}</span>
+        <span class="status-legend-pct">${pct}%</span>
       </div>`;
   }).join('');
 
   wrap.innerHTML = `
-    <div class="donut-chart-inner">
-      <div class="donut-left">
-        <div class="donut-svg-wrap">
-          <svg viewBox="0 0 148 148" xmlns="http://www.w3.org/2000/svg" class="donut-svg">
+    <div class="status-donut-inner">
+      <div class="status-donut-left">
+        <div class="status-donut-svg-wrap">
+          <svg viewBox="0 0 148 148" xmlns="http://www.w3.org/2000/svg" class="status-donut-svg">
             ${svgSlices}
-            <text x="${CX}" y="${CY - 8}" class="donut-center-label">전체</text>
-            <text x="${CX}" y="${CY + 15}" class="donut-center-value">${total}</text>
+            <text x="${CX}" y="${CY - 8}" class="status-donut-center-label">전체</text>
+            <text x="${CX}" y="${CY + 15}" class="status-donut-center-value">${total}</text>
           </svg>
         </div>
-        <div class="donut-legend">${legendItems}</div>
       </div>
-      <div class="dept-bar-chart">${barRows}</div>
+      <div class="status-legend">${legendItems}</div>
     </div>`;
 }
 
