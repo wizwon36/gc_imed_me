@@ -407,9 +407,12 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     </table>
   `;
 
-  // tbody 렌더 후 thead 다시 강제 표시 (skeleton 등으로 숨겨진 경우 대비)
+  // tbody 렌더 후 실제 스크롤바 너비 측정해서 thead에 정확히 보정
   if (theadContainer) {
     theadContainer.style.display = '';
+    // scrollbar 너비 = 전체 너비 - 스크롤 가능한 내부 너비
+    const scrollbarWidth = container.offsetWidth - container.clientWidth;
+    theadContainer.style.paddingRight = scrollbarWidth + 'px';
   }
 }
 
