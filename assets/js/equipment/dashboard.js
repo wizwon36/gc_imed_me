@@ -438,6 +438,13 @@ function initPanelCarousel() {
     return firstCard.offsetWidth + gap;
   }
 
+  function getScrollOffset() {
+    const grid = scrollEl.querySelector('.dashboard-panels-grid');
+    if (!grid) return 0;
+    const styles = window.getComputedStyle(grid);
+    return parseFloat(styles.paddingLeft || 0);
+  }
+
   function updateActiveByScroll() {
     if (window.innerWidth > 768) {
       setActive(0);
@@ -445,7 +452,8 @@ function initPanelCarousel() {
     }
 
     const width = getPanelWidth();
-    const index = Math.round(scrollEl.scrollLeft / width);
+    const offset = getScrollOffset();
+    const index = Math.round((scrollEl.scrollLeft - offset + width / 2) / width);
     setActive(Math.max(0, Math.min(index, dots.length - 1)));
   }
 
@@ -455,9 +463,10 @@ function initPanelCarousel() {
 
       const index = Number(dot.dataset.index || 0);
       const width = getPanelWidth();
+      const offset = getScrollOffset();
 
       scrollEl.scrollTo({
-        left: width * index,
+        left: offset + width * index,
         behavior: 'smooth'
       });
 
