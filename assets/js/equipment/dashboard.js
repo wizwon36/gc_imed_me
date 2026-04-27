@@ -265,7 +265,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
   const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
   const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
-  const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
+  const sideHeader = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side">${textSafe(options.sideLabel || '')}</th>` : '';
 
   // thead는 데이터 유무와 관계없이 항상 표시
   const theadMap = {
@@ -351,6 +351,7 @@ function renderMaintenanceAlerts(items) {
   renderRecordList('#maintenanceAlertList', '#maintenanceAlertEmpty', items, {
     dateField: 'maintenance_end_date',
     dateLabel: '',
+    sideLabel: 'D-Day',
     showDept: true,
     showDate: false,   // 날짜 제거 — D-Day 뱃지로 충분
     sideRenderer: function (item) {
