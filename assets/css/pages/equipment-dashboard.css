@@ -168,7 +168,6 @@
   width: 100%;
   margin: 0;
   padding: 0;
-  padding-right: 8px; /* 스크롤바 너비 보정 */
   background: #f7f9fd;
   border-top: 1.5px solid #e0e7f2;
   border-bottom: 1.5px solid #e0e7f2;
