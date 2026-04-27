@@ -159,6 +159,7 @@
 .dashboard-page .dashboard-panel--registered .dashboard-section-head {
   padding-bottom: 16px;
   border-bottom: 0;
+  margin-bottom: 0;  /* common.css .section-head { margin-bottom: 16px } 덮어쓰기 */
 }
 
 /* thead wrap — section-head 바깥, 카드 전체 폭, 여백 0 */
