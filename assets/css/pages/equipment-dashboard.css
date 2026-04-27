@@ -147,10 +147,15 @@
   flex: 0 0 auto;
   padding: 18px 22px 16px;
   background: #f7f9fd;
-  border-bottom: 1.5px solid #e0e7f2;
+  border-bottom: 0;        /* 테이블 패널은 컬럼 헤더가 이어받음 */
   position: relative;
-  z-index: 10;           /* sticky thead(z-index:2)보다 항상 위 */
-  isolation: isolate;    /* 독립 스택 컨텍스트 */
+  z-index: 10;
+  isolation: isolate;
+}
+
+/* 테이블 패널이 아닌 경우 — heatmap / actions / empty 등은 border 필요 */
+.dashboard-page .dashboard-panel--portal:not(.dashboard-panel--maintenance):not(.dashboard-panel--repair):not(.dashboard-panel--registered) .dashboard-section-head {
+  border-bottom: 1.5px solid #e0e7f2;
 }
 
 /* 헤더 바로 다음 콘텐츠 영역 패딩 */
@@ -485,9 +490,9 @@
 /* 스크롤 영역 밖 고정 헤더 */
 .dash-tbl-header-fixed {
   flex: 0 0 auto;
-  background: #f0f4fa;
-  border-top: 1px solid #e0e7f2;
-  border-bottom: 1.5px solid #d0d8e8;
+  background: #f7f9fd;           /* 카드 헤더와 동일한 배경색 */
+  border-top: 0;                 /* 이중 선 제거 */
+  border-bottom: 1.5px solid #e0e7f2;
   padding: 0 22px;
 }
 
@@ -496,9 +501,9 @@
 }
 
 .dash-tbl-th {
-  position: static;   /* sticky 제거 — 헤더가 이미 스크롤 밖에 있음 */
+  position: static;
   padding: 9px 10px;
-  background: #f0f4fa;
+  background: #f7f9fd;           /* 카드 헤더와 동일 */
   border-bottom: none;
   font-size: 11px;
   font-weight: 800;
