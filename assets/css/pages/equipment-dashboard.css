@@ -616,12 +616,13 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    overflow: hidden;
     margin-top: 12px;
   }
 
   .dashboard-panels-scroll {
     flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
   }
 
   .dashboard-panels-grid {
@@ -674,7 +675,8 @@
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
-    padding-bottom: 4px;
+    padding-bottom: 0;
+    height: 100%;
   }
 
   .dashboard-panels-scroll::-webkit-scrollbar {
