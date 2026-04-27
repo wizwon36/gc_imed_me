@@ -263,36 +263,44 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const showStatus = options.showStatus === true;
   const hasExtra = !!options.extraField;
 
-  // 패널별 컬럼 너비 정의 (thead/tbody 동일하게 적용)
+  // 패널별 컬럼 너비 정의 — 모바일/PC 분기
+  const isMobile = window.innerWidth <= 700;
+
   const colWidths = (function() {
     const id = container.id;
     if (id === 'maintenanceAlertList') {
-      // 장비명 28% + 부서 26% + 만료일(pc) 22% + D-DAY 24%
+      if (isMobile) {
+        // 모바일: 장비명 38% + 부서 36% + D-DAY 26% (만료일 숨김)
+        return [{ w: '38%' }, { w: '36%' }, { w: '26%' }];
+      }
+      // PC: 장비명 28% + 부서 26% + 만료일 22% + D-DAY 24%
       const cols = [{ w: '28%' }, { w: '26%' }];
-      if (hasExtra) cols.push({ w: '22%', pc: true });
+      if (hasExtra) cols.push({ w: '22%' });
       cols.push({ w: '24%' });
       return cols;
     }
     if (id === 'recentRepairList') {
-      // 장비명 32% + 부서 28% + 수리일 22% + 상태 18%
+      if (isMobile) {
+        // 모바일: 장비명 36% + 부서 30% + 수리일 22% + 상태 12%
+        return [{ w: '36%' }, { w: '30%' }, { w: '22%' }, { w: '12%' }];
+      }
+      // PC: 장비명 32% + 부서 28% + 수리일 22% + 상태 18%
       return [{ w: '32%' }, { w: '28%' }, { w: '22%' }, { w: '18%' }];
     }
     if (id === 'recentRegisteredList') {
-      // 장비명 38% + 부서 36% + 등록일 26%
+      // 모바일/PC 동일
       return [{ w: '38%' }, { w: '36%' }, { w: '26%' }];
     }
     return [];
   })();
 
   const colgroup = colWidths.length
-    ? `<colgroup>${colWidths.map(c =>
-        `<col style="width:${c.w};"${c.pc ? ' class="pc-only"' : ''}>`
-      ).join('')}</colgroup>`
+    ? `<colgroup>${colWidths.map(c => `<col style="width:${c.w};">`).join('')}</colgroup>`
     : '';
 
   const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
   const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
-  const extraHeader = hasExtra ? `<th class="dash-tbl-th dash-tbl-th--extra pc-only">${textSafe(options.extraLabel || '')}</th>` : '';
+  const extraHeader = (hasExtra && !isMobile) ? `<th class="dash-tbl-th dash-tbl-th--extra">${textSafe(options.extraLabel || '')}</th>` : '';
   const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status" style="text-align:center;">상태</th>' : '';
   const sideHeader = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side" style="text-align:center;">${textSafe(options.sideLabel || '')}</th>` : '';
 
@@ -351,9 +359,9 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
       statusHtml = `<td class="dash-tbl-cell dash-tbl-cell--status"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
     }
 
-    // PC 전용 추가 컬럼
+    // PC 전용 추가 컬럼 (모바일 숨김)
     let extraHtml = '';
-    if (options.extraField) {
+    if (options.extraField && !isMobile) {
       let extraVal = item[options.extraField] || '-';
       // status 필드면 한글 뱃지로 변환
       if (options.extraField === 'status') {
