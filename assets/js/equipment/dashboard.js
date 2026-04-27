@@ -430,19 +430,8 @@ function initPanelCarousel() {
 
   function getPanelWidth() {
     const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
-    const grid = scrollEl.querySelector('.dashboard-panels-grid');
-    if (!firstCard || !grid) return 1;
-
-    const styles = window.getComputedStyle(grid);
-    const gap = parseFloat(styles.columnGap || styles.gap || 0);
-    return firstCard.offsetWidth + gap;
-  }
-
-  function getFirstCardOffset() {
-    const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
-    if (!firstCard) return 0;
-    // 첫 카드의 margin-left = scrollLeft 기준점
-    return parseFloat(window.getComputedStyle(firstCard).marginLeft || 0);
+    if (!firstCard) return scrollEl.offsetWidth || 1;
+    return firstCard.offsetWidth;
   }
 
   function updateActiveByScroll() {
@@ -452,8 +441,7 @@ function initPanelCarousel() {
     }
 
     const width = getPanelWidth();
-    const offset = getFirstCardOffset();
-    const index = Math.round((scrollEl.scrollLeft - offset + width / 2) / width);
+    const index = Math.round(scrollEl.scrollLeft / width);
     setActive(Math.max(0, Math.min(index, dots.length - 1)));
   }
 
@@ -463,10 +451,9 @@ function initPanelCarousel() {
 
       const index = Number(dot.dataset.index || 0);
       const width = getPanelWidth();
-      const offset = getFirstCardOffset();
 
       scrollEl.scrollTo({
-        left: offset + width * index,
+        left: width * index,
         behavior: 'smooth'
       });
 
