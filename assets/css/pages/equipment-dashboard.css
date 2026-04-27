@@ -616,19 +616,17 @@
   .dashboard-panels-grid {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc(100% - 32px);
+    grid-auto-columns: 100%;
     grid-template-columns: none;
-    gap: 12px;
+    gap: 0;
   }
 
-  /* 첫 카드 왼쪽 여백 */
   .dashboard-panels-grid > *:first-child {
-    margin-left: 16px;
+    margin-left: 0;
   }
 
-  /* 마지막 카드 오른쪽 여백 (spacer 포함) */
   .dashboard-panels-grid > *:last-child {
-    margin-right: 16px;
+    margin-right: 0;
   }
 
   .dashboard-page .dashboard-panel--portal {
@@ -637,6 +635,7 @@
     height: auto;
     border-radius: 20px;
     padding: 16px;
+    box-sizing: border-box;
   }
 
   .dashboard-page .dashboard-section-title {
