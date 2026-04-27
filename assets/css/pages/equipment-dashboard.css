@@ -582,10 +582,12 @@
   .dashboard-page .dashboard-page-shell {
     display: flex;
     flex-direction: column;
-    min-height: 100dvh;
+    height: 100dvh;
     gap: 0;
+    padding-top: 16px;
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
     box-sizing: border-box;
+    overflow: hidden;
   }
 
   .dashboard-page .dashboard-topbar {
@@ -614,6 +616,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow: hidden;
     margin-top: 12px;
   }
 
