@@ -715,6 +715,17 @@
 }
 
 
+.dept-chart-wrap::-webkit-scrollbar,
+.heatmap-wrap::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dept-chart-wrap::-webkit-scrollbar-thumb,
+.heatmap-wrap::-webkit-scrollbar-thumb {
+  background: #d0d7e2;
+  border-radius: 999px;
+}
+
 /* =============================================
    패널 0: 부서별 장비 현황 — C형 인라인 막대
    ============================================= */
@@ -727,9 +738,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   padding: 4px 0 8px;
   overflow-y: auto;
+  max-height: 280px;
 }
 
 .dept-cbar-list {
@@ -802,9 +813,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   padding: 4px 0 8px;
-  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 280px;
 }
 
 .hm-table {
