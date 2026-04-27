@@ -153,12 +153,24 @@
   isolation: isolate;
 }
 
-/* 테이블 패널: section-head도 동일하게 border 유지, 하단 패딩만 제거 */
+/* 테이블 패널: padding-bottom 제거 — thead가 section-head 안에 포함됨 */
 .dashboard-page .dashboard-panel--maintenance .dashboard-section-head,
 .dashboard-page .dashboard-panel--repair .dashboard-section-head,
 .dashboard-page .dashboard-panel--registered .dashboard-section-head {
   padding-bottom: 0;
-  border-bottom: 1.5px solid #e0e7f2;
+  border-bottom: 0;
+  flex-wrap: wrap;
+}
+
+/* thead wrap — section-head 전체 너비 차지, 바로 아래 붙음 */
+.dash-tbl-thead-wrap {
+  width: 100%;
+  margin-top: 12px;
+  border-top: 1.5px solid #e0e7f2;
+}
+
+.dash-tbl-thead-wrap .dash-tbl {
+  width: 100%;
 }
 
 /* 헤더 바로 다음 콘텐츠 영역 패딩 */
@@ -177,7 +189,7 @@
   padding: 24px;
 }
 
-/* list-stack: 카드 헤더 바로 아래 붙임, 전체 폭 사용 */
+/* list-stack: 패딩 없이 카드 전체 폭 */
 .dashboard-page .dashboard-section-head ~ .dashboard-list-stack {
   margin-top: 0 !important;
   padding: 0 !important;
@@ -888,10 +900,9 @@
     padding: 14px 16px 12px;
   }
 
-  .dashboard-page .dashboard-section-head + *,
+  .dashboard-page .dashboard-section-head + *:not(.dashboard-list-stack),
   .dashboard-page .dashboard-section-head ~ .dept-chart-wrap,
   .dashboard-page .dashboard-section-head ~ .heatmap-wrap,
-  .dashboard-page .dashboard-section-head ~ .dashboard-list-stack,
   .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--portal,
   .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--enhanced,
   .dashboard-page .dashboard-section-head ~ .empty-box {
