@@ -553,7 +553,7 @@
   .dashboard-page .dashboard-kpi-grid--portal {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 0;
   }
   
   .dashboard-page .dashboard-kpi-card {
@@ -583,9 +583,7 @@
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
-    gap: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    /* container의 기본 padding-bottom 덮어쓰기 */
+    gap: 12px;
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
     box-sizing: border-box;
   }
@@ -596,7 +594,7 @@
 
   .dashboard-page .dashboard-kpi-grid--portal {
     flex-shrink: 0;
-    margin-top: 16px;
+    margin-top: 0;
   }
 
   .dashboard-panel-dots-wrapper {
@@ -630,8 +628,8 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-top: 14px;
-    margin-bottom: 12px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   .dashboard-panel-dot {
