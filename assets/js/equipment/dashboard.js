@@ -264,8 +264,9 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 
   const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
   const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
+  const extraHeader = options.extraField ? `<th class="dash-tbl-th dash-tbl-th--extra pc-only">${textSafe(options.extraLabel || '')}</th>` : '';
   const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
-  const sideHeader = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side">${textSafe(options.sideLabel || '')}</th>` : '';
+  const sideHeader = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side" style="text-align:center;">${textSafe(options.sideLabel || '')}</th>` : '';
 
   // thead는 데이터 유무와 관계없이 항상 표시
   const theadMap = {
@@ -277,7 +278,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   if (theadContainer) {
     theadContainer.innerHTML = `<table class="dash-tbl"><thead><tr>
       <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-      ${deptHeader}${dateHeader}${statusHeader}${sideHeader}
+      ${deptHeader}${dateHeader}${extraHeader}${statusHeader}${sideHeader}
     </tr></thead></table>`;
     theadContainer.style.display = '';
   }
@@ -303,7 +304,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 
     let sideHtml = '';
     if (hasSide) {
-      sideHtml = `<td class="dash-tbl-cell dash-tbl-cell--side">${options.sideRenderer(item) || ''}</td>`;
+      sideHtml = `<td class="dash-tbl-cell dash-tbl-cell--side" style="text-align:center;">${options.sideRenderer(item) || ''}</td>`;
     }
 
     let statusHtml = '';
@@ -322,6 +323,29 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
       statusHtml = `<td class="dash-tbl-cell dash-tbl-cell--status"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
     }
 
+    // PC 전용 추가 컬럼
+    let extraHtml = '';
+    if (options.extraField) {
+      let extraVal = item[options.extraField] || '-';
+      // status 필드면 한글 뱃지로 변환
+      if (options.extraField === 'status') {
+        const st = extraVal;
+        const stLabel = st === 'IN_USE' ? '사용중'
+          : st === 'REPAIRING' ? '수리중'
+          : st === 'INSPECTING' ? '점검중'
+          : st === 'STORED' ? '보관'
+          : st === 'DISPOSED' ? '폐기' : (textSafe(st) || '-');
+        const stClass = st === 'IN_USE' ? 'status-badge is-in-use'
+          : st === 'REPAIRING' ? 'status-badge is-repairing'
+          : st === 'INSPECTING' ? 'status-badge is-inspecting'
+          : st === 'STORED' ? 'status-badge is-stored'
+          : st === 'DISPOSED' ? 'status-badge is-disposed' : 'status-badge';
+        extraHtml = `<td class="dash-tbl-cell dash-tbl-cell--extra pc-only" style="text-align:center;"><span class="${stClass}">${stLabel}</span></td>`;
+      } else {
+        extraHtml = `<td class="dash-tbl-cell dash-tbl-cell--extra pc-only">${textSafe(formatDisplayDate(extraVal) || extraVal)}</td>`;
+      }
+    }
+
     return `
       <tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
         <td class="dash-tbl-cell dash-tbl-cell--name">
@@ -333,6 +357,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
           <span class="dept-mobile">${deptMobile}</span>
         </td>` : ''}
         ${showDate ? `<td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>` : ''}
+        ${extraHtml}
         ${statusHtml}
         ${sideHtml}
       </tr>
@@ -353,7 +378,9 @@ function renderMaintenanceAlerts(items) {
     dateLabel: '',
     sideLabel: 'D-Day',
     showDept: true,
-    showDate: false,   // 날짜 제거 — D-Day 뱃지로 충분
+    showDate: false,
+    extraField: 'maintenance_end_date',
+    extraLabel: '만료일',   // 날짜 제거 — D-Day 뱃지로 충분
     sideRenderer: function (item) {
       const dday = Number(item.dday || 0);
       const ddayText =
@@ -392,7 +419,9 @@ function renderRecentRegisteredList(items) {
     dateField: 'created_at',
     dateLabel: '등록일',
     showDept: true,
-    showDate: true
+    showDate: true,
+    extraField: 'status',
+    extraLabel: '상태'
   });
 }
 
