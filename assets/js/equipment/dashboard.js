@@ -256,39 +256,38 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   if (!container) return;
 
   const list = Array.isArray(items) ? items : [];
-
   const hasSide = typeof options.sideRenderer === 'function';
   const showDept = options.showDept !== false;
   const showDate = options.showDate !== false;
   const showStatus = options.showStatus === true;
   const hasExtra = !!options.extraField;
-
-  // 패널별 컬럼 너비 정의 — 모바일/PC 분기
   const isMobile = window.innerWidth <= 700;
 
+  // 별도 theadContainer는 완전히 숨김 — 단일 테이블로만 처리
+  const theadMap = {
+    'maintenanceAlertList': 'maintenanceAlertThead',
+    'recentRepairList': 'recentRepairThead',
+    'recentRegisteredList': 'recentRegisteredThead'
+  };
+  const theadContainer = document.getElementById(theadMap[container.id] || '');
+  if (theadContainer) theadContainer.style.display = 'none';
+
+  // 패널/뷰포트별 컬럼 너비
   const colWidths = (function() {
     const id = container.id;
     if (id === 'maintenanceAlertList') {
-      if (isMobile) {
-        // 모바일: 장비명 38% + 부서 36% + D-DAY 26% (만료일 숨김)
-        return [{ w: '38%' }, { w: '36%' }, { w: '26%' }];
-      }
-      // PC: 장비명 28% + 부서 26% + 만료일 22% + D-DAY 24%
-      const cols = [{ w: '28%' }, { w: '26%' }];
-      if (hasExtra) cols.push({ w: '22%' });
-      cols.push({ w: '24%' });
-      return cols;
+      return isMobile
+        ? [{ w: '40%' }, { w: '34%' }, { w: '26%' }]
+        : (hasExtra
+            ? [{ w: '28%' }, { w: '26%' }, { w: '22%' }, { w: '24%' }]
+            : [{ w: '36%' }, { w: '36%' }, { w: '28%' }]);
     }
     if (id === 'recentRepairList') {
-      if (isMobile) {
-        // 모바일: 장비명 36% + 부서 30% + 수리일 22% + 상태 12%
-        return [{ w: '36%' }, { w: '30%' }, { w: '22%' }, { w: '12%' }];
-      }
-      // PC: 장비명 32% + 부서 28% + 수리일 22% + 상태 18%
-      return [{ w: '32%' }, { w: '28%' }, { w: '22%' }, { w: '18%' }];
+      return isMobile
+        ? [{ w: '34%' }, { w: '28%' }, { w: '24%' }, { w: '14%' }]
+        : [{ w: '32%' }, { w: '28%' }, { w: '22%' }, { w: '18%' }];
     }
     if (id === 'recentRegisteredList') {
-      // 모바일/PC 동일
       return [{ w: '38%' }, { w: '36%' }, { w: '26%' }];
     }
     return [];
@@ -298,137 +297,84 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     ? `<colgroup>${colWidths.map(c => `<col style="width:${c.w};">`).join('')}</colgroup>`
     : '';
 
-  const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
-  const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
-  const extraHeader = (hasExtra && !isMobile) ? `<th class="dash-tbl-th dash-tbl-th--extra">${textSafe(options.extraLabel || '')}</th>` : '';
-  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status" style="text-align:center;">상태</th>' : '';
-  const sideHeader = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side" style="text-align:center;">${textSafe(options.sideLabel || '')}</th>` : '';
-
-  // thead — colgroup 포함
-  const theadMap = {
-    'maintenanceAlertList': 'maintenanceAlertThead',
-    'recentRepairList': 'recentRepairThead',
-    'recentRegisteredList': 'recentRegisteredThead'
-  };
-  const theadContainer = document.getElementById(theadMap[container.id] || '');
-  if (theadContainer) {
-    theadContainer.innerHTML = `<table class="dash-tbl">${colgroup}<thead><tr>
-      <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-      ${deptHeader}${dateHeader}${extraHeader}${statusHeader}${sideHeader}
-    </tr></thead></table>`;
-    theadContainer.style.display = '';
-  }
+  // 헤더 셀 — text-align 인라인으로 직접 지정
+  const thName  = `<th class="dash-tbl-th dash-tbl-th--name" style="text-align:left;">장비명</th>`;
+  const thDept  = showDept ? `<th class="dash-tbl-th dash-tbl-th--dept" style="text-align:center;">부서</th>` : '';
+  const thDate  = showDate ? `<th class="dash-tbl-th dash-tbl-th--date" style="text-align:center;">${textSafe(options.dateLabel)}</th>` : '';
+  const thExtra = (hasExtra && !isMobile) ? `<th class="dash-tbl-th dash-tbl-th--extra" style="text-align:center;">${textSafe(options.extraLabel || '')}</th>` : '';
+  const thStatus = showStatus ? `<th class="dash-tbl-th dash-tbl-th--status" style="text-align:center;">상태</th>` : '';
+  const thSide  = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side" style="text-align:center;">${textSafe(options.sideLabel || '')}</th>` : '';
 
   if (!list.length) {
-    // 빈 상태에서도 thead 표시
-    if (theadContainer) theadContainer.style.display = 'none';
-    container.innerHTML = `
-      <table class="dash-tbl dash-tbl--scroll">
-        ${colgroup}
-        <thead class="dash-tbl-thead-sticky">
-          <tr>
-            <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-            ${deptHeader}${dateHeader}${extraHeader}${statusHeader}${sideHeader}
-          </tr>
-        </thead>
-      </table>
-    `;
     container.style.display = 'block';
     if (emptyEl) emptyEl.style.display = 'block';
+    container.innerHTML = `
+      <table class="dash-tbl" style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">
+        ${colgroup}
+        <thead><tr>${thName}${thDept}${thDate}${thExtra}${thStatus}${thSide}</tr></thead>
+      </table>`;
     return;
   }
 
-  container.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
 
-  const rows = list.map(function (item) {
-    const title = textSafe(item.equipment_name || '-');
+  const rows = list.map(function(item) {
+    const title    = textSafe(item.equipment_name || '-');
+    const model    = textSafe(item.model_name || '-');
     const dateText = textSafe(formatDisplayDate(item[options.dateField]));
-    const model = textSafe(item.model_name || '-');
-    const deptRaw = item.department_display || item.department || '-';
-    const dept = textSafe(deptRaw);
+    const deptRaw  = item.department_display || item.department || '-';
+    const dept     = textSafe(deptRaw);
     const deptMobile = dept.replace(' / ', '<br>');
-    const id = encodeURIComponent(item.equipment_id || '');
+    const id       = encodeURIComponent(item.equipment_id || '');
 
-    let sideHtml = '';
-    if (hasSide) {
-      sideHtml = `<td class="dash-tbl-cell dash-tbl-cell--side" style="text-align:center;">${options.sideRenderer(item) || ''}</td>`;
+    const tdDept = showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept" style="text-align:center;">
+      <span class="dept-pc">${dept}</span>
+      <span class="dept-mobile">${deptMobile}</span>
+    </td>` : '';
+
+    const tdDate = showDate
+      ? `<td class="dash-tbl-cell dash-tbl-cell--date" style="text-align:center;">${dateText}</td>`
+      : '';
+
+    let tdExtra = '';
+    if (hasExtra && !isMobile) {
+      const rawVal = item[options.extraField] || '-';
+      const dispVal = textSafe(formatDisplayDate(rawVal) || rawVal);
+      tdExtra = `<td class="dash-tbl-cell dash-tbl-cell--extra" style="text-align:center;">${dispVal}</td>`;
     }
 
-    let statusHtml = '';
+    let tdStatus = '';
     if (showStatus) {
       const st = item.status || '';
-      const stLabel = st === 'IN_USE' ? '사용중'
-        : st === 'REPAIRING' ? '수리중'
-        : st === 'INSPECTING' ? '점검중'
-        : st === 'STORED' ? '보관'
+      const stLabel = st === 'IN_USE' ? '사용중' : st === 'REPAIRING' ? '수리중'
+        : st === 'INSPECTING' ? '점검중' : st === 'STORED' ? '보관'
         : st === 'DISPOSED' ? '폐기' : (st || '-');
-      const stClass = st === 'IN_USE' ? 'status-badge is-in-use'
-        : st === 'REPAIRING' ? 'status-badge is-repairing'
-        : st === 'INSPECTING' ? 'status-badge is-inspecting'
-        : st === 'STORED' ? 'status-badge is-stored'
-        : st === 'DISPOSED' ? 'status-badge is-disposed' : 'status-badge';
-      statusHtml = `<td class="dash-tbl-cell dash-tbl-cell--status"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
+      const stClass = `status-badge is-${st === 'IN_USE' ? 'in-use' : st === 'REPAIRING' ? 'repairing'
+        : st === 'INSPECTING' ? 'inspecting' : st === 'STORED' ? 'stored'
+        : st === 'DISPOSED' ? 'disposed' : 'default'}`;
+      tdStatus = `<td class="dash-tbl-cell dash-tbl-cell--status" style="text-align:center;"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
     }
 
-    // PC 전용 추가 컬럼 (모바일 숨김)
-    let extraHtml = '';
-    if (options.extraField && !isMobile) {
-      let extraVal = item[options.extraField] || '-';
-      // status 필드면 한글 뱃지로 변환
-      if (options.extraField === 'status') {
-        const st = extraVal;
-        const stLabel = st === 'IN_USE' ? '사용중'
-          : st === 'REPAIRING' ? '수리중'
-          : st === 'INSPECTING' ? '점검중'
-          : st === 'STORED' ? '보관'
-          : st === 'DISPOSED' ? '폐기' : (textSafe(st) || '-');
-        const stClass = st === 'IN_USE' ? 'status-badge is-in-use'
-          : st === 'REPAIRING' ? 'status-badge is-repairing'
-          : st === 'INSPECTING' ? 'status-badge is-inspecting'
-          : st === 'STORED' ? 'status-badge is-stored'
-          : st === 'DISPOSED' ? 'status-badge is-disposed' : 'status-badge';
-        extraHtml = `<td class="dash-tbl-cell dash-tbl-cell--extra pc-only" style="text-align:center;"><span class="${stClass}">${stLabel}</span></td>`;
-      } else {
-        extraHtml = `<td class="dash-tbl-cell dash-tbl-cell--extra pc-only">${textSafe(formatDisplayDate(extraVal) || extraVal)}</td>`;
-      }
-    }
+    const tdSide = hasSide
+      ? `<td class="dash-tbl-cell dash-tbl-cell--side" style="text-align:center;">${options.sideRenderer(item) || ''}</td>`
+      : '';
 
-    return `
-      <tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
-        <td class="dash-tbl-cell dash-tbl-cell--name">
-          <div class="dash-tbl-name">${title}</div>
-          <div class="dash-tbl-sub">${model}</div>
-        </td>
-        ${showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept">
-          <span class="dept-pc">${dept}</span>
-          <span class="dept-mobile">${deptMobile}</span>
-        </td>` : ''}
-        ${showDate ? `<td class="dash-tbl-cell dash-tbl-cell--date">${dateText}</td>` : ''}
-        ${extraHtml}
-        ${statusHtml}
-        ${sideHtml}
-      </tr>
-    `;
+    return `<tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
+      <td class="dash-tbl-cell dash-tbl-cell--name" style="text-align:left;">
+        <div class="dash-tbl-name">${title}</div>
+        <div class="dash-tbl-sub">${model}</div>
+      </td>
+      ${tdDept}${tdDate}${tdExtra}${tdStatus}${tdSide}
+    </tr>`;
   }).join('');
 
-  // thead + tbody를 단일 테이블로 렌더 — 컬럼 정렬 완벽 보장
-  if (theadContainer) {
-    theadContainer.style.display = 'none'; // 별도 thead-wrap 숨김
-  }
-
+  container.style.display = 'block';
   container.innerHTML = `
-    <table class="dash-tbl dash-tbl--scroll">
+    <table class="dash-tbl" style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">
       ${colgroup}
-      <thead class="dash-tbl-thead-sticky">
-        <tr>
-          <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-          ${deptHeader}${dateHeader}${extraHeader}${statusHeader}${sideHeader}
-        </tr>
-      </thead>
+      <thead><tr>${thName}${thDept}${thDate}${thExtra}${thStatus}${thSide}</tr></thead>
       <tbody>${rows}</tbody>
-    </table>
-  `;
+    </table>`;
 }
 
 function renderMaintenanceAlerts(items) {
