@@ -145,10 +145,12 @@
   justify-content: space-between;
   gap: 12px;
   flex: 0 0 auto;
-  /* 헤더 자체가 배경 블록 */
   padding: 18px 22px 16px;
   background: #f7f9fd;
   border-bottom: 1.5px solid #e0e7f2;
+  position: relative;
+  z-index: 10;           /* sticky thead(z-index:2)보다 항상 위 */
+  isolation: isolate;    /* 독립 스택 컨텍스트 */
 }
 
 /* 헤더 바로 다음 콘텐츠 영역 패딩 */
@@ -447,7 +449,9 @@
 .dashboard-page .dashboard-panel--repair .dashboard-list-stack {
   max-height: 280px;
   overflow-y: auto;
-  padding-right: 18px;  /* 오른쪽 스크롤바 여백 포함 */
+  overflow-x: hidden;
+  padding-right: 4px;
+  position: relative;  /* sticky thead의 기준 컨테이너 확정 */
 }
 
 .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack::-webkit-scrollbar,
@@ -482,7 +486,7 @@
   color: #3d5068;
   text-align: left;
   white-space: nowrap;
-  z-index: 1;
+  z-index: 2;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
