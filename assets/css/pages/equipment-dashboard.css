@@ -153,13 +153,12 @@
   isolation: isolate;
 }
 
-/* 테이블 패널: section-head border 유지 */
+/* 테이블 패널: 하단 패딩·border 제거 — dash-tbl-thead-wrap이 구분선 담당 */
 .dashboard-page .dashboard-panel--maintenance .dashboard-section-head,
 .dashboard-page .dashboard-panel--repair .dashboard-section-head,
 .dashboard-page .dashboard-panel--registered .dashboard-section-head {
-  padding-bottom: 16px;
-  border-bottom: 1.5px solid #e0e7f2;
-  flex-wrap: initial;
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 /* thead wrap — section-head 바로 다음, 전체 폭, 여백 없음 */
