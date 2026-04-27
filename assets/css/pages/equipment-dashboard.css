@@ -523,22 +523,26 @@
   text-transform: uppercase;
 }
 
-/* 첫 번째 / 마지막 셀에 카드 내부 여백 맞춤 */
+/* 첫 번째 / 마지막 셀 패딩 */
 .dash-tbl-th:first-child,
 .dash-tbl-cell:first-child {
-  padding-left: 22px;
+  padding-left: 18px;
 }
 
 .dash-tbl-th:last-child,
 .dash-tbl-cell:last-child {
-  padding-right: 18px;
+  padding-right: 12px;
 }
 
-/* 컬럼 너비는 JS colgroup으로 처리 — CSS width 불필요 */
+/* 장비명 제외 모든 컬럼 가운데 정렬 */
+.dash-tbl-th--dept,   .dash-tbl-cell--dept,
+.dash-tbl-th--date,   .dash-tbl-cell--date,
+.dash-tbl-th--extra,  .dash-tbl-cell--extra,
+.dash-tbl-th--status, .dash-tbl-cell--status,
+.dash-tbl-th--side,   .dash-tbl-cell--side {
+  text-align: center;
+}
 
-.dash-tbl-cell--status { text-align: center; }
-.dash-tbl-cell--extra.pc-only { text-align: center; }
-.dashboard-panel--registered .dash-tbl-cell--date { text-align: right; padding-right: 22px; }
 .dashboard-panel--maintenance .dash-tbl-cell--extra { font-size: 12px; color: #667085; }
 
 .dash-tbl-row {
