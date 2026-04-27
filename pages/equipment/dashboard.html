@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>의료장비 관리시스템</title>
-  <link rel="stylesheet" href="../../assets/css/common.css?v=20260427l" />
-  <link rel="stylesheet" href="../../assets/css/pages/equipment-dashboard.css?v=20260427l" />
+  <link rel="stylesheet" href="../../assets/css/common.css?v=20260427o" />
+  <link rel="stylesheet" href="../../assets/css/pages/equipment-dashboard.css?v=20260427o" />
   <style>
     @media (max-width: 768px) {
       html, body { overflow: hidden; overscroll-behavior: none; }
@@ -53,35 +53,26 @@
       </article>
     </section>
 
+    <!-- PC 전용 액션 바 -->
+    <div class="dashboard-action-bar" id="dashboardActionBar">
+      <span class="dashboard-action-bar-label">빠른 작업</span>
+      <a class="dashboard-action-bar-btn dashboard-action-bar-btn--primary" id="dashboardActionBarCreate" href="form.html">＋ 장비 등록</a>
+      <a class="dashboard-action-bar-btn" href="list.html">장비 조회</a>
+      <button type="button" class="dashboard-action-bar-btn" id="dashboardActionBarExport" style="display:none;">장비대장 다운로드</button>
+    </div>
+
     <section class="dashboard-panels-carousel-wrap dashboard-panels-section">
       <div class="dashboard-panel-dots" id="dashboardPanelDots" aria-label="대시보드 패널 탐색">
         <button type="button" class="dashboard-panel-dot is-active" data-index="0" aria-label="빠른 작업"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="1" aria-label="부서별 장비 현황"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="2" aria-label="부서별 상태 현황"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="3" aria-label="유지보수 만료 예정"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="4" aria-label="최근 30일 이내 수리된 장비"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="5" aria-label="최근 30일 이내 등록된 장비"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="1" aria-label="부서별 상태 현황"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="2" aria-label="유지보수 만료 예정"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="3" aria-label="최근 30일 이내 수리된 장비"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="4" aria-label="최근 30일 이내 등록된 장비"></button>
       </div>
 
       <div id="dashboardPanelsScroll" class="dashboard-panels-scroll">
         <div class="dashboard-panels-grid">
-
-          <!-- 패널 0: 부서별 장비 현황 — C형 인라인 막대 (1칸) -->
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--dept-chart" id="panelCard0">
-            <div class="section-head dashboard-section-head">
-              <div>
-                <span class="portal-section-kicker">DEPARTMENT</span>
-                <h2 class="section-title dashboard-section-title">부서별 장비 현황</h2>
-                <div class="sub-text dashboard-section-desc">부서별 보유 장비 대수입니다.</div>
-              </div>
-            </div>
-            <div id="deptChartWrap" class="dept-chart-wrap">
-              <div class="empty-box" id="deptChartEmpty" style="display:none;">데이터가 없습니다.</div>
-            </div>
-          </article>
-
-          <!-- 패널 1: 부서별 상태 현황 — 히트맵 (1칸) -->
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--heatmap" id="panelCard1">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--heatmap" id="panelCard0">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">STATUS × DEPT</span>
@@ -94,7 +85,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions" id="panelCard2">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions" id="panelCard1">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">QUICK ACTIONS</span>
@@ -130,7 +121,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--maintenance" id="panelCard3">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--maintenance" id="panelCard2">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">MAINTENANCE</span>
@@ -153,7 +144,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--repair" id="panelCard4">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--repair" id="panelCard3">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">REPAIR</span>
@@ -168,7 +159,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--registered" id="panelCard5">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--registered" id="panelCard4">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">REGISTERED</span>
