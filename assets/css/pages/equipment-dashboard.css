@@ -205,13 +205,24 @@
 .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack,
 .dashboard-page .dashboard-panel--registered .dashboard-list-stack,
 .dashboard-page .dashboard-panel--repair .dashboard-list-stack {
-  max-height: 320px;
+  max-height: 360px;
   overflow-y: auto !important;
   overflow-x: hidden;
   padding: 0 !important;
   position: relative;
   isolation: isolate;
-  -webkit-overflow-scrolling: touch; /* iOS 스크롤 */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 단일 테이블 내 thead sticky */
+.dashboard-page .dashboard-panel--maintenance .dashboard-list-stack thead th,
+.dashboard-page .dashboard-panel--registered .dashboard-list-stack thead th,
+.dashboard-page .dashboard-panel--repair .dashboard-list-stack thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f7f9fd;
+  border-bottom: 1.5px solid #e0e7f2;
 }
 
 .dashboard-page .dashboard-section-head > div {
