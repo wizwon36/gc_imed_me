@@ -600,6 +600,14 @@
     background: #2563eb;
   }
 
+  /* 모바일 캐러셀 순서 — 빠른 작업을 첫 번째로 */
+  #panelCard2 { order: -1; }
+  #panelCard0 { order: 0; }
+  #panelCard1 { order: 1; }
+  #panelCard3 { order: 2; }
+  #panelCard4 { order: 3; }
+  #panelCard5 { order: 4; }
+
   /* bottom panels swipe */
   .dashboard-panels-scroll {
     overflow-x: auto;
