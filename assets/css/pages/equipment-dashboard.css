@@ -712,71 +712,11 @@
     margin-top: 7px;
     gap: 5px;
   }
-}
 
-/* ===== 부서별 장비 현황 차트 패널 ===== */
+/* =============================================
+   패널 0: 부서별 장비 현황 — C형 인라인 막대
+   ============================================= */
 
-.dashboard-page .dashboard-panel--dept-chart {
-  display: flex;
-  flex-direction: column;
-}
-
-.dept-chart-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 4px 0;
-  overflow-y: auto;
-}
-
-.dept-chart-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.dept-chart-row {
-  display: grid;
-  grid-template-columns: 110px 1fr 36px;
-  align-items: center;
-  gap: 10px;
-}
-
-.dept-chart-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #475569;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: right;
-}
-
-.dept-chart-bar-wrap {
-  background: #f1f5f9;
-  border-radius: 999px;
-  height: 10px;
-  overflow: hidden;
-}
-
-.dept-chart-bar {
-  height: 100%;
-  border-radius: 999px;
-  min-width: 4px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dept-chart-count {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: right;
-}
-
-/* ===== 부서별 장비 현황 차트 패널 ===== */
-
-/* PC: 1칸 (status-chart와 나란히) */
 .dashboard-page .dashboard-panel--dept-chart {
   min-height: 240px;
 }
@@ -786,274 +726,344 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 4px 0;
+  padding: 4px 0 8px;
   overflow-y: auto;
 }
 
-.dept-chart-list {
+.dept-cbar-list {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 10px;
 }
 
-.dept-chart-row {
-  display: grid;
-  grid-template-columns: 130px 1fr 40px;
-  align-items: center;
-  gap: 12px;
+.dept-cbar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.dept-chart-label {
-  font-size: 12.5px;
+.dept-cbar-label {
+  font-size: 12px;
   font-weight: 600;
   color: #475569;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: right;
 }
 
-.dept-chart-bar-wrap {
+.dept-cbar-track {
   background: #f1f5f9;
-  border-radius: 999px;
-  height: 10px;
+  border-radius: 6px;
+  height: 26px;
   overflow: hidden;
+  position: relative;
 }
 
-.dept-chart-bar {
+.dept-cbar-fill {
   height: 100%;
-  border-radius: 999px;
-  min-width: 4px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  min-width: 72px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dept-chart-count {
-  font-size: 13px;
+.dept-cbar-inline {
+  font-size: 11.5px;
   font-weight: 700;
-  color: #1e293b;
-  text-align: right;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
-/* 모바일: span 해제, 일반 카드로 */
 @media (max-width: 700px) {
-  .dashboard-page .dashboard-panel--dept-chart {
-    grid-column: span 1;
-    min-height: 0;
-  }
-
-  .dept-chart-row {
-    grid-template-columns: 90px 1fr 32px;
-    gap: 8px;
-  }
-
-  .dept-chart-label {
-    font-size: 11.5px;
-  }
-
-  .dept-chart-count {
-    font-size: 12px;
-  }
+  .dept-cbar-label { font-size: 11px; }
+  .dept-cbar-track { height: 24px; }
+  .dept-cbar-inline { font-size: 11px; }
 }
 
-/* ===== 부서별 차트: 가로 막대 (단독 패널) ===== */
+/* =============================================
+   패널 1: 부서별 상태 현황 — 히트맵
+   ============================================= */
 
-.dept-chart-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 4px 0 8px;
-  overflow-y: auto;
-}
-
-.dept-bar-list {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.dept-bar-row {
-  display: grid;
-  grid-template-columns: 100px 1fr 38px;
-  align-items: center;
-  gap: 10px;
-}
-
-.dept-bar-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #475569;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: right;
-}
-
-.dept-bar-track {
-  background: #f1f5f9;
-  border-radius: 999px;
-  height: 10px;
-  overflow: hidden;
-}
-
-.dept-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  min-width: 4px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dept-bar-count {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: right;
-}
-
-/* ===== 상태별 현황 도넛 차트 (독립 패널) ===== */
-
-.dashboard-page .dashboard-panel--status-chart {
+.dashboard-page .dashboard-panel--heatmap {
   min-height: 240px;
 }
 
-.status-chart-wrap {
+.heatmap-wrap {
   flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
   padding: 4px 0 8px;
+  overflow-x: auto;
 }
 
-.status-donut-inner {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+.hm-table {
   width: 100%;
-}
-
-.status-donut-left {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
+  gap: 5px;
 }
 
-.status-donut-svg-wrap {
-  width: 148px;
-  height: 148px;
-  flex-shrink: 0;
-}
-
-.status-donut-svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.status-donut-slice {
-  opacity: 0;
-  animation: statusDonutFadeIn 0.35s ease forwards;
-  transition: filter 0.15s;
-  cursor: default;
-}
-
-.status-donut-slice:hover { filter: brightness(1.12); }
-
-@keyframes statusDonutFadeIn {
-  from { opacity: 0; transform-origin: 74px 74px; transform: scale(0.82); }
-  to   { opacity: 1; transform-origin: 74px 74px; transform: scale(1); }
-}
-
-.status-donut-center-label {
-  font-size: 10px;
-  fill: #94a3b8;
-  text-anchor: middle;
-  font-weight: 500;
-}
-
-.status-donut-center-value {
-  font-size: 20px;
-  fill: #1e293b;
-  text-anchor: middle;
-  font-weight: 800;
-}
-
-.status-legend {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-
-.status-legend-item {
+.hm-header-row {
   display: grid;
-  grid-template-columns: 10px 1fr auto auto;
+  grid-template-columns: 80px repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.hm-dept-th {
+  /* 빈 왼쪽 헤더 */
+}
+
+.hm-th {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-align: center;
+  padding: 3px 0;
+}
+
+.hm-row {
+  display: grid;
+  grid-template-columns: 80px repeat(4, 1fr);
+  gap: 5px;
   align-items: center;
-  gap: 8px;
 }
 
-.status-legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-legend-label {
-  font-size: 13px;
+.hm-dept {
+  font-size: 12px;
   font-weight: 600;
   color: #334155;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding-right: 6px;
 }
 
-.status-legend-count {
+.hm-cell {
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+
+.hm-cell--empty {
+  background: #f8fafc;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.hm-cell:not(.hm-cell--empty):hover {
+  opacity: 0.82;
+}
+
+@media (max-width: 700px) {
+  .hm-header-row,
+  .hm-row {
+    grid-template-columns: 64px repeat(4, 1fr);
+    gap: 4px;
+  }
+  .hm-dept { font-size: 11px; }
+  .hm-th   { font-size: 10px; }
+  .hm-cell { height: 30px; font-size: 12px; border-radius: 6px; }
+}
+
+/* =============================================
+   패널 3: 유지보수 만료 — D-Day 게이지
+   ============================================= */
+
+.maint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.maint-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 0;
+  border-radius: 10px;
+  transition: background 0.12s;
+}
+
+.maint-row:hover {
+  background: #f8fafc;
+}
+
+.maint-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.maint-name {
   font-size: 13px;
   font-weight: 700;
   color: #1e293b;
-  text-align: right;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.status-legend-pct {
+.maint-sub {
   font-size: 11.5px;
-  color: #94a3b8;
-  text-align: right;
+  color: #64748b;
+  margin-top: 2px;
   white-space: nowrap;
-  min-width: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 모바일 */
+.maint-gauge-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+  height: 5px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.maint-gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.maint-badge {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
+  min-width: 52px;
+  text-align: center;
+}
+
+.maint-badge--over   { background: #fef2f2; color: #dc2626; }
+.maint-badge--urgent { background: #fef2f2; color: #dc2626; }
+.maint-badge--warn   { background: #fffbeb; color: #d97706; }
+.maint-badge--normal { background: #f0fdf4; color: #16a34a; }
+
 @media (max-width: 700px) {
-  .dept-bar-row {
-    grid-template-columns: 80px 1fr 32px;
-    gap: 8px;
-  }
-  .dept-bar-label { font-size: 11.5px; }
-  .dept-bar-count { font-size: 12px; }
+  .maint-name  { font-size: 12.5px; }
+  .maint-sub   { font-size: 11px; }
+  .maint-badge { font-size: 11px; min-width: 46px; padding: 3px 7px; }
+}
 
-  .status-donut-inner {
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-  }
+/* =============================================
+   패널 4·5: 수리·등록 장비 — 타임라인
+   ============================================= */
 
-  .status-donut-left {
-    width: 100%;
-    align-items: center;
-  }
+.dashboard-timeline-stack {
+  flex: 1;
+  overflow-y: auto;
+}
 
-  .status-legend {
-    width: 100%;
-  }
+.tl-list {
+  display: flex;
+  flex-direction: column;
+}
 
-  .status-legend-item {
-    grid-template-columns: 10px 1fr auto auto;
-  }
+.tl-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 6px 8px 2px;
+  border-radius: 10px;
+  transition: background 0.12s;
+}
 
-  .status-legend-label { font-size: 12px; }
-  .status-legend-count { font-size: 12px; }
+.tl-row:hover {
+  background: #f8fafc;
+}
+
+.tl-line-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 4px;
+  width: 12px;
+}
+
+.tl-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #bfdbfe;
+  flex-shrink: 0;
+}
+
+.tl-connector {
+  width: 2px;
+  flex: 1;
+  min-height: 14px;
+  background: #e2e8f0;
+  border-radius: 1px;
+  margin-top: 3px;
+}
+
+.tl-body {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 4px;
+}
+
+.tl-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.tl-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-badge {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.tl-badge--use     { background: #eff6ff; color: #2563eb; }
+.tl-badge--repair  { background: #fef2f2; color: #dc2626; }
+.tl-badge--inspect { background: #fffbeb; color: #d97706; }
+.tl-badge--stored  { background: #f0fdf4; color: #16a34a; }
+.tl-badge--disposed{ background: #f1f5f9; color: #64748b; }
+
+.tl-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.tl-date {
+  color: #94a3b8;
+}
+
+@media (max-width: 700px) {
+  .tl-name  { font-size: 12.5px; }
+  .tl-meta  { font-size: 11px; }
+  .tl-badge { font-size: 10px; }
 }
