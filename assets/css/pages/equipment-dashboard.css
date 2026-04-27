@@ -948,8 +948,7 @@
     padding-right: 14px;
   }
 
-  /* 모바일: pc-only 컬럼 숨김 */
-  .pc-only { display: none !important; }
+  /* 모바일: pc-only 컬럼 숨김 — JS에서 colgroup/셀 분기로 처리 */
 
   /* 모바일: 유지보수 */
   .dashboard-panel--maintenance .dash-tbl-th--name { width: 40%; }
