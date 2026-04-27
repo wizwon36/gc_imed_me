@@ -607,8 +607,8 @@
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
     padding-bottom: 4px;
-    padding-left: 4%;
-    padding-right: 4%;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .dashboard-panels-scroll::-webkit-scrollbar {
@@ -618,13 +618,13 @@
   .dashboard-panels-grid {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 92%;
+    grid-auto-columns: calc(100% - 32px);
     grid-template-columns: none;
     gap: 12px;
   }
 
   .dashboard-page .dashboard-panel--portal {
-    scroll-snap-align: center;
+    scroll-snap-align: start;
     min-height: 0;
     height: auto;
     border-radius: 20px;
