@@ -51,16 +51,17 @@
     <section class="dashboard-panels-carousel-wrap">
       <div class="dashboard-panel-dots" id="dashboardPanelDots" aria-label="대시보드 패널 탐색">
         <button type="button" class="dashboard-panel-dot is-active" data-index="0" aria-label="부서별 장비 현황"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="1" aria-label="빠른 작업"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="2" aria-label="유지보수 만료 예정"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="3" aria-label="최근 30일 이내 수리된 장비"></button>
-        <button type="button" class="dashboard-panel-dot" data-index="4" aria-label="최근 30일 이내 등록된 장비"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="1" aria-label="상태별 현황"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="2" aria-label="빠른 작업"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="3" aria-label="유지보수 만료 예정"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="4" aria-label="최근 30일 이내 수리된 장비"></button>
+        <button type="button" class="dashboard-panel-dot" data-index="5" aria-label="최근 30일 이내 등록된 장비"></button>
       </div>
 
       <div id="dashboardPanelsScroll" class="dashboard-panels-scroll">
         <div class="dashboard-panels-grid">
 
-          <!-- 패널 1: 부서별 장비 현황 (PC: 2칸, 모바일: 첫 번째 카드) -->
+          <!-- 패널 1: 부서별 장비 현황 (PC: 1칸) -->
           <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--dept-chart" id="panelCard0">
             <div class="section-head dashboard-section-head">
               <div>
@@ -74,7 +75,21 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions" id="panelCard1">
+          <!-- 패널 2: 상태별 현황 (PC: 1칸) -->
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--status-chart" id="panelCard1">
+            <div class="section-head dashboard-section-head">
+              <div>
+                <span class="portal-section-kicker">STATUS</span>
+                <h2 class="section-title dashboard-section-title">상태별 현황</h2>
+                <div class="sub-text dashboard-section-desc">장비 운영 상태 분포입니다.</div>
+              </div>
+            </div>
+            <div id="statusChartWrap" class="status-chart-wrap">
+              <div class="empty-box" id="statusChartEmpty" style="display:none;">데이터가 없습니다.</div>
+            </div>
+          </article>
+
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--actions" id="panelCard2">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">QUICK ACTIONS</span>
@@ -110,7 +125,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--maintenance" id="panelCard2">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--maintenance" id="panelCard3">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">MAINTENANCE</span>
@@ -133,7 +148,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--repair" id="panelCard3">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--repair" id="panelCard4">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">REPAIR</span>
@@ -148,7 +163,7 @@
             </div>
           </article>
 
-          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--registered" id="panelCard4">
+          <article class="card dashboard-panel dashboard-panel--portal dashboard-panel--records dashboard-panel--registered" id="panelCard5">
             <div class="section-head dashboard-section-head">
               <div>
                 <span class="portal-section-kicker">REGISTERED</span>
