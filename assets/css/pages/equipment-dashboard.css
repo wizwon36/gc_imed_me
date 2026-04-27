@@ -153,12 +153,12 @@
   isolation: isolate;
 }
 
-/* 테이블 패널: section-head 하단 패딩 제거 — 컬럼 타이틀이 바로 이어붙음 */
+/* 테이블 패널: section-head도 동일하게 border 유지 */
 .dashboard-page .dashboard-panel--maintenance .dashboard-section-head,
 .dashboard-page .dashboard-panel--repair .dashboard-section-head,
 .dashboard-page .dashboard-panel--registered .dashboard-section-head {
   padding-bottom: 16px;
-  border-bottom: 0;
+  border-bottom: 1.5px solid #e0e7f2;  /* 선 복구 */
 }
 
 /* 헤더 바로 다음 콘텐츠 영역 패딩 */
@@ -177,7 +177,7 @@
   padding: 24px;
 }
 
-/* list-stack: 테이블이 좌우 패딩 자체 처리 — 상하만 */
+/* list-stack: 패딩 없이 카드 전체 폭 사용 */
 .dashboard-page .dashboard-section-head ~ .dashboard-list-stack {
   margin-top: 0;
   padding: 0;
@@ -468,7 +468,7 @@
   max-height: 320px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 18px 16px 22px;
+  padding: 0 0 12px 0;   /* 좌우 패딩 제거 — 테이블이 카드 전체 폭 */
   position: relative;
   isolation: isolate;
 }
@@ -508,6 +508,17 @@
   z-index: 2;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* 첫 번째 / 마지막 셀에 카드 내부 여백 맞춤 */
+.dash-tbl-th:first-child,
+.dash-tbl-cell:first-child {
+  padding-left: 22px;
+}
+
+.dash-tbl-th:last-child,
+.dash-tbl-cell:last-child {
+  padding-right: 18px;
 }
 
 /* 유지보수: 장비명 + 부서 + D-Day (날짜 없음) */
