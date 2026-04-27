@@ -534,30 +534,12 @@
   padding-right: 18px;
 }
 
-/* PC 전용 / 모바일 숨김 */
-.pc-only { display: table-cell; }
-
-/* 유지보수: 장비명 + 부서 + 만료일(PC) + D-Day — 만료일 축소, D-DAY 확대 */
-.dashboard-panel--maintenance .dash-tbl-th--name { width: 32%; }
-.dashboard-panel--maintenance .dash-tbl-th--dept { width: 30%; }
-.dashboard-panel--maintenance .dash-tbl-th--extra { width: 18%; }
-.dashboard-panel--maintenance .dash-tbl-th--side { width: 20%; text-align: center; }
-.dashboard-panel--maintenance .dash-tbl-cell--extra { font-size: 12px; color: #667085; }
-
-/* 수리: 장비명 + 부서 + 수리일 + 상태 */
-.dashboard-panel--repair .dash-tbl-th--name { width: 35%; }
-.dashboard-panel--repair .dash-tbl-th--dept { width: 30%; }
-.dashboard-panel--repair .dash-tbl-th--date { width: 22%; }
-.dashboard-panel--repair .dash-tbl-th--status { width: 13%; text-align: center; }
-
-/* 등록: 장비명 + 부서 + 등록일 */
-.dashboard-panel--registered .dash-tbl-th--name { width: 38%; }
-.dashboard-panel--registered .dash-tbl-th--dept { width: 36%; }
-.dashboard-panel--registered .dash-tbl-th--date { width: 26%; text-align: right; }
-.dashboard-panel--registered .dash-tbl-cell--date { text-align: right; padding-right: 22px; }
+/* 컬럼 너비는 JS colgroup으로 처리 — CSS width 불필요 */
 
 .dash-tbl-cell--status { text-align: center; }
 .dash-tbl-cell--extra.pc-only { text-align: center; }
+.dashboard-panel--registered .dash-tbl-cell--date { text-align: right; padding-right: 22px; }
+.dashboard-panel--maintenance .dash-tbl-cell--extra { font-size: 12px; color: #667085; }
 
 .dash-tbl-row {
   transition: background-color 0.12s ease;
@@ -963,12 +945,12 @@
   /* 모바일: pc-only 컬럼 숨김 */
   .pc-only { display: none !important; }
 
-  /* 모바일: 유지보수 — 만료일 숨기고 장비명+부서+D-Day */
+  /* 모바일: 유지보수 */
   .dashboard-panel--maintenance .dash-tbl-th--name { width: 40%; }
   .dashboard-panel--maintenance .dash-tbl-th--dept { width: 34%; }
   .dashboard-panel--maintenance .dash-tbl-th--side { width: 26%; }
 
-  /* 모바일: 수리/등록 — 장비명 + 부서(줄바꿈) + 날짜 */
+  /* 모바일: 수리/등록 */
   .dashboard-panel--repair .dash-tbl-th--name,
   .dashboard-panel--registered .dash-tbl-th--name { width: 36%; }
   .dashboard-panel--repair .dash-tbl-th--dept,
