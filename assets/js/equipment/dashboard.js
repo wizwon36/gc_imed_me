@@ -370,9 +370,8 @@ function renderDeptChart(data) {
       <div class="dept-cbar-row">
         <div class="dept-cbar-label" title="${name}">${name}</div>
         <div class="dept-cbar-track">
-          <div class="dept-cbar-fill" style="width:${barPct}%;background:${color};">
-            <span class="dept-cbar-inline">${count}대&nbsp;&nbsp;${pct}%</span>
-          </div>
+          <div class="dept-cbar-fill" style="width:${barPct}%;background:${color};"></div>
+          <span class="dept-cbar-outside" style="color:${color};">${count}대&nbsp;&nbsp;${pct}%</span>
         </div>
       </div>`;
   }).join('');
