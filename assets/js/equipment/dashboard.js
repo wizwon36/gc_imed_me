@@ -339,11 +339,6 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     `;
   }).join('');
 
-  const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
-  const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
-  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
-  const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
-
   // 미리 HTML에 정의된 thead 컨테이너에 채워넣기 (데이터 있을 때)
   container.innerHTML = `
     <table class="dash-tbl">
