@@ -168,6 +168,7 @@
   width: 100%;
   margin: 0;
   padding: 0;
+  padding-right: 8px; /* 스크롤바 너비 보정 */
   background: #f7f9fd;
   border-top: 1.5px solid #e0e7f2;
   border-bottom: 1.5px solid #e0e7f2;
@@ -529,9 +530,10 @@
   padding-left: 18px;
 }
 
+/* 마지막 셀 — 스크롤바 너비 감안해 여백 없음, 센터 정렬로 처리 */
 .dash-tbl-th:last-child,
 .dash-tbl-cell:last-child {
-  padding-right: 6px;
+  padding-right: 4px;
 }
 
 /* 장비명 제외 모든 컬럼 가운데 정렬 */
