@@ -267,10 +267,10 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const colWidths = (function() {
     const id = container.id;
     if (id === 'maintenanceAlertList') {
-      // 장비명 30% + 부서 28% + 만료일(pc) 16% + D-DAY 26%
-      const cols = [{ w: '30%' }, { w: '28%' }];
-      if (hasExtra) cols.push({ w: '16%', pc: true });
-      cols.push({ w: '26%' });
+      // 장비명 28% + 부서 26% + 만료일(pc) 22% + D-DAY 24%
+      const cols = [{ w: '28%' }, { w: '26%' }];
+      if (hasExtra) cols.push({ w: '22%', pc: true });
+      cols.push({ w: '24%' });
       return cols;
     }
     if (id === 'recentRepairList') {
