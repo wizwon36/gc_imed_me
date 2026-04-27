@@ -123,9 +123,9 @@
 .dashboard-page .dashboard-panel--portal {
   display: flex;
   flex-direction: column;
-  min-height: 360px;
-  height: 100%;
-  padding: 0;                          /* 패딩 제거 — 헤더/바디가 각자 처리 */
+  min-height: 0;         /* 고정 min-height 제거 — 콘텐츠에 맞게 자동 */
+  height: auto;
+  padding: 0;
   border: 1.5px solid #d0d8e8;
   border-radius: 24px;
   background: #fff;
@@ -1052,6 +1052,7 @@
 
 .dashboard-page .dashboard-panel--heatmap {
   min-height: 240px;
+  height: auto;
 }
 
 .heatmap-wrap {
@@ -1059,8 +1060,8 @@
   display: flex;
   flex-direction: column;
   padding: 0;
-  overflow-y: auto;
-  max-height: 280px;
+  overflow-y: visible;
+  max-height: none;
 }
 
 .hm-table {
@@ -1129,7 +1130,8 @@
     min-height: 0;
   }
   .heatmap-wrap {
-    max-height: 260px;
+    max-height: none;
+    overflow-y: visible;
   }
   .hm-header-row,
   .hm-row {
