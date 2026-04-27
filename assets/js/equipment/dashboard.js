@@ -261,14 +261,42 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const showDept = options.showDept !== false;
   const showDate = options.showDate !== false;
   const showStatus = options.showStatus === true;
+  const hasExtra = !!options.extraField;
+
+  // 패널별 컬럼 너비 정의 (thead/tbody 동일하게 적용)
+  const colWidths = (function() {
+    const id = container.id;
+    if (id === 'maintenanceAlertList') {
+      // 장비명 32% + 부서 30% + 만료일(pc) 18% + D-DAY 20%
+      const cols = [{ w: '32%' }, { w: '30%' }];
+      if (hasExtra) cols.push({ w: '18%', pc: true });
+      cols.push({ w: '20%' });
+      return cols;
+    }
+    if (id === 'recentRepairList') {
+      // 장비명 35% + 부서 30% + 수리일 22% + 상태 13%
+      return [{ w: '35%' }, { w: '30%' }, { w: '22%' }, { w: '13%' }];
+    }
+    if (id === 'recentRegisteredList') {
+      // 장비명 38% + 부서 36% + 등록일 26%
+      return [{ w: '38%' }, { w: '36%' }, { w: '26%' }];
+    }
+    return [];
+  })();
+
+  const colgroup = colWidths.length
+    ? `<colgroup>${colWidths.map(c =>
+        `<col style="width:${c.w};"${c.pc ? ' class="pc-only"' : ''}>`
+      ).join('')}</colgroup>`
+    : '';
 
   const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
   const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
-  const extraHeader = options.extraField ? `<th class="dash-tbl-th dash-tbl-th--extra pc-only">${textSafe(options.extraLabel || '')}</th>` : '';
-  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
+  const extraHeader = hasExtra ? `<th class="dash-tbl-th dash-tbl-th--extra pc-only">${textSafe(options.extraLabel || '')}</th>` : '';
+  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status" style="text-align:center;">상태</th>' : '';
   const sideHeader = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side" style="text-align:center;">${textSafe(options.sideLabel || '')}</th>` : '';
 
-  // thead는 데이터 유무와 관계없이 항상 표시
+  // thead — colgroup 포함
   const theadMap = {
     'maintenanceAlertList': 'maintenanceAlertThead',
     'recentRepairList': 'recentRepairThead',
@@ -276,7 +304,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   };
   const theadContainer = document.getElementById(theadMap[container.id] || '');
   if (theadContainer) {
-    theadContainer.innerHTML = `<table class="dash-tbl"><thead><tr>
+    theadContainer.innerHTML = `<table class="dash-tbl">${colgroup}<thead><tr>
       <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
       ${deptHeader}${dateHeader}${extraHeader}${statusHeader}${sideHeader}
     </tr></thead></table>`;
@@ -364,9 +392,9 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     `;
   }).join('');
 
-  // 미리 HTML에 정의된 thead 컨테이너에 채워넣기 (데이터 있을 때)
+  // tbody — colgroup 포함 (thead와 동일한 너비)
   container.innerHTML = `
-    <table class="dash-tbl">
+    <table class="dash-tbl">${colgroup}
       <tbody>${rows}</tbody>
     </table>
   `;
