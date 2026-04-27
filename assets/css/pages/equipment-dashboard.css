@@ -45,17 +45,38 @@
 }
 
 .dashboard-page .dashboard-kpi-card {
-  min-height: 68px;
-  max-height: 68px;
-  padding: 10px 14px;
-  border: 1px solid #d9dee7;
-  border-radius: 16px;
+  min-height: 80px;
+  max-height: 80px;
+  padding: 12px 16px;
+  border: 1.5px solid #d0d8e8;
+  border-radius: 18px;
   background: #fff;
-  box-shadow: 0 3px 10px rgba(16, 24, 40, 0.04);
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.07), 0 1px 3px rgba(16, 24, 40, 0.04);
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.dashboard-page .dashboard-kpi-card:hover {
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.11), 0 2px 6px rgba(16, 24, 40, 0.05);
+  transform: translateY(-1px);
+}
+
+/* 각 KPI 카드 컬러 포인트 */
+.dashboard-page .dashboard-kpi-card:nth-child(1) {
+  border-top: 3px solid #2563eb;
+}
+.dashboard-page .dashboard-kpi-card:nth-child(2) {
+  border-top: 3px solid #16a34a;
+}
+.dashboard-page .dashboard-kpi-card:nth-child(3) {
+  border-top: 3px solid #d97706;
+}
+.dashboard-page .dashboard-kpi-card:nth-child(4) {
+  border-top: 3px solid #7c3aed;
 }
 
 .dashboard-page .dashboard-kpi-label {
@@ -67,14 +88,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .dashboard-page .dashboard-kpi-value {
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 900;
   color: #0b1f44;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -102,11 +125,16 @@
   flex-direction: column;
   min-height: 360px;
   height: 100%;
-  padding: 18px;
-  border: 1px solid #d9dee7;
-  border-radius: 22px;
+  padding: 22px;
+  border: 1.5px solid #d0d8e8;
+  border-radius: 24px;
   background: #fff;
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+  box-shadow: 0 6px 24px rgba(16, 24, 40, 0.07), 0 2px 6px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.dashboard-page .dashboard-panel--portal:hover {
+  box-shadow: 0 10px 32px rgba(16, 24, 40, 0.10), 0 3px 8px rgba(16, 24, 40, 0.05);
 }
 
 .dashboard-page .dashboard-section-head {
@@ -115,8 +143,8 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 0;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #e9edf5;
+  padding-bottom: 16px;
+  border-bottom: 1.5px solid #e9edf5;
   flex: 0 0 auto;
 }
 
@@ -127,35 +155,38 @@
 .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--portal,
 .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--enhanced,
 .dashboard-page .dashboard-section-head ~ .empty-box {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .dashboard-page .dashboard-section-head > div {
   position: relative;
-  padding-left: 14px;
+  padding-left: 16px;
 }
 
 .dashboard-page .dashboard-section-head > div::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 4px;
+  top: 3px;
+  bottom: 3px;
+  width: 5px;
   border-radius: 999px;
   background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 100%);
 }
 
 .dashboard-page .dashboard-section-title {
   margin: 2px 0 0;
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.2;
+  font-weight: 800;
+  color: #0b1f44;
+  letter-spacing: -0.01em;
 }
 
 .dashboard-page .dashboard-section-desc {
-  margin-top: 4px;
+  margin-top: 5px;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.45;
   color: #667085;
   word-break: keep-all;
 }
@@ -327,20 +358,22 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  min-height: 72px;
-  padding: 12px 13px;
-  border: 1px solid #d9dee7;
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 1.5px solid #e2e8f0;
   border-radius: 18px;
   background: #fff;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
 }
 
 .dashboard-record-item:hover {
-  transform: translateY(-1px);
-  border-color: #bfd0ea;
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+  transform: translateY(-2px);
+  border-color: #93aff5;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.10);
+  background: #fafcff;
 }
 
 .dashboard-record-main {
@@ -416,15 +449,17 @@
 .dash-tbl-th {
   position: sticky;
   top: 0;
-  padding: 8px 10px;
-  background: #f1f5fb;
-  border-bottom: 1px solid #d9dee7;
+  padding: 9px 10px;
+  background: #f0f4fa;
+  border-bottom: 1.5px solid #d0d8e8;
   font-size: 11px;
   font-weight: 800;
-  color: #516274;
+  color: #3d5068;
   text-align: left;
   white-space: nowrap;
   z-index: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* 유지보수: 장비명 + 부서 + D-Day (날짜 없음) */
@@ -445,15 +480,15 @@
 }
 
 .dash-tbl-row:not(:last-child) td {
-  border-bottom: 1px solid #eef2f6;
+  border-bottom: 1px solid #edf1f7;
 }
 
 .dash-tbl-row:hover {
-  background: #f7f9fd;
+  background: #f0f5ff;
 }
 
 .dash-tbl-cell {
-  padding: 10px 10px;
+  padding: 11px 10px;
   font-size: 13px;
   color: #1e293b;
   vertical-align: middle;
@@ -514,28 +549,32 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 54px;
-  min-height: 28px;
-  padding: 0 10px;
+  min-width: 58px;
+  min-height: 30px;
+  padding: 0 12px;
   border-radius: 999px;
   background: #fff7ed;
-  border: 1px solid #fdba74;
+  border: 1.5px solid #fdba74;
   color: #c2410c;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 11.5px;
+  font-weight: 900;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(194, 65, 12, 0.12);
 }
 
 .dashboard-dday-badge.is-normal {
   background: #eff6ff;
-  border-color: #bfdbfe;
+  border-color: #93c5fd;
   color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.10);
 }
 
 .dashboard-dday-badge.is-overdue {
   background: #fef2f2;
-  border-color: #fecaca;
+  border-color: #fca5a5;
   color: #b42318;
+  box-shadow: 0 2px 6px rgba(180, 35, 24, 0.12);
 }
 
 #maintenanceAlertEmpty.empty-box,
