@@ -323,18 +323,23 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
   const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
 
-  // thead를 section-head 안에 주입 — CSS 여백 간섭 완전 차단
-  const panel = container.closest('.dashboard-panel--portal');
-  const sectionHead = panel ? panel.querySelector('.dashboard-section-head') : null;
-  if (sectionHead) {
-    const existingThead = sectionHead.querySelector('.dash-tbl-thead-wrap');
-    if (existingThead) existingThead.remove();
-    const theadHtml = `<div class="dash-tbl-thead-wrap"><table class="dash-tbl"><thead><tr>
-      <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-      ${deptHeader}${dateHeader}${statusHeader}${sideHeader}
-    </tr></thead></table></div>`;
-    sectionHead.insertAdjacentHTML('beforeend', theadHtml);
+  // thead를 list-stack 바로 앞에 삽입하고 JS로 직접 여백 0 강제
+  const existingThead = container.previousElementSibling;
+  if (existingThead && existingThead.classList.contains('dash-tbl-thead-wrap')) {
+    existingThead.remove();
   }
+
+  const theadWrap = document.createElement('div');
+  theadWrap.className = 'dash-tbl-thead-wrap';
+  theadWrap.style.cssText = 'margin:0;padding:0;width:100%;';
+  theadWrap.innerHTML = `<table class="dash-tbl"><thead><tr>
+    <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+    ${deptHeader}${dateHeader}${statusHeader}${sideHeader}
+  </tr></thead></table>`;
+  container.parentNode.insertBefore(theadWrap, container);
+
+  // list-stack 여백 JS로 직접 강제
+  container.style.cssText += 'margin-top:0!important;padding:0!important;';
 
   container.innerHTML = `
     <table class="dash-tbl">
