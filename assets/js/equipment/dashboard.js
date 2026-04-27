@@ -256,6 +256,32 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   if (!container) return;
 
   const list = Array.isArray(items) ? items : [];
+
+  const hasSide = typeof options.sideRenderer === 'function';
+  const showDept = options.showDept !== false;
+  const showDate = options.showDate !== false;
+  const showStatus = options.showStatus === true;
+
+  const deptHeader = showDept ? '<th class="dash-tbl-th dash-tbl-th--dept">부서</th>' : '';
+  const dateHeader = showDate ? `<th class="dash-tbl-th dash-tbl-th--date">${textSafe(options.dateLabel)}</th>` : '';
+  const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
+  const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
+
+  // thead는 데이터 유무와 관계없이 항상 표시
+  const theadMap = {
+    'maintenanceAlertList': 'maintenanceAlertThead',
+    'recentRepairList': 'recentRepairThead',
+    'recentRegisteredList': 'recentRegisteredThead'
+  };
+  const theadContainer = document.getElementById(theadMap[container.id] || '');
+  if (theadContainer) {
+    theadContainer.innerHTML = `<table class="dash-tbl"><thead><tr>
+      <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+      ${deptHeader}${dateHeader}${statusHeader}${sideHeader}
+    </tr></thead></table>`;
+    theadContainer.style.display = '';
+  }
+
   if (!list.length) {
     container.innerHTML = '';
     container.style.display = 'none';
@@ -265,11 +291,6 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 
   container.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
-
-  const hasSide = typeof options.sideRenderer === 'function';
-  const showDept = options.showDept !== false;
-  const showDate = options.showDate !== false;
-  const showStatus = options.showStatus === true;
 
   const rows = list.map(function (item) {
     const title = textSafe(item.equipment_name || '-');
@@ -323,24 +344,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
   const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
 
-  // 미리 HTML에 정의된 thead 컨테이너에 채워넣기
-  const theadMap = {
-    'maintenanceAlertList': 'maintenanceAlertThead',
-    'recentRepairList': 'recentRepairThead',
-    'recentRegisteredList': 'recentRegisteredThead'
-  };
-  const containerId = container.id;
-  const theadContainerId = theadMap[containerId];
-  const theadContainer = theadContainerId ? document.getElementById(theadContainerId) : null;
-
-  if (theadContainer) {
-    theadContainer.innerHTML = `<table class="dash-tbl"><thead><tr>
-      <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-      ${deptHeader}${dateHeader}${statusHeader}${sideHeader}
-    </tr></thead></table>`;
-    theadContainer.style.display = '';
-  }
-
+  // 미리 HTML에 정의된 thead 컨테이너에 채워넣기 (데이터 있을 때)
   container.innerHTML = `
     <table class="dash-tbl">
       <tbody>${rows}</tbody>
