@@ -148,7 +148,61 @@
   word-break: keep-all;
 }
 
-/* quick actions */
+/* quick actions — PC에서 패널 카드 숨기고 액션 바로 대체 */
+.dashboard-page .dashboard-panel--actions {
+  display: none;
+}
+
+.dashboard-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #d9dee7;
+  border-radius: 18px;
+  padding: 10px 16px;
+}
+
+.dashboard-action-bar-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #667085;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.dashboard-action-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid #d9dee7;
+  background: #fff;
+  color: #0b1f44;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dashboard-action-bar-btn:hover {
+  background: #f1f5f9;
+  border-color: #b0bdd0;
+}
+
+.dashboard-action-bar-btn--primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.dashboard-action-bar-btn--primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--enhanced {
   display: grid;
@@ -662,13 +716,21 @@
     background: #2563eb;
   }
 
+  /* 모바일: 액션 바 숨기고 패널 카드 표시 */
+  #dashboardActionBar {
+    display: none;
+  }
+
+  .dashboard-page .dashboard-panel--actions {
+    display: flex;
+  }
+
   /* 모바일 캐러셀 순서 — 빠른 작업을 첫 번째로 */
-  #panelCard2 { order: -1; }
+  #panelCard1 { order: -1; }
   #panelCard0 { order: 0; }
-  #panelCard1 { order: 1; }
+  #panelCard2 { order: 1; }
   #panelCard3 { order: 2; }
   #panelCard4 { order: 3; }
-  #panelCard5 { order: 4; }
 
   /* bottom panels swipe */
   .dashboard-panels-scroll {
@@ -846,24 +908,27 @@
   background: #f1f5f9;
   border-radius: 6px;
   height: 28px;
-  position: relative;
-  display: flex;
-  align-items: center;
+  overflow: hidden;
 }
 
 .dept-cbar-fill {
   height: 100%;
   border-radius: 6px;
-  min-width: 6px;
-  flex-shrink: 0;
+  min-width: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  overflow: hidden;
   transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dept-cbar-outside {
+.dept-cbar-inline {
   font-size: 11.5px;
   font-weight: 700;
+  color: #fff;
   white-space: nowrap;
-  margin-left: 8px;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 @media (max-width: 700px) {
