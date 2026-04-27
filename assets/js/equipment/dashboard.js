@@ -419,9 +419,7 @@ function renderRecentRegisteredList(items) {
     dateField: 'created_at',
     dateLabel: '등록일',
     showDept: true,
-    showDate: true,
-    extraField: 'status',
-    extraLabel: '상태'
+    showDate: true
   });
 }
 
