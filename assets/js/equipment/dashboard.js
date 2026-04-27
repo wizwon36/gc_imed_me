@@ -170,6 +170,17 @@ function applyDashboardPermissionUi() {
     exportAction.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
     exportAction.addEventListener('click', exportAllEquipmentsExcel);
   }
+
+  const exportActionBar = dq('#dashboardActionBarExport');
+  if (exportActionBar) {
+    exportActionBar.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
+    exportActionBar.addEventListener('click', exportAllEquipmentsExcel);
+  }
+
+  const createActionBar = dq('#dashboardActionBarCreate');
+  if (createActionBar) {
+    createActionBar.style.display = DASHBOARD_PERMISSION.canEdit ? '' : 'none';
+  }
 }
 
 function renderDashboardSkeleton() {
@@ -332,7 +343,6 @@ function renderDashboardData(summary) {
   renderMaintenanceAlerts(summary?.maintenance_alerts || []);
   renderRecentRepairList(summary?.recent_repairs || []);
   renderRecentRegisteredList(summary?.recent_registrations || []);
-  renderDeptChart(summary?.department_summary || []);
   renderHeatmap(summary?.department_summary || []);
 }
 
@@ -370,8 +380,9 @@ function renderDeptChart(data) {
       <div class="dept-cbar-row">
         <div class="dept-cbar-label" title="${name}">${name}</div>
         <div class="dept-cbar-track">
-          <div class="dept-cbar-fill" style="width:${barPct}%;background:${color};"></div>
-          <span class="dept-cbar-outside" style="color:${color};">${count}대&nbsp;&nbsp;${pct}%</span>
+          <div class="dept-cbar-fill" style="width:${barPct}%;background:${color};">
+            <span class="dept-cbar-inline">${count}대&nbsp;&nbsp;${pct}%</span>
+          </div>
         </div>
       </div>`;
   }).join('');
