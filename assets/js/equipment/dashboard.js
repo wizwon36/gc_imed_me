@@ -282,7 +282,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     }
     if (id === 'recentRepairList') {
       return isMobile
-        ? ['32%', '28%', '24%', '16%']
+        ? ['32%', '26%', '24%', '18%']
         : ['32%', '28%', '22%', '18%'];
     }
     return ['38%', '36%', '26%']; // registered
@@ -291,16 +291,16 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const colgroup = `<colgroup>${cols.map(w => `<col style="width:${w};">`).join('')}</colgroup>`;
 
   // th — text-align 인라인 직접 지정
-  const th = (label, align) =>
-    `<th class="dash-tbl-th" style="text-align:${align || 'center'};position:sticky;top:0;background:#f7f9fd;border-bottom:1.5px solid #e0e7f2;z-index:2;padding:9px 8px;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;">${label}</th>`;
+  const th = (label, align, extraStyle) =>
+    `<th style="text-align:${align || 'center'};padding:9px 8px;${align === 'left' ? 'padding-left:18px;' : ''}position:sticky;top:0;background:#f7f9fd;border-bottom:1.5px solid #e0e7f2;z-index:2;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;${extraStyle || ''}">${label}</th>`;
 
   const theadRow = [
     th('장비명', 'left'),
-    showDept                  ? th('부서')          : '',
-    showDate                  ? th(options.dateLabel || '') : '',
-    hasExtra && !isMobile     ? th(options.extraLabel || '') : '',
-    showStatus                ? th('상태')          : '',
-    hasSide                   ? th(options.sideLabel || '') : ''
+    showDept              ? th('부서')                       : '',
+    showDate              ? th(options.dateLabel || '')      : '',
+    hasExtra && !isMobile ? th(options.extraLabel || '')     : '',
+    showStatus            ? th('상태')                       : '',
+    hasSide               ? th(options.sideLabel || '')      : ''
   ].join('');
 
   if (!list.length) {
