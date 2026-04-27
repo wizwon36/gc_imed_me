@@ -323,23 +323,23 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
   const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
 
-  // thead를 list-stack 바로 앞에 삽입하고 JS로 직접 여백 0 강제
-  const existingThead = container.previousElementSibling;
-  if (existingThead && existingThead.classList.contains('dash-tbl-thead-wrap')) {
-    existingThead.remove();
+  // 미리 HTML에 정의된 thead 컨테이너에 채워넣기
+  const theadMap = {
+    'maintenanceAlertList': 'maintenanceAlertThead',
+    'recentRepairList': 'recentRepairThead',
+    'recentRegisteredList': 'recentRegisteredThead'
+  };
+  const containerId = container.id;
+  const theadContainerId = theadMap[containerId];
+  const theadContainer = theadContainerId ? document.getElementById(theadContainerId) : null;
+
+  if (theadContainer) {
+    theadContainer.innerHTML = `<table class="dash-tbl"><thead><tr>
+      <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+      ${deptHeader}${dateHeader}${statusHeader}${sideHeader}
+    </tr></thead></table>`;
+    theadContainer.style.display = '';
   }
-
-  const theadWrap = document.createElement('div');
-  theadWrap.className = 'dash-tbl-thead-wrap';
-  theadWrap.style.cssText = 'margin:0;padding:0;width:100%;';
-  theadWrap.innerHTML = `<table class="dash-tbl"><thead><tr>
-    <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-    ${deptHeader}${dateHeader}${statusHeader}${sideHeader}
-  </tr></thead></table>`;
-  container.parentNode.insertBefore(theadWrap, container);
-
-  // list-stack 여백 JS로 직접 강제
-  container.style.cssText += 'margin-top:0!important;padding:0!important;';
 
   container.innerHTML = `
     <table class="dash-tbl">
