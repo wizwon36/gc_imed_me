@@ -125,29 +125,33 @@
   flex-direction: column;
   min-height: 360px;
   height: 100%;
-  padding: 22px;
+  padding: 0;                          /* 패딩 제거 — 헤더/바디가 각자 처리 */
   border: 1.5px solid #d0d8e8;
   border-radius: 24px;
   background: #fff;
   box-shadow: 0 6px 24px rgba(16, 24, 40, 0.07), 0 2px 6px rgba(16, 24, 40, 0.04);
   transition: box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
 .dashboard-page .dashboard-panel--portal:hover {
   box-shadow: 0 10px 32px rgba(16, 24, 40, 0.10), 0 3px 8px rgba(16, 24, 40, 0.05);
 }
 
+/* ── 카드 헤더 블록 ── */
 .dashboard-page .dashboard-section-head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 0;
-  padding-bottom: 16px;
-  border-bottom: 1.5px solid #e9edf5;
   flex: 0 0 auto;
+  /* 헤더 자체가 배경 블록 */
+  padding: 18px 22px 16px;
+  background: #f7f9fd;
+  border-bottom: 1.5px solid #e0e7f2;
 }
 
+/* 헤더 바로 다음 콘텐츠 영역 패딩 */
 .dashboard-page .dashboard-section-head + *,
 .dashboard-page .dashboard-section-head ~ .dept-chart-wrap,
 .dashboard-page .dashboard-section-head ~ .heatmap-wrap,
@@ -155,39 +159,60 @@
 .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--portal,
 .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--enhanced,
 .dashboard-page .dashboard-section-head ~ .empty-box {
-  margin-top: 16px;
+  margin-top: 0;
+  padding: 18px 22px 20px;
+}
+
+/* list-stack은 overflow를 위해 flex grow */
+.dashboard-page .dashboard-panel--portal > .dashboard-list-stack {
+  flex: 1 1 auto;
 }
 
 .dashboard-page .dashboard-section-head > div {
   position: relative;
-  padding-left: 16px;
+  padding-left: 14px;
 }
 
 .dashboard-page .dashboard-section-head > div::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 3px;
-  bottom: 3px;
-  width: 5px;
+  top: 2px;
+  bottom: 2px;
+  width: 4px;
   border-radius: 999px;
   background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 100%);
 }
 
+/* kicker 라벨 — 배경 뱃지 스타일 */
+.dashboard-page .portal-section-kicker {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  margin-bottom: 7px;
+  border-radius: 6px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
 .dashboard-page .dashboard-section-title {
-  margin: 2px 0 0;
-  font-size: 19px;
-  line-height: 1.2;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
   font-weight: 800;
   color: #0b1f44;
   letter-spacing: -0.01em;
 }
 
 .dashboard-page .dashboard-section-desc {
-  margin-top: 5px;
-  font-size: 12px;
+  margin-top: 4px;
+  font-size: 11.5px;
   line-height: 1.45;
-  color: #667085;
+  color: #8494aa;
   word-break: keep-all;
 }
 
@@ -422,7 +447,7 @@
 .dashboard-page .dashboard-panel--repair .dashboard-list-stack {
   max-height: 280px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 18px;  /* 오른쪽 스크롤바 여백 포함 */
 }
 
 .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack::-webkit-scrollbar,
@@ -825,16 +850,30 @@
     min-height: 0;
     height: auto;
     border-radius: 20px;
-    padding: 16px;
+    padding: 0;
     box-sizing: border-box;
   }
 
+  .dashboard-page .dashboard-section-head {
+    padding: 14px 16px 12px;
+  }
+
+  .dashboard-page .dashboard-section-head + *,
+  .dashboard-page .dashboard-section-head ~ .dept-chart-wrap,
+  .dashboard-page .dashboard-section-head ~ .heatmap-wrap,
+  .dashboard-page .dashboard-section-head ~ .dashboard-list-stack,
+  .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--portal,
+  .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--enhanced,
+  .dashboard-page .dashboard-section-head ~ .empty-box {
+    padding: 14px 16px 16px;
+  }
+
   .dashboard-page .dashboard-section-title {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .dashboard-page .dashboard-section-desc {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
@@ -853,7 +892,7 @@
   .dashboard-page .dashboard-panel--registered .dashboard-list-stack,
   .dashboard-page .dashboard-panel--repair .dashboard-list-stack {
     max-height: 300px;
-    padding-right: 2px;
+    padding-right: 14px;
   }
 
   /* 모바일: 유지보수 */
@@ -936,7 +975,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 4px 0 8px;
+  padding: 0;
   overflow-y: auto;
   max-height: 280px;
 }
@@ -1019,7 +1058,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 4px 0 8px;
+  padding: 0;
   overflow-y: auto;
   max-height: 280px;
 }
