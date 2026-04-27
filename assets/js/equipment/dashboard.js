@@ -434,6 +434,13 @@ function initPanelCarousel() {
     return firstCard.offsetWidth;
   }
 
+  function getSortedCards() {
+    const cards = Array.from(scrollEl.querySelectorAll('.dashboard-panel--portal'));
+    return cards.sort(function (a, b) {
+      return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+    });
+  }
+
   function updateActiveByScroll() {
     if (window.innerWidth > 768) {
       setActive(0);
