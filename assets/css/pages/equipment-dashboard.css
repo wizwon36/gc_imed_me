@@ -531,7 +531,7 @@
 
 .dash-tbl-th:last-child,
 .dash-tbl-cell:last-child {
-  padding-right: 12px;
+  padding-right: 6px;
 }
 
 /* 장비명 제외 모든 컬럼 가운데 정렬 */
