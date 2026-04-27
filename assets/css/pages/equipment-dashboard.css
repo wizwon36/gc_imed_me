@@ -157,50 +157,57 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
-  border: 1px solid #d9dee7;
+  background: #eef3ff;
+  border: 1px solid #c7d7f9;
   border-radius: 18px;
   padding: 10px 16px;
 }
 
 .dashboard-action-bar-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: #667085;
-  margin-right: 4px;
+  color: #4060b0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-right: 6px;
   white-space: nowrap;
+  padding-right: 10px;
+  border-right: 1px solid #c7d7f9;
 }
 
 .dashboard-action-bar-btn {
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 10px;
+  gap: 6px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 700;
-  border: 1px solid #d9dee7;
+  border: 1px solid #c7d7f9;
   background: #fff;
-  color: #0b1f44;
+  color: #1e3a8a;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .dashboard-action-bar-btn:hover {
-  background: #f1f5f9;
-  border-color: #b0bdd0;
+  background: #dbeafe;
+  border-color: #93aff5;
 }
 
 .dashboard-action-bar-btn--primary {
   background: #2563eb;
   border-color: #2563eb;
   color: #fff;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.25);
 }
 
 .dashboard-action-bar-btn--primary:hover {
   background: #1d4ed8;
   border-color: #1d4ed8;
+  box-shadow: 0 3px 12px rgba(37,99,235,0.35);
 }
 
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
