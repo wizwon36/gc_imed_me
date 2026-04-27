@@ -762,11 +762,12 @@
 .dept-cbar-fill {
   height: 100%;
   border-radius: 6px;
-  min-width: 72px;
+  min-width: 60px;
   display: flex;
   align-items: center;
   padding: 0 10px;
   transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .dept-cbar-inline {
@@ -774,6 +775,8 @@
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
   letter-spacing: 0.01em;
 }
 
@@ -809,7 +812,7 @@
 
 .hm-header-row {
   display: grid;
-  grid-template-columns: 80px repeat(4, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
   gap: 5px;
   margin-bottom: 2px;
 }
@@ -828,7 +831,7 @@
 
 .hm-row {
   display: grid;
-  grid-template-columns: 80px repeat(4, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
   gap: 5px;
   align-items: center;
 }
@@ -841,6 +844,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding-right: 6px;
+  min-width: 0;
 }
 
 .hm-cell {
@@ -868,7 +872,7 @@
 @media (max-width: 700px) {
   .hm-header-row,
   .hm-row {
-    grid-template-columns: 64px repeat(4, 1fr);
+    grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
     gap: 4px;
   }
   .hm-dept { font-size: 11px; }
