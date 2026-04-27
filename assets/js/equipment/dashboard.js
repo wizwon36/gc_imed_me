@@ -282,7 +282,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     }
     if (id === 'recentRepairList') {
       return isMobile
-        ? ['28%', '26%', '24%', '22%']
+        ? ['24%', '24%', '26%', '26%']
         : ['32%', '28%', '22%', '18%'];
     }
     return ['38%', '36%', '26%']; // registered
@@ -352,7 +352,9 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
       tdStatus = td(`<span class="${cls}">${label}</span>`);
     }
 
-    const tdSide = hasSide ? td(options.sideRenderer(item) || '') : '';
+    const tdSide = hasSide
+      ? `<td style="padding:6px 4px;border-bottom:1px solid #edf1f7;vertical-align:middle;">${options.sideRenderer(item) || ''}</td>`
+      : '';
 
     return `<tr class="dash-tbl-row" onclick="location.href='detail.html?id=${eid}'" style="cursor:pointer;">${tdName}${tdDept}${tdDate}${tdExtra}${tdStatus}${tdSide}</tr>`;
   }).join('');
