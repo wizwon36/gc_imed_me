@@ -206,11 +206,12 @@
 .dashboard-page .dashboard-panel--registered .dashboard-list-stack,
 .dashboard-page .dashboard-panel--repair .dashboard-list-stack {
   max-height: 320px;
-  overflow-y: auto;
+  overflow-y: auto !important;
   overflow-x: hidden;
   padding: 0 !important;
   position: relative;
   isolation: isolate;
+  -webkit-overflow-scrolling: touch; /* iOS 스크롤 */
 }
 
 .dashboard-page .dashboard-section-head > div {
@@ -521,6 +522,15 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* sticky thead 컬럼별 정렬 — 장비명 제외 모두 가운데 */
+.dash-tbl-thead-sticky .dash-tbl-th--dept,
+.dash-tbl-thead-sticky .dash-tbl-th--date,
+.dash-tbl-thead-sticky .dash-tbl-th--extra,
+.dash-tbl-thead-sticky .dash-tbl-th--status,
+.dash-tbl-thead-sticky .dash-tbl-th--side {
+  text-align: center !important;
 }
   width: 100%;
   border-collapse: separate;
