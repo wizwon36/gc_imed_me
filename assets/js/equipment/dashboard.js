@@ -274,8 +274,8 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
       return cols;
     }
     if (id === 'recentRepairList') {
-      // 장비명 35% + 부서 30% + 수리일 22% + 상태 13%
-      return [{ w: '35%' }, { w: '30%' }, { w: '22%' }, { w: '13%' }];
+      // 장비명 32% + 부서 28% + 수리일 22% + 상태 18%
+      return [{ w: '32%' }, { w: '28%' }, { w: '22%' }, { w: '18%' }];
     }
     if (id === 'recentRegisteredList') {
       // 장비명 38% + 부서 36% + 등록일 26%
@@ -398,6 +398,11 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
       <tbody>${rows}</tbody>
     </table>
   `;
+
+  // tbody 렌더 후 thead 다시 강제 표시 (skeleton 등으로 숨겨진 경우 대비)
+  if (theadContainer) {
+    theadContainer.style.display = '';
+  }
 }
 
 function renderMaintenanceAlerts(items) {
