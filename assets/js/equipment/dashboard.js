@@ -438,11 +438,11 @@ function initPanelCarousel() {
     return firstCard.offsetWidth + gap;
   }
 
-  function getScrollOffset() {
-    const grid = scrollEl.querySelector('.dashboard-panels-grid');
-    if (!grid) return 0;
-    const styles = window.getComputedStyle(grid);
-    return parseFloat(styles.paddingLeft || 0);
+  function getFirstCardOffset() {
+    const firstCard = scrollEl.querySelector('.dashboard-panel--portal');
+    if (!firstCard) return 0;
+    // 첫 카드의 margin-left = scrollLeft 기준점
+    return parseFloat(window.getComputedStyle(firstCard).marginLeft || 0);
   }
 
   function updateActiveByScroll() {
@@ -452,7 +452,7 @@ function initPanelCarousel() {
     }
 
     const width = getPanelWidth();
-    const offset = getScrollOffset();
+    const offset = getFirstCardOffset();
     const index = Math.round((scrollEl.scrollLeft - offset + width / 2) / width);
     setActive(Math.max(0, Math.min(index, dots.length - 1)));
   }
@@ -463,7 +463,7 @@ function initPanelCarousel() {
 
       const index = Number(dot.dataset.index || 0);
       const width = getPanelWidth();
-      const offset = getScrollOffset();
+      const offset = getFirstCardOffset();
 
       scrollEl.scrollTo({
         left: offset + width * index,
@@ -476,7 +476,12 @@ function initPanelCarousel() {
 
   scrollEl.addEventListener('scroll', updateActiveByScroll, { passive: true });
   window.addEventListener('resize', updateActiveByScroll);
-  updateActiveByScroll();
+
+  // 초기 dot은 항상 0번 — 레이아웃 완성 후 한 번 더 보정
+  setActive(0);
+  requestAnimationFrame(function () {
+    requestAnimationFrame(updateActiveByScroll);
+  });
 }
 
 async function loadDashboard() {
