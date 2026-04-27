@@ -606,9 +606,8 @@
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
-    scroll-padding-left: 16px;
     padding-bottom: 4px;
-    padding-left: 16px;
+    padding-left: 0;
     padding-right: 0;
   }
 
@@ -619,9 +618,10 @@
   .dashboard-panels-grid {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc(100vw - 32px);
+    grid-auto-columns: calc(100% - 32px);
     grid-template-columns: none;
     gap: 12px;
+    padding-left: 16px;
     padding-right: 16px;
   }
 
@@ -794,6 +794,12 @@
 }
 
 @media (max-width: 700px) {
+  .dashboard-panels-spacer {
+    display: block;
+    width: 4px;
+    flex-shrink: 0;
+  }
+
   .dashboard-page .dashboard-panel--dept-chart {
     min-height: 0;
   }
