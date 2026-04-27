@@ -252,67 +252,61 @@ function renderKpis(summary) {
 
 function renderRecordList(containerSelector, emptySelector, items, options) {
   const container = dq(containerSelector);
-  const emptyEl = dq(emptySelector);
+  const emptyEl   = dq(emptySelector);
   if (!container) return;
 
-  const list = Array.isArray(items) ? items : [];
-  const hasSide = typeof options.sideRenderer === 'function';
-  const showDept = options.showDept !== false;
-  const showDate = options.showDate !== false;
+  const list       = Array.isArray(items) ? items : [];
+  const hasSide    = typeof options.sideRenderer === 'function';
+  const showDept   = options.showDept !== false;
+  const showDate   = options.showDate !== false;
   const showStatus = options.showStatus === true;
-  const hasExtra = !!options.extraField;
-  const isMobile = window.innerWidth <= 700;
+  const hasExtra   = !!options.extraField;
+  const isMobile   = window.innerWidth <= 700;
 
-  // 별도 theadContainer는 완전히 숨김 — 단일 테이블로만 처리
+  // 별도 theadContainer 완전히 숨김
   const theadMap = {
-    'maintenanceAlertList': 'maintenanceAlertThead',
-    'recentRepairList': 'recentRepairThead',
-    'recentRegisteredList': 'recentRegisteredThead'
+    'maintenanceAlertList':  'maintenanceAlertThead',
+    'recentRepairList':      'recentRepairThead',
+    'recentRegisteredList':  'recentRegisteredThead'
   };
   const theadContainer = document.getElementById(theadMap[container.id] || '');
   if (theadContainer) theadContainer.style.display = 'none';
 
-  // 패널/뷰포트별 컬럼 너비
-  const colWidths = (function() {
+  // 컬럼 너비 — colgroup으로 thead/tbody 동시 적용
+  const cols = (function() {
     const id = container.id;
     if (id === 'maintenanceAlertList') {
       return isMobile
-        ? [{ w: '40%' }, { w: '34%' }, { w: '26%' }]
-        : (hasExtra
-            ? [{ w: '28%' }, { w: '26%' }, { w: '22%' }, { w: '24%' }]
-            : [{ w: '36%' }, { w: '36%' }, { w: '28%' }]);
+        ? ['40%', '34%', '26%']
+        : (hasExtra ? ['28%', '26%', '22%', '24%'] : ['36%', '36%', '28%']);
     }
     if (id === 'recentRepairList') {
       return isMobile
-        ? [{ w: '34%' }, { w: '28%' }, { w: '24%' }, { w: '14%' }]
-        : [{ w: '32%' }, { w: '28%' }, { w: '22%' }, { w: '18%' }];
+        ? ['32%', '28%', '24%', '16%']
+        : ['32%', '28%', '22%', '18%'];
     }
-    if (id === 'recentRegisteredList') {
-      return [{ w: '38%' }, { w: '36%' }, { w: '26%' }];
-    }
-    return [];
+    return ['38%', '36%', '26%']; // registered
   })();
 
-  const colgroup = colWidths.length
-    ? `<colgroup>${colWidths.map(c => `<col style="width:${c.w};">`).join('')}</colgroup>`
-    : '';
+  const colgroup = `<colgroup>${cols.map(w => `<col style="width:${w};">`).join('')}</colgroup>`;
 
-  // 헤더 셀 — text-align 인라인으로 직접 지정
-  const thName  = `<th class="dash-tbl-th dash-tbl-th--name" style="text-align:left;">장비명</th>`;
-  const thDept  = showDept ? `<th class="dash-tbl-th dash-tbl-th--dept" style="text-align:center;">부서</th>` : '';
-  const thDate  = showDate ? `<th class="dash-tbl-th dash-tbl-th--date" style="text-align:center;">${textSafe(options.dateLabel)}</th>` : '';
-  const thExtra = (hasExtra && !isMobile) ? `<th class="dash-tbl-th dash-tbl-th--extra" style="text-align:center;">${textSafe(options.extraLabel || '')}</th>` : '';
-  const thStatus = showStatus ? `<th class="dash-tbl-th dash-tbl-th--status" style="text-align:center;">상태</th>` : '';
-  const thSide  = hasSide ? `<th class="dash-tbl-th dash-tbl-th--side" style="text-align:center;">${textSafe(options.sideLabel || '')}</th>` : '';
+  // th — text-align 인라인 직접 지정
+  const th = (label, align) =>
+    `<th class="dash-tbl-th" style="text-align:${align || 'center'};position:sticky;top:0;background:#f7f9fd;border-bottom:1.5px solid #e0e7f2;z-index:2;padding:9px 8px;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;">${label}</th>`;
+
+  const theadRow = [
+    th('장비명', 'left'),
+    showDept                  ? th('부서')          : '',
+    showDate                  ? th(options.dateLabel || '') : '',
+    hasExtra && !isMobile     ? th(options.extraLabel || '') : '',
+    showStatus                ? th('상태')          : '',
+    hasSide                   ? th(options.sideLabel || '') : ''
+  ].join('');
 
   if (!list.length) {
     container.style.display = 'block';
     if (emptyEl) emptyEl.style.display = 'block';
-    container.innerHTML = `
-      <table class="dash-tbl" style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">
-        ${colgroup}
-        <thead><tr>${thName}${thDept}${thDate}${thExtra}${thStatus}${thSide}</tr></thead>
-      </table>`;
+    container.innerHTML = `<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">${colgroup}<thead><tr>${theadRow}</tr></thead></table>`;
     return;
   }
 
@@ -325,56 +319,47 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     const deptRaw  = item.department_display || item.department || '-';
     const dept     = textSafe(deptRaw);
     const deptMobile = dept.replace(' / ', '<br>');
-    const id       = encodeURIComponent(item.equipment_id || '');
+    const eid      = encodeURIComponent(item.equipment_id || '');
 
-    const tdDept = showDept ? `<td class="dash-tbl-cell dash-tbl-cell--dept" style="text-align:center;">
-      <span class="dept-pc">${dept}</span>
-      <span class="dept-mobile">${deptMobile}</span>
-    </td>` : '';
+    const td = (content, align) =>
+      `<td class="dash-tbl-cell" style="padding:10px 8px;font-size:12px;border-bottom:1px solid #edf1f7;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;text-align:${align || 'center'};">${content}</td>`;
 
-    const tdDate = showDate
-      ? `<td class="dash-tbl-cell dash-tbl-cell--date" style="text-align:center;">${dateText}</td>`
-      : '';
+    const tdName = `<td class="dash-tbl-cell dash-tbl-cell--name" style="padding:10px 8px;padding-left:18px;font-size:12px;border-bottom:1px solid #edf1f7;vertical-align:middle;text-align:left;">
+      <div class="dash-tbl-name">${title}</div>
+      <div class="dash-tbl-sub">${model}</div>
+    </td>`;
+
+    const tdDept = showDept ? td(
+      `<span class="dept-pc">${dept}</span><span class="dept-mobile">${deptMobile}</span>`
+    ) : '';
+
+    const tdDate = showDate ? td(dateText) : '';
 
     let tdExtra = '';
     if (hasExtra && !isMobile) {
-      const rawVal = item[options.extraField] || '-';
+      const rawVal  = item[options.extraField] || '-';
       const dispVal = textSafe(formatDisplayDate(rawVal) || rawVal);
-      tdExtra = `<td class="dash-tbl-cell dash-tbl-cell--extra" style="text-align:center;">${dispVal}</td>`;
+      tdExtra = td(dispVal);
     }
 
     let tdStatus = '';
     if (showStatus) {
-      const st = item.status || '';
-      const stLabel = st === 'IN_USE' ? '사용중' : st === 'REPAIRING' ? '수리중'
-        : st === 'INSPECTING' ? '점검중' : st === 'STORED' ? '보관'
-        : st === 'DISPOSED' ? '폐기' : (st || '-');
-      const stClass = `status-badge is-${st === 'IN_USE' ? 'in-use' : st === 'REPAIRING' ? 'repairing'
-        : st === 'INSPECTING' ? 'inspecting' : st === 'STORED' ? 'stored'
-        : st === 'DISPOSED' ? 'disposed' : 'default'}`;
-      tdStatus = `<td class="dash-tbl-cell dash-tbl-cell--status" style="text-align:center;"><span class="${stClass}">${textSafe(stLabel)}</span></td>`;
+      const st     = item.status || '';
+      const labels = { IN_USE:'사용중', REPAIRING:'수리중', INSPECTING:'점검중', STORED:'보관', DISPOSED:'폐기' };
+      const classes = { IN_USE:'is-in-use', REPAIRING:'is-repairing', INSPECTING:'is-inspecting', STORED:'is-stored', DISPOSED:'is-disposed' };
+      const label  = labels[st] || textSafe(st) || '-';
+      const cls    = 'status-badge ' + (classes[st] || '');
+      tdStatus = td(`<span class="${cls}">${label}</span>`);
     }
 
-    const tdSide = hasSide
-      ? `<td class="dash-tbl-cell dash-tbl-cell--side" style="text-align:center;">${options.sideRenderer(item) || ''}</td>`
-      : '';
+    const tdSide = hasSide ? td(options.sideRenderer(item) || '') : '';
 
-    return `<tr class="dash-tbl-row" onclick="location.href='detail.html?id=${id}'" style="cursor:pointer;">
-      <td class="dash-tbl-cell dash-tbl-cell--name" style="text-align:left;">
-        <div class="dash-tbl-name">${title}</div>
-        <div class="dash-tbl-sub">${model}</div>
-      </td>
-      ${tdDept}${tdDate}${tdExtra}${tdStatus}${tdSide}
-    </tr>`;
+    return `<tr class="dash-tbl-row" onclick="location.href='detail.html?id=${eid}'" style="cursor:pointer;">${tdName}${tdDept}${tdDate}${tdExtra}${tdStatus}${tdSide}</tr>`;
   }).join('');
 
   container.style.display = 'block';
-  container.innerHTML = `
-    <table class="dash-tbl" style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">
-      ${colgroup}
-      <thead><tr>${thName}${thDept}${thDate}${thExtra}${thStatus}${thSide}</tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+  container.innerHTML = `<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">${colgroup}<thead><tr>${theadRow}</tr></thead><tbody>${rows}</tbody></table>`;
+}
 }
 
 function renderMaintenanceAlerts(items) {
