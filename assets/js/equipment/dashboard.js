@@ -282,7 +282,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     }
     if (id === 'recentRepairList') {
       return isMobile
-        ? ['32%', '26%', '24%', '18%']
+        ? ['28%', '26%', '24%', '22%']
         : ['32%', '28%', '22%', '18%'];
     }
     return ['38%', '36%', '26%']; // registered
