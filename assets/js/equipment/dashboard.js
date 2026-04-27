@@ -274,17 +274,30 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   const statusHeader = showStatus ? '<th class="dash-tbl-th dash-tbl-th--status">상태</th>' : '';
   const sideHeader = hasSide ? '<th class="dash-tbl-th dash-tbl-th--side"></th>' : '';
 
+  // thead를 스크롤 영역 밖에 고정 배치 — sticky bleeding 방지
+  const panel = container.closest('.dashboard-panel--portal');
+  const existingTblHeader = panel ? panel.querySelector('.dash-tbl-header-fixed') : null;
+  if (existingTblHeader) existingTblHeader.remove();
+
+  const headerHtml = `
+    <div class="dash-tbl-header-fixed">
+      <table class="dash-tbl">
+        <thead>
+          <tr>
+            <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+            ${deptHeader}
+            ${dateHeader}
+            ${statusHeader}
+            ${sideHeader}
+          </tr>
+        </thead>
+      </table>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforebegin', headerHtml);
+
   container.innerHTML = `
     <table class="dash-tbl">
-      <thead>
-        <tr>
-          <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
-          ${deptHeader}
-          ${dateHeader}
-          ${statusHeader}
-          ${sideHeader}
-        </tr>
-      </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
