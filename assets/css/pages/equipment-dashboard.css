@@ -534,19 +534,22 @@
   padding-right: 18px;
 }
 
-/* 유지보수: 장비명 + 부서 + D-Day (날짜 없음) */
+/* 유지보수: 장비명 + 부서 + D-Day */
 .dashboard-panel--maintenance .dash-tbl-th--name { width: 42%; }
 .dashboard-panel--maintenance .dash-tbl-th--dept { width: 36%; }
 .dashboard-panel--maintenance .dash-tbl-th--side { width: 22%; text-align: center; }
 
-/* 수리/등록: 장비명 + 부서 + 날짜 (+ 상태는 수리만) */
-.dashboard-panel--repair .dash-tbl-th--name,
-.dashboard-panel--registered .dash-tbl-th--name { width: 35%; }
-.dashboard-panel--repair .dash-tbl-th--dept,
-.dashboard-panel--registered .dash-tbl-th--dept { width: 32%; }
-.dashboard-panel--repair .dash-tbl-th--date,
-.dashboard-panel--registered .dash-tbl-th--date { width: 20%; }
+/* 수리: 장비명 + 부서 + 수리일 + 상태 */
+.dashboard-panel--repair .dash-tbl-th--name { width: 35%; }
+.dashboard-panel--repair .dash-tbl-th--dept { width: 30%; }
+.dashboard-panel--repair .dash-tbl-th--date { width: 22%; }
 .dashboard-panel--repair .dash-tbl-th--status { width: 13%; text-align: center; }
+
+/* 등록: 장비명 + 부서 + 등록일 (상태 없음 — 날짜 오른쪽 정렬) */
+.dashboard-panel--registered .dash-tbl-th--name { width: 38%; }
+.dashboard-panel--registered .dash-tbl-th--dept { width: 32%; }
+.dashboard-panel--registered .dash-tbl-th--date { width: 30%; }
+
 .dash-tbl-cell--status { text-align: center; }
 
 .dash-tbl-row {
@@ -955,16 +958,16 @@
   .dashboard-panel--maintenance .dash-tbl-th--dept { width: 34%; }
   .dashboard-panel--maintenance .dash-tbl-th--side { width: 26%; }
 
-  /* 모바일: 수리/등록 — 부서 숨기고 장비명 + 날짜 2컬럼 */
+  /* 모바일: 수리/등록 — 장비명 + 부서(줄바꿈) + 날짜 */
   .dashboard-panel--repair .dash-tbl-th--name,
-  .dashboard-panel--registered .dash-tbl-th--name { width: 55%; }
+  .dashboard-panel--registered .dash-tbl-th--name { width: 36%; }
   .dashboard-panel--repair .dash-tbl-th--dept,
-  .dashboard-panel--registered .dash-tbl-th--dept { display: none; }
+  .dashboard-panel--registered .dash-tbl-th--dept { width: 30%; display: table-cell; }
   .dashboard-panel--repair .dash-tbl-cell--dept,
-  .dashboard-panel--registered .dash-tbl-cell--dept { display: none; }
+  .dashboard-panel--registered .dash-tbl-cell--dept { display: table-cell; }
   .dashboard-panel--repair .dash-tbl-th--date,
-  .dashboard-panel--registered .dash-tbl-th--date { width: 30%; }
-  .dashboard-panel--repair .dash-tbl-th--status { width: 15%; }
+  .dashboard-panel--registered .dash-tbl-th--date { width: 22%; }
+  .dashboard-panel--repair .dash-tbl-th--status { width: 12%; }
 
   /* 모바일: 부서 두 줄 */
   .dept-pc     { display: none; }
