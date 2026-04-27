@@ -534,10 +534,14 @@
   padding-right: 18px;
 }
 
-/* 유지보수: 장비명 + 부서 + D-Day */
-.dashboard-panel--maintenance .dash-tbl-th--name { width: 42%; }
-.dashboard-panel--maintenance .dash-tbl-th--dept { width: 36%; }
-.dashboard-panel--maintenance .dash-tbl-th--side { width: 22%; text-align: center; }
+/* PC 전용 / 모바일 숨김 */
+.pc-only { display: table-cell; }
+
+/* 유지보수: 장비명 + 부서 + 만료일(PC) + D-Day */
+.dashboard-panel--maintenance .dash-tbl-th--name { width: 30%; }
+.dashboard-panel--maintenance .dash-tbl-th--dept { width: 28%; }
+.dashboard-panel--maintenance .dash-tbl-th--extra { width: 22%; }
+.dashboard-panel--maintenance .dash-tbl-th--side { width: 20%; text-align: center; }
 
 /* 수리: 장비명 + 부서 + 수리일 + 상태 */
 .dashboard-panel--repair .dash-tbl-th--name { width: 35%; }
@@ -545,12 +549,14 @@
 .dashboard-panel--repair .dash-tbl-th--date { width: 22%; }
 .dashboard-panel--repair .dash-tbl-th--status { width: 13%; text-align: center; }
 
-/* 등록: 장비명 + 부서 + 등록일 (상태 없음 — 날짜 오른쪽 정렬) */
-.dashboard-panel--registered .dash-tbl-th--name { width: 38%; }
-.dashboard-panel--registered .dash-tbl-th--dept { width: 32%; }
-.dashboard-panel--registered .dash-tbl-th--date { width: 30%; }
+/* 등록: 장비명 + 부서 + 등록일 + 상태(PC) */
+.dashboard-panel--registered .dash-tbl-th--name { width: 28%; }
+.dashboard-panel--registered .dash-tbl-th--dept { width: 28%; }
+.dashboard-panel--registered .dash-tbl-th--date { width: 22%; }
+.dashboard-panel--registered .dash-tbl-th--extra { width: 22%; text-align: center; }
 
 .dash-tbl-cell--status { text-align: center; }
+.dash-tbl-cell--extra.pc-only { text-align: center; }
 
 .dash-tbl-row {
   transition: background-color 0.12s ease;
@@ -953,7 +959,10 @@
     padding-right: 14px;
   }
 
-  /* 모바일: 유지보수 */
+  /* 모바일: pc-only 컬럼 숨김 */
+  .pc-only { display: none !important; }
+
+  /* 모바일: 유지보수 — 만료일 숨기고 장비명+부서+D-Day */
   .dashboard-panel--maintenance .dash-tbl-th--name { width: 40%; }
   .dashboard-panel--maintenance .dash-tbl-th--dept { width: 34%; }
   .dashboard-panel--maintenance .dash-tbl-th--side { width: 26%; }
