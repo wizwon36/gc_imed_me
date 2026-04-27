@@ -192,7 +192,8 @@
 }
 
 /* list-stack: 패딩 없이 카드 전체 폭 */
-.dashboard-page .dashboard-section-head ~ .dashboard-list-stack {
+.dashboard-page .dashboard-section-head ~ .dashboard-list-stack,
+.dashboard-page .dashboard-section-head ~ .dash-tbl-thead-wrap {
   margin-top: 0 !important;
   padding: 0 !important;
 }
