@@ -360,7 +360,6 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   container.style.display = 'block';
   container.innerHTML = `<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">${colgroup}<thead><tr>${theadRow}</tr></thead><tbody>${rows}</tbody></table>`;
 }
-}
 
 function renderMaintenanceAlerts(items) {
   renderRecordList('#maintenanceAlertList', '#maintenanceAlertEmpty', items, {
