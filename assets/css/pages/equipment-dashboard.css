@@ -154,7 +154,7 @@
 }
 
 /* 헤더 바로 다음 콘텐츠 영역 패딩 */
-.dashboard-page .dashboard-section-head + *,
+.dashboard-page .dashboard-section-head + *:not(.dash-tbl-header-fixed),
 .dashboard-page .dashboard-section-head ~ .dept-chart-wrap,
 .dashboard-page .dashboard-section-head ~ .heatmap-wrap,
 .dashboard-page .dashboard-section-head ~ .dashboard-list-stack,
@@ -162,7 +162,7 @@
 .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--enhanced,
 .dashboard-page .dashboard-section-head ~ .empty-box {
   margin-top: 0;
-  padding: 18px 22px 20px;
+  padding: 10px 22px 20px;
 }
 
 /* list-stack은 overflow를 위해 flex grow */
@@ -450,8 +450,8 @@
   max-height: 280px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
-  position: relative;  /* sticky thead의 기준 컨테이너 확정 */
+  padding: 0 4px 0 0;
+  position: relative;
 }
 
 .dashboard-page .dashboard-panel--maintenance .dashboard-list-stack::-webkit-scrollbar,
@@ -475,18 +475,30 @@
   table-layout: fixed;
 }
 
+/* 스크롤 영역 밖 고정 헤더 */
+.dash-tbl-header-fixed {
+  flex: 0 0 auto;
+  border-bottom: 1.5px solid #d0d8e8;
+  background: #f0f4fa;
+  padding: 0 22px;   /* 패널 좌우 패딩 동기화 */
+  /* ~ * 셀렉터의 padding 덮어쓰기 방지 */
+  margin-top: 0 !important;
+}
+
+.dash-tbl-header-fixed .dash-tbl {
+  display: table;
+}
+
 .dash-tbl-th {
-  position: sticky;
-  top: 0;
+  position: static;   /* sticky 제거 — 헤더가 이미 스크롤 밖에 있음 */
   padding: 9px 10px;
   background: #f0f4fa;
-  border-bottom: 1.5px solid #d0d8e8;
+  border-bottom: none;
   font-size: 11px;
   font-weight: 800;
   color: #3d5068;
   text-align: left;
   white-space: nowrap;
-  z-index: 2;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
