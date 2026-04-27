@@ -606,9 +606,10 @@
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
+    scroll-padding-left: 16px;
     padding-bottom: 4px;
     padding-left: 16px;
-    padding-right: 16px;
+    padding-right: 0;
   }
 
   .dashboard-panels-scroll::-webkit-scrollbar {
@@ -618,9 +619,10 @@
   .dashboard-panels-grid {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc(100% - 32px);
+    grid-auto-columns: calc(100vw - 32px);
     grid-template-columns: none;
     gap: 12px;
+    padding-right: 16px;
   }
 
   .dashboard-page .dashboard-panel--portal {
@@ -793,8 +795,10 @@
 
 @media (max-width: 700px) {
   .dashboard-page .dashboard-panel--dept-chart {
-    grid-column: span 1;
     min-height: 0;
+  }
+  .dept-chart-wrap {
+    max-height: 260px;
   }
   .dept-cbar-label  { font-size: 11px; }
   .dept-cbar-track  { height: 24px; }
@@ -881,8 +885,10 @@
 
 @media (max-width: 700px) {
   .dashboard-page .dashboard-panel--heatmap {
-    grid-column: span 1;
     min-height: 0;
+  }
+  .heatmap-wrap {
+    max-height: 260px;
   }
   .hm-header-row,
   .hm-row {
