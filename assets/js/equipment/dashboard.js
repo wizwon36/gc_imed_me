@@ -320,8 +320,20 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
   }
 
   if (!list.length) {
-    container.innerHTML = '';
-    container.style.display = 'none';
+    // 빈 상태에서도 thead 표시
+    if (theadContainer) theadContainer.style.display = 'none';
+    container.innerHTML = `
+      <table class="dash-tbl dash-tbl--scroll">
+        ${colgroup}
+        <thead class="dash-tbl-thead-sticky">
+          <tr>
+            <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+            ${deptHeader}${dateHeader}${extraHeader}${statusHeader}${sideHeader}
+          </tr>
+        </thead>
+      </table>
+    `;
+    container.style.display = 'block';
     if (emptyEl) emptyEl.style.display = 'block';
     return;
   }
@@ -400,20 +412,23 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     `;
   }).join('');
 
-  // tbody — colgroup 포함 (thead와 동일한 너비)
+  // thead + tbody를 단일 테이블로 렌더 — 컬럼 정렬 완벽 보장
+  if (theadContainer) {
+    theadContainer.style.display = 'none'; // 별도 thead-wrap 숨김
+  }
+
   container.innerHTML = `
-    <table class="dash-tbl">${colgroup}
+    <table class="dash-tbl dash-tbl--scroll">
+      ${colgroup}
+      <thead class="dash-tbl-thead-sticky">
+        <tr>
+          <th class="dash-tbl-th dash-tbl-th--name">장비명</th>
+          ${deptHeader}${dateHeader}${extraHeader}${statusHeader}${sideHeader}
+        </tr>
+      </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
-
-  // tbody 렌더 후 실제 스크롤바 너비 측정해서 thead에 정확히 보정
-  if (theadContainer) {
-    theadContainer.style.display = '';
-    // scrollbar 너비 = 전체 너비 - 스크롤 가능한 내부 너비
-    const scrollbarWidth = container.offsetWidth - container.clientWidth;
-    theadContainer.style.paddingRight = scrollbarWidth + 'px';
-  }
 }
 
 function renderMaintenanceAlerts(items) {
