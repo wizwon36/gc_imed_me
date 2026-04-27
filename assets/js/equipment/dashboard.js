@@ -333,6 +333,7 @@ function renderDashboardData(summary) {
   renderRecentRepairList(summary?.recent_repairs || []);
   renderRecentRegisteredList(summary?.recent_registrations || []);
   renderDeptChart(summary?.department_summary || []);
+  renderHeatmap(summary?.department_summary || []);
 }
 
 async function fetchDashboardData() {
@@ -348,102 +349,69 @@ async function fetchDashboardData() {
 }
 
 function renderDeptChart(data) {
-  const wrap = document.getElementById('deptChartWrap');
+  const wrap  = document.getElementById('deptChartWrap');
   const empty = document.getElementById('deptChartEmpty');
   if (!wrap) return;
 
-  if (!data || data.length === 0) {
-    if (empty) empty.style.display = '';
-    return;
-  }
+  if (!data || data.length === 0) { if (empty) empty.style.display = ''; return; }
   if (empty) empty.style.display = 'none';
 
-  const COLORS = [
-    '#3b82f6','#10b981','#f59e0b','#ef4444',
-    '#8b5cf6','#06b6d4','#f97316','#84cc16'
-  ];
-
-  const total = data.reduce((s, d) => s + Number(d.count || 0), 0);
+  const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+  const total  = data.reduce((s, d) => s + Number(d.count || 0), 0);
   if (total === 0) { if (empty) empty.style.display = ''; return; }
 
-  const R = 58, r = 36, CX = 74, CY = 74;
-
-  function polarToXY(cx, cy, radius, angleDeg) {
-    const rad = (angleDeg - 90) * Math.PI / 180;
-    return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
-  }
-
-  function donutSlicePath(cx, cy, outerR, innerR, startDeg, endDeg) {
-    const o1 = polarToXY(cx, cy, outerR, startDeg);
-    const o2 = polarToXY(cx, cy, outerR, endDeg);
-    const i1 = polarToXY(cx, cy, innerR, endDeg);
-    const i2 = polarToXY(cx, cy, innerR, startDeg);
-    const large = (endDeg - startDeg) > 180 ? 1 : 0;
-    return [
-      `M ${o1.x} ${o1.y}`,
-      `A ${outerR} ${outerR} 0 ${large} 1 ${o2.x} ${o2.y}`,
-      `L ${i1.x} ${i1.y}`,
-      `A ${innerR} ${innerR} 0 ${large} 0 ${i2.x} ${i2.y}`,
-      'Z'
-    ].join(' ');
-  }
-
-  let currentDeg = 0;
-  const slices = data.map((d, i) => {
-    const count = Number(d.count || 0);
-    const deg   = (count / total) * 360;
-    const start = currentDeg;
-    const end   = currentDeg + deg - 0.4;
-    currentDeg += deg;
-    return { ...d, count, deg, start, end, color: COLORS[i % COLORS.length] };
-  });
-
-  const svgSlices = slices.map((s, i) => `
-    <path class="donut-slice" d="${donutSlicePath(CX, CY, R, r, s.start, s.end)}"
-      fill="${s.color}" style="animation-delay:${i * 60}ms"/>`
-  ).join('');
-
-  // 범례 (모바일용 + PC 도넛 아래)
-  const legendItems = slices.map(s => {
-    const pct  = Math.round((s.count / total) * 100);
-    const name = textSafe(s.department_display || s.department || '-');
+  const rows = data.map(function (d, i) {
+    const count  = Number(d.count || 0);
+    const pct    = Math.round((count / total) * 100);
+    const color  = COLORS[i % COLORS.length];
+    const name   = textSafe(d.department_display || d.department || '-');
+    const barPct = Math.max(pct, 8);
     return `
-      <div class="donut-legend-item">
-        <span class="donut-legend-dot" style="background:${s.color};"></span>
-        <span class="donut-legend-label" title="${name}">${name}</span>
-        <span class="donut-legend-count">${s.count}</span>
-        <span class="donut-legend-pct">${pct}%</span>
+      <div class="dept-cbar-row">
+        <div class="dept-cbar-label" title="${name}">${name}</div>
+        <div class="dept-cbar-track">
+          <div class="dept-cbar-fill" style="width:${barPct}%;background:${color};">
+            <span class="dept-cbar-inline">${count}대&nbsp;&nbsp;${pct}%</span>
+          </div>
+        </div>
       </div>`;
   }).join('');
 
-  // 가로 막대 (PC 오른쪽 전용)
-  const maxCount = Math.max(...slices.map(s => s.count));
-  const barRows = slices.map(s => {
-    const pct  = maxCount > 0 ? Math.round((s.count / maxCount) * 100) : 0;
-    const name = textSafe(s.department_display || s.department || '-');
-    return `
-      <div class="dept-bar-row">
-        <div class="dept-bar-label" title="${name}">${name}</div>
-        <div class="dept-bar-track">
-          <div class="dept-bar-fill" style="width:${pct}%;background:${s.color};"></div>
-        </div>
-        <div class="dept-bar-count">${s.count}</div>
-      </div>`;
+  wrap.innerHTML = `<div class="dept-cbar-list">${rows}</div>`;
+}
+
+function renderHeatmap(data) {
+  const wrap  = document.getElementById('heatmapWrap');
+  const empty = document.getElementById('heatmapEmpty');
+  if (!wrap) return;
+
+  if (!data || data.length === 0) { if (empty) empty.style.display = ''; return; }
+  if (empty) empty.style.display = 'none';
+
+  const COLS = [
+    { key: 'in_use',     label: '사용중', bg: '#dbeafe', fg: '#1d4ed8' },
+    { key: 'repairing',  label: '수리중', bg: '#fee2e2', fg: '#dc2626' },
+    { key: 'inspecting', label: '점검중', bg: '#fef9c3', fg: '#ca8a04' },
+    { key: 'stored',     label: '보관',   bg: '#dcfce7', fg: '#16a34a' }
+  ];
+
+  const headerCells = COLS.map(c => `<div class="hm-th">${c.label}</div>`).join('');
+
+  const dataRows = data.map(function (dept) {
+    const name  = textSafe(dept.department_display || dept.department || '-');
+    const cells = COLS.map(function (c) {
+      const val = Number(dept[c.key] || 0);
+      return val === 0
+        ? `<div class="hm-cell hm-cell--empty">—</div>`
+        : `<div class="hm-cell" style="background:${c.bg};color:${c.fg};">${val}</div>`;
+    }).join('');
+    return `<div class="hm-row"><div class="hm-dept" title="${name}">${name}</div>${cells}</div>`;
   }).join('');
 
   wrap.innerHTML = `
-    <div class="donut-chart-inner">
-      <div class="donut-left">
-        <div class="donut-svg-wrap">
-          <svg viewBox="0 0 148 148" xmlns="http://www.w3.org/2000/svg" class="donut-svg">
-            ${svgSlices}
-            <text x="${CX}" y="${CY - 8}" class="donut-center-label">전체</text>
-            <text x="${CX}" y="${CY + 15}" class="donut-center-value">${total}</text>
-          </svg>
-        </div>
-        <div class="donut-legend">${legendItems}</div>
-      </div>
-      <div class="dept-bar-chart">${barRows}</div>
+    <div class="hm-table">
+      <div class="hm-header-row"><div class="hm-dept-th"></div>${headerCells}</div>
+      ${dataRows}
     </div>`;
 }
 
