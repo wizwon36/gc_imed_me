@@ -574,13 +574,64 @@
     line-height: 1;
   }
 
+  /* 모바일: KPI + dots + 카드가 화면을 꽉 채우도록 */
+  .dashboard-page {
+    padding-bottom: 0;
+  }
+
+  .dashboard-page .dashboard-page-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    gap: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* container의 기본 padding-bottom 덮어쓰기 */
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+    box-sizing: border-box;
+  }
+
+  .dashboard-page .dashboard-topbar {
+    flex-shrink: 0;
+  }
+
+  .dashboard-page .dashboard-kpi-grid--portal {
+    flex-shrink: 0;
+    margin-top: 16px;
+  }
+
+  .dashboard-panel-dots-wrapper {
+    flex-shrink: 0;
+  }
+
+  /* 패널 영역이 남은 공간 전부 차지 */
+  .dashboard-page .dashboard-panels-section {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .dashboard-panels-scroll {
+    flex: 1 1 auto;
+  }
+
+  .dashboard-panels-grid {
+    height: 100%;
+  }
+
+  .dashboard-page .dashboard-panel--portal {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
   /* dots visible on top */
   .dashboard-panel-dots {
     display: flex !important;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-top: 14px;
+    margin-bottom: 12px;
   }
 
   .dashboard-panel-dot {
