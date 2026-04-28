@@ -462,8 +462,19 @@ function renderDetailInfo(item) {
 function buildHistoryActionButtons(item) {
   if (!detailPermission.canEdit) return '';
 
+  // 등록자 본인 또는 admin만 수정/완료 처리 가능
+  const currentUser = window.auth && typeof window.auth.getSession === 'function'
+    ? window.auth.getSession()
+    : null;
+  const currentEmail = String((currentUser && currentUser.email) || '').trim().toLowerCase();
+  const createdBy    = String(item.created_by || '').trim().toLowerCase();
+  const isOwner      = currentEmail && createdBy && currentEmail === createdBy;
+  const isAdmin      = detailPermission.isAdmin;
+
+  if (!isOwner && !isAdmin) return '';
+
   const buttons = [];
-  const historyId = item.history_id || '';
+  const historyId  = item.history_id || '';
   const equipmentId = item.equipment_id || currentEquipmentId || '';
 
   if (String(item.result_status || '') !== 'COMPLETED') {
