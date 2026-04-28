@@ -178,7 +178,7 @@
 
     bodyEl.innerHTML = `
       <div class="support-detail-row">
-        <div class="support-detail-label">앱 / 카테고리</div>
+        <div class="support-detail-label">카테고리 / 유형</div>
         <div class="support-detail-value">
           <span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span>
           <span class="support-badge support-badge--cat" style="margin-left:6px;">${escapeHtml(item.category_label)}</span>
@@ -270,11 +270,10 @@
         }
       }, 600);
     } catch (err) {
-      await hideGlobalLoading(true);
+      await hideGlobalLoading();
       alert(err.message || '저장 중 오류가 발생했습니다.');
     } finally {
       setLoading(submitBtn, false);
-      hideGlobalLoading();
     }
   }
 
