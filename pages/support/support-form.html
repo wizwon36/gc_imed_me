@@ -25,7 +25,7 @@
 
     <div id="messageBox" class="message-box"></div>
 
-    <div class="card" style="max-width:720px; margin:0 auto;">
+    <div class="card">
       <form id="supportForm" novalidate>
 
         <!-- 앱 선택 -->
@@ -127,6 +127,11 @@
       display: flex;
       gap: 10px;
       margin-top: 28px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 480px) {
+      .form-control { font-size: 16px; } /* iOS 자동 확대 방지 */
+      .form-actions .btn { flex: 1; min-width: 0; }
     }
 
     /* 드롭존 */
