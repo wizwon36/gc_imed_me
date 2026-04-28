@@ -290,5 +290,15 @@ window.OrgService = {
       team_name: team_name || '',
       department: this.buildDepartmentText(clinic_name, team_name)
     };
+  },
+
+  clearCache() {
+    window.ORG_CONFIG.cache.loaded = false;
+    window.ORG_CONFIG.cache.clinics = [];
+    window.ORG_CONFIG.cache.teams = [];
+    window.ORG_CONFIG.cache.loadingPromise = null;
+    try {
+      sessionStorage.removeItem(window.ORG_CONFIG.CACHE_KEY);
+    } catch (e) {}
   }
 };
