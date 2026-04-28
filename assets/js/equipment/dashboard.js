@@ -305,10 +305,13 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 
   if (!list.length) {
     container.style.display = 'block';
+    container.setAttribute('data-empty', 'true');
     if (emptyEl) emptyEl.style.display = 'block';
     container.innerHTML = `<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">${colgroup}<thead><tr>${theadRow}</tr></thead></table>`;
     return;
   }
+
+  container.removeAttribute('data-empty');
 
   if (emptyEl) emptyEl.style.display = 'none';
 
