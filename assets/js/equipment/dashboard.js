@@ -477,6 +477,13 @@ function renderHeatmap(data) {
   if (!data || data.length === 0) { if (empty) empty.style.display = ''; return; }
   if (empty) empty.style.display = 'none';
 
+  const STATUS_KEYS = {
+    in_use:     'IN_USE',
+    repairing:  'REPAIRING',
+    inspecting: 'INSPECTING',
+    stored:     'STORED'
+  };
+
   const COLS = [
     { key: 'in_use',     label: '사용중', bg: '#dbeafe', fg: '#1d4ed8' },
     { key: 'repairing',  label: '수리중', bg: '#fee2e2', fg: '#dc2626' },
@@ -487,13 +494,18 @@ function renderHeatmap(data) {
   const headerCells = COLS.map(c => `<div class="hm-th">${c.label}</div>`).join('');
 
   const dataRows = data.map(function (dept) {
-    const name  = textSafe(dept.department_display || dept.department || '-');
+    const name     = textSafe(dept.department_display || dept.department || '-');
+    const teamCode = encodeURIComponent(dept.team_code || '');
+
     const cells = COLS.map(function (c) {
       const val = Number(dept[c.key] || 0);
-      return val === 0
-        ? `<div class="hm-cell hm-cell--empty">—</div>`
-        : `<div class="hm-cell" style="background:${c.bg};color:${c.fg};">${val}</div>`;
+      if (val === 0) return `<div class="hm-cell hm-cell--empty">—</div>`;
+
+      const statusKey = STATUS_KEYS[c.key];
+      const url = `list.html?team_code=${teamCode}&status=${statusKey}`;
+      return `<div class="hm-cell hm-cell--link" style="background:${c.bg};color:${c.fg};cursor:pointer;" onclick="location.href='${url}'" title="${name} ${c.label} 조회">${val}</div>`;
     }).join('');
+
     return `<div class="hm-row"><div class="hm-dept" title="${name}">${name}</div>${cells}</div>`;
   }).join('');
 
