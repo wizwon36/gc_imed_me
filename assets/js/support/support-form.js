@@ -17,6 +17,11 @@
     try {
       showGlobalLoading('화면을 준비하는 중...');
       await loadAppList();
+      // 스켈레톤 제거 후 실제 폼 표시
+      const sk = document.getElementById('formSkeleton');
+      const form = document.getElementById('supportForm');
+      if (sk) sk.style.display = 'none';
+      if (form) form.style.display = '';
       bindFileInput();
     } catch (err) {
       showMessage(err.message || '초기화 오류가 발생했습니다.', 'error');
