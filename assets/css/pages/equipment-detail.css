@@ -680,10 +680,12 @@
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .btn-sm {
-  min-height: 38px;
+  min-height: 32px;
+  white-space: nowrap;
 }
 
 .detail-photo-card {
