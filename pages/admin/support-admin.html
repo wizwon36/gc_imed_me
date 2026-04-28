@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>수정요청 관리 - MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+</head>
+<body class="portal-page">
+  <div class="container page-shell">
+
+    <section class="top-brand-bar portal-topbar portal-hero-card">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">+</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">수정요청 관리</strong>
+          <span class="top-brand-sub">접수된 수정요청을 처리합니다</span>
+        </div>
+      </div>
+      <div class="top-brand-actions portal-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="users.html">사용자 관리</a>
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+      </div>
+    </section>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <!-- 필터 -->
+    <div class="support-filter-bar">
+      <select id="filterApp" class="form-control-sm">
+        <option value="">전체 앱</option>
+      </select>
+      <select id="filterStatus" class="form-control-sm">
+        <option value="">전체 상태</option>
+        <option value="PENDING">접수</option>
+        <option value="IN_PROGRESS">처리중</option>
+        <option value="COMPLETED">완료</option>
+        <option value="REJECTED">반려</option>
+      </select>
+      <input type="text" id="filterKeyword" class="form-control-sm" placeholder="제목, 내용, 요청자 검색" style="flex:1;min-width:160px;" />
+      <button type="button" id="filterBtn" class="btn" style="min-height:38px;padding:0 16px;font-size:14px;">조회</button>
+    </div>
+
+    <!-- 통계 뱃지 -->
+    <div class="support-stat-bar" id="statBar"></div>
+
+    <!-- 목록 -->
+    <div id="requestList" class="support-list"></div>
+    <div id="emptyBox" class="empty-box" style="display:none;">접수된 요청이 없습니다.</div>
+
+    <!-- 처리 모달 -->
+    <div id="processModal" class="support-modal" style="display:none;" role="dialog" aria-modal="true">
+      <div class="support-modal-backdrop" id="modalBackdrop"></div>
+      <div class="support-modal-box">
+        <div class="support-modal-header">
+          <h3 class="support-modal-title" id="modalTitle">요청 처리</h3>
+          <button type="button" class="support-modal-close" id="modalClose">✕</button>
+        </div>
+        <div class="support-modal-body" id="modalBody"></div>
+        <div class="support-modal-footer" id="modalFooter"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/admin/support-admin.js"></script>
+
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
+    </div>
+  </div>
+
+  <style>
+    .form-control-sm {
+      height: 38px;
+      padding: 0 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+    .support-filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    /* 통계 바 */
+    .support-stat-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .support-stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .support-stat-chip:hover { border-color: var(--blue); }
+    .support-stat-chip-count {
+      background: var(--blue-soft);
+      color: var(--blue);
+      border-radius: 999px;
+      padding: 0 7px;
+      font-size: 11px;
+    }
+
+    /* 목록 카드 */
+    .support-list { display: flex; flex-direction: column; gap: 10px; }
+    .support-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .support-card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 4px 16px rgba(47,109,246,0.10);
+    }
+    .support-card.is-pending     { border-left: 4px solid #f59e0b; }
+    .support-card.is-in_progress { border-left: 4px solid #2563eb; }
+    .support-card.is-completed   { border-left: 4px solid #10b981; }
+    .support-card.is-rejected    { border-left: 4px solid #ef4444; }
+    .support-card-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .support-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+    }
+    .support-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .support-badge--app          { background:#f0f4ff; color:#2563eb; border:1px solid #bfdbfe; }
+    .support-badge--cat          { background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; }
+    .support-badge--PENDING      { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
+    .support-badge--IN_PROGRESS  { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .support-badge--COMPLETED    { background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+    .support-badge--REJECTED     { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
+    .support-card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .support-card-preview {
+      font-size: 13px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 모달 */
+    .support-modal { position:fixed; inset:0; z-index:1000; }
+    .support-modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.45); }
+    .support-modal-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 620px;
+      max-height: 92vh;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .support-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .support-modal-title  { margin:0; font-size:18px; font-weight:800; }
+    .support-modal-close  { background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted); }
+    .support-modal-close:hover { color:var(--text-primary); }
+    .support-modal-body   { padding:20px 24px; overflow-y:auto; flex:1; }
+    .support-modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--surface-soft);
+    }
+    .support-detail-row     { margin-bottom:14px; }
+    .support-detail-label   { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .support-detail-value   { font-size:14px; color:var(--text-primary); }
+    .support-detail-content {
+      background: var(--surface-soft);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .support-process-form   { display:flex; flex-direction:column; gap:12px; }
+    .support-process-label  { font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+    .support-process-select, .support-process-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text-primary);
+      box-sizing: border-box;
+    }
+    .support-process-select:focus,
+    .support-process-textarea:focus { outline:none; border-color:var(--blue); }
+    .support-process-textarea { resize:vertical; min-height:100px; }
+    .support-process-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
+    .support-existing-reply {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      background: var(--success-bg);
+      border: 1px solid #a7f3d0;
+      border-radius: var(--radius-md);
+    }
+    .support-existing-reply-label { font-size:12px; font-weight:700; color:var(--success-text); margin-bottom:6px; }
+    .support-existing-reply-text  { font-size:13px; white-space:pre-wrap; }
+  </style>
+</body>
+</html>
