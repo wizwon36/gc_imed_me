@@ -92,7 +92,9 @@
   }
 
   function logout() {
-    window.appPermission?.clearCache?.(); // ← 추가
+    window.appPermission?.clearCache?.();
+    window.OrgService?.clearCache?.();
+    window.orgSelect?.clearCache?.();
     clearSession();
     history.replaceState(null, '', getLoginUrl());
     location.replace(getLoginUrl());
@@ -153,6 +155,10 @@
         throw new Error(result?.message || '로그인에 실패했습니다.');
       }
 
+      // 이전 사용자의 캐시를 모두 제거한 뒤 새 세션 저장
+      window.appPermission?.clearCache?.();
+      window.OrgService?.clearCache?.();
+      window.orgSelect?.clearCache?.();
       saveSession(result.user || {});
 
       if (String(result.user?.first_login || 'N').toUpperCase() === 'Y') {
