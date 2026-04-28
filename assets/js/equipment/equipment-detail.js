@@ -485,7 +485,9 @@ function buildHistoryActionButtons(item) {
     );
   }
 
-  return '<div class="timeline-actions">' + buttons.join('') + '</div>';
+  return buttons.length
+    ? '<div class="timeline-actions">' + buttons.join('') + '</div>'
+    : '';
 }
 
 function renderHistories(items) {
