@@ -164,10 +164,20 @@
 
     if (titleEl) titleEl.textContent = item.title;
 
-    const fileHtml = Array.isArray(item.file_ids) && item.file_ids.length
+    const files = Array.isArray(item.files) && item.files.length ? item.files : [];
+    const fileHtml = files.length
       ? `<div class="support-detail-row">
            <div class="support-detail-label">첨부파일</div>
-           <div class="support-detail-value">${item.file_ids.length}개 파일 첨부됨</div>
+           <div class="support-file-list">
+             ${files.map(function(f) {
+               return f.download_url
+                 ? `<a href="${escapeHtml(f.download_url)}" target="_blank" rel="noopener" class="support-file-chip" download>
+                      <span class="support-file-chip-icon">⬇</span>
+                      <span class="support-file-chip-name">${escapeHtml(f.file_name)}</span>
+                    </a>`
+                 : `<span class="support-file-chip support-file-chip--error">${escapeHtml(f.file_name)}</span>`;
+             }).join('')}
+           </div>
          </div>` : '';
 
     const existingReplyHtml = item.reply ? `
