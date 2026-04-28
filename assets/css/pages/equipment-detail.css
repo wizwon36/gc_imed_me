@@ -585,11 +585,12 @@
 
   .det-tbl-scroll {
     max-height: 260px;
-    overflow-x: hidden; /* 가로 스크롤 제거 */
+    overflow-x: hidden;
   }
 
   .det-tbl {
-    min-width: 0; /* 모바일 min-width 초기화 */
+    min-width: 0;
+    width: 100%;
   }
 
   .det-tbl-cell,
@@ -598,14 +599,18 @@
     font-size: 12px;
   }
 
-  /* 수리/점검이력: 내용 컬럼 숨김 */
+  /* 수리/점검이력: 내용 컬럼 숨김 — 구분/날짜 + 상태 + 처리 3컬럼 */
   .det-tbl-cell--desc,
   .det-tbl-th--desc {
     display: none;
   }
 
+  /* 수리/점검이력 컬럼 너비 */
+  .det-tbl-th--type  { width: 90px; }
+  .det-tbl-th--actions { width: 80px; }
+
   /* 재고조사이력: 부서 두 줄 허용 */
-  .det-tbl-cell:not(.det-tbl-cell--type):not(.det-tbl-cell--desc):not(.det-tbl-cell--actions) {
+  .det-tbl-cell {
     white-space: normal;
     word-break: keep-all;
   }
