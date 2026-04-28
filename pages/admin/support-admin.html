@@ -314,6 +314,30 @@
   .sk-text   { height:13px; width:80%; border-radius:6px; }
   .sk-text-sm{ height:12px; width:40%; border-radius:6px; margin-top:8px; }
 
+  
+    /* ── 첨부파일 칩 ── */
+    .support-file-list {
+      display: flex; flex-direction: column; gap: 6px; margin-top: 4px;
+    }
+    .support-file-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px; color: #1d4ed8;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+      max-width: 100%; overflow: hidden;
+    }
+    .support-file-chip:hover { background: #e0e7ff; border-color: #a5b4fc; }
+    .support-file-chip-icon { font-size: 14px; flex-shrink: 0; }
+    .support-file-chip-name {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .support-file-chip--error {
+      color: #dc2626; background: #fef2f2; border-color: #fca5a5;
+    }
   </style>
 </body>
 </html>
