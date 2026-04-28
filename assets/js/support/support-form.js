@@ -1,6 +1,6 @@
 (function () {
   const MAX_SINGLE_MB    = 10;
-  const MAX_TOTAL_MB     = 30;
+  const MAX_TOTAL_MB     = 20;
   const MAX_SINGLE_BYTES = MAX_SINGLE_MB * 1024 * 1024;
   const MAX_TOTAL_BYTES  = MAX_TOTAL_MB  * 1024 * 1024;
 
