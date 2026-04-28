@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>내 수정요청 - MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+</head>
+<body class="portal-page">
+  <div class="container page-shell">
+
+    <section class="top-brand-bar portal-topbar portal-hero-card">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">+</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">내 수정요청 목록</strong>
+          <span class="top-brand-sub">접수한 요청의 처리 현황을 확인합니다</span>
+        </div>
+      </div>
+      <div class="top-brand-actions portal-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+        <a class="portal-header-btn portal-header-btn--primary" href="support-form.html">+ 새 요청</a>
+      </div>
+    </section>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <!-- 필터 -->
+    <div class="support-filter-bar">
+      <select id="filterApp" class="form-control-sm">
+        <option value="">전체 앱</option>
+      </select>
+      <select id="filterStatus" class="form-control-sm">
+        <option value="">전체 상태</option>
+        <option value="PENDING">접수</option>
+        <option value="IN_PROGRESS">처리중</option>
+        <option value="COMPLETED">완료</option>
+        <option value="REJECTED">반려</option>
+      </select>
+      <button type="button" id="filterBtn" class="btn" style="min-height:38px;padding:0 16px;font-size:14px;">조회</button>
+    </div>
+
+    <!-- 목록 -->
+    <div id="requestList" class="support-list"></div>
+
+    <!-- 빈 상태 -->
+    <div id="emptyBox" class="empty-box" style="display:none;">
+      접수한 요청이 없습니다.<br>
+      <a href="support-form.html" style="color:var(--blue);font-weight:700;">새 요청 접수하기 →</a>
+    </div>
+
+    <!-- 상세 모달 -->
+    <div id="detailModal" class="support-modal" style="display:none;" role="dialog" aria-modal="true">
+      <div class="support-modal-backdrop" id="modalBackdrop"></div>
+      <div class="support-modal-box">
+        <div class="support-modal-header">
+          <h3 class="support-modal-title" id="modalTitle">요청 상세</h3>
+          <button type="button" class="support-modal-close" id="modalClose">✕</button>
+        </div>
+        <div class="support-modal-body" id="modalBody"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/support/support-list.js"></script>
+
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
+    </div>
+  </div>
+
+  <style>
+    .form-control-sm {
+      height: 38px;
+      padding: 0 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+    .support-filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .support-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .support-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .support-card:hover {
+      border-color: var(--blue);
+      box-shadow: 0 4px 16px rgba(47,109,246,0.10);
+    }
+    .support-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .support-card-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+      flex: 1;
+      min-width: 0;
+    }
+    .support-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .support-badge--app      { background:#f0f4ff; color:#2563eb; border:1px solid #bfdbfe; }
+    .support-badge--cat      { background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; }
+    .support-badge--PENDING     { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
+    .support-badge--IN_PROGRESS { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .support-badge--COMPLETED   { background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+    .support-badge--REJECTED    { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
+    .support-card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .support-card-preview {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .support-card-reply {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: var(--success-bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid #a7f3d0;
+      font-size: 13px;
+      color: var(--success-text);
+    }
+    .support-card-reply-label {
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    /* 모달 */
+    .support-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+    }
+    .support-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+    }
+    .support-modal-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 580px;
+      max-height: 90vh;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .support-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .support-modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .support-modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+    .support-modal-close:hover { color: var(--text-primary); }
+    .support-modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+    .support-detail-row {
+      margin-bottom: 14px;
+    }
+    .support-detail-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .support-detail-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .support-detail-content {
+      background: var(--surface-soft);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .support-reply-box {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: var(--success-bg);
+      border: 1px solid #a7f3d0;
+      border-radius: var(--radius-md);
+    }
+    .support-reply-box-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--success-text);
+      margin-bottom: 8px;
+    }
+    .support-reply-box-content {
+      font-size: 14px;
+      white-space: pre-wrap;
+      color: var(--text-primary);
+    }
+  </style>
+</body>
+</html>
