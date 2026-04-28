@@ -18,6 +18,8 @@
       await loadMeta();
       await loadList();
     } catch (err) {
+      const listEl = document.getElementById('requestList');
+      if (listEl) listEl.innerHTML = '';
       showMessage(err.message || '목록을 불러오지 못했습니다.', 'error');
     } finally {
       hideGlobalLoading();
