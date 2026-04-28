@@ -373,6 +373,7 @@
 
 .det-tbl {
   width: 100%;
+  min-width: 360px;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: auto;
@@ -392,8 +393,9 @@
   z-index: 1;
 }
 
-.det-tbl-th--type  { width: 110px; }
-.det-tbl-th--desc  { min-width: 120px; }
+.det-tbl-th--type    { width: 110px; }
+.det-tbl-th--desc    { min-width: 120px; }
+.det-tbl-th--actions { width: 140px; }
 
 .det-tbl-row { transition: background-color 0.12s ease; }
 .det-tbl-row:not(:last-child) td { border-bottom: 1px solid #eef2f6; }
