@@ -321,12 +321,15 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
     const deptMobile = dept.replace(' / ', '<br>');
     const eid      = encodeURIComponent(item.equipment_id || '');
 
-    const td = (content, align) =>
-      `<td class="dash-tbl-cell" style="padding:10px 8px;font-size:12px;border-bottom:1px solid #edf1f7;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;text-align:${align || 'center'};">${content}</td>`;
+    const cellFs  = isMobile ? '11px' : '12px';
+    const subFs   = isMobile ? '9px'  : '10px';
 
-    const tdName = `<td class="dash-tbl-cell dash-tbl-cell--name" style="padding:10px 8px;padding-left:18px;font-size:12px;border-bottom:1px solid #edf1f7;vertical-align:middle;text-align:left;">
+    const td = (content, align) =>
+      `<td class="dash-tbl-cell" style="padding:10px 8px;font-size:${cellFs};border-bottom:1px solid #edf1f7;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;text-align:${align || 'center'};">${content}</td>`;
+
+    const tdName = `<td class="dash-tbl-cell dash-tbl-cell--name" style="padding:10px 8px;padding-left:18px;font-size:${cellFs};border-bottom:1px solid #edf1f7;vertical-align:middle;text-align:left;">
       <div class="dash-tbl-name">${title}</div>
-      <div class="dash-tbl-sub">${model}</div>
+      <div class="dash-tbl-sub" style="font-size:${subFs};">${model}</div>
     </td>`;
 
     const tdDept = showDept ? td(
