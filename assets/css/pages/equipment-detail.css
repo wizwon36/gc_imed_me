@@ -434,11 +434,14 @@
 }
 
 .timeline-actions .btn {
-  min-height: 28px;
+  min-height: 30px !important;
+  height: 30px;
   padding: 0 10px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 /* empty / skeleton */
