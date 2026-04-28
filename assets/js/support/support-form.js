@@ -32,7 +32,7 @@
     document.getElementById('supportForm')?.addEventListener('submit', handleSubmit);
   });
 
-  // ── 앱/카테고리 목록 로드 ─────────────────────────────────────────
+  // ── 카테고리/유형 목록 로드 ──────────────────────────────────────────
   async function loadAppList() {
     const result = await apiGet('getSupportAppList');
     const apps       = result?.data?.apps       || [];
@@ -165,8 +165,8 @@
     const title    = document.getElementById('title')?.value?.trim()    || '';
     const content  = document.getElementById('content')?.value?.trim()  || '';
 
-    if (!appId)    { showMessage('앱을 선택해 주세요.', 'error');       return; }
-    if (!category) { showMessage('카테고리를 선택해 주세요.', 'error'); return; }
+    if (!appId)    { showMessage('카테고리를 선택해 주세요.', 'error');  return; }
+    if (!category) { showMessage('유형을 선택해 주세요.', 'error');      return; }
     if (!title)    { showMessage('제목을 입력해 주세요.', 'error');     return; }
     if (!content)  { showMessage('내용을 입력해 주세요.', 'error');     return; }
 
