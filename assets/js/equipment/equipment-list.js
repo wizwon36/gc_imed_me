@@ -9,8 +9,9 @@ var equipmentListState = {
   loading: false,
   canEdit: false,
   isRecentMode: false,
-  isAdmin: false,        // ★ admin 여부
-  userClinicCode: ''     // ★ 본인 소속 의원 코드
+  isAdmin: false,
+  userClinicCode: '',
+  _initialLoad: true   // ★ 최초 로딩 여부 — URL params 직접 사용
 };
 
 function el(selector) {
@@ -446,7 +447,11 @@ async function loadEquipmentList(nextPage) {
       showGlobalLoading('장비 목록을 불러오는 중...');
     }
 
-    filters = getCurrentFilters();
+    filters = equipmentListState._initialLoad
+      ? getListQueryParams()   // 최초 로딩: URL params 직접 사용
+      : getCurrentFilters();   // 이후 검색: form 값 사용
+
+    equipmentListState._initialLoad = false;
     requestParams = buildListRequestParams(filters, nextPage || equipmentListState.page);
 
     equipmentListState.page = nextPage || equipmentListState.page;
