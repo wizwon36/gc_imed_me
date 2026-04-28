@@ -450,8 +450,12 @@ async function handleSubmit(e) {
     isSubmitting = true;
     setLoading(submitBtn, true, '신청 중...');
     showGlobalLoading('사인물 신청을 처리하는 중...');
-    await apiPost('createSignageRequest', payload);
-    alert('신청이 완료되었습니다.\n담당자 정수빈님(gcsbjeong@gccorp.com)에게 알림이 전송되었습니다.');
+    const res = await apiPost('createSignageRequest', payload);
+    const notifyEmail = res.data?.notify_email || '';
+    const alertMsg = notifyEmail
+      ? `신청이 완료되었습니다.\n담당자(${notifyEmail})에게 알림이 전송되었습니다.`
+      : '신청이 완료되었습니다.';
+    alert(alertMsg);
     location.href = '../../portal.html';
   } catch (err) {
     showMessage(err.message || '신청 중 오류가 발생했습니다.', 'error');
