@@ -522,12 +522,12 @@ function renderHistories(items) {
           '<div class="det-tbl-main">' + escapeHtml(historyTypeLabel(item.history_type)) + '</div>' +
           '<div class="det-tbl-sub">' + safeValue(formatDisplayDate(item.work_date)) + '</div>' +
         '</td>' +
-        '<td class="det-tbl-cell">' +
+        '<td class="det-tbl-cell" style="text-align:center;">' +
           '<span class="timeline-badge ' + ResultStatusClass(item.result_status) + '">' +
             escapeHtml(resultStatusLabel(item.result_status)) +
           '</span>' +
         '</td>' +
-        '<td class="det-tbl-cell det-tbl-cell--desc">' + nl2br(item.description || '-') + '</td>' +
+        '<td class="det-tbl-cell det-tbl-cell--desc" style="text-align:center;">' + nl2br(item.description || '-') + '</td>' +
         (actionBtns
           ? '<td class="det-tbl-cell det-tbl-cell--actions">' + actionBtns + '</td>'
           : '') +
@@ -536,7 +536,7 @@ function renderHistories(items) {
   }).join('');
 
   const actionHeader = detailPermission.canEdit
-    ? '<th class="det-tbl-th det-tbl-th--actions"></th>'
+    ? '<th class="det-tbl-th det-tbl-th--actions" style="text-align:center;">처리</th>'
     : '';
 
   area.innerHTML =
@@ -544,8 +544,8 @@ function renderHistories(items) {
       '<table class="det-tbl">' +
         '<thead><tr>' +
           '<th class="det-tbl-th det-tbl-th--type">구분 / 날짜</th>' +
-          '<th class="det-tbl-th">상태</th>' +
-          '<th class="det-tbl-th det-tbl-th--desc">내용</th>' +
+          '<th class="det-tbl-th" style="text-align:center;">상태</th>' +
+          '<th class="det-tbl-th det-tbl-th--desc" style="text-align:center;">내용</th>' +
           actionHeader +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
@@ -575,9 +575,9 @@ function renderInventoryLogs(items) {
           '<div class="det-tbl-main">' + escapeHtml(conditionStatusLabel(item.condition_status)) + '</div>' +
           '<div class="det-tbl-sub">' + safeValue(formatDisplayDate(item.checked_at)) + '</div>' +
         '</td>' +
-        '<td class="det-tbl-cell">' + safeValue(item.checked_by_name || item.checked_by) + '</td>' +
-        '<td class="det-tbl-cell">' + safeValue(item.department_at_check) + '</td>' +
-        '<td class="det-tbl-cell">' + safeValue(item.location_at_check) + '</td>' +
+        '<td class="det-tbl-cell" style="text-align:center;">' + safeValue(item.checked_by_name || item.checked_by) + '</td>' +
+        '<td class="det-tbl-cell" style="text-align:center;">' + safeValue(item.department_at_check) + '</td>' +
+        '<td class="det-tbl-cell" style="text-align:center;">' + safeValue(item.location_at_check) + '</td>' +
       '</tr>'
     );
   }).join('');
@@ -587,9 +587,9 @@ function renderInventoryLogs(items) {
       '<table class="det-tbl">' +
         '<thead><tr>' +
           '<th class="det-tbl-th det-tbl-th--type">상태 / 날짜</th>' +
-          '<th class="det-tbl-th">점검자</th>' +
-          '<th class="det-tbl-th">부서</th>' +
-          '<th class="det-tbl-th">위치</th>' +
+          '<th class="det-tbl-th" style="text-align:center;">점검자</th>' +
+          '<th class="det-tbl-th" style="text-align:center;">부서</th>' +
+          '<th class="det-tbl-th" style="text-align:center;">위치</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>' +
