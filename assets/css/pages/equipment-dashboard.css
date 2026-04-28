@@ -1219,6 +1219,15 @@
   min-width: 0;
 }
 
+.hm-cell--link {
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.hm-cell--link:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
 .hm-cell--empty {
   background: #f8fafc;
   color: #cbd5e1;
