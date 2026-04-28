@@ -55,7 +55,7 @@
     });
   }
 
-  // ── 파일 입력 바인딩 (사인물 폼과 동일한 방식) ───────────────────
+  // ── 파일 입력 바인딩 ─────────────────────────────────────────────
   function bindFileInput() {
     const input = document.getElementById('fileInput');
     if (!input) return;
@@ -165,17 +165,17 @@
     const title    = document.getElementById('title')?.value?.trim()    || '';
     const content  = document.getElementById('content')?.value?.trim()  || '';
 
-    if (!appId)    { showMessage('앱을 선택해 주세요.', 'error');        return; }
-    if (!category) { showMessage('카테고리를 선택해 주세요.', 'error');  return; }
-    if (!title)    { showMessage('제목을 입력해 주세요.', 'error');      return; }
-    if (!content)  { showMessage('내용을 입력해 주세요.', 'error');      return; }
+    if (!appId)    { showMessage('앱을 선택해 주세요.', 'error');       return; }
+    if (!category) { showMessage('카테고리를 선택해 주세요.', 'error'); return; }
+    if (!title)    { showMessage('제목을 입력해 주세요.', 'error');     return; }
+    if (!content)  { showMessage('내용을 입력해 주세요.', 'error');     return; }
 
     const submitBtn = document.getElementById('submitBtn');
-    try {
-      isSubmitting = true;
-      setLoading(submitBtn, true, '접수 중...');
-      showGlobalLoading('수정요청을 접수하는 중...');
+    isSubmitting = true;
+    setLoading(submitBtn, true, '접수 중...');
+    showGlobalLoading('수정요청을 접수하는 중...');
 
+    try {
       await apiPost('createSupportRequest', {
         app_id:     appId,
         category:   category,
@@ -185,15 +185,15 @@
         created_by: createdBy
       });
 
+      await hideGlobalLoading();
       alert('수정요청이 접수되었습니다.\n담당자 확인 후 처리해 드리겠습니다.');
       location.href = 'support-list.html';
+
     } catch (err) {
-      await hideGlobalLoading(true);
+      await hideGlobalLoading();
       showMessage(err.message || '접수 중 오류가 발생했습니다.', 'error');
-    } finally {
       isSubmitting = false;
       setLoading(submitBtn, false);
-      hideGlobalLoading();
     }
   }
 })();
