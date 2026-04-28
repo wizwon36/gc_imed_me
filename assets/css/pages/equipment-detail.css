@@ -644,17 +644,17 @@
 }
 
 .timeline-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  flex-wrap: wrap;
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 0;
+  flex-wrap: nowrap;
 }
 
 .timeline-actions .btn {
-  min-height: 38px;
-  padding: 0 12px;
-  border-radius: 10px;
-  font-size: 13px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 700;
 }
 
