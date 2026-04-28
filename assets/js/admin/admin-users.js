@@ -72,10 +72,10 @@ function bindEvents() {
     clearFieldInvalid();
   });
 
-  // 아이디 입력 시 허용되지 않는 문자 실시간 제거 (한글·공백·특수문자)
+  // 이메일 입력 시 허용되지 않는 문자 실시간 제거 (허용: 영문 소문자·숫자·점·하이픈·언더바·@)
   document.getElementById('userEmail')?.addEventListener('input', (e) => {
     const raw = e.target.value;
-    const cleaned = raw.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+    const cleaned = raw.toLowerCase().replace(/[^a-z0-9.@_-]/g, '');
     if (raw !== cleaned) e.target.value = cleaned;
     e.target.classList.remove('is-invalid');
   });
@@ -215,13 +215,13 @@ function validateUserForm(data) {
 
   if (!data.user_email) {
     markFieldInvalid('userEmail');
-    throw new Error('아이디를 입력해 주세요.');
+    throw new Error('이메일을 입력해 주세요.');
   }
 
-  // 아이디 형식 검증: 영문 소문자·숫자·점·하이픈·언더바만 허용
-  if (!/^[a-z0-9._-]+$/.test(data.user_email)) {
+  // 이메일 형식 검증
+  if (!/^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(data.user_email)) {
     markFieldInvalid('userEmail');
-    throw new Error('아이디는 영문 소문자, 숫자, 점(.), 하이픈(-), 언더바(_)만 사용할 수 있습니다.');
+    throw new Error('이메일 형식으로 입력해 주세요. (예: name@example.com)');
   }
 
   if (!data.user_name) {
@@ -460,7 +460,7 @@ function renderUserList() {
     <table class="user-tbl">
       <thead>
         <tr>
-          <th class="user-tbl-th user-tbl-th--name">이름 / 아이디</th>
+          <th class="user-tbl-th user-tbl-th--name">이름 / 이메일</th>
           <th class="user-tbl-th user-tbl-th--org">소속</th>
           <th class="user-tbl-th user-tbl-th--role">역할</th>
           <th class="user-tbl-th user-tbl-th--status">상태</th>
@@ -642,7 +642,7 @@ function setEditMode(user) {
   if (cancelBtn) cancelBtn.style.display = 'inline-flex';
   if (emailInput) emailInput.disabled = true;
   if (passwordHint) {
-    passwordHint.innerHTML = '수정 모드에서는 아이디를 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
+    passwordHint.innerHTML = '수정 모드에서는 이메일을 변경할 수 없습니다. 비밀번호 초기화는 우측 목록에서 진행할 수 있습니다.';
   }
 
   clearFieldInvalid();
@@ -778,7 +778,6 @@ async function handleApprove(regId) {
     hideGlobalLoading();
   }
 
-  // 스피너를 완전히 끈 뒤 목록 새로고침 (loadPendingRegistrations가 자체 스피너 관리)
   await loadPendingRegistrations();
 }
 
