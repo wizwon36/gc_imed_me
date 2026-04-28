@@ -527,7 +527,6 @@ function renderHistories(items) {
             escapeHtml(resultStatusLabel(item.result_status)) +
           '</span>' +
         '</td>' +
-        '<td class="det-tbl-cell">' + safeValue(item.request_department) + '</td>' +
         '<td class="det-tbl-cell det-tbl-cell--desc">' + nl2br(item.description || '-') + '</td>' +
         (actionBtns
           ? '<td class="det-tbl-cell det-tbl-cell--actions">' + actionBtns + '</td>'
@@ -537,7 +536,7 @@ function renderHistories(items) {
   }).join('');
 
   const actionHeader = detailPermission.canEdit
-    ? '<th class="det-tbl-th"></th>'
+    ? '<th class="det-tbl-th det-tbl-th--actions"></th>'
     : '';
 
   area.innerHTML =
@@ -546,7 +545,6 @@ function renderHistories(items) {
         '<thead><tr>' +
           '<th class="det-tbl-th det-tbl-th--type">구분 / 날짜</th>' +
           '<th class="det-tbl-th">상태</th>' +
-          '<th class="det-tbl-th">요청부서</th>' +
           '<th class="det-tbl-th det-tbl-th--desc">내용</th>' +
           actionHeader +
         '</tr></thead>' +
