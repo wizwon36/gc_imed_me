@@ -258,10 +258,10 @@
     }
 
     const submitBtn = document.getElementById('processSubmitBtn');
-    try {
-      setLoading(submitBtn, true, '저장 중...');
-      showGlobalLoading('처리 중...');
+    setLoading(submitBtn, true, '저장 중...');
+    showGlobalLoading('처리 중...');
 
+    try {
       await apiPost('updateSupportRequest', {
         request_id:         currentItem.request_id,
         status:             status,
@@ -270,17 +270,19 @@
       });
 
       closeModal();
+      await hideGlobalLoading();
       showMessage('처리 상태가 업데이트되었습니다.', 'success');
-      setTimeout(async () => {
-        try {
-          showGlobalLoading('목록 새로고침 중...');
-          await loadList();
-        } finally {
-          hideGlobalLoading();
-        }
-      }, 600);
+
+      showGlobalLoading('목록 새로고침 중...');
+      try {
+        await loadList();
+      } finally {
+        await hideGlobalLoading();
+      }
+
     } catch (err) {
       await hideGlobalLoading();
+      setLoading(submitBtn, false);
       alert(err.message || '저장 중 오류가 발생했습니다.');
     } finally {
       setLoading(submitBtn, false);
