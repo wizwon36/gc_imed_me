@@ -229,12 +229,14 @@
         </div>
         <div class="support-process-actions">
           <button type="button" id="processSubmitBtn" class="btn btn-primary" style="min-width:100px;">저장</button>
+          <button type="button" id="resendEmailBtn" class="btn btn-secondary" style="min-width:100px;">📧 메일 재발송</button>
           <button type="button" id="processCancelBtn" class="btn">닫기</button>
         </div>
       </div>
     `;
 
     document.getElementById('processSubmitBtn')?.addEventListener('click', handleProcess);
+    document.getElementById('resendEmailBtn')?.addEventListener('click', handleResendEmail);
     document.getElementById('processCancelBtn')?.addEventListener('click', closeModal);
 
     modal.style.display = 'block';
@@ -286,6 +288,34 @@
       alert(err.message || '저장 중 오류가 발생했습니다.');
     } finally {
       setLoading(submitBtn, false);
+    }
+  }
+
+  // ── 메일 재발송 ───────────────────────────────────────────────────
+  async function handleResendEmail() {
+    if (!currentItem) return;
+
+    if (!confirm('담당자에게 요청 내용과 첨부파일을 메일로 재발송하시겠습니까?')) return;
+
+    const user  = window.auth?.getSession?.() || {};
+    const email = user.user_email || user.email || '';
+    const btn   = document.getElementById('resendEmailBtn');
+
+    setLoading(btn, true, '발송 중...');
+    showGlobalLoading('메일 재발송 중...');
+
+    try {
+      await apiPost('resendSupportEmail', {
+        request_id:         currentItem.request_id,
+        request_user_email: email
+      });
+      await hideGlobalLoading();
+      showMessage('메일이 재발송되었습니다.', 'success');
+    } catch (err) {
+      await hideGlobalLoading();
+      alert(err.message || '메일 재발송 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(btn, false, '📧 메일 재발송');
     }
   }
 
