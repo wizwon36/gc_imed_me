@@ -54,6 +54,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '🪧',
       url: `${CONFIG.SITE_BASE_URL}/pages/signage/signage-form.html`
     },
+    // ── 수정요청: 권한 없어도 모든 사용자에게 노출 ──────────────────
+    support: {
+      title: '프로그램 수정요청',
+      desc: '불편사항·기능 개선 요청',
+      icon: '🛠️',
+      url: `${CONFIG.SITE_BASE_URL}/pages/support/support-form.html`
+    },
     users_admin: {
       title: '사용자 관리',
       desc: '사용자 등록 및 권한 관리',
@@ -65,6 +72,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       desc: '작업 이력과 기록 조회',
       icon: '🧾',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
+    },
+    // ── 관리자: 수정요청 관리 ──────────────────────────────────────
+    support_admin: {
+      title: '수정요청 관리',
+      desc: '접수된 수정요청 처리',
+      icon: '⚙️',
+      url: `${CONFIG.SITE_BASE_URL}/pages/admin/support-admin.html`
     }
   };
 
@@ -80,12 +94,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const permissions = Array.isArray(result.data) ? [...result.data] : [];
 
-    if (isAdmin && !permissions.some(item => item.app_id === 'users_admin')) {
-      permissions.push({
-        app_id: 'users_admin',
-        permission: 'admin',
-        active: 'Y'
+    // 관리자 전용 앱 자동 추가
+    if (isAdmin) {
+      ['users_admin', 'logs', 'support_admin'].forEach(appId => {
+        if (!permissions.some(item => item.app_id === appId)) {
+          permissions.push({ app_id: appId, permission: 'admin', active: 'Y' });
+        }
       });
+    }
+
+    // 수정요청은 모든 로그인 사용자에게 노출 (권한 불필요)
+    if (!permissions.some(item => item.app_id === 'support')) {
+      permissions.push({ app_id: 'support', permission: 'view', active: 'Y' });
     }
 
     const visiblePermissions = permissions.filter(item => {
@@ -108,8 +128,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const app = APP_MAP[item.app_id];
         const permissionLabel =
           item.permission === 'admin' ? '관리자' :
-          item.permission === 'edit' ? '편집' :
-          item.permission === 'view' ? '조회' :
+          item.permission === 'edit'  ? '편집'   :
+          item.permission === 'view'  ? '조회'   :
           (item.permission || '');
 
         return `
