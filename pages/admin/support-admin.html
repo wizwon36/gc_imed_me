@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>수정요청 관리 - MSO관리팀 업무포털</title>
+  <style>body { opacity: 0; }</style>
   <link rel="stylesheet" href="../../assets/css/common.css" />
+  <style>body { opacity: 1; transition: opacity 0.15s ease; }</style>
 </head>
 <body class="portal-page">
   <div class="container page-shell">
@@ -45,7 +47,39 @@
     <div class="support-stat-bar" id="statBar"></div>
 
     <!-- 목록 -->
-    <div id="requestList" class="support-list"></div>
+    <div id="requestList" class="support-list">
+      <!-- 스켈레톤: 데이터 로드 전 shimmer 카드 -->
+      <div class="sk-card" id="skCard1">
+        <div class="sk-badge-row">
+          <div class="sk sk-badge"></div>
+          <div class="sk sk-badge"></div>
+          <div class="sk sk-badge"></div>
+        </div>
+        <div class="sk sk-title"></div>
+        <div class="sk sk-text"></div>
+        <div class="sk sk-text-sm"></div>
+      </div>
+      <div class="sk-card" id="skCard2">
+        <div class="sk-badge-row">
+          <div class="sk sk-badge"></div>
+          <div class="sk sk-badge"></div>
+          <div class="sk sk-badge"></div>
+        </div>
+        <div class="sk sk-title"></div>
+        <div class="sk sk-text"></div>
+        <div class="sk sk-text-sm"></div>
+      </div>
+      <div class="sk-card" id="skCard3">
+        <div class="sk-badge-row">
+          <div class="sk sk-badge"></div>
+          <div class="sk sk-badge"></div>
+          <div class="sk sk-badge"></div>
+        </div>
+        <div class="sk sk-title"></div>
+        <div class="sk sk-text"></div>
+        <div class="sk sk-text-sm"></div>
+      </div>
+    </div>
     <div id="emptyBox" class="empty-box" style="display:none;">접수된 요청이 없습니다.</div>
 
     <!-- 처리 모달 -->
@@ -258,6 +292,31 @@
     }
     .support-existing-reply-label { font-size:12px; font-weight:700; color:var(--success-text); margin-bottom:6px; }
     .support-existing-reply-text  { font-size:13px; white-space:pre-wrap; }
+
+  /* ── 스켈레톤 로딩 ── */
+  @keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
+  }
+  .sk {
+    background: linear-gradient(90deg, #f0f2f5 25%, #e4e6ea 50%, #f0f2f5 75%);
+    background-size: 600px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: 8px;
+  }
+  .sk-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    margin-bottom: 10px;
+  }
+  .sk-badge-row { display:flex; gap:8px; margin-bottom:10px; }
+  .sk-badge  { height:22px; width:64px; border-radius:999px; }
+  .sk-title  { height:18px; width:55%; border-radius:6px; margin-bottom:8px; }
+  .sk-text   { height:13px; width:80%; border-radius:6px; }
+  .sk-text-sm{ height:12px; width:40%; border-radius:6px; margin-top:8px; }
+
   </style>
 </body>
 </html>
