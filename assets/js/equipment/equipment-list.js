@@ -547,6 +547,7 @@ async function initListFilters() {
           window.orgSelect.getFilteredTeams(query.clinic_code),
           { emptyText: '전체 팀' }
         );
+        teamEl.disabled = false;  // bindClinicTeamSelects가 disabled로 만든 것 해제
         if (query.team_code) teamEl.value = query.team_code;
       } else {
         teamEl.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
