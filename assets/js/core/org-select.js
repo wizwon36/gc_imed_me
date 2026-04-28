@@ -175,6 +175,9 @@ function fillSelectOptions(selectEl, items, config = {}) {
     getFilteredTeams,
     getOrgDisplayText,
     fillSelectOptions,
-    bindClinicTeamSelects
+    bindClinicTeamSelects,
+    clearCache() {
+      orgDataCache = null;
+    }
   };
 })();
