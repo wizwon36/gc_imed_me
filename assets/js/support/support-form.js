@@ -17,7 +17,7 @@
     try {
       showGlobalLoading('화면을 준비하는 중...');
       await loadAppList();
-      bindDropzone();
+      bindFileInput();
     } catch (err) {
       showMessage(err.message || '초기화 오류가 발생했습니다.', 'error');
     } finally {
@@ -50,26 +50,20 @@
     });
   }
 
-  // ── 파일 드롭존 ───────────────────────────────────────────────────
-  function bindDropzone() {
-    const dropzone  = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileInput');
-
-    dropzone?.addEventListener('click', () => fileInput?.click());
-    fileInput?.addEventListener('change', () => {
-      processFiles(Array.from(fileInput.files || []));
-      fileInput.value = '';
-    });
-
-    dropzone?.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropzone.classList.add('is-over');
-    });
-    dropzone?.addEventListener('dragleave', () => dropzone.classList.remove('is-over'));
-    dropzone?.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('is-over');
-      processFiles(Array.from(e.dataTransfer.files || []));
+  // ── 파일 입력 바인딩 (사인물 폼과 동일한 방식) ───────────────────
+  function bindFileInput() {
+    const input = document.getElementById('fileInput');
+    if (!input) return;
+    input.addEventListener('change', function (e) {
+      const files = Array.from(e.target.files);
+      if (files.length > 0) {
+        const fileNameEl = document.getElementById('fileName');
+        if (fileNameEl) {
+          fileNameEl.textContent = files.length === 1 ? files[0].name : files.length + '개 파일 선택됨';
+        }
+      }
+      processFiles(files);
+      input.value = '';
     });
   }
 
@@ -100,12 +94,14 @@
       pendingUploads++;
       const itemId = 'fi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
       const listEl = document.getElementById('fileList');
-      listEl?.insertAdjacentHTML('beforeend', `
-        <li class="support-file-item is-uploading" id="${itemId}">
-          <span class="support-file-item-name">${escapeHtml(file.name)}</span>
-          <span class="support-file-item-status">업로드 중...</span>
-        </li>
-      `);
+      if (listEl) {
+        listEl.insertAdjacentHTML('beforeend',
+          `<div class="signage-file-item is-uploading" id="${itemId}">
+            <span class="signage-file-item-name">${escapeHtml(file.name)}</span>
+            <span class="signage-file-item-status">업로드 중...</span>
+          </div>`
+        );
+      }
 
       try {
         const base64 = await toBase64(file);
@@ -121,24 +117,13 @@
         const el = document.getElementById(itemId);
         if (el) {
           el.classList.replace('is-uploading', 'is-done');
-          el.querySelector('.support-file-item-status').textContent = `✓ 완료 (${formatSize(file.size)})`;
-          // 삭제 버튼 추가
-          const idx = uploadedFileIds.length - 1;
-          el.insertAdjacentHTML('beforeend', `
-            <button type="button" class="support-file-item-remove" data-idx="${idx}" title="삭제">✕</button>
-          `);
-          el.querySelector('.support-file-item-remove')?.addEventListener('click', function () {
-            const i = Number(this.dataset.idx);
-            uploadedFileIds.splice(i, 1);
-            uploadedFileSizes.splice(i, 1);
-            el.remove();
-          });
+          el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatSize(file.size)})`;
         }
       } catch (err) {
         const el = document.getElementById(itemId);
         if (el) {
           el.classList.replace('is-uploading', 'is-error');
-          el.querySelector('.support-file-item-status').textContent = '✗ 실패';
+          el.querySelector('.signage-file-item-status').textContent = '✗ 실패';
         }
         showMessage('업로드 실패: ' + file.name, 'error');
       } finally {
