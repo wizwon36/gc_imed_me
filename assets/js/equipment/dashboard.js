@@ -1,4 +1,4 @@
-const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v2';
+const DASHBOARD_SESSION_KEY = 'gc_imed_dashboard_v3';
 const DASHBOARD_SESSION_TTL = 1000 * 60 * 5;
 
 const DASHBOARD_PERMISSION_CACHE_KEY = 'gc_imed_dashboard_permission_v1';
@@ -494,15 +494,16 @@ function renderHeatmap(data) {
   const headerCells = COLS.map(c => `<div class="hm-th">${c.label}</div>`).join('');
 
   const dataRows = data.map(function (dept) {
-    const name     = textSafe(dept.department_display || dept.department || '-');
-    const teamCode = encodeURIComponent(dept.team_code || '');
+    const name       = textSafe(dept.department_display || dept.department || '-');
+    const teamCode   = encodeURIComponent(dept.team_code || '');
+    const clinicCode = encodeURIComponent(dept.clinic_code || '');
 
     const cells = COLS.map(function (c) {
       const val = Number(dept[c.key] || 0);
       if (val === 0) return `<div class="hm-cell hm-cell--empty">—</div>`;
 
       const statusKey = STATUS_KEYS[c.key];
-      const url = `list.html?team_code=${teamCode}&status=${statusKey}`;
+      const url = `list.html?clinic_code=${clinicCode}&team_code=${teamCode}&status=${statusKey}`;
       return `<div class="hm-cell hm-cell--link" style="background:${c.bg};color:${c.fg};cursor:pointer;" onclick="location.href='${url}'" title="${name} ${c.label} 조회">${val}</div>`;
     }).join('');
 
