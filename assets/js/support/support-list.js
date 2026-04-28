@@ -49,7 +49,6 @@
   async function loadList() {
     const user   = window.auth?.getSession?.() || {};
     const email  = user.user_email || user.email || '';
-
     const appId  = document.getElementById('filterApp')?.value    || '';
     const status = document.getElementById('filterStatus')?.value || '';
 
@@ -61,6 +60,7 @@
     renderList(result?.data || []);
   }
 
+  // ── 카드 렌더링 ────────────────────────────────────────────────────
   function renderList(items) {
     const listEl  = document.getElementById('requestList');
     const emptyEl = document.getElementById('emptyBox');
@@ -70,7 +70,6 @@
       if (emptyEl) emptyEl.style.display = 'block';
       return;
     }
-
     if (emptyEl) emptyEl.style.display = 'none';
 
     listEl.innerHTML = items.map(function (item) {
@@ -78,20 +77,25 @@
       const replyHtml = hasReply ? `
         <div class="support-card-reply">
           <div class="support-card-reply-label">💬 처리 답변</div>
-          <div>${escapeHtml(item.reply)}</div>
+          <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.reply)}</div>
         </div>` : '';
 
       return `
-        <div class="support-card" data-id="${escapeHtml(item.request_id)}">
-          <div class="support-card-top">
-            <span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span>
-            <span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span>
-            <span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span>
-            <span class="support-card-title">${escapeHtml(item.title)}</span>
+        <div class="support-card support-card--${item.status}" data-id="${escapeHtml(item.request_id)}">
+          <div class="support-card-bar"></div>
+          <div class="support-card-body">
+            <div class="support-card-badges">
+              <span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span>
+              <span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span>
+              <span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span>
+            </div>
+            <div class="support-card-title">${escapeHtml(item.title)}</div>
+            <div class="support-card-preview">${escapeHtml(item.content)}</div>
+            ${replyHtml}
+            <div class="support-card-meta">
+              <span>${escapeHtml(item.created_at)}</span>
+            </div>
           </div>
-          <div class="support-card-preview">${escapeHtml(item.content)}</div>
-          ${replyHtml}
-          <div class="support-card-meta">${escapeHtml(item.created_at)}</div>
         </div>
       `;
     }).join('');
@@ -103,12 +107,16 @@
     });
   }
 
+  // ── 모달 열기 ──────────────────────────────────────────────────────
   async function openDetail(requestId) {
     try {
       const user  = window.auth?.getSession?.() || {};
       const email = user.user_email || user.email || '';
       showGlobalLoading('불러오는 중...');
-      const result = await apiGet('getSupportRequest', { request_id: requestId, request_user_email: email });
+      const result = await apiGet('getSupportRequest', {
+        request_id: requestId,
+        request_user_email: email
+      });
       renderModal(result.data);
     } catch (err) {
       showMessage(err.message || '상세 정보를 불러오지 못했습니다.', 'error');
@@ -117,48 +125,65 @@
     }
   }
 
+  // ── 모달 렌더링 ────────────────────────────────────────────────────
   function renderModal(item) {
-    const modal   = document.getElementById('detailModal');
-    const titleEl = document.getElementById('modalTitle');
-    const bodyEl  = document.getElementById('modalBody');
+    const modal  = document.getElementById('detailModal');
+    const bodyEl = document.getElementById('modalBody');
 
-    if (titleEl) titleEl.textContent = item.title;
+    // 상단 컬러 바 + 헤더를 동적으로 교체
+    const box = modal.querySelector('.support-modal-box');
+    if (box) {
+      // topbar
+      let topbar = box.querySelector('.support-modal-topbar');
+      if (!topbar) {
+        topbar = document.createElement('div');
+        box.insertBefore(topbar, box.firstChild);
+      }
+      topbar.className = `support-modal-topbar support-modal-topbar--${item.status}`;
 
-    const replyHtml = item.reply ? `
-      <div class="support-reply-box">
-        <div class="support-reply-box-title">💬 처리 답변 · ${escapeHtml(item.replied_at)}</div>
-        <div class="support-reply-box-content">${escapeHtml(item.reply)}</div>
-      </div>` : '';
+      // 헤더 뱃지 + 제목
+      const headerLeft = box.querySelector('.support-modal-header-left');
+      if (headerLeft) {
+        headerLeft.innerHTML = `
+          <div class="support-modal-badges">
+            <span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span>
+            <span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span>
+            <span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span>
+          </div>
+          <h3 class="support-modal-title">${escapeHtml(item.title)}</h3>
+        `;
+      }
+    }
 
     const fileHtml = Array.isArray(item.file_ids) && item.file_ids.length
-      ? `<div class="support-detail-row">
-           <div class="support-detail-label">첨부파일</div>
-           <div class="support-detail-value">${item.file_ids.length}개 파일 첨부됨</div>
-         </div>` : '';
+      ? `<div class="support-meta-item">📎 <strong>파일 ${item.file_ids.length}개 첨부</strong></div>` : '';
+
+    const replyHtml = item.reply ? `
+      <div class="support-modal-section">
+        <div class="support-reply-box">
+          <div class="support-reply-box-title">
+            💬 처리 답변
+            <span style="font-weight:400;color:var(--text-muted);margin-left:4px;">${escapeHtml(item.replied_at)}</span>
+          </div>
+          <div class="support-reply-box-content">${escapeHtml(item.reply)}</div>
+        </div>
+      </div>` : '';
 
     bodyEl.innerHTML = `
-      <div class="support-detail-row">
-        <div class="support-detail-label">앱 / 카테고리</div>
-        <div class="support-detail-value">
-          <span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span>
-          <span class="support-badge support-badge--cat" style="margin-left:6px;">${escapeHtml(item.category_label)}</span>
+      <!-- 메타 정보 -->
+      <div class="support-modal-section">
+        <div class="support-meta-row">
+          <div class="support-meta-item">🕐 <strong>${escapeHtml(item.created_at)}</strong></div>
+          ${fileHtml}
         </div>
       </div>
-      <div class="support-detail-row">
-        <div class="support-detail-label">상태</div>
-        <div class="support-detail-value">
-          <span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span>
-        </div>
-      </div>
-      <div class="support-detail-row">
-        <div class="support-detail-label">내용</div>
+
+      <!-- 요청 내용 -->
+      <div class="support-modal-section">
+        <div class="support-detail-label">요청 내용</div>
         <div class="support-detail-content">${escapeHtml(item.content)}</div>
       </div>
-      ${fileHtml}
-      <div class="support-detail-row">
-        <div class="support-detail-label">접수일시</div>
-        <div class="support-detail-value">${escapeHtml(item.created_at)}</div>
-      </div>
+
       ${replyHtml}
     `;
 
