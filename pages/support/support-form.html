@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>수정요청 - MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+</head>
+<body class="portal-page">
+  <div class="container page-shell">
+
+    <section class="top-brand-bar portal-topbar portal-hero-card">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">+</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">프로그램 수정요청</strong>
+          <span class="top-brand-sub">불편한 점이나 개선 사항을 알려주세요</span>
+        </div>
+      </div>
+      <div class="top-brand-actions portal-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+        <a class="portal-header-btn portal-header-btn--secondary" href="support-list.html">내 요청 목록</a>
+      </div>
+    </section>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <div class="card" style="max-width:720px; margin:0 auto;">
+      <form id="supportForm" novalidate>
+
+        <!-- 앱 선택 -->
+        <div class="form-row">
+          <label class="form-label" for="appId">앱 <span class="required">*</span></label>
+          <select id="appId" class="form-control" required>
+            <option value="">앱을 선택해 주세요</option>
+          </select>
+        </div>
+
+        <!-- 카테고리 -->
+        <div class="form-row">
+          <label class="form-label" for="category">카테고리 <span class="required">*</span></label>
+          <select id="category" class="form-control" required>
+            <option value="">카테고리를 선택해 주세요</option>
+          </select>
+        </div>
+
+        <!-- 제목 -->
+        <div class="form-row">
+          <label class="form-label" for="title">제목 <span class="required">*</span></label>
+          <input type="text" id="title" class="form-control" placeholder="요청 제목을 입력해 주세요" maxlength="100" required />
+        </div>
+
+        <!-- 내용 -->
+        <div class="form-row">
+          <label class="form-label" for="content">내용 <span class="required">*</span></label>
+          <textarea id="content" class="form-control" rows="6" placeholder="증상, 재현 방법, 개선 제안 등 상세히 작성해 주세요" required></textarea>
+        </div>
+
+        <!-- 파일 첨부 -->
+        <div class="form-row">
+          <label class="form-label">파일 첨부</label>
+          <div class="support-dropzone" id="dropzone">
+            <input type="file" id="fileInput" multiple accept="image/*,.pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.zip,.txt" style="display:none;" />
+            <div class="support-dropzone-inner" id="dropzoneInner">
+              <div class="support-dropzone-icon">📎</div>
+              <div class="support-dropzone-text">클릭하거나 파일을 드래그하세요</div>
+              <div class="support-dropzone-hint">이미지, PDF, 문서 등 • 파일당 10MB / 전체 30MB</div>
+            </div>
+          </div>
+          <ul class="support-file-list" id="fileList"></ul>
+        </div>
+
+        <!-- 제출 -->
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn btn-primary" style="min-width:120px;">요청 접수</button>
+          <a href="../../portal.html" class="btn">취소</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/support/support-form.js"></script>
+
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
+    </div>
+  </div>
+
+  <style>
+    .form-row {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: border-color 0.15s;
+      box-sizing: border-box;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+    textarea.form-control {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    /* 드롭존 */
+    .support-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-soft);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .support-dropzone:hover,
+    .support-dropzone.is-over {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+    }
+    .support-dropzone-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px;
+      gap: 6px;
+    }
+    .support-dropzone-icon {
+      font-size: 28px;
+    }
+    .support-dropzone-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    .support-dropzone-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* 파일 목록 */
+    .support-file-list {
+      list-style: none;
+      margin: 8px 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .support-file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 13px;
+    }
+    .support-file-item.is-uploading { background: var(--info-bg); border-color: #bfdbfe; }
+    .support-file-item.is-done      { background: var(--success-bg); border-color: #a7f3d0; }
+    .support-file-item.is-error     { background: var(--danger-bg); border-color: #fca5a5; }
+    .support-file-item-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .support-file-item-status {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .support-file-item-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 16px;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .support-file-item-remove:hover { color: var(--danger-text); }
+  </style>
+</body>
+</html>
