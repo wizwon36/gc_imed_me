@@ -435,6 +435,13 @@
   min-height: 0;
 }
 
+/* 데이터 없을 때 list-stack이 공간을 먹지 않도록 — empty-box가 thead 바로 아래 붙음 */
+.dashboard-page .dashboard-panel--maintenance .dashboard-list-stack[data-empty],
+.dashboard-page .dashboard-panel--repair .dashboard-list-stack[data-empty],
+.dashboard-page .dashboard-panel--registered .dashboard-list-stack[data-empty] {
+  flex: 0 0 auto;
+}
+
 .dashboard-record-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
