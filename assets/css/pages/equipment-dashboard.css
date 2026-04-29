@@ -767,8 +767,8 @@
   .dashboard-page .dashboard-top-actions {
     width: 100%;
     margin-top: 14px;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
