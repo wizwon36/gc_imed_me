@@ -1921,6 +1921,20 @@ select.input {
     font-weight: 800;
   }
 
+  .dashboard-page.portal-page .portal-top-actions {
+    margin-top: 14px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .dashboard-page.portal-page .portal-header-btn {
+    min-width: 0;
+    min-height: 46px;
+    padding: 0 10px;
+    border-radius: 16px;
+    font-size: 14px;
+  }
+
   .portal-page .portal-intro {
     display: grid;
     grid-template-columns: 1fr;
