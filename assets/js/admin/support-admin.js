@@ -227,6 +227,7 @@
           <div class="support-process-label">답변 내용</div>
           <textarea id="processReply" class="support-process-textarea" placeholder="처리 결과나 안내 메시지를 입력하세요. (완료/반려 시 요청자에게 메일 발송)">${escapeHtml(item.reply || '')}</textarea>
         </div>
+        <div id="modalFeedback" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:8px;"></div>
         <div class="support-process-actions">
           <button type="button" id="processSubmitBtn" class="btn btn-primary" style="min-width:100px;">저장</button>
           <button type="button" id="resendEmailBtn" class="btn btn-secondary" style="min-width:100px;">📧 메일 재발송</button>
@@ -239,6 +240,8 @@
     document.getElementById('resendEmailBtn')?.addEventListener('click', handleResendEmail);
     document.getElementById('processCancelBtn')?.addEventListener('click', closeModal);
 
+    const fb = document.getElementById('modalFeedback');
+    if (fb) fb.style.display = 'none';
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
   }
@@ -310,13 +313,25 @@
         request_user_email: email
       });
       await hideGlobalLoading();
-      showMessage('메일이 재발송되었습니다.', 'success');
+      showModalFeedback('✅ 메일이 재발송되었습니다.', 'success');
     } catch (err) {
       await hideGlobalLoading();
-      alert(err.message || '메일 재발송 중 오류가 발생했습니다.');
+      showModalFeedback('❌ ' + (err.message || '메일 재발송 중 오류가 발생했습니다.'), 'error');
     } finally {
       setLoading(btn, false, '📧 메일 재발송');
     }
+  }
+
+  function showModalFeedback(msg, type) {
+    const el = document.getElementById('modalFeedback');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.background = type === 'success' ? '#ecfdf5' : '#fef2f2';
+    el.style.color      = type === 'success' ? '#065f46' : '#991b1b';
+    el.style.border     = type === 'success' ? '1px solid #a7f3d0' : '1px solid #fca5a5';
+    // 4초 후 자동 숨김
+    setTimeout(function() { el.style.display = 'none'; }, 4000);
   }
 
   function closeModal() {
