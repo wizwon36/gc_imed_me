@@ -279,7 +279,8 @@
     .support-process-select:focus,
     .support-process-textarea:focus { outline:none; border-color:var(--blue); }
     .support-process-textarea { resize:vertical; min-height:100px; }
-    .support-process-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
+    .support-process-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:4px; flex-wrap:wrap; width:100%; }
+    .support-process-actions .btn { word-break:keep-all; white-space:nowrap; flex:1; min-width:70px; text-align:center; }
     .support-existing-reply {
       margin-bottom: 14px;
       padding: 12px 14px;
