@@ -26,6 +26,13 @@
       <div class="top-brand-actions portal-top-actions dashboard-top-actions">
         <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
         <a class="portal-header-btn portal-header-btn--secondary" href="list.html">장비목록</a>
+        <button
+          type="button"
+          id="logoutBtn"
+          class="portal-header-btn portal-header-btn--secondary"
+        >
+          로그아웃
+        </button>
       </div>
     </section>
 
@@ -193,6 +200,12 @@
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../../assets/js/equipment/dashboard.js"></script>
+  <script>
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      try { showGlobalLoading('로그아웃 중...'); } catch (e) {}
+      window.auth.logout();
+    });
+  </script>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
