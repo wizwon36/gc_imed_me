@@ -196,7 +196,11 @@
       </div>
       <div class="support-detail-row">
         <div class="support-detail-label">요청자</div>
-        <div class="support-detail-value">${escapeHtml(item.created_by)} · ${escapeHtml(item.created_at)}</div>
+        <div class="support-detail-value">
+          ${item.requester_name ? `<strong>${escapeHtml(item.requester_name)}</strong> · ` : ''}${escapeHtml(item.created_by)}<br>
+          ${[item.requester_clinic, item.requester_dept].filter(Boolean).map(escapeHtml).join(' / ')}
+          <span style="color:var(--text-muted);font-size:12px;margin-left:6px;">${escapeHtml(item.created_at)}</span>
+        </div>
       </div>
       <div class="support-detail-row">
         <div class="support-detail-label">현재 상태</div>
@@ -229,9 +233,9 @@
         </div>
         <div id="modalFeedback" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:8px;"></div>
         <div class="support-process-actions">
-          <button type="button" id="processSubmitBtn" class="btn btn-primary" style="min-width:100px;">저장</button>
-          <button type="button" id="resendEmailBtn" class="btn btn-secondary" style="min-width:100px;">📧 메일 재발송</button>
-          <button type="button" id="processCancelBtn" class="btn">닫기</button>
+          <button type="button" id="processSubmitBtn" class="btn btn-primary" style="flex:1;min-width:80px;">저장</button>
+          <button type="button" id="resendEmailBtn" class="btn btn-secondary" style="flex:1;min-width:80px;">📧 재발송</button>
+          <button type="button" id="processCancelBtn" class="btn" style="flex:1;min-width:60px;">닫기</button>
         </div>
       </div>
     `;
