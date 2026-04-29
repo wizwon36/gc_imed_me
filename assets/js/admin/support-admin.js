@@ -194,7 +194,7 @@
           <span class="support-badge support-badge--cat" style="margin-left:6px;">${escapeHtml(item.category_label)}</span>
         </div>
       </div>
-      <div class="support-detail-row">
+      <div class="support-detail-row support-detail-row--requester">
         <div class="support-detail-label">요청자</div>
         <div class="support-detail-value">
           ${item.requester_name ? `<strong>${escapeHtml(item.requester_name)}</strong> · ` : ''}${escapeHtml(item.created_by)}<br>
