@@ -96,6 +96,8 @@
     window.OrgService?.clearCache?.();
     window.orgSelect?.clearCache?.();
     clearSession();
+    // 페이지별 sessionStorage 캐시 전체 제거 (의원 전환 시 잔류 방지)
+    try { sessionStorage.clear(); } catch (e) {}
     history.replaceState(null, '', getLoginUrl());
     location.replace(getLoginUrl());
   }
@@ -159,6 +161,8 @@
       window.appPermission?.clearCache?.();
       window.OrgService?.clearCache?.();
       window.orgSelect?.clearCache?.();
+      // 페이지별 sessionStorage 캐시 전체 제거 (의원 전환 시 잔류 방지)
+      try { sessionStorage.clear(); } catch (e) {}
       saveSession(result.user || {});
 
       if (String(result.user?.first_login || 'N').toUpperCase() === 'Y') {
