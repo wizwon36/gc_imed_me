@@ -49,13 +49,13 @@
     <!-- 앱 본문 -->
     <div id="appBody" style="display:none;">
 
-      <!-- SECTION 1: 검사 항목 탭 -->
-      <div class="card form-card equipment-form-card" style="padding-top:0;">
-        <div class="section-head equipment-form-section-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:22px 22px 18px;">
+      <!-- SECTION 1: 검사 항목 선택 -->
+      <div class="card form-card equipment-form-card" style="padding:0;overflow:hidden;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 18px;border-bottom:1.5px solid #e0e7f2;">
           <div>
             <span class="portal-section-kicker">STEP 1</span>
             <h2 class="section-title">검사 항목 선택</h2>
-            <p class="sub-text equipment-form-section-desc">관리할 검사 항목을 선택하거나 새 항목을 추가하세요.</p>
+            <p class="sub-text equipment-form-section-desc" style="margin-top:6px;">관리할 검사 항목을 선택하거나 새 항목을 추가하세요.</p>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;padding-top:4px;">
             <button type="button" id="editItemBtn" class="btn" style="display:none;min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">항목 수정</button>
@@ -63,8 +63,15 @@
           </div>
         </div>
 
-        <div class="lj-item-tabs" id="itemTabs">
-          <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtn">+ 항목 추가</button>
+        <!-- 항목 선택 셀렉트 + 추가 버튼 -->
+        <div id="itemSelectRow" style="display:none;align-items:center;gap:10px;padding:14px 22px;border-bottom:1.5px solid #e0e7f2;">
+          <select id="itemSelect" class="input" style="flex:1;min-height:44px;font-weight:600;"></select>
+          <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtn" style="flex-shrink:0;border-radius:12px;padding:0 16px;min-height:44px;">+ 항목 추가</button>
+        </div>
+
+        <!-- 항목 없을 때 추가 버튼만 -->
+        <div id="itemEmptyRow" style="padding:14px 22px;border-bottom:1.5px solid #e0e7f2;">
+          <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtnEmpty" style="border-radius:12px;padding:0 16px;min-height:44px;">+ 항목 추가</button>
         </div>
 
         <div class="empty-state" id="itemEmptyState" style="margin:20px 22px;">
