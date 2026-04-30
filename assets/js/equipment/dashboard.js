@@ -496,6 +496,12 @@ function renderHeatmap(data) {
 
   const headerCells = COLS.map(c => `<div class="hm-th">${c.label}</div>`).join('');
 
+  const thead = document.getElementById('heatmapThead');
+  if (thead) {
+    thead.innerHTML = `<div class="hm-header-row"><div class="hm-dept-th">의원 / 부서명</div>${headerCells}</div>`;
+    thead.style.display = '';
+  }
+
   const dataRows = data.map(function (dept) {
     const name       = textSafe(dept.department_display || dept.department || '-');
     const teamCode   = encodeURIComponent(dept.team_code || '');
@@ -515,7 +521,6 @@ function renderHeatmap(data) {
 
   wrap.innerHTML = `
     <div class="hm-table">
-      <div class="hm-header-row"><div class="hm-dept-th"></div>${headerCells}</div>
       ${dataRows}
     </div>`;
 }
