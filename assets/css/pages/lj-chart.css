@@ -48,7 +48,6 @@
 }
 
 /* ── 스켈레톤 — lj-card 안에서 사용 ── */
-#skeletonBody { display: none; }
 #skeletonBody .lj-card { margin-top: 16px; }
 #skeletonBody .lj-card:first-child { margin-top: 0; }
 #skeletonBody .lj-card-head {
