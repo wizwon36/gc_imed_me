@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       showItemEmptyState();
     } else {
       state.items = itemsResult;
-      renderTabs();
+      renderItemSelect();
       if (state.items.length > 0) {
         selectItem(state.items[0].item_id);
       } else {
@@ -79,12 +79,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 이벤트 바인딩
 // ─────────────────────────────────────────────
 function bindEvents() {
+  // 항목 추가 버튼 (항목 있을 때 / 없을 때 둘 다)
   $('addItemTabBtn').addEventListener('click', () => openItemModal(null));
+  $('addItemTabBtnEmpty').addEventListener('click', () => openItemModal(null));
+
   $('editItemBtn').addEventListener('click', () => {
     const item = getActiveItem();
     if (item) openItemModal(item);
   });
   $('deleteItemBtn').addEventListener('click', deleteActiveItem);
+
+  // 셀렉트 변경 시 항목 전환
+  $('itemSelect').addEventListener('change', e => {
+    if (e.target.value) selectItem(e.target.value);
+  });
 
   $('itemModalClose').addEventListener('click', closeItemModal);
   $('itemModalCancel').addEventListener('click', closeItemModal);
@@ -95,12 +103,10 @@ function bindEvents() {
   $('sampleDataBtn').addEventListener('click', loadSampleData);
   $('exportCsvBtn').addEventListener('click', exportCsv);
 
-  // 모달 배경 클릭 닫기
   $('itemModal').addEventListener('click', e => {
     if (e.target === $('itemModal')) closeItemModal();
   });
 
-  // 오늘 날짜 기본값
   $('entryDate').value = new Date().toISOString().slice(0, 10);
 }
 
@@ -113,7 +119,7 @@ async function loadItems() {
     showGlobalLoading('불러오는 중...');
     const result = await apiGet('ljGetItems', { request_user_email: user.email });
     state.items = Array.isArray(result.data) ? result.data : [];
-    renderTabs();
+    renderItemSelect();
     if (state.items.length > 0) {
       selectItem(state.items[0].item_id);
     } else {
@@ -148,26 +154,30 @@ async function loadEntriesForItem(itemId) {
 // ─────────────────────────────────────────────
 // 검사 항목 탭 렌더링
 // ─────────────────────────────────────────────
-function renderTabs() {
-  const tabsEl = $('itemTabs');
-  // 기존 탭 제거 (추가 버튼 제외)
-  Array.from(tabsEl.querySelectorAll('.lj-item-tab:not(.lj-item-tab-add)')).forEach(el => el.remove());
+function renderItemSelect() {
+  const selectEl = $('itemSelect');
+  const selectRow = $('itemSelectRow');
+  const emptyRow = $('itemEmptyRow');
 
-  state.items.forEach(item => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'lj-item-tab' + (item.item_id === state.activeItemId ? ' is-active' : '');
-    btn.dataset.itemId = item.item_id;
-    btn.textContent = item.item_name;
-    btn.addEventListener('click', () => selectItem(item.item_id));
-    // 추가 버튼 앞에 삽입
-    tabsEl.insertBefore(btn, $('addItemTabBtn'));
-  });
+  if (state.items.length === 0) {
+    selectRow.style.display = 'none';
+    emptyRow.style.display = '';
+    return;
+  }
+
+  selectRow.style.display = 'flex';
+  emptyRow.style.display = 'none';
+
+  selectEl.innerHTML = state.items.map(item =>
+    `<option value="${escHtml(item.item_id)}" ${item.item_id === state.activeItemId ? 'selected' : ''}>
+      ${escHtml(item.item_name)}
+    </option>`
+  ).join('');
 }
 
 function selectItem(itemId) {
   state.activeItemId = itemId;
-  renderTabs();
+  renderItemSelect();
 
   const item = getActiveItem();
   if (!item) return;
@@ -289,7 +299,7 @@ async function saveItem() {
       state.items.push(result.data);
     }
 
-    renderTabs();
+    renderItemSelect();
     selectItem(isEdit ? itemId : state.items[state.items.length - 1].item_id);
     showMessage(isEdit ? '항목이 수정되었습니다.' : '항목이 추가되었습니다.', 'success');
   } catch (e) {
@@ -318,7 +328,7 @@ async function deleteActiveItem() {
 
     if (state.chart) { state.chart.destroy(); state.chart = null; }
 
-    renderTabs();
+    renderItemSelect();
     if (state.items.length > 0) {
       selectItem(state.items[0].item_id);
     } else {
