@@ -32,8 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // globalLoading 대신 스켈레톤으로 초기 로딩 표시
+  // 스켈레톤 + 스피너 동시 표시
   $('skeletonBody').style.display = 'block';
+  showGlobalLoading('불러오는 중...');
   bindEvents();
 
   try {
@@ -49,8 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const [hasAccess, itemsResult] = await Promise.all([permissionPromise, itemsPromise]);
 
-    // 스켈레톤 제거
+    // 스켈레톤 + 스피너 제거
     $('skeletonBody').style.display = 'none';
+    hideGlobalLoading();
 
     if (!hasAccess) {
       $('permissionDenied').style.display = '';
@@ -72,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch (e) {
     $('skeletonBody').style.display = 'none';
+    hideGlobalLoading();
     showMessage(e.message || '불러오는 중 오류가 발생했습니다.', 'error');
   }
 });
