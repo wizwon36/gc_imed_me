@@ -60,7 +60,7 @@
             <h2 class="section-title">검사 항목 선택</h2>
             <p class="sub-text equipment-form-section-desc" style="margin-top:6px;">관리할 검사 항목을 선택하거나 새 항목을 추가하세요.</p>
           </div>
-          <div style="display:flex;gap:8px;flex-shrink:0;padding-top:4px;">
+          <div style="display:flex;flex-direction:row;align-items:center;gap:8px;flex-shrink:0;">
             <button type="button" id="editItemBtn" class="btn" style="display:none;min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">항목 수정</button>
             <button type="button" id="deleteItemBtn" class="btn btn-danger" style="display:none;min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">항목 삭제</button>
           </div>
@@ -105,7 +105,7 @@
             <h2 class="section-title">QC 데이터 입력</h2>
             <p class="sub-text equipment-form-section-desc">측정일과 측정값을 입력하세요.</p>
           </div>
-          <button type="button" id="sampleDataBtn" class="btn" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;flex-shrink:0;margin-top:4px;">샘플 데이터</button>
+          <button type="button" id="sampleDataBtn" class="btn" style="min-height:36px;height:36px;font-size:13px;padding:0 14px;border-radius:10px;flex-shrink:0;">샘플 데이터</button>
         </div>
 
         <div class="lj-data-entry-row">
@@ -155,10 +155,10 @@
             <span class="portal-section-kicker">STATISTICS</span>
             <h2 class="section-title">통계 요약</h2>
           </div>
-          <div style="display:flex;gap:8px;flex-shrink:0;margin-top:4px;">
-            <button type="button" id="exportCsvBtn" class="btn" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">CSV</button>
-            <button type="button" id="exportExcelBtn" class="btn" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">엑셀</button>
-            <button type="button" id="exportPdfBtn" class="btn btn-primary" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">PDF</button>
+          <div style="display:flex;flex-direction:row;align-items:center;gap:8px;flex-shrink:0;">
+            <button type="button" id="exportCsvBtn" class="btn" style="min-height:36px;height:36px;font-size:13px;padding:0 14px;border-radius:10px;">CSV</button>
+            <button type="button" id="exportExcelBtn" class="btn" style="min-height:36px;height:36px;font-size:13px;padding:0 14px;border-radius:10px;">엑셀</button>
+            <button type="button" id="exportPdfBtn" class="btn btn-primary" style="min-height:36px;height:36px;font-size:13px;padding:0 14px;border-radius:10px;">PDF</button>
           </div>
         </div>
         <div class="kpi-grid" id="statGrid"></div>
