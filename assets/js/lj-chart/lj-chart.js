@@ -238,8 +238,8 @@ function renderSettingsDisplay(item) {
   let html = tiles.map(t => `
     <div class="kpi-card">
       <div class="kpi-label">${escHtml(t.label)}</div>
-      <div style="font-size:20px;font-weight:800;color:#0b1f44;line-height:1.2;">${escHtml(t.value)}</div>
-      <div style="font-size:12px;color:#94a3b8;margin-top:2px;">${escHtml(t.unit)}</div>
+      <div style="font-size:20px;font-weight:900;color:#0b1f44;line-height:1;letter-spacing:-0.02em;">${escHtml(t.value)}</div>
+      <div style="font-size:10px;color:#8494aa;margin-top:3px;font-weight:600;">${escHtml(t.unit)}</div>
     </div>
   `).join('');
 
@@ -547,8 +547,8 @@ function renderStats() {
   $('statGrid').innerHTML = cards.map(c => `
     <div class="kpi-card">
       <div class="kpi-label">${escHtml(c.label)}</div>
-      <div style="font-size:22px;font-weight:800;color:${c.danger ? '#dc2626' : c.warn ? '#d97706' : '#0b1f44'};line-height:1.1;">${escHtml(String(c.value))}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${escHtml(c.unit)}</div>
+      <div style="font-size:20px;font-weight:900;color:${c.danger ? '#b42318' : c.warn ? '#c2410c' : '#0b1f44'};line-height:1;letter-spacing:-0.02em;">${escHtml(String(c.value))}</div>
+      <div style="font-size:10px;color:#8494aa;margin-top:3px;font-weight:600;">${escHtml(c.unit)}</div>
     </div>
   `).join('');
 }
