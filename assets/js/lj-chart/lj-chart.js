@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!hasAccess) {
       $('skeletonBody').style.display = 'none';
-      hideGlobalLoading();
+      await hideGlobalLoading();
       $('permissionDenied').style.display = '';
       return;
     }
@@ -64,17 +64,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderItemSelect();
       showItemEmptyState();
       $('skeletonBody').style.display = 'none';
-      hideGlobalLoading();
+      await hideGlobalLoading();
     } else {
       state.items = itemsResult;
-      renderItemSelect();
-      // 첫 항목 entries까지 모두 로드한 뒤 스피너/스켈레톤 제거
+      // 첫 항목 entries 로드
       await loadEntriesForItem(state.items[0].item_id, true);
-      $('skeletonBody').style.display = 'none';
-      hideGlobalLoading();
-      // entries 로드 후 화면 구성
+
+      // 모든 렌더링 먼저 완료
       state.activeItemId = state.items[0].item_id;
       const item = state.items[0];
+      renderItemSelect();
       $('itemEmptyState').style.display = 'none';
       $('settingsSection').style.display = '';
       $('dataEntrySection').style.display = '';
@@ -83,14 +82,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       $('settingsSectionTitle').textContent = item.item_name;
       $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
       renderSettingsDisplay(item);
-      renderItemSelect();
       renderDataTable();
       renderStats();
       renderChart();
+
+      // 렌더링 완료 후 스켈레톤 + 스피너 제거
+      $('skeletonBody').style.display = 'none';
+      await hideGlobalLoading();
     }
   } catch (e) {
     $('skeletonBody').style.display = 'none';
-    hideGlobalLoading();
+    await hideGlobalLoading();
     showMessage(e.message || '불러오는 중 오류가 발생했습니다.', 'error');
   }
 });
