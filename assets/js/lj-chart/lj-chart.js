@@ -32,22 +32,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  showGlobalLoading('불러오는 중...');
+  // globalLoading 대신 스켈레톤으로 초기 로딩 표시
+  $('skeletonBody').style.display = '';
   bindEvents();
 
   try {
     const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
 
-    // 권한 확인과 항목 조회를 병렬 실행 (admin은 권한 API 스킵)
     const permissionPromise = isAdmin
       ? Promise.resolve(true)
       : window.appPermission.hasPermission(APP_ID);
 
     const itemsPromise = apiGet('ljGetItems', { request_user_email: user.email })
       .then(r => Array.isArray(r.data) ? r.data : [])
-      .catch(() => null); // 권한 없을 때 에러 무시
+      .catch(() => null);
 
     const [hasAccess, itemsResult] = await Promise.all([permissionPromise, itemsPromise]);
+
+    // 스켈레톤 제거
+    $('skeletonBody').style.display = 'none';
 
     if (!hasAccess) {
       $('permissionDenied').style.display = '';
@@ -57,7 +60,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('appBody').style.display = '';
 
     if (itemsResult === null) {
-      // 항목 조회 실패 시 빈 상태로 표시
       showItemEmptyState();
     } else {
       state.items = itemsResult;
@@ -69,9 +71,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
   } catch (e) {
+    $('skeletonBody').style.display = 'none';
     showMessage(e.message || '불러오는 중 오류가 발생했습니다.', 'error');
-  } finally {
-    hideGlobalLoading();
   }
 });
 
@@ -136,8 +137,22 @@ async function loadItems() {
 
 async function loadEntriesForItem(itemId) {
   const user = window.auth.getSession();
+
+  // 테이블 영역에 스켈레톤 표시
+  $('dataEmptyState').style.display = 'none';
+  $('dataTable').style.display = '';
+  $('dataTableBody').innerHTML = Array(4).fill(0).map(() => `
+    <tr>
+      <td><div class="skeleton" style="height:14px;width:90px;border-radius:6px;"></div></td>
+      <td><div class="skeleton" style="height:14px;width:50px;border-radius:6px;margin:0 auto;"></div></td>
+      <td><div class="skeleton" style="height:20px;width:52px;border-radius:6px;margin:0 auto;"></div></td>
+      <td><div class="skeleton" style="height:20px;width:60px;border-radius:6px;margin:0 auto;"></div></td>
+      <td><div class="skeleton" style="height:14px;width:80px;border-radius:6px;"></div></td>
+      <td></td>
+    </tr>
+  `).join('');
+
   try {
-    showGlobalLoading('데이터 불러오는 중...');
     const result = await apiGet('ljGetEntries', {
       item_id: itemId,
       request_user_email: user.email
@@ -151,8 +166,8 @@ async function loadEntriesForItem(itemId) {
     renderChart();
   } catch (e) {
     showMessage(e.message || '데이터를 불러오지 못했습니다.', 'error');
-  } finally {
-    hideGlobalLoading();
+    $('dataTable').style.display = 'none';
+    $('dataEmptyState').style.display = '';
   }
 }
 
