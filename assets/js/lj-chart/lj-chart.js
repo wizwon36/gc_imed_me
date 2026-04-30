@@ -986,29 +986,36 @@ async function exportPdf() {
 
     document.body.removeChild(wrap);
 
-    // jsPDF에 이미지로 삽입
     const imgData = canvas.toDataURL('image/png');
-    const pdfW = 210; // A4 mm
-    const pdfH = (canvas.height / canvas.width) * pdfW;
+    const pdfW = 210;           // A4 가로 mm
+    const pageH = 297;          // A4 세로 mm
+    const imgW = canvas.width;
+    const imgH = canvas.height;
 
-    const doc = new jsPDF({
-      orientation: pdfH > 297 ? 'portrait' : 'portrait',
-      unit: 'mm',
-      format: pdfH > 297 ? [pdfW, pdfH] : 'a4'
-    });
+    // canvas 전체 높이를 mm로 환산 (pdfW 기준 비율 유지)
+    const totalPdfH = (imgH / imgW) * pdfW;
+    const pageCount = Math.ceil(totalPdfH / pageH);
 
-    doc.addImage(imgData, 'PNG', 0, 0, pdfW, Math.min(pdfH, 297));
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-    // 내용이 A4 한 장을 넘으면 페이지 분할
-    if (pdfH > 297) {
-      let remainH = pdfH - 297;
-      let pageTop = 297;
-      while (remainH > 0) {
-        doc.addPage();
-        doc.addImage(imgData, 'PNG', 0, -pageTop, pdfW, pdfH);
-        pageTop += 297;
-        remainH -= 297;
-      }
+    for (let i = 0; i < pageCount; i++) {
+      if (i > 0) doc.addPage();
+
+      // 이 페이지에서 보여줄 canvas의 y 시작 픽셀
+      const srcY = Math.round((i * pageH / totalPdfH) * imgH);
+      // 이 페이지에서 보여줄 canvas 높이 픽셀
+      const srcH = Math.round(Math.min(pageH / totalPdfH * imgH, imgH - srcY));
+
+      // 해당 슬라이스만 임시 캔버스에 복사
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width  = imgW;
+      sliceCanvas.height = srcH;
+      const ctx = sliceCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, srcY, imgW, srcH, 0, 0, imgW, srcH);
+
+      const sliceImgData = sliceCanvas.toDataURL('image/png');
+      const sliceH = (srcH / imgW) * pdfW; // 이 슬라이스의 mm 높이
+      doc.addImage(sliceImgData, 'PNG', 0, 0, pdfW, sliceH);
     }
 
     doc.save(`LJ_${item.item_name}_${today}.pdf`);
@@ -1019,10 +1026,6 @@ async function exportPdf() {
     hideGlobalLoading();
   }
 }
-
-
-
-
 
 function showMessage(text, type = 'error') {
   const box = $('messageBox');
