@@ -5,7 +5,33 @@
  * common.css + equipment-form.css 그대로 사용
  * ========================================= */
 
-/* ── section-title 파란 라인 (padding:0 카드에서도 동작) ── */
+/* ── 카드 기본 (padding:0 보장 — form-card 미사용) ── */
+.lj-card {
+  padding: 0 !important;
+  overflow: hidden;
+  border: 1px solid #d9dee7;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+}
+.lj-card + .lj-card { margin-top: 16px; }
+
+/* ── 카드 내부 헤더 ── */
+.lj-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px 18px;
+  border-bottom: 1.5px solid #e0e7f2;
+}
+
+/* ── 카드 내부 본문 패딩 ── */
+.lj-card-body {
+  padding: 16px 22px 20px;
+}
+
+
 .lj-chart-page .section-title {
   position: relative;
   display: inline-block;
