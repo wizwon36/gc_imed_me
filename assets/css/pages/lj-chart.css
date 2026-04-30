@@ -47,7 +47,16 @@
   background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 100%);
 }
 
-/* ── kicker 배지 — dashboard portal-section-kicker 동일 ── */
+/* ── 카드 헤더 내 버튼 높이 고정 (common.css btn min-height 오버라이드) ── */
+.lj-card-head .btn {
+  min-height: 36px !important;
+  height: 36px;
+  font-size: 13px;
+  padding: 0 14px;
+  border-radius: 10px;
+}
+
+
 .lj-chart-page .portal-section-kicker {
   display: inline-flex;
   align-items: center;
