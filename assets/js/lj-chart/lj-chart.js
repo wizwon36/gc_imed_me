@@ -50,27 +50,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const [hasAccess, itemsResult] = await Promise.all([permissionPromise, itemsPromise]);
 
-    // 스켈레톤 + 스피너 제거
-    $('skeletonBody').style.display = 'none';
-    hideGlobalLoading();
-
     if (!hasAccess) {
+      $('skeletonBody').style.display = 'none';
+      hideGlobalLoading();
       $('permissionDenied').style.display = '';
       return;
     }
 
     $('appBody').style.display = '';
 
-    if (itemsResult === null) {
+    if (itemsResult === null || itemsResult.length === 0) {
+      state.items = itemsResult || [];
+      renderItemSelect();
       showItemEmptyState();
+      $('skeletonBody').style.display = 'none';
+      hideGlobalLoading();
     } else {
       state.items = itemsResult;
       renderItemSelect();
-      if (state.items.length > 0) {
-        selectItem(state.items[0].item_id);
-      } else {
-        showItemEmptyState();
-      }
+      // 첫 항목 entries까지 모두 로드한 뒤 스피너/스켈레톤 제거
+      await loadEntriesForItem(state.items[0].item_id, true);
+      $('skeletonBody').style.display = 'none';
+      hideGlobalLoading();
+      // entries 로드 후 화면 구성
+      state.activeItemId = state.items[0].item_id;
+      const item = state.items[0];
+      $('itemEmptyState').style.display = 'none';
+      $('settingsSection').style.display = '';
+      $('dataEntrySection').style.display = '';
+      $('editItemBtn').style.display = '';
+      $('deleteItemBtn').style.display = '';
+      $('settingsSectionTitle').textContent = item.item_name;
+      $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
+      renderSettingsDisplay(item);
+      renderItemSelect();
+      renderDataTable();
+      renderStats();
+      renderChart();
     }
   } catch (e) {
     $('skeletonBody').style.display = 'none';
@@ -139,22 +155,24 @@ async function loadItems() {
   }
 }
 
-async function loadEntriesForItem(itemId) {
+async function loadEntriesForItem(itemId, isInitial = false) {
   const user = window.auth.getSession();
 
-  // 테이블 영역에 스켈레톤 표시
-  $('dataEmptyState').style.display = 'none';
-  $('dataTable').style.display = '';
-  $('dataTableBody').innerHTML = Array(4).fill(0).map(() => `
-    <tr>
-      <td><div class="skeleton" style="height:14px;width:90px;border-radius:6px;"></div></td>
-      <td><div class="skeleton" style="height:14px;width:50px;border-radius:6px;margin:0 auto;"></div></td>
-      <td><div class="skeleton" style="height:20px;width:52px;border-radius:6px;margin:0 auto;"></div></td>
-      <td><div class="skeleton" style="height:20px;width:60px;border-radius:6px;margin:0 auto;"></div></td>
-      <td><div class="skeleton" style="height:14px;width:80px;border-radius:6px;"></div></td>
-      <td></td>
-    </tr>
-  `).join('');
+  // 초기 로딩이 아닐 때만 테이블 스켈레톤 행 표시
+  if (!isInitial) {
+    $('dataEmptyState').style.display = 'none';
+    $('dataTable').style.display = '';
+    $('dataTableBody').innerHTML = Array(4).fill(0).map(() => `
+      <tr>
+        <td><div class="skeleton" style="height:14px;width:90px;border-radius:6px;"></div></td>
+        <td><div class="skeleton" style="height:14px;width:50px;border-radius:6px;margin:0 auto;"></div></td>
+        <td><div class="skeleton" style="height:20px;width:52px;border-radius:6px;margin:0 auto;"></div></td>
+        <td><div class="skeleton" style="height:20px;width:60px;border-radius:6px;margin:0 auto;"></div></td>
+        <td><div class="skeleton" style="height:14px;width:80px;border-radius:6px;"></div></td>
+        <td></td>
+      </tr>
+    `).join('');
+  }
 
   try {
     const result = await apiGet('ljGetEntries', {
