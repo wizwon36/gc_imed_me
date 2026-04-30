@@ -547,8 +547,8 @@ function renderStats() {
   $('statGrid').innerHTML = cards.map(c => `
     <div class="kpi-card">
       <div class="kpi-label">${escHtml(c.label)}</div>
-      <div style="font-size:26px;font-weight:800;color:${c.danger ? '#dc2626' : c.warn ? '#d97706' : '#0b1f44'};line-height:1.1;">${escHtml(String(c.value))}</div>
-      <div style="font-size:12px;color:#94a3b8;margin-top:2px;">${escHtml(c.unit)}</div>
+      <div style="font-size:22px;font-weight:800;color:${c.danger ? '#dc2626' : c.warn ? '#d97706' : '#0b1f44'};line-height:1.1;">${escHtml(String(c.value))}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${escHtml(c.unit)}</div>
     </div>
   `).join('');
 }
