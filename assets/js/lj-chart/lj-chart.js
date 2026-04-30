@@ -32,20 +32,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  showGlobalLoading('불러오는 중...');
+  bindEvents();
+
   try {
-    showGlobalLoading('권한 확인 중...');
-    const ok = await window.appPermission.requirePermission(APP_ID);
-    if (!ok) return;
+    const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
+
+    // 권한 확인과 항목 조회를 병렬 실행 (admin은 권한 API 스킵)
+    const permissionPromise = isAdmin
+      ? Promise.resolve(true)
+      : window.appPermission.hasPermission(APP_ID);
+
+    const itemsPromise = apiGet('ljGetItems', { request_user_email: user.email })
+      .then(r => Array.isArray(r.data) ? r.data : [])
+      .catch(() => null); // 권한 없을 때 에러 무시
+
+    const [hasAccess, itemsResult] = await Promise.all([permissionPromise, itemsPromise]);
+
+    if (!hasAccess) {
+      $('permissionDenied').style.display = '';
+      return;
+    }
+
+    $('appBody').style.display = '';
+
+    if (itemsResult === null) {
+      // 항목 조회 실패 시 빈 상태로 표시
+      showItemEmptyState();
+    } else {
+      state.items = itemsResult;
+      renderTabs();
+      if (state.items.length > 0) {
+        selectItem(state.items[0].item_id);
+      } else {
+        showItemEmptyState();
+      }
+    }
   } catch (e) {
-    $('permissionDenied').style.display = '';
-    return;
+    showMessage(e.message || '불러오는 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
   }
-
-  $('appBody').style.display = '';
-  bindEvents();
-  await loadItems();
 });
 
 // ─────────────────────────────────────────────
@@ -83,7 +110,7 @@ function bindEvents() {
 async function loadItems() {
   const user = window.auth.getSession();
   try {
-    showGlobalLoading('항목 불러오는 중...');
+    showGlobalLoading('불러오는 중...');
     const result = await apiGet('ljGetItems', { request_user_email: user.email });
     state.items = Array.isArray(result.data) ? result.data : [];
     renderTabs();
