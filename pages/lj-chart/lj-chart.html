@@ -41,7 +41,7 @@
     <div id="messageBox" class="message-box"></div>
 
     <!-- 권한 없음 -->
-    <div id="permissionDenied" class="card form-card equipment-form-card" style="display:none;">
+    <div id="permissionDenied" class="card lj-card" style="display:none;">
       <div class="empty-state" style="margin:8px 0;">
         <div style="font-size:48px;margin-bottom:8px;">🔒</div>
         <p class="empty-state-title">접근 권한이 없습니다</p>
@@ -53,7 +53,7 @@
     <div id="appBody" style="display:none;">
 
       <!-- SECTION 1: 검사 항목 선택 -->
-      <div class="card form-card equipment-form-card" style="padding:0;overflow:hidden;">
+      <div class="card lj-card">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 18px;border-bottom:1.5px solid #e0e7f2;">
           <div>
             <span class="portal-section-kicker">STEP 1</span>
@@ -85,8 +85,8 @@
       </div>
 
       <!-- SECTION 2: 설정 표시 -->
-      <div class="card form-card equipment-form-card" id="settingsSection" style="display:none;margin-top:16px;">
-        <div class="section-head equipment-form-section-head">
+      <div class="card lj-card" id="settingsSection" style="display:none;margin-top:16px;">
+        <div class="lj-card-head">
           <div>
             <span class="portal-section-kicker">SETTINGS</span>
             <h2 class="section-title" id="settingsSectionTitle">설정</h2>
@@ -98,8 +98,8 @@
       </div>
 
       <!-- SECTION 3: 데이터 입력 -->
-      <div class="card form-card equipment-form-card" id="dataEntrySection" style="display:none;margin-top:16px;">
-        <div class="section-head equipment-form-section-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+      <div class="card lj-card" id="dataEntrySection" style="display:none;margin-top:16px;">
+        <div class="lj-card-head">
           <div>
             <span class="portal-section-kicker">STEP 2</span>
             <h2 class="section-title">QC 데이터 입력</h2>
@@ -149,8 +149,8 @@
       </div>
 
       <!-- SECTION 4: 통계 요약 — kpi-grid / kpi-card (common.css) -->
-      <div class="card form-card equipment-form-card" id="statsSection" style="display:none;margin-top:16px;">
-        <div class="section-head equipment-form-section-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+      <div class="card lj-card" id="statsSection" style="display:none;margin-top:16px;">
+        <div class="lj-card-head">
           <div>
             <span class="portal-section-kicker">STATISTICS</span>
             <h2 class="section-title">통계 요약</h2>
@@ -165,8 +165,8 @@
       </div>
 
       <!-- SECTION 5: L-J 차트 -->
-      <div class="card form-card equipment-form-card" id="chartSection" style="display:none;margin-top:16px;">
-        <div class="section-head equipment-form-section-head">
+      <div class="card lj-card" id="chartSection" style="display:none;margin-top:16px;">
+        <div class="lj-card-head">
           <div>
             <span class="portal-section-kicker">LEVEY-JENNINGS CHART</span>
             <h2 class="section-title" id="chartSectionTitle">L-J 차트</h2>
@@ -184,7 +184,7 @@
   <!-- 검사 항목 추가/수정 모달 -->
   <div class="lj-modal-backdrop" id="itemModal" style="display:none;">
     <div class="lj-modal">
-      <div class="section-head equipment-form-section-head" style="padding:20px 24px 16px;border-bottom:1.5px solid #e0e7f2;margin-bottom:0;display:flex;align-items:center;justify-content:space-between;">
+      <div class="lj-card-head" style="padding:20px 24px 16px;border-bottom:1.5px solid #e0e7f2;margin-bottom:0;display:flex;align-items:center;justify-content:space-between;">
         <div>
           <h2 class="section-title" id="itemModalTitle">검사 항목 추가</h2>
         </div>
