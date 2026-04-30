@@ -181,10 +181,14 @@
 /* 헤더 바로 다음 콘텐츠 영역 패딩 */
 .dashboard-page .dashboard-section-head + *:not(.dashboard-list-stack):not(.dash-tbl-thead-wrap),
 .dashboard-page .dashboard-section-head ~ .dept-chart-wrap,
-.dashboard-page .dashboard-section-head ~ .heatmap-wrap,
 .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--portal,
 .dashboard-page .dashboard-section-head ~ .dashboard-action-grid--enhanced {
   margin-top: 0;
+  padding: 12px 22px 20px;
+}
+
+/* heatmap-wrap은 thead-wrap 다음에 오므로 별도 패딩 */
+.dashboard-page .dashboard-panel--heatmap .heatmap-wrap {
   padding: 12px 22px 20px;
 }
 
@@ -1185,10 +1189,18 @@
   display: grid;
   grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
   gap: 5px;
-  margin-bottom: 2px;
+  margin-bottom: 0;
+  padding: 8px 22px 8px;
+  border-bottom: 1.5px solid #e0e7f2;
+  background: #f7f9fd;
 }
 
-.hm-dept-th { /* 빈 왼쪽 헤더 */ }
+.hm-dept-th {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  padding: 3px 0;
+}
 
 .hm-th {
   font-size: 11px;
