@@ -54,6 +54,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '🪧',
       url: `${CONFIG.SITE_BASE_URL}/pages/signage/signage-form.html`
     },
+    lj_chart: {
+      title: 'L-J 정도관리 차트',
+      desc: '검사실 QC 데이터 관리 및 Westgard 규칙 분석',
+      icon: '📈',
+      url: `${CONFIG.SITE_BASE_URL}/pages/lj-chart/lj-chart.html`
+    },
     // ── 수정요청: 권한 없어도 모든 사용자에게 노출 ──────────────────
     support: {
       title: '프로그램 수정요청',
