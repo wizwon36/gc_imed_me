@@ -102,6 +102,8 @@ function bindEvents() {
   $('entryValue').addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); });
   $('sampleDataBtn').addEventListener('click', loadSampleData);
   $('exportCsvBtn').addEventListener('click', exportCsv);
+  $('exportExcelBtn').addEventListener('click', exportExcel);
+  $('exportPdfBtn').addEventListener('click', exportPdf);
 
   $('itemModal').addEventListener('click', e => {
     if (e.target === $('itemModal')) closeItemModal();
@@ -727,8 +729,239 @@ function exportCsv() {
 }
 
 // ─────────────────────────────────────────────
-// 유틸
+// 엑셀 내보내기 (SheetJS)
 // ─────────────────────────────────────────────
+function exportExcel() {
+  const item = getActiveItem();
+  const entries = state.entries[state.activeItemId] || [];
+  if (entries.length === 0) { showMessage('데이터가 없습니다.', 'error'); return; }
+  if (typeof XLSX === 'undefined') { showMessage('라이브러리 로딩 중입니다. 잠시 후 다시 시도해 주세요.', 'error'); return; }
+
+  const mean = Number(item.mean);
+  const sd   = Number(item.sd);
+  const analyzed = analyzeEntries(entries, mean, sd);
+  const today = new Date().toISOString().slice(0, 10);
+
+  // ── 시트1: 통계 요약 ──
+  const values = entries.map(e => Number(e.value));
+  const n = values.length;
+  const actualMean = values.reduce((s, v) => s + v, 0) / n;
+  const actualSD   = Math.sqrt(values.reduce((s, v) => s + Math.pow(v - actualMean, 2), 0) / n);
+  const cv = (actualSD / actualMean) * 100;
+  const warnCount   = analyzed.filter(r => r.violations.length > 0 && !r.violations.some(v => v.type === 'reject')).length;
+  const rejectCount = analyzed.filter(r => r.violations.some(v => v.type === 'reject')).length;
+
+  const summaryData = [
+    ['L-J 정도관리 차트 — 통계 요약'],
+    [],
+    ['검사 항목', item.item_name],
+    ['단위',     item.unit],
+    ['출력일',   today],
+    [],
+    ['항목',       '값'],
+    ['목표 평균',  mean],
+    ['표준편차',   sd],
+    ['+2SD 상한',  mean + 2 * sd],
+    ['-2SD 하한',  mean - 2 * sd],
+    [],
+    ['데이터 수',  n],
+    ['실측 평균',  parseFloat(actualMean.toFixed(2))],
+    ['실측 SD',    parseFloat(actualSD.toFixed(2))],
+    ['%CV',        parseFloat(cv.toFixed(1))],
+    ['경고 건수',  warnCount],
+    ['거부 건수',  rejectCount],
+  ];
+
+  // ── 시트2: QC 데이터 ──
+  const dataRows = [
+    ['측정일', '측정값', `단위(${item.unit})`, 'SDI', 'Westgard 판정', '메모'],
+    ...analyzed.map(e => [
+      e.date,
+      Number(e.value),
+      item.unit,
+      parseFloat(e.sdi.toFixed(3)),
+      e.violations.length ? e.violations.map(v => v.code).join(' / ') : '정상',
+      e.memo || ''
+    ])
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+  const wsData    = XLSX.utils.aoa_to_sheet(dataRows);
+
+  // 열 너비
+  wsSummary['!cols'] = [{ wch: 16 }, { wch: 20 }];
+  wsData['!cols']    = [{ wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 24 }, { wch: 20 }];
+
+  XLSX.utils.book_append_sheet(wb, wsSummary, '통계 요약');
+  XLSX.utils.book_append_sheet(wb, wsData,    'QC 데이터');
+
+  XLSX.writeFile(wb, `LJ_${item.item_name}_${today}.xlsx`);
+}
+
+// ─────────────────────────────────────────────
+// PDF 내보내기 (jsPDF + html2canvas)
+// ─────────────────────────────────────────────
+async function exportPdf() {
+  const item = getActiveItem();
+  const entries = state.entries[state.activeItemId] || [];
+  if (entries.length === 0) { showMessage('데이터가 없습니다.', 'error'); return; }
+  if (typeof window.jspdf === 'undefined' || typeof html2canvas === 'undefined') {
+    showMessage('라이브러리 로딩 중입니다. 잠시 후 다시 시도해 주세요.', 'error'); return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const mean = Number(item.mean);
+  const sd   = Number(item.sd);
+  const analyzed = analyzeEntries(entries, mean, sd);
+  const today = new Date().toISOString().slice(0, 10);
+  const values = entries.map(e => Number(e.value));
+  const n = values.length;
+  const actualMean = values.reduce((s, v) => s + v, 0) / n;
+  const actualSD   = Math.sqrt(values.reduce((s, v) => s + Math.pow(v - actualMean, 2), 0) / n);
+  const cv = (actualSD / actualMean) * 100;
+  const warnCount   = analyzed.filter(r => r.violations.length > 0 && !r.violations.some(v => v.type === 'reject')).length;
+  const rejectCount = analyzed.filter(r => r.violations.some(v => v.type === 'reject')).length;
+
+  try {
+    showGlobalLoading('PDF 생성 중...');
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const PW = 210, PH = 297;
+    const ML = 15, MR = 15, MT = 15;
+    let y = MT;
+
+    // 헬퍼
+    const line = (y2, color = '#e0e7f2') => {
+      doc.setDrawColor(color);
+      doc.setLineWidth(0.3);
+      doc.line(ML, y2, PW - MR, y2);
+    };
+    const text = (str, x, y2, opts = {}) => {
+      doc.setFontSize(opts.size || 10);
+      doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+      doc.setTextColor(opts.color || '#1e293b');
+      doc.text(String(str), x, y2, { align: opts.align || 'left' });
+    };
+
+    // ── 헤더 ──
+    doc.setFillColor('#2563eb');
+    doc.rect(ML, y, PW - ML - MR, 10, 'F');
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor('#ffffff');
+    doc.text('L-J Levey-Jennings QC Report', ML + 4, y + 7);
+    y += 14;
+
+    // ── 기본 정보 ──
+    text(`검사 항목: ${item.item_name}  |  단위: ${item.unit}  |  출력일: ${today}`, ML, y, { size: 9, color: '#475569' });
+    y += 6;
+    if (item.memo) { text(`메모: ${item.memo}`, ML, y, { size: 9, color: '#64748b' }); y += 6; }
+    line(y); y += 5;
+
+    // ── 통계 요약 표 ──
+    text('통계 요약', ML, y, { size: 11, bold: true });
+    y += 6;
+
+    const stats = [
+      ['목표 평균 (Mean)', `${mean.toFixed(2)} ${item.unit}`, '실측 평균', `${actualMean.toFixed(2)} ${item.unit}`],
+      ['표준편차 (SD)',    `${sd.toFixed(2)} ${item.unit}`,  '실측 SD',   `${actualSD.toFixed(2)} ${item.unit}`],
+      ['+2SD 상한',        `${(mean + 2*sd).toFixed(2)}`,    '%CV',       `${cv.toFixed(1)}%`],
+      ['-2SD 하한',        `${(mean - 2*sd).toFixed(2)}`,    '경고 건수', `${warnCount}건`],
+      ['데이터 수',        `${n}건`,                         '거부 건수', `${rejectCount}건`],
+    ];
+
+    const colW = (PW - ML - MR) / 4;
+    stats.forEach((row, i) => {
+      const ry = y + i * 7;
+      if (i % 2 === 0) { doc.setFillColor('#f8fafc'); doc.rect(ML, ry - 4.5, PW - ML - MR, 7, 'F'); }
+      text(row[0], ML + 2,          ry, { size: 9, bold: true, color: '#475569' });
+      text(row[1], ML + colW + 2,   ry, { size: 9, color: '#0b1f44' });
+      text(row[2], ML + colW * 2 + 2, ry, { size: 9, bold: true, color: '#475569' });
+      text(row[3], ML + colW * 3 + 2, ry, { size: 9, color: rejectCount > 0 && row[2] === '거부 건수' ? '#dc2626' : warnCount > 0 && row[2] === '경고 건수' ? '#d97706' : '#0b1f44' });
+    });
+    y += stats.length * 7 + 4;
+    line(y); y += 6;
+
+    // ── 차트 캡처 ──
+    text('L-J 차트', ML, y, { size: 11, bold: true });
+    y += 4;
+
+    const canvas = $('ljChartCanvas');
+    if (canvas) {
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const chartW = PW - ML - MR;
+      const chartH = chartW * (canvas.height / canvas.width);
+      const maxH = 90;
+      const finalH = Math.min(chartH, maxH);
+      const finalW = finalH * (canvas.width / canvas.height);
+      doc.addImage(imgData, 'PNG', ML, y, finalW, finalH);
+      y += finalH + 6;
+    }
+
+    line(y); y += 6;
+
+    // ── QC 데이터 표 ──
+    text('QC 데이터', ML, y, { size: 11, bold: true });
+    y += 6;
+
+    const tHeaders = ['측정일', '측정값', 'SDI', 'Westgard 판정', '메모'];
+    const tColW = [(PW - ML - MR) * 0.18, 0.12, 0.10, 0.32, 0.28].map(r => (PW - ML - MR) * r);
+
+    // 테이블 헤더
+    doc.setFillColor('#f1f5f9');
+    doc.rect(ML, y - 4.5, PW - ML - MR, 6.5, 'F');
+    let tx = ML + 2;
+    tHeaders.forEach((h, i) => {
+      text(h, tx, y, { size: 8, bold: true, color: '#516274' });
+      tx += tColW[i];
+    });
+    y += 4;
+    line(y, '#cbd5e1'); y += 4;
+
+    // 데이터 행
+    analyzed.forEach((e, i) => {
+      if (y > PH - 20) { doc.addPage(); y = MT + 6; }
+      const hasReject = e.violations.some(v => v.type === 'reject');
+      const hasWarn   = e.violations.length > 0 && !hasReject;
+      if (hasReject) { doc.setFillColor('#fef2f2'); doc.rect(ML, y - 4, PW - ML - MR, 6, 'F'); }
+      else if (hasWarn) { doc.setFillColor('#fffbeb'); doc.rect(ML, y - 4, PW - ML - MR, 6, 'F'); }
+
+      const row = [
+        e.date,
+        `${Number(e.value).toFixed(2)}`,
+        e.sdi.toFixed(2),
+        e.violations.length ? e.violations.map(v => v.code).join(' / ') : '정상',
+        e.memo || ''
+      ];
+      tx = ML + 2;
+      row.forEach((cell, ci) => {
+        const color = ci === 2 && Math.abs(e.sdi) >= 3 ? '#dc2626'
+                    : ci === 2 && Math.abs(e.sdi) >= 2 ? '#d97706'
+                    : '#334155';
+        text(cell, tx, y, { size: 8, color });
+        tx += tColW[ci];
+      });
+      y += 6;
+      if (i < analyzed.length - 1) { line(y - 2, '#f1f5f9'); }
+    });
+
+    // ── 푸터 ──
+    const pageCount = doc.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      doc.setPage(p);
+      text(`MSO관리팀 업무지원 시스템  |  L-J 정도관리 차트  |  ${today}  |  ${p} / ${pageCount}`,
+        PW / 2, PH - 8, { size: 7.5, color: '#94a3b8', align: 'center' });
+    }
+
+    doc.save(`LJ_${item.item_name}_${today}.pdf`);
+    showMessage('PDF가 저장되었습니다.', 'success');
+  } catch (e) {
+    showMessage('PDF 생성 중 오류가 발생했습니다: ' + e.message, 'error');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+
 function showMessage(text, type = 'error') {
   const box = $('messageBox');
   if (!box) return;
