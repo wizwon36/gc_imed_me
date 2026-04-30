@@ -277,8 +277,7 @@ function renderSettingsDisplay(item) {
   let html = tiles.map(t => `
     <div class="kpi-card">
       <div class="kpi-label">${escHtml(t.label)}</div>
-      <div style="font-size:20px;font-weight:900;color:#0b1f44;line-height:1;letter-spacing:-0.02em;">${escHtml(t.value)}</div>
-      <div style="font-size:10px;color:#8494aa;margin-top:3px;font-weight:600;">${escHtml(t.unit)}</div>
+      <div style="font-size:22px;font-weight:900;color:#0b1f44;line-height:1;letter-spacing:-0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(t.value)} <span style="font-size:13px;font-weight:600;color:#8494aa;">${escHtml(t.unit)}</span></div>
     </div>
   `).join('');
 
@@ -575,7 +574,7 @@ function renderStats() {
   const rejectCount = analyzed.filter(r => r.violations.some(v => v.type === 'reject')).length;
 
   const cards = [
-    { label: '데이터 수',  value: n,                   unit: '건' },
+    { label: '데이터 수',  value: n,                    unit: '건' },
     { label: '실측 평균',  value: actualMean.toFixed(2), unit: item.unit },
     { label: '실측 SD',    value: actualSD.toFixed(2),   unit: item.unit },
     { label: '%CV',        value: cv.toFixed(1),          unit: '%' },
@@ -586,8 +585,7 @@ function renderStats() {
   $('statGrid').innerHTML = cards.map(c => `
     <div class="kpi-card">
       <div class="kpi-label">${escHtml(c.label)}</div>
-      <div style="font-size:20px;font-weight:900;color:${c.danger ? '#b42318' : c.warn ? '#c2410c' : '#0b1f44'};line-height:1;letter-spacing:-0.02em;">${escHtml(String(c.value))}</div>
-      <div style="font-size:10px;color:#8494aa;margin-top:3px;font-weight:600;">${escHtml(c.unit)}</div>
+      <div style="font-size:22px;font-weight:900;color:${c.danger?'#b42318':c.warn?'#c2410c':'#0b1f44'};line-height:1;letter-spacing:-0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(String(c.value))} <span style="font-size:13px;font-weight:600;color:#8494aa;">${escHtml(c.unit)}</span></div>
     </div>
   `).join('');
 }
@@ -1028,6 +1026,10 @@ async function exportPdf() {
     hideGlobalLoading();
   }
 }
+
+
+
+
 
 function showMessage(text, type = 'error') {
   const box = $('messageBox');
