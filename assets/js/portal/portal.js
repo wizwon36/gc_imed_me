@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const permissions = Array.isArray(result.data) ? [...result.data] : [];
 
-    // 관리자 전용 앱 자동 추가
+    // 관리자 전용 앱 자동 추가 (admin 역할이면 항상 접근 가능)
     if (isAdmin) {
       ['users_admin', 'logs', 'support_admin'].forEach(appId => {
         if (!permissions.some(item => item.app_id === appId)) {
@@ -109,10 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // 수정요청은 모든 로그인 사용자에게 노출 (권한 불필요)
-    if (!permissions.some(item => item.app_id === 'support')) {
-      permissions.push({ app_id: 'support', permission: 'view', active: 'Y' });
-    }
+    // support / support_admin 은 권한 기반으로만 노출 (강제 노출 제거)
 
     const visiblePermissions = permissions.filter(item => {
       if (!item || !item.app_id) return false;
