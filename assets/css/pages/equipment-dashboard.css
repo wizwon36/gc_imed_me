@@ -171,7 +171,6 @@
   padding: 0;
   box-sizing: border-box;
   background: #f7f9fd;
-  border-top: 1.5px solid #e0e7f2;
   border-bottom: 1.5px solid #e0e7f2;
 }
 
@@ -1191,8 +1190,7 @@
   grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
   gap: 5px;
   margin-bottom: 0;
-  padding: 8px 22px 8px;
-  border-bottom: 1.5px solid #e0e7f2;
+  padding: 9px 22px;
   background: #f7f9fd;
 }
 
