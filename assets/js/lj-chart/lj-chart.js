@@ -142,7 +142,10 @@ async function loadEntriesForItem(itemId) {
       item_id: itemId,
       request_user_email: user.email
     });
-    state.entries[itemId] = Array.isArray(result.data) ? result.data : [];
+    state.entries[itemId] = (Array.isArray(result.data) ? result.data : []).map(e => ({
+      ...e,
+      date: normalizeDate(e.date)
+    }));
     renderDataTable();
     renderStats();
     renderChart();
@@ -365,7 +368,8 @@ async function addEntry() {
     });
 
     if (!state.entries[state.activeItemId]) state.entries[state.activeItemId] = [];
-    state.entries[state.activeItemId].push(result.data);
+    const newEntry = { ...result.data, date: normalizeDate(result.data.date) };
+    state.entries[state.activeItemId].push(newEntry);
     state.entries[state.activeItemId].sort((a, b) => a.date.localeCompare(b.date));
 
     $('entryValue').value = '';
@@ -685,7 +689,7 @@ async function loadSampleData() {
         request_user_email: user.email
       });
       if (!state.entries[state.activeItemId]) state.entries[state.activeItemId] = [];
-      state.entries[state.activeItemId].push(result.data);
+      state.entries[state.activeItemId].push({ ...result.data, date: normalizeDate(result.data.date) });
     }
     state.entries[state.activeItemId].sort((a, b) => a.date.localeCompare(b.date));
     renderDataTable();
@@ -975,6 +979,21 @@ function escHtml(value) {
   return String(value == null ? '' : value)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// 날짜 정규화 — GAS에서 Date 객체가 문자열로 직렬화된 경우 yyyy-MM-dd로 변환
+function normalizeDate(val) {
+  if (!val) return '';
+  const s = String(val).trim();
+  // 이미 yyyy-MM-dd 형식이면 그대로
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // 그 외 Date 문자열 파싱
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 window.deleteEntry = deleteEntry;
