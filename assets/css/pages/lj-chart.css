@@ -1,120 +1,179 @@
 /* =========================================
  * lj-chart.css
- * L-J 정도관리 차트 전용 — 신규 컴포넌트만 정의
+ * L-J 정도관리 차트 — dashboard.css 디자인 토큰 기준
  * ========================================= */
 
-/* ── 카드 (padding:0 완전 보장) ── */
+/* ── 카드 — dashboard-panel--portal 동일 ── */
 .lj-card {
   padding: 0 !important;
   overflow: hidden;
-  border: 1px solid #d9dee7;
-  border-radius: 28px;
-  background: #ffffff;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
-  margin-top: 20px;
+  border: 1.5px solid #d0d8e8;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(16, 24, 40, 0.07), 0 2px 6px rgba(16, 24, 40, 0.04);
+  transition: box-shadow 0.2s ease;
+  margin-top: 16px;
 }
 .lj-card:first-child { margin-top: 0; }
+.lj-card:hover {
+  box-shadow: 0 10px 32px rgba(16, 24, 40, 0.10), 0 3px 8px rgba(16, 24, 40, 0.05);
+}
 
-/* ── 카드 헤더 ── */
+/* ── 카드 헤더 — dashboard-section-head 동일 ── */
 .lj-card-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 24px 20px;
-  border-bottom: 1.5px solid #e0e7f2;
+  flex: 0 0 auto;
+  padding: 18px 22px 16px;
   background: #f7f9fd;
-}
-.lj-card-head > div { display: flex; flex-direction: column; gap: 4px; }
-
-/* ── section-title 파란 라인 ── */
-.lj-chart-page .section-title {
+  border-bottom: 1.5px solid #e0e7f2;
   position: relative;
-  display: inline-block;
-  margin: 0;
-  padding-left: 16px;
-  font-size: 20px;
-  line-height: 1.3;
-  font-weight: 800;
-  color: #0b1f44;
+  z-index: 10;
 }
-.lj-chart-page .section-title::before {
+
+/* 헤더 내 텍스트 블록 — dashboard-section-head > div 동일 */
+.lj-card-head > div:first-child {
+  position: relative;
+  padding-left: 14px;
+}
+.lj-card-head > div:first-child::before {
   content: "";
   position: absolute;
-  left: 0; top: 3px; bottom: 3px;
+  left: 0; top: 2px; bottom: 2px;
   width: 4px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
+  background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 100%);
 }
 
-/* ── 설정 KPI 그리드 ── */
+/* ── kicker 배지 — dashboard portal-section-kicker 동일 ── */
+.lj-chart-page .portal-section-kicker {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+/* ── 섹션 제목 — dashboard-section-title 동일 ── */
+.lj-chart-page .section-title {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: #0b1f44;
+  letter-spacing: -0.01em;
+  /* 파란 라인은 lj-card-head > div::before 로 처리 */
+  padding-left: 0 !important;
+}
+.lj-chart-page .section-title::before { display: none !important; }
+
+/* ── 설명 텍스트 — dashboard-section-desc 동일 ── */
+.lj-chart-page .sub-text {
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #8494aa;
+  word-break: keep-all;
+}
+
+/* ── 설정 KPI — dashboard-kpi-card 스타일 참고 ── */
 #settingsDisplay.kpi-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  padding: 20px 24px 22px;
-  margin: 0;
+  gap: 10px;
+  padding: 16px 22px 20px;
 }
 #settingsDisplay .kpi-card {
-  padding: 14px 16px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1.5px solid #d0d8e8;
   border-radius: 16px;
-  background: #f8fafc;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.05);
 }
-#settingsDisplay .kpi-card.full-span {
-  grid-column: 1 / -1;
+#settingsDisplay .kpi-card .kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7a90;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
 }
+#settingsDisplay .kpi-card.full-span { grid-column: 1 / -1; }
 
-/* ── 통계 KPI 그리드 — 6열 한 줄 ── */
+/* ── 통계 KPI — 6열 한 줄 ── */
 #statGrid.kpi-grid {
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
-  padding: 20px 24px 22px;
-  margin: 0;
+  gap: 10px;
+  padding: 16px 22px 20px;
 }
 #statGrid .kpi-card {
-  padding: 14px 16px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1.5px solid #d0d8e8;
   border-radius: 16px;
-  background: #f8fafc;
-}
-
-/* ── 항목 선택 셀렉트 행 ── */
-#itemSelectRow {
-  padding: 14px 24px;
-  border-bottom: 1.5px solid #e0e7f2;
   background: #fff;
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.05);
 }
-#itemEmptyRow {
-  padding: 14px 24px;
-  border-bottom: 1.5px solid #e0e7f2;
+#statGrid .kpi-card .kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7a90;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
 }
-.empty-state { margin: 24px; }
 
 /* ── 항목 추가 버튼 ── */
 .lj-item-tab {
   display: inline-flex;
   align-items: center;
-  padding: 0 16px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1.5px dashed #c8d3e0;
+  padding: 0 14px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px dashed #c0ccdb;
   background: #fff;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: #6b7a90;
   cursor: pointer;
   transition: border-color .15s, background .15s, color .15s;
   white-space: nowrap;
 }
-.lj-item-tab:hover { border-color: #60a5fa; color: #2563eb; background: #eff6ff; }
+.lj-item-tab:hover { border-color: #60a5fa; color: #1d4ed8; background: #eff6ff; }
+
+/* ── 항목 셀렉트/추가 행 ── */
+#itemSelectRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-bottom: 1.5px solid #e0e7f2;
+  background: #fff;
+}
+#itemEmptyRow {
+  padding: 12px 22px;
+  border-bottom: 1.5px solid #e0e7f2;
+  background: #fff;
+}
+.empty-state { margin: 24px 22px; }
 
 /* ── 데이터 입력 행 ── */
 .lj-data-entry-row {
   display: flex;
   gap: 10px;
   align-items: flex-end;
-  padding: 16px 24px;
+  padding: 14px 22px;
   border-bottom: 1.5px solid #e0e7f2;
-  flex-wrap: wrap;
   background: #f7f9fd;
+  flex-wrap: wrap;
 }
 .lj-data-entry-field {
   display: flex;
@@ -131,14 +190,17 @@
 }
 
 /* ── 차트 래퍼 ── */
-.lj-chart-wrap { padding: 20px 24px 28px; }
+.lj-chart-wrap { padding: 16px 22px 24px; }
 
-/* ── 데이터 테이블 ── */
+/* ── 데이터 테이블 — dash-tbl 스타일 동일 ── */
 .lj-data-table-wrap {
   overflow-x: auto;
   overflow-y: auto;
   max-height: 360px;
 }
+.lj-data-table-wrap::-webkit-scrollbar { width: 4px; }
+.lj-data-table-wrap::-webkit-scrollbar-thumb { background: #d0d7e2; border-radius: 999px; }
+
 .lj-data-table {
   width: 100%;
   border-collapse: separate;
@@ -148,22 +210,26 @@
 }
 .lj-data-table th {
   position: sticky; top: 0;
-  padding: 10px 10px;
+  padding: 9px 10px;
   background: #f7f9fd;
   border-bottom: 1.5px solid #e0e7f2;
-  font-size: 10px; font-weight: 800; color: #3d5068;
+  font-size: 11px; font-weight: 800; color: #3d5068;
   text-align: center; white-space: nowrap;
   z-index: 2; letter-spacing: .04em; text-transform: uppercase;
 }
-.lj-data-table th:first-child { text-align: left; padding-left: 20px; }
+.lj-data-table th:first-child { text-align: left; padding-left: 18px; }
 .lj-data-table td {
   padding: 11px 10px;
-  border-bottom: 1px solid #f1f5f9;
-  text-align: center; vertical-align: middle; color: #334155;
+  border-bottom: 1px solid #edf1f7;
+  text-align: center; vertical-align: middle; color: #1e293b;
+  font-size: 13px;
 }
-.lj-data-table td:first-child { text-align: left; padding-left: 20px; font-size: 12px; color: #64748b; font-family: monospace; }
+.lj-data-table td:first-child {
+  text-align: left; padding-left: 18px;
+  font-size: 12px; color: #475569; font-family: monospace;
+}
 .lj-data-table tr:last-child td { border-bottom: none; }
-.lj-data-table tr:hover td { background: #f8fafc; }
+.lj-data-table tr:hover td { background: #f0f5ff; }
 
 /* 이상 행 강조 */
 .lj-row--warn td { background: #fffbeb !important; }
@@ -177,16 +243,16 @@
   border-radius: 6px; font-size: 12px; font-weight: 700; font-family: monospace;
 }
 .lj-sdi-badge--normal { background: #f0fdf4; color: #15803d; }
-.lj-sdi-badge--warn   { background: #fffbeb; color: #b45309; }
-.lj-sdi-badge--reject { background: #fef2f2; color: #dc2626; }
+.lj-sdi-badge--warn   { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
+.lj-sdi-badge--reject { background: #fef2f2; color: #b42318; border: 1px solid #fca5a5; }
 
 /* ── Westgard 규칙 배지 ── */
 .lj-rule-badge {
   display: inline-block; padding: 2px 7px;
   border-radius: 5px; font-size: 11px; font-weight: 700; margin: 1px 2px;
 }
-.lj-rule-badge--warn   { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
-.lj-rule-badge--reject { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+.lj-rule-badge--warn   { background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; }
+.lj-rule-badge--reject { background: #fef2f2; color: #b42318; border: 1px solid #fca5a5; }
 
 /* ── 삭제 버튼 ── */
 .lj-del-btn {
@@ -195,19 +261,21 @@
   color: #94a3b8; font-size: 14px; line-height: 1;
   transition: background .12s, color .12s;
 }
-.lj-del-btn:hover { background: #fee2e2; color: #dc2626; }
+.lj-del-btn:hover { background: #fef2f2; color: #b42318; }
 
 /* ── 모달 ── */
 .lj-modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.45);
+  background: rgba(0,0,0,.4);
   z-index: 1000;
   display: flex; align-items: center; justify-content: center; padding: 16px;
 }
 .lj-modal {
-  background: #fff; border-radius: 28px;
+  background: #fff;
+  border: 1.5px solid #d0d8e8;
+  border-radius: 24px;
   width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  box-shadow: 0 20px 60px rgba(16, 24, 40, 0.18);
 }
 
 /* ── 반응형 ── */
@@ -216,13 +284,12 @@
   #settingsDisplay.kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
-  .lj-card-head { padding: 18px 18px 16px; }
-  .lj-data-entry-row { padding: 14px 18px; }
-  #itemSelectRow, #itemEmptyRow { padding: 12px 18px; }
+  .lj-card-head { padding: 14px 16px 12px; }
+  .lj-data-entry-row, #itemSelectRow, #itemEmptyRow { padding: 12px 16px; }
+  #statGrid.kpi-grid, #settingsDisplay.kpi-grid { padding: 14px 16px 16px; }
   #statGrid.kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #settingsDisplay.kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lj-data-table th:first-child, .lj-data-table td:first-child { padding-left: 12px; }
-  .lj-chart-wrap { padding: 16px 18px 22px; }
-  #statGrid.kpi-grid, #settingsDisplay.kpi-grid { padding: 16px 18px 18px; }
-  #itemSelectRow #addItemTabBtn { width: 100%; justify-content: center; }
+  .lj-chart-wrap { padding: 14px 16px 20px; }
+  .empty-state { margin: 20px 16px; }
 }
