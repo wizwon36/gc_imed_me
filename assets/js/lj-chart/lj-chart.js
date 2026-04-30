@@ -194,14 +194,15 @@ function renderSettingsDisplay(item) {
   ];
 
   let html = tiles.map(t => `
-    <div class="info-tile">
-      <div class="info-tile-label">${escHtml(t.label)}</div>
-      <div class="info-tile-value">${escHtml(t.value)} <span style="font-size:12px;font-weight:500;color:#94a3b8;">${escHtml(t.unit)}</span></div>
+    <div class="kpi-card">
+      <div class="kpi-label">${escHtml(t.label)}</div>
+      <div style="font-size:20px;font-weight:800;color:#0b1f44;line-height:1.2;">${escHtml(t.value)}</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:2px;">${escHtml(t.unit)}</div>
     </div>
   `).join('');
 
   if (item.memo) {
-    html += `<div class="info-tile info-tile-wide"><div class="info-tile-label">메모</div><div class="info-tile-value">${escHtml(item.memo)}</div></div>`;
+    html += `<div class="kpi-card" style="grid-column:1/-1;"><div class="kpi-label">메모</div><div style="font-size:14px;font-weight:600;color:#334155;">${escHtml(item.memo)}</div></div>`;
   }
 
   $('settingsDisplay').innerHTML = html;
