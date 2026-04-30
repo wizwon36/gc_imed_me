@@ -1,0 +1,191 @@
+/* =========================================
+ * lj-chart.css
+ * L-J 정도관리 차트 전용 — 신규 컴포넌트만 정의
+ * 레이아웃/카드/인풋/헤더/버튼/빈상태 등은
+ * common.css + equipment-form.css 그대로 사용
+ * ========================================= */
+
+/* ── 검사 항목 탭 ── */
+.lj-item-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 14px 22px;
+  border-bottom: 1.5px solid #e0e7f2;
+  background: #f7f9fd;
+}
+
+.lj-item-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1.5px solid #e0e7f2;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, color .15s;
+  white-space: nowrap;
+}
+.lj-item-tab:hover { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
+.lj-item-tab.is-active { border-color: #2563eb; background: #2563eb; color: #fff; }
+
+.lj-item-tab-add { border-style: dashed; color: #94a3b8; }
+.lj-item-tab-add:hover { border-color: #60a5fa; color: #2563eb; background: #eff6ff; }
+
+/* ── 데이터 입력 행 ── */
+.lj-data-entry-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 14px 22px;
+  border-bottom: 1.5px solid #e0e7f2;
+  flex-wrap: wrap;
+}
+
+.lj-data-entry-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 130px;
+}
+
+.lj-data-entry-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-self: flex-end;
+  padding-bottom: 1px;
+}
+
+/* ── 차트 래퍼 ── */
+.lj-chart-wrap {
+  padding: 16px 22px 24px;
+}
+
+/* ── 데이터 테이블 ── */
+.lj-data-table-wrap {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 340px;
+}
+
+.lj-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  table-layout: fixed;
+}
+
+.lj-data-table th {
+  position: sticky;
+  top: 0;
+  padding: 9px 10px;
+  background: #f7f9fd;
+  border-bottom: 1.5px solid #e0e7f2;
+  font-size: 10px;
+  font-weight: 800;
+  color: #3d5068;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 2;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.lj-data-table th:first-child { text-align: left; padding-left: 18px; }
+
+.lj-data-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: center;
+  vertical-align: middle;
+  color: #334155;
+}
+.lj-data-table td:first-child { text-align: left; padding-left: 18px; font-size: 12px; color: #64748b; font-family: monospace; }
+.lj-data-table tr:last-child td { border-bottom: none; }
+.lj-data-table tr:hover td { background: #f8fafc; }
+
+/* 이상 행 강조 */
+.lj-row--warn td { background: #fffbeb !important; }
+.lj-row--warn td:first-child { color: #92400e; }
+.lj-row--reject td { background: #fef2f2 !important; }
+.lj-row--reject td:first-child { color: #991b1b; }
+
+/* ── SDI 배지 ── */
+.lj-sdi-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: monospace;
+}
+.lj-sdi-badge--normal { background: #f0fdf4; color: #15803d; }
+.lj-sdi-badge--warn   { background: #fffbeb; color: #b45309; }
+.lj-sdi-badge--reject { background: #fef2f2; color: #dc2626; }
+
+/* ── Westgard 규칙 위반 배지 ── */
+.lj-rule-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  margin: 1px 2px;
+}
+.lj-rule-badge--warn   { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+.lj-rule-badge--reject { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+/* ── 데이터 삭제 버튼 ── */
+.lj-del-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  transition: background .12s, color .12s;
+}
+.lj-del-btn:hover { background: #fee2e2; color: #dc2626; }
+
+/* ── 모달 ── */
+.lj-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.lj-modal {
+  background: #fff;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.lj-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 0 24px 20px;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 600px) {
+  .lj-data-entry-row { gap: 8px; }
+  .lj-item-tabs { padding: 10px 16px; gap: 6px; }
+  .lj-chart-wrap { padding: 12px 14px 20px; }
+  .lj-data-table th:first-child,
+  .lj-data-table td:first-child { padding-left: 12px; }
+}
