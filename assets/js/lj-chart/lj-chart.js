@@ -244,7 +244,7 @@ function renderSettingsDisplay(item) {
   `).join('');
 
   if (item.memo) {
-    html += `<div class="kpi-card" style="grid-column:1/-1;"><div class="kpi-label">메모</div><div style="font-size:14px;font-weight:600;color:#334155;">${escHtml(item.memo)}</div></div>`;
+    html += `<div class="kpi-card full-span"><div class="kpi-label">메모</div><div style="font-size:14px;font-weight:600;color:#334155;">${escHtml(item.memo)}</div></div>`;
   }
 
   $('settingsDisplay').innerHTML = html;
