@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 이벤트 바인딩
 // ─────────────────────────────────────────────
 function bindEvents() {
+  $('logoutBtn')?.addEventListener('click', () => window.auth.logout());
   // 항목 추가 버튼 (항목 있을 때 / 없을 때 둘 다)
   $('addItemTabBtn').addEventListener('click', () => openItemModal(null));
   $('addItemTabBtnEmpty').addEventListener('click', () => openItemModal(null));
