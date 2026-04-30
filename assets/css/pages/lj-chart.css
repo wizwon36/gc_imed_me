@@ -47,7 +47,21 @@
   background: linear-gradient(180deg, #1d4ed8 0%, #60a5fa 100%);
 }
 
-/* ── 카드 헤더 내 버튼 높이 고정 (common.css btn min-height 오버라이드) ── */
+/* ── 스켈레톤 — lj-card 안에서 사용 ── */
+#skeletonBody { display: none; }
+#skeletonBody .lj-card { margin-top: 16px; }
+#skeletonBody .lj-card:first-child { margin-top: 0; }
+#skeletonBody .lj-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px 16px;
+  background: #f7f9fd;
+  border-bottom: 1.5px solid #e0e7f2;
+}
+
+
 .lj-card-head .btn {
   min-height: 36px !important;
   height: 36px;
