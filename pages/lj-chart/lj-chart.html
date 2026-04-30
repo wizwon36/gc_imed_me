@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="../../assets/css/pages/equipment-form.css" />
   <link rel="stylesheet" href="../../assets/css/pages/lj-chart.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body class="portal-page equipment-form-page lj-chart-page">
   <div class="container page-shell equipment-form-shell">
@@ -152,7 +155,11 @@
             <span class="portal-section-kicker">STATISTICS</span>
             <h2 class="section-title">통계 요약</h2>
           </div>
-          <button type="button" id="exportCsvBtn" class="btn" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;flex-shrink:0;margin-top:4px;">CSV 내보내기</button>
+          <div style="display:flex;gap:8px;flex-shrink:0;margin-top:4px;">
+            <button type="button" id="exportCsvBtn" class="btn" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">CSV</button>
+            <button type="button" id="exportExcelBtn" class="btn" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">엑셀</button>
+            <button type="button" id="exportPdfBtn" class="btn btn-primary" style="min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">PDF</button>
+          </div>
         </div>
         <div class="kpi-grid" id="statGrid" style="padding:0 22px 20px;"></div>
       </div>
