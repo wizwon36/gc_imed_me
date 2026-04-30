@@ -156,7 +156,8 @@
 /* 테이블 패널: 부서별 현황과 동일한 padding 유지, border만 제거 */
 .dashboard-page .dashboard-panel--maintenance .dashboard-section-head,
 .dashboard-page .dashboard-panel--repair .dashboard-section-head,
-.dashboard-page .dashboard-panel--registered .dashboard-section-head {
+.dashboard-page .dashboard-panel--registered .dashboard-section-head,
+.dashboard-page .dashboard-panel--heatmap .dashboard-section-head {
   padding-bottom: 16px;
   border-bottom: 0;
   margin-bottom: 0;  /* common.css .section-head { margin-bottom: 16px } 덮어쓰기 */
