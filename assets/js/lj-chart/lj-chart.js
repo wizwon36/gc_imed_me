@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // globalLoading 대신 스켈레톤으로 초기 로딩 표시
-  $('skeletonBody').style.display = '';
+  $('skeletonBody').style.display = 'block';
   bindEvents();
 
   try {
