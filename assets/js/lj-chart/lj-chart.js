@@ -804,7 +804,7 @@ function exportExcel() {
 }
 
 // ─────────────────────────────────────────────
-// PDF 내보내기 (jsPDF + html2canvas)
+// PDF 내보내기 — HTML 결과지 캡처 방식 (한글 완벽 지원)
 // ─────────────────────────────────────────────
 async function exportPdf() {
   const item = getActiveItem();
@@ -827,133 +827,151 @@ async function exportPdf() {
   const warnCount   = analyzed.filter(r => r.violations.length > 0 && !r.violations.some(v => v.type === 'reject')).length;
   const rejectCount = analyzed.filter(r => r.violations.some(v => v.type === 'reject')).length;
 
+  // 차트 이미지 캡처 (DOM canvas → dataURL)
+  const chartImgData = $('ljChartCanvas')
+    ? $('ljChartCanvas').toDataURL('image/png', 1.0)
+    : null;
+
   try {
     showGlobalLoading('PDF 생성 중...');
 
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const PW = 210, PH = 297;
-    const ML = 15, MR = 15, MT = 15;
-    let y = MT;
+    // ── 결과지 HTML 동적 생성 ──
+    const wrap = document.createElement('div');
+    wrap.style.cssText = [
+      'position:fixed', 'left:-9999px', 'top:0',
+      'width:794px',   // A4 96dpi 기준
+      'background:#fff',
+      'font-family:Pretendard,"Noto Sans KR","Malgun Gothic",sans-serif',
+      'color:#0f172a', 'font-size:13px', 'line-height:1.5'
+    ].join(';');
 
-    // 헬퍼
-    const line = (y2, color = '#e0e7f2') => {
-      doc.setDrawColor(color);
-      doc.setLineWidth(0.3);
-      doc.line(ML, y2, PW - MR, y2);
-    };
-    const text = (str, x, y2, opts = {}) => {
-      doc.setFontSize(opts.size || 10);
-      doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
-      doc.setTextColor(opts.color || '#1e293b');
-      doc.text(String(str), x, y2, { align: opts.align || 'left' });
-    };
-
-    // ── 헤더 ──
-    doc.setFillColor('#2563eb');
-    doc.rect(ML, y, PW - ML - MR, 10, 'F');
-    doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor('#ffffff');
-    doc.text('L-J Levey-Jennings QC Report', ML + 4, y + 7);
-    y += 14;
-
-    // ── 기본 정보 ──
-    text(`검사 항목: ${item.item_name}  |  단위: ${item.unit}  |  출력일: ${today}`, ML, y, { size: 9, color: '#475569' });
-    y += 6;
-    if (item.memo) { text(`메모: ${item.memo}`, ML, y, { size: 9, color: '#64748b' }); y += 6; }
-    line(y); y += 5;
-
-    // ── 통계 요약 표 ──
-    text('통계 요약', ML, y, { size: 11, bold: true });
-    y += 6;
-
-    const stats = [
-      ['목표 평균 (Mean)', `${mean.toFixed(2)} ${item.unit}`, '실측 평균', `${actualMean.toFixed(2)} ${item.unit}`],
-      ['표준편차 (SD)',    `${sd.toFixed(2)} ${item.unit}`,  '실측 SD',   `${actualSD.toFixed(2)} ${item.unit}`],
-      ['+2SD 상한',        `${(mean + 2*sd).toFixed(2)}`,    '%CV',       `${cv.toFixed(1)}%`],
-      ['-2SD 하한',        `${(mean - 2*sd).toFixed(2)}`,    '경고 건수', `${warnCount}건`],
-      ['데이터 수',        `${n}건`,                         '거부 건수', `${rejectCount}건`],
+    const statRows = [
+      { label: '목표 평균 (Mean)', value: `${mean.toFixed(2)} ${item.unit}` },
+      { label: '표준편차 (SD)',    value: `${sd.toFixed(2)} ${item.unit}` },
+      { label: '+2SD 상한',        value: `${(mean + 2*sd).toFixed(2)} ${item.unit}` },
+      { label: '-2SD 하한',        value: `${(mean - 2*sd).toFixed(2)} ${item.unit}` },
+      { label: '데이터 수',        value: `${n}건` },
+      { label: '실측 평균',        value: `${actualMean.toFixed(2)} ${item.unit}` },
+      { label: '실측 SD',          value: `${actualSD.toFixed(2)} ${item.unit}` },
+      { label: '%CV',              value: `${cv.toFixed(1)}%` },
+      { label: '경고 건수',        value: `${warnCount}건`, warn: warnCount > 0 },
+      { label: '거부 건수',        value: `${rejectCount}건`, danger: rejectCount > 0 },
     ];
 
-    const colW = (PW - ML - MR) / 4;
-    stats.forEach((row, i) => {
-      const ry = y + i * 7;
-      if (i % 2 === 0) { doc.setFillColor('#f8fafc'); doc.rect(ML, ry - 4.5, PW - ML - MR, 7, 'F'); }
-      text(row[0], ML + 2,          ry, { size: 9, bold: true, color: '#475569' });
-      text(row[1], ML + colW + 2,   ry, { size: 9, color: '#0b1f44' });
-      text(row[2], ML + colW * 2 + 2, ry, { size: 9, bold: true, color: '#475569' });
-      text(row[3], ML + colW * 3 + 2, ry, { size: 9, color: rejectCount > 0 && row[2] === '거부 건수' ? '#dc2626' : warnCount > 0 && row[2] === '경고 건수' ? '#d97706' : '#0b1f44' });
-    });
-    y += stats.length * 7 + 4;
-    line(y); y += 6;
-
-    // ── 차트 캡처 ──
-    text('L-J 차트', ML, y, { size: 11, bold: true });
-    y += 4;
-
-    const canvas = $('ljChartCanvas');
-    if (canvas) {
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const chartW = PW - ML - MR;
-      const chartH = chartW * (canvas.height / canvas.width);
-      const maxH = 90;
-      const finalH = Math.min(chartH, maxH);
-      const finalW = finalH * (canvas.width / canvas.height);
-      doc.addImage(imgData, 'PNG', ML, y, finalW, finalH);
-      y += finalH + 6;
-    }
-
-    line(y); y += 6;
-
-    // ── QC 데이터 표 ──
-    text('QC 데이터', ML, y, { size: 11, bold: true });
-    y += 6;
-
-    const tHeaders = ['측정일', '측정값', 'SDI', 'Westgard 판정', '메모'];
-    const tColW = [(PW - ML - MR) * 0.18, 0.12, 0.10, 0.32, 0.28].map(r => (PW - ML - MR) * r);
-
-    // 테이블 헤더
-    doc.setFillColor('#f1f5f9');
-    doc.rect(ML, y - 4.5, PW - ML - MR, 6.5, 'F');
-    let tx = ML + 2;
-    tHeaders.forEach((h, i) => {
-      text(h, tx, y, { size: 8, bold: true, color: '#516274' });
-      tx += tColW[i];
-    });
-    y += 4;
-    line(y, '#cbd5e1'); y += 4;
-
-    // 데이터 행
-    analyzed.forEach((e, i) => {
-      if (y > PH - 20) { doc.addPage(); y = MT + 6; }
+    const dataRowsHtml = analyzed.map((e, i) => {
       const hasReject = e.violations.some(v => v.type === 'reject');
       const hasWarn   = e.violations.length > 0 && !hasReject;
-      if (hasReject) { doc.setFillColor('#fef2f2'); doc.rect(ML, y - 4, PW - ML - MR, 6, 'F'); }
-      else if (hasWarn) { doc.setFillColor('#fffbeb'); doc.rect(ML, y - 4, PW - ML - MR, 6, 'F'); }
+      const bg = hasReject ? '#fef2f2' : hasWarn ? '#fffbeb' : (i % 2 === 0 ? '#fff' : '#f8fafc');
+      const sdiColor = Math.abs(e.sdi) >= 3 ? '#b42318' : Math.abs(e.sdi) >= 2 ? '#c2410c' : '#15803d';
+      const judgment = e.violations.length
+        ? e.violations.map(v => `<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;background:${v.type==='reject'?'#fee2e2':'#fef9c3'};color:${v.type==='reject'?'#b91c1c':'#a16207'};border:1px solid ${v.type==='reject'?'#fca5a5':'#fde047'};">${escHtml(v.code)}</span>`).join(' ')
+        : '<span style="color:#94a3b8;">정상</span>';
+      return `<tr style="background:${bg};">
+        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-family:monospace;font-size:12px;color:#475569;">${escHtml(e.date)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:700;">${Number(e.value).toFixed(2)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-family:monospace;font-weight:700;color:${sdiColor};">${e.sdi.toFixed(2)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;">${judgment}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#64748b;">${escHtml(e.memo || '')}</td>
+      </tr>`;
+    }).join('');
 
-      const row = [
-        e.date,
-        `${Number(e.value).toFixed(2)}`,
-        e.sdi.toFixed(2),
-        e.violations.length ? e.violations.map(v => v.code).join(' / ') : '정상',
-        e.memo || ''
-      ];
-      tx = ML + 2;
-      row.forEach((cell, ci) => {
-        const color = ci === 2 && Math.abs(e.sdi) >= 3 ? '#dc2626'
-                    : ci === 2 && Math.abs(e.sdi) >= 2 ? '#d97706'
-                    : '#334155';
-        text(cell, tx, y, { size: 8, color });
-        tx += tColW[ci];
-      });
-      y += 6;
-      if (i < analyzed.length - 1) { line(y - 2, '#f1f5f9'); }
+    wrap.innerHTML = `
+      <div style="padding:32px 36px;">
+
+        <!-- 헤더 -->
+        <div style="background:#2563eb;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.08em;margin-bottom:4px;">L-J LEVEY-JENNINGS QC REPORT</div>
+            <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.02em;">${escHtml(item.item_name)}</div>
+          </div>
+          <div style="text-align:right;color:rgba(255,255,255,.85);font-size:13px;line-height:1.7;">
+            <div>단위: <strong>${escHtml(item.unit)}</strong></div>
+            <div>출력일: <strong>${today}</strong></div>
+            ${item.memo ? `<div style="font-size:12px;margin-top:2px;">${escHtml(item.memo)}</div>` : ''}
+          </div>
+        </div>
+
+        <!-- 통계 요약 -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:800;color:#1d4ed8;letter-spacing:.08em;margin-bottom:10px;padding-left:10px;border-left:3px solid #2563eb;">통계 요약</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
+            ${statRows.map(r => `
+              <div style="background:#f8fafc;border:1.5px solid #d0d8e8;border-radius:10px;padding:10px 12px;">
+                <div style="font-size:10px;font-weight:700;color:#6b7a90;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;">${escHtml(r.label)}</div>
+                <div style="font-size:17px;font-weight:900;color:${r.danger?'#b42318':r.warn?'#c2410c':'#0b1f44'};letter-spacing:-0.02em;">${escHtml(r.value)}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- 차트 -->
+        ${chartImgData ? `
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:800;color:#1d4ed8;letter-spacing:.08em;margin-bottom:10px;padding-left:10px;border-left:3px solid #2563eb;">L-J 차트</div>
+          <div style="border:1.5px solid #d0d8e8;border-radius:12px;padding:12px;background:#fff;">
+            <img src="${chartImgData}" style="width:100%;height:auto;display:block;" />
+          </div>
+        </div>` : ''}
+
+        <!-- QC 데이터 테이블 -->
+        <div>
+          <div style="font-size:11px;font-weight:800;color:#1d4ed8;letter-spacing:.08em;margin-bottom:10px;padding-left:10px;border-left:3px solid #2563eb;">QC 데이터 (${n}건)</div>
+          <table style="width:100%;border-collapse:collapse;border:1.5px solid #d0d8e8;border-radius:10px;overflow:hidden;">
+            <thead>
+              <tr style="background:#f7f9fd;">
+                <th style="padding:9px 10px;text-align:left;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;border-bottom:1.5px solid #e0e7f2;">측정일</th>
+                <th style="padding:9px 10px;text-align:center;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;border-bottom:1.5px solid #e0e7f2;">측정값</th>
+                <th style="padding:9px 10px;text-align:center;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;border-bottom:1.5px solid #e0e7f2;">SDI</th>
+                <th style="padding:9px 10px;text-align:center;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;border-bottom:1.5px solid #e0e7f2;">Westgard 판정</th>
+                <th style="padding:9px 10px;text-align:left;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;border-bottom:1.5px solid #e0e7f2;">메모</th>
+              </tr>
+            </thead>
+            <tbody>${dataRowsHtml}</tbody>
+          </table>
+        </div>
+
+        <!-- 푸터 -->
+        <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e0e7f2;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;color:#94a3b8;">MSO관리팀 업무지원 시스템 · L-J 정도관리 차트</span>
+          <span style="font-size:11px;color:#94a3b8;">${today}</span>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    // html2canvas 캡처
+    const canvas = await html2canvas(wrap, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
     });
 
-    // ── 푸터 ──
-    const pageCount = doc.getNumberOfPages();
-    for (let p = 1; p <= pageCount; p++) {
-      doc.setPage(p);
-      text(`MSO관리팀 업무지원 시스템  |  L-J 정도관리 차트  |  ${today}  |  ${p} / ${pageCount}`,
-        PW / 2, PH - 8, { size: 7.5, color: '#94a3b8', align: 'center' });
+    document.body.removeChild(wrap);
+
+    // jsPDF에 이미지로 삽입
+    const imgData = canvas.toDataURL('image/png');
+    const pdfW = 210; // A4 mm
+    const pdfH = (canvas.height / canvas.width) * pdfW;
+
+    const doc = new jsPDF({
+      orientation: pdfH > 297 ? 'portrait' : 'portrait',
+      unit: 'mm',
+      format: pdfH > 297 ? [pdfW, pdfH] : 'a4'
+    });
+
+    doc.addImage(imgData, 'PNG', 0, 0, pdfW, Math.min(pdfH, 297));
+
+    // 내용이 A4 한 장을 넘으면 페이지 분할
+    if (pdfH > 297) {
+      let remainH = pdfH - 297;
+      let pageTop = 297;
+      while (remainH > 0) {
+        doc.addPage();
+        doc.addImage(imgData, 'PNG', 0, -pageTop, pdfW, pdfH);
+        pageTop += 297;
+        remainH -= 297;
+      }
     }
 
     doc.save(`LJ_${item.item_name}_${today}.pdf`);
@@ -964,6 +982,9 @@ async function exportPdf() {
     hideGlobalLoading();
   }
 }
+
+
+
 
 
 function showMessage(text, type = 'error') {
