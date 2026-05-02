@@ -210,9 +210,15 @@
             <span class="form-label">측정일</span>
             <input type="date" id="entryDate" class="input" />
           </div>
-          <div class="lj-data-entry-field">
+          <!-- 정량적: 수치 입력 -->
+          <div class="lj-data-entry-field" id="entryValueField">
             <span class="form-label">측정값</span>
             <input type="number" id="entryValue" class="input" step="any" placeholder="0.00" />
+          </div>
+          <!-- 정성적: 결과값 선택 -->
+          <div class="lj-data-entry-field" id="entryResultField" style="display:none;">
+            <span class="form-label">결과값</span>
+            <select id="entryResult" class="input select"></select>
           </div>
           <div class="lj-data-entry-field">
             <span class="form-label">메모 (선택)</span>
@@ -230,7 +236,7 @@
             <p class="empty-state-desc">측정일과 측정값을 입력하고 추가 버튼을 눌러 데이터를 등록하세요.</p>
           </div>
           <table class="lj-data-table" id="dataTable" style="display:none;">
-            <thead>
+            <thead id="dataTableHead">
               <tr>
                 <th style="width:120px;">측정일</th>
                 <th style="width:90px;">측정값</th>
@@ -292,20 +298,51 @@
         <div class="form-grid two-col">
           <label class="form-field full-col">
             <span class="form-label required">검사 항목명</span>
-            <input type="text" id="modalItemName" class="input" placeholder="예: GLU, HbA1c, Total Cholesterol" />
+            <input type="text" id="modalItemName" class="input" placeholder="예: GLU, HbA1c, RPR" />
           </label>
-          <label class="form-field">
-            <span class="form-label required">단위</span>
-            <input type="text" id="modalItemUnit" class="input" placeholder="예: mg/dL, %" />
+          <label class="form-field full-col">
+            <span class="form-label required">관리 유형</span>
+            <select id="modalItemType" class="input select">
+              <option value="quantitative">정량적 (Quantitative) — 수치 측정값</option>
+              <option value="qualitative">정성적 (Qualitative) — Positive/Negative 등</option>
+            </select>
           </label>
-          <label class="form-field">
-            <span class="form-label required">목표 평균 (Mean)</span>
-            <input type="number" id="modalItemMean" class="input" step="any" placeholder="0.00" />
-          </label>
-          <label class="form-field">
-            <span class="form-label required">표준편차 (SD)</span>
-            <input type="number" id="modalItemSd" class="input" step="any" placeholder="0.00" min="0.0001" />
-          </label>
+
+          <!-- 정량적 필드 -->
+          <div id="quantitativeFields" style="display:contents;">
+            <label class="form-field">
+              <span class="form-label required">단위</span>
+              <input type="text" id="modalItemUnit" class="input" placeholder="예: mg/dL, %" />
+            </label>
+            <label class="form-field">
+              <span class="form-label required">목표 평균 (Mean)</span>
+              <input type="number" id="modalItemMean" class="input" step="any" placeholder="0.00" />
+            </label>
+            <label class="form-field full-col">
+              <span class="form-label required">표준편차 (SD)</span>
+              <input type="number" id="modalItemSd" class="input" step="any" placeholder="0.00" min="0.0001" />
+            </label>
+          </div>
+
+          <!-- 정성적 필드 -->
+          <div id="qualitativeFields" style="display:none;contents:none;">
+            <label class="form-field full-col" style="grid-column:1/-1;">
+              <span class="form-label required">결과값 프리셋</span>
+              <select id="modalItemPreset" class="input select">
+                <option value="pos_neg">Positive / Negative</option>
+                <option value="reactive">Reactive / Non-Reactive</option>
+                <option value="detected">Detected / Not Detected</option>
+                <option value="neg_plus">Negative / Trace / 1+ / 2+ / 3+ / 4+</option>
+                <option value="weak_reactive">Non-Reactive / Weakly Reactive / Reactive</option>
+                <option value="weak_pos">Negative / Weak Positive / Positive / Strong Positive</option>
+              </select>
+            </label>
+            <label class="form-field full-col" style="grid-column:1/-1;">
+              <span class="form-label required">기대 결과값 (정상)</span>
+              <select id="modalItemExpected" class="input select"></select>
+            </label>
+          </div>
+
           <label class="form-field full-col">
             <span class="form-label">메모 (선택)</span>
             <input type="text" id="modalItemMemo" class="input" placeholder="장비명, 시약 lot 등 참고 정보" />
