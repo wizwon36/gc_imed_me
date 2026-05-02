@@ -55,8 +55,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       url: `${CONFIG.SITE_BASE_URL}/pages/signage/signage-form.html`
     },
     lj_chart: {
-      title: 'L-J 정도관리 차트',
-      desc: '검사실 QC 데이터 관리 및 Westgard 규칙 분석',
+      title: '정도관리 시스템',
+      desc: '정량적·정성적 QC 데이터 관리 및 Westgard 규칙 분석',
       icon: '📈',
       url: `${CONFIG.SITE_BASE_URL}/pages/lj-chart/lj-chart.html`
     },
