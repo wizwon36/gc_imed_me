@@ -350,17 +350,23 @@ function getActiveItem() {
 // 설정 표시
 // ─────────────────────────────────────────────
 function renderSettingsDisplay(item) {
+  const dept = item.department || item.team_name || '';
+
+  // 설정 섹션 헤더 subtitle에 부서 뱃지 표시
+  const deptBadge = dept
+    ? `<span style="display:inline-flex;align-items:center;height:22px;padding:0 10px;margin-top:6px;border-radius:6px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:.03em;border:1px solid #bfdbfe;">${escHtml(dept)}</span>`
+    : '';
+  $('settingsSectionTitle').textContent = item.item_name;
+  const descEl = $('settingsSection').querySelector('.sub-text');
+  if (descEl) descEl.innerHTML = `목표 평균과 표준편차 기준입니다. ${deptBadge}`;
+
   if (item.item_type === 'qualitative') {
     const preset = QUALITATIVE_PRESETS[item.preset] || {};
     const values = preset.values || [];
     $('settingsDisplay').innerHTML = `
       <div class="kpi-card">
-        <div class="kpi-label">부서</div>
-        <div style="font-size:16px;font-weight:900;color:#0b1f44;line-height:1.2;">${escHtml(item.department || item.team_name || '-')}</div>
-      </div>
-      <div class="kpi-card">
         <div class="kpi-label">관리 유형</div>
-        <div style="font-size:16px;font-weight:900;color:#0b1f44;line-height:1.2;">정성적 (Qualitative)</div>
+        <div style="font-size:18px;font-weight:900;color:#0b1f44;line-height:1;letter-spacing:-0.02em;">정성적 (Qualitative)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">기대 결과값 (정상)</div>
@@ -379,7 +385,6 @@ function renderSettingsDisplay(item) {
   const mean = Number(item.mean);
   const sd   = Number(item.sd);
   const tiles = [
-    { label: '부서',             value: item.department || item.team_name || '-', unit: '' },
     { label: '목표 평균 (Mean)', value: mean.toFixed(2), unit: item.unit },
     { label: '표준편차 (SD)',    value: sd.toFixed(2),   unit: item.unit },
     { label: '+2SD 상한',        value: (mean + 2*sd).toFixed(2), unit: item.unit },
