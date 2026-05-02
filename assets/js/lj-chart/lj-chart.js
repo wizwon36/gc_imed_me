@@ -224,7 +224,7 @@ function renderItemSelect() {
   selectRow.style.display = 'flex';
   emptyRow.style.display  = 'none';
 
-  selectEl.innerHTML = state.items.map(item => {
+  selectEl.innerHTML = '<option value="">검사 항목을 선택하세요</option>' + state.items.map(item => {
     const dept = item.department || item.team_name || '';
     const label = dept ? `${item.item_name} (${dept})` : item.item_name;
     return `<option value="${escHtml(item.item_id)}" ${item.item_id === state.activeItemId ? 'selected' : ''}>${escHtml(label)}</option>`;
