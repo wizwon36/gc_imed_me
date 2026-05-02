@@ -84,47 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       state.items = itemsResult || [];
       renderItemSelect();
       showItemEmptyState();
-      $('skeletonBody').style.display = 'none';
-      await hideGlobalLoading();
     } else {
       state.items = itemsResult;
-      await loadEntriesForItem(state.items[0].item_id, true);
-
-      state.activeItemId = state.items[0].item_id;
-      const item = state.items[0];
       renderItemSelect();
-      $('itemEmptyState').style.display = 'none';
-      $('settingsSection').style.display = '';
-      $('dataEntrySection').style.display = '';
-      $('editItemBtn').style.display = '';
-      $('deleteItemBtn').style.display = '';
-      $('settingsSectionTitle').textContent = item.item_name;
-      $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
-
-      const isQual = item.item_type === 'qualitative';
-      $('entryValueField').style.display  = isQual ? 'none' : '';
-      $('entryResultField').style.display = isQual ? '' : 'none';
-      if (isQual) {
-        const preset = QUALITATIVE_PRESETS[item.preset];
-        if (preset) {
-          $('entryResult').innerHTML = preset.values.map(v =>
-            `<option value="${escHtml(v)}">${escHtml(v)}</option>`
-          ).join('');
-        }
-      }
-      $('dataTableHead').innerHTML = isQual
-        ? `<tr><th style="width:120px;">측정일</th><th style="width:130px;">결과값</th><th style="width:100px;">판정</th><th>메모</th><th style="width:50px;"></th></tr>`
-        : `<tr><th style="width:120px;">측정일</th><th style="width:90px;">측정값</th><th style="width:80px;">SDI</th><th style="width:190px;">Westgard 판정</th><th>메모</th><th style="width:50px;"></th></tr>`;
-      $('chartSection').style.display = isQual ? 'none' : '';
-
-      renderSettingsDisplay(item);
-      renderDataTable();
-      renderStats();
-      if (!isQual) renderChart();
-
-      $('skeletonBody').style.display = 'none';
-      await hideGlobalLoading();
+      showItemEmptyState(); // 항목 선택 전까지 빈 상태 표시
     }
+
+    $('skeletonBody').style.display = 'none';
+    await hideGlobalLoading();
   } catch (e) {
     $('skeletonBody').style.display = 'none';
     await hideGlobalLoading();
@@ -344,6 +311,15 @@ function showItemEmptyState() {
   $('chartSection').style.display = 'none';
   $('editItemBtn').style.display = 'none';
   $('deleteItemBtn').style.display = 'none';
+
+  // 항목이 있으면 "선택하세요", 없으면 "추가하세요"
+  const hasItems = state.items.length > 0;
+  const titleEl = $('itemEmptyTitle');
+  const descEl  = $('itemEmptyDesc');
+  if (titleEl) titleEl.textContent = hasItems ? '검사 항목을 선택하세요' : '등록된 검사 항목이 없습니다';
+  if (descEl)  descEl.innerHTML    = hasItems
+    ? '위의 셀렉트에서 검사 항목을 선택하세요.'
+    : '<strong>+ 항목 추가</strong> 버튼을 눌러 첫 번째 검사 항목을 추가하세요.';
 }
 
 function getActiveItem() {
