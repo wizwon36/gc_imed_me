@@ -164,9 +164,12 @@
         </div>
 
         <!-- 항목 선택 셀렉트 + 추가 버튼 -->
-        <div id="itemSelectRow" style="display:none;align-items:center;gap:10px;padding:14px 22px;border-bottom:1.5px solid #e0e7f2;">
-          <select id="itemSelect" class="input" style="flex:1;min-height:44px;font-weight:600;"></select>
-          <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtn" style="flex-shrink:0;border-radius:12px;padding:0 16px;min-height:44px;">+ 항목 추가</button>
+        <div id="itemSelectRow" style="display:none;flex-direction:column;gap:8px;padding:14px 22px;border-bottom:1.5px solid #e0e7f2;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <select id="itemSelect" class="input" style="flex:1;min-height:44px;font-weight:600;"></select>
+            <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtn" style="flex-shrink:0;border-radius:12px;padding:0 16px;min-height:44px;">+ 항목 추가</button>
+          </div>
+          <div id="itemDeptBadge" style="display:none;"></div>
         </div>
 
         <!-- 항목 없을 때 추가 버튼만 -->
