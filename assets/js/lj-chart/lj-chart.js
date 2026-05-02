@@ -537,6 +537,7 @@ async function saveItem() {
     }
     showMessage(isEdit ? '항목이 수정되었습니다.' : '항목이 추가되었습니다.', 'success');
   } catch (e) {
+    alert('ERROR: ' + (e.message || '저장에 실패했습니다.'));
     showMessage(e.message || '저장에 실패했습니다.', 'error');
   } finally {
     hideGlobalLoading();
@@ -1273,6 +1274,10 @@ async function exportPdf() {
     hideGlobalLoading();
   }
 }
+
+
+
+
 
 function showMessage(text, type = 'error') {
   const box = $('messageBox');
