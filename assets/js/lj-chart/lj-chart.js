@@ -517,14 +517,24 @@ async function saveItem() {
     closeItemModal();
     if (isEdit) {
       await apiPost('ljUpdateItem', payload);
-      const idx = state.items.findIndex(it => it.item_id === itemId);
-      if (idx !== -1) state.items[idx] = { ...state.items[idx], ...payload };
     } else {
-      const result = await apiPost('ljCreateItem', payload);
-      state.items.push(result.data);
+      await apiPost('ljCreateItem', payload);
     }
-    const targetId = isEdit ? itemId : state.items[state.items.length - 1].item_id;
-    await selectItem(targetId);
+
+    // 서버에서 최신 목록 재조회
+    const result = await apiGet('ljGetItems', { request_user_email: user.email });
+    state.items = Array.isArray(result.data) ? result.data : [];
+
+    // 수정이면 같은 항목 유지, 신규면 마지막 항목 선택
+    const targetId = isEdit
+      ? itemId
+      : state.items[state.items.length - 1]?.item_id;
+
+    if (targetId) {
+      // entries 캐시 무효화 (설정 변경 반영)
+      if (isEdit) delete state.entries[targetId];
+      await selectItem(targetId);
+    }
     showMessage(isEdit ? '항목이 수정되었습니다.' : '항목이 추가되었습니다.', 'success');
   } catch (e) {
     showMessage(e.message || '저장에 실패했습니다.', 'error');
@@ -1263,10 +1273,6 @@ async function exportPdf() {
     hideGlobalLoading();
   }
 }
-
-
-
-
 
 function showMessage(text, type = 'error') {
   const box = $('messageBox');
