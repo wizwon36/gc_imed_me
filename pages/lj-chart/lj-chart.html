@@ -300,6 +300,17 @@
             <span class="form-label required">검사 항목명</span>
             <input type="text" id="modalItemName" class="input" placeholder="예: GLU, HbA1c, RPR" />
           </label>
+          <!-- 부서 선택 (admin만 표시) -->
+          <div id="modalOrgFields" style="display:none;contents:none;">
+            <label class="form-field">
+              <span class="form-label required">의원</span>
+              <select id="modalItemClinic" class="input select"><option value="">선택</option></select>
+            </label>
+            <label class="form-field">
+              <span class="form-label required">팀</span>
+              <select id="modalItemTeam" class="input select"><option value="">선택</option></select>
+            </label>
+          </div>
           <label class="form-field full-col">
             <span class="form-label required">관리 유형</span>
             <select id="modalItemType" class="input select">
