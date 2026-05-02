@@ -1,6 +1,6 @@
 /**
  * lj-chart.js
- * L-J 정도관리 차트 앱 - 프론트엔드
+ * 정도관리 시스템 앱 - 프론트엔드
  * app_id: 'lj_chart'
  */
 
@@ -1020,7 +1020,7 @@ function exportExcel() {
   const rejectCount = analyzed.filter(r => r.violations.some(v => v.type === 'reject')).length;
 
   const summaryData = [
-    ['L-J 정도관리 차트 — 통계 요약'],
+    ['정도관리 시스템 — 통계 요약'],
     [],
     ['검사 항목', item.item_name],
     ['단위',     item.unit],
@@ -1195,7 +1195,7 @@ async function exportPdf() {
 
         <!-- 푸터 -->
         <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e0e7f2;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:11px;color:#94a3b8;">MSO관리팀 업무지원 시스템 · L-J 정도관리 차트</span>
+          <span style="font-size:11px;color:#94a3b8;">MSO관리팀 업무지원 시스템 · 정도관리 시스템</span>
           <span style="font-size:11px;color:#94a3b8;">${today}</span>
         </div>
       </div>
