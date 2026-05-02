@@ -226,24 +226,37 @@ function selectItem(itemId) {
   const item = getActiveItem();
   if (!item) return;
 
-  $('itemEmptyState').style.display = 'none';
-  $('settingsSection').style.display = '';
-  $('dataEntrySection').style.display = '';
-  $('editItemBtn').style.display = '';
-  $('deleteItemBtn').style.display = '';
+  // 스피너 + 스켈레톤 표시
+  showGlobalLoading('불러오는 중...');
+  $('skeletonBody').style.display = 'block';
+  $('appBody').style.display = 'none';
 
-  $('settingsSectionTitle').textContent = item.item_name;
-  $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
+  // 비동기로 처리 (UI 블로킹 방지)
+  (async () => {
+    try {
+      if (!state.entries[itemId]) {
+        await loadEntriesForItem(itemId, true);
+      }
 
-  renderSettingsDisplay(item);
-
-  if (state.entries[itemId]) {
-    renderDataTable();
-    renderStats();
-    renderChart();
-  } else {
-    loadEntriesForItem(itemId);
-  }
+      // 렌더링
+      $('itemEmptyState').style.display = 'none';
+      $('settingsSection').style.display = '';
+      $('dataEntrySection').style.display = '';
+      $('editItemBtn').style.display = '';
+      $('deleteItemBtn').style.display = '';
+      $('settingsSectionTitle').textContent = item.item_name;
+      $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
+      renderSettingsDisplay(item);
+      renderItemSelect();
+      renderDataTable();
+      renderStats();
+      renderChart();
+    } finally {
+      $('skeletonBody').style.display = 'none';
+      $('appBody').style.display = '';
+      await hideGlobalLoading();
+    }
+  })();
 }
 
 function showItemEmptyState() {
