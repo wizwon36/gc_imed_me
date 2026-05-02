@@ -131,8 +131,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     showMessage(e.message || '불러오는 중 오류가 발생했습니다.', 'error');
   }
 });
-
-
 // ─────────────────────────────────────────────
 // 이벤트 바인딩
 // ─────────────────────────────────────────────
@@ -165,6 +163,12 @@ function bindEvents() {
   $('addEntryBtn').addEventListener('click', addEntry);
   $('entryValue').addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); });
   $('sampleDataBtn').addEventListener('click', loadSampleData);
+
+  // 샘플 데이터 버튼 — admin만 표시
+  const user = window.auth.getSession();
+  if (String(user?.role || '').trim().toLowerCase() === 'admin') {
+    $('sampleDataBtn').style.display = '';
+  }
   $('exportCsvBtn').addEventListener('click', exportCsv);
   $('exportExcelBtn').addEventListener('click', exportExcel);
   $('exportPdfBtn').addEventListener('click', exportPdf);
@@ -1273,10 +1277,6 @@ async function exportPdf() {
     hideGlobalLoading();
   }
 }
-
-
-
-
 
 function showMessage(text, type = 'error') {
   const box = $('messageBox');
