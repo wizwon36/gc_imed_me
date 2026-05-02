@@ -7,6 +7,18 @@
 const APP_ID = 'lj_chart';
 
 // ─────────────────────────────────────────────
+// 정성적 프리셋 정의
+// ─────────────────────────────────────────────
+const QUALITATIVE_PRESETS = {
+  pos_neg:      { label: 'Positive / Negative',                          values: ['Negative', 'Positive'] },
+  reactive:     { label: 'Reactive / Non-Reactive',                      values: ['Non-Reactive', 'Reactive'] },
+  detected:     { label: 'Detected / Not Detected',                      values: ['Not Detected', 'Detected'] },
+  neg_plus:     { label: 'Negative / Trace / 1+ / 2+ / 3+ / 4+',        values: ['Negative', 'Trace', '1+', '2+', '3+', '4+'] },
+  weak_reactive:{ label: 'Non-Reactive / Weakly Reactive / Reactive',    values: ['Non-Reactive', 'Weakly Reactive', 'Reactive'] },
+  weak_pos:     { label: 'Negative / Weak Positive / Positive / Strong Positive', values: ['Negative', 'Weak Positive', 'Positive', 'Strong Positive'] }
+};
+
+// ─────────────────────────────────────────────
 // 상태
 // ─────────────────────────────────────────────
 let state = {
@@ -120,6 +132,11 @@ function bindEvents() {
   $('itemModalClose').addEventListener('click', closeItemModal);
   $('itemModalCancel').addEventListener('click', closeItemModal);
   $('itemModalSave').addEventListener('click', saveItem);
+
+  // 타입 변경 시 필드 전환
+  $('modalItemType').addEventListener('change', onModalTypeChange);
+  // 프리셋 변경 시 기대값 옵션 업데이트
+  $('modalItemPreset').addEventListener('change', updateExpectedOptions);
 
   $('addEntryBtn').addEventListener('click', addEntry);
   $('entryValue').addEventListener('keydown', e => { if (e.key === 'Enter') addEntry(); });
@@ -246,11 +263,43 @@ function selectItem(itemId) {
       $('deleteItemBtn').style.display = '';
       $('settingsSectionTitle').textContent = item.item_name;
       $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
+
+      // 타입에 따라 입력 UI / 테이블 헤더 전환
+      const isQual = item.item_type === 'qualitative';
+      $('entryValueField').style.display  = isQual ? 'none' : '';
+      $('entryResultField').style.display = isQual ? '' : 'none';
+      if (isQual) {
+        const preset = QUALITATIVE_PRESETS[item.preset];
+        if (preset) {
+          $('entryResult').innerHTML = preset.values.map(v =>
+            `<option value="${escHtml(v)}">${escHtml(v)}</option>`
+          ).join('');
+        }
+      }
+      $('dataTableHead').innerHTML = isQual
+        ? `<tr>
+            <th style="width:120px;">측정일</th>
+            <th style="width:130px;">결과값</th>
+            <th style="width:100px;">판정</th>
+            <th>메모</th>
+            <th style="width:50px;"></th>
+           </tr>`
+        : `<tr>
+            <th style="width:120px;">측정일</th>
+            <th style="width:90px;">측정값</th>
+            <th style="width:80px;">SDI</th>
+            <th style="width:190px;">Westgard 판정</th>
+            <th>메모</th>
+            <th style="width:50px;"></th>
+           </tr>`;
+      // 정성적이면 차트 섹션 숨김
+      $('chartSection').style.display = isQual ? 'none' : '';
+
       renderSettingsDisplay(item);
       renderItemSelect();
       renderDataTable();
       renderStats();
-      renderChart();
+      if (!isQual) renderChart();
     } finally {
       $('skeletonBody').style.display = 'none';
       $('appBody').style.display = '';
@@ -277,9 +326,30 @@ function getActiveItem() {
 // 설정 표시
 // ─────────────────────────────────────────────
 function renderSettingsDisplay(item) {
+  if (item.item_type === 'qualitative') {
+    const preset = QUALITATIVE_PRESETS[item.preset] || {};
+    const values = preset.values || [];
+    $('settingsDisplay').innerHTML = `
+      <div class="kpi-card">
+        <div class="kpi-label">관리 유형</div>
+        <div style="font-size:18px;font-weight:900;color:#0b1f44;line-height:1;letter-spacing:-0.02em;">정성적 (Qualitative)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">기대 결과값 (정상)</div>
+        <div style="font-size:18px;font-weight:900;color:#15803d;line-height:1;letter-spacing:-0.02em;">${escHtml(item.expected_value || '-')}</div>
+      </div>
+      <div class="kpi-card" style="grid-column:1/-1;max-height:none;">
+        <div class="kpi-label" style="margin-bottom:8px;">결과값 프리셋</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${values.map(v => `<span style="padding:4px 12px;border-radius:20px;background:${v===item.expected_value?'#dcfce7':'#f1f5f9'};color:${v===item.expected_value?'#15803d':'#64748b'};font-size:13px;font-weight:${v===item.expected_value?'800':'600'};border:1.5px solid ${v===item.expected_value?'#86efac':'#e2e8f0'};">${escHtml(v)}</span>`).join('')}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   const mean = Number(item.mean);
   const sd   = Number(item.sd);
-
   const tiles = [
     { label: '목표 평균 (Mean)', value: mean.toFixed(2), unit: item.unit },
     { label: '표준편차 (SD)',    value: sd.toFixed(2),   unit: item.unit },
@@ -297,21 +367,54 @@ function renderSettingsDisplay(item) {
   if (item.memo) {
     html += `<div class="kpi-card full-span"><div class="kpi-label">메모</div><div style="font-size:14px;font-weight:600;color:#334155;">${escHtml(item.memo)}</div></div>`;
   }
-
   $('settingsDisplay').innerHTML = html;
 }
 
 // ─────────────────────────────────────────────
 // 검사 항목 모달
 // ─────────────────────────────────────────────
+function onModalTypeChange() {
+  const type = $('modalItemType').value;
+  const isQual = type === 'qualitative';
+  $('quantitativeFields').style.display = isQual ? 'none' : 'contents';
+  $('qualitativeFields').style.display  = isQual ? 'contents' : 'none';
+  if (isQual) updateExpectedOptions();
+}
+
+function updateExpectedOptions(selectedExpected) {
+  const preset = $('modalItemPreset').value;
+  const values = QUALITATIVE_PRESETS[preset]?.values || [];
+  $('modalItemExpected').innerHTML = values.map(v =>
+    `<option value="${escHtml(v)}" ${v === selectedExpected ? 'selected' : ''}>${escHtml(v)}</option>`
+  ).join('');
+}
+
 function openItemModal(item) {
   $('itemModalTitle').textContent = item ? '검사 항목 수정' : '검사 항목 추가';
-  $('modalItemId').value = item ? item.item_id : '';
-  $('modalItemName').value = item ? item.item_name : '';
-  $('modalItemUnit').value = item ? item.unit : '';
-  $('modalItemMean').value = item ? item.mean : '';
-  $('modalItemSd').value = item ? item.sd : '';
-  $('modalItemMemo').value = item ? (item.memo || '') : '';
+  $('modalItemId').value    = item ? item.item_id : '';
+  $('modalItemName').value  = item ? item.item_name : '';
+  $('modalItemMemo').value  = item ? (item.memo || '') : '';
+
+  const type = item ? (item.item_type || 'quantitative') : 'quantitative';
+  $('modalItemType').value = type;
+
+  if (type === 'qualitative') {
+    $('quantitativeFields').style.display = 'none';
+    $('qualitativeFields').style.display  = 'contents';
+    const preset = item?.preset || 'pos_neg';
+    $('modalItemPreset').value = preset;
+    updateExpectedOptions(item?.expected_value);
+    $('modalItemUnit').value  = '';
+    $('modalItemMean').value  = '';
+    $('modalItemSd').value    = '';
+  } else {
+    $('quantitativeFields').style.display = 'contents';
+    $('qualitativeFields').style.display  = 'none';
+    $('modalItemUnit').value  = item ? item.unit  : '';
+    $('modalItemMean').value  = item ? item.mean  : '';
+    $('modalItemSd').value    = item ? item.sd    : '';
+  }
+
   $('itemModal').style.display = '';
   setTimeout(() => $('modalItemName').focus(), 50);
 }
@@ -321,42 +424,48 @@ function closeItemModal() {
 }
 
 async function saveItem() {
-  const itemId = $('modalItemId').value.trim();
+  const itemId   = $('modalItemId').value.trim();
   const itemName = $('modalItemName').value.trim();
-  const unit = $('modalItemUnit').value.trim();
-  const mean = parseFloat($('modalItemMean').value);
-  const sd = parseFloat($('modalItemSd').value);
-  const memo = $('modalItemMemo').value.trim();
+  const itemType = $('modalItemType').value;
+  const memo     = $('modalItemMemo').value.trim();
 
   if (!itemName) { alert('검사 항목명을 입력하세요.'); $('modalItemName').focus(); return; }
-  if (!unit) { alert('단위를 입력하세요.'); $('modalItemUnit').focus(); return; }
-  if (isNaN(mean)) { alert('목표 평균을 입력하세요.'); $('modalItemMean').focus(); return; }
-  if (isNaN(sd) || sd <= 0) { alert('표준편차를 올바르게 입력하세요. (0보다 커야 합니다)'); $('modalItemSd').focus(); return; }
 
   const user = window.auth.getSession();
   const isEdit = !!itemId;
+  let payload;
+
+  if (itemType === 'qualitative') {
+    const preset        = $('modalItemPreset').value;
+    const expectedValue = $('modalItemExpected').value;
+    if (!preset)        { alert('결과값 프리셋을 선택하세요.'); return; }
+    if (!expectedValue) { alert('기대 결과값을 선택하세요.'); return; }
+    payload = { item_name: itemName, item_type: 'qualitative', preset, expected_value: expectedValue, unit: '', mean: '', sd: '', memo, request_user_email: user.email };
+  } else {
+    const unit = $('modalItemUnit').value.trim();
+    const mean = parseFloat($('modalItemMean').value);
+    const sd   = parseFloat($('modalItemSd').value);
+    if (!unit)           { alert('단위를 입력하세요.');         $('modalItemUnit').focus(); return; }
+    if (isNaN(mean))     { alert('목표 평균을 입력하세요.');    $('modalItemMean').focus(); return; }
+    if (isNaN(sd)||sd<=0){ alert('표준편차를 올바르게 입력하세요.'); $('modalItemSd').focus(); return; }
+    payload = { item_name: itemName, item_type: 'quantitative', unit, mean, sd, memo, preset: '', expected_value: '', request_user_email: user.email };
+  }
+
+  if (isEdit) payload.item_id = itemId;
 
   try {
     showGlobalLoading(isEdit ? '항목 수정 중...' : '항목 저장 중...');
     closeItemModal();
-
     if (isEdit) {
-      await apiPost('ljUpdateItem', {
-        item_id: itemId, item_name: itemName, unit, mean, sd, memo,
-        request_user_email: user.email
-      });
+      await apiPost('ljUpdateItem', payload);
       const idx = state.items.findIndex(it => it.item_id === itemId);
-      if (idx !== -1) state.items[idx] = { ...state.items[idx], item_name: itemName, unit, mean, sd, memo };
+      if (idx !== -1) state.items[idx] = { ...state.items[idx], ...payload };
     } else {
-      const result = await apiPost('ljCreateItem', {
-        item_name: itemName, unit, mean, sd, memo,
-        request_user_email: user.email
-      });
+      const result = await apiPost('ljCreateItem', payload);
       state.items.push(result.data);
     }
-
-    renderItemSelect();
-    selectItem(isEdit ? itemId : state.items[state.items.length - 1].item_id);
+    const targetId = isEdit ? itemId : state.items[state.items.length - 1].item_id;
+    await selectItem(targetId);
     showMessage(isEdit ? '항목이 수정되었습니다.' : '항목이 추가되었습니다.', 'success');
   } catch (e) {
     showMessage(e.message || '저장에 실패했습니다.', 'error');
@@ -403,12 +512,20 @@ async function deleteActiveItem() {
 // ─────────────────────────────────────────────
 async function addEntry() {
   const date = $('entryDate').value;
-  const value = parseFloat($('entryValue').value);
   const memo = $('entryMemo').value.trim();
-
+  const item = getActiveItem();
+  if (!item || !state.activeItemId) return;
   if (!date) { alert('측정일을 선택하세요.'); $('entryDate').focus(); return; }
-  if (isNaN(value)) { alert('측정값을 입력하세요.'); $('entryValue').focus(); return; }
-  if (!state.activeItemId) return;
+
+  const isQual = item.item_type === 'qualitative';
+  let value;
+  if (isQual) {
+    value = $('entryResult').value;
+    if (!value) { alert('결과값을 선택하세요.'); return; }
+  } else {
+    value = parseFloat($('entryValue').value);
+    if (isNaN(value)) { alert('측정값을 입력하세요.'); $('entryValue').focus(); return; }
+  }
 
   const user = window.auth.getSession();
   try {
@@ -423,13 +540,13 @@ async function addEntry() {
     state.entries[state.activeItemId].push(newEntry);
     state.entries[state.activeItemId].sort((a, b) => a.date.localeCompare(b.date));
 
-    $('entryValue').value = '';
+    if (!isQual) $('entryValue').value = '';
     $('entryMemo').value = '';
     $('entryDate').value = new Date().toISOString().slice(0, 10);
 
     renderDataTable();
     renderStats();
-    renderChart();
+    if (!isQual) renderChart();
   } catch (e) {
     showMessage(e.message || '저장에 실패했습니다.', 'error');
   } finally {
@@ -531,23 +648,40 @@ function renderDataTable() {
 
   $('dataEmptyState').style.display = 'none';
   $('dataTable').style.display = '';
-
-  const analyzed = analyzeEntries(entries, Number(item.mean), Number(item.sd));
   const tbody = $('dataTableBody');
 
+  // ── 정성적 테이블 ──
+  if (item.item_type === 'qualitative') {
+    tbody.innerHTML = [...entries].reverse().map(row => {
+      const isPass = String(row.value) === String(item.expected_value);
+      const rowClass = isPass ? '' : 'lj-row--reject';
+      const badge = isPass
+        ? `<span style="display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#f0fdf4;color:#15803d;border:1px solid #86efac;">Pass</span>`
+        : `<span style="display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#fef2f2;color:#b42318;border:1px solid #fca5a5;">Fail</span>`;
+      return `
+        <tr class="${rowClass}">
+          <td>${escHtml(row.date)}</td>
+          <td style="font-weight:700;text-align:center;">${escHtml(String(row.value))}</td>
+          <td style="text-align:center;">${badge}</td>
+          <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
+          <td><button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">✕</button></td>
+        </tr>`;
+    }).join('');
+    return;
+  }
+
+  // ── 정량적 테이블 ──
+  const analyzed = analyzeEntries(entries, Number(item.mean), Number(item.sd));
   tbody.innerHTML = [...analyzed].reverse().map(row => {
     const hasReject = row.violations.some(v => v.type === 'reject');
     const hasWarn = row.violations.some(v => v.type === 'warn');
     const rowClass = hasReject ? 'lj-row--reject' : (hasWarn ? 'lj-row--warn' : '');
-
     const sdiClass = Math.abs(row.sdi) >= 3 ? 'lj-sdi-badge--reject'
                    : Math.abs(row.sdi) >= 2 ? 'lj-sdi-badge--warn'
                    : 'lj-sdi-badge--normal';
-
     const badges = row.violations.map(v =>
       `<span class="lj-rule-badge lj-rule-badge--${v.type}">${escHtml(v.code)}</span>`
     ).join('') || '<span style="color:#94a3b8;font-size:12px;">정상</span>';
-
     return `
       <tr class="${rowClass}">
         <td>${escHtml(row.date)}</td>
@@ -556,8 +690,7 @@ function renderDataTable() {
         <td>${badges}</td>
         <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
         <td><button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">✕</button></td>
-      </tr>
-    `;
+      </tr>`;
   }).join('');
 }
 
@@ -575,11 +708,43 @@ function renderStats() {
   }
 
   $('statsSection').style.display = '';
+  const n = entries.length;
 
-  const values = entries.map(e => Number(e.value));
-  const n = values.length;
-  const actualMean = values.reduce((s, v) => s + v, 0) / n;
-  const actualSD = Math.sqrt(values.reduce((s, v) => s + Math.pow(v - actualMean, 2), 0) / n);
+  // ── 정성적 통계 ──
+  if (item.item_type === 'qualitative') {
+    const passCount = entries.filter(e => String(e.value) === String(item.expected_value)).length;
+    const failCount = n - passCount;
+    const passRate  = ((passCount / n) * 100).toFixed(1);
+
+    // 결과값별 빈도
+    const freq = {};
+    entries.forEach(e => { const k = String(e.value); freq[k] = (freq[k] || 0) + 1; });
+    const preset = QUALITATIVE_PRESETS[item.preset];
+    const freqCards = (preset?.values || Object.keys(freq)).map(v => ({
+      label: v, value: freq[v] || 0, unit: '건',
+      warn: v !== item.expected_value && (freq[v] || 0) > 0
+    }));
+
+    const summaryCards = [
+      { label: '총 검사 수',   value: n,         unit: '건' },
+      { label: 'Pass',         value: passCount,  unit: '건' },
+      { label: 'Fail',         value: failCount,  unit: '건', danger: failCount > 0 },
+      { label: 'Pass율',       value: `${passRate}`, unit: '%' }
+    ];
+
+    $('statGrid').innerHTML = [...summaryCards, ...freqCards].map((c, i) => `
+      <div class="kpi-card">
+        <div class="kpi-label">${escHtml(c.label)}</div>
+        <div style="font-size:22px;font-weight:900;color:${c.danger?'#b42318':c.warn?'#c2410c':'#0b1f44'};line-height:1;letter-spacing:-0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(String(c.value))} <span style="font-size:13px;font-weight:600;color:#8494aa;">${escHtml(c.unit)}</span></div>
+      </div>
+    `).join('');
+    return;
+  }
+
+  // ── 정량적 통계 ──
+  const numValues = entries.map(e => Number(e.value));
+  const actualMean = numValues.reduce((s, v) => s + v, 0) / n;
+  const actualSD = Math.sqrt(numValues.reduce((s, v) => s + Math.pow(v - actualMean, 2), 0) / n);
   const cv = (actualSD / actualMean) * 100;
 
   const analyzed = analyzeEntries(entries, Number(item.mean), Number(item.sd));
@@ -587,12 +752,12 @@ function renderStats() {
   const rejectCount = analyzed.filter(r => r.violations.some(v => v.type === 'reject')).length;
 
   const cards = [
-    { label: '데이터 수',  value: n,                    unit: '건' },
-    { label: '실측 평균',  value: actualMean.toFixed(2), unit: item.unit },
-    { label: '실측 SD',    value: actualSD.toFixed(2),   unit: item.unit },
-    { label: '%CV',        value: cv.toFixed(1),          unit: '%' },
-    { label: '경고 건수',  value: warnCount,   unit: '건', warn: warnCount > 0 },
-    { label: '거부 건수',  value: rejectCount, unit: '건', danger: rejectCount > 0 }
+    { label: '데이터 수',  value: n,                       unit: '건' },
+    { label: '실측 평균',  value: actualMean.toFixed(2),    unit: item.unit },
+    { label: '실측 SD',    value: actualSD.toFixed(2),      unit: item.unit },
+    { label: '%CV',        value: cv.toFixed(1),             unit: '%' },
+    { label: '경고 건수',  value: warnCount,    unit: '건', warn: warnCount > 0 },
+    { label: '거부 건수',  value: rejectCount,  unit: '건', danger: rejectCount > 0 }
   ];
 
   $('statGrid').innerHTML = cards.map(c => `
