@@ -240,24 +240,35 @@ async function loadEntriesForItem(itemId, isInitial = false) {
 // 검사 항목 탭 렌더링
 // ─────────────────────────────────────────────
 function renderItemSelect() {
-  const selectEl = $('itemSelect');
+  const selectEl  = $('itemSelect');
   const selectRow = $('itemSelectRow');
-  const emptyRow = $('itemEmptyRow');
+  const emptyRow  = $('itemEmptyRow');
+  const deptBadge = $('itemDeptBadge');
 
   if (state.items.length === 0) {
     selectRow.style.display = 'none';
-    emptyRow.style.display = '';
+    emptyRow.style.display  = '';
     return;
   }
 
   selectRow.style.display = 'flex';
-  emptyRow.style.display = 'none';
+  emptyRow.style.display  = 'none';
 
   selectEl.innerHTML = state.items.map(item =>
     `<option value="${escHtml(item.item_id)}" ${item.item_id === state.activeItemId ? 'selected' : ''}>
       ${escHtml(item.item_name)}
     </option>`
   ).join('');
+
+  // 선택된 항목의 부서 뱃지 표시
+  const activeItem = state.items.find(it => it.item_id === state.activeItemId);
+  const dept = activeItem ? (activeItem.department || activeItem.team_name || '') : '';
+  if (dept && deptBadge) {
+    deptBadge.style.display = '';
+    deptBadge.innerHTML = `<span style="display:inline-flex;align-items:center;height:24px;padding:0 12px;border-radius:6px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:.04em;border:1px solid #bfdbfe;">📍 ${escHtml(dept)}</span>`;
+  } else if (deptBadge) {
+    deptBadge.style.display = 'none';
+  }
 }
 
 function selectItem(itemId) {
@@ -350,15 +361,9 @@ function getActiveItem() {
 // 설정 표시
 // ─────────────────────────────────────────────
 function renderSettingsDisplay(item) {
-  const dept = item.department || item.team_name || '';
-
-  // 설정 섹션 헤더 subtitle에 부서 뱃지 표시
-  const deptBadge = dept
-    ? `<span style="display:inline-flex;align-items:center;height:22px;padding:0 10px;margin-top:6px;border-radius:6px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:.03em;border:1px solid #bfdbfe;">${escHtml(dept)}</span>`
-    : '';
   $('settingsSectionTitle').textContent = item.item_name;
   const descEl = $('settingsSection').querySelector('.sub-text');
-  if (descEl) descEl.innerHTML = `목표 평균과 표준편차 기준입니다. ${deptBadge}`;
+  if (descEl) descEl.textContent = '목표 평균과 표준편차 기준입니다.';
 
   if (item.item_type === 'qualitative') {
     const preset = QUALITATIVE_PRESETS[item.preset] || {};
