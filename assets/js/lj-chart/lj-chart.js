@@ -22,10 +22,11 @@ const QUALITATIVE_PRESETS = {
 // 상태
 // ─────────────────────────────────────────────
 let state = {
-  items: [],        // 검사 항목 목록 { item_id, item_name, unit, mean, sd, memo }
+  items: [],
   activeItemId: null,
-  entries: {},      // { item_id: [ { entry_id, date, value, memo } ] }
-  chart: null
+  entries: {},
+  chart: null,
+  orgData: null   // admin용 org 데이터
 };
 
 // ─────────────────────────────────────────────
@@ -44,7 +45,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // 스켈레톤 + 스피너 동시 표시
   $('skeletonBody').style.display = 'block';
   showGlobalLoading('불러오는 중...');
   bindEvents();
@@ -60,7 +60,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       .then(r => Array.isArray(r.data) ? r.data : [])
       .catch(() => null);
 
-    const [hasAccess, itemsResult] = await Promise.all([permissionPromise, itemsPromise]);
+    // admin이면 org 데이터도 병렬 로드
+    const orgPromise = isAdmin
+      ? apiGet('getOrgData', {}).catch(() => null)
+      : Promise.resolve(null);
+
+    const [hasAccess, itemsResult, orgResult] = await Promise.all([permissionPromise, itemsPromise, orgPromise]);
+
+    if (orgResult?.data) {
+      state.orgData = orgResult.data;
+    }
 
     if (!hasAccess) {
       $('skeletonBody').style.display = 'none';
@@ -79,10 +88,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await hideGlobalLoading();
     } else {
       state.items = itemsResult;
-      // 첫 항목 entries 로드
       await loadEntriesForItem(state.items[0].item_id, true);
 
-      // 모든 렌더링 먼저 완료
       state.activeItemId = state.items[0].item_id;
       const item = state.items[0];
       renderItemSelect();
@@ -93,12 +100,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       $('deleteItemBtn').style.display = '';
       $('settingsSectionTitle').textContent = item.item_name;
       $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
+
+      const isQual = item.item_type === 'qualitative';
+      $('entryValueField').style.display  = isQual ? 'none' : '';
+      $('entryResultField').style.display = isQual ? '' : 'none';
+      if (isQual) {
+        const preset = QUALITATIVE_PRESETS[item.preset];
+        if (preset) {
+          $('entryResult').innerHTML = preset.values.map(v =>
+            `<option value="${escHtml(v)}">${escHtml(v)}</option>`
+          ).join('');
+        }
+      }
+      $('dataTableHead').innerHTML = isQual
+        ? `<tr><th style="width:120px;">측정일</th><th style="width:130px;">결과값</th><th style="width:100px;">판정</th><th>메모</th><th style="width:50px;"></th></tr>`
+        : `<tr><th style="width:120px;">측정일</th><th style="width:90px;">측정값</th><th style="width:80px;">SDI</th><th style="width:190px;">Westgard 판정</th><th>메모</th><th style="width:50px;"></th></tr>`;
+      $('chartSection').style.display = isQual ? 'none' : '';
+
       renderSettingsDisplay(item);
       renderDataTable();
       renderStats();
-      renderChart();
+      if (!isQual) renderChart();
 
-      // 렌더링 완료 후 스켈레톤 + 스피너 제거
       $('skeletonBody').style.display = 'none';
       await hideGlobalLoading();
     }
@@ -108,6 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showMessage(e.message || '불러오는 중 오류가 발생했습니다.', 'error');
   }
 });
+
 
 // ─────────────────────────────────────────────
 // 이벤트 바인딩
@@ -331,8 +355,12 @@ function renderSettingsDisplay(item) {
     const values = preset.values || [];
     $('settingsDisplay').innerHTML = `
       <div class="kpi-card">
+        <div class="kpi-label">부서</div>
+        <div style="font-size:16px;font-weight:900;color:#0b1f44;line-height:1.2;">${escHtml(item.department || item.team_name || '-')}</div>
+      </div>
+      <div class="kpi-card">
         <div class="kpi-label">관리 유형</div>
-        <div style="font-size:18px;font-weight:900;color:#0b1f44;line-height:1;letter-spacing:-0.02em;">정성적 (Qualitative)</div>
+        <div style="font-size:16px;font-weight:900;color:#0b1f44;line-height:1.2;">정성적 (Qualitative)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">기대 결과값 (정상)</div>
@@ -351,6 +379,7 @@ function renderSettingsDisplay(item) {
   const mean = Number(item.mean);
   const sd   = Number(item.sd);
   const tiles = [
+    { label: '부서',             value: item.department || item.team_name || '-', unit: '' },
     { label: '목표 평균 (Mean)', value: mean.toFixed(2), unit: item.unit },
     { label: '표준편차 (SD)',    value: sd.toFixed(2),   unit: item.unit },
     { label: '+2SD 상한',        value: (mean + 2*sd).toFixed(2), unit: item.unit },
@@ -390,10 +419,34 @@ function updateExpectedOptions(selectedExpected) {
 }
 
 function openItemModal(item) {
+  const user = window.auth.getSession();
+  const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
+
   $('itemModalTitle').textContent = item ? '검사 항목 수정' : '검사 항목 추가';
   $('modalItemId').value    = item ? item.item_id : '';
   $('modalItemName').value  = item ? item.item_name : '';
   $('modalItemMemo').value  = item ? (item.memo || '') : '';
+
+  // admin에게만 부서 선택 표시
+  if (isAdmin && state.orgData) {
+    $('modalOrgFields').style.display = 'contents';
+    const clinics = state.orgData.clinics || [];
+    const teams   = state.orgData.teams   || [];
+
+    $('modalItemClinic').innerHTML = '<option value="">의원 선택</option>' +
+      clinics.map(c => `<option value="${escHtml(c.code_value)}" ${c.code_value === item?.clinic_code ? 'selected' : ''}>${escHtml(c.code_name)}</option>`).join('');
+
+    const filterTeams = (clinicCode) => {
+      $('modalItemTeam').innerHTML = '<option value="">팀 선택</option>' +
+        teams.filter(t => !clinicCode || t.parent_code === clinicCode)
+             .map(t => `<option value="${escHtml(t.code_value)}" ${t.code_value === item?.team_code ? 'selected' : ''}>${escHtml(t.code_name)}</option>`).join('');
+    };
+    filterTeams(item?.clinic_code || '');
+
+    $('modalItemClinic').onchange = () => filterTeams($('modalItemClinic').value);
+  } else {
+    $('modalOrgFields').style.display = 'none';
+  }
 
   const type = item ? (item.item_type || 'quantitative') : 'quantitative';
   $('modalItemType').value = type;
@@ -432,15 +485,22 @@ async function saveItem() {
   if (!itemName) { alert('검사 항목명을 입력하세요.'); $('modalItemName').focus(); return; }
 
   const user = window.auth.getSession();
+  const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
   const isEdit = !!itemId;
   let payload;
+
+  // admin이면 선택한 org 값 포함
+  const clinicCode = isAdmin ? $('modalItemClinic').value : '';
+  const teamCode   = isAdmin ? $('modalItemTeam').value   : '';
+
+  if (isAdmin && !teamCode) { alert('팀을 선택하세요.'); return; }
 
   if (itemType === 'qualitative') {
     const preset        = $('modalItemPreset').value;
     const expectedValue = $('modalItemExpected').value;
     if (!preset)        { alert('결과값 프리셋을 선택하세요.'); return; }
     if (!expectedValue) { alert('기대 결과값을 선택하세요.'); return; }
-    payload = { item_name: itemName, item_type: 'qualitative', preset, expected_value: expectedValue, unit: '', mean: '', sd: '', memo, request_user_email: user.email };
+    payload = { item_name: itemName, item_type: 'qualitative', preset, expected_value: expectedValue, unit: '', mean: '', sd: '', memo, clinic_code: clinicCode, team_code: teamCode, request_user_email: user.email };
   } else {
     const unit = $('modalItemUnit').value.trim();
     const mean = parseFloat($('modalItemMean').value);
@@ -448,7 +508,7 @@ async function saveItem() {
     if (!unit)           { alert('단위를 입력하세요.');         $('modalItemUnit').focus(); return; }
     if (isNaN(mean))     { alert('목표 평균을 입력하세요.');    $('modalItemMean').focus(); return; }
     if (isNaN(sd)||sd<=0){ alert('표준편차를 올바르게 입력하세요.'); $('modalItemSd').focus(); return; }
-    payload = { item_name: itemName, item_type: 'quantitative', unit, mean, sd, memo, preset: '', expected_value: '', request_user_email: user.email };
+    payload = { item_name: itemName, item_type: 'quantitative', unit, mean, sd, memo, preset: '', expected_value: '', clinic_code: clinicCode, team_code: teamCode, request_user_email: user.email };
   }
 
   if (isEdit) payload.item_id = itemId;
