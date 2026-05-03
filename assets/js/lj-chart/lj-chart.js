@@ -69,13 +69,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (orgResult?.data) {
       state.orgData = orgResult.data;
-      // admin 부서 필터 초기화
-      const teams = orgResult.data.teams || [];
-      const filterSel = $('deptFilterSelect');
-      if (filterSel && teams.length > 0) {
+      const clinics = orgResult.data.clinics || [];
+      const teams   = orgResult.data.teams   || [];
+      const clinicSel = $('clinicFilterSelect');
+      const teamSel   = $('teamFilterSelect');
+
+      if (clinicSel && clinics.length > 0) {
         $('deptFilterRow').style.display = 'flex';
-        filterSel.innerHTML = '<option value="">전체 부서</option>' +
-          teams.map(t => `<option value="${escHtml(t.code_value)}">${escHtml(t.code_name)}</option>`).join('');
+
+        const updateTeams = (clinicCode) => {
+          const filtered = clinicCode
+            ? teams.filter(t => t.parent_code === clinicCode)
+            : teams;
+          teamSel.innerHTML = '<option value="">전체 팀</option>' +
+            filtered.map(t => `<option value="${escHtml(t.code_value)}">${escHtml(t.code_name)}</option>`).join('');
+        };
+
+        clinicSel.innerHTML = '<option value="">전체 의원</option>' +
+          clinics.map(c => `<option value="${escHtml(c.code_value)}">${escHtml(c.code_name)}</option>`).join('');
+        updateTeams('');
+
+        clinicSel.addEventListener('change', () => {
+          updateTeams(clinicSel.value);
+          state.activeItemId = null;
+          renderItemSelect();
+          showItemEmptyState();
+        });
       }
     }
 
@@ -121,8 +140,8 @@ function bindEvents() {
   });
   $('deleteItemBtn').addEventListener('click', deleteActiveItem);
 
-  // 부서 필터 (admin 전용)
-  $('deptFilterSelect')?.addEventListener('change', () => {
+  // 팀 필터 변경 (admin 전용)
+  $('teamFilterSelect')?.addEventListener('change', () => {
     state.activeItemId = null;
     renderItemSelect();
     showItemEmptyState();
@@ -230,11 +249,14 @@ function renderItemSelect() {
   const selectRow = $('itemSelectRow');
   const emptyRow  = $('itemEmptyRow');
 
-  // 부서 필터 적용 (admin 전용)
-  const filterTeam = $('deptFilterSelect')?.value || '';
-  const filteredItems = filterTeam
-    ? state.items.filter(it => (it.team_code || '') === filterTeam)
-    : state.items;
+  // 의원/팀 필터 적용 (admin 전용)
+  const filterClinic = $('clinicFilterSelect')?.value || '';
+  const filterTeam   = $('teamFilterSelect')?.value   || '';
+  const filteredItems = state.items.filter(it => {
+    if (filterTeam   && (it.team_code   || '') !== filterTeam)   return false;
+    if (filterClinic && (it.clinic_code || '') !== filterClinic) return false;
+    return true;
+  });
 
   if (filteredItems.length === 0) {
     selectRow.style.display = 'none';
