@@ -626,15 +626,19 @@ async function addEntry() {
   const user = window.auth.getSession();
   try {
     showGlobalLoading('데이터 저장 중...');
-    const result = await apiPost('ljCreateEntry', {
+    await apiPost('ljCreateEntry', {
       item_id: state.activeItemId, date, value, memo,
       request_user_email: user.email
     });
 
-    if (!state.entries[state.activeItemId]) state.entries[state.activeItemId] = [];
-    const newEntry = { ...result.data, date: normalizeDate(result.data.date) };
-    state.entries[state.activeItemId].push(newEntry);
-    state.entries[state.activeItemId].sort((a, b) => a.date.localeCompare(b.date));
+    // 서버에서 최신 entries 재조회
+    const entryResult = await apiGet('ljGetEntries', {
+      item_id: state.activeItemId,
+      request_user_email: user.email
+    });
+    state.entries[state.activeItemId] = (Array.isArray(entryResult.data) ? entryResult.data : []).map(e => ({
+      ...e, date: normalizeDate(e.date)
+    }));
 
     if (!isQual) $('entryValue').value = '';
     $('entryMemo').value = '';
@@ -661,7 +665,15 @@ async function deleteEntry(entryId) {
       request_user_email: user.email
     });
 
-    state.entries[state.activeItemId] = state.entries[state.activeItemId].filter(e => e.entry_id !== entryId);
+    // 서버에서 최신 entries 재조회
+    const entryResult = await apiGet('ljGetEntries', {
+      item_id: state.activeItemId,
+      request_user_email: user.email
+    });
+    state.entries[state.activeItemId] = (Array.isArray(entryResult.data) ? entryResult.data : []).map(e => ({
+      ...e, date: normalizeDate(e.date)
+    }));
+
     renderDataTable();
     renderStats();
     renderChart();
