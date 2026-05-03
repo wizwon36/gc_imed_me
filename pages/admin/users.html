@@ -33,20 +33,10 @@
       font-family: Pretendard, "Noto Sans KR", Arial, sans-serif;
     }
 
-    .users-topbar-wrap {
-      width: 100%;
-    }
-
-    .users-topbar-wrap .top-brand-bar {
-      max-width: 100%;
-      margin: 0;
-      border-radius: 0;
-    }
-
     .admin-page {
       max-width: var(--page-max-width);
       margin: 0 auto;
-      padding: 20px 20px 48px;
+      padding: 28px 20px 48px;
     }
 
     .page-header {
@@ -795,25 +785,19 @@
     }
   </style>
 </head>
-<body class="portal-page">
-  <div class="users-topbar-wrap">
-    <section class="top-brand-bar portal-topbar portal-hero-card">
-      <div class="top-brand-left">
-        <div class="top-brand-logo">+</div>
-        <div class="top-brand-texts">
-          <strong class="top-brand-title">사용자 관리</strong>
-          <span class="top-brand-sub">사용자 등록 · 권한 · 비밀번호 초기화</span>
-        </div>
-      </div>
-
-      <div class="top-brand-actions portal-top-actions">
-        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
-        <button type="button" id="logoutBtn" class="portal-header-btn portal-header-btn--secondary">로그아웃</button>
-      </div>
-    </section>
-  </div>
-
+<body>
   <div class="admin-page">
+    <header class="page-header">
+      <div class="page-title-wrap">
+        <h1>사용자 관리</h1>
+        <p>사용자 등록, 권한 관리, 비밀번호 초기화, 활성 여부를 관리합니다.</p>
+      </div>
+
+      <div class="page-header-actions">
+        <a href="../../portal.html" class="admin-btn secondary">HOME</a>
+        <button type="button" id="logoutBtn" class="admin-btn secondary">로그아웃</button>
+      </div>
+    </header>
 
     <div class="page-grid">
 
@@ -1069,7 +1053,7 @@
       </div><!-- /.page-col-right -->
 
     </div><!-- /.page-grid -->
-  </div><!-- /.admin-page -->
+  </div>
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
