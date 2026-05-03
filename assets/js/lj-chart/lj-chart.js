@@ -548,6 +548,10 @@ async function saveItem() {
     const result = await apiGet('ljGetItems', { request_user_email: user.email });
     state.items = Array.isArray(result.data) ? result.data : [];
 
+    // entries 캐시 전체 초기화 (부서 전환 시 이전 데이터 잔류 방지)
+    state.entries = {};
+    state.activeItemId = null;
+
     // 수정이면 같은 항목 유지, 신규면 마지막 항목 선택
     const targetId = isEdit
       ? itemId
