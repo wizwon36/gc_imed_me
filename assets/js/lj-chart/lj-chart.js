@@ -648,6 +648,7 @@ async function addEntry() {
     renderStats();
     if (!isQual) renderChart();
   } catch (e) {
+    alert('ERROR: ' + (e.message || '저장에 실패했습니다.'));
     showMessage(e.message || '저장에 실패했습니다.', 'error');
   } finally {
     hideGlobalLoading();
