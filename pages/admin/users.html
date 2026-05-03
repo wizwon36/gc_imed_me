@@ -33,6 +33,16 @@
       font-family: Pretendard, "Noto Sans KR", Arial, sans-serif;
     }
 
+    .users-topbar-wrap {
+      width: 100%;
+    }
+
+    .users-topbar-wrap .top-brand-bar {
+      max-width: 100%;
+      margin: 0;
+      border-radius: 0;
+    }
+
     .admin-page {
       max-width: var(--page-max-width);
       margin: 0 auto;
@@ -786,7 +796,7 @@
   </style>
 </head>
 <body class="portal-page">
-  <div class="container page-shell">
+  <div class="users-topbar-wrap">
     <section class="top-brand-bar portal-topbar portal-hero-card">
       <div class="top-brand-left">
         <div class="top-brand-logo">+</div>
@@ -801,6 +811,7 @@
         <button type="button" id="logoutBtn" class="portal-header-btn portal-header-btn--secondary">로그아웃</button>
       </div>
     </section>
+  </div>
 
   <div class="admin-page">
 
@@ -1059,7 +1070,6 @@
 
     </div><!-- /.page-grid -->
   </div><!-- /.admin-page -->
-  </div><!-- /.container.page-shell -->
 
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
