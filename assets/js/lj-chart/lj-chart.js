@@ -628,6 +628,7 @@ async function addEntry() {
     showGlobalLoading('데이터 저장 중...');
     await apiPost('ljCreateEntry', {
       item_id: state.activeItemId, date, value, memo,
+      item_type: item.item_type || 'quantitative',
       request_user_email: user.email
     });
 
@@ -1010,6 +1011,7 @@ async function loadSampleData() {
       const value = parseFloat((mean + randomNormal() * sd).toFixed(2));
       const result = await apiPost('ljCreateEntry', {
         item_id: state.activeItemId, date: dateStr, value, memo: '샘플',
+        item_type: item.item_type || 'quantitative',
         request_user_email: user.email
       });
       if (!state.entries[state.activeItemId]) state.entries[state.activeItemId] = [];
