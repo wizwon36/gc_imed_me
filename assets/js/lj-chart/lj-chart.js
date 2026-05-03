@@ -69,6 +69,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (orgResult?.data) {
       state.orgData = orgResult.data;
+      // admin 부서 필터 초기화
+      const teams = orgResult.data.teams || [];
+      const filterSel = $('deptFilterSelect');
+      if (filterSel && teams.length > 0) {
+        $('deptFilterRow').style.display = 'flex';
+        filterSel.innerHTML = '<option value="">전체 부서</option>' +
+          teams.map(t => `<option value="${escHtml(t.code_value)}">${escHtml(t.code_name)}</option>`).join('');
+      }
     }
 
     if (!hasAccess) {
@@ -112,6 +120,13 @@ function bindEvents() {
     if (item) openItemModal(item);
   });
   $('deleteItemBtn').addEventListener('click', deleteActiveItem);
+
+  // 부서 필터 (admin 전용)
+  $('deptFilterSelect')?.addEventListener('change', () => {
+    state.activeItemId = null;
+    renderItemSelect();
+    showItemEmptyState();
+  });
 
   // 셀렉트 변경 시 항목 전환
   $('itemSelect').addEventListener('change', e => {
@@ -215,7 +230,13 @@ function renderItemSelect() {
   const selectRow = $('itemSelectRow');
   const emptyRow  = $('itemEmptyRow');
 
-  if (state.items.length === 0) {
+  // 부서 필터 적용 (admin 전용)
+  const filterTeam = $('deptFilterSelect')?.value || '';
+  const filteredItems = filterTeam
+    ? state.items.filter(it => (it.team_code || '') === filterTeam)
+    : state.items;
+
+  if (filteredItems.length === 0) {
     selectRow.style.display = 'none';
     emptyRow.style.display  = '';
     return;
@@ -224,11 +245,10 @@ function renderItemSelect() {
   selectRow.style.display = 'flex';
   emptyRow.style.display  = 'none';
 
-  selectEl.innerHTML = '<option value="">검사 항목을 선택하세요</option>' + state.items.map(item => {
-    const dept = item.department || item.team_name || '';
-    const label = dept ? `${item.item_name} (${dept})` : item.item_name;
-    return `<option value="${escHtml(item.item_id)}" ${item.item_id === state.activeItemId ? 'selected' : ''}>${escHtml(label)}</option>`;
-  }).join('');
+  selectEl.innerHTML = '<option value="">검사 항목을 선택하세요</option>' +
+    filteredItems.map(item =>
+      `<option value="${escHtml(item.item_id)}" ${item.item_id === state.activeItemId ? 'selected' : ''}>${escHtml(item.item_name)}</option>`
+    ).join('');
 }
 
 function selectItem(itemId) {
