@@ -231,7 +231,7 @@ async function loadEntriesForItem(itemId, isInitial = false) {
     state.entries[itemId] = (Array.isArray(result.data) ? result.data : []).map(e => ({
       ...e,
       date: normalizeDate(e.date)
-    }));
+    })).sort((a, b) => a.date.localeCompare(b.date));
     renderDataTable();
     renderStats();
     renderChart();
@@ -639,7 +639,7 @@ async function addEntry() {
     });
     state.entries[state.activeItemId] = (Array.isArray(entryResult.data) ? entryResult.data : []).map(e => ({
       ...e, date: normalizeDate(e.date)
-    }));
+    })).sort((a, b) => a.date.localeCompare(b.date));
 
     if (!isQual) $('entryValue').value = '';
     $('entryMemo').value = '';
@@ -673,7 +673,7 @@ async function deleteEntry(entryId) {
     });
     state.entries[state.activeItemId] = (Array.isArray(entryResult.data) ? entryResult.data : []).map(e => ({
       ...e, date: normalizeDate(e.date)
-    }));
+    })).sort((a, b) => a.date.localeCompare(b.date));
 
     renderDataTable();
     renderStats();
