@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             : teams;
           teamSel.innerHTML = '<option value="">전체 팀</option>' +
             filtered.map(t => `<option value="${escHtml(t.code_value)}">${escHtml(t.code_name)}</option>`).join('');
+          teamSel.disabled = !clinicCode;
         };
 
         clinicSel.innerHTML = '<option value="">전체 의원</option>' +
