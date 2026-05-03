@@ -254,15 +254,9 @@
 
     tbody tr:hover { background: rgba(37, 99, 235, 0.03); }
 
-    td {
-      padding: 12px 14px;
-      color: var(--text-strong);
-      vertical-align: middle;
-      max-width: 280px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    td { padding: 12px 14px; color: var(--text-strong); vertical-align: middle; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    td:nth-child(1), td:nth-child(2), td:nth-child(3), td:nth-child(6) { text-align: center; }
 
     td.wrap {
       white-space: normal;
@@ -568,12 +562,12 @@
           <table>
             <thead>
               <tr>
-                <th style="width:160px;">작업 시각</th>
-                <th style="width:120px;">작업 유형</th>
-                <th style="width:110px;">대상 유형</th>
+                <th style="width:160px; text-align:center;">작업 시각</th>
+                <th style="width:120px; text-align:center;">작업 유형</th>
+                <th style="width:110px; text-align:center;">대상 유형</th>
                 <th style="width:160px;">대상 ID</th>
                 <th>작업 내용</th>
-                <th style="width:240px;">작업자</th>
+                <th style="width:240px; text-align:center;">작업자</th>
               </tr>
             </thead>
             <tbody id="logTableBody">
