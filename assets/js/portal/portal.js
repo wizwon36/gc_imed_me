@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
     lj_chart: {
       title: '정도관리 시스템',
-      desc: '정량적·정성적 QC 데이터 관리 및 Westgard 규칙 분석',
+      desc: 'QC 데이터 관리',
       icon: '📈',
       url: `${CONFIG.SITE_BASE_URL}/pages/lj-chart/lj-chart.html`
     },
