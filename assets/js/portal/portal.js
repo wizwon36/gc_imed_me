@@ -4,17 +4,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const gridEl = document.getElementById('portalAppGrid');
   const emptyEl = document.getElementById('portalEmpty');
   const logoutBtn = document.getElementById('logoutBtn');
-  const adminPageBtn = document.getElementById('adminPageBtn');
 
   logoutBtn?.addEventListener('click', () => {
     try {
       showGlobalLoading('로그아웃 중...');
     } catch (e) {}
     window.auth.logout();
-  });
-
-  adminPageBtn?.addEventListener('click', () => {
-    location.href = `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`;
   });
 
   const user = window.auth?.getSession?.();
@@ -37,9 +32,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
-  if (adminPageBtn) {
-    adminPageBtn.style.display = isAdmin ? '' : 'none';
-  }
 
   const APP_MAP = {
     equipment: {
