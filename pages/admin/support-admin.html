@@ -122,17 +122,17 @@
       padding: 10px 12px;
       color: var(--text-primary);
       vertical-align: middle;
+      overflow: hidden;
+      text-overflow: clip;
+      white-space: nowrap;
     }
     .support-grid td.col-center {
       text-align: center;
-      white-space: nowrap;
     }
-    /* 말줄임은 제목·미리보기 컬럼에만 적용 */
+    /* 말줄임은 제목·미리보기 컬럼에만 */
     .support-grid td.col-title,
     .support-grid td.col-preview {
-      overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
     }
     .support-grid td.col-title {
       font-weight: 600;
