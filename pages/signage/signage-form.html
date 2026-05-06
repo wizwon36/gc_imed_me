@@ -25,6 +25,21 @@
       </div>
     </section>
 
+    <!-- 탭 네비게이션 -->
+    <div class="signage-tab-nav" id="signageTabNav">
+      <button type="button" class="signage-tab-btn is-active" data-tab="form">
+        <span class="signage-tab-icon">📝</span> 신청하기
+      </button>
+      <button type="button" class="signage-tab-btn" data-tab="history" id="tabBtnHistory">
+        <span class="signage-tab-icon">📋</span> 신청 이력
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 탭 A: 신청 폼                          -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="tabPaneForm" class="signage-tab-pane is-active">
+
     <!-- 타이틀 -->
     <section class="page-hero-simple equipment-form-hero">
       <div class="equipment-form-hero-copy">
@@ -307,7 +322,351 @@
       </div>
 
     </form>
+    </div><!-- /#tabPaneForm -->
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- 탭 B: 신청 이력                        -->
+    <!-- ══════════════════════════════════════ -->
+    <div id="tabPaneHistory" class="signage-tab-pane">
+
+      <section class="page-hero-simple equipment-form-hero">
+        <div class="equipment-form-hero-copy">
+          <span class="portal-section-kicker">HISTORY</span>
+          <h1 class="page-title">신청 이력</h1>
+          <p class="page-desc" id="historyHeroDesc">나의 사인물 제작 신청 내역을 확인합니다.</p>
+        </div>
+      </section>
+
+      <!-- 필터 카드 -->
+      <div class="card form-card equipment-form-card" style="margin-bottom:16px;">
+        <div class="section-head equipment-form-section-head" style="padding-bottom:16px;">
+          <div>
+            <span class="portal-section-kicker">FILTER</span>
+            <h2 class="section-title" style="font-size:18px;">조회 조건</h2>
+          </div>
+        </div>
+
+        <div id="historyMsgBox" class="message-box" style="margin-bottom:14px;"></div>
+
+        <div class="form-grid two-col">
+          <label class="form-field full-col">
+            <span class="form-label">검색어</span>
+            <input type="text" id="histFilterKeyword" class="input" placeholder="신청 ID, 요청자명, 부서, 내용으로 검색" />
+          </label>
+          <label class="form-field">
+            <span class="form-label">제작 유형</span>
+            <select id="histFilterType" class="input">
+              <option value="">전체</option>
+              <option value="NAMEPLATE">규격 명판</option>
+              <option value="SIGN">일반 사인물</option>
+            </select>
+          </label>
+          <label class="form-field">
+            <span class="form-label">긴급 여부</span>
+            <select id="histFilterUrgent" class="input">
+              <option value="">전체</option>
+              <option value="Y">긴급</option>
+              <option value="N">일반</option>
+            </select>
+          </label>
+          <label class="form-field">
+            <span class="form-label">시작일</span>
+            <input type="date" id="histFilterDateFrom" class="input" />
+          </label>
+          <label class="form-field">
+            <span class="form-label">종료일</span>
+            <input type="date" id="histFilterDateTo" class="input" />
+          </label>
+          <div class="form-field" style="align-self:flex-end;">
+            <button type="button" id="histSearchBtn" class="btn btn-primary" style="width:100%; min-height:46px;">조회</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 목록 -->
+      <div class="card form-card equipment-form-card">
+        <div class="section-head equipment-form-section-head" style="padding-bottom:0; border-bottom:none;">
+          <div id="histListCount" style="font-size:13px; font-weight:700; color:#64748b;">조회 버튼을 눌러 주세요.</div>
+        </div>
+        <div id="histRequestList" class="signage-hist-list"></div>
+        <div id="histEmptyBox" class="signage-hist-empty" style="display:none;">
+          <div style="font-size:36px; margin-bottom:12px;">🪧</div>
+          <p>신청 내역이 없습니다.</p>
+        </div>
+      </div>
+
+    </div><!-- /#tabPaneHistory -->
+
   </div>
+
+  <!-- 이력 상세 모달 -->
+  <div id="histModalBackdrop" class="signage-hist-modal-backdrop" role="dialog" aria-modal="true">
+    <div id="histModalBox" class="signage-hist-modal">
+      <div class="signage-hist-modal-head">
+        <h2 class="signage-hist-modal-title" id="histModalTitle">신청 상세</h2>
+        <button type="button" id="histModalClose" class="signage-hist-modal-close" aria-label="닫기">✕</button>
+      </div>
+      <div class="signage-hist-modal-body" id="histModalBody"></div>
+    </div>
+  </div>
+
+  <style>
+    /* ── 탭 네비게이션 ── */
+    .signage-tab-nav {
+      display: flex;
+      gap: 6px;
+      margin: 20px 0 0;
+      border-bottom: 2px solid rgba(148, 163, 184, 0.18);
+      padding-bottom: 0;
+    }
+
+    .signage-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: none;
+      font-size: 14px;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      margin-bottom: -2px;
+      transition: color 0.14s ease, border-color 0.14s ease;
+      border-radius: 0;
+    }
+
+    .signage-tab-btn:hover { color: #0f172a; }
+
+    .signage-tab-btn.is-active {
+      color: #0b1f44;
+      border-bottom-color: #2563eb;
+    }
+
+    .signage-tab-icon { font-size: 15px; }
+
+    /* ── 탭 패널 ── */
+    .signage-tab-pane { display: none; }
+    .signage-tab-pane.is-active { display: block; }
+
+    /* ── 이력 카드 목록 ── */
+    .signage-hist-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px 0 4px;
+    }
+
+    .signage-hist-card {
+      display: flex;
+      gap: 0;
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.07);
+      background: #fff;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.13s ease, box-shadow 0.13s ease, border-color 0.13s ease;
+    }
+
+    .signage-hist-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09);
+      border-color: rgba(37, 99, 235, 0.18);
+    }
+
+    .signage-hist-card-bar {
+      width: 5px;
+      flex-shrink: 0;
+      background: #d1d5db;
+    }
+
+    .signage-hist-card.is-NAMEPLATE .signage-hist-card-bar { background: linear-gradient(180deg, #6366f1, #818cf8); }
+    .signage-hist-card.is-SIGN      .signage-hist-card-bar { background: linear-gradient(180deg, #0ea5e9, #38bdf8); }
+
+    .signage-hist-card-body {
+      flex: 1;
+      padding: 13px 16px;
+      min-width: 0;
+    }
+
+    .signage-hist-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .signage-hist-badges { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+    .signage-hist-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .shb-NAMEPLATE { background: rgba(99,102,241,.10); color: #4338ca; }
+    .shb-SIGN      { background: rgba(14,165,233,.10);  color: #0369a1; }
+    .shb-urgent    { background: rgba(220,38,38,.10);   color: #b91c1c; }
+    .shb-draft     { background: rgba(5,150,105,.10);   color: #065f46; }
+
+    .signage-hist-req-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(100, 116, 139, 0.65);
+    }
+
+    .signage-hist-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .signage-hist-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .signage-hist-meta-item { display: flex; align-items: center; gap: 3px; }
+    .signage-hist-meta-label { font-weight: 700; color: #94a3b8; }
+
+    /* ── 이력 빈 상태 ── */
+    .signage-hist-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* ── 이력 상세 모달 ── */
+    .signage-hist-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(11, 31, 68, 0.45);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .signage-hist-modal-backdrop.is-open { display: flex; }
+
+    .signage-hist-modal {
+      background: #fff;
+      border-radius: 22px;
+      width: 100%;
+      max-width: 620px;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(11, 31, 68, 0.22);
+      animation: shmIn 0.2s ease;
+    }
+
+    @keyframes shmIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .signage-hist-modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 2;
+      border-radius: 22px 22px 0 0;
+    }
+
+    .signage-hist-modal-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .signage-hist-modal-close {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      background: #f8fafc;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #64748b;
+      flex-shrink: 0;
+      transition: background 0.12s;
+    }
+
+    .signage-hist-modal-close:hover { background: #e2e8f0; }
+    .signage-hist-modal-body { padding: 20px 22px 26px; }
+
+    .shm-section { margin-bottom: 20px; }
+    .shm-section:last-child { margin-bottom: 0; }
+
+    .shm-section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin: 0 0 10px;
+    }
+
+    .shm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .shm-grid.single { grid-template-columns: 1fr; }
+
+    .shm-item {
+      padding: 10px 13px;
+      background: #f8fafc;
+      border-radius: 11px;
+      border: 1px solid rgba(148, 163, 184, 0.13);
+    }
+
+    .shm-item-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 3px;
+    }
+
+    .shm-item-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      word-break: break-all;
+      white-space: pre-wrap;
+      line-height: 1.55;
+    }
+  </style>
 
   <!-- 전역 로딩 -->
   <div id="globalLoading" aria-hidden="true">
@@ -321,6 +680,7 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/org-select.js"></script>
   <script src="../../assets/js/signage/nameplate-images.js"></script>
   <script src="../../assets/js/signage/signage-form.js"></script>
