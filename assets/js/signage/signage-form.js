@@ -75,6 +75,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
+  // ── 권한 확인 (signage 앱) ──────────────────────────────────────
+  const ok = await window.appPermission?.requirePermission?.('signage', ['view', 'admin']);
+  if (!ok) return;
+
+  const isHistAdmin = await window.appPermission?.hasPermission?.('signage', ['admin'])
+    || String(user.role || '').trim().toLowerCase() === 'admin';
+
+  // admin이면 이력 탭 설명 변경
+  if (isHistAdmin) {
+    const heroDesc = document.getElementById('historyHeroDesc');
+    if (heroDesc) heroDesc.textContent = '전체 사인물 제작 신청 내역을 조회합니다.';
+  }
+
+  // ── 탭 전환 ────────────────────────────────────────────────────
+  document.querySelectorAll('.signage-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.signage-tab-btn').forEach(b => b.classList.remove('is-active'));
+      document.querySelectorAll('.signage-tab-pane').forEach(p => p.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      document.getElementById(tab === 'form' ? 'tabPaneForm' : 'tabPaneHistory').classList.add('is-active');
+
+      // 이력 탭 첫 진입 시 자동 조회
+      if (tab === 'history' && !histLoaded) histFetchList();
+    });
+  });
+
+  // ── 폼 초기화 ──────────────────────────────────────────────────
   try {
     showGlobalLoading('화면을 준비하는 중...');
     await window.orgSelect.loadOrgData();
@@ -88,6 +116,217 @@ document.addEventListener('DOMContentLoaded', async () => {
     showMessage(err.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
     hideGlobalLoading();
+  }
+
+  // ── 이력 탭 초기화 ─────────────────────────────────────────────
+  const today    = histTodayYmd();
+  const threeAgo = histDateOffset(-90);
+  const fromEl   = document.getElementById('histFilterDateFrom');
+  const toEl     = document.getElementById('histFilterDateTo');
+  if (fromEl) { fromEl.value = threeAgo; fromEl.max = today; }
+  if (toEl)   { toEl.value   = today;    toEl.max   = today; }
+
+  document.getElementById('histSearchBtn')?.addEventListener('click', histFetchList);
+
+  ['histFilterKeyword','histFilterType','histFilterUrgent','histFilterDateFrom','histFilterDateTo']
+    .forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') histFetchList();
+      });
+    });
+
+  document.getElementById('histModalBackdrop')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) histCloseModal();
+  });
+  document.getElementById('histModalClose')?.addEventListener('click', histCloseModal);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') histCloseModal(); });
+
+  // ── 이력: 데이터 조회 ───────────────────────────────────────────
+  let histAllRows = [];
+  let histLoaded  = false;
+
+  async function histFetchList() {
+    const email    = (user.user_email || user.email || '').trim().toLowerCase();
+    const keyword  = histGetVal('histFilterKeyword');
+    const type     = histGetVal('histFilterType');
+    const urgent   = histGetVal('histFilterUrgent');
+    const dateFrom = histGetVal('histFilterDateFrom');
+    const dateTo   = histGetVal('histFilterDateTo');
+
+    if (!dateFrom || !dateTo) { histShowMsg('조회 기간을 입력해 주세요.', 'error'); return; }
+    const diff = (new Date(dateTo) - new Date(dateFrom)) / 86400000;
+    if (diff < 0)  { histShowMsg('종료일이 시작일보다 앞에 있습니다.', 'error'); return; }
+    if (diff > 90) { histShowMsg('조회 기간은 최대 3개월(90일)까지 가능합니다.', 'error'); return; }
+
+    histClearMsg();
+
+    const params = { request_user_email: email, date_from: dateFrom, date_to: dateTo };
+    if (!isHistAdmin) params.target_user_email = email;  // view: 본인만 / admin: 전체
+    if (keyword) params.keyword   = keyword;
+    if (type)    params.type      = type;
+    if (urgent)  params.is_urgent = urgent;
+
+    const searchBtn = document.getElementById('histSearchBtn');
+    try {
+      if (searchBtn) { searchBtn.disabled = true; searchBtn.textContent = '조회 중...'; }
+      showGlobalLoading('신청 이력을 불러오는 중...');
+      const result = await window.apiGet('listSignageRequests', params);
+      histAllRows  = Array.isArray(result.data) ? result.data : [];
+      histLoaded   = true;
+      histRenderList(histAllRows);
+    } catch (err) {
+      histShowMsg(err.message || '신청 이력을 불러오지 못했습니다.', 'error');
+      histRenderList([]);
+    } finally {
+      hideGlobalLoading();
+      if (searchBtn) { searchBtn.disabled = false; searchBtn.textContent = '조회'; }
+    }
+  }
+
+  // ── 이력: 렌더링 ────────────────────────────────────────────────
+  function histRenderList(rows) {
+    const listEl  = document.getElementById('histRequestList');
+    const emptyEl = document.getElementById('histEmptyBox');
+    const countEl = document.getElementById('histListCount');
+
+    if (!rows.length) {
+      if (listEl)  listEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
+      if (countEl) countEl.textContent = '조회된 신청 내역이 없습니다.';
+      return;
+    }
+
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (countEl) countEl.textContent   = `총 ${rows.length.toLocaleString()}건`;
+    if (listEl)  listEl.innerHTML = rows.map(histBuildCard).join('');
+
+    listEl.querySelectorAll('.signage-hist-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const row = histAllRows.find(r => r.request_id === card.dataset.id);
+        if (row) histOpenModal(row);
+      });
+    });
+  }
+
+  function histBuildCard(row) {
+    const typeLabel = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type;
+    let title = row.type === 'NAMEPLATE'
+      ? `[${row.nameplate_type || '-'} 타입] ${row.sign_size || ''}`.trim()
+      : ([row.sign_type, row.sign_size].filter(Boolean).join(' · ') || typeLabel);
+
+    const urgentBadge = row.is_urgent === 'Y' ? `<span class="signage-hist-badge shb-urgent">🚨 긴급</span>` : '';
+    const draftBadge  = row.draft_confirm === 'Y' ? `<span class="signage-hist-badge shb-draft">✅ 시안확인</span>` : '';
+
+    return `
+      <div class="signage-hist-card is-${hesc(row.type)}" data-id="${hesc(row.request_id)}">
+        <div class="signage-hist-card-bar"></div>
+        <div class="signage-hist-card-body">
+          <div class="signage-hist-card-top">
+            <div class="signage-hist-badges">
+              <span class="signage-hist-badge shb-${hesc(row.type)}">${hesc(typeLabel)}</span>
+              ${urgentBadge}${draftBadge}
+            </div>
+            <span class="signage-hist-req-id">${hesc(row.request_id)}</span>
+          </div>
+          <div class="signage-hist-card-title">${hesc(title)}</div>
+          <div class="signage-hist-card-meta">
+            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">부서</span>${hesc(row.department || '-')}</span>
+            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">요청자</span>${hesc(row.requester_name || '-')}</span>
+            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">수량</span>${hesc(String(row.quantity || 1))}개</span>
+            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">신청일</span>${hesc(String(row.created_at || '-').slice(0,10))}</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ── 이력: 모달 ──────────────────────────────────────────────────
+  function histOpenModal(row) {
+    const ENV    = { INDOOR: '실내', OUTDOOR: '실외' };
+    const MAGNET = { Y: '있음 (탈부착)', N: '없음 (고정)' };
+    const typeLabel = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type;
+
+    const commonHtml = `
+      <div class="shm-section">
+        <p class="shm-section-title">📋 신청 정보</p>
+        <div class="shm-grid">
+          <div class="shm-item"><div class="shm-item-label">신청번호</div><div class="shm-item-value">${hesc(row.request_id)}</div></div>
+          <div class="shm-item"><div class="shm-item-label">제작 종류</div><div class="shm-item-value">${hesc(typeLabel)}</div></div>
+          <div class="shm-item"><div class="shm-item-label">긴급 여부</div><div class="shm-item-value">${row.is_urgent === 'Y' ? '🚨 긴급' + (row.urgent_reason ? ' — ' + hesc(row.urgent_reason) : '') : '일반'}</div></div>
+          <div class="shm-item"><div class="shm-item-label">시안 컨펌</div><div class="shm-item-value">${row.draft_confirm === 'Y' ? '✅ 요청함' : '필요 없음'}</div></div>
+          <div class="shm-item"><div class="shm-item-label">부서</div><div class="shm-item-value">${hesc(row.department || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">요청자</div><div class="shm-item-value">${hesc(row.requester_name || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">연락처</div><div class="shm-item-value">${hesc(row.contact || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">수량</div><div class="shm-item-value">${hesc(String(row.quantity || 1))}개</div></div>
+        </div>
+      </div>`;
+
+    const detailHtml = row.type === 'NAMEPLATE' ? `
+      <div class="shm-section">
+        <p class="shm-section-title">🪧 명판 상세</p>
+        <div class="shm-grid">
+          <div class="shm-item"><div class="shm-item-label">명판 타입</div><div class="shm-item-value">${hesc(row.nameplate_type || '-')} 타입</div></div>
+          <div class="shm-item"><div class="shm-item-label">규격 사이즈</div><div class="shm-item-value">${hesc(row.sign_size || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">자석 부착</div><div class="shm-item-value">${hesc(MAGNET[row.magnet_yn] || '-')}</div></div>
+        </div>
+        ${row.nameplate_text ? `<div class="shm-grid single" style="margin-top:8px;"><div class="shm-item"><div class="shm-item-label">명판 문구</div><div class="shm-item-value">${hesc(row.nameplate_text)}</div></div></div>` : ''}
+      </div>` : `
+      <div class="shm-section">
+        <p class="shm-section-title">🖼️ 사인물 상세</p>
+        <div class="shm-grid">
+          <div class="shm-item"><div class="shm-item-label">사이즈</div><div class="shm-item-value">${hesc(row.sign_size || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">형태/종류</div><div class="shm-item-value">${hesc(row.sign_type || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">설치 환경</div><div class="shm-item-value">${hesc(ENV[row.install_env] || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">설치 위치</div><div class="shm-item-value">${hesc(row.install_location || '-')}</div></div>
+        </div>
+        ${row.text_content ? `<div class="shm-grid single" style="margin-top:8px;"><div class="shm-item"><div class="shm-item-label">상세 내역</div><div class="shm-item-value">${hesc(row.text_content)}</div></div></div>` : ''}
+      </div>`;
+
+    const metaHtml = `
+      <div class="shm-section">
+        <p class="shm-section-title">🕐 신청 메타</p>
+        <div class="shm-grid">
+          <div class="shm-item"><div class="shm-item-label">신청일시</div><div class="shm-item-value">${hesc(row.created_at || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">신청계정</div><div class="shm-item-value">${hesc(row.created_by || '-')}</div></div>
+        </div>
+      </div>`;
+
+    document.getElementById('histModalTitle').textContent = typeLabel + ' 신청 상세';
+    document.getElementById('histModalBody').innerHTML = commonHtml + detailHtml + metaHtml;
+    document.getElementById('histModalBackdrop').classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function histCloseModal() {
+    document.getElementById('histModalBackdrop').classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  // ── 이력: 유틸 ──────────────────────────────────────────────────
+  function hesc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function histGetVal(id) { return (document.getElementById(id)?.value || '').trim(); }
+  function histTodayYmd() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function histDateOffset(days) {
+    const d = new Date(); d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function histShowMsg(msg, type) {
+    const box = document.getElementById('historyMsgBox') || document.getElementById('histMsgBox');
+    if (!box) return;
+    box.className = `message-box ${type}`;
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+  function histClearMsg() {
+    const box = document.getElementById('historyMsgBox') || document.getElementById('histMsgBox');
+    if (!box) return;
+    box.style.display = 'none';
+    box.textContent = '';
   }
 });
 
