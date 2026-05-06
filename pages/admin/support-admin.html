@@ -6,6 +6,20 @@
   <title>수정요청 관리 - MSO관리팀 업무포털</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <style>
+    :root {
+      --page-max-width: 1440px;
+    }
+
+    body {
+      background: linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
+      min-height: 100vh;
+    }
+
+    /* 관리자 페이지 공통 너비 (logs, users 와 동일) */
+    .page-shell {
+      max-width: var(--page-max-width) !important;
+    }
+
     .form-control-sm {
       height: 38px;
       padding: 0 12px;
