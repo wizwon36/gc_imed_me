@@ -116,16 +116,25 @@
     const counts = { PENDING: 0, IN_PROGRESS: 0, COMPLETED: 0, REJECTED: 0 };
     items.forEach(function (item) { if (counts[item.status] !== undefined) counts[item.status]++; });
 
+    const total  = items.length;
     const labels = { PENDING:'접수', IN_PROGRESS:'처리중', COMPLETED:'완료', REJECTED:'반려' };
     const bar = document.getElementById('statBar');
     if (!bar) return;
 
-    bar.innerHTML = Object.keys(counts).map(function (s) {
+    // 전체 칩 + 개별 상태 칩
+    const allChip = `<div class="support-stat-chip support-stat-chip--all" data-status="">
+      전체
+      <span class="support-stat-chip-count">${total}</span>
+    </div>`;
+
+    const statusChips = Object.keys(counts).map(function (s) {
       return `<div class="support-stat-chip" data-status="${s}">
         ${escapeHtml(labels[s])}
         <span class="support-stat-chip-count">${counts[s]}</span>
       </div>`;
     }).join('');
+
+    bar.innerHTML = allChip + statusChips;
 
     bar.querySelectorAll('.support-stat-chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
