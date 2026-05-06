@@ -267,12 +267,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     return `
       <tr data-id="${hesc(row.request_id)}">
-        <td style="font-size:12px; color:#64748b; font-weight:700;">${hesc(row.request_id)}</td>
-        <td>${hesc(String(row.created_at || '-').slice(0, 10))}</td>
+        <td style="text-align:center; font-size:12px; color:#64748b; font-weight:700;">${hesc(row.request_id)}</td>
+        <td style="text-align:center;">${hesc(String(row.created_at || '-').slice(0, 10))}</td>
         <td style="text-align:center;"><span class="hist-badge hist-badge-${hesc(row.type)}">${hesc(typeLabel)}</span></td>
-        <td>${hesc(row.clinic_name || '-')}</td>
-        <td>${hesc(row.team_name || row.department || '-')}</td>
-        <td>${hesc(row.requester_name || '-')}</td>
+        <td style="text-align:center;">${hesc(row.clinic_name || '-')}</td>
+        <td style="text-align:center;">${hesc(row.team_name || row.department || '-')}</td>
+        <td style="text-align:center;">${hesc(row.requester_name || '-')}</td>
         <td class="wrap">${hesc(title)}</td>
       </tr>`;
   }
