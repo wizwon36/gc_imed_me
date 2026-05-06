@@ -418,9 +418,12 @@
       <div class="card form-card equipment-form-card">
         <div class="hist-table-topbar">
           <div id="histListCount" class="hist-list-count">조회 버튼을 눌러 주세요.</div>
-          <button type="button" id="histExportBtn" class="btn btn-ghost" style="display:none;">
-            📥 엑셀 다운로드
-          </button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" id="histPrevBtn" class="btn btn-ghost" style="min-height:34px; padding:0 12px; font-size:13px; display:none;" disabled>◀ 이전</button>
+            <span id="histPageInfo" style="font-size:13px; font-weight:600; color:#64748b; display:none;"></span>
+            <button type="button" id="histNextBtn" class="btn btn-ghost" style="min-height:34px; padding:0 12px; font-size:13px; display:none;" disabled>다음 ▶</button>
+            <button type="button" id="histExportBtn" class="btn btn-ghost" style="display:none;">📥 엑셀 다운로드</button>
+          </div>
         </div>
 
         <div class="hist-table-wrap">
