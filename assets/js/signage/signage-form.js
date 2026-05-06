@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   document.getElementById('histSearchBtn')?.addEventListener('click', histFetchList);
+  document.getElementById('histExportBtn')?.addEventListener('click', histExportExcel);
 
   ['histFilterKeyword','histFilterType','histFilterUrgent',
    'histFilterClinic','histFilterTeam','histFilterDateFrom','histFilterDateTo']
@@ -226,10 +227,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── 이력: 테이블 렌더링 ─────────────────────────────────────────
   function histRenderTable(rows) {
-    const tbody   = document.getElementById('histTableBody');
-    const countEl = document.getElementById('histListCount');
+    const tbody     = document.getElementById('histTableBody');
+    const countEl   = document.getElementById('histListCount');
+    const exportBtn = document.getElementById('histExportBtn');
 
     if (!tbody) return;
+
+    if (exportBtn) exportBtn.style.display = rows.length ? '' : 'none';
 
     if (!rows.length) {
       tbody.innerHTML = `
@@ -336,6 +340,102 @@ document.addEventListener('DOMContentLoaded', async () => {
   function histCloseModal() {
     document.getElementById('histModalBackdrop').classList.remove('is-open');
     document.body.style.overflow = '';
+  }
+
+  // ── 이력: 엑셀 내보내기 ─────────────────────────────────────────
+  function histExportExcel() {
+    if (!window.XLSX) {
+      alert('엑셀 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    if (!histAllRows.length) {
+      alert('다운로드할 데이터가 없습니다.');
+      return;
+    }
+
+    const exportBtn = document.getElementById('histExportBtn');
+
+    try {
+      if (exportBtn) { exportBtn.disabled = true; exportBtn.textContent = '다운로드 중...'; }
+
+      const TYPE_LABEL = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' };
+
+      // 그리드와 동일한 7개 컬럼
+      const headers = ['신청번호', '신청일자', '종류', '소속 의원', '소속 부서', '신청인', '신청 제목'];
+
+      const COL_DATE = new Set([1]);
+
+      const rowData = histAllRows.map(r => {
+        const title = r.request_title ||
+          (r.type === 'NAMEPLATE'
+            ? `[${r.nameplate_type || '-'} 타입] ${r.sign_size || ''}`.trim()
+            : ([r.sign_type, r.sign_size].filter(Boolean).join(' · ') || TYPE_LABEL[r.type] || r.type));
+        return [
+          r.request_id     || '',
+          String(r.created_at || '').slice(0, 10),
+          TYPE_LABEL[r.type] || r.type || '',
+          r.clinic_name    || '',
+          r.team_name      || r.department || '',
+          r.requester_name || '',
+          title
+        ];
+      });
+
+      // ── 장비대장과 동일한 스타일 ─────────────────────────────────
+      const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
+      const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+      const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+      const BORDER = {
+        top:    { style: 'thin', color: { rgb: 'BFBFBF' } },
+        bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+        left:   { style: 'thin', color: { rgb: 'BFBFBF' } },
+        right:  { style: 'thin', color: { rgb: 'BFBFBF' } }
+      };
+      const ALIGN_LEFT   = { horizontal: 'left',   vertical: 'center' };
+      const ALIGN_CENTER = { horizontal: 'center', vertical: 'center' };
+      const FMT_DATE = 'yyyy-mm-dd';
+
+      const ws = {};
+      const totalCols = headers.length;
+      const totalRows = rowData.length + 1;
+
+      headers.forEach((h, c) => {
+        ws[window.XLSX.utils.encode_cell({ r: 0, c })] = {
+          v: h, t: 's',
+          s: { font: FONT_HEADER, fill: FILL_HEADER, border: BORDER, alignment: ALIGN_CENTER }
+        };
+      });
+
+      rowData.forEach((row, r) => {
+        row.forEach((val, c) => {
+          const isDate = COL_DATE.has(c);
+          const cell = {
+            v: val, t: 's',
+            s: { font: FONT_BASE, border: BORDER, alignment: isDate ? ALIGN_CENTER : ALIGN_LEFT }
+          };
+          if (isDate && val) { cell.z = FMT_DATE; cell.s.numFmt = FMT_DATE; }
+          ws[window.XLSX.utils.encode_cell({ r: r + 1, c })] = cell;
+        });
+      });
+
+      ws['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: totalRows - 1, c: totalCols - 1 });
+      ws['!cols'] = [{ wch: 16 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 18 }, { wch: 10 }, { wch: 36 }];
+      ws['!rows'] = Array(totalRows).fill({ hpt: 18 });
+
+      const wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, ws, '사인물신청이력');
+
+      const now = new Date();
+      const dateStr = now.getFullYear() +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0');
+      window.XLSX.writeFile(wb, `사인물신청이력_${dateStr}.xlsx`);
+
+    } catch (err) {
+      alert(err.message || '엑셀 다운로드 중 오류가 발생했습니다.');
+    } finally {
+      if (exportBtn) { exportBtn.disabled = false; exportBtn.textContent = '📥 엑셀 다운로드'; }
+    }
   }
 
   // ── 이력: 유틸 ──────────────────────────────────────────────────
