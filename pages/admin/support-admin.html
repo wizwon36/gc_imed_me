@@ -92,13 +92,14 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
+      table-layout: fixed;
     }
     .support-grid thead tr {
       background: var(--surface-soft, #f8fafc);
       border-bottom: 2px solid var(--border);
     }
     .support-grid thead th {
-      padding: 10px 14px;
+      padding: 10px 12px;
       font-size: 12px;
       font-weight: 700;
       color: var(--text-muted);
@@ -106,6 +107,7 @@
       white-space: nowrap;
       letter-spacing: 0.03em;
     }
+    .support-grid thead th.th-center { text-align: center; }
     .support-grid tbody tr {
       border-bottom: 1px solid var(--border);
       cursor: pointer;
@@ -117,27 +119,22 @@
     .support-grid tbody tr.is-completed   { border-left: 3px solid #10b981; }
     .support-grid tbody tr.is-rejected    { border-left: 3px solid #ef4444; }
     .support-grid td {
-      padding: 10px 14px;
+      padding: 10px 12px;
       color: var(--text-primary);
       vertical-align: middle;
-    }
-    .support-grid td.col-title {
-      max-width: 320px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    .support-grid td.col-center { text-align: center; }
+    .support-grid td.col-title {
       font-weight: 600;
     }
     .support-grid td.col-preview {
-      max-width: 260px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       color: var(--text-secondary);
       font-size: 12px;
     }
     .support-grid td.col-meta {
-      white-space: nowrap;
       font-size: 12px;
       color: var(--text-muted);
     }
@@ -404,18 +401,18 @@
     </div>
 
     <!-- 그리드 테이블 -->
-    <div style="overflow-x:auto;">
+    <div>
       <table class="support-grid" id="requestList" style="display:none;">
         <thead>
           <tr>
-            <th style="width:90px;">카테고리</th>
-            <th style="width:90px;">유형</th>
-            <th style="width:72px;">상태</th>
-            <th>제목</th>
+            <th class="th-center" style="width:88px;">카테고리</th>
+            <th class="th-center" style="width:88px;">유형</th>
+            <th class="th-center" style="width:64px;">상태</th>
+            <th style="width:28%;">제목</th>
             <th>내용 미리보기</th>
-            <th style="width:160px;">요청자</th>
-            <th style="width:140px;">일시</th>
-            <th style="width:44px;">답변</th>
+            <th class="th-center" style="width:72px;">요청자</th>
+            <th class="th-center" style="width:96px;">일시</th>
+            <th class="th-center" style="width:36px;">답변</th>
           </tr>
         </thead>
         <tbody id="requestBody"></tbody>
