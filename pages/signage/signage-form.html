@@ -21,19 +21,13 @@
         </div>
       </div>
       <div class="top-brand-actions portal-top-actions equipment-form-top-actions">
+        <button type="button" id="tabBtnHistory" class="portal-header-btn portal-header-btn--secondary">📋 신청 이력</button>
+        <button type="button" id="tabBtnForm"    class="portal-header-btn portal-header-btn--secondary" style="display:none;">📝 신청하기</button>
         <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
       </div>
     </section>
 
-    <!-- ── 탭 네비게이션 (두 패널 공통, hero 위) ── -->
-    <div class="signage-tab-nav" id="signageTabNav">
-      <button type="button" class="signage-tab-btn is-active" data-tab="form">
-        📝 신청하기
-      </button>
-      <button type="button" class="signage-tab-btn" data-tab="history">
-        📋 신청 이력
-      </button>
-    </div>
+
 
     <!-- ══════════════════════════════════════ -->
     <!-- 탭 A: 신청 폼                          -->
@@ -469,36 +463,6 @@
 
   <style>
     /* ── 탭 네비게이션 ── */
-    .signage-tab-nav {
-      display: flex;
-      border-bottom: 2px solid rgba(148, 163, 184, 0.20);
-      margin-bottom: 20px;
-    }
-
-    .signage-tab-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 10px 20px;
-      border: none;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      background: none;
-      font-size: 14px;
-      font-weight: 700;
-      color: #94a3b8;
-      cursor: pointer;
-      transition: color 0.14s, border-color 0.14s;
-      white-space: nowrap;
-    }
-
-    .signage-tab-btn:hover { color: #0f172a; }
-
-    .signage-tab-btn.is-active {
-      color: #0b1f44;
-      border-bottom-color: #2563eb;
-    }
-
     /* ── 탭 패널 ── */
     .signage-tab-pane { display: none; }
     .signage-tab-pane.is-active { display: block; }
