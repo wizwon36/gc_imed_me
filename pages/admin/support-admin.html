@@ -144,11 +144,18 @@
       text-align: center;
       display: table-cell; /* 명시적으로 유지 */
     }
-    /* inline-flex 뱃지를 셀 안에서 가운데 정렬 */
+    /* inline-flex 뱃지를 셀 안에서 가로·세로 모두 가운데 */
+    .support-grid td.col-center {
+      display: table-cell;
+      vertical-align: middle;
+    }
     .support-grid td.col-center .support-badge {
       margin: 0 auto;
       display: block;
       width: fit-content;
+      line-height: 1;
+      padding-top: 4px;
+      padding-bottom: 4px;
     }
     /* 말줄임은 제목·미리보기 컬럼에만 */
     .support-grid td.col-title,
@@ -355,20 +362,21 @@
   </style>
 </head>
 <body class="portal-page">
-  <div class="container page-shell">
 
-    <section class="top-brand-bar portal-topbar portal-hero-card">
-      <div class="top-brand-left">
-        <div class="top-brand-logo">+</div>
-        <div class="top-brand-texts">
-          <strong class="top-brand-title">수정요청 관리</strong>
-          <span class="top-brand-sub">접수된 수정요청을 처리합니다</span>
-        </div>
+  <section class="top-brand-bar portal-topbar portal-hero-card" style="margin:12px 12px 0; border-radius:20px;">
+    <div class="top-brand-left">
+      <div class="top-brand-logo">+</div>
+      <div class="top-brand-texts">
+        <strong class="top-brand-title">수정요청 관리</strong>
+        <span class="top-brand-sub">접수된 수정요청을 처리합니다</span>
       </div>
-      <div class="top-brand-actions portal-top-actions">
-        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
-      </div>
-    </section>
+    </div>
+    <div class="top-brand-actions portal-top-actions">
+      <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+    </div>
+  </section>
+
+  <div class="container page-shell">
 
     <div id="messageBox" class="message-box"></div>
 
