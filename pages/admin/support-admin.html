@@ -87,32 +87,94 @@
       font-size: 11px;
     }
 
-    /* 목록 카드 */
-    .support-list { display: flex; flex-direction: column; gap: 10px; }
-    .support-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
+    /* ── 그리드 테이블 ── */
+    .support-grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .support-grid thead tr {
+      background: var(--surface-soft, #f8fafc);
+      border-bottom: 2px solid var(--border);
+    }
+    .support-grid thead th {
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: left;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+    .support-grid tbody tr {
+      border-bottom: 1px solid var(--border);
       cursor: pointer;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      position: relative;
+      transition: background 0.1s;
     }
-    .support-card:hover {
-      border-color: var(--blue);
-      box-shadow: 0 4px 16px rgba(47,109,246,0.10);
+    .support-grid tbody tr:hover { background: var(--hover, #f1f5f9); }
+    .support-grid tbody tr.is-pending     { border-left: 3px solid #f59e0b; }
+    .support-grid tbody tr.is-in_progress { border-left: 3px solid #2563eb; }
+    .support-grid tbody tr.is-completed   { border-left: 3px solid #10b981; }
+    .support-grid tbody tr.is-rejected    { border-left: 3px solid #ef4444; }
+    .support-grid td {
+      padding: 10px 14px;
+      color: var(--text-primary);
+      vertical-align: middle;
     }
-    .support-card.is-pending     { border-left: 4px solid #f59e0b; }
-    .support-card.is-in_progress { border-left: 4px solid #2563eb; }
-    .support-card.is-completed   { border-left: 4px solid #10b981; }
-    .support-card.is-rejected    { border-left: 4px solid #ef4444; }
-    .support-card-top {
+    .support-grid td.col-title {
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .support-grid td.col-preview {
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    .support-grid td.col-meta {
+      white-space: nowrap;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .support-grid td.col-reply {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* ── 페이지네이션 ── */
+    .support-pagination {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      gap: 4px;
+      margin-top: 16px;
       flex-wrap: wrap;
-      margin-bottom: 6px;
     }
+    .pg-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .pg-btn:hover   { border-color: var(--blue); color: var(--blue); }
+    .pg-btn.is-active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+    .pg-btn:disabled { opacity: 0.35; cursor: default; }
     .support-card-title {
       font-size: 15px;
       font-weight: 800;
@@ -329,39 +391,38 @@
     <div class="support-stat-bar" id="statBar"></div>
 
     <!-- 목록 -->
-    <div id="requestList" class="support-list">
-      <!-- 스켈레톤: 데이터 로드 전 shimmer 카드 -->
+    <!-- 스켈레톤 -->
+    <div id="skeletonArea">
       <div class="sk-card" id="skCard1">
-        <div class="sk-badge-row">
-          <div class="sk sk-badge"></div>
-          <div class="sk sk-badge"></div>
-          <div class="sk sk-badge"></div>
-        </div>
-        <div class="sk sk-title"></div>
-        <div class="sk sk-text"></div>
-        <div class="sk sk-text-sm"></div>
+        <div class="sk-badge-row"><div class="sk sk-badge"></div><div class="sk sk-badge"></div><div class="sk sk-badge"></div></div>
+        <div class="sk sk-title"></div><div class="sk sk-text"></div><div class="sk sk-text-sm"></div>
       </div>
       <div class="sk-card" id="skCard2">
-        <div class="sk-badge-row">
-          <div class="sk sk-badge"></div>
-          <div class="sk sk-badge"></div>
-          <div class="sk sk-badge"></div>
-        </div>
-        <div class="sk sk-title"></div>
-        <div class="sk sk-text"></div>
-        <div class="sk sk-text-sm"></div>
-      </div>
-      <div class="sk-card" id="skCard3">
-        <div class="sk-badge-row">
-          <div class="sk sk-badge"></div>
-          <div class="sk sk-badge"></div>
-          <div class="sk sk-badge"></div>
-        </div>
-        <div class="sk sk-title"></div>
-        <div class="sk sk-text"></div>
-        <div class="sk sk-text-sm"></div>
+        <div class="sk-badge-row"><div class="sk sk-badge"></div><div class="sk sk-badge"></div><div class="sk sk-badge"></div></div>
+        <div class="sk sk-title"></div><div class="sk sk-text"></div><div class="sk sk-text-sm"></div>
       </div>
     </div>
+
+    <!-- 그리드 테이블 -->
+    <div style="overflow-x:auto;">
+      <table class="support-grid" id="requestList" style="display:none;">
+        <thead>
+          <tr>
+            <th style="width:90px;">카테고리</th>
+            <th style="width:90px;">유형</th>
+            <th style="width:72px;">상태</th>
+            <th>제목</th>
+            <th>내용 미리보기</th>
+            <th style="width:160px;">요청자</th>
+            <th style="width:140px;">일시</th>
+            <th style="width:44px;">답변</th>
+          </tr>
+        </thead>
+        <tbody id="requestBody"></tbody>
+      </table>
+    </div>
+
+    <div id="paginationBar" class="support-pagination" style="display:none;"></div>
     <div id="emptyBox" class="empty-box" style="display:none;">접수된 요청이 없습니다.</div>
 
     <!-- 처리 모달 -->
