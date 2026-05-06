@@ -88,22 +88,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (heroDesc) heroDesc.textContent = '전체 사인물 제작 신청 내역을 조회합니다.';
   }
 
-  // ── 탭 전환 ────────────────────────────────────────────────────
-  document.querySelectorAll('.signage-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
+  // ── 탭 전환 (topbar 버튼) ──────────────────────────────────────
+  function switchTab(tab) {
+    const btnHistory = document.getElementById('tabBtnHistory');
+    const btnForm    = document.getElementById('tabBtnForm');
 
-      document.querySelectorAll('.signage-tab-btn').forEach(b => {
-        b.classList.toggle('is-active', b.dataset.tab === tab);
-      });
+    // 현재 탭의 반대 버튼만 표시
+    if (btnHistory) btnHistory.style.display = tab === 'form'    ? '' : 'none';
+    if (btnForm)    btnForm.style.display    = tab === 'history' ? '' : 'none';
 
-      document.querySelectorAll('.signage-tab-pane').forEach(p => p.classList.remove('is-active'));
-      document.getElementById(tab === 'form' ? 'tabPaneForm' : 'tabPaneHistory').classList.add('is-active');
+    document.querySelectorAll('.signage-tab-pane').forEach(p => p.classList.remove('is-active'));
+    document.getElementById(tab === 'form' ? 'tabPaneForm' : 'tabPaneHistory').classList.add('is-active');
 
-      // 이력 탭 첫 진입 시 자동 조회
-      if (tab === 'history' && !histLoaded) histFetchList();
-    });
-  });
+    if (tab === 'history' && !histLoaded) histFetchList();
+  }
+
+  document.getElementById('tabBtnHistory')?.addEventListener('click', () => switchTab('history'));
+  document.getElementById('tabBtnForm')?.addEventListener('click',    () => switchTab('form'));
 
   // ── 폼 초기화 ──────────────────────────────────────────────────
   try {
