@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!rows.length) {
       tbody.innerHTML = `
-        <tr><td colspan="7">
+        <tr><td colspan="8">
           <div class="hist-table-empty">
             <div class="hist-table-empty-icon">🪧</div>
             <div>${histLoaded ? '조건에 맞는 신청 내역이 없습니다.' : '조건을 설정한 뒤 <strong>조회</strong> 버튼을 눌러 주세요.'}</div>
@@ -310,6 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td style="text-align:center;">${hesc(row.clinic_name || '-')}</td>
         <td style="text-align:center;">${hesc(row.team_name || row.department || '-')}</td>
         <td style="text-align:center;">${hesc(row.requester_name || '-')}</td>
+        <td style="text-align:center;">${hesc(String(row.quantity || 1))}</td>
         <td class="wrap">${hesc(title)}</td>
       </tr>`;
   }
@@ -397,10 +398,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const TYPE_LABEL = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' };
 
-      // 그리드와 동일한 7개 컬럼
-      const headers = ['신청번호', '신청일자', '종류', '소속 의원', '소속 부서', '신청인', '신청 제목'];
+      // 그리드와 동일한 8개 컬럼
+      const headers = ['신청번호', '신청일자', '종류', '소속 의원', '소속 부서', '신청인', '수량', '신청 제목'];
 
-      const COL_DATE = new Set([1]);
+      const COL_DATE   = new Set([1]);
+      const COL_NUM    = new Set([6]);
 
       const rowData = histAllRows.map(r => {
         const title = r.request_title ||
@@ -414,6 +416,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           r.clinic_name    || '',
           r.team_name      || r.department || '',
           r.requester_name || '',
+          Number(r.quantity || 1),
           title
         ];
       });
@@ -446,9 +449,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       rowData.forEach((row, r) => {
         row.forEach((val, c) => {
           const isDate = COL_DATE.has(c);
+          const isNum  = COL_NUM.has(c);
           const cell = {
-            v: val, t: 's',
-            s: { font: FONT_BASE, border: BORDER, alignment: isDate ? ALIGN_CENTER : ALIGN_LEFT }
+            v: val,
+            t: isNum ? 'n' : 's',
+            s: { font: FONT_BASE, border: BORDER, alignment: (isDate || isNum) ? ALIGN_CENTER : ALIGN_LEFT }
           };
           if (isDate && val) { cell.z = FMT_DATE; cell.s.numFmt = FMT_DATE; }
           ws[window.XLSX.utils.encode_cell({ r: r + 1, c })] = cell;
@@ -456,7 +461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       ws['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: totalRows - 1, c: totalCols - 1 });
-      ws['!cols'] = [{ wch: 16 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 18 }, { wch: 10 }, { wch: 36 }];
+      ws['!cols'] = [{ wch: 16 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 18 }, { wch: 10 }, { wch: 8 }, { wch: 36 }];
       ws['!rows'] = Array(totalRows).fill({ hpt: 18 });
 
       const wb = window.XLSX.utils.book_new();
