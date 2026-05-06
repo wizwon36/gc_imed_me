@@ -140,22 +140,16 @@
       text-overflow: clip;
       white-space: nowrap;
     }
+    /* 뱃지 컬럼: flexbox로 가로·세로 모두 가운데 정렬 */
     .support-grid td.col-center {
       text-align: center;
-      display: table-cell; /* 명시적으로 유지 */
-    }
-    /* inline-flex 뱃지를 셀 안에서 가로·세로 모두 가운데 */
-    .support-grid td.col-center {
-      display: table-cell;
       vertical-align: middle;
     }
-    .support-grid td.col-center .support-badge {
-      margin: 0 auto;
-      display: block;
-      width: fit-content;
-      line-height: 1;
-      padding-top: 4px;
-      padding-bottom: 4px;
+    .support-grid td.col-center > * {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
     }
     /* 말줄임은 제목·미리보기 컬럼에만 */
     .support-grid td.col-title,
@@ -423,8 +417,8 @@
         <thead>
           <tr>
             <th class="th-center" style="width:88px;">카테고리</th>
-            <th class="th-center" style="width:88px;">유형</th>
-            <th class="th-center" style="width:64px;">상태</th>
+            <th class="th-center" style="width:110px;">유형</th>
+            <th class="th-center" style="width:72px;">상태</th>
             <th style="width:28%;">제목</th>
             <th>내용 미리보기</th>
             <th class="th-center" style="width:72px;">요청자</th>
