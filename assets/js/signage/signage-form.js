@@ -92,9 +92,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.signage-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
-      document.querySelectorAll('.signage-tab-btn').forEach(b => b.classList.remove('is-active'));
+
+      // 모든 탭 버튼 비활성 → 같은 data-tab 버튼 전부 활성 (두 nav 동기화)
+      document.querySelectorAll('.signage-tab-btn').forEach(b => {
+        b.classList.toggle('is-active', b.dataset.tab === tab);
+      });
+
+      // 패널 전환
       document.querySelectorAll('.signage-tab-pane').forEach(p => p.classList.remove('is-active'));
-      btn.classList.add('is-active');
       document.getElementById(tab === 'form' ? 'tabPaneForm' : 'tabPaneHistory').classList.add('is-active');
 
       // 이력 탭 첫 진입 시 자동 조회
