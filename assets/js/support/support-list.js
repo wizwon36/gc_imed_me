@@ -33,9 +33,23 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
   });
 
+  // ── 기본 앱 목록 (API 응답에 없을 경우 폴백) ──────────────────────
+  const DEFAULT_APPS = [
+    { app_id: 'equipment', app_name: '의료장비 관리' },
+    { app_id: 'signage',   app_name: '사인물 신청'   },
+    { app_id: 'lj_chart',  app_name: '정도관리 시스템' }
+  ];
+
   async function loadMeta() {
     const result = await apiGet('getSupportAppList');
     appList = result?.data?.apps || [];
+
+    // API 응답에 lj_chart 가 없으면 DEFAULT_APPS 에서 보완
+    DEFAULT_APPS.forEach(function (def) {
+      if (!appList.some(function (a) { return a.app_id === def.app_id; })) {
+        appList = appList.concat([def]);
+      }
+    });
 
     const appSel = document.getElementById('filterApp');
     appList.forEach(function (a) {
@@ -130,10 +144,8 @@
     const modal  = document.getElementById('detailModal');
     const bodyEl = document.getElementById('modalBody');
 
-    // 상단 컬러 바 + 헤더를 동적으로 교체
     const box = modal.querySelector('.support-modal-box');
     if (box) {
-      // topbar
       let topbar = box.querySelector('.support-modal-topbar');
       if (!topbar) {
         topbar = document.createElement('div');
@@ -141,7 +153,6 @@
       }
       topbar.className = `support-modal-topbar support-modal-topbar--${item.status}`;
 
-      // 헤더 뱃지 + 제목
       const headerLeft = box.querySelector('.support-modal-header-left');
       if (headerLeft) {
         headerLeft.innerHTML = `
@@ -170,20 +181,16 @@
       </div>` : '';
 
     bodyEl.innerHTML = `
-      <!-- 메타 정보 -->
       <div class="support-modal-section">
         <div class="support-meta-row">
           <div class="support-meta-item">🕐 <strong>${escapeHtml(item.created_at)}</strong></div>
           ${fileHtml}
         </div>
       </div>
-
-      <!-- 요청 내용 -->
       <div class="support-modal-section">
         <div class="support-detail-label">요청 내용</div>
         <div class="support-detail-content">${escapeHtml(item.content)}</div>
       </div>
-
       ${replyHtml}
     `;
 
