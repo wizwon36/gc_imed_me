@@ -46,6 +46,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '🪧',
       url: `${CONFIG.SITE_BASE_URL}/pages/signage/signage-form.html`
     },
+    signage_list: {
+      title: '사인물 신청 이력',
+      desc: '나의 사인물 제작 신청 내역 조회',
+      icon: '📋',
+      url: `${CONFIG.SITE_BASE_URL}/pages/signage/signage-list.html`
+    },
     lj_chart: {
       title: '정도관리 시스템',
       desc: 'QC 데이터 관리',
