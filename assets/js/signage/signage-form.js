@@ -253,9 +253,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function histBuildRow(row) {
     const typeLabel = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type;
-    const content   = row.type === 'NAMEPLATE'
-      ? `[${row.nameplate_type || '-'} 타입] ${row.sign_size || ''}`.trim()
-      : ([row.sign_type, row.sign_size].filter(Boolean).join(' · ') || typeLabel);
+    const content   = row.request_title ||
+      (row.type === 'NAMEPLATE'
+        ? `[${row.nameplate_type || '-'} 타입] ${row.sign_size || ''}`.trim()
+        : ([row.sign_type, row.sign_size].filter(Boolean).join(' · ') || typeLabel));
 
     const urgentCell = row.is_urgent === 'Y'
       ? `<span class="hist-badge hist-badge-urgent">🚨 긴급</span>`
@@ -272,7 +273,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td style="text-align:center;">${urgentCell}</td>
       </tr>`;
   }
-  }
 
   // ── 이력: 모달 ──────────────────────────────────────────────────
   function histOpenModal(row) {
@@ -283,6 +283,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const commonHtml = `
       <div class="shm-section">
         <p class="shm-section-title">📋 신청 정보</p>
+        <div class="shm-grid single" style="margin-bottom:8px;">
+          <div class="shm-item"><div class="shm-item-label">제목</div><div class="shm-item-value">${hesc(row.request_title || '-')}</div></div>
+        </div>
         <div class="shm-grid">
           <div class="shm-item"><div class="shm-item-label">신청번호</div><div class="shm-item-value">${hesc(row.request_id)}</div></div>
           <div class="shm-item"><div class="shm-item-label">제작 종류</div><div class="shm-item-value">${hesc(typeLabel)}</div></div>
@@ -403,6 +406,16 @@ function handleTypeChange(e) {
   document.getElementById('typeCard_' + type)?.classList.add('is-selected');
   showEl('sectionCommon');
   showEl('formActions');
+
+  // 제목 placeholder 타입별 전환
+  const titleEl = document.getElementById('request_title');
+  if (titleEl) {
+    if (type === 'SIGN') {
+      titleEl.placeholder = '예: [A3 포맥스], [바닥 스티커], [화살표 스티커], [바닥 유도선] 등 제작 품목명을 상세히 입력해 주세요.';
+    } else {
+      titleEl.placeholder = '예: [명패] MD / 홍길동 / 부인과 : 명패 당사자의 직함 / 성함 / 부서를 순서대로 입력해 주세요.';
+    }
+  }
 
   if (type === 'SIGN') {
     showEl('sectionSign');
@@ -769,6 +782,7 @@ function buildPayload() {
 
   return {
     type,
+    request_title:      getValue('request_title'),
     clinic_code:        getValue('clinic_code'),
     team_code:          getValue('team_code'),
     requester_name:     getValue('requester_name'),
@@ -796,9 +810,10 @@ function buildPayload() {
 // 유효성 검증
 // ─────────────────────────────────────────────
 function validatePayload(p) {
-  if (!p.clinic_code)    return fail('의원 정보가 없습니다. 다시 로그인해 주세요.', null);
-  if (!p.team_code)      return fail('팀 정보가 없습니다. 다시 로그인해 주세요.', null);
-  if (!p.requester_name) return fail('요청자명을 입력해 주세요.', 'requester_name');
+  if (!p.clinic_code)      return fail('의원 정보가 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.team_code)        return fail('팀 정보가 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.request_title)    return fail('제목을 입력해 주세요.', 'request_title');
+  if (!p.requester_name)   return fail('요청자명을 입력해 주세요.', 'requester_name');
   if (!p.contact)        return fail('연락처를 입력해 주세요.', 'contact');
   if (!p.quantity || p.quantity < 1) return fail('수량을 1 이상 입력해 주세요.', 'quantity');
   if (p.is_urgent === 'Y' && !p.urgent_reason) return fail('긴급 사유를 입력해 주세요.', 'urgent_reason');
