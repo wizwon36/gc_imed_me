@@ -122,11 +122,18 @@
       padding: 10px 12px;
       color: var(--text-primary);
       vertical-align: middle;
+    }
+    .support-grid td.col-center {
+      text-align: center;
+      white-space: nowrap;
+    }
+    /* 말줄임은 제목·미리보기 컬럼에만 적용 */
+    .support-grid td.col-title,
+    .support-grid td.col-preview {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .support-grid td.col-center { text-align: center; }
     .support-grid td.col-title {
       font-weight: 600;
     }
@@ -172,13 +179,6 @@
       color: #fff;
     }
     .pg-btn:disabled { opacity: 0.35; cursor: default; }
-    .support-card-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--text-primary);
-      flex: 1;
-      min-width: 0;
-    }
     .support-badge {
       display: inline-flex;
       align-items: center;
@@ -195,18 +195,6 @@
     .support-badge--IN_PROGRESS  { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
     .support-badge--COMPLETED    { background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
     .support-badge--REJECTED     { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
-    .support-card-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-    .support-card-preview {
-      font-size: 13px;
-      color: var(--text-secondary);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
 
     /* 모달 */
     .support-modal { position:fixed; inset:0; z-index:1000; }
