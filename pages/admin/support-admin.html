@@ -142,6 +142,13 @@
     }
     .support-grid td.col-center {
       text-align: center;
+      display: table-cell; /* 명시적으로 유지 */
+    }
+    /* inline-flex 뱃지를 셀 안에서 가운데 정렬 */
+    .support-grid td.col-center .support-badge {
+      margin: 0 auto;
+      display: block;
+      width: fit-content;
     }
     /* 말줄임은 제목·미리보기 컬럼에만 */
     .support-grid td.col-title,
