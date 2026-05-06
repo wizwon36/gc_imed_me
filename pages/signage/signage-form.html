@@ -11,7 +11,7 @@
 <body class="portal-page equipment-form-page signage-form-page">
   <div class="container page-shell equipment-form-shell">
 
-    <!-- 헤더 -->
+    <!-- 헤더 (탭 포함) -->
     <section class="top-brand-bar equipment-form-topbar signage-topbar">
       <div class="top-brand-left">
         <div class="top-brand-logo">✦</div>
@@ -21,19 +21,18 @@
         </div>
       </div>
       <div class="top-brand-actions portal-top-actions equipment-form-top-actions">
+        <!-- 탭 네비게이션 -->
+        <div class="signage-tab-nav" id="signageTabNav">
+          <button type="button" class="signage-tab-btn is-active" data-tab="form">
+            📝 신청하기
+          </button>
+          <button type="button" class="signage-tab-btn" data-tab="history" id="tabBtnHistory">
+            📋 신청 이력
+          </button>
+        </div>
         <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
       </div>
     </section>
-
-    <!-- 탭 네비게이션 -->
-    <div class="signage-tab-nav" id="signageTabNav">
-      <button type="button" class="signage-tab-btn is-active" data-tab="form">
-        <span class="signage-tab-icon">📝</span> 신청하기
-      </button>
-      <button type="button" class="signage-tab-btn" data-tab="history" id="tabBtnHistory">
-        <span class="signage-tab-icon">📋</span> 신청 이력
-      </button>
-    </div>
 
     <!-- ══════════════════════════════════════ -->
     <!-- 탭 A: 신청 폼                          -->
@@ -339,19 +338,36 @@
 
       <!-- 필터 카드 -->
       <div class="card form-card equipment-form-card" style="margin-bottom:16px;">
-        <div class="section-head equipment-form-section-head" style="padding-bottom:16px;">
+        <div class="section-head equipment-form-section-head">
           <div>
             <span class="portal-section-kicker">FILTER</span>
-            <h2 class="section-title" style="font-size:18px;">조회 조건</h2>
+            <h2 class="section-title">조회 조건</h2>
           </div>
         </div>
 
         <div id="historyMsgBox" class="message-box" style="margin-bottom:14px;"></div>
 
-        <div class="form-grid two-col">
-          <label class="form-field full-col">
+        <!-- 1행: 검색어 (full) -->
+        <div class="form-grid" style="grid-template-columns:1fr; margin-bottom:12px;">
+          <label class="form-field">
             <span class="form-label">검색어</span>
             <input type="text" id="histFilterKeyword" class="input" placeholder="신청 ID, 요청자명, 부서, 내용으로 검색" />
+          </label>
+        </div>
+
+        <!-- 2행: 의원 / 팀 / 제작 유형 / 긴급 여부 -->
+        <div class="form-grid two-col" style="margin-bottom:12px;">
+          <label class="form-field" id="histFilterClinicWrap">
+            <span class="form-label">의원</span>
+            <select id="histFilterClinic" class="input">
+              <option value="">전체 의원</option>
+            </select>
+          </label>
+          <label class="form-field" id="histFilterTeamWrap">
+            <span class="form-label">팀</span>
+            <select id="histFilterTeam" class="input" disabled>
+              <option value="">전체 팀</option>
+            </select>
           </label>
           <label class="form-field">
             <span class="form-label">제작 유형</span>
@@ -369,6 +385,10 @@
               <option value="N">일반</option>
             </select>
           </label>
+        </div>
+
+        <!-- 3행: 시작일 / 종료일 / 조회 버튼 -->
+        <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr; align-items:flex-end;">
           <label class="form-field">
             <span class="form-label">시작일</span>
             <input type="date" id="histFilterDateFrom" class="input" />
@@ -377,21 +397,43 @@
             <span class="form-label">종료일</span>
             <input type="date" id="histFilterDateTo" class="input" />
           </label>
-          <div class="form-field" style="align-self:flex-end;">
+          <div class="form-field">
+            <span class="form-label">&nbsp;</span>
             <button type="button" id="histSearchBtn" class="btn btn-primary" style="width:100%; min-height:46px;">조회</button>
           </div>
         </div>
       </div>
 
-      <!-- 목록 -->
+      <!-- 결과 테이블 카드 -->
       <div class="card form-card equipment-form-card">
-        <div class="section-head equipment-form-section-head" style="padding-bottom:0; border-bottom:none;">
-          <div id="histListCount" style="font-size:13px; font-weight:700; color:#64748b;">조회 버튼을 눌러 주세요.</div>
+        <div class="hist-table-topbar">
+          <div id="histListCount" class="hist-list-count">조회 버튼을 눌러 주세요.</div>
         </div>
-        <div id="histRequestList" class="signage-hist-list"></div>
-        <div id="histEmptyBox" class="signage-hist-empty" style="display:none;">
-          <div style="font-size:36px; margin-bottom:12px;">🪧</div>
-          <p>신청 내역이 없습니다.</p>
+
+        <div class="hist-table-wrap">
+          <table class="hist-table">
+            <thead>
+              <tr>
+                <th style="width:130px;">신청일</th>
+                <th style="width:90px; text-align:center;">유형</th>
+                <th style="width:140px;">신청번호</th>
+                <th>제작 내용</th>
+                <th style="width:160px;">부서</th>
+                <th style="width:80px; text-align:center;">수량</th>
+                <th style="width:80px; text-align:center;">긴급</th>
+              </tr>
+            </thead>
+            <tbody id="histTableBody">
+              <tr>
+                <td colspan="7">
+                  <div class="hist-table-empty">
+                    <div class="hist-table-empty-icon">🪧</div>
+                    <div>조건을 설정한 뒤 <strong>조회</strong> 버튼을 눌러 주세요.</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -411,97 +453,110 @@
   </div>
 
   <style>
-    /* ── 탭 네비게이션 ── */
+    /* ── 탭 (헤더 내부) ── */
     .signage-tab-nav {
       display: flex;
-      gap: 6px;
-      margin: 20px 0 0;
-      border-bottom: 2px solid rgba(148, 163, 184, 0.18);
-      padding-bottom: 0;
+      gap: 2px;
+      background: rgba(255,255,255,0.10);
+      border-radius: 10px;
+      padding: 3px;
     }
 
     .signage-tab-btn {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 10px 20px;
+      gap: 6px;
+      padding: 7px 14px;
       border: none;
-      border-bottom: 3px solid transparent;
-      background: none;
-      font-size: 14px;
+      border-radius: 8px;
+      background: transparent;
+      font-size: 13px;
       font-weight: 700;
-      color: #64748b;
+      color: rgba(255,255,255,0.65);
       cursor: pointer;
-      margin-bottom: -2px;
-      transition: color 0.14s ease, border-color 0.14s ease;
-      border-radius: 0;
+      transition: background 0.14s ease, color 0.14s ease;
+      white-space: nowrap;
     }
 
-    .signage-tab-btn:hover { color: #0f172a; }
+    .signage-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.12); }
 
     .signage-tab-btn.is-active {
-      color: #0b1f44;
-      border-bottom-color: #2563eb;
+      background: rgba(255,255,255,0.22);
+      color: #fff;
     }
-
-    .signage-tab-icon { font-size: 15px; }
 
     /* ── 탭 패널 ── */
     .signage-tab-pane { display: none; }
     .signage-tab-pane.is-active { display: block; }
 
-    /* ── 이력 카드 목록 ── */
-    .signage-hist-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 16px 0 4px;
-    }
-
-    .signage-hist-card {
-      display: flex;
-      gap: 0;
-      border-radius: 14px;
-      border: 1px solid rgba(15, 23, 42, 0.07);
-      background: #fff;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.13s ease, box-shadow 0.13s ease, border-color 0.13s ease;
-    }
-
-    .signage-hist-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09);
-      border-color: rgba(37, 99, 235, 0.18);
-    }
-
-    .signage-hist-card-bar {
-      width: 5px;
-      flex-shrink: 0;
-      background: #d1d5db;
-    }
-
-    .signage-hist-card.is-NAMEPLATE .signage-hist-card-bar { background: linear-gradient(180deg, #6366f1, #818cf8); }
-    .signage-hist-card.is-SIGN      .signage-hist-card-bar { background: linear-gradient(180deg, #0ea5e9, #38bdf8); }
-
-    .signage-hist-card-body {
-      flex: 1;
-      padding: 13px 16px;
-      min-width: 0;
-    }
-
-    .signage-hist-card-top {
+    /* ── 이력 테이블 상단바 ── */
+    .hist-table-topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
+      padding: 16px 0 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      margin-bottom: 0;
     }
 
-    .signage-hist-badges { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+    .hist-list-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+    }
 
-    .signage-hist-badge {
+    /* ── 테이블 래퍼 ── */
+    .hist-table-wrap {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      margin-top: 14px;
+    }
+
+    .hist-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .hist-table thead tr {
+      background: #f8fafc;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.20);
+    }
+
+    .hist-table th {
+      padding: 11px 13px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 800;
+      color: #64748b;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .hist-table tbody tr {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+      cursor: pointer;
+      transition: background 0.11s ease;
+    }
+
+    .hist-table tbody tr:last-child { border-bottom: none; }
+    .hist-table tbody tr:hover { background: rgba(37, 99, 235, 0.03); }
+
+    .hist-table td {
+      padding: 11px 13px;
+      color: #0f172a;
+      vertical-align: middle;
+      white-space: nowrap;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hist-table td.wrap { white-space: normal; word-break: break-all; }
+
+    /* 유형 뱃지 */
+    .hist-badge {
       display: inline-flex;
       align-items: center;
       min-height: 20px;
@@ -512,46 +567,20 @@
       white-space: nowrap;
     }
 
-    .shb-NAMEPLATE { background: rgba(99,102,241,.10); color: #4338ca; }
-    .shb-SIGN      { background: rgba(14,165,233,.10);  color: #0369a1; }
-    .shb-urgent    { background: rgba(220,38,38,.10);   color: #b91c1c; }
-    .shb-draft     { background: rgba(5,150,105,.10);   color: #065f46; }
+    .hist-badge-NAMEPLATE { background: rgba(99,102,241,.10); color: #4338ca; }
+    .hist-badge-SIGN      { background: rgba(14,165,233,.10);  color: #0369a1; }
+    .hist-badge-urgent    { background: rgba(220,38,38,.10);   color: #b91c1c; }
 
-    .signage-hist-req-id {
-      font-size: 11px;
-      font-weight: 700;
-      color: rgba(100, 116, 139, 0.65);
-    }
-
-    .signage-hist-card-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .signage-hist-card-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      font-size: 12px;
-      color: #64748b;
-    }
-
-    .signage-hist-meta-item { display: flex; align-items: center; gap: 3px; }
-    .signage-hist-meta-label { font-weight: 700; color: #94a3b8; }
-
-    /* ── 이력 빈 상태 ── */
-    .signage-hist-empty {
+    /* ── 빈 상태 ── */
+    .hist-table-empty {
+      padding: 36px 20px;
       text-align: center;
-      padding: 40px 20px;
       color: #64748b;
       font-size: 14px;
       line-height: 1.7;
     }
+
+    .hist-table-empty-icon { font-size: 34px; margin-bottom: 10px; }
 
     /* ── 이력 상세 모달 ── */
     .signage-hist-modal-backdrop {
@@ -606,18 +635,13 @@
     }
 
     .signage-hist-modal-close {
-      width: 34px;
-      height: 34px;
+      width: 34px; height: 34px;
       border-radius: 9px;
       border: 1px solid rgba(148, 163, 184, 0.26);
       background: #f8fafc;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      color: #64748b;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #64748b; flex-shrink: 0;
       transition: background 0.12s;
     }
 
@@ -628,43 +652,28 @@
     .shm-section:last-child { margin-bottom: 0; }
 
     .shm-section-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: #94a3b8;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      margin: 0 0 10px;
+      font-size: 11px; font-weight: 800; color: #94a3b8;
+      letter-spacing: 0.07em; text-transform: uppercase; margin: 0 0 10px;
     }
 
-    .shm-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
+    .shm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .shm-grid.single { grid-template-columns: 1fr; }
 
     .shm-item {
-      padding: 10px 13px;
-      background: #f8fafc;
-      border-radius: 11px;
-      border: 1px solid rgba(148, 163, 184, 0.13);
+      padding: 10px 13px; background: #f8fafc;
+      border-radius: 11px; border: 1px solid rgba(148, 163, 184, 0.13);
     }
 
-    .shm-item-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
-      margin-bottom: 3px;
-    }
+    .shm-item-label { font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 3px; }
 
     .shm-item-value {
-      font-size: 13px;
-      font-weight: 600;
-      color: #0f172a;
-      word-break: break-all;
-      white-space: pre-wrap;
-      line-height: 1.55;
+      font-size: 13px; font-weight: 600; color: #0f172a;
+      word-break: break-all; white-space: pre-wrap; line-height: 1.55;
+    }
+
+    /* ── 반응형 ── */
+    @media (max-width: 760px) {
+      .signage-tab-nav { display: none; }  /* 모바일: 탭 숨김 처리 or 별도 대응 */
     }
   </style>
 
