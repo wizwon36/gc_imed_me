@@ -289,7 +289,7 @@
         <div class="support-detail-label">요청자</div>
         <div class="support-detail-value">
           ${item.requester_name ? `<strong>${escapeHtml(item.requester_name)}</strong> · ` : ''}${escapeHtml(item.created_by)}<br>
-          ${[item.requester_clinic, item.requester_dept].filter(Boolean).map(escapeHtml).join(' / ')}
+          ${escapeHtml(item.requester_dept || item.requester_clinic || '')}
           <span style="color:var(--text-muted);font-size:12px;margin-left:6px;">${escapeHtml(item.created_at)}</span>
         </div>
       </div>
