@@ -123,11 +123,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── 이력 탭 초기화 ─────────────────────────────────────────────
   const today    = histTodayYmd();
-  const threeAgo = histDateOffset(-90);
+  const weekAgo  = histDateOffset(-7);
   const fromEl   = document.getElementById('histFilterDateFrom');
   const toEl     = document.getElementById('histFilterDateTo');
-  if (fromEl) { fromEl.value = threeAgo; fromEl.max = today; }
-  if (toEl)   { toEl.value   = today;    toEl.max   = today; }
+  if (fromEl) { fromEl.value = weekAgo; fromEl.max = today; }
+  if (toEl)   { toEl.value   = today;   toEl.max   = today; }
 
   // 의원·팀 셀렉트 채우기 (orgSelect는 이미 loadOrgData 완료됨)
   const clinicSel = document.getElementById('histFilterClinic');
