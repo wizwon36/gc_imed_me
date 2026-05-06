@@ -3,548 +3,621 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>사인물 신청 이력</title>
+  <title>사용자 관리</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- 기존 공통 CSS 재사용 -->
-  <link rel="stylesheet" href="assets/css/common.css" />
+  <link rel="stylesheet" href="../../assets/css/common.css" />
 
   <style>
-    /* ── 페이지 변수 ── */
     :root {
-      --page-max: 1200px;
-      --card-r: 20px;
-      --card-shadow: 0 10px 32px rgba(15, 23, 42, 0.07);
-      --line: rgba(148, 163, 184, 0.20);
-      --primary: #2563eb;
-      --primary-soft: rgba(37, 99, 235, 0.08);
-      --text-strong: #0f172a;
+      --page-max-width: 1440px;
+      --card-radius: 20px;
+      --card-border: 1px solid rgba(15, 23, 42, 0.08);
+      --card-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
       --text-subtle: #64748b;
+      --text-strong: #0f172a;
       --bg-soft: #f8fafc;
       --bg-panel: #ffffff;
+      --line-soft: rgba(148, 163, 184, 0.22);
+      --danger-soft: rgba(220, 38, 38, 0.08);
+      --success-soft: rgba(22, 163, 74, 0.08);
+      --primary-color: #2563eb;
+      --danger-color: #dc2626;
     }
 
     * { box-sizing: border-box; }
 
     body {
-      background: linear-gradient(160deg, #f0f5ff 0%, #f8fafc 60%);
-      min-height: 100vh;
-      color: var(--text-strong);
-    }
-
-    /* ── 레이아웃 ── */
-    .page-wrap {
-      max-width: var(--page-max);
-      margin: 0 auto;
-      padding: 20px 18px 56px;
-    }
-
-    /* ── 탑바 ── */
-    .top-brand-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px 20px;
-      background: linear-gradient(120deg, #0b1f44 0%, #163880 100%);
-      border-radius: 20px;
-      margin: 12px 12px 0;
-      box-shadow: 0 8px 24px rgba(11, 31, 68, 0.22);
-    }
-
-    .top-brand-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .top-brand-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      font-weight: 900;
-      color: #fff;
-      flex-shrink: 0;
-    }
-
-    .top-brand-title {
-      display: block;
-      font-size: 17px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: -0.02em;
-    }
-
-    .top-brand-sub {
-      display: block;
-      font-size: 12px;
-      color: rgba(255,255,255,0.62);
-      margin-top: 1px;
-    }
-
-    .top-brand-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .header-btn {
-      display: inline-flex;
-      align-items: center;
-      min-height: 36px;
-      padding: 0 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.10);
-      color: rgba(255,255,255,0.88);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.14s ease;
-    }
-
-    .header-btn:hover { background: rgba(255,255,255,0.18); }
-
-    /* ── 페이지 히어로 ── */
-    .page-hero {
-      margin: 28px 0 22px;
-    }
-
-    .page-hero h1 {
       margin: 0;
-      font-size: 30px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      color: #0b1f44;
+      background: linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
+      color: var(--text-strong);
+      font-family: Pretendard, "Noto Sans KR", Arial, sans-serif;
     }
 
-    .page-hero p {
-      margin: 8px 0 0;
-      font-size: 14px;
-      color: var(--text-subtle);
-      line-height: 1.6;
+    .admin-page {
+      max-width: var(--page-max-width);
+      margin: 0 auto;
+      padding: 28px 20px 48px;
     }
 
-    /* ── 패널 카드 ── */
-    .panel {
-      background: var(--bg-panel);
-      border: 1px solid rgba(15,23,42,0.07);
-      border-radius: var(--card-r);
-      box-shadow: var(--card-shadow);
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-
-    .panel-head {
-      padding: 20px 22px 16px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .panel-head-row {
+    .page-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .page-title-wrap h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .page-title-wrap p {
+      margin: 8px 0 0;
+      color: var(--text-subtle);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .page-header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .admin-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: #fff;
+      color: var(--text-strong);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+      text-decoration: none;
+    }
+
+    .admin-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .admin-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .admin-btn.primary {
+      border-color: rgba(37, 99, 235, 0.14);
+      background: rgba(37, 99, 235, 0.08);
+      color: #1d4ed8;
+      box-shadow: none;
+    }
+    
+    .admin-btn.primary:hover {
+      background: rgba(37, 99, 235, 0.12);
+      box-shadow: none;
+    }
+    
+    .admin-btn.secondary {
+      background: #fff;
+    }
+
+    .admin-btn.danger {
+      border-color: rgba(220, 38, 38, 0.18);
+      color: var(--danger-color);
+    }
+
+    .admin-btn.small {
+      min-height: 36px;
+      padding: 0 12px;
+      font-size: 13px;
+      border-radius: 10px;
+    }
+
+    #saveUserBtn {
+      min-width: 140px;
+      padding: 0 22px;
+      border-radius: 16px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    
+    .page-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* 좌측 컬럼: 등록폼 + 가입신청 패널을 세로로 쌓음 */
+    .page-col-left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    /* 우측 컬럼: 사용자 목록, 높이 고정 + 내부 스크롤 */
+    .page-col-right {
+      position: sticky;
+      top: 20px;
+      min-width: 0;
+    }
+
+    /* 사용자 목록 패널 내부 스크롤 */
+    .user-list-scroll {
+      max-height: calc(100vh - 220px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    /* 스크롤바 스타일 */
+    .user-list-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .user-list-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .user-list-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148,163,184,0.4);
+      border-radius: 999px;
+    }
+
+    .panel-card {
+      background: var(--bg-panel);
+      border: var(--card-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 22px 22px 14px;
+      border-bottom: 1px solid var(--line-soft);
     }
 
     .panel-title {
       margin: 0;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 800;
       letter-spacing: -0.02em;
     }
 
     .panel-desc {
-      margin: 6px 0 0;
-      font-size: 13px;
+      margin: 8px 0 0;
       color: var(--text-subtle);
+      font-size: 14px;
+      line-height: 1.6;
     }
 
-    .panel-body { padding: 20px 22px; }
-
-    /* ── 신청 버튼 ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 40px;
-      padding: 0 16px;
-      border-radius: 11px;
-      border: none;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.13s ease, box-shadow 0.13s ease;
-      text-decoration: none;
+    .panel-body {
+      padding: 22px;
     }
 
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(15,23,42,0.10); }
-    .btn:active { transform: translateY(0); }
-
-    .btn-primary {
-      background: #0b1f44;
-      color: #fff;
-    }
-
-    .btn-ghost {
-      background: var(--bg-soft);
-      color: var(--text-subtle);
-      border: 1px solid rgba(148,163,184,0.26);
-    }
-
-    .btn-blue {
-      background: var(--primary-soft);
-      color: #1d4ed8;
-      border: 1px solid rgba(37,99,235,0.14);
-    }
-
-    /* ── 필터 ── */
-    .filter-grid {
+    .form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      align-items: end;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 8px;
     }
 
     .form-label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-subtle);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-
-    .input, .select {
-      width: 100%;
-      min-height: 40px;
-      padding: 0 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.34);
-      background: #fff;
-      font-size: 13px;
-      color: var(--text-strong);
-      outline: none;
-      transition: border-color 0.13s ease, box-shadow 0.13s ease;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-
-    .select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 32px;
-    }
-
-    .input:focus, .select:focus {
-      border-color: rgba(37, 99, 235, 0.5);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.09);
-    }
-
-    /* ── 목록 상단 바 ── */
-    .list-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin: 20px 0 12px;
-    }
-
-    .list-count {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-subtle);
-    }
-
-    /* ── 카드 목록 ── */
-    .request-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    /* ── 신청 카드 ── */
-    .req-card {
-      display: flex;
-      gap: 0;
-      border-radius: 16px;
-      border: 1px solid rgba(15,23,42,0.07);
-      background: #fff;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
-      position: relative;
-    }
-
-    .req-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(15,23,42,0.09);
-      border-color: rgba(37,99,235,0.18);
-    }
-
-    /* 왼쪽 컬러 바 */
-    .req-card-bar {
-      width: 5px;
-      flex-shrink: 0;
-      background: #d1d5db;
-    }
-
-    .req-card.is-NAMEPLATE .req-card-bar { background: linear-gradient(180deg, #6366f1 0%, #818cf8 100%); }
-    .req-card.is-SIGN      .req-card-bar { background: linear-gradient(180deg, #0ea5e9 0%, #38bdf8 100%); }
-
-    .req-card-body {
-      flex: 1;
-      padding: 16px 18px;
-      min-width: 0;
-    }
-
-    .req-card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .req-card-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .badge {
       display: inline-flex;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-strong);
+    }
+
+    .field-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       min-height: 22px;
-      padding: 0 9px;
+      padding: 0 8px;
       border-radius: 999px;
       font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.01em;
-      white-space: nowrap;
+      line-height: 1;
+      letter-spacing: -0.01em;
     }
 
-    .badge-type-NAMEPLATE { background: rgba(99,102,241,0.10); color: #4338ca; }
-    .badge-type-SIGN      { background: rgba(14,165,233,0.10); color: #0369a1; }
-
-    .badge-urgent {
-      background: rgba(220, 38, 38, 0.10);
+    .field-badge.required {
+      background: var(--danger-soft);
       color: #b91c1c;
     }
 
-    .badge-draft {
-      background: rgba(5,150,105,0.10);
-      color: #065f46;
+    .field-badge.optional {
+      background: rgba(100, 116, 139, 0.10);
+      color: #475569;
     }
 
-    .req-id {
+    .input,
+    .select {
+      width: 100%;
+      min-height: 46px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: #fff;
+      font-size: 14px;
+      color: var(--text-strong);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      -webkit-appearance: none;
+      appearance: none;
+      box-sizing: border-box;
+    }
+
+    /* select 화살표 복원 */
+    .select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: rgba(37, 99, 235, 0.55);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+    }
+
+    .input[disabled] {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .is-invalid {
+      border-color: rgba(220, 38, 38, 0.8) !important;
+      box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.10) !important;
+      background: rgba(254, 242, 242, 0.72);
+    }
+
+    .form-help {
+      margin: 0;
+      color: var(--text-subtle);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .required-guide {
+      margin-top: 2px;
+    }
+
+    .permission-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .permission-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 140px;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: var(--bg-soft);
+    }
+
+    .permission-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .permission-desc {
+      margin: 4px 0 0;
+      color: var(--text-subtle);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message-box {
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .message-box.success,
+    .message-box.error {
+      display: block;
+    }
+
+    .message-box.success {
+      background: var(--success-soft);
+      border-color: rgba(22, 163, 74, 0.16);
+      color: #166534;
+    }
+
+    .message-box.error {
+      background: rgba(254, 242, 242, 0.9);
+      border-color: rgba(220, 38, 38, 0.18);
+      color: #b91c1c;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+    
+    .filter-row > .form-group {
+      min-width: 0;
+    }
+    
+    .filter-row > .form-group:first-child {
+      grid-column: 1 / -1;
+    }
+    
+    .filter-row .admin-btn {
+      width: 100%;
+    }
+    
+    .list-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .list-count {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-subtle);
+    }
+
+    .user-list {
+      display: block;
+    }
+
+    /* ── 사용자 목록 테이블 ── */
+    .user-tbl {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: auto;
+      background: #fff;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .user-tbl-th {
+      padding: 10px 12px;
+      background: #f1f5fb;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
       font-size: 12px;
-      font-weight: 700;
-      color: rgba(100,116,139,0.7);
-      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      color: #516274;
+      text-align: left;
+      white-space: nowrap;
     }
 
-    .req-card-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 7px;
+    .user-tbl-th--name    { min-width: 90px; white-space: nowrap; }
+    .user-tbl-th--org     { min-width: 120px; }
+    .user-tbl-th--role    { min-width: 50px; text-align: center; white-space: nowrap; }
+    .user-tbl-th--status  { min-width: 50px; text-align: center; white-space: nowrap; }
+    .user-tbl-th--actions { min-width: 180px; text-align: center; white-space: nowrap; }
+
+    .user-tbl-row { transition: background-color 0.12s ease; }
+    .user-tbl-row:not(:last-child) td { border-bottom: 1px solid #eef2f6; }
+    .user-tbl-row:hover { background: #f7f9fd; }
+
+    .user-tbl-cell {
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #1e293b;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .user-tbl-cell--org {
+      vertical-align: middle;
+    }
+
+    .user-tbl-org-main {
+      font-size: 13px;
+      color: #1e293b;
+    }
+
+    .user-tbl-cell--status { text-align: center; overflow: visible; white-space: nowrap; }
+    .user-tbl-cell--role { white-space: nowrap; overflow: visible; text-align: center; }
+    .user-tbl-cell--actions { text-align: center; overflow: visible; white-space: nowrap; }
+
+    .user-tbl-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0b1f44;
+    }
+
+    .user-tbl-sub {
+      margin-top: 2px;
+      font-size: 11px;
+      color: #94a3b8;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .req-card-detail {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 18px;
-      font-size: 12px;
-      color: var(--text-subtle);
-    }
-
-    .req-detail-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+    .user-tbl-actions {
+      display: inline-flex;
+      gap: 5px;
+      justify-content: center;
+      flex-wrap: nowrap;
       white-space: nowrap;
     }
 
-    .req-detail-label {
-      font-weight: 700;
-      color: #94a3b8;
-    }
-
-    /* ── 빈 상태 ── */
-    .empty-box {
-      text-align: center;
-      padding: 44px 20px;
-      color: var(--text-subtle);
-    }
-
-    .empty-box .empty-icon { font-size: 40px; margin-bottom: 14px; }
-    .empty-box p { margin: 0; font-size: 14px; line-height: 1.7; }
-
-    /* ── 메시지 박스 ── */
-    .msg-box {
-      display: none;
-      padding: 13px 16px;
-      border-radius: 13px;
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.5;
-      margin-bottom: 16px;
-    }
-
-    .msg-box.error {
-      display: block;
-      background: #fef2f2;
-      border: 1px solid rgba(220,38,38,0.18);
-      color: #b91c1c;
-    }
-
-    .msg-box.info {
-      display: block;
-      background: #eff6ff;
-      border: 1px solid rgba(37,99,235,0.16);
-      color: #1d4ed8;
-    }
-
-    /* ── 상세 모달 ── */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(11,31,68,0.45);
-      backdrop-filter: blur(4px);
+    .user-tbl-btn {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: #f8fafc;
+      color: #0f172a;
+      transition: background 0.12s ease, border-color 0.12s ease;
+      white-space: nowrap;
     }
 
-    .modal-backdrop.is-open { display: flex; }
+    .user-tbl-btn:hover { background: #e8edf5; border-color: #b0bccc; }
 
-    .modal {
-      background: #fff;
-      border-radius: 24px;
-      width: 100%;
-      max-width: 640px;
-      max-height: 88vh;
-      overflow-y: auto;
-      box-shadow: 0 24px 64px rgba(11,31,68,0.22);
-      animation: modalIn 0.22s ease;
+    .user-tbl-btn.danger {
+      border-color: rgba(220, 38, 38, 0.24);
+      color: #dc2626;
+      background: rgba(220, 38, 38, 0.05);
     }
 
-    @keyframes modalIn {
-      from { opacity: 0; transform: translateY(16px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0)    scale(1); }
-    }
+    .user-tbl-btn.danger:hover { background: rgba(220, 38, 38, 0.10); }
 
-    .modal-head {
-      padding: 22px 24px 18px;
-      border-bottom: 1px solid var(--line);
+    /* 가입신청 카드 */
+    .pending-item {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 2;
-      border-radius: 24px 24px 0 0;
+      gap: 16px;
+      padding: 16px;
+      border-bottom: 1px solid rgba(148,163,184,0.14);
     }
+    .pending-item:last-child { border-bottom: none; }
 
-    .modal-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin: 0;
-    }
+    .pending-item__main { flex: 1; min-width: 0; }
 
-    .modal-close-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      border: 1px solid rgba(148,163,184,0.28);
-      background: var(--bg-soft);
-      cursor: pointer;
+    .pending-item__title {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: var(--text-subtle);
-      flex-shrink: 0;
-      transition: background 0.12s ease;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 6px;
     }
+    .pending-item__title strong { font-size: 15px; color: #0f172a; }
+    .pending-item__title span { font-size: 13px; color: #64748b; }
 
-    .modal-close-btn:hover { background: #e2e8f0; }
-
-    .modal-body { padding: 22px 24px 28px; }
-
-    /* 모달 섹션 */
-    .detail-section {
-      margin-bottom: 22px;
-    }
-
-    .detail-section:last-child { margin-bottom: 0; }
-
-    .detail-section-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: #94a3b8;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin: 0 0 12px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .pending-item__meta {
+      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
-    }
-
-    .detail-grid.single { grid-template-columns: 1fr; }
-
-    .detail-item {
-      padding: 12px 14px;
-      background: var(--bg-soft);
-      border-radius: 12px;
-      border: 1px solid rgba(148,163,184,0.14);
-    }
-
-    .detail-item-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
+      font-size: 13px;
+      color: #64748b;
       margin-bottom: 4px;
     }
-
-    .detail-item-value {
+    .pending-item__memo {
       font-size: 13px;
-      font-weight: 600;
-      color: #0f172a;
-      word-break: break-all;
-      white-space: pre-wrap;
-      line-height: 1.6;
+      color: #475569;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-top: 6px;
     }
 
-    /* ── 글로벌 로딩 ── */
+    .pending-item__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .admin-btn.approve {
+      border-color: rgba(22,163,74,0.2);
+      background: rgba(22,163,74,0.08);
+      color: #166534;
+    }
+    .admin-btn.approve:hover { background: rgba(22,163,74,0.15); }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .status-chip.active {
+      background: var(--success-soft);
+      color: #166534;
+    }
+
+    .status-chip.inactive {
+      background: rgba(148, 163, 184, 0.14);
+      color: #475569;
+    }
+
+    .user-list-empty {
+      display: block;
+      padding: 18px 16px;
+      border-radius: 16px;
+      border: 1px dashed rgba(148, 163, 184, 0.36);
+      background: #fff;
+      color: var(--text-subtle);
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      text-align: left;
+    }
+
+    .user-list-empty.error {
+      border-color: rgba(220, 38, 38, 0.24);
+      background: rgba(254, 242, 242, 0.8);
+      color: #b91c1c;
+    }
+
+    .user-list-empty strong {
+      display: inline;
+      white-space: nowrap;
+      word-break: keep-all;
+    }
+
     #globalLoading {
       position: fixed;
       inset: 0;
@@ -552,559 +625,463 @@
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(15,23,42,0.28);
+      background: rgba(15, 23, 42, 0.26);
       backdrop-filter: blur(3px);
+      padding: 20px;
     }
 
-    #globalLoading[aria-hidden="false"] { display: flex; }
+    #globalLoading[aria-hidden="false"] {
+      display: flex;
+    }
 
-    .gl-dialog {
+    .global-loading__dialog {
+      min-width: 240px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 24px 30px;
+      gap: 14px;
+      padding: 24px 28px;
       border-radius: 18px;
       background: #fff;
-      box-shadow: 0 18px 40px rgba(15,23,42,0.16);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      text-align: center;
     }
 
-    .gl-spinner {
-      width: 32px;
-      height: 32px;
+    .global-loading__spinner {
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
-      border: 3px solid rgba(148,163,184,0.24);
+      border: 3px solid rgba(148, 163, 184, 0.28);
       border-top-color: #2563eb;
-      animation: spin 0.75s linear infinite;
+      animation: global-loading-spin 0.8s linear infinite;
     }
 
-    .gl-text {
+    .global-loading__text {
       font-size: 14px;
       font-weight: 700;
       color: var(--text-strong);
+      line-height: 1.5;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes global-loading-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
-    /* ── 반응형 ── */
-    @media (max-width: 760px) {
-      .filter-grid {
-        grid-template-columns: 1fr 1fr;
+    @media (max-width: 1180px) {
+      .page-grid {
+        grid-template-columns: 1fr;
       }
 
-      .filter-grid .search-full { grid-column: 1 / -1; }
-      .filter-grid .btn-row     { grid-column: 1 / -1; }
+      .page-col-right {
+        position: static;
+      }
 
-      .req-card-top { flex-direction: column; gap: 6px; }
+      .user-list-scroll {
+        max-height: 520px;
+      }
 
-      .detail-grid { grid-template-columns: 1fr; }
-
-      .top-brand-bar { margin: 8px 8px 0; border-radius: 16px; }
+      .filter-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    
+      .filter-row > .form-group:first-child {
+        grid-column: 1 / -1;
+      }
     }
 
-    @media (max-width: 480px) {
-      .filter-grid { grid-template-columns: 1fr; }
-      .filter-grid .search-full { grid-column: 1; }
-      .filter-grid .btn-row     { grid-column: 1; }
+    @media (max-width: 760px) {
+      .admin-page {
+        padding: 20px 14px 34px;
+      }
+
+      .page-header {
+        flex-direction: column;
+      }
+
+      .page-header-actions {
+        width: 100%;
+      }
+
+      .page-header-actions .admin-btn {
+        flex: 1 1 auto;
+      }
+
+      .panel-header,
+      .panel-body {
+        padding: 18px;
+      }
+
+      .form-row,
+      .filter-row,
+      .permission-card {
+        grid-template-columns: 1fr;
+      }
+
+      .permission-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .user-tbl-th--org,
+      .user-tbl-cell--org,
+      .user-tbl-th--role,
+      .user-tbl-cell--role,
+      .user-tbl-th--status,
+      .user-tbl-cell--status { display: none; }
+
+      .user-tbl-th--name    { width: 40%; }
+      .user-tbl-th--actions { width: 60%; }
+
+      .user-tbl-cell--actions {
+        overflow: visible;
+        white-space: nowrap;
+        padding: 8px 8px;
+      }
+
+      .user-tbl-actions {
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: 4px;
+      }
+
+      .user-tbl-btn {
+        min-height: 26px;
+        padding: 0 8px;
+        font-size: 11px;
+      }
+
+      .list-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .user-item__actions {
+        justify-content: flex-start;
+      }
+      
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+    
+      .filter-row > .form-group:first-child {
+        grid-column: auto;
+      }
+
+      .user-list-empty {
+        font-size: 15px;
+        line-height: 1.75;
+      }
+
+      #saveUserBtn {
+        width: 100%;
+        min-width: 0;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }      
     }
   </style>
 </head>
-<body>
-
-  <!-- ── 탑바 ── -->
-  <div class="top-brand-bar">
+<body class="portal-page">
+  <section class="top-brand-bar portal-topbar portal-hero-card" style="margin:12px 12px 0; border-radius:20px 20px 20px 20px;">
     <div class="top-brand-left">
-      <div class="top-brand-logo">✦</div>
+      <div class="top-brand-logo">+</div>
       <div class="top-brand-texts">
-        <strong class="top-brand-title">사인물 신청 이력</strong>
-        <span class="top-brand-sub">나의 사인물 제작 신청 내역</span>
+        <strong class="top-brand-title">사용자 관리</strong>
+        <span class="top-brand-sub">사용자 등록 · 권한 · 비밀번호 초기화</span>
       </div>
     </div>
-    <div class="top-brand-actions">
-      <a class="header-btn" href="../../portal.html">HOME</a>
-      <button type="button" id="logoutBtn" class="header-btn">로그아웃</button>
+    <div class="top-brand-actions portal-top-actions">
+      <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+      <button type="button" id="logoutBtn" class="portal-header-btn portal-header-btn--secondary">로그아웃</button>
     </div>
+  </section>
+
+  <div class="admin-page">
+
+    <div class="page-grid">
+
+      <!-- 좌측: 등록폼 + 가입신청 관리 -->
+      <div class="page-col-left">
+
+        <section class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title" id="formTitle">사용자 등록</h2>
+            <p class="panel-desc" id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
+          </div>
+
+          <div class="panel-body">
+            <div id="adminUserMessage" class="message-box" aria-live="polite"></div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="userEmail" class="form-label">이메일(아이디) <span class="field-badge required">필수</span></label>
+                <input type="email" id="userEmail" class="input" placeholder="이메일 주소 입력" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="userName" class="form-label">이름 <span class="field-badge required">필수</span></label>
+                  <input type="text" id="userName" class="input" placeholder="사용자 이름" />
+                </div>
+
+                <div class="form-group">
+                  <label for="phone" class="form-label">연락처 <span class="field-badge optional">선택</span></label>
+                  <input type="text" id="phone" class="input" placeholder="연락처" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="clinic_code" class="form-label">의원 <span class="field-badge required">필수</span></label>
+                  <select id="clinic_code" class="select">
+                    <option value="">의원을 선택하세요</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="team_code" class="form-label">팀 <span class="field-badge required">필수</span></label>
+                  <select id="team_code" class="select" disabled>
+                    <option value="">팀을 선택하세요</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="globalRole" class="form-label">기본 역할 <span class="field-badge optional">선택</span></label>
+                  <select id="globalRole" class="select">
+                    <option value="user">user</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="userActive" class="form-label">사용 여부 <span class="field-badge optional">선택</span></label>
+                  <select id="userActive" class="select">
+                    <option value="Y">활성</option>
+                    <option value="N">비활성</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">앱별 권한 <span class="field-badge optional">선택</span></label>
+                <p class="form-help">권한을 선택하지 않으면 해당 앱에 접근할 수 없습니다.</p>
+
+                <div class="permission-grid">
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">의료장비 관리</p>
+                      <p class="permission-desc">장비 조회, 등록, 수정, 이력 및 재고조사 관련 기능</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="equipment">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="edit">edit</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">사인물 신청</p>
+                      <p class="permission-desc">사인물, 명판 신청기능</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="signage">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">사인물 신청 이력</p>
+                      <p class="permission-desc">나의 사인물 제작 신청 내역 조회</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="signage_list">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">정도관리 시스템</p>
+                      <p class="permission-desc">검사실 QC 데이터 관리 및 Westgard 규칙 분석</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="lj_chart">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="edit">edit</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">프로그램 수정요청</p>
+                      <p class="permission-desc">불편사항·기능 개선 요청 제출</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="support">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">수정요청 관리</p>
+                      <p class="permission-desc">접수된 수정요청 처리 및 답변 (관리자용)</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="support_admin">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">로그 조회</p>
+                      <p class="permission-desc">시스템 작업 로그 및 변경 이력 확인</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="logs">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+
+                  <div class="permission-card">
+                    <div>
+                      <p class="permission-title">사용자 관리</p>
+                      <p class="permission-desc">사용자 등록, 권한 관리, 비밀번호 초기화</p>
+                    </div>
+                    <select class="select app-permission" data-app-id="users_admin">
+                      <option value="">권한 없음</option>
+                      <option value="view">view</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <p class="form-help" id="passwordHint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</p>
+              <p class="form-help required-guide"><span class="field-badge required">필수</span> 항목을 먼저 입력한 뒤 저장해 주세요.</p>
+
+              <div class="form-actions">
+                <button type="button" id="saveUserBtn" class="admin-btn primary">사용자 등록</button>
+                <button type="button" id="cancelEditBtn" class="admin-btn secondary" style="display:none;">취소</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 가입 신청 관리 -->
+        <section class="panel-card">
+          <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="panel-title">가입 신청 관리</h2>
+              <p class="panel-desc">사용자가 직접 신청한 가입 요청을 검토하고 승인 또는 거절합니다.</p>
+            </div>
+            <button type="button" id="loadPendingBtn" class="admin-btn secondary">신청 목록 새로고침</button>
+          </div>
+
+          <div class="panel-body">
+            <div id="pendingMessage" class="message-box" aria-live="polite"></div>
+            <div id="pendingListCount" class="list-count" style="margin-bottom:12px;">아직 불러오지 않았습니다.</div>
+            <div id="pendingList" class="user-list">
+              <div class="user-list-empty">
+                <strong>신청 목록 새로고침</strong>을 눌러 대기 중인 신청을 확인해 주세요.
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /.page-col-left -->
+
+      <!-- 우측: 사용자 목록 (내부 스크롤) -->
+      <div class="page-col-right">
+        <section class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title">사용자 목록</h2>
+            <p class="panel-desc">처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 조회 버튼을 눌러 주세요.</p>
+          </div>
+
+          <div class="panel-body">
+            <div class="filter-row">
+              <div class="form-group">
+                <label for="userSearchKeyword" class="form-label">검색어</label>
+                <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 이메일, 부서, 의원, 팀으로 검색" />
+              </div>
+
+              <div class="form-group">
+                <label for="userFilterActive" class="form-label">상태</label>
+                <select id="userFilterActive" class="select">
+                  <option value="">전체</option>
+                  <option value="Y">활성</option>
+                  <option value="N">비활성</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="userFilterRole" class="form-label">역할</label>
+                <select id="userFilterRole" class="select">
+                  <option value="">전체</option>
+                  <option value="user">user</option>
+                  <option value="admin">admin</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="userFilterClinic" class="form-label">의원</label>
+                <select id="userFilterClinic" class="select">
+                  <option value="">전체 의원</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" id="searchUsersBtn" class="admin-btn secondary">사용자 조회</button>
+              </div>
+            </div>
+
+            <div class="list-topbar">
+              <div id="userListCount" class="list-count">아직 조회하지 않았습니다.</div>
+            </div>
+
+            <div class="user-list-scroll">
+              <div id="userList" class="user-list">
+                <div class="user-list-empty">
+                  처음에는 전체 목록을 자동으로 불러오지 않습니다. 조건을 확인한 뒤 <strong>사용자 조회</strong>를 눌러 주세요.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div><!-- /.page-col-right -->
+
+    </div><!-- /.page-grid -->
   </div>
 
-  <!-- ── 페이지 본문 ── -->
-  <div class="page-wrap">
-
-    <div class="page-hero">
-      <h1>사인물 신청 이력</h1>
-      <p>나의 사인물 제작 신청 내역을 확인하세요.</p>
-    </div>
-
-    <!-- 필터 패널 -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-head-row">
-          <div>
-            <h2 class="panel-title">신청 내역 조회</h2>
-            <p class="panel-desc">유형과 검색어로 신청 이력을 빠르게 찾을 수 있습니다.</p>
-          </div>
-          <a href="pages/signage/signage-form.html" class="btn btn-primary">
-            <span>＋</span> 새 신청
-          </a>
-        </div>
-      </div>
-      <div class="panel-body">
-
-        <div id="msgBox" class="msg-box"></div>
-
-        <div class="filter-grid">
-          <div class="form-group search-full" style="grid-column: 1 / -1;">
-            <label class="form-label">검색어</label>
-            <input type="text" id="filterKeyword" class="input" placeholder="신청 ID, 요청자명, 부서, 내용으로 검색" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">제작 유형</label>
-            <select id="filterType" class="select">
-              <option value="">전체</option>
-              <option value="NAMEPLATE">규격 명판</option>
-              <option value="SIGN">일반 사인물</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">긴급 여부</label>
-            <select id="filterUrgent" class="select">
-              <option value="">전체</option>
-              <option value="Y">긴급</option>
-              <option value="N">일반</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">시작일</label>
-            <input type="date" id="filterDateFrom" class="input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">종료일</label>
-            <input type="date" id="filterDateTo" class="input" />
-          </div>
-          <div class="form-group btn-row" style="justify-content: flex-end;">
-            <label class="form-label">&nbsp;</label>
-            <button type="button" id="searchBtn" class="btn btn-blue" style="min-height:40px; width: 100%;">조회</button>
-          </div>
-        </div>
-
-        <!-- 목록 상단 -->
-        <div class="list-bar">
-          <div id="listCount" class="list-count">조회 버튼을 눌러 주세요.</div>
-        </div>
-
-        <!-- 카드 목록 -->
-        <div id="requestList" class="request-list"></div>
-
-        <!-- 빈 상태 -->
-        <div id="emptyBox" class="empty-box" style="display:none;">
-          <div class="empty-icon">🪧</div>
-          <p>신청 내역이 없습니다.<br />새 신청 버튼으로 사인물 제작을 요청해 보세요.</p>
-        </div>
-
-      </div>
-    </div>
-
-  </div><!-- /.page-wrap -->
-
-  <!-- ── 상세 모달 ── -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div id="modalBox" class="modal">
-      <div class="modal-head">
-        <h2 class="modal-title" id="modalTitle">신청 상세</h2>
-        <button type="button" id="modalClose" class="modal-close-btn" aria-label="닫기">✕</button>
-      </div>
-      <div class="modal-body" id="modalBody"></div>
-    </div>
-  </div>
-
-  <!-- ── 글로벌 로딩 ── -->
   <div id="globalLoading" aria-hidden="true">
-    <div class="gl-dialog">
-      <div class="gl-spinner"></div>
-      <div class="gl-text" id="globalLoadingText">불러오는 중...</div>
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">로딩 중...</div>
     </div>
   </div>
 
-  <!-- ── 스크립트 ── -->
-  <script src="assets/js/core/config.js"></script>
-  <script src="assets/js/core/api.js"></script>
-  <script src="assets/js/core/utils.js"></script>
-  <script src="assets/js/core/auth.js"></script>
-  <script src="assets/js/core/app-permission.js"></script>
-
-  <script>
-  (function () {
-    /* ─────────────────────────────────────────
-       상수
-    ───────────────────────────────────────── */
-    const TYPE_LABEL   = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' };
-    const ENV_LABEL    = { INDOOR: '실내', OUTDOOR: '실외' };
-    const MAGNET_LABEL = { Y: '있음 (탈부착)', N: '없음 (고정)' };
-
-    let allRows = [];   // 현재 조회된 전체 데이터
-
-    /* ─────────────────────────────────────────
-       초기화
-    ───────────────────────────────────────── */
-    document.addEventListener('DOMContentLoaded', async () => {
-      const user = window.auth?.requireAuth?.();
-      if (!user) return;
-
-      // signage_list 권한 확인
-      const ok = await window.appPermission?.requirePermission?.('signage_list', ['view', 'admin']);
-      if (!ok) return;
-
-      // 날짜 기본값: 최근 3개월
-      const today     = todayYmd();
-      const threeAgo  = dateOffset(-90);
-      setVal('filterDateFrom', threeAgo);
-      setVal('filterDateTo',   today);
-      document.getElementById('filterDateFrom').max = today;
-      document.getElementById('filterDateTo').max   = today;
-
-      // 이벤트 바인딩
-      document.getElementById('logoutBtn')?.addEventListener('click', () => {
-        showGL('로그아웃 중...');
-        window.auth.logout();
-      });
-
-      document.getElementById('searchBtn')?.addEventListener('click', fetchList);
-
-      ['filterKeyword','filterType','filterUrgent','filterDateFrom','filterDateTo']
-        .forEach(id => {
-          document.getElementById(id)?.addEventListener('keydown', e => {
-            if (e.key === 'Enter') fetchList();
-          });
-        });
-
-      document.getElementById('modalBackdrop')?.addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeModal();
-      });
-      document.getElementById('modalClose')?.addEventListener('click', closeModal);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-      // 자동 조회 (처음 진입 시)
-      await fetchList();
-    });
-
-    /* ─────────────────────────────────────────
-       데이터 조회
-    ───────────────────────────────────────── */
-    async function fetchList() {
-      const user = window.auth?.getSession?.();
-      if (!user) return;
-
-      const email   = (user.user_email || user.email || '').trim().toLowerCase();
-      const keyword = getVal('filterKeyword');
-      const type    = getVal('filterType');
-      const urgent  = getVal('filterUrgent');
-      const dateFrom = getVal('filterDateFrom');
-      const dateTo   = getVal('filterDateTo');
-
-      if (!dateFrom || !dateTo) {
-        showMsg('조회 기간을 입력해 주세요.', 'error');
-        return;
-      }
-
-      const diff = (new Date(dateTo) - new Date(dateFrom)) / 86400000;
-      if (diff < 0) { showMsg('종료일이 시작일보다 앞에 있습니다.', 'error'); return; }
-      if (diff > 90) { showMsg('조회 기간은 최대 3개월(90일)까지 가능합니다.', 'error'); return; }
-
-      clearMsg();
-
-      const params = {
-        request_user_email: email,
-        date_from: dateFrom,
-        date_to:   dateTo
-      };
-      if (keyword) params.keyword   = keyword;
-      if (type)    params.type      = type;
-      if (urgent)  params.is_urgent = urgent;
-
-      try {
-        const searchBtn = document.getElementById('searchBtn');
-        if (searchBtn) { searchBtn.disabled = true; searchBtn.textContent = '조회 중...'; }
-        showGL('신청 이력을 불러오는 중...');
-
-        const result = await window.apiGet('listSignageRequests', params);
-        allRows = Array.isArray(result.data) ? result.data : [];
-        renderList(allRows);
-      } catch (err) {
-        showMsg(err.message || '신청 이력을 불러오지 못했습니다.', 'error');
-        renderList([]);
-      } finally {
-        hideGL();
-        const searchBtn = document.getElementById('searchBtn');
-        if (searchBtn) { searchBtn.disabled = false; searchBtn.textContent = '조회'; }
-      }
-    }
-
-    /* ─────────────────────────────────────────
-       렌더링
-    ───────────────────────────────────────── */
-    function renderList(rows) {
-      const listEl  = document.getElementById('requestList');
-      const emptyEl = document.getElementById('emptyBox');
-      const countEl = document.getElementById('listCount');
-
-      if (!rows.length) {
-        listEl.innerHTML = '';
-        emptyEl.style.display = 'block';
-        if (countEl) countEl.textContent = '조회된 신청 내역이 없습니다.';
-        return;
-      }
-
-      emptyEl.style.display = 'none';
-      if (countEl) countEl.textContent = `총 ${rows.length.toLocaleString()}건`;
-
-      listEl.innerHTML = rows.map(buildCard).join('');
-
-      // 카드 클릭 → 모달
-      listEl.querySelectorAll('.req-card').forEach(card => {
-        card.addEventListener('click', () => {
-          const id  = card.dataset.id;
-          const row = allRows.find(r => r.request_id === id);
-          if (row) openModal(row);
-        });
-      });
-    }
-
-    function buildCard(row) {
-      const typeLabel   = TYPE_LABEL[row.type] || row.type || '-';
-      const isNameplate = row.type === 'NAMEPLATE';
-
-      // 카드 제목: 명판 타입 or 사이즈 기반
-      let title = '';
-      if (isNameplate) {
-        title = `[${row.nameplate_type || '-'} 타입] ${row.sign_size || ''}`.trim();
-      } else {
-        title = row.sign_size
-          ? `${row.sign_type || ''} · ${row.sign_size}`.replace(/^·\s*/, '')
-          : (row.sign_type || '사인물');
-      }
-      if (!title) title = typeLabel;
-
-      const urgentBadge = row.is_urgent === 'Y'
-        ? `<span class="badge badge-urgent">🚨 긴급</span>` : '';
-      const draftBadge = row.draft_confirm === 'Y'
-        ? `<span class="badge badge-draft">✅ 시안확인</span>` : '';
-
-      return `
-        <div class="req-card is-${esc(row.type)}" data-id="${esc(row.request_id)}">
-          <div class="req-card-bar"></div>
-          <div class="req-card-body">
-            <div class="req-card-top">
-              <div class="req-card-badges">
-                <span class="badge badge-type-${esc(row.type)}">${esc(typeLabel)}</span>
-                ${urgentBadge}
-                ${draftBadge}
-              </div>
-              <span class="req-id">${esc(row.request_id)}</span>
-            </div>
-            <div class="req-card-title">${esc(title)}</div>
-            <div class="req-card-detail">
-              <span class="req-detail-item"><span class="req-detail-label">부서</span>${esc(row.department || '-')}</span>
-              <span class="req-detail-item"><span class="req-detail-label">요청자</span>${esc(row.requester_name || '-')}</span>
-              <span class="req-detail-item"><span class="req-detail-label">수량</span>${esc(String(row.quantity || 1))}개</span>
-              <span class="req-detail-item"><span class="req-detail-label">신청일</span>${esc(fmtDate(row.created_at))}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    /* ─────────────────────────────────────────
-       모달
-    ───────────────────────────────────────── */
-    function openModal(row) {
-      const isNameplate = row.type === 'NAMEPLATE';
-      const typeLabel   = TYPE_LABEL[row.type] || row.type;
-
-      // 공통 섹션
-      const commonSection = `
-        <div class="detail-section">
-          <p class="detail-section-title">📋 신청 정보</p>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <div class="detail-item-label">신청번호</div>
-              <div class="detail-item-value">${esc(row.request_id)}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">제작 종류</div>
-              <div class="detail-item-value">${esc(typeLabel)}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">긴급 여부</div>
-              <div class="detail-item-value">${row.is_urgent === 'Y' ? '🚨 긴급' : '일반'}${row.urgent_reason ? ' — ' + esc(row.urgent_reason) : ''}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">시안 컨펌</div>
-              <div class="detail-item-value">${row.draft_confirm === 'Y' ? '✅ 요청함 (시안 확인 후 제작)' : '필요 없음'}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">부서</div>
-              <div class="detail-item-value">${esc(row.department || '-')}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">요청자</div>
-              <div class="detail-item-value">${esc(row.requester_name || '-')}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">연락처</div>
-              <div class="detail-item-value">${esc(row.contact || '-')}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">수량</div>
-              <div class="detail-item-value">${esc(String(row.quantity || 1))}개</div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // 타입별 상세 섹션
-      let detailSection = '';
-      if (isNameplate) {
-        detailSection = `
-          <div class="detail-section">
-            <p class="detail-section-title">🪧 명판 상세</p>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <div class="detail-item-label">명판 타입</div>
-                <div class="detail-item-value">${esc(row.nameplate_type || '-')} 타입</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-item-label">규격 사이즈</div>
-                <div class="detail-item-value">${esc(row.sign_size || '-')}</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-item-label">자석 부착</div>
-                <div class="detail-item-value">${esc(MAGNET_LABEL[row.magnet_yn] || '-')}</div>
-              </div>
-            </div>
-            ${row.nameplate_text ? `
-            <div class="detail-grid single" style="margin-top:10px;">
-              <div class="detail-item">
-                <div class="detail-item-label">명판 문구</div>
-                <div class="detail-item-value">${esc(row.nameplate_text)}</div>
-              </div>
-            </div>` : ''}
-          </div>
-        `;
-      } else {
-        detailSection = `
-          <div class="detail-section">
-            <p class="detail-section-title">🖼️ 사인물 상세</p>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <div class="detail-item-label">사이즈</div>
-                <div class="detail-item-value">${esc(row.sign_size || '-')}</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-item-label">형태/종류</div>
-                <div class="detail-item-value">${esc(row.sign_type || '-')}</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-item-label">설치 환경</div>
-                <div class="detail-item-value">${esc(ENV_LABEL[row.install_env] || '-')}</div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-item-label">설치 위치</div>
-                <div class="detail-item-value">${esc(row.install_location || '-')}</div>
-              </div>
-            </div>
-            ${row.text_content ? `
-            <div class="detail-grid single" style="margin-top:10px;">
-              <div class="detail-item">
-                <div class="detail-item-label">상세 내역</div>
-                <div class="detail-item-value">${esc(row.text_content)}</div>
-              </div>
-            </div>` : ''}
-          </div>
-        `;
-      }
-
-      // 메타 섹션
-      const metaSection = `
-        <div class="detail-section">
-          <p class="detail-section-title">🕐 신청 메타</p>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <div class="detail-item-label">신청일시</div>
-              <div class="detail-item-value">${esc(row.created_at || '-')}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-item-label">신청계정</div>
-              <div class="detail-item-value">${esc(row.created_by || '-')}</div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('modalTitle').textContent = typeLabel + ' 신청 상세';
-      document.getElementById('modalBody').innerHTML = commonSection + detailSection + metaSection;
-      document.getElementById('modalBackdrop').classList.add('is-open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-      document.getElementById('modalBackdrop').classList.remove('is-open');
-      document.body.style.overflow = '';
-    }
-
-    /* ─────────────────────────────────────────
-       유틸
-    ───────────────────────────────────────── */
-    function esc(str) {
-      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    function getVal(id) { return (document.getElementById(id)?.value || '').trim(); }
-    function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
-
-    function todayYmd() {
-      const d = new Date();
-      return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
-    }
-
-    function dateOffset(days) {
-      const d = new Date();
-      d.setDate(d.getDate() + days);
-      return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
-    }
-
-    function p2(n) { return String(n).padStart(2, '0'); }
-
-    function fmtDate(str) {
-      if (!str) return '-';
-      return String(str).slice(0, 10);
-    }
-
-    function showMsg(msg, type) {
-      const box = document.getElementById('msgBox');
-      if (!box) return;
-      box.className = `msg-box ${type}`;
-      box.textContent = msg;
-    }
-
-    function clearMsg() {
-      const box = document.getElementById('msgBox');
-      if (!box) return;
-      box.className = 'msg-box';
-      box.textContent = '';
-    }
-
-    function showGL(text) {
-      const el = document.getElementById('globalLoading');
-      const tx = document.getElementById('globalLoadingText');
-      if (el) el.setAttribute('aria-hidden', 'false');
-      if (tx) tx.textContent = text || '불러오는 중...';
-    }
-
-    function hideGL() {
-      const el = document.getElementById('globalLoading');
-      if (el) el.setAttribute('aria-hidden', 'true');
-    }
-
-  })();
-  </script>
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/org-select.js"></script>
+  <script src="../../assets/js/admin/admin-users.js"></script>
 </body>
 </html>
