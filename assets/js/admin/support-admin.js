@@ -16,6 +16,7 @@
     try {
       showGlobalLoading('목록을 불러오는 중...');
       await loadMeta();
+      initDateDefaults();
       await loadList();
     } catch (err) {
       const listEl = document.getElementById('requestList');
@@ -73,6 +74,20 @@
     });
   }
 
+  // ── 날짜 기본값 초기화 (오늘 기준 한 달 전 ~ 오늘) ────────────────
+  function initDateDefaults() {
+    const today = new Date();
+    const from  = new Date(today);
+    from.setMonth(from.getMonth() - 1);
+
+    const fmt = d => d.toISOString().slice(0, 10);
+
+    const fromEl = document.getElementById('filterDateFrom');
+    const toEl   = document.getElementById('filterDateTo');
+    if (fromEl && !fromEl.value) fromEl.value = fmt(from);
+    if (toEl   && !toEl.value)   toEl.value   = fmt(today);
+  }
+
   // ── 목록 로드 ─────────────────────────────────────────────────────
   async function loadList() {
     const user    = window.auth?.getSession?.() || {};
@@ -80,11 +95,15 @@
     const appId   = document.getElementById('filterApp')?.value    || '';
     const status  = document.getElementById('filterStatus')?.value || '';
     const keyword = document.getElementById('filterKeyword')?.value?.trim() || '';
+    const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+    const dateTo   = document.getElementById('filterDateTo')?.value   || '';
 
     const params = { request_user_email: email };
-    if (appId)   params.app_id  = appId;
-    if (status)  params.status  = status;
-    if (keyword) params.keyword = keyword;
+    if (appId)    params.app_id    = appId;
+    if (status)   params.status    = status;
+    if (keyword)  params.keyword   = keyword;
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo)   params.date_to   = dateTo;
 
     const result = await apiGet('listSupportRequests', params);
     allItems = result?.data || [];
