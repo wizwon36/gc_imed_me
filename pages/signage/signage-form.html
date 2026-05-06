@@ -25,6 +25,16 @@
       </div>
     </section>
 
+    <!-- ── 탭 네비게이션 (두 패널 공통, hero 위) ── -->
+    <div class="signage-tab-nav" id="signageTabNav">
+      <button type="button" class="signage-tab-btn is-active" data-tab="form">
+        📝 신청하기
+      </button>
+      <button type="button" class="signage-tab-btn" data-tab="history">
+        📋 신청 이력
+      </button>
+    </div>
+
     <!-- ══════════════════════════════════════ -->
     <!-- 탭 A: 신청 폼                          -->
     <!-- ══════════════════════════════════════ -->
@@ -43,22 +53,13 @@
 
     <form id="signageForm" novalidate>
 
-      <!-- STEP 1 — 탭이 section-head 우측에 위치 -->
+      <!-- STEP 1 -->
       <div class="card form-card equipment-form-card">
-        <div class="section-head equipment-form-section-head signage-step1-head">
+        <div class="section-head equipment-form-section-head">
           <div>
             <span class="portal-section-kicker">STEP 1</span>
             <h2 class="section-title">제작 종류 선택 <span class="signage-req">*</span></h2>
             <p class="sub-text equipment-form-section-desc">신청하실 제작 종류를 먼저 선택해 주세요.</p>
-          </div>
-          <!-- 탭 네비게이션 -->
-          <div class="signage-tab-nav" id="signageTabNav">
-            <button type="button" class="signage-tab-btn is-active" data-tab="form">
-              📝 신청하기
-            </button>
-            <button type="button" class="signage-tab-btn" data-tab="history" id="tabBtnHistory">
-              📋 신청 이력
-            </button>
           </div>
         </div>
         <div class="signage-type-grid">
@@ -344,19 +345,10 @@
 
       <!-- 필터 카드 -->
       <div class="card form-card equipment-form-card" style="margin-bottom:16px;">
-        <div class="section-head equipment-form-section-head signage-step1-head">
+        <div class="section-head equipment-form-section-head">
           <div>
             <span class="portal-section-kicker">FILTER</span>
             <h2 class="section-title">조회 조건</h2>
-          </div>
-          <!-- 탭 네비게이션 (이력 탭에서도 동일 위치) -->
-          <div class="signage-tab-nav" id="signageTabNavHistory">
-            <button type="button" class="signage-tab-btn" data-tab="form">
-              📝 신청하기
-            </button>
-            <button type="button" class="signage-tab-btn is-active" data-tab="history">
-              📋 신청 이력
-            </button>
           </div>
         </div>
 
@@ -431,15 +423,16 @@
               <tr>
                 <th style="width:140px;">신청번호</th>
                 <th style="width:110px;">신청일자</th>
-                <th style="width:130px;">소속 의원</th>
-                <th style="width:150px;">소속 부서</th>
-                <th style="width:100px;">신청인</th>
+                <th style="width:90px; text-align:center;">종류</th>
+                <th style="width:120px;">소속 의원</th>
+                <th style="width:140px;">소속 부서</th>
+                <th style="width:90px;">신청인</th>
                 <th>신청 제목</th>
               </tr>
             </thead>
             <tbody id="histTableBody">
               <tr>
-                <td colspan="6">
+                <td colspan="7">
                   <div class="hist-table-empty">
                     <div class="hist-table-empty-icon">🪧</div>
                     <div>조건을 설정한 뒤 <strong>조회</strong> 버튼을 눌러 주세요.</div>
@@ -467,47 +460,35 @@
   </div>
 
   <style>
-    /* ── STEP 1 / FILTER 헤더: 탭을 우측에 배치 ── */
-    .signage-step1-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-    }
-
     /* ── 탭 네비게이션 ── */
     .signage-tab-nav {
       display: flex;
-      gap: 4px;
-      flex-shrink: 0;
-      align-self: flex-start;
+      border-bottom: 2px solid rgba(148, 163, 184, 0.20);
+      margin-bottom: 20px;
     }
 
     .signage-tab-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.28);
-      background: #f8fafc;
-      font-size: 13px;
+      gap: 7px;
+      padding: 10px 20px;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      background: none;
+      font-size: 14px;
       font-weight: 700;
-      color: #64748b;
+      color: #94a3b8;
       cursor: pointer;
-      transition: background 0.13s ease, color 0.13s ease, border-color 0.13s ease;
+      transition: color 0.14s, border-color 0.14s;
       white-space: nowrap;
     }
 
-    .signage-tab-btn:hover {
-      background: #f1f5f9;
-      color: #0f172a;
-    }
+    .signage-tab-btn:hover { color: #0f172a; }
 
     .signage-tab-btn.is-active {
-      background: #0b1f44;
-      border-color: #0b1f44;
-      color: #fff;
+      color: #0b1f44;
+      border-bottom-color: #2563eb;
     }
 
     /* ── 탭 패널 ── */
@@ -698,7 +679,7 @@
 
     /* ── 반응형 ── */
     @media (max-width: 760px) {
-      .signage-tab-btn { padding: 10px 14px; font-size: 13px; }
+      .signage-tab-btn { padding: 9px 14px; font-size: 13px; }
     }
   </style>
 
