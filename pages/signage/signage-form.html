@@ -394,8 +394,8 @@
           </label>
         </div>
 
-        <!-- 3행: 시작일 / 종료일 / 조회 버튼 -->
-        <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr; align-items:flex-end;">
+        <!-- 3행: 시작일 / 종료일 (2열) + 조회 버튼 -->
+        <div class="form-grid" style="grid-template-columns:1fr 1fr auto; align-items:flex-end; gap:12px;">
           <label class="form-field">
             <span class="form-label">시작일</span>
             <input type="date" id="histFilterDateFrom" class="input" />
@@ -406,7 +406,7 @@
           </label>
           <div class="form-field">
             <span class="form-label">&nbsp;</span>
-            <button type="button" id="histSearchBtn" class="btn btn-primary" style="width:100%; min-height:46px;">조회</button>
+            <button type="button" id="histSearchBtn" class="btn btn-primary" style="min-height:46px; padding:0 28px; white-space:nowrap;">조회</button>
           </div>
         </div>
       </div>
