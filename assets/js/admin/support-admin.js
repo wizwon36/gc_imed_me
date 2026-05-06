@@ -145,39 +145,86 @@
     });
   }
 
-  // ── 목록 렌더 ─────────────────────────────────────────────────────
+  // ── 목록 렌더 (그리드 + 페이지네이션) ────────────────────────────
+  const PAGE_SIZE = 20;
+  let currentPage = 1;
+
   function renderList(items) {
-    const listEl  = document.getElementById('requestList');
-    const emptyEl = document.getElementById('emptyBox');
+    currentPage = 1;
+    renderPage(items, currentPage);
+  }
+
+  function renderPage(items, page) {
+    const tableEl  = document.getElementById('requestList');
+    const bodyEl   = document.getElementById('requestBody');
+    const emptyEl  = document.getElementById('emptyBox');
+    const skelEl   = document.getElementById('skeletonArea');
+    const pgBar    = document.getElementById('paginationBar');
+
+    if (skelEl) skelEl.style.display = 'none';
 
     if (!items.length) {
-      if (listEl)  listEl.innerHTML = '';
+      if (tableEl) tableEl.style.display = 'none';
+      if (pgBar)   pgBar.style.display   = 'none';
       if (emptyEl) emptyEl.style.display = 'block';
       return;
     }
     if (emptyEl) emptyEl.style.display = 'none';
+    if (tableEl) tableEl.style.display = '';
 
-    listEl.innerHTML = items.map(function (item) {
+    const totalPages = Math.ceil(items.length / PAGE_SIZE);
+    const start = (page - 1) * PAGE_SIZE;
+    const pageItems = items.slice(start, start + PAGE_SIZE);
+
+    bodyEl.innerHTML = pageItems.map(function (item) {
       return `
-        <div class="support-card is-${item.status.toLowerCase()}" data-id="${escapeHtml(item.request_id)}">
-          <div class="support-card-top">
-            <span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span>
-            <span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span>
-            <span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span>
-            <span class="support-card-title">${escapeHtml(item.title)}</span>
-          </div>
-          <div class="support-card-preview">${escapeHtml(item.content)}</div>
-          <div class="support-card-meta">
-            요청자: ${escapeHtml(item.created_by)} · ${escapeHtml(item.created_at)}
-            ${item.reply ? ' · 💬 답변 있음' : ''}
-          </div>
-        </div>
+        <tr class="is-${item.status.toLowerCase()}" data-id="${escapeHtml(item.request_id)}">
+          <td><span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span></td>
+          <td><span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span></td>
+          <td><span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span></td>
+          <td class="col-title">${escapeHtml(item.title)}</td>
+          <td class="col-preview">${escapeHtml(item.content)}</td>
+          <td class="col-meta">${escapeHtml(item.created_by)}</td>
+          <td class="col-meta">${escapeHtml(item.created_at)}</td>
+          <td class="col-reply">${item.reply ? '💬' : ''}</td>
+        </tr>
       `;
     }).join('');
 
-    listEl.querySelectorAll('.support-card').forEach(function (card) {
-      card.addEventListener('click', function () {
+    bodyEl.querySelectorAll('tr').forEach(function (row) {
+      row.addEventListener('click', function () {
         openModal(this.dataset.id);
+      });
+    });
+
+    // 페이지네이션 렌더
+    if (totalPages <= 1) {
+      if (pgBar) pgBar.style.display = 'none';
+      return;
+    }
+    if (pgBar) pgBar.style.display = 'flex';
+
+    const WINDOW = 2;
+    let pgHtml = '';
+
+    pgHtml += `<button class="pg-btn" ${page === 1 ? 'disabled' : ''} data-page="${page - 1}">‹</button>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= page - WINDOW && i <= page + WINDOW)) {
+        pgHtml += `<button class="pg-btn ${i === page ? 'is-active' : ''}" data-page="${i}">${i}</button>`;
+      } else if (i === page - WINDOW - 1 || i === page + WINDOW + 1) {
+        pgHtml += `<span style="padding:0 4px;color:var(--text-muted);">…</span>`;
+      }
+    }
+
+    pgHtml += `<button class="pg-btn" ${page === totalPages ? 'disabled' : ''} data-page="${page + 1}">›</button>`;
+
+    pgBar.innerHTML = pgHtml;
+    pgBar.querySelectorAll('.pg-btn:not(:disabled)').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        currentPage = parseInt(this.dataset.page, 10);
+        renderPage(allItems, currentPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     });
   }
