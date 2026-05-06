@@ -354,15 +354,15 @@
 
         <div id="historyMsgBox" class="message-box" style="margin-bottom:14px;"></div>
 
-        <!-- 1행: 검색어 (full) -->
-        <div class="form-grid" style="grid-template-columns:1fr; margin-bottom:12px;">
-          <label class="form-field">
+        <!-- 1행: 검색어 -->
+        <div class="form-grid two-col" style="margin-bottom:12px;">
+          <label class="form-field full-col">
             <span class="form-label">검색어</span>
             <input type="text" id="histFilterKeyword" class="input" placeholder="신청 ID, 요청자명, 부서, 내용으로 검색" />
           </label>
         </div>
 
-        <!-- 2행: 의원 / 팀 / 제작 유형 / 긴급 여부 -->
+        <!-- 2행: 의원 / 팀 -->
         <div class="form-grid two-col" style="margin-bottom:12px;">
           <label class="form-field" id="histFilterClinicWrap">
             <span class="form-label">의원</span>
@@ -376,6 +376,10 @@
               <option value="">전체 팀</option>
             </select>
           </label>
+        </div>
+
+        <!-- 3행: 제작 유형 / 긴급 여부 -->
+        <div class="form-grid two-col" style="margin-bottom:12px;">
           <label class="form-field">
             <span class="form-label">제작 유형</span>
             <select id="histFilterType" class="input">
@@ -394,8 +398,8 @@
           </label>
         </div>
 
-        <!-- 3행: 시작일 / 종료일 (2열) + 조회 버튼 -->
-        <div class="form-grid" style="grid-template-columns:1fr 1fr auto; align-items:flex-end; gap:12px;">
+        <!-- 4행: 시작일 / 종료일 + 조회 버튼 -->
+        <div class="form-grid two-col" style="align-items:flex-end;">
           <label class="form-field">
             <span class="form-label">시작일</span>
             <input type="date" id="histFilterDateFrom" class="input" />
@@ -404,10 +408,9 @@
             <span class="form-label">종료일</span>
             <input type="date" id="histFilterDateTo" class="input" />
           </label>
-          <div class="form-field">
-            <span class="form-label">&nbsp;</span>
-            <button type="button" id="histSearchBtn" class="btn btn-primary" style="min-height:46px; padding:0 28px; white-space:nowrap;">조회</button>
-          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <button type="button" id="histSearchBtn" class="btn btn-primary" style="width:100%; min-height:46px;">조회</button>
         </div>
       </div>
 
@@ -415,6 +418,9 @@
       <div class="card form-card equipment-form-card">
         <div class="hist-table-topbar">
           <div id="histListCount" class="hist-list-count">조회 버튼을 눌러 주세요.</div>
+          <button type="button" id="histExportBtn" class="btn btn-ghost" style="display:none;">
+            📥 엑셀 다운로드
+          </button>
         </div>
 
         <div class="hist-table-wrap">
@@ -691,6 +697,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../../assets/js/core/config.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
