@@ -140,16 +140,12 @@
       text-overflow: clip;
       white-space: nowrap;
     }
-    /* 뱃지 컬럼: flexbox로 가로·세로 모두 가운데 정렬 */
+    /* 뱃지 컬럼: td를 flex 컨테이너로 만들어 가로·세로 정렬 */
     .support-grid td.col-center {
-      text-align: center;
-      vertical-align: middle;
-    }
-    .support-grid td.col-center > * {
-      display: inline-flex;
+      display: flex !important;
       align-items: center;
       justify-content: center;
-      vertical-align: middle;
+      text-align: center;
     }
     /* 말줄임은 제목·미리보기 컬럼에만 */
     .support-grid td.col-title,
