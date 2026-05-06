@@ -126,9 +126,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (fromEl) { fromEl.value = threeAgo; fromEl.max = today; }
   if (toEl)   { toEl.value   = today;    toEl.max   = today; }
 
+  // 의원·팀 셀렉트 채우기 (orgSelect는 이미 loadOrgData 완료됨)
+  const clinicSel = document.getElementById('histFilterClinic');
+  const teamSel   = document.getElementById('histFilterTeam');
+
+  if (clinicSel) {
+    (window.orgSelect?.getClinics?.() || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value       = c.code_value;
+      opt.textContent = c.code_name;
+      clinicSel.appendChild(opt);
+    });
+
+    clinicSel.addEventListener('change', () => {
+      const code = clinicSel.value;
+      // 팀 목록 갱신
+      while (teamSel.options.length > 1) teamSel.remove(1);
+      if (code) {
+        const teams = (window.orgSelect?.getTeams?.() || [])
+          .filter(t => (t.parent_code || t.parentCode || t.clinic_code) === code);
+        teams.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value       = t.code_value;
+          opt.textContent = t.code_name;
+          teamSel.appendChild(opt);
+        });
+        teamSel.disabled = teams.length === 0;
+      } else {
+        teamSel.disabled = true;
+      }
+      teamSel.value = '';
+    });
+  }
+
   document.getElementById('histSearchBtn')?.addEventListener('click', histFetchList);
 
-  ['histFilterKeyword','histFilterType','histFilterUrgent','histFilterDateFrom','histFilterDateTo']
+  ['histFilterKeyword','histFilterType','histFilterUrgent',
+   'histFilterClinic','histFilterTeam','histFilterDateFrom','histFilterDateTo']
     .forEach(id => {
       document.getElementById(id)?.addEventListener('keydown', e => {
         if (e.key === 'Enter') histFetchList();
@@ -150,6 +184,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const keyword  = histGetVal('histFilterKeyword');
     const type     = histGetVal('histFilterType');
     const urgent   = histGetVal('histFilterUrgent');
+    const clinic   = histGetVal('histFilterClinic');
+    const team     = histGetVal('histFilterTeam');
     const dateFrom = histGetVal('histFilterDateFrom');
     const dateTo   = histGetVal('histFilterDateTo');
 
@@ -162,9 +198,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const params = { request_user_email: email, date_from: dateFrom, date_to: dateTo };
     if (!isHistAdmin) params.target_user_email = email;  // view: 본인만 / admin: 전체
-    if (keyword) params.keyword   = keyword;
-    if (type)    params.type      = type;
-    if (urgent)  params.is_urgent = urgent;
+    if (keyword) params.keyword      = keyword;
+    if (type)    params.type         = type;
+    if (urgent)  params.is_urgent    = urgent;
+    if (clinic)  params.clinic_code  = clinic;
+    if (team)    params.team_code    = team;
 
     const searchBtn = document.getElementById('histSearchBtn');
     try {
@@ -173,70 +211,67 @@ document.addEventListener('DOMContentLoaded', async () => {
       const result = await window.apiGet('listSignageRequests', params);
       histAllRows  = Array.isArray(result.data) ? result.data : [];
       histLoaded   = true;
-      histRenderList(histAllRows);
+      histRenderTable(histAllRows);
     } catch (err) {
       histShowMsg(err.message || '신청 이력을 불러오지 못했습니다.', 'error');
-      histRenderList([]);
+      histRenderTable([]);
     } finally {
       hideGlobalLoading();
       if (searchBtn) { searchBtn.disabled = false; searchBtn.textContent = '조회'; }
     }
   }
 
-  // ── 이력: 렌더링 ────────────────────────────────────────────────
-  function histRenderList(rows) {
-    const listEl  = document.getElementById('histRequestList');
-    const emptyEl = document.getElementById('histEmptyBox');
+  // ── 이력: 테이블 렌더링 ─────────────────────────────────────────
+  function histRenderTable(rows) {
+    const tbody   = document.getElementById('histTableBody');
     const countEl = document.getElementById('histListCount');
 
+    if (!tbody) return;
+
     if (!rows.length) {
-      if (listEl)  listEl.innerHTML = '';
-      if (emptyEl) emptyEl.style.display = 'block';
-      if (countEl) countEl.textContent = '조회된 신청 내역이 없습니다.';
+      tbody.innerHTML = `
+        <tr><td colspan="7">
+          <div class="hist-table-empty">
+            <div class="hist-table-empty-icon">🪧</div>
+            <div>${histLoaded ? '조건에 맞는 신청 내역이 없습니다.' : '조건을 설정한 뒤 <strong>조회</strong> 버튼을 눌러 주세요.'}</div>
+          </div>
+        </td></tr>`;
+      if (countEl) countEl.textContent = histLoaded ? '조회된 신청 내역이 없습니다.' : '조회 버튼을 눌러 주세요.';
       return;
     }
 
-    if (emptyEl) emptyEl.style.display = 'none';
-    if (countEl) countEl.textContent   = `총 ${rows.length.toLocaleString()}건`;
-    if (listEl)  listEl.innerHTML = rows.map(histBuildCard).join('');
+    if (countEl) countEl.textContent = `총 ${rows.length.toLocaleString()}건`;
+    tbody.innerHTML = rows.map(histBuildRow).join('');
 
-    listEl.querySelectorAll('.signage-hist-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const row = histAllRows.find(r => r.request_id === card.dataset.id);
+    tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const row = histAllRows.find(r => r.request_id === tr.dataset.id);
         if (row) histOpenModal(row);
       });
     });
   }
 
-  function histBuildCard(row) {
+  function histBuildRow(row) {
     const typeLabel = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type;
-    let title = row.type === 'NAMEPLATE'
+    const content   = row.type === 'NAMEPLATE'
       ? `[${row.nameplate_type || '-'} 타입] ${row.sign_size || ''}`.trim()
       : ([row.sign_type, row.sign_size].filter(Boolean).join(' · ') || typeLabel);
 
-    const urgentBadge = row.is_urgent === 'Y' ? `<span class="signage-hist-badge shb-urgent">🚨 긴급</span>` : '';
-    const draftBadge  = row.draft_confirm === 'Y' ? `<span class="signage-hist-badge shb-draft">✅ 시안확인</span>` : '';
+    const urgentCell = row.is_urgent === 'Y'
+      ? `<span class="hist-badge hist-badge-urgent">🚨 긴급</span>`
+      : `<span style="color:#94a3b8; font-size:12px;">일반</span>`;
 
     return `
-      <div class="signage-hist-card is-${hesc(row.type)}" data-id="${hesc(row.request_id)}">
-        <div class="signage-hist-card-bar"></div>
-        <div class="signage-hist-card-body">
-          <div class="signage-hist-card-top">
-            <div class="signage-hist-badges">
-              <span class="signage-hist-badge shb-${hesc(row.type)}">${hesc(typeLabel)}</span>
-              ${urgentBadge}${draftBadge}
-            </div>
-            <span class="signage-hist-req-id">${hesc(row.request_id)}</span>
-          </div>
-          <div class="signage-hist-card-title">${hesc(title)}</div>
-          <div class="signage-hist-card-meta">
-            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">부서</span>${hesc(row.department || '-')}</span>
-            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">요청자</span>${hesc(row.requester_name || '-')}</span>
-            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">수량</span>${hesc(String(row.quantity || 1))}개</span>
-            <span class="signage-hist-meta-item"><span class="signage-hist-meta-label">신청일</span>${hesc(String(row.created_at || '-').slice(0,10))}</span>
-          </div>
-        </div>
-      </div>`;
+      <tr data-id="${hesc(row.request_id)}">
+        <td>${hesc(String(row.created_at || '-').slice(0,10))}</td>
+        <td style="text-align:center;"><span class="hist-badge hist-badge-${hesc(row.type)}">${hesc(typeLabel)}</span></td>
+        <td style="font-size:12px; color:#64748b;">${hesc(row.request_id)}</td>
+        <td class="wrap" style="max-width:240px;">${hesc(content)}</td>
+        <td>${hesc(row.department || '-')}</td>
+        <td style="text-align:center;">${hesc(String(row.quantity || 1))}개</td>
+        <td style="text-align:center;">${urgentCell}</td>
+      </tr>`;
+  }
   }
 
   // ── 이력: 모달 ──────────────────────────────────────────────────
