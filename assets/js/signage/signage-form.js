@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!rows.length) {
       tbody.innerHTML = `
-        <tr><td colspan="7">
+        <tr><td colspan="6">
           <div class="hist-table-empty">
             <div class="hist-table-empty-icon">🪧</div>
             <div>${histLoaded ? '조건에 맞는 신청 내역이 없습니다.' : '조건을 설정한 뒤 <strong>조회</strong> 버튼을 눌러 주세요.'}</div>
@@ -257,25 +257,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function histBuildRow(row) {
-    const typeLabel = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type;
-    const content   = row.request_title ||
+    const title = row.request_title ||
       (row.type === 'NAMEPLATE'
         ? `[${row.nameplate_type || '-'} 타입] ${row.sign_size || ''}`.trim()
-        : ([row.sign_type, row.sign_size].filter(Boolean).join(' · ') || typeLabel));
-
-    const urgentCell = row.is_urgent === 'Y'
-      ? `<span class="hist-badge hist-badge-urgent">🚨 긴급</span>`
-      : `<span style="color:#94a3b8; font-size:12px;">일반</span>`;
+        : ([row.sign_type, row.sign_size].filter(Boolean).join(' · ') ||
+           ({ NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type)));
 
     return `
       <tr data-id="${hesc(row.request_id)}">
-        <td>${hesc(String(row.created_at || '-').slice(0,10))}</td>
-        <td style="text-align:center;"><span class="hist-badge hist-badge-${hesc(row.type)}">${hesc(typeLabel)}</span></td>
-        <td style="font-size:12px; color:#64748b;">${hesc(row.request_id)}</td>
-        <td class="wrap" style="max-width:240px;">${hesc(content)}</td>
-        <td>${hesc(row.department || '-')}</td>
-        <td style="text-align:center;">${hesc(String(row.quantity || 1))}개</td>
-        <td style="text-align:center;">${urgentCell}</td>
+        <td style="font-size:12px; color:#64748b; font-weight:700;">${hesc(row.request_id)}</td>
+        <td>${hesc(String(row.created_at || '-').slice(0, 10))}</td>
+        <td>${hesc(row.clinic_name || '-')}</td>
+        <td>${hesc(row.team_name || row.department || '-')}</td>
+        <td>${hesc(row.requester_name || '-')}</td>
+        <td class="wrap">${hesc(title)}</td>
       </tr>`;
   }
 
