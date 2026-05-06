@@ -45,10 +45,24 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
   });
 
+  // ── 기본 앱 목록 (API 응답에 없을 경우 폴백) ──────────────────────
+  const DEFAULT_APPS = [
+    { app_id: 'equipment', app_name: '의료장비 관리' },
+    { app_id: 'signage',   app_name: '사인물 신청'   },
+    { app_id: 'lj_chart',  app_name: '정도관리 시스템' }
+  ];
+
   // ── 메타 로드 ─────────────────────────────────────────────────────
   async function loadMeta() {
     const result = await apiGet('getSupportAppList');
-    const apps   = result?.data?.apps || [];
+    let apps   = result?.data?.apps || [];
+
+    // API 응답에 lj_chart 가 없으면 DEFAULT_APPS 에서 보완
+    DEFAULT_APPS.forEach(function (def) {
+      if (!apps.some(function (a) { return a.app_id === def.app_id; })) {
+        apps = apps.concat([def]);
+      }
+    });
 
     const appSel = document.getElementById('filterApp');
     apps.forEach(function (a) {
