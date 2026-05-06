@@ -180,8 +180,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') histCloseModal(); });
 
   // ── 이력: 데이터 조회 ───────────────────────────────────────────
-  let histAllRows = [];
-  let histLoaded  = false;
+  const HIST_PAGE_SIZE = 20;
+  let histAllRows  = [];
+  let histLoaded   = false;
+  let histCurPage  = 1;
+  let histTotPages = 1;
+
+  // 페이지네이션 버튼 이벤트
+  document.getElementById('histPrevBtn')?.addEventListener('click', () => {
+    if (histCurPage > 1) { histCurPage--; histRenderPage(); }
+  });
+  document.getElementById('histNextBtn')?.addEventListener('click', () => {
+    if (histCurPage < histTotPages) { histCurPage++; histRenderPage(); }
+  });
 
   async function histFetchList() {
     const email    = (user.user_email || user.email || '').trim().toLowerCase();
@@ -215,25 +226,54 @@ document.addEventListener('DOMContentLoaded', async () => {
       const result = await window.apiGet('listSignageRequests', params);
       histAllRows  = Array.isArray(result.data) ? result.data : [];
       histLoaded   = true;
-      histRenderTable(histAllRows);
+      histCurPage  = 1;
+      histTotPages = histAllRows.length === 0 ? 1 : Math.ceil(histAllRows.length / HIST_PAGE_SIZE);
+      histRenderPage();
     } catch (err) {
       histShowMsg(err.message || '신청 이력을 불러오지 못했습니다.', 'error');
-      histRenderTable([]);
+      histRenderPage();
     } finally {
       hideGlobalLoading();
       if (searchBtn) { searchBtn.disabled = false; searchBtn.textContent = '조회'; }
     }
   }
 
-  // ── 이력: 테이블 렌더링 ─────────────────────────────────────────
-  function histRenderTable(rows) {
-    const tbody     = document.getElementById('histTableBody');
-    const countEl   = document.getElementById('histListCount');
+  // ── 이력: 페이지 렌더링 (페이지네이션 포함) ─────────────────────
+  function histRenderPage() {
+    const rows      = histAllRows;
+    const total     = rows.length;
     const exportBtn = document.getElementById('histExportBtn');
+    const countEl   = document.getElementById('histListCount');
+    const prevBtn   = document.getElementById('histPrevBtn');
+    const nextBtn   = document.getElementById('histNextBtn');
+    const pageInfo  = document.getElementById('histPageInfo');
 
+    if (exportBtn) exportBtn.style.display = total ? '' : 'none';
+
+    if (!total) {
+      if (countEl)  countEl.textContent = histLoaded ? '조회된 신청 내역이 없습니다.' : '조회 버튼을 눌러 주세요.';
+      [prevBtn, nextBtn, pageInfo].forEach(el => { if (el) el.style.display = 'none'; });
+      histRenderTable([]);
+      return;
+    }
+
+    if (countEl) countEl.textContent = `총 ${total.toLocaleString()}건 (${histCurPage} / ${histTotPages} 페이지)`;
+
+    // 페이지네이션 컨트롤
+    const showPaging = histTotPages > 1;
+    [prevBtn, nextBtn, pageInfo].forEach(el => { if (el) el.style.display = showPaging ? '' : 'none'; });
+    if (prevBtn)  prevBtn.disabled  = histCurPage <= 1;
+    if (nextBtn)  nextBtn.disabled  = histCurPage >= histTotPages;
+    if (pageInfo) pageInfo.textContent = `${histCurPage} / ${histTotPages}`;
+
+    const start = (histCurPage - 1) * HIST_PAGE_SIZE;
+    histRenderTable(rows.slice(start, start + HIST_PAGE_SIZE));
+  }
+
+  // ── 이력: 테이블 행 렌더링 ──────────────────────────────────────
+  function histRenderTable(rows) {
+    const tbody = document.getElementById('histTableBody');
     if (!tbody) return;
-
-    if (exportBtn) exportBtn.style.display = rows.length ? '' : 'none';
 
     if (!rows.length) {
       tbody.innerHTML = `
@@ -243,13 +283,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div>${histLoaded ? '조건에 맞는 신청 내역이 없습니다.' : '조건을 설정한 뒤 <strong>조회</strong> 버튼을 눌러 주세요.'}</div>
           </div>
         </td></tr>`;
-      if (countEl) countEl.textContent = histLoaded ? '조회된 신청 내역이 없습니다.' : '조회 버튼을 눌러 주세요.';
       return;
     }
 
-    if (countEl) countEl.textContent = `총 ${rows.length.toLocaleString()}건`;
     tbody.innerHTML = rows.map(histBuildRow).join('');
-
     tbody.querySelectorAll('tr[data-id]').forEach(tr => {
       tr.addEventListener('click', () => {
         const row = histAllRows.find(r => r.request_id === tr.dataset.id);
