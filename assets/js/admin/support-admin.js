@@ -177,15 +177,17 @@
     const pageItems = items.slice(start, start + PAGE_SIZE);
 
     bodyEl.innerHTML = pageItems.map(function (item) {
+      const requester = item.requester_name || item.created_by || '';
+      const dateShort  = (item.created_at || '').slice(0, 10);
       return `
         <tr class="is-${item.status.toLowerCase()}" data-id="${escapeHtml(item.request_id)}">
-          <td><span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span></td>
-          <td><span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span></td>
-          <td><span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span></td>
+          <td class="col-center"><span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span></td>
+          <td class="col-center"><span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span></td>
+          <td class="col-center"><span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span></td>
           <td class="col-title">${escapeHtml(item.title)}</td>
           <td class="col-preview">${escapeHtml(item.content)}</td>
-          <td class="col-meta">${escapeHtml(item.created_by)}</td>
-          <td class="col-meta">${escapeHtml(item.created_at)}</td>
+          <td class="col-meta col-center">${escapeHtml(requester)}</td>
+          <td class="col-meta col-center">${escapeHtml(dateShort)}</td>
           <td class="col-reply">${item.reply ? '💬' : ''}</td>
         </tr>
       `;
