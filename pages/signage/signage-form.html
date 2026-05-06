@@ -11,7 +11,7 @@
 <body class="portal-page equipment-form-page signage-form-page">
   <div class="container page-shell equipment-form-shell">
 
-    <!-- 헤더 (탭 포함) -->
+    <!-- 헤더 -->
     <section class="top-brand-bar equipment-form-topbar signage-topbar">
       <div class="top-brand-left">
         <div class="top-brand-logo">✦</div>
@@ -21,18 +21,19 @@
         </div>
       </div>
       <div class="top-brand-actions portal-top-actions equipment-form-top-actions">
-        <!-- 탭 네비게이션 -->
-        <div class="signage-tab-nav" id="signageTabNav">
-          <button type="button" class="signage-tab-btn is-active" data-tab="form">
-            📝 신청하기
-          </button>
-          <button type="button" class="signage-tab-btn" data-tab="history" id="tabBtnHistory">
-            📋 신청 이력
-          </button>
-        </div>
         <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
       </div>
     </section>
+
+    <!-- 탭 네비게이션 -->
+    <div class="signage-tab-nav" id="signageTabNav">
+      <button type="button" class="signage-tab-btn is-active" data-tab="form">
+        📝 신청하기
+      </button>
+      <button type="button" class="signage-tab-btn" data-tab="history" id="tabBtnHistory">
+        📋 신청 이력
+      </button>
+    </div>
 
     <!-- ══════════════════════════════════════ -->
     <!-- 탭 A: 신청 폼                          -->
@@ -87,6 +88,12 @@
           </div>
         </div>
         <div class="form-grid two-col">
+          <!-- 제목: 타입에 따라 placeholder 변경 (JS에서 처리) -->
+          <label class="form-field full-col">
+            <span class="form-label required">제목</span>
+            <input type="text" id="request_title" class="input"
+              placeholder="제작 종류를 선택하면 입력 안내가 표시됩니다." required />
+          </label>
           <label class="form-field">
             <span class="form-label required">요청 의원</span>
             <input type="text" id="clinic_name_display" class="input" readonly placeholder="로그인 정보에서 자동 입력" />
@@ -453,36 +460,36 @@
   </div>
 
   <style>
-    /* ── 탭 (헤더 내부) ── */
+    /* ── 탭 네비게이션 (topbar 아래 독립 배치) ── */
     .signage-tab-nav {
       display: flex;
-      gap: 2px;
-      background: rgba(255,255,255,0.10);
-      border-radius: 10px;
-      padding: 3px;
+      gap: 0;
+      border-bottom: 2px solid rgba(148, 163, 184, 0.20);
+      margin-bottom: 4px;
     }
 
     .signage-tab-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
+      gap: 7px;
+      padding: 11px 22px;
       border: none;
-      border-radius: 8px;
-      background: transparent;
-      font-size: 13px;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      background: none;
+      font-size: 14px;
       font-weight: 700;
-      color: rgba(255,255,255,0.65);
+      color: #64748b;
       cursor: pointer;
-      transition: background 0.14s ease, color 0.14s ease;
+      transition: color 0.14s ease, border-color 0.14s ease;
       white-space: nowrap;
     }
 
-    .signage-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.12); }
+    .signage-tab-btn:hover { color: #0f172a; }
 
     .signage-tab-btn.is-active {
-      background: rgba(255,255,255,0.22);
-      color: #fff;
+      color: #0b1f44;
+      border-bottom-color: #2563eb;
     }
 
     /* ── 탭 패널 ── */
@@ -673,7 +680,7 @@
 
     /* ── 반응형 ── */
     @media (max-width: 760px) {
-      .signage-tab-nav { display: none; }  /* 모바일: 탭 숨김 처리 or 별도 대응 */
+      .signage-tab-btn { padding: 10px 14px; font-size: 13px; }
     }
   </style>
 
