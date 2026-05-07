@@ -242,7 +242,9 @@ async function loadEntriesForItem(itemId, isInitial = false) {
   try {
     const result = await apiGet('ljGetEntries', {
       item_id: itemId,
-      request_user_email: user.email
+      request_user_email: user.email,
+      date_from: state.dateFrom,
+      date_to:   state.dateTo
     });
     state.entries[itemId] = (Array.isArray(result.data) ? result.data : []).map(e => ({
       ...e,
@@ -654,7 +656,9 @@ async function addEntry() {
     // 서버에서 최신 entries 재조회
     const entryResult = await apiGet('ljGetEntries', {
       item_id: state.activeItemId,
-      request_user_email: user.email
+      request_user_email: user.email,
+      date_from: state.dateFrom,
+      date_to:   state.dateTo
     });
     state.entries[state.activeItemId] = (Array.isArray(entryResult.data) ? entryResult.data : []).map(e => ({
       ...e, date: normalizeDate(e.date)
@@ -688,7 +692,9 @@ async function deleteEntry(entryId) {
     // 서버에서 최신 entries 재조회
     const entryResult = await apiGet('ljGetEntries', {
       item_id: state.activeItemId,
-      request_user_email: user.email
+      request_user_email: user.email,
+      date_from: state.dateFrom,
+      date_to:   state.dateTo
     });
     state.entries[state.activeItemId] = (Array.isArray(entryResult.data) ? entryResult.data : []).map(e => ({
       ...e, date: normalizeDate(e.date)
@@ -751,10 +757,10 @@ function applyDateFilter() {
 function rerenderWithFilter() {
   const item = getActiveItem();
   if (!item) return;
+  // 날짜 범위가 바뀌면 캐시를 무효화하고 서버에서 재조회
+  delete state.entries[state.activeItemId];
   updateDateFilterInfo();
-  renderDataTable();
-  renderStats();
-  if (item.item_type !== 'qualitative') renderChart();
+  loadEntriesForItem(state.activeItemId);
 }
 
 function updateDateFilterInfo() {
@@ -771,17 +777,9 @@ function updateDateFilterInfo() {
   }
 }
 
-/** 날짜 필터가 적용된 entries 반환 (정량·정성 공용) */
+/** 서버에서 이미 날짜 필터링된 entries 반환 */
 function getFilteredEntries() {
-  const entries = state.entries[state.activeItemId] || [];
-  const from = state.dateFrom;
-  const to   = state.dateTo;
-  if (!from && !to) return entries;
-  return entries.filter(e => {
-    if (from && e.date < from) return false;
-    if (to   && e.date > to)   return false;
-    return true;
-  });
+  return state.entries[state.activeItemId] || [];
 }
 
 // ─────────────────────────────────────────────
