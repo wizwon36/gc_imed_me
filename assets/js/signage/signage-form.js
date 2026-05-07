@@ -130,6 +130,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (fromEl) { fromEl.value = weekAgo; fromEl.max = today; }
   if (toEl)   { toEl.value   = today;   toEl.max   = today; }
 
+  // 의원·팀 필터: admin이 아닌 경우(view 권한) 숨김
+  const clinicWrap = document.getElementById('histFilterClinicWrap');
+  const teamWrap   = document.getElementById('histFilterTeamWrap');
+  if (!isHistAdmin) {
+    if (clinicWrap) clinicWrap.style.display = 'none';
+    if (teamWrap)   teamWrap.style.display   = 'none';
+  }
+
   // 의원·팀 셀렉트 채우기 (orgSelect는 이미 loadOrgData 완료됨)
   const clinicSel = document.getElementById('histFilterClinic');
   const teamSel   = document.getElementById('histFilterTeam');
