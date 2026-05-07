@@ -759,10 +759,10 @@ async function rerenderWithFilter() {
   if (!item) return;
   // 날짜 범위가 바뀌면 캐시를 무효화하고 서버에서 재조회
   delete state.entries[state.activeItemId];
-  updateDateFilterInfo();
   showGlobalLoading('데이터를 불러오는 중...');
   try {
     await loadEntriesForItem(state.activeItemId);
+    updateDateFilterInfo(); // 데이터 로드 완료 후 건수 표시
   } finally {
     hideGlobalLoading();
   }
@@ -771,14 +771,13 @@ async function rerenderWithFilter() {
 function updateDateFilterInfo() {
   const infoEl = $('dateFilterInfo');
   if (!infoEl) return;
-  const entries = getFilteredEntries();
-  const total   = (state.entries[state.activeItemId] || []).length;
+  const count = getFilteredEntries().length;
   if (state.dateFrom || state.dateTo) {
-    const from = state.dateFrom || '전체';
-    const to   = state.dateTo   || '전체';
-    infoEl.textContent = `${from} ~ ${to} · ${entries.length}건 표시 중 (전체 ${total}건)`;
+    const from = state.dateFrom || '-';
+    const to   = state.dateTo   || '-';
+    infoEl.textContent = `${from} ~ ${to} · ${count}건`;
   } else {
-    infoEl.textContent = `전체 ${total}건`;
+    infoEl.textContent = `전체 ${count}건`;
   }
 }
 
