@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const nextBtn   = document.getElementById('histNextBtn');
     const pageInfo  = document.getElementById('histPageInfo');
 
-    if (exportBtn) exportBtn.style.display = total ? '' : 'none';
+    if (exportBtn) exportBtn.style.display = (isHistAdmin && total) ? '' : 'none';
 
     if (!total) {
       if (countEl)  countEl.textContent = histLoaded ? '조회된 신청 내역이 없습니다.' : '조회 버튼을 눌러 주세요.';
