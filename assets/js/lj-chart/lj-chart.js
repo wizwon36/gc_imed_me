@@ -754,13 +754,18 @@ function applyDateFilter() {
   rerenderWithFilter();
 }
 
-function rerenderWithFilter() {
+async function rerenderWithFilter() {
   const item = getActiveItem();
   if (!item) return;
   // 날짜 범위가 바뀌면 캐시를 무효화하고 서버에서 재조회
   delete state.entries[state.activeItemId];
   updateDateFilterInfo();
-  loadEntriesForItem(state.activeItemId);
+  showGlobalLoading('데이터를 불러오는 중...');
+  try {
+    await loadEntriesForItem(state.activeItemId);
+  } finally {
+    hideGlobalLoading();
+  }
 }
 
 function updateDateFilterInfo() {
