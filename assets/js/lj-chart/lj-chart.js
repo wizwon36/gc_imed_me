@@ -26,7 +26,9 @@ let state = {
   activeItemId: null,
   entries: {},
   chart: null,
-  orgData: null   // admin용 org 데이터
+  orgData: null,   // admin용 org 데이터
+  dateFrom: '',    // 날짜 필터 시작일 (yyyy-MM-dd)
+  dateTo: ''       // 날짜 필터 종료일 (yyyy-MM-dd)
 };
 
 // ─────────────────────────────────────────────
@@ -171,6 +173,17 @@ function bindEvents() {
   if (String(user?.role || '').trim().toLowerCase() === 'admin') {
     $('sampleDataBtn').style.display = '';
   }
+  $('chartDateApplyBtn').addEventListener('click', applyDateFilter);
+  $('chartDateFrom').addEventListener('keydown', e => { if (e.key === 'Enter') applyDateFilter(); });
+  $('chartDateTo').addEventListener('keydown',   e => { if (e.key === 'Enter') applyDateFilter(); });
+
+  document.querySelectorAll('.lj-date-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const days = parseInt(btn.dataset.days, 10);
+      applyDatePreset(days);
+    });
+  });
+
   $('exportCsvBtn').addEventListener('click', exportCsv);
   $('exportExcelBtn').addEventListener('click', exportExcel);
   $('exportPdfBtn').addEventListener('click', exportPdf);
@@ -180,6 +193,9 @@ function bindEvents() {
   });
 
   $('entryDate').value = new Date().toISOString().slice(0, 10);
+
+  // 날짜 필터 기본값: 최근 30일
+  applyDatePreset(30, false);
 }
 
 // ─────────────────────────────────────────────
@@ -297,6 +313,7 @@ function selectItem(itemId) {
       $('itemEmptyState').style.display = 'none';
       $('settingsSection').style.display = '';
       $('dataEntrySection').style.display = '';
+      $('dateFilterSection').style.display = '';
       $('editItemBtn').style.display = '';
       $('deleteItemBtn').style.display = '';
       $('settingsSectionTitle').textContent = item.item_name;
@@ -335,6 +352,7 @@ function selectItem(itemId) {
 
       renderSettingsDisplay(item);
       renderItemSelect();
+      updateDateFilterInfo();
       renderDataTable();
       renderStats();
       if (!isQual) renderChart();
@@ -350,6 +368,7 @@ function showItemEmptyState() {
   $('itemEmptyState').style.display = '';
   $('settingsSection').style.display = 'none';
   $('dataEntrySection').style.display = 'none';
+  $('dateFilterSection').style.display = 'none';
   $('statsSection').style.display = 'none';
   $('chartSection').style.display = 'none';
   $('editItemBtn').style.display = 'none';
@@ -686,6 +705,86 @@ async function deleteEntry(entryId) {
 }
 
 // ─────────────────────────────────────────────
+// 날짜 필터 유틸
+// ─────────────────────────────────────────────
+function dateOffsetYmd(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+function applyDatePreset(days, rerender = true) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (days === 0) {
+    state.dateFrom = '';
+    state.dateTo   = '';
+    $('chartDateFrom').value = '';
+    $('chartDateTo').value   = '';
+  } else {
+    state.dateFrom = dateOffsetYmd(days);
+    state.dateTo   = today;
+    $('chartDateFrom').value = state.dateFrom;
+    $('chartDateTo').value   = state.dateTo;
+  }
+  // 활성 프리셋 버튼 스타일 반영
+  document.querySelectorAll('.lj-date-preset-btn').forEach(btn => {
+    const active = parseInt(btn.dataset.days, 10) === days;
+    btn.style.background    = active ? '#2563eb' : '';
+    btn.style.color         = active ? '#fff'    : '';
+    btn.style.borderColor   = active ? '#2563eb' : '';
+  });
+  if (rerender) rerenderWithFilter();
+}
+
+function applyDateFilter() {
+  state.dateFrom = $('chartDateFrom').value;
+  state.dateTo   = $('chartDateTo').value;
+  // 프리셋 버튼 활성 해제 (직접 입력이므로)
+  document.querySelectorAll('.lj-date-preset-btn').forEach(btn => {
+    btn.style.background  = '';
+    btn.style.color       = '';
+    btn.style.borderColor = '';
+  });
+  rerenderWithFilter();
+}
+
+function rerenderWithFilter() {
+  const item = getActiveItem();
+  if (!item) return;
+  updateDateFilterInfo();
+  renderDataTable();
+  renderStats();
+  if (item.item_type !== 'qualitative') renderChart();
+}
+
+function updateDateFilterInfo() {
+  const infoEl = $('dateFilterInfo');
+  if (!infoEl) return;
+  const entries = getFilteredEntries();
+  const total   = (state.entries[state.activeItemId] || []).length;
+  if (state.dateFrom || state.dateTo) {
+    const from = state.dateFrom || '전체';
+    const to   = state.dateTo   || '전체';
+    infoEl.textContent = `${from} ~ ${to} · ${entries.length}건 표시 중 (전체 ${total}건)`;
+  } else {
+    infoEl.textContent = `전체 ${total}건`;
+  }
+}
+
+/** 날짜 필터가 적용된 entries 반환 (정량·정성 공용) */
+function getFilteredEntries() {
+  const entries = state.entries[state.activeItemId] || [];
+  const from = state.dateFrom;
+  const to   = state.dateTo;
+  if (!from && !to) return entries;
+  return entries.filter(e => {
+    if (from && e.date < from) return false;
+    if (to   && e.date > to)   return false;
+    return true;
+  });
+}
+
+// ─────────────────────────────────────────────
 // Westgard Rules 판정
 // ─────────────────────────────────────────────
 function analyzeEntries(entries, mean, sd) {
@@ -747,7 +846,7 @@ function analyzeEntries(entries, mean, sd) {
 function renderDataTable() {
   const itemId = state.activeItemId;
   const item = getActiveItem();
-  const entries = state.entries[itemId] || [];
+  const entries = getFilteredEntries();
 
   if (entries.length === 0) {
     $('dataEmptyState').style.display = '';
@@ -809,7 +908,7 @@ function renderDataTable() {
 function renderStats() {
   const itemId = state.activeItemId;
   const item = getActiveItem();
-  const entries = state.entries[itemId] || [];
+  const entries = getFilteredEntries();
 
   if (entries.length === 0) {
     $('statsSection').style.display = 'none';
@@ -883,7 +982,7 @@ function renderStats() {
 function renderChart() {
   const itemId = state.activeItemId;
   const item = getActiveItem();
-  const entries = state.entries[itemId] || [];
+  const entries = getFilteredEntries();
 
   if (entries.length === 0) {
     $('chartSection').style.display = 'none';
@@ -1033,7 +1132,7 @@ async function loadSampleData() {
 // ─────────────────────────────────────────────
 function exportCsv() {
   const item = getActiveItem();
-  const entries = state.entries[state.activeItemId] || [];
+  const entries = getFilteredEntries();
   if (entries.length === 0) return;
 
   const analyzed = analyzeEntries(entries, Number(item.mean), Number(item.sd));
@@ -1062,7 +1161,7 @@ function exportCsv() {
 // ─────────────────────────────────────────────
 function exportExcel() {
   const item = getActiveItem();
-  const entries = state.entries[state.activeItemId] || [];
+  const entries = getFilteredEntries();
   if (entries.length === 0) { showMessage('데이터가 없습니다.', 'error'); return; }
   if (typeof XLSX === 'undefined') { showMessage('라이브러리 로딩 중입니다. 잠시 후 다시 시도해 주세요.', 'error'); return; }
 
@@ -1133,7 +1232,7 @@ function exportExcel() {
 // ─────────────────────────────────────────────
 async function exportPdf() {
   const item = getActiveItem();
-  const entries = state.entries[state.activeItemId] || [];
+  const entries = getFilteredEntries();
   if (entries.length === 0) { showMessage('데이터가 없습니다.', 'error'); return; }
   if (typeof window.jspdf === 'undefined' || typeof html2canvas === 'undefined') {
     showMessage('라이브러리 로딩 중입니다. 잠시 후 다시 시도해 주세요.', 'error'); return;
