@@ -520,7 +520,7 @@ async function initListFilters() {
     var isAdmin = equipmentListState.isAdmin;
 
     if (!isAdmin && userClinicCode) {
-      // ★ 일반 user: 본인 소속 의원만 표시하고 선택 고정
+      // ★ 일반 user: 의원은 본인 소속으로 고정(disabled), 팀은 초기값만 본인 팀으로 세팅(변경 가능)
       var userClinic = window.orgSelect.getClinics().filter(function(c) {
         return c.code_value === userClinicCode;
       });
@@ -530,7 +530,7 @@ async function initListFilters() {
       clinicEl.value = userClinicCode;
       clinicEl.disabled = true;
 
-      // ★ user: 팀도 본인 소속 팀으로 초기값 강제 지정 및 고정
+      // 팀: 소속 의원 하위 팀 전체 표시, 초기값만 본인 팀으로 세팅 (변경 가능)
       var userTeamCode = equipmentListState.userTeamCode;
       window.orgSelect.fillSelectOptions(
         teamEl,
@@ -538,7 +538,7 @@ async function initListFilters() {
         { emptyText: '전체 팀' }
       );
       teamEl.value = userTeamCode || '';
-      teamEl.disabled = true;
+      teamEl.disabled = false;
 
     } else {
       // admin: 전체 의원 선택 가능
@@ -601,7 +601,7 @@ function bindListEvents() {
           document.getElementById('team_code').disabled = true;
         }
       } else {
-        // ★ user: 팀도 본인 소속 팀으로 고정 복원 (초기화해도 본인 팀 유지, disabled 재적용)
+        // ★ user: 초기화 시 팀을 본인 소속 팀으로 복원 (의원은 disabled 유지, 팀은 변경 가능)
         setValue('team_code', equipmentListState.userTeamCode || '');
         if (window.orgSelect) {
           var teamElReset = document.getElementById('team_code');
@@ -611,7 +611,7 @@ function bindListEvents() {
             { emptyText: '전체 팀' }
           );
           teamElReset.value = equipmentListState.userTeamCode || '';
-          teamElReset.disabled = true;
+          teamElReset.disabled = false;
         }
       }
       setValue('status', '');
