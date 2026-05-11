@@ -92,7 +92,7 @@ function bindEvents() {
       document.querySelectorAll('.left-tab-panel').forEach(function(p) { p.style.display = 'none'; });
       btn.classList.add('is-active');
       var panel = document.getElementById('tab-' + target);
-      if (panel) panel.style.display = '';
+      if (panel) panel.style.display = 'block';
 
     });
   });
