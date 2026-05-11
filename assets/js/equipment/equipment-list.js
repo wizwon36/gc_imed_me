@@ -162,8 +162,7 @@ function renderListSummary() {
   page = formatNumberLocal(equipmentListState.page || 1);
   totalPages = formatNumberLocal(equipmentListState.totalPages || 1);
 
-  var prefix = equipmentListState.isAdmin ? '검색 결과 ' : '소속 팀 장비 ';
-  summaryEl.textContent = prefix + total + '건 · ' + page + ' / ' + totalPages + ' 페이지';
+  summaryEl.textContent = '검색 결과 ' + total + '건 · ' + page + ' / ' + totalPages + ' 페이지';
 }
 
 /* ── 카드 (모바일용) ── */
@@ -407,40 +406,20 @@ function applyListPermissionUi() {
 function buildListRequestParams(filters, nextPage) {
   var hasFilter = hasMeaningfulFilter(filters);
 
-  // ★ user이면 team_code를 본인 소속 팀으로 강제 주입
-  // (필터가 없는 초기 조회 포함, admin은 그대로 유지)
-  var effectiveClinicCode = filters.clinic_code;
-  var effectiveTeamCode   = filters.team_code;
-
-  if (!equipmentListState.isAdmin) {
-    effectiveClinicCode = equipmentListState.userClinicCode || filters.clinic_code;
-    effectiveTeamCode   = equipmentListState.userTeamCode   || filters.team_code;
-  }
-
-  // ★ user는 팀 필터가 항상 적용되므로 isRecentMode 판정에서도 반영
-  var effectiveFilters = {
-    keyword:      filters.keyword,
-    clinic_code:  effectiveClinicCode,
-    team_code:    effectiveTeamCode,
-    status:       filters.status,
-    manufacturer: filters.manufacturer
-  };
-  var hasEffectiveFilter = hasMeaningfulFilter(effectiveFilters);
-
-  equipmentListState.isRecentMode = !hasEffectiveFilter;
+  equipmentListState.isRecentMode = !hasFilter;
 
   var base = {
     request_user_email: equipmentListState.user && equipmentListState.user.email ? equipmentListState.user.email : '',
-    keyword:      effectiveFilters.keyword,
-    clinic_code:  effectiveFilters.clinic_code,
-    team_code:    effectiveFilters.team_code,
-    status:       effectiveFilters.status,
-    manufacturer: effectiveFilters.manufacturer,
+    keyword:      filters.keyword,
+    clinic_code:  filters.clinic_code,
+    team_code:    filters.team_code,
+    status:       filters.status,
+    manufacturer: filters.manufacturer,
     page:         nextPage,
     page_size:    equipmentListState.pageSize
   };
 
-  if (!hasEffectiveFilter) {
+  if (!hasFilter) {
     base.recent_only = 'Y';
     base.include_total = 'N';
     return base;
