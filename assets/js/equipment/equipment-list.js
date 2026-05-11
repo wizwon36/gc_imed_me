@@ -11,6 +11,7 @@ var equipmentListState = {
   isRecentMode: false,
   isAdmin: false,
   userClinicCode: '',
+  userTeamCode: '',
   _initialLoad: true   // ★ 최초 로딩 여부 — URL params 직접 사용
 };
 
@@ -171,7 +172,7 @@ function buildEquipmentCard(item) {
 
   leftActions += '<a class="btn" href="detail.html?id=' + encodeURIComponent(item.equipment_id || '') + '">상세</a>';
 
-  if (equipmentListState.canEdit) {
+  if (equipmentListState.canEdit && canEditItem(item)) {
     leftActions += '<a class="btn btn-primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
   }
 
@@ -230,7 +231,7 @@ function buildEquipmentRow(item) {
 
   actions += '<a class="tbl-btn" href="detail.html?id=' + encodeURIComponent(item.equipment_id || '') + '">상세</a>';
 
-  if (equipmentListState.canEdit) {
+  if (equipmentListState.canEdit && canEditItem(item)) {
     actions += '<a class="tbl-btn tbl-btn--primary" href="form.html?id=' + encodeURIComponent(item.equipment_id || '') + '">수정</a>';
   }
 
@@ -380,6 +381,15 @@ function renderPagination() {
   renderFullPagination();
 }
 
+// ★ 개별 장비에 대해 수정 가능 여부 판단
+// admin이면 모든 장비 수정 가능, user이면 본인 소속 팀 장비만 수정 가능
+function canEditItem(item) {
+  if (equipmentListState.isAdmin) return true;
+  var itemTeamCode = String(item.team_code || '').trim();
+  var userTeamCode = equipmentListState.userTeamCode;
+  return !!userTeamCode && itemTeamCode === userTeamCode;
+}
+
 function applyListPermissionUi() {
   var createBtn = document.getElementById('createEquipmentBtn');
   if (createBtn) {
@@ -521,13 +531,15 @@ async function initListFilters() {
       clinicEl.value = userClinicCode;
       clinicEl.disabled = true;
 
-      // 팀은 소속 의원 팀만 표시
+      // ★ user: 팀도 본인 소속 팀으로 초기값 강제 지정 및 고정
+      var userTeamCode = equipmentListState.userTeamCode;
       window.orgSelect.fillSelectOptions(
         teamEl,
         window.orgSelect.getFilteredTeams(userClinicCode),
         { emptyText: '전체 팀' }
       );
-      if (query.team_code) teamEl.value = query.team_code;
+      teamEl.value = userTeamCode || '';
+      teamEl.disabled = true;
 
     } else {
       // admin: 전체 의원 선택 가능
@@ -590,13 +602,15 @@ function bindListEvents() {
           document.getElementById('team_code').disabled = true;
         }
       } else {
-        setValue('team_code', '');
+        // ★ user: 팀도 본인 소속 팀으로 고정 복원 (초기화해도 본인 팀 유지)
+        setValue('team_code', equipmentListState.userTeamCode || '');
         if (window.orgSelect) {
           window.orgSelect.fillSelectOptions(
             document.getElementById('team_code'),
             window.orgSelect.getFilteredTeams(equipmentListState.userClinicCode),
             { emptyText: '전체 팀' }
           );
+          document.getElementById('team_code').value = equipmentListState.userTeamCode || '';
         }
       }
       setValue('status', '');
@@ -802,10 +816,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       return;
     }
 
-    // ★ admin 여부 및 소속 의원 코드 세팅
+    // ★ admin 여부 및 소속 의원/팀 코드 세팅
     var userRole = String(equipmentListState.user.role || '').trim().toLowerCase();
     equipmentListState.isAdmin = (userRole === 'admin');
     equipmentListState.userClinicCode = String(equipmentListState.user.clinic_code || '').trim();
+    equipmentListState.userTeamCode   = String(equipmentListState.user.team_code   || '').trim();
 
     if (window.appPermission && typeof window.appPermission.requirePermission === 'function') {
       var canView = await window.appPermission.requirePermission('equipment', ['view', 'edit', 'admin']);
