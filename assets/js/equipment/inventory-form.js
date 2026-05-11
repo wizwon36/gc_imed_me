@@ -152,9 +152,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ok = await window.appPermission?.requirePermission?.('equipment', ['edit', 'admin']);
     if (!ok) return;
 
-    qs('#inventoryForm')?.addEventListener('submit', handleSubmitInventory);
-
     await loadEquipmentInfo();
+
+    // ★ user이면 본인 소속 팀 장비만 재고조사 등록 가능
+    // loadEquipmentInfo() 완료 후 currentEquipment에 장비 데이터가 세팅되어 있음
+    if (String(user.role || '').trim().toLowerCase() !== 'admin') {
+      const userTeamCode      = String(user.team_code || '').trim();
+      const equipmentTeamCode = String((currentEquipment && currentEquipment.team_code) || '').trim();
+      if (userTeamCode && equipmentTeamCode && userTeamCode !== equipmentTeamCode) {
+        showMessage('본인 소속 팀의 장비만 재고조사를 등록할 수 있습니다.', 'error');
+        const submitBtn = qs('#inventoryForm button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+      }
+    }
+
+    qs('#inventoryForm')?.addEventListener('submit', handleSubmitInventory);
   } catch (error) {
     showMessage(error.message || '재고조사 화면을 불러오는 중 오류가 발생했습니다.', 'error');
   } finally {
