@@ -317,9 +317,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
+  // ★ edit 권한 체크: view만 있는 사용자는 이력 등록 폼 접근 불가
+  if (window.appPermission && typeof window.appPermission.requirePermission === 'function') {
+    const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
+    if (!ok) return;
+  }
+
   try {
     showGlobalLoading('초기 정보를 불러오는 중...');
     await loadEquipmentInfo();
+
+    // ★ user이면 본인 소속 팀 장비만 이력 등록/수정 가능
+    // loadEquipmentInfo() 완료 후 currentEquipment에 장비 데이터가 세팅되어 있음
+    if (String(user.role || '').trim().toLowerCase() !== 'admin') {
+      const userTeamCode      = String(user.team_code || '').trim();
+      const equipmentTeamCode = String((currentEquipment && currentEquipment.team_code) || '').trim();
+      if (userTeamCode && equipmentTeamCode && userTeamCode !== equipmentTeamCode) {
+        showMessage('본인 소속 팀의 장비만 이력을 등록할 수 있습니다.', 'error');
+        const submitBtn = document.querySelector('form button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+      }
+    }
+
     await loadHistoryInfoIfEditMode();
     applyHistoryFormDefaults();
     bindCurrencyInput('#amount');
