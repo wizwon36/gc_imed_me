@@ -680,6 +680,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
+  // ★ edit 권한 체크: view만 있는 사용자는 폼 페이지 접근 불가
+  if (window.appPermission && typeof window.appPermission.requirePermission === 'function') {
+    const ok = await window.appPermission.requirePermission('equipment', ['edit', 'admin']);
+    if (!ok) return;
+  }
+
   try {
     showGlobalLoading('화면을 준비하는 중...');
     setPageMode();
