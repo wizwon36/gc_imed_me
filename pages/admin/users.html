@@ -134,13 +134,12 @@
     }
     
     .page-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 20px;
-      align-items: start;
     }
 
-    /* 좌측 컬럼: 등록폼 + 가입신청 패널을 세로로 쌓음 */
+    /* 1단 레이아웃: 좌/우 구분 없이 세로 스택 */
     .page-col-left {
       display: flex;
       flex-direction: column;
@@ -148,30 +147,13 @@
       min-width: 0;
     }
 
-    /* 우측 컬럼: 사용자 목록, 높이 고정 + 내부 스크롤 */
     .page-col-right {
-      position: sticky;
-      top: 20px;
       min-width: 0;
     }
 
-    /* 사용자 목록 패널 내부 스크롤 */
+    /* 목록 패널: 내부 스크롤 제거 (1단에서는 자연스럽게 늘어남) */
     .user-list-scroll {
-      max-height: calc(100vh - 220px);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-    }
-
-    /* 스크롤바 스타일 */
-    .user-list-scroll::-webkit-scrollbar {
-      width: 6px;
-    }
-    .user-list-scroll::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .user-list-scroll::-webkit-scrollbar-thumb {
-      background: rgba(148,163,184,0.4);
-      border-radius: 999px;
+      overflow-y: visible;
     }
 
     .panel-card {
@@ -311,8 +293,14 @@
 
     .permission-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .permission-grid {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
     .permission-card {
@@ -376,7 +364,7 @@
 
     .filter-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: 2fr repeat(3, minmax(0, 1fr)) auto;
       gap: 12px;
       align-items: end;
       margin-bottom: 16px;
@@ -386,9 +374,7 @@
       min-width: 0;
     }
     
-    .filter-row > .form-group:first-child {
-      grid-column: 1 / -1;
-    }
+    /* 1단 레이아웃: 검색어 필드가 첫 열에서 2fr로 넓게 표시 */
     
     .filter-row .admin-btn {
       width: 100%;
@@ -670,22 +656,10 @@
     }
 
     @media (max-width: 1180px) {
-      .page-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .page-col-right {
-        position: static;
-      }
-
-      .user-list-scroll {
-        max-height: 520px;
-      }
-
       .filter-row {
         grid-template-columns: 1fr 1fr;
       }
-    
+
       .filter-row > .form-group:first-child {
         grid-column: 1 / -1;
       }
