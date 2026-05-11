@@ -25,8 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   showGlobalLoading('초기 정보를 불러오는 중...');
   try {
     await initializeOrgData();
-    // ★ 초기 진입 시 가입신청 자동 조회 (배지 표시용)
-    await loadPendingRegistrations();
   } catch (error) {
     setAdminMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -95,6 +93,10 @@ function bindEvents() {
       btn.classList.add('is-active');
       var panel = document.getElementById('tab-' + target);
       if (panel) panel.style.display = '';
+      // ★ 가입신청 탭으로 전환 시 자동 조회 (배지 표시 겸)
+      if (target === 'pending') {
+        loadPendingRegistrations();
+      }
     });
   });
 
