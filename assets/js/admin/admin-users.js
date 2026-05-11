@@ -4,6 +4,10 @@ let allUsers = [];
 let hasLoadedUsers = false;
 let orgBinder = null;
 
+// ★ 페이지네이션 state
+const USER_LIST_PAGE_SIZE = 10;
+let userListPage = 1;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
@@ -21,6 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   showGlobalLoading('초기 정보를 불러오는 중...');
   try {
     await initializeOrgData();
+    // ★ 초기 진입 시 가입신청 자동 조회 (배지 표시용)
+    await loadPendingRegistrations();
   } catch (error) {
     setAdminMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -53,19 +59,19 @@ function bindEvents() {
   });
 
   document.getElementById('userSearchKeyword')?.addEventListener('input', () => {
-    if (hasLoadedUsers) renderUserList();
+    if (hasLoadedUsers) renderUserList(true);
   });
 
   document.getElementById('userFilterActive')?.addEventListener('change', () => {
-    if (hasLoadedUsers) renderUserList();
+    if (hasLoadedUsers) renderUserList(true);
   });
 
   document.getElementById('userFilterRole')?.addEventListener('change', () => {
-    if (hasLoadedUsers) renderUserList();
+    if (hasLoadedUsers) renderUserList(true);
   });
 
   document.getElementById('userFilterClinic')?.addEventListener('change', () => {
-    if (hasLoadedUsers) renderUserList();
+    if (hasLoadedUsers) renderUserList(true);
   });
 
   document.getElementById('clinic_code')?.addEventListener('change', () => {
@@ -78,6 +84,18 @@ function bindEvents() {
     const cleaned = raw.toLowerCase().replace(/[^a-z0-9.@_-]/g, '');
     if (raw !== cleaned) e.target.value = cleaned;
     e.target.classList.remove('is-invalid');
+  });
+
+  // ★ 좌측 탭 전환 이벤트
+  document.querySelectorAll('.left-tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = btn.dataset.tab;
+      document.querySelectorAll('.left-tab-btn').forEach(function(b) { b.classList.remove('is-active'); });
+      document.querySelectorAll('.left-tab-panel').forEach(function(p) { p.style.display = 'none'; });
+      btn.classList.add('is-active');
+      var panel = document.getElementById('tab-' + target);
+      if (panel) panel.style.display = '';
+    });
   });
 
   document.getElementById('userList')?.addEventListener('click', async (event) => {
@@ -181,14 +199,20 @@ function normalize(value) {
 }
 
 function collectPermissions() {
-  const permissionEls = document.querySelectorAll('.app-permission');
+  // ★ radio 버튼 방식: 각 app_id별 checked된 값 수집
   const permissions = [];
+  const seen = {};
 
-  permissionEls.forEach((el) => {
+  document.querySelectorAll('.app-permission').forEach((el) => {
     const appId = normalize(el.dataset.appId);
-    const permission = normalize(el.value);
+    if (!appId || seen[appId]) return;
+    seen[appId] = true;
 
-    if (!appId || !permission) return;
+    // radio: name="perm-{app_id}" 중 checked 된 것
+    const checked = document.querySelector(`input.app-permission[data-app-id="${appId}"]:checked`);
+    const permission = checked ? normalize(checked.value) : '';
+
+    if (!permission) return; // 권한 없음은 제외
 
     permissions.push({
       app_id: appId,
@@ -377,10 +401,12 @@ async function loadUsers() {
   }
 }
 
-function renderUserList() {
+function renderUserList(resetPage) {
   const listEl = document.getElementById('userList');
   const countEl = document.getElementById('userListCount');
   if (!listEl) return;
+
+  if (resetPage) userListPage = 1;
 
   const keyword = normalize(document.getElementById('userSearchKeyword')?.value).toLowerCase();
   const activeFilter = normalize(document.getElementById('userFilterActive')?.value).toUpperCase();
@@ -412,16 +438,24 @@ function renderUserList() {
     return matchesKeyword && matchesActive && matchesRole && matchesClinic;
   });
 
+  const totalCount = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / USER_LIST_PAGE_SIZE));
+  if (userListPage > totalPages) userListPage = totalPages;
+
+  const start = (userListPage - 1) * USER_LIST_PAGE_SIZE;
+  const pagedUsers = filteredUsers.slice(start, start + USER_LIST_PAGE_SIZE);
+
   if (countEl) {
-    countEl.textContent = `총 ${filteredUsers.length}명 / 전체 ${allUsers.length}명`;
+    countEl.textContent = `총 ${totalCount}명 / 전체 ${allUsers.length}명`;
   }
 
   if (!filteredUsers.length) {
     listEl.innerHTML = `<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>`;
+    renderUserListPagination(0, 1);
     return;
   }
 
-  const rows = filteredUsers.map((user) => {
+  const rows = pagedUsers.map((user) => {
     const isActive = normalize(user.active || 'Y').toUpperCase() === 'Y';
     const statusClass = isActive ? 'active' : 'inactive';
     const statusText = isActive ? '활성' : '비활성';
@@ -470,6 +504,41 @@ function renderUserList() {
       <tbody>${rows}</tbody>
     </table>
   `;
+  renderUserListPagination(totalCount, totalPages);
+}
+
+function renderUserListPagination(totalCount, totalPages) {
+  const area = document.getElementById('userListPagination');
+  if (!area) return;
+
+  if (totalPages <= 1) {
+    area.innerHTML = '';
+    return;
+  }
+
+  const page = userListPage;
+  let btns = '';
+
+  btns += `<button type="button" class="user-pg-btn" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>&#8249;</button>`;
+
+  const start = Math.max(1, page - 2);
+  const end   = Math.min(totalPages, page + 2);
+  for (let i = start; i <= end; i++) {
+    btns += `<button type="button" class="user-pg-btn ${i === page ? 'is-active' : ''}" data-page="${i}">${i}</button>`;
+  }
+
+  btns += `<button type="button" class="user-pg-btn" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''}>&#8250;</button>`;
+
+  area.innerHTML = btns;
+
+  area.querySelectorAll('.user-pg-btn[data-page]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var next = Number(btn.dataset.page);
+      if (!next || next === userListPage || btn.disabled) return;
+      userListPage = next;
+      renderUserList(false);
+    });
+  });
 }
 
 async function editUser(userEmail) {
@@ -620,9 +689,23 @@ function setPermissionValues(permissions = []) {
     }
   });
 
-  document.querySelectorAll('.app-permission').forEach((el) => {
+  // ★ radio 버튼 방식: 각 app_id별로 해당 value의 radio를 checked
+  const seen = {};
+  document.querySelectorAll('input.app-permission').forEach((el) => {
     const appId = normalize(el.dataset.appId);
-    el.value = permissionMap[appId] || '';
+    if (!appId) return;
+
+    const targetVal = permissionMap[appId] || '';
+    el.checked = (normalize(el.value) === targetVal);
+
+    // 권한이 없으면 '없음'(value="") radio를 checked
+    if (!seen[appId]) {
+      seen[appId] = true;
+      if (!targetVal) {
+        const noneRadio = document.querySelector(`input.app-permission[data-app-id="${appId}"][value=""]`);
+        if (noneRadio) noneRadio.checked = true;
+      }
+    }
   });
 }
 
@@ -705,6 +788,17 @@ async function loadPendingRegistrations() {
       countEl.textContent = list.length > 0
         ? `대기 중인 신청 ${list.length}건`
         : '대기 중인 신청이 없습니다.';
+    }
+
+    // ★ 탭 배지 업데이트
+    const badge = document.getElementById('pendingBadge');
+    if (badge) {
+      if (list.length > 0) {
+        badge.textContent = String(list.length);
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
     }
 
     if (!list.length) {
