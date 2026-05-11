@@ -801,7 +801,10 @@ async function loadPendingRegistrations() {
     }
 
     if (!list.length) {
-      listEl.innerHTML = `<div class="user-list-empty">대기 중인 가입 신청이 없습니다.</div>`;
+      listEl.innerHTML = `
+        <div class="user-list-empty" style="text-align:center; padding:28px 16px;">
+          ✅ 현재 대기 중인 가입 신청이 없습니다.
+        </div>`;
       return;
     }
 
