@@ -182,27 +182,74 @@ async function loadStatusOptions(selectedValue) {
   }
 }
 
+// ★ user role이면 본인 소속 의원으로 고정, admin이면 전체 선택 가능
 async function initializeOrgSelectors() {
   await window.orgSelect.loadOrgData();
 
   const clinicSelect = qs('#clinic_code');
   const teamSelect = qs('#team_code');
+  const user = getCurrentUserSafe();
+  const isAdmin = String(user.role || '').toLowerCase() === 'admin';
 
-  window.orgSelect.fillSelectOptions(clinicSelect, window.orgSelect.getClinics(), {
-    emptyText: '의원을 선택하세요'
-  });
+  if (isAdmin) {
+    // admin: 전체 의원 목록 표시, 자유 선택
+    window.orgSelect.fillSelectOptions(clinicSelect, window.orgSelect.getClinics(), {
+      emptyText: '의원을 선택하세요'
+    });
 
-  if (teamSelect) {
-    teamSelect.disabled = true;
-    teamSelect.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
+    if (teamSelect) {
+      teamSelect.disabled = true;
+      teamSelect.innerHTML = '<option value="">의원을 먼저 선택하세요</option>';
+    }
+
+    orgBinder = window.orgSelect.bindClinicTeamSelects({
+      clinicSelect,
+      teamSelect,
+      onClinicChanged: function() { updateTeamSelectGuide(); updateDepartmentPreview(); },
+      onTeamChanged: function() { updateTeamSelectGuide(); updateDepartmentPreview(); }
+    });
+
+  } else {
+    // ★ user: 본인 소속 의원으로 고정 (disabled), 팀은 소속 의원 하위 팀만 표시
+    const userClinicCode = normalizeText(user.clinic_code);
+    const userTeamCode   = normalizeText(user.team_code);
+
+    // 의원 셀렉트: 본인 소속 의원 1개만 표시하고 변경 불가
+    if (clinicSelect) {
+      const clinics = window.orgSelect.getClinics();
+      const myClinic = clinics.find(function(c) {
+        return normalizeText(c.code_value) === userClinicCode;
+      });
+      const clinicLabel = myClinic ? normalizeText(myClinic.code_name) : userClinicCode;
+
+      clinicSelect.innerHTML = '<option value="' + escapeHtml(userClinicCode) + '">' +
+        escapeHtml(clinicLabel) + '</option>';
+      clinicSelect.value = userClinicCode;
+      clinicSelect.disabled = true;
+    }
+
+    // ★ user: 팀 셀렉트도 본인 소속 팀 1개만 표시하고 변경 불가
+    if (teamSelect) {
+      const teams = window.orgSelect.getTeams ? window.orgSelect.getTeams() : [];
+      const myTeam = teams.find(function(t) {
+        return normalizeText(t.code_value) === userTeamCode;
+      });
+      const teamLabel = myTeam ? normalizeText(myTeam.code_name) : userTeamCode;
+
+      teamSelect.innerHTML = '<option value="' + escapeHtml(userTeamCode) + '">' +
+        escapeHtml(teamLabel) + '</option>';
+      teamSelect.value = userTeamCode;
+      teamSelect.disabled = true;
+    }
+
+    // orgBinder는 onTeamChanged 콜백용으로만 바인딩 (의원/팀 모두 고정이므로 렌더링은 불필요)
+    orgBinder = window.orgSelect.bindClinicTeamSelects({
+      clinicSelect,
+      teamSelect,
+      onClinicChanged: function() { updateDepartmentPreview(); },
+      onTeamChanged: function() { updateDepartmentPreview(); }
+    });
   }
-
-  orgBinder = window.orgSelect.bindClinicTeamSelects({
-    clinicSelect,
-    teamSelect,
-    onClinicChanged: function() { updateTeamSelectGuide(); updateDepartmentPreview(); },
-    onTeamChanged: function() { updateTeamSelectGuide(); updateDepartmentPreview(); }
-  });
 
   updateTeamSelectGuide();
 }
@@ -419,15 +466,22 @@ function fillEquipmentForm(item) {
   qs('#current_user').value = item.current_user || '';
   qs('#memo').value = item.memo || '';
 
+  const user = getCurrentUserSafe();
+  const isAdmin = String(user.role || '').toLowerCase() === 'admin';
   const clinicSelect = qs('#clinic_code');
   const teamSelect = qs('#team_code');
 
-  if (clinicSelect) clinicSelect.value = item.clinic_code || '';
+  if (isAdmin) {
+    // admin: 장비의 의원/팀으로 자유롭게 설정
+    if (clinicSelect) clinicSelect.value = item.clinic_code || '';
 
-  if (orgBinder?.renderTeamsByClinic) {
-    orgBinder.renderTeamsByClinic(item.clinic_code || '', item.team_code || '');
-  } else if (teamSelect) {
-    teamSelect.value = item.team_code || '';
+    if (orgBinder?.renderTeamsByClinic) {
+      orgBinder.renderTeamsByClinic(item.clinic_code || '', item.team_code || '');
+    } else if (teamSelect) {
+      teamSelect.value = item.team_code || '';
+    }
+  } else {
+    // ★ user: 의원/팀 모두 initializeOrgSelectors에서 이미 고정 — 별도 설정 불필요
   }
 
   updateTeamSelectGuide();
