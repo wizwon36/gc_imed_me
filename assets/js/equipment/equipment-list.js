@@ -520,7 +520,7 @@ async function initListFilters() {
     var isAdmin = equipmentListState.isAdmin;
 
     if (!isAdmin && userClinicCode) {
-      // ★ 일반 user: 의원은 본인 소속으로 고정(disabled), 팀은 초기값만 본인 팀으로 세팅(변경 가능)
+      // ★ 일반 user: 의원은 본인 소속으로 고정(disabled)
       var userClinic = window.orgSelect.getClinics().filter(function(c) {
         return c.code_value === userClinicCode;
       });
@@ -530,14 +530,15 @@ async function initListFilters() {
       clinicEl.value = userClinicCode;
       clinicEl.disabled = true;
 
-      // 팀: 소속 의원 하위 팀 전체 표시, 초기값만 본인 팀으로 세팅 (변경 가능)
+      // 팀: 소속 의원 하위 팀 전체 표시
+      // URL params(dashboard 클릭 등)에 team_code가 있으면 우선 적용, 없으면 본인 팀으로 세팅
       var userTeamCode = equipmentListState.userTeamCode;
       window.orgSelect.fillSelectOptions(
         teamEl,
         window.orgSelect.getFilteredTeams(userClinicCode),
         { emptyText: '전체 팀' }
       );
-      teamEl.value = userTeamCode || '';
+      teamEl.value = query.team_code || userTeamCode || '';
       teamEl.disabled = false;
 
     } else {
