@@ -622,15 +622,17 @@ function bindListEvents() {
           document.getElementById('team_code').disabled = true;
         }
       } else {
-        // ★ user: 팀도 본인 소속 팀으로 고정 복원 (초기화해도 본인 팀 유지)
+        // ★ user: 팀도 본인 소속 팀으로 고정 복원 (초기화해도 본인 팀 유지, disabled 재적용)
         setValue('team_code', equipmentListState.userTeamCode || '');
         if (window.orgSelect) {
+          var teamElReset = document.getElementById('team_code');
           window.orgSelect.fillSelectOptions(
-            document.getElementById('team_code'),
+            teamElReset,
             window.orgSelect.getFilteredTeams(equipmentListState.userClinicCode),
             { emptyText: '전체 팀' }
           );
-          document.getElementById('team_code').value = equipmentListState.userTeamCode || '';
+          teamElReset.value = equipmentListState.userTeamCode || '';
+          teamElReset.disabled = true;
         }
       }
       setValue('status', '');
