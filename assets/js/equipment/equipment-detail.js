@@ -115,10 +115,22 @@ function applyActionVisibility() {
       .trim()
       .toUpperCase() === 'Y';
 
-  if (editBtn) editBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  // ★ user이면 본인 소속 팀 장비만 수정/이력/재고 버튼 표시
+  const currentUser = getCurrentUser();
+  const isAdmin = detailPermission.isAdmin;
+  const canEditThisItem = detailPermission.canEdit && (
+    isAdmin ||
+    (
+      currentEquipmentData &&
+      currentUser &&
+      String(currentEquipmentData.team_code || '').trim() === String(currentUser.team_code || '').trim()
+    )
+  );
+
+  if (editBtn) editBtn.style.display = canEditThisItem && !isDeleted ? '' : 'none';
   if (deleteBtn) deleteBtn.style.display = detailPermission.canDelete ? '' : 'none';
-  if (addHistoryBtn) addHistoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
-  if (addInventoryBtn) addInventoryBtn.style.display = detailPermission.canEdit && !isDeleted ? '' : 'none';
+  if (addHistoryBtn) addHistoryBtn.style.display = canEditThisItem && !isDeleted ? '' : 'none';
+  if (addInventoryBtn) addInventoryBtn.style.display = canEditThisItem && !isDeleted ? '' : 'none';
   const isMobile = window.innerWidth <= 768;
   if (printLabelBtn) printLabelBtn.style.display = (detailPermission.canView && !isMobile) ? '' : 'none';
   if (inspectionCertBtn) inspectionCertBtn.style.display = detailPermission.isAdmin ? '' : 'none';
