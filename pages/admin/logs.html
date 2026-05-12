@@ -362,6 +362,92 @@
       padding: 0 4px;
     }
 
+    /* ── diff 상세 행 ── */
+    .log-main-row.has-diff:hover { background: rgba(37, 99, 235, 0.05); }
+
+    .diff-toggle-hint {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #2563eb;
+      opacity: 0.7;
+    }
+
+    .log-detail-row td {
+      padding: 0;
+      background: #f8faff;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .diff-wrap {
+      padding: 14px 20px;
+    }
+
+    .diff-table {
+      width: auto;
+      min-width: 480px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .diff-table thead tr {
+      background: rgba(37, 99, 235, 0.06);
+    }
+
+    .diff-table th {
+      padding: 7px 14px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #475569;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .diff-table tbody tr {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+    }
+
+    .diff-table tbody tr:last-child { border-bottom: none; }
+
+    .diff-field {
+      padding: 6px 14px;
+      font-weight: 700;
+      color: #475569;
+      white-space: nowrap;
+      min-width: 100px;
+    }
+
+    .diff-before {
+      padding: 6px 14px;
+      color: #b91c1c;
+      background: rgba(220, 38, 38, 0.04);
+      max-width: 260px;
+      word-break: break-all;
+      white-space: normal;
+    }
+
+    .diff-arrow {
+      padding: 6px 8px;
+      color: #94a3b8;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .diff-after {
+      padding: 6px 14px;
+      color: #166534;
+      background: rgba(22, 163, 74, 0.05);
+      max-width: 260px;
+      word-break: break-all;
+      white-space: normal;
+    }
+
+    .diff-empty {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
     /* ── 메시지 박스 ── */
     .message-box {
       display: none;
