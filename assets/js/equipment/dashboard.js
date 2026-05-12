@@ -237,8 +237,9 @@ function applyDashboardPermissionUi() {
 // ─────────────────────────────────────────────
 
 function initDashboardQuickSearch() {
-  const input     = document.getElementById('dashboardQuickSearch');
-  const clearBtn  = document.getElementById('dashboardQuickSearchClear');
+  const input      = document.getElementById('dashboardQuickSearch');
+  const clearBtn   = document.getElementById('dashboardQuickSearchClear');
+  const searchBtn  = document.getElementById('dashboardQuickSearchBtn');
   const searchWrap = document.getElementById('dashboardActionBarSearchWrap');
   if (!input || !searchWrap) return;
 
@@ -252,33 +253,17 @@ function initDashboardQuickSearch() {
     return;
   }
 
-  // 권한별 기본 파라미터 구성
-  function buildSearchParams(keyword) {
-    const session     = window.auth?.getSession?.() || {};
-    const userEmail   = String(session.email || session.user_email || '').trim().toLowerCase();
-    const userRole    = String(session.role || '').trim().toLowerCase();
-    const isAdmin     = (userRole === 'admin');
-
-    const params = { keyword: keyword, request_user_email: userEmail };
-
-    if (!isAdmin) {
-      const clinicCode = String(session.clinic_code || '').trim();
-      const teamCode   = String(session.team_code   || '').trim();
-      if (clinicCode) params.clinic_code = clinicCode;
-      if (teamCode)   params.team_code   = teamCode;
-    }
-
-    return params;
-  }
-
   // 검색 실행 — list.html 로 이동
   function executeSearch() {
     const keyword = input.value.trim();
-    if (!keyword) return;
+    if (!keyword) {
+      input.focus();
+      return;
+    }
 
-    const session     = window.auth?.getSession?.() || {};
-    const userRole    = String(session.role || '').trim().toLowerCase();
-    const isAdmin     = (userRole === 'admin');
+    const session    = window.auth?.getSession?.() || {};
+    const userRole   = String(session.role || '').trim().toLowerCase();
+    const isAdmin    = (userRole === 'admin');
 
     const url = new URL('list.html', location.href);
     url.searchParams.set('keyword', keyword);
@@ -304,6 +289,13 @@ function initDashboardQuickSearch() {
     clearBtn.style.display = 'none';
     input.focus();
   });
+
+  // 검색 버튼 클릭
+  if (searchBtn) {
+    searchBtn.addEventListener('click', function () {
+      executeSearch();
+    });
+  }
 
   // Enter 키 검색
   input.addEventListener('keydown', function (e) {
