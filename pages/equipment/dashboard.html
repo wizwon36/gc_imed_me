@@ -75,6 +75,22 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10v1.5A1.5 1.5 0 003.5 13h7a1.5 1.5 0 001.5-1.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         장비대장 다운로드
       </button>
+      <div class="dashboard-action-bar-search" id="dashboardActionBarSearchWrap">
+        <div class="dashboard-action-bar-search-inner">
+          <svg class="dashboard-action-bar-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input
+            type="text"
+            id="dashboardQuickSearch"
+            class="dashboard-action-bar-search-input"
+            placeholder="장비명, 모델명, 시리얼 검색..."
+            autocomplete="off"
+            maxlength="100"
+          />
+          <button type="button" class="dashboard-action-bar-search-clear" id="dashboardQuickSearchClear" aria-label="검색어 지우기" style="display:none;">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <section class="dashboard-panels-carousel-wrap dashboard-panels-section">
