@@ -251,7 +251,9 @@ function buildDiffHtml(before, after) {
     next_action_date: '다음예정일', requester: '요청자',
     item_name: '검사항목명', item_type: '항목유형', unit: '단위',
     mean: '목표평균', sd: '표준편차', preset: '결과값프리셋',
-    expected_value: '기대결과값'
+    expected_value: '기대결과값',
+    user_name: '사용자명', role: '역할', phone: '연락처',
+    active: '활성여부', department: '부서'
   };
 
   const rows = keys.map(key => {
