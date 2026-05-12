@@ -106,16 +106,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tabBtnHistory')?.addEventListener('click', () => switchTab('history'));
   document.getElementById('tabBtnForm')?.addEventListener('click',    () => switchTab('form'));
 
-  // ── 폼 초기화 ──────────────────────────────────────────────────
+  // ── 폼 이벤트 바인딩 (await 전에 먼저 등록 — 네트워크 지연과 무관하게 즉시 동작)
+  bindTypeSelector();
+  bindUrgentToggle();
+  bindFileDropzones();
+  bindNameplateTypeSelector();
+  document.getElementById('signageForm')?.addEventListener('submit', handleSubmit);
+
+  // ── 폼 데이터 초기화 (org 데이터 로딩 등 비동기 작업) ────────────
   try {
     showGlobalLoading('화면을 준비하는 중...');
     await window.orgSelect.loadOrgData();
     prefillUserInfo(user);
-    bindTypeSelector();
-    bindUrgentToggle();
-    bindFileDropzones();
-    bindNameplateTypeSelector();
-    document.getElementById('signageForm').addEventListener('submit', handleSubmit);
   } catch (err) {
     showMessage(err.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
