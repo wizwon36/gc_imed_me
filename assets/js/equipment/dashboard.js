@@ -268,11 +268,11 @@ function initDashboardQuickSearch() {
     const url = new URL('list.html', location.href);
     url.searchParams.set('keyword', keyword);
 
+    // non-admin: clinic_code는 list.js가 세션 기준으로 강제 고정하므로 생략.
+    // team_code만 URL로 전달 — list.js가 query.team_code || userTeamCode 순으로 적용함.
     if (!isAdmin) {
-      const clinicCode = String(session.clinic_code || '').trim();
-      const teamCode   = String(session.team_code   || '').trim();
-      if (clinicCode) url.searchParams.set('clinic_code', clinicCode);
-      if (teamCode)   url.searchParams.set('team_code',   teamCode);
+      const teamCode = String(session.team_code || '').trim();
+      if (teamCode) url.searchParams.set('team_code', teamCode);
     }
 
     location.href = url.toString();
