@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tabBtnHistory')?.addEventListener('click', () => switchTab('history'));
   document.getElementById('tabBtnForm')?.addEventListener('click',    () => switchTab('form'));
 
-  // ── 폼 이벤트 바인딩 (await 전에 먼저 등록 — 네트워크 지연과 무관하게 즉시 동작)
+  // ── 폼 이벤트 바인딩 (await 전에 먼저 등록 — 네트워크 지연과 무관하게 즉시 동작) ──
   bindTypeSelector();
   bindUrgentToggle();
   bindFileDropzones();
@@ -569,6 +569,24 @@ function handleTypeChange(e) {
     }
   }
 
+  // 타입 전환 시 업로드 파일 상태 초기화 (이전 타입에서 올린 파일 ID가 잘못 포함되는 것 방지)
+  uploadedFileIds.main      = [];  uploadedFileSizes.main      = [];
+  uploadedFileIds.location  = [];  uploadedFileSizes.location  = [];
+  uploadedFileIds.reference = [];  uploadedFileSizes.reference = [];
+  ['fileList_main', 'fileList_location'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+  ['fileName_main', 'fileName_location'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '선택된 파일 없음';
+  });
+
+  // 명판 선택 상태 초기화
+  currentNpType    = '';
+  currentNpSubtype = '';
+  currentLayout    = null;
+
   if (type === 'SIGN') {
     showEl('sectionSign');
     hideEl('sectionNameplate');
@@ -837,12 +855,29 @@ async function processFiles(files, key, listId) {
     try {
       const base64 = await toBase64(file);
       const res    = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
-      uploadedFileIds[key].push(res.data.file_id);
-      uploadedFileSizes[key].push(file.size);
+      const fileId = res.data.file_id;
+      const fileSize = file.size;
+      uploadedFileIds[key].push(fileId);
+      uploadedFileSizes[key].push(fileSize);
       const el = document.getElementById(itemId);
       if (el) {
         el.classList.replace('is-uploading', 'is-done');
-        el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatFileSize(file.size)})`;
+        el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatFileSize(fileSize)})`;
+        // 삭제 버튼 추가
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'signage-file-item-remove';
+        removeBtn.textContent = '✕';
+        removeBtn.title = '파일 제거';
+        removeBtn.addEventListener('click', () => {
+          const idx = uploadedFileIds[key].indexOf(fileId);
+          if (idx !== -1) {
+            uploadedFileIds[key].splice(idx, 1);
+            uploadedFileSizes[key].splice(idx, 1);
+          }
+          el.remove();
+        });
+        el.appendChild(removeBtn);
       }
       const emptyEl = document.getElementById('previewEmpty_' + key);
       if (emptyEl) emptyEl.style.display = 'none';
@@ -851,6 +886,14 @@ async function processFiles(files, key, listId) {
       if (el) {
         el.classList.replace('is-uploading', 'is-error');
         el.querySelector('.signage-file-item-status').textContent = '✗ 실패';
+        // 실패한 아이템도 클릭으로 제거 가능하도록
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'signage-file-item-remove';
+        removeBtn.textContent = '✕';
+        removeBtn.title = '제거';
+        removeBtn.addEventListener('click', () => el.remove());
+        el.appendChild(removeBtn);
       }
       showMessage('업로드 실패: ' + file.name, 'error');
     } finally {
@@ -939,7 +982,7 @@ function buildPayload() {
     team_code:          getValue('team_code'),
     requester_name:     getValue('requester_name'),
     contact:            getValue('contact'),
-    quantity:           Number(getValue('quantity') || 1),
+    quantity:           Math.floor(Number(getValue('quantity') || 1)),
     text_content:       textContent,
     is_urgent:          getValue('is_urgent') || 'N',
     urgent_reason:      getValue('urgent_reason'),
@@ -968,6 +1011,7 @@ function validatePayload(p) {
   if (!p.requester_name)   return fail('요청자명을 입력해 주세요.', 'requester_name');
   if (!p.contact)        return fail('연락처를 입력해 주세요.', 'contact');
   if (!p.quantity || p.quantity < 1) return fail('수량을 1 이상 입력해 주세요.', 'quantity');
+  if (!Number.isInteger(p.quantity))  return fail('수량은 정수로 입력해 주세요.', 'quantity');
   if (p.is_urgent === 'Y' && !p.urgent_reason) return fail('긴급 사유를 입력해 주세요.', 'urgent_reason');
   if (!p.created_by)     return fail('로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', null);
 
@@ -1015,12 +1059,12 @@ function setRequired(id, v) { const el = document.getElementById(id); if (el) el
 
 // ─────────────────────────────────────────────
 // 자석 카드 선택 표시 (JS 바인딩)
+// — 두 번째 DOMContentLoaded 제거: bindNameplateTypeSelector 렌더링 후
+//   npTextSection 노출 시점에 magnet_yn 카드도 함께 바인딩되므로 이벤트 위임으로 처리
 // ─────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  document.addEventListener('change', (e) => {
-    if (e.target.name === 'magnet_yn') {
-      document.querySelectorAll('.signage-magnet-card').forEach(c => c.classList.remove('is-selected'));
-      e.target.closest('.signage-magnet-card')?.classList.add('is-selected');
-    }
-  });
+document.addEventListener('change', (e) => {
+  if (e.target.name === 'magnet_yn') {
+    document.querySelectorAll('.signage-magnet-card').forEach(c => c.classList.remove('is-selected'));
+    e.target.closest('.signage-magnet-card')?.classList.add('is-selected');
+  }
 });
