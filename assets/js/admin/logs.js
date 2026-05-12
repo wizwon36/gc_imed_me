@@ -262,18 +262,4 @@ function truncate(value, maxLen) {
   return str.length > maxLen ? str.slice(0, maxLen) + '…' : str;
 }
 
-function clearMessage() {
-  const box = document.getElementById('messageBox');
-  if (!box) return;
-  box.style.display = 'none';
-  box.textContent = '';
-  box.className = 'message-box';
-}
-
-function showMessage(message, type = 'error') {
-  const box = document.getElementById('messageBox');
-  if (!box) { alert(message); return; }
-  box.className = `message-box ${type}`;
-  box.textContent = message;
-  box.style.display = 'block';
-}
+// clearMessage, showMessage는 utils.js의 전역 함수를 사용합니다.
