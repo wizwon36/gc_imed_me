@@ -248,7 +248,10 @@ function buildDiffHtml(before, after) {
     current_user: '현재사용자', memo: '비고',
     history_type: '이력유형', work_date: '작업일', amount: '금액',
     vendor_name: '업체명', description: '내용', result_status: '결과상태',
-    next_action_date: '다음예정일', requester: '요청자'
+    next_action_date: '다음예정일', requester: '요청자',
+    item_name: '검사항목명', item_type: '항목유형', unit: '단위',
+    mean: '목표평균', sd: '표준편차', preset: '결과값프리셋',
+    expected_value: '기대결과값'
   };
 
   const rows = keys.map(key => {
