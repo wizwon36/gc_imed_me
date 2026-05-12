@@ -659,14 +659,6 @@
         grid-template-columns: 1fr;
       }
 
-      .permission-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .permission-card:nth-child(even) { border-right: none; }
-      .permission-card:nth-last-child(-n+2) { border-bottom: 1px solid rgba(148,163,184,0.12); }
-      .permission-card:last-child { border-bottom: none; }
-
       .user-tbl-th--org,
       .user-tbl-cell--org,
       .user-tbl-th--role,
@@ -808,6 +800,13 @@
     .permission-card:nth-last-child(-n+2) { border-bottom: none; }
 
     .permission-card:hover { background: #f8fafc; }
+
+    @media (max-width: 760px) {
+      .permission-grid { grid-template-columns: 1fr; }
+      .permission-card:nth-child(even) { border-right: none; }
+      .permission-card:nth-last-child(-n+2) { border-bottom: 1px solid rgba(148,163,184,0.12); }
+      .permission-card:last-child { border-bottom: none; }
+    }
 
     .permission-card-head { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
 
