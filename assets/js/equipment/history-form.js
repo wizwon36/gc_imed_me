@@ -184,7 +184,7 @@ async function loadHistoryInfoIfEditMode() {
   }
 }
 
-async function buildHistoryPayload() {
+function buildHistoryPayload() {
   const currentUser = getCurrentUserSafe();
   const actor = currentUser.email || currentUser.user_email || currentUser.name || 'system';
 
@@ -266,7 +266,7 @@ async function handleSubmit(event) {
   event.preventDefault();
   clearMessage();
 
-  const payload = await buildHistoryPayload();
+  const payload = buildHistoryPayload();
   if (!validateHistoryPayload(payload)) return;
 
   const submitBtn = qs('#submitBtn');
