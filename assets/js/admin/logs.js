@@ -174,7 +174,7 @@ function renderPage() {
     return;
   }
 
-  tbody.innerHTML = pageRows.map(row => buildLogRow(row)).join('');
+  tbody.innerHTML = pageRows.map((row, i) => buildLogRow(row, (currentPage - 1) * PAGE_SIZE + i)).join('');
   updatePagination();
 }
 
@@ -199,20 +199,92 @@ function renderEmpty(message) {
   updatePagination();
 }
 
-function buildLogRow(row) {
+function buildLogRow(row, index) {
   const actionType = String(row.action_type || '').trim().toUpperCase();
   const badgeClass = getBadgeClass(actionType);
+  const hasDiff = actionType === 'UPDATE' && (row.before_data || row.after_data);
+  const detailRowId = `log-detail-${index}`;
 
-  return `
-    <tr>
+  const mainRow = `
+    <tr class="log-main-row${hasDiff ? ' has-diff' : ''}" ${hasDiff ? `onclick="toggleLogDetail('${detailRowId}')" style="cursor:pointer;"` : ''}>
       <td>${safeText(row.action_time)}</td>
       <td><span class="action-badge ${badgeClass}">${escapeHtml(actionType || '-')}</span></td>
       <td><span class="target-type">${escapeHtml(row.target_type || '-')}</span></td>
       <td title="${escapeHtml(row.target_id || '')}">${escapeHtml(truncate(row.target_id, 22))}</td>
-      <td class="wrap">${escapeHtml(row.action_detail || '-')}</td>
+      <td class="wrap">${escapeHtml(row.action_detail || '-')}${hasDiff ? ' <span class="diff-toggle-hint">▾ 변경 내역</span>' : ''}</td>
       <td>${escapeHtml(row.action_user || '-')}</td>
     </tr>
   `;
+
+  if (!hasDiff) return mainRow;
+
+  const diffHtml = buildDiffHtml(row.before_data, row.after_data);
+
+  const detailRow = `
+    <tr id="${detailRowId}" class="log-detail-row" style="display:none;">
+      <td colspan="6">
+        <div class="diff-wrap">${diffHtml}</div>
+      </td>
+    </tr>
+  `;
+
+  return mainRow + detailRow;
+}
+
+function buildDiffHtml(before, after) {
+  const b = before || {};
+  const a = after  || {};
+  const keys = Array.from(new Set([...Object.keys(b), ...Object.keys(a)]));
+
+  if (keys.length === 0) return '<span class="diff-empty">변경 내역 없음</span>';
+
+  const FIELD_LABEL = {
+    equipment_name: '장비명', model_name: '모델명', manufacturer: '제조사',
+    serial_no: '시리얼번호', status: '상태', location: '위치',
+    clinic_code: '의원코드', clinic_name: '의원명', team_code: '팀코드', team_name: '팀명',
+    department: '사용부서', purchase_date: '취득일자', manufacture_date: '제조일자',
+    maintenance_end_date: '유지보수종료일', acquisition_cost: '취득가액',
+    vendor: '구매처', manager_name: '담당자', manager_phone: '연락처',
+    current_user: '현재사용자', memo: '비고',
+    history_type: '이력유형', work_date: '작업일', amount: '금액',
+    vendor_name: '업체명', description: '내용', result_status: '결과상태',
+    next_action_date: '다음예정일', requester: '요청자'
+  };
+
+  const rows = keys.map(key => {
+    const label = FIELD_LABEL[key] || key;
+    const bVal = b[key] !== undefined ? String(b[key]) : '';
+    const aVal = a[key] !== undefined ? String(a[key]) : '';
+    return `
+      <tr>
+        <td class="diff-field">${escapeHtml(label)}</td>
+        <td class="diff-before">${escapeHtml(bVal || '-')}</td>
+        <td class="diff-arrow">→</td>
+        <td class="diff-after">${escapeHtml(aVal || '-')}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <table class="diff-table">
+      <thead>
+        <tr>
+          <th>필드</th>
+          <th>변경 전</th>
+          <th></th>
+          <th>변경 후</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function toggleLogDetail(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'table-row' : 'none';
 }
 
 function getBadgeClass(actionType) {
