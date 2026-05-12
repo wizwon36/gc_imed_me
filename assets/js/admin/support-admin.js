@@ -382,7 +382,6 @@
 
     } catch (err) {
       await hideGlobalLoading();
-      setLoading(submitBtn, false);
       alert(err.message || '저장 중 오류가 발생했습니다.');
     } finally {
       setLoading(submitBtn, false);
