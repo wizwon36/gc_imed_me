@@ -663,6 +663,10 @@
         grid-template-columns: 1fr;
       }
 
+      .permission-card:nth-child(even) { border-right: none; }
+      .permission-card:nth-last-child(-n+2) { border-bottom: 1px solid rgba(148,163,184,0.12); }
+      .permission-card:last-child { border-bottom: none; }
+
       .user-tbl-th--org,
       .user-tbl-cell--org,
       .user-tbl-th--role,
@@ -780,8 +784,8 @@
     /* ── 권한 카드 개선 ── */
     /* ── 앱별 권한: compact 행 레이아웃 (통합) ── */
     .permission-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       border: 1px solid rgba(148,163,184,0.20);
       border-radius: 14px;
       overflow: hidden;
@@ -795,11 +799,13 @@
       gap: 16px;
       padding: 11px 16px;
       border-bottom: 1px solid rgba(148,163,184,0.12);
+      border-right: 1px solid rgba(148,163,184,0.12);
       background: #fff;
       transition: background 0.12s;
     }
 
-    .permission-card:last-child { border-bottom: none; }
+    .permission-card:nth-child(even) { border-right: none; }
+    .permission-card:nth-last-child(-n+2) { border-bottom: none; }
 
     .permission-card:hover { background: #f8fafc; }
 
