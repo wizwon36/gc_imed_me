@@ -339,6 +339,72 @@
   box-shadow: 0 3px 12px rgba(37,99,235,0.35);
 }
 
+/* ── 액션 바 빠른 검색창 ── */
+.dashboard-action-bar-search {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.dashboard-action-bar-search-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-action-bar-search-icon {
+  position: absolute;
+  left: 12px;
+  color: #7a96c8;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.dashboard-action-bar-search-input {
+  height: 38px;
+  width: 240px;
+  padding: 0 36px 0 34px;
+  border: 1px solid #c7d7f9;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 13px;
+  color: #1e3a8a;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, width 0.2s;
+}
+
+.dashboard-action-bar-search-input::placeholder {
+  color: #a0b4d8;
+  font-weight: 400;
+}
+
+.dashboard-action-bar-search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  width: 280px;
+}
+
+.dashboard-action-bar-search-clear {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: #dbeafe;
+  border-radius: 50%;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s;
+}
+
+.dashboard-action-bar-search-clear:hover {
+  background: #bfdbfe;
+}
+
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--enhanced {
   display: grid;
