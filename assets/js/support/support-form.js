@@ -130,19 +130,44 @@
           created_by:  createdBy
         });
 
-        uploadedFileIds.push(res.data.file_id);
-        uploadedFileSizes.push(file.size);
+        const fileId   = res.data.file_id;
+        const fileSize = file.size;
+        uploadedFileIds.push(fileId);
+        uploadedFileSizes.push(fileSize);
 
         const el = document.getElementById(itemId);
         if (el) {
           el.classList.replace('is-uploading', 'is-done');
-          el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatSize(file.size)})`;
+          el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatSize(fileSize)})`;
+          // 삭제 버튼 추가
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'signage-file-item-remove';
+          removeBtn.textContent = '✕';
+          removeBtn.title = '파일 제거';
+          removeBtn.addEventListener('click', () => {
+            const idx = uploadedFileIds.indexOf(fileId);
+            if (idx !== -1) {
+              uploadedFileIds.splice(idx, 1);
+              uploadedFileSizes.splice(idx, 1);
+            }
+            el.remove();
+          });
+          el.appendChild(removeBtn);
         }
       } catch (err) {
         const el = document.getElementById(itemId);
         if (el) {
           el.classList.replace('is-uploading', 'is-error');
           el.querySelector('.signage-file-item-status').textContent = '✗ 실패';
+          // 실패 아이템도 제거 가능하도록
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'signage-file-item-remove';
+          removeBtn.textContent = '✕';
+          removeBtn.title = '제거';
+          removeBtn.addEventListener('click', () => el.remove());
+          el.appendChild(removeBtn);
         }
         showMessage('업로드 실패: ' + file.name, 'error');
       } finally {
