@@ -232,6 +232,88 @@ function applyDashboardPermissionUi() {
   }
 }
 
+// ─────────────────────────────────────────────
+// 빠른 검색 (액션 바)
+// ─────────────────────────────────────────────
+
+function initDashboardQuickSearch() {
+  const input     = document.getElementById('dashboardQuickSearch');
+  const clearBtn  = document.getElementById('dashboardQuickSearchClear');
+  const searchWrap = document.getElementById('dashboardActionBarSearchWrap');
+  if (!input || !searchWrap) return;
+
+  // clinic 미허용 시 검색창도 비활성화
+  const user = window.auth?.getSession?.() || null;
+  const clinicAllowed = isEquipmentClinicAllowed(user);
+  if (!clinicAllowed) {
+    searchWrap.style.opacity = '0.4';
+    searchWrap.style.pointerEvents = 'none';
+    input.placeholder = '이용 불가 (미오픈 의원)';
+    return;
+  }
+
+  // 권한별 기본 파라미터 구성
+  function buildSearchParams(keyword) {
+    const session     = window.auth?.getSession?.() || {};
+    const userEmail   = String(session.email || session.user_email || '').trim().toLowerCase();
+    const userRole    = String(session.role || '').trim().toLowerCase();
+    const isAdmin     = (userRole === 'admin');
+
+    const params = { keyword: keyword, request_user_email: userEmail };
+
+    if (!isAdmin) {
+      const clinicCode = String(session.clinic_code || '').trim();
+      const teamCode   = String(session.team_code   || '').trim();
+      if (clinicCode) params.clinic_code = clinicCode;
+      if (teamCode)   params.team_code   = teamCode;
+    }
+
+    return params;
+  }
+
+  // 검색 실행 — list.html 로 이동
+  function executeSearch() {
+    const keyword = input.value.trim();
+    if (!keyword) return;
+
+    const session     = window.auth?.getSession?.() || {};
+    const userRole    = String(session.role || '').trim().toLowerCase();
+    const isAdmin     = (userRole === 'admin');
+
+    const url = new URL('list.html', location.href);
+    url.searchParams.set('keyword', keyword);
+
+    if (!isAdmin) {
+      const clinicCode = String(session.clinic_code || '').trim();
+      const teamCode   = String(session.team_code   || '').trim();
+      if (clinicCode) url.searchParams.set('clinic_code', clinicCode);
+      if (teamCode)   url.searchParams.set('team_code',   teamCode);
+    }
+
+    location.href = url.toString();
+  }
+
+  // clear 버튼 표시/숨김
+  input.addEventListener('input', function () {
+    clearBtn.style.display = input.value ? '' : 'none';
+  });
+
+  // clear 버튼 클릭
+  clearBtn.addEventListener('click', function () {
+    input.value = '';
+    clearBtn.style.display = 'none';
+    input.focus();
+  });
+
+  // Enter 키 검색
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSearch();
+    }
+  });
+}
+
 function renderDashboardSkeleton() {
   ['#maintenanceAlertList', '#recentRepairList', '#recentRegisteredList'].forEach(function (selector) {
     const el = dq(selector);
@@ -625,6 +707,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     applyDashboardPermissionUi();
+    initDashboardQuickSearch();
 
     const cached = getDashboardSessionCache();
     if (cached) {
