@@ -191,11 +191,15 @@ async function loadBulkLabels(ids, sizeClass, layout, user) {
 
   try {
     showGlobalLoading('라벨 정보를 불러오는 중...');
-    var items = [];
-    for (var i = 0; i < ids.length; i++) {
-      var result = await apiGet('getEquipment', { id: ids[i], request_user_email: userEmail });
-      if (result && result.data) items.push(result.data);
-    }
+
+    var results = await Promise.all(
+      ids.map(function(id) {
+        return apiGet('getEquipment', { id: id, request_user_email: userEmail });
+      })
+    );
+    var items = results
+      .map(function(result) { return result && result.data ? result.data : null; })
+      .filter(Boolean);
 
     if (!items.length) {
       container.innerHTML = '<div class="empty-box">불러올 장비 정보가 없습니다.</div>';
