@@ -1,6 +1,6 @@
 let currentEquipmentId = '';
 let currentEquipmentData = null;
-let detailPermission = { canView: false, canEdit: false, canDelete: false, isAdmin: false };
+let detailPermission = { canView: false, canEdit: false, canDelete: false, isAdmin: false, isAppAdmin: false };
 
 function getCurrentUser() {
   if (window.auth && typeof window.auth.getSession === 'function') {
@@ -12,12 +12,12 @@ function getCurrentUser() {
 async function getEquipmentPermissionContext() {
   const user = getCurrentUser();
   if (!user || !user.email) {
-    return { canView: false, canEdit: false, canDelete: false, isAdmin: false };
+    return { canView: false, canEdit: false, canDelete: false, isAdmin: false, isAppAdmin: false };
   }
 
   const role = String(user.role || '').trim().toLowerCase();
   if (role === 'admin') {
-    return { canView: true, canEdit: true, canDelete: true, isAdmin: true };
+    return { canView: true, canEdit: true, canDelete: true, isAdmin: true, isAppAdmin: false };
   }
 
   try {
@@ -35,10 +35,11 @@ async function getEquipmentPermissionContext() {
       canView: ['view', 'edit', 'admin'].indexOf(permission) > -1,
       canEdit: ['edit', 'admin'].indexOf(permission) > -1,
       canDelete: false,
-      isAdmin: false
+      isAdmin: false,
+      isAppAdmin: permission === 'admin'
     };
   } catch (error) {
-    return { canView: false, canEdit: false, canDelete: false, isAdmin: false };
+    return { canView: false, canEdit: false, canDelete: false, isAdmin: false, isAppAdmin: false };
   }
 }
 
@@ -116,10 +117,13 @@ function applyActionVisibility() {
       .toUpperCase() === 'Y';
 
   // ★ user이면 본인 소속 팀 장비만 수정/이력/재고 버튼 표시
+  // app:admin이면 타 팀 장비도 수정/이력/재고 버튼 표시
   const currentUser = getCurrentUser();
   const isAdmin = detailPermission.isAdmin;
+  const isAppAdmin = detailPermission.isAppAdmin;
   const canEditThisItem = detailPermission.canEdit && (
     isAdmin ||
+    isAppAdmin ||
     (
       currentEquipmentData &&
       currentUser &&
@@ -133,7 +137,7 @@ function applyActionVisibility() {
   if (addInventoryBtn) addInventoryBtn.style.display = canEditThisItem && !isDeleted ? '' : 'none';
   const isMobile = window.innerWidth <= 768;
   if (printLabelBtn) printLabelBtn.style.display = (detailPermission.canView && !isMobile) ? '' : 'none';
-  if (inspectionCertBtn) inspectionCertBtn.style.display = detailPermission.isAdmin ? '' : 'none';
+  if (inspectionCertBtn) inspectionCertBtn.style.display = (isAdmin || isAppAdmin) ? '' : 'none';
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
@@ -250,7 +254,7 @@ function renderPhoto(item) {
   }
 
   if (deleteBtn) {
-    deleteBtn.style.display = hasPhoto && detailPermission.canDelete ? '' : 'none';
+    deleteBtn.style.display = hasPhoto && detailPermission.canEdit ? '' : 'none';
   }
 }
 
@@ -297,7 +301,7 @@ function openPhotoInNewWindow() {
 }
 
 async function deleteCurrentPhoto() {
-  if (!detailPermission.canDelete) {
+  if (!detailPermission.canEdit) {
     showMessage('사진을 삭제할 권한이 없습니다.', 'error');
     return;
   }
@@ -474,7 +478,7 @@ function renderDetailInfo(item) {
 function buildHistoryActionButtons(item) {
   if (!detailPermission.canEdit) return '';
 
-  // 등록자 본인 또는 admin만 수정/완료 처리 가능
+  // 등록자 본인 또는 admin / isAppAdmin만 수정/완료 처리 가능
   const currentUser = window.auth && typeof window.auth.getSession === 'function'
     ? window.auth.getSession()
     : null;
@@ -482,8 +486,9 @@ function buildHistoryActionButtons(item) {
   const createdBy    = String(item.created_by || '').trim().toLowerCase();
   const isOwner      = currentEmail && createdBy && currentEmail === createdBy;
   const isAdmin      = detailPermission.isAdmin;
+  const isAppAdmin   = detailPermission.isAppAdmin;
 
-  if (!isOwner && !isAdmin) return '';
+  if (!isOwner && !isAdmin && !isAppAdmin) return '';
 
   const buttons = [];
   const historyId  = item.history_id || '';
