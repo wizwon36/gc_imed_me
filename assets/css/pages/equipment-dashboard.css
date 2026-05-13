@@ -430,6 +430,103 @@
   box-shadow: 0 3px 12px rgba(37,99,235,0.35);
 }
 
+/* ── 모바일 빠른 작업 패널 검색창 (PC에서 숨김) ── */
+.dashboard-mobile-search {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .dashboard-mobile-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px 14px;
+  }
+
+  .dashboard-mobile-search-inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .dashboard-mobile-search-icon {
+    position: absolute;
+    left: 13px;
+    color: #7a96c8;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .dashboard-mobile-search-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 38px 0 38px;
+    border: 1.5px solid #c7d7f9;
+    border-radius: 14px;
+    background: #f4f7fe;
+    font-size: 14px;
+    color: #1e3a8a;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+  }
+
+  .dashboard-mobile-search-input::placeholder {
+    color: #a0b4d8;
+    font-weight: 400;
+  }
+
+  .dashboard-mobile-search-input:focus {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  }
+
+  .dashboard-mobile-search-clear {
+    position: absolute;
+    right: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: #dbeafe;
+    border-radius: 50%;
+    color: #2563eb;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.12s;
+  }
+
+  .dashboard-mobile-search-clear:hover {
+    background: #bfdbfe;
+  }
+
+  .dashboard-mobile-search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+
+  .dashboard-mobile-search-btn:hover {
+    background: #1d4ed8;
+    box-shadow: 0 3px 12px rgba(37,99,235,0.35);
+  }
+}
+
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--enhanced {
   display: grid;
