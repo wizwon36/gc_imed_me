@@ -237,81 +237,86 @@ function applyDashboardPermissionUi() {
 // ─────────────────────────────────────────────
 
 function initDashboardQuickSearch() {
-  const input     = document.getElementById('dashboardQuickSearch');
-  const clearBtn  = document.getElementById('dashboardQuickSearchClear');
-  const searchWrap = document.getElementById('dashboardActionBarSearchWrap');
-  if (!input || !searchWrap) return;
-
-  // clinic 미허용 시 검색창도 비활성화
   const user = window.auth?.getSession?.() || null;
   const clinicAllowed = isEquipmentClinicAllowed(user);
-  if (!clinicAllowed) {
-    searchWrap.style.opacity = '0.4';
-    searchWrap.style.pointerEvents = 'none';
-    input.placeholder = '이용 불가 (미오픈 의원)';
-    return;
-  }
 
-  // 권한별 기본 파라미터 구성
-  function buildSearchParams(keyword) {
-    const session     = window.auth?.getSession?.() || {};
-    const userEmail   = String(session.email || session.user_email || '').trim().toLowerCase();
-    const userRole    = String(session.role || '').trim().toLowerCase();
-    const isAdmin     = (userRole === 'admin');
-
-    const params = { keyword: keyword, request_user_email: userEmail };
-
-    if (!isAdmin) {
-      const clinicCode = String(session.clinic_code || '').trim();
-      const teamCode   = String(session.team_code   || '').trim();
-      if (clinicCode) params.clinic_code = clinicCode;
-      if (teamCode)   params.team_code   = teamCode;
-    }
-
-    return params;
-  }
-
-  // 검색 실행 — list.html 로 이동
-  function executeSearch() {
-    const keyword = input.value.trim();
-    if (!keyword) return;
-
-    const session     = window.auth?.getSession?.() || {};
-    const userRole    = String(session.role || '').trim().toLowerCase();
-    const isAdmin     = (userRole === 'admin');
-
+  // ── 공통: 권한별 검색 URL 생성 ──
+  function buildSearchUrl(keyword) {
+    const session = window.auth?.getSession?.() || {};
+    const isAdmin = String(session.role || '').trim().toLowerCase() === 'admin';
     const url = new URL('list.html', location.href);
     url.searchParams.set('keyword', keyword);
-
     if (!isAdmin) {
-      const clinicCode = String(session.clinic_code || '').trim();
-      const teamCode   = String(session.team_code   || '').trim();
-      if (clinicCode) url.searchParams.set('clinic_code', clinicCode);
-      if (teamCode)   url.searchParams.set('team_code',   teamCode);
+      const teamCode = String(session.team_code || '').trim();
+      if (teamCode) url.searchParams.set('team_code', teamCode);
     }
-
-    location.href = url.toString();
+    return url.toString();
   }
 
-  // clear 버튼 표시/숨김
-  input.addEventListener('input', function () {
-    clearBtn.style.display = input.value ? '' : 'none';
-  });
+  // ── 공통: 검색 실행 ──
+  function executeSearch(inputEl) {
+    const keyword = inputEl.value.trim();
+    if (!keyword) { inputEl.focus(); return; }
+    location.href = buildSearchUrl(keyword);
+  }
 
-  // clear 버튼 클릭
-  clearBtn.addEventListener('click', function () {
-    input.value = '';
-    clearBtn.style.display = 'none';
-    input.focus();
-  });
+  // ── PC 액션바 검색창 ──
+  (function initPcSearch() {
+    const wrap      = document.getElementById('dashboardActionBarSearchWrap');
+    const input     = document.getElementById('dashboardQuickSearch');
+    const clearBtn  = document.getElementById('dashboardQuickSearchClear');
+    const searchBtn = document.getElementById('dashboardQuickSearchBtn');
+    if (!wrap || !input) return;
 
-  // Enter 키 검색
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      executeSearch();
+    if (!clinicAllowed) {
+      wrap.style.opacity = '0.4';
+      wrap.style.pointerEvents = 'none';
+      input.placeholder = '이용 불가 (미오픈 의원)';
+      return;
     }
-  });
+
+    input.addEventListener('input', function () {
+      clearBtn.style.display = input.value ? '' : 'none';
+    });
+    clearBtn.addEventListener('click', function () {
+      input.value = '';
+      clearBtn.style.display = 'none';
+      input.focus();
+    });
+    if (searchBtn) searchBtn.addEventListener('click', function () { executeSearch(input); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); executeSearch(input); }
+    });
+  })();
+
+  // ── 모바일 빠른 작업 패널 검색창 ──
+  (function initMobileSearch() {
+    const wrap      = document.getElementById('dashboardMobileSearchWrap');
+    const input     = document.getElementById('dashboardMobileSearch');
+    const clearBtn  = document.getElementById('dashboardMobileSearchClear');
+    const searchBtn = document.getElementById('dashboardMobileSearchBtn');
+    if (!wrap || !input) return;
+
+    if (!clinicAllowed) {
+      wrap.style.opacity = '0.4';
+      wrap.style.pointerEvents = 'none';
+      input.placeholder = '이용 불가 (미오픈 의원)';
+      return;
+    }
+
+    input.addEventListener('input', function () {
+      clearBtn.style.display = input.value ? '' : 'none';
+    });
+    clearBtn.addEventListener('click', function () {
+      input.value = '';
+      clearBtn.style.display = 'none';
+      input.focus();
+    });
+    if (searchBtn) searchBtn.addEventListener('click', function () { executeSearch(input); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); executeSearch(input); }
+    });
+  })();
 }
 
 function renderDashboardSkeleton() {
