@@ -343,7 +343,6 @@
 .dashboard-action-bar-search {
   display: flex;
   align-items: center;
-  gap: 6px;
   margin-left: auto;
 }
 
@@ -404,30 +403,6 @@
 
 .dashboard-action-bar-search-clear:hover {
   background: #bfdbfe;
-}
-
-.dashboard-action-bar-search-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  border: none;
-  background: #2563eb;
-  color: #fff;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.22);
-  transition: background 0.15s, box-shadow 0.15s;
-  flex-shrink: 0;
-}
-
-.dashboard-action-bar-search-btn:hover {
-  background: #1d4ed8;
-  box-shadow: 0 3px 12px rgba(37,99,235,0.35);
 }
 
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
@@ -1052,7 +1027,8 @@
 
   .dashboard-page .dashboard-panel--maintenance .dashboard-section-head,
   .dashboard-page .dashboard-panel--repair .dashboard-section-head,
-  .dashboard-page .dashboard-panel--registered .dashboard-section-head {
+  .dashboard-page .dashboard-panel--registered .dashboard-section-head,
+  .dashboard-page .dashboard-panel--heatmap .dashboard-section-head {
     padding-bottom: 12px;
     border-bottom: 0;
   }
@@ -1282,7 +1258,6 @@
   gap: 5px;
   margin-bottom: 0;
   padding: 9px 22px;
-  line-height: 1.5;
   background: #f7f9fd;
 }
 
@@ -1293,6 +1268,9 @@
   letter-spacing: .04em;
   text-transform: uppercase;
   white-space: nowrap;
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 .hm-th {
@@ -1304,6 +1282,10 @@
   text-align: center;
   white-space: nowrap;
   min-width: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hm-row {
