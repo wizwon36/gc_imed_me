@@ -237,9 +237,8 @@ function applyDashboardPermissionUi() {
 // ─────────────────────────────────────────────
 
 function initDashboardQuickSearch() {
-  const input      = document.getElementById('dashboardQuickSearch');
-  const clearBtn   = document.getElementById('dashboardQuickSearchClear');
-  const searchBtn  = document.getElementById('dashboardQuickSearchBtn');
+  const input     = document.getElementById('dashboardQuickSearch');
+  const clearBtn  = document.getElementById('dashboardQuickSearchClear');
   const searchWrap = document.getElementById('dashboardActionBarSearchWrap');
   if (!input || !searchWrap) return;
 
@@ -253,26 +252,42 @@ function initDashboardQuickSearch() {
     return;
   }
 
+  // 권한별 기본 파라미터 구성
+  function buildSearchParams(keyword) {
+    const session     = window.auth?.getSession?.() || {};
+    const userEmail   = String(session.email || session.user_email || '').trim().toLowerCase();
+    const userRole    = String(session.role || '').trim().toLowerCase();
+    const isAdmin     = (userRole === 'admin');
+
+    const params = { keyword: keyword, request_user_email: userEmail };
+
+    if (!isAdmin) {
+      const clinicCode = String(session.clinic_code || '').trim();
+      const teamCode   = String(session.team_code   || '').trim();
+      if (clinicCode) params.clinic_code = clinicCode;
+      if (teamCode)   params.team_code   = teamCode;
+    }
+
+    return params;
+  }
+
   // 검색 실행 — list.html 로 이동
   function executeSearch() {
     const keyword = input.value.trim();
-    if (!keyword) {
-      input.focus();
-      return;
-    }
+    if (!keyword) return;
 
-    const session    = window.auth?.getSession?.() || {};
-    const userRole   = String(session.role || '').trim().toLowerCase();
-    const isAdmin    = (userRole === 'admin');
+    const session     = window.auth?.getSession?.() || {};
+    const userRole    = String(session.role || '').trim().toLowerCase();
+    const isAdmin     = (userRole === 'admin');
 
     const url = new URL('list.html', location.href);
     url.searchParams.set('keyword', keyword);
 
-    // non-admin: clinic_code는 list.js가 세션 기준으로 강제 고정하므로 생략.
-    // team_code만 URL로 전달 — list.js가 query.team_code || userTeamCode 순으로 적용함.
     if (!isAdmin) {
-      const teamCode = String(session.team_code || '').trim();
-      if (teamCode) url.searchParams.set('team_code', teamCode);
+      const clinicCode = String(session.clinic_code || '').trim();
+      const teamCode   = String(session.team_code   || '').trim();
+      if (clinicCode) url.searchParams.set('clinic_code', clinicCode);
+      if (teamCode)   url.searchParams.set('team_code',   teamCode);
     }
 
     location.href = url.toString();
@@ -289,13 +304,6 @@ function initDashboardQuickSearch() {
     clearBtn.style.display = 'none';
     input.focus();
   });
-
-  // 검색 버튼 클릭
-  if (searchBtn) {
-    searchBtn.addEventListener('click', function () {
-      executeSearch();
-    });
-  }
 
   // Enter 키 검색
   input.addEventListener('keydown', function (e) {
@@ -366,7 +374,7 @@ function renderRecordList(containerSelector, emptySelector, items, options) {
 
   // th — text-align 인라인 직접 지정
   const th = (label, align, extraStyle) =>
-    `<th style="text-align:${align || 'center'};padding:9px 8px;${align === 'left' ? 'padding-left:18px;' : ''}position:sticky;top:0;background:#f7f9fd;border-bottom:1.5px solid #e0e7f2;z-index:2;font-size:10px;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;${extraStyle || ''}">${label}</th>`;
+    `<th style="text-align:${align || 'center'};padding:9px 8px;${align === 'left' ? 'padding-left:18px;' : ''}position:sticky;top:0;background:#f7f9fd;border-bottom:1.5px solid #e0e7f2;z-index:2;font-size:10px;line-height:1;font-weight:800;color:#3d5068;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;${extraStyle || ''}">${label}</th>`;
 
   const theadRow = [
     th('장비명', 'left'),
