@@ -90,10 +90,6 @@
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           </button>
         </div>
-        <button type="button" class="dashboard-action-bar-search-btn" id="dashboardQuickSearchBtn" aria-label="검색">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.7"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-          검색
-        </button>
       </div>
     </div>
 
@@ -129,6 +125,27 @@
                 <h2 class="section-title dashboard-section-title">빠른 작업</h2>
                 <div class="sub-text dashboard-section-desc">자주 사용하는 화면으로 바로 이동합니다.</div>
               </div>
+            </div>
+
+            <!-- 모바일 전용 검색창 -->
+            <div class="dashboard-mobile-search" id="dashboardMobileSearchWrap">
+              <div class="dashboard-mobile-search-inner">
+                <svg class="dashboard-mobile-search-icon" width="15" height="15" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <input
+                  type="text"
+                  id="dashboardMobileSearch"
+                  class="dashboard-mobile-search-input"
+                  placeholder="장비명, 모델명, 시리얼 검색..."
+                  autocomplete="off"
+                  maxlength="100"
+                />
+                <button type="button" class="dashboard-mobile-search-clear" id="dashboardMobileSearchClear" aria-label="검색어 지우기" style="display:none;">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+              <button type="button" class="dashboard-mobile-search-btn" id="dashboardMobileSearchBtn" aria-label="검색">
+                <svg width="15" height="15" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.7"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+              </button>
             </div>
 
             <div class="dashboard-action-grid dashboard-action-grid--enhanced dashboard-action-grid--portal">
