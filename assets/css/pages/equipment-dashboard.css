@@ -343,6 +343,7 @@
 .dashboard-action-bar-search {
   display: flex;
   align-items: center;
+  gap: 6px;
   margin-left: auto;
 }
 
@@ -403,6 +404,30 @@
 
 .dashboard-action-bar-search-clear:hover {
   background: #bfdbfe;
+}
+
+.dashboard-action-bar-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.22);
+  transition: background 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+.dashboard-action-bar-search-btn:hover {
+  background: #1d4ed8;
+  box-shadow: 0 3px 12px rgba(37,99,235,0.35);
 }
 
 .dashboard-page .dashboard-panel--actions .dashboard-action-grid--portal,
