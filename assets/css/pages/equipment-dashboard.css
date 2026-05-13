@@ -1294,8 +1294,6 @@
   text-transform: uppercase;
   white-space: nowrap;
   line-height: 1;
-  display: flex;
-  align-items: center;
 }
 
 .hm-th {
@@ -1308,9 +1306,6 @@
   white-space: nowrap;
   min-width: 0;
   line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .hm-row {
