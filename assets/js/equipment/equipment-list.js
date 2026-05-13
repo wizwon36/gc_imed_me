@@ -10,6 +10,7 @@ var equipmentListState = {
   canEdit: false,
   isRecentMode: false,
   isAdmin: false,
+  isAppAdmin: false,
   userClinicCode: '',
   userTeamCode: '',
   _initialLoad: true   // ★ 최초 로딩 여부 — URL params 직접 사용
@@ -836,6 +837,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       equipmentListState.canEdit = await window.appPermission.hasPermission('equipment', ['edit', 'admin']);
     }
 
+    if (window.appPermission && typeof window.appPermission.getPermission === 'function') {
+      var appPerm = await window.appPermission.getPermission('equipment');
+      equipmentListState.isAppAdmin = (String(appPerm || '').trim().toLowerCase() === 'admin');
+    }
+
     applyListPermissionUi();
     await initListFilters();
     bindListEvents();
@@ -978,7 +984,7 @@ function updateBulkUI() {
   if (sizeSelect)   sizeSelect.style.display   = count > 0 ? '' : 'none';
   if (layoutSelect) layoutSelect.style.display = count > 0 ? '' : 'none';
   if (countEl)      countEl.textContent        = count;
-  if (certBtn)      certBtn.style.display      = (count > 0 && equipmentListState.isAdmin) ? '' : 'none';
+  if (certBtn)      certBtn.style.display      = (count > 0 && (equipmentListState.isAdmin || equipmentListState.isAppAdmin)) ? '' : 'none';
   if (certCountEl)  certCountEl.textContent    = count;
 }
 
