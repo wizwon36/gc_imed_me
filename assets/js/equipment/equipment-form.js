@@ -696,7 +696,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadEquipmentIfEditMode();
     updateDepartmentPreview();
     document.querySelector('#equipmentForm')?.addEventListener('submit', handleSubmit);
-    initBulkSection(user);
+
+    // app permission이 'admin'인지 확인해서 일괄등록 탭 노출 여부에 사용
+    let isAppAdmin = false;
+    if (window.appPermission && typeof window.appPermission.getPermission === 'function') {
+      const appPerm = await window.appPermission.getPermission('equipment');
+      isAppAdmin = (String(appPerm || '').trim().toLowerCase() === 'admin');
+    }
+    initBulkSection(user, isAppAdmin);
   } catch (error) {
     showMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -986,11 +993,12 @@ async function handleBulkSubmit(rows, userEmail) {
 }
 
 // 일괄등록 섹션 초기화
-function initBulkSection(user) {
+function initBulkSection(user, isAppAdmin) {
   const userEmail = user.email || user.user_email || '';
+  const isRoleAdmin = String(user.role || '').toLowerCase() === 'admin';
 
-  // 관리자가 아니면 탭 자체를 숨김
-  if (String(user.role || '').toLowerCase() !== 'admin') {
+  // role:admin 또는 app:admin이 아니면 탭 자체를 숨김
+  if (!isRoleAdmin && !isAppAdmin) {
     const tabBulk = qs('#tabBulk');
     if (tabBulk) tabBulk.style.display = 'none';
     return;
