@@ -1910,7 +1910,7 @@ select.input {
   .portal-top-actions,
   .portal-page .portal-top-actions {
     width: 100%;
-    margin-top: 14px;
+    margin-top: 8px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
