@@ -7,16 +7,16 @@
 .lj-card {
   padding: 0 !important;
   overflow: hidden;
-  border: 1.5px solid #d0d8e8;
-  border-radius: 24px;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-xl);
   background: #fff;
-  box-shadow: 0 6px 24px rgba(16, 24, 40, 0.07), 0 2px 6px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-card);
   transition: box-shadow 0.2s ease;
   margin-top: 16px;
 }
 .lj-card:first-child { margin-top: 0; }
 .lj-card:hover {
-  box-shadow: 0 10px 32px rgba(16, 24, 40, 0.10), 0 3px 8px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* ── 카드 헤더 — dashboard-section-head 동일 ── */
@@ -116,10 +116,10 @@
   min-height: 80px;
   max-height: 80px;
   padding: 12px 16px;
-  border: 1.5px solid #d0d8e8;
-  border-radius: 18px;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-md);
   background: #fff;
-  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.07), 0 1px 3px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -128,7 +128,7 @@
   transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 #settingsDisplay .kpi-card:hover {
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.11), 0 2px 6px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-1px);
 }
 #settingsDisplay .kpi-card:nth-child(1) { border-top: 3px solid #2563eb; }
@@ -159,10 +159,10 @@
   min-height: 80px;
   max-height: 80px;
   padding: 12px 16px;
-  border: 1.5px solid #d0d8e8;
-  border-radius: 18px;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-md);
   background: #fff;
-  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.07), 0 1px 3px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -171,7 +171,7 @@
   transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 #statGrid .kpi-card:hover {
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.11), 0 2px 6px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-1px);
 }
 #statGrid .kpi-card:nth-child(1) { border-top: 3px solid #2563eb; }
@@ -200,7 +200,7 @@
   padding: 0 14px;
   height: 40px;
   border-radius: 10px;
-  border: 1.5px dashed #c0ccdb;
+  border: 1.5px dashed var(--border-dashed);
   background: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -334,10 +334,10 @@
 }
 .lj-modal {
   background: #fff;
-  border: 1.5px solid #d0d8e8;
-  border-radius: 24px;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-xl);
   width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(16, 24, 40, 0.18);
+  box-shadow: var(--shadow-modal);
 }
 
 /* ── 반응형 ── */
