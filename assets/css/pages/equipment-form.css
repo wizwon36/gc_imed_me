@@ -269,57 +269,6 @@
 
 /* mobile */
 @media (max-width: 768px) {
-  .page-shell .top-brand-bar {
-    display: block !important;
-    padding: 16px 18px 18px;
-    border-radius: 22px;
-    margin-bottom: 16px;
-  }
-
-  .page-shell .top-brand-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .page-shell .top-brand-texts {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
-  .page-shell .top-brand-title {
-    display: block;
-    font-size: 16px;
-    line-height: 1.25;
-    word-break: keep-all;
-  }
-
-  .page-shell .top-brand-sub {
-    display: block;
-    margin-top: 4px;
-    font-size: 13px;
-    color: #667085;
-    white-space: normal;
-  }
-
-  .page-shell .top-brand-actions {
-    width: 100%;
-    margin-top: 14px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .page-shell .top-brand-actions .nav-link {
-    min-height: 46px;
-    padding: 0 10px;
-    border-radius: 16px;
-    font-size: 14px;
-    font-weight: 800;
-    justify-content: center;
-  }
-
   .page-hero-simple {
     margin-bottom: 16px;
     padding: 0;
