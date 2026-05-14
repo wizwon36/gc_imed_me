@@ -1907,27 +1907,35 @@ select.input {
   }
 
   .top-brand-actions,
-  .portal-top-actions {
+  .portal-top-actions,
+  .portal-page .portal-top-actions {
     width: 100%;
     margin-top: 14px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+    flex-wrap: unset;
+    justify-content: unset;
+    margin-left: unset;
+    align-items: unset;
   }
 
   /* 버튼 수에 따른 열 수 조정 (JS applyTopActionsColClass 자동 부여) */
   .top-brand-actions.top-actions--cols-1,
-  .portal-top-actions.top-actions--cols-1 {
+  .portal-top-actions.top-actions--cols-1,
+  .portal-page .portal-top-actions.top-actions--cols-1 {
     grid-template-columns: 1fr;
   }
 
   .top-brand-actions.top-actions--cols-2,
-  .portal-top-actions.top-actions--cols-2 {
+  .portal-top-actions.top-actions--cols-2,
+  .portal-page .portal-top-actions.top-actions--cols-2 {
     grid-template-columns: 1fr 1fr;
   }
 
   .top-brand-actions.top-actions--cols-3,
-  .portal-top-actions.top-actions--cols-3 {
+  .portal-top-actions.top-actions--cols-3,
+  .portal-page .portal-top-actions.top-actions--cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
