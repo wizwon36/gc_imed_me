@@ -1079,26 +1079,6 @@
     margin-bottom: 16px;
   }
 
-  /* form.css 패턴과 동일하게 */
-  .equipment-list-top-actions {
-    width: 100%;
-    margin-top: 14px;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px;
-  }
-
-  .equipment-list-top-actions .portal-header-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 46px;
-    padding: 0 10px;
-    border-radius: 16px;
-    font-size: 14px;
-    font-weight: 800;
-    justify-content: center;
-  }
-
   .equipment-list-page .page-hero-simple {
     margin-bottom: 16px;
     padding: 0;
@@ -1313,14 +1293,6 @@
     white-space: normal;
   }
 
-  .equipment-label-page .equipment-label-top-actions {
-    width: 100%;
-    margin-top: 14px;
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px;
-  }
-
   .equipment-label-page .equipment-label-top-actions .portal-header-btn {
     width: 100%;
     min-width: 0;
@@ -1362,10 +1334,6 @@
 
 /* narrow mobile */
 @media (max-width: 480px) {
-  .equipment-list-top-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .equipment-list-top-actions .portal-header-btn {
     min-height: 40px;
     font-size: 12px;
@@ -1405,10 +1373,6 @@
 
   .equipment-card-actions {
     grid-template-columns: 1fr;
-  }
-
-  .equipment-label-page .equipment-label-top-actions {
-    grid-template-columns: 1fr 1fr !important;
   }
 
   .equipment-label-page .label-preview-card {
