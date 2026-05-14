@@ -17,12 +17,6 @@
   margin-top: 8px;
 }
 
-.dashboard-page .dashboard-top-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .dashboard-page .dashboard-top-actions .portal-header-btn {
   display: inline-flex;
   align-items: center;
@@ -752,6 +746,8 @@
 .dash-tbl-thead-sticky .dash-tbl-th--side {
   text-align: center !important;
 }
+
+.dash-tbl--scroll {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -932,59 +928,6 @@
 
 /* mobile */
 @media (max-width: 768px) {
-  .dashboard-page .dashboard-topbar {
-    display: block;
-    padding: 18px 18px 20px;
-    border-radius: 24px;
-  }
-
-  .dashboard-page .top-brand-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-  }
-
-  .dashboard-page .top-brand-texts {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
-  .dashboard-page .top-brand-title {
-    display: block;
-    font-size: 18px;
-    line-height: 1.25;
-    word-break: keep-all;
-  }
-
-  .dashboard-page .top-brand-sub {
-    display: block;
-    margin-top: 6px;
-    font-size: 14px;
-    line-height: 1.45;
-    color: #667085;
-    white-space: normal;
-  }
-
-  .dashboard-page .dashboard-top-actions {
-    width: 100%;
-    margin-top: 14px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .dashboard-page .dashboard-top-actions .portal-header-btn {
-    width: 100%;
-    min-width: 0;
-    min-height: 46px;
-    padding: 0 10px;
-    border-radius: 16px;
-    font-size: 14px;
-    font-weight: 800;
-    justify-content: center;
-  }
-
   /* KPI mobile: PC처럼 한 줄 4칸 */
   .dashboard-page .dashboard-kpi-grid--portal {
     grid-template-columns: repeat(4, minmax(0, 1fr));
