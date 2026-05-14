@@ -1,12 +1,16 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
 
 :root {
-  --bg: #f3f5f7;
+  --bg: #f0f2f5;
   --surface: #ffffff;
   --surface-soft: #f8fafc;
 
-  --border: #d9dee5;
-  --border-soft: #e7ebf0;
+  /* Border colors */
+  --border: #e2e8f0;           /* 기본 카드/컨테이너 테두리 */
+  --border-soft: #eaeff5;      /* 구분선/서브 테두리 */
+  --border-card: #e2e8f0;      /* 카드 테두리 (--border 와 동일, 명시적 별칭) */
+  --border-input: #dde3ed;     /* 인풋/버튼 테두리 */
+  --border-dashed: #dce4ef;    /* dashed 테두리 */
 
   --text-primary: #111827;
   --text-secondary: #5f6b7a;
@@ -28,12 +32,16 @@
   --danger-bg: #fef2f2;
   --danger-text: #b42318;
 
-  --radius-xl: 28px;
-  --radius-lg: 22px;
-  --radius-md: 18px;
-  --radius-sm: 14px;
+  /* Border radius */
+  --radius-xl: 24px;   /* 페이지 메인 카드 */
+  --radius-lg: 20px;   /* 일반 카드 */
+  --radius-md: 16px;   /* 내부 요소, 인풋, 버튼 */
+  --radius-sm: 12px;   /* 소형 요소, 칩, 배지 */
 
-  --shadow-card: 0 6px 24px rgba(15, 23, 42, 0.07), 0 2px 6px rgba(15, 23, 42, 0.04);
+  /* Box shadow */
+  --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-card-hover: 0 6px 20px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --shadow-modal: 0 20px 60px rgba(15, 23, 42, 0.18);
 
   --container-width: 1120px;
 
@@ -319,7 +327,7 @@ button, input, select, textarea {
   min-height: 42px;
   padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid #d7dbe4;
+  border: 1px solid var(--border-card);
   background: #fff;
   color: #334155;
   cursor: pointer;
@@ -339,10 +347,10 @@ button, input, select, textarea {
 
 .summary-pill {
   background: #fff;
-  border: 1px solid #e6e9ef;
-  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
   padding: 18px 18px;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 .summary-pill-label {
@@ -391,7 +399,7 @@ button, input, select, textarea {
 .status-badge.is-stored {
   background: #f8f9fc;
   color: #344054;
-  border-color: #d0d5dd;
+  border-color: var(--border-input);
 }
 
 .status-badge.is-disposed {
@@ -402,8 +410,8 @@ button, input, select, textarea {
 
 .info-tile {
   background: #f8fafc;
-  border: 1px solid #edf1f5;
-  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
   padding: 16px;
   min-width: 0;
 }
@@ -434,8 +442,8 @@ button, input, select, textarea {
 
 .guide-item {
   background: #f8fafc;
-  border: 1px solid #edf1f5;
-  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
   padding: 16px;
 }
 
@@ -467,7 +475,7 @@ button, input, select, textarea {
   gap: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   padding: 16px 18px;
   margin-bottom: 24px;
 }
@@ -539,7 +547,7 @@ button, input, select, textarea {
 }
 
 .label-preview-card {
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   box-shadow: none;
 }
 
@@ -554,8 +562,8 @@ button, input, select, textarea {
   width: 440px;
   min-height: 270px;
   background: #fff;
-  border: 1.5px solid #cfd7e3;
-  border-radius: 24px;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-xl);
   padding: 20px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 152px;
@@ -689,8 +697,8 @@ button, input, select, textarea {
   min-height: 220px;
   padding: 28px 16px;
   text-align: center;
-  border: 1px dashed #d8dee8;
-  border-radius: 18px;
+  border: 1px dashed var(--border-dashed);
+  border-radius: var(--radius-md);
   background: #fcfdff;
 }
 
@@ -729,13 +737,13 @@ button, input, select, textarea {
 
 .search-chip-row {
   padding: 12px;
-  border: 1px solid #e4e9f1;
-  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
   background: #f8fbff;
 }
 
 #resetBtn {
-  border-color: #d7dbe4;
+  border-color: var(--border-card);
   background: #f8fafc;
 }
 
@@ -749,7 +757,7 @@ button, input, select, textarea {
 
 .search-panel,
 .search-form-card {
-  border-radius: 22px;
+  border-radius: var(--radius-lg);
 }
 
 .search-panel .card-body,
@@ -820,8 +828,8 @@ button, input, select, textarea {
   flex-wrap: wrap;
   gap: 10px;
   padding: 14px;
-  border: 1px solid #e6ebf2;
-  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
   background: linear-gradient(180deg, #f8fbff 0%, #f4f8fd 100%);
 }
 
@@ -834,7 +842,7 @@ button, input, select, textarea {
 }
 
 .filter-chip.active {
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .search-submit-btn,
@@ -963,7 +971,7 @@ button, input, select, textarea {
   flex-wrap: wrap;
   gap: 10px;
   padding: 14px;
-  border: 1px solid #e4e9f1;
+  border: 1px solid var(--border-soft);
   border-radius: 18px;
   background: #f8fbff;
 }
@@ -1121,7 +1129,7 @@ button, input, select, textarea {
   padding: 16px 18px;
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-modal);
   text-align: center;
   transform: translate(-50%, -50%);
 }
@@ -1202,7 +1210,7 @@ button, input, select, textarea {
 select.input {
   width: 100%;
   min-height: 44px;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-input);
   border-radius: 12px;
   padding: 10px 14px;
   background: #fff;
@@ -1269,7 +1277,7 @@ select.input {
 .filter-actions-right .btn-primary,
 .filter-actions-right .btn-secondary {
   appearance: none;
-  border: 1px solid #cfd6e4;
+  border: 1px solid var(--border-input);
   border-radius: 12px;
   min-height: 40px;
   padding: 0 14px;
@@ -1315,7 +1323,7 @@ select.input {
 .status-badge.is-stored {
   background: #f2f4f7;
   color: #475467;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-input);
 }
 
 .status-badge.is-disposed {
@@ -1335,7 +1343,7 @@ select.input {
 
 .pagination-btn {
   appearance: none;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-input);
   background: #fff;
   border-radius: 12px;
   min-width: 40px;
@@ -1391,12 +1399,12 @@ select.input {
   gap: 14px;
   align-items: flex-start;
   padding: 18px;
-  border: 1px solid #d9dee7;
+  border: 1px solid var(--border-card);
   border-radius: 20px;
   background: #fff;
   text-decoration: none;
   color: inherit;
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 .portal-app-icon {
@@ -1462,7 +1470,7 @@ select.input {
 
 .portal-header-btn {
   appearance: none;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   min-height: 46px;
   padding: 0 18px;
   font-size: 16px;
@@ -1474,7 +1482,7 @@ select.input {
   white-space: nowrap;
   cursor: pointer;
   box-sizing: border-box;
-  border: 1px solid #cfd6e4;
+  border: 1px solid var(--border-input);
   background: #fff;
   color: #0b1f44;
 }
@@ -1487,7 +1495,7 @@ select.input {
 
 .portal-header-btn--secondary {
   background: #fff;
-  border-color: #cfd6e4;
+  border-color: var(--border-input);
   color: #0b1f44;
 }
 
@@ -1549,10 +1557,10 @@ select.input {
 
 .portal-intro-main,
 .portal-profile-card {
-  border: 1px solid #d9dee7;
+  border: 1px solid var(--border-card);
   border-radius: 24px;
   background: #fff;
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 .portal-intro-main {
@@ -1630,10 +1638,10 @@ select.input {
   align-items: center;
   min-height: 124px;
   padding: 20px 22px;
-  border: 1px solid #d9dee7;
+  border: 1px solid var(--border-card);
   border-radius: 24px;
   background: #fff;
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+  box-shadow: var(--shadow-card);
   text-decoration: none;
   color: inherit;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -1641,8 +1649,8 @@ select.input {
 
 .portal-app-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.08);
-  border-color: #c9d3e3;
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-input);
 }
 
 .portal-app-icon {
@@ -1952,10 +1960,10 @@ select.input {
   .portal-page .portal-profile-card {
     display: block;
     padding: 20px 18px;
-    border: 1px solid #d9dee7;
+    border: 1px solid var(--border-card);
     border-radius: 22px;
     background: #fff;
-    box-shadow: 0 4px 14px rgba(16, 24, 40, 0.04);
+    box-shadow: var(--shadow-card);
   }
 
   .portal-page .portal-intro-main {
@@ -2100,7 +2108,7 @@ select.input {
   padding: 18px;
   border-radius: 28px;
   background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
-  border: 1px solid #dbe7ff;
+  border: 1px solid var(--border-soft);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
@@ -2116,9 +2124,9 @@ select.input {
 
 .portal-page .portal-intro-main,
 .portal-page .portal-profile-card {
-  border: 1px solid #d9e4f5;
+  border: 1px solid var(--border-soft);
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .portal-page .portal-section {
@@ -2160,14 +2168,14 @@ select.input {
 }
 
 .portal-page .portal-app-card {
-  border: 1px solid #d5ddeb;
+  border: 1px solid var(--border-card);
   background: #fff;
-  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .portal-page .portal-app-card:hover {
   border-color: #bfd0ea;
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+  box-shadow: var(--shadow-card-hover);
 }
 
 @media (max-width: 768px) {
@@ -2263,8 +2271,8 @@ select.input {
 .btn-return {
   background: #fff;
   color: #0b1f4d;
-  border: 1px solid #cfd8e3;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--border-input);
+  box-shadow: var(--shadow-card);
 }
 
 .btn-secondary-soft:hover,
@@ -2311,7 +2319,7 @@ select.input {
   gap: 8px;
   min-height: 46px;
   padding: 0 16px;
-  border: 1px solid #d9dee7;
+  border: 1px solid var(--border-card);
   border-radius: 18px;
   background: #fff;
   color: #667085;
@@ -2449,11 +2457,11 @@ select.input {
   --text-main: #0b1f44;
   --text-sub: #667085;
 
-  --border: #d9dee7;
+  --border: #e2e8f0;
   --bg-card: #ffffff;
-  --bg-page: #f5f7fb;
+  --bg-page: #f0f2f5;
 
-  --radius-lg: 24px;
+  --radius-lg: 20px;
   --radius-md: 16px;
 
   --space-1: 8px;
@@ -2465,10 +2473,10 @@ select.input {
 
 /* 카드 통일 */
 .card {
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-card);
   background: var(--bg-card);
-  box-shadow: 0 6px 18px rgba(16,24,40,0.05);
+  box-shadow: var(--shadow-card);
 }
 
 /* 버튼 통일 */
@@ -2519,7 +2527,7 @@ select.input {
 .equipment-item-card:hover,
 .dashboard-action-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+  box-shadow: var(--shadow-card-hover);
   border-color: #c7d2fe;
 }
 
@@ -2527,15 +2535,21 @@ select.input {
 .portal-app-card:active,
 .dashboard-action-card:active {
   transform: translateY(0);
-  box-shadow: 0 4px 10px rgba(16, 24, 40, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 /* 버튼 hover */
 .btn:hover,
 .portal-header-btn:hover {
-  background: var(--primary);
+  background: #f1f5ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.portal-header-btn--primary:hover {
+  background: var(--navy-soft);
   color: #fff;
-  border-color: var(--primary);
+  border-color: var(--navy-soft);
 }
 
 /* 버튼 클릭 */
