@@ -50,10 +50,10 @@
 /* filter card */
 .filter-card {
   padding: 22px;
-  border: 1px solid #d9dee7;
-  border-radius: 28px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
   background: #fff;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .filter-card:hover,
@@ -126,8 +126,8 @@
   width: 100%;
   min-height: 52px;
   padding: 0 16px;
-  border: 1px solid #d0d5dd;
-  border-radius: 16px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-md);
   background: #fff;
   color: #0f172a;
   font-size: 15px;
@@ -142,7 +142,7 @@
 .filter-card .input:hover,
 .filter-card select.input:hover,
 .filter-card .textarea:hover {
-  border-color: #bcc7d6;
+  border-color: var(--border-input);
 }
 
 .filter-card .input:focus,
@@ -172,7 +172,7 @@
   min-width: 110px;
   min-height: 46px;
   padding: 0 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
 }
 
 /* filter actions */
@@ -209,7 +209,7 @@
 .filter-actions-right .btn-primary,
 .filter-actions-right .btn-secondary {
   appearance: none;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   min-height: 48px;
   padding: 0 18px;
   font-size: 15px;
@@ -230,13 +230,13 @@
 
 .filter-actions-right .btn-secondary {
   background: #fff;
-  border: 1px solid #cfd6e4;
+  border: 1px solid var(--border-input);
   color: #0b1f44;
 }
 
 .filter-actions-right .btn-secondary:hover {
   background: #f8fafc;
-  border-color: #bcc7d6;
+  border-color: var(--border-input);
 }
 
 /* list wrap */
@@ -261,7 +261,7 @@
   padding: 0 14px;
   border-radius: 999px;
   background: #eef4ff;
-  border: 1px solid #d7e5ff;
+  border: 1px solid var(--border-soft);
   color: #285ea8;
   font-size: 14px;
   font-weight: 700;
@@ -292,10 +292,10 @@
 
 .equipment-card {
   background: #fff;
-  border: 1px solid #d9dee7;
-  border-radius: 26px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
   padding: 22px;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card);
   transition:
     transform 0.16s ease,
     box-shadow 0.16s ease,
@@ -304,8 +304,8 @@
 
 .equipment-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(16, 24, 40, 0.08);
-  border-color: #cfd8e6;
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-input);
 }
 
 .equipment-card-head {
@@ -348,8 +348,8 @@
   gap: 6px;
   min-width: 0;
   padding: 14px;
-  border: 1px solid #e8edf4;
-  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
   background: #f8fafc;
 }
 
@@ -391,7 +391,7 @@
 .equipment-card-actions .btn-primary {
   min-width: 96px;
   min-height: 46px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   font-weight: 800;
   display: inline-flex;
@@ -405,10 +405,10 @@
   border-collapse: separate;
   border-spacing: 0;
   background: #fff;
-  border: 1px solid #d9dee7;
-  border-radius: 20px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card);
   table-layout: fixed;
 }
 
@@ -501,14 +501,14 @@
   text-decoration: none;
   white-space: nowrap;
   background: #f1f5f9;
-  border: 1px solid #d5dce7;
+  border: 1px solid var(--border-input);
   color: #0f172a;
   transition: background-color 0.12s ease, border-color 0.12s ease;
 }
 
 .tbl-btn:hover {
   background: #e8edf5;
-  border-color: #b0bccc;
+  border-color: var(--border-input);
 }
 
 .tbl-btn--primary {
@@ -556,7 +556,7 @@
 .status-badge.is-stored {
   background: #f8fafc;
   color: #475467;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-input);
 }
 
 .status-badge.is-disposed {
@@ -570,8 +570,8 @@
 /* empty / pagination */
 .empty-box {
   padding: 48px 20px;
-  border: 1px dashed #d8e0ea;
-  border-radius: 24px;
+  border: 1px dashed var(--border-dashed);
+  border-radius: var(--radius-xl);
   background: #fff;
   color: #667085;
   text-align: center;
@@ -591,8 +591,8 @@
   min-width: 40px;
   min-height: 40px;
   padding: 0 12px;
-  border: 1px solid #d5dce7;
-  border-radius: 12px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
   background: #fff;
   color: #0f172a;
   font-size: 14px;
@@ -605,7 +605,7 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  border-color: #94a3b8;
+  border-color: var(--border-input);
   background: #f8fafc;
 }
 
@@ -657,7 +657,7 @@
 .mobile-block-btn {
   min-height: 48px;
   padding: 0 28px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   font-size: 15px;
   font-weight: 800;
   margin-top: 8px;
@@ -700,10 +700,10 @@
 
 .equipment-label-page .label-preview-card {
   padding: 22px;
-  border: 1px solid #d9dee7;
-  border-radius: 28px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
   background: #fff;
-  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .equipment-label-page .label-preview-card:hover,
@@ -763,8 +763,8 @@
   min-width: 170px;
   min-height: 46px;
   padding: 0 14px;
-  border: 1px solid #d0d5dd;
-  border-radius: 14px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
   background: #fff;
   font-size: 14px;
 }
@@ -777,12 +777,12 @@
 }
 
 .equipment-label-page .device-label {
-  border: 1px solid #cfd8e3;
-  border-radius: 24px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-xl);
   background: #fff;
   display: grid;
   align-items: center;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-card);
   transition: width 0.18s ease, min-height 0.18s ease, gap 0.18s ease;
 }
 
@@ -843,7 +843,7 @@
 }
 
 .equipment-label-page .label-qr-box {
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border-soft);
   background: #fff;
   box-sizing: border-box;
 }
@@ -1040,7 +1040,7 @@
   min-width: 72px;
   min-height: 72px;
   padding: 4px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
 }
 
 .equipment-label-page .equipment-label-topbar {
@@ -1059,7 +1059,7 @@
 
   .filter-card {
     padding: 20px;
-    border-radius: 24px;
+    border-radius: var(--radius-xl);
   }
 
   /* 태블릿: 테이블 유지, 가로 스크롤 */
@@ -1095,7 +1095,7 @@
 
   .filter-card {
     padding: 18px;
-    border-radius: 24px;
+    border-radius: var(--radius-xl);
   }
 
   .filter-card .section-title {
@@ -1167,7 +1167,7 @@
     width: 100%;
     min-height: 40px;
     padding: 0 12px;
-    border-radius: 14px;
+    border-radius: var(--radius-sm);
     font-size: 13px;
     line-height: 1.35;
   }
@@ -1185,7 +1185,7 @@
 
   .equipment-card {
     padding: 16px;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
   }
 
   .equipment-card-head {
@@ -1210,7 +1210,7 @@
 
   .equipment-card-row {
     padding: 10px 12px;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
   }
 
   .equipment-card-label {
@@ -1242,7 +1242,7 @@
     min-width: 0;
     min-height: 42px;
     font-size: 13px;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
     text-align: center;
     white-space: nowrap;
     display: inline-flex;
@@ -1263,7 +1263,7 @@
   .equipment-label-page .top-brand-bar {
     display: block;
     padding: 16px 18px 18px;
-    border-radius: 22px;
+    border-radius: var(--radius-lg);
   }
 
   .equipment-label-page .top-brand-left {
@@ -1304,7 +1304,7 @@
 
   .equipment-label-page .label-preview-card {
     padding: 18px;
-    border-radius: 24px;
+    border-radius: var(--radius-xl);
   }
 
   .equipment-label-page .device-label.size-90x48,
@@ -1346,7 +1346,7 @@
 
   .filter-card {
     padding: 16px;
-    border-radius: 22px;
+    border-radius: var(--radius-lg);
   }
 
   .filter-card .section-title {
@@ -1355,7 +1355,7 @@
 
   .equipment-card {
     padding: 16px;
-    border-radius: 22px;
+    border-radius: var(--radius-lg);
   }
 
   .equipment-card-title {
@@ -1377,7 +1377,7 @@
 
   .equipment-label-page .label-preview-card {
     padding: 16px;
-    border-radius: 22px;
+    border-radius: var(--radius-lg);
   }
 
   .equipment-label-page .label-print-toolbar {
