@@ -691,6 +691,38 @@ async function loadDashboard() {
   setDashboardSessionCache(loaded);
 }
 
+// ─────────────────────────────────────────────
+// 모바일 카드 높이 고정
+// topbar + kpi + dots + margin을 제외한 나머지 높이로 카드 고정
+// ─────────────────────────────────────────────
+function setDashboardCardHeight() {
+  if (window.innerWidth > 768) return;
+
+  var topbar  = document.querySelector('.dashboard-topbar');
+  var kpi     = document.querySelector('.dashboard-kpi-grid--portal');
+  var dots    = document.querySelector('.dashboard-panel-dots');
+  var section = document.querySelector('.dashboard-panels-section');
+  var cards   = document.querySelectorAll('.dashboard-page .dashboard-panel--portal');
+
+  if (!topbar || !kpi || !section || cards.length === 0) return;
+
+  var vh          = window.innerHeight;
+  var shellPadTop = 16;
+  var shellPadBot = Math.max(parseInt(getComputedStyle(document.body).getPropertyValue('--safe-area-inset-bottom') || '0'), 16);
+  var topbarH     = topbar.offsetHeight  + 12; // margin-bottom
+  var kpiH        = kpi.offsetHeight;
+  var dotsH       = dots ? (dots.offsetHeight + 12) : 0; // dots margin-bottom
+  var sectionMT   = 12; // margin-top
+
+  var cardH = vh - shellPadTop - shellPadBot - topbarH - kpiH - dotsH - sectionMT;
+  cardH = Math.max(cardH, 480); // 최소 480px 보장
+
+  cards.forEach(function(card) {
+    card.style.height = cardH + 'px';
+    card.style.minHeight = cardH + 'px';
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
   if (DASHBOARD_BOOTSTRAPPED) return;
   DASHBOARD_BOOTSTRAPPED = true;
@@ -718,6 +750,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (cached) {
       renderDashboardData(cached.summary || {});
       initPanelCarousel();
+      setDashboardCardHeight();
       return;
     }
 
@@ -726,6 +759,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     setDashboardSessionCache(loaded);
 
     initPanelCarousel();
+    setDashboardCardHeight();
   } catch (error) {
     if (typeof showMessage === 'function') {
       showMessage(error.message || '대시보드를 불러오는 중 오류가 발생했습니다.', 'error');
@@ -737,6 +771,10 @@ document.addEventListener('DOMContentLoaded', async function () {
       hideGlobalLoading();
     }
   }
+});
+
+window.addEventListener('resize', function() {
+  setDashboardCardHeight();
 });
 
 // ─────────────────────────────────────────────
