@@ -727,8 +727,9 @@ function setDashboardCardHeight() {
   var kpiH        = kpi.offsetHeight;
   var dotsH       = dots ? (dots.offsetHeight + 12) : 0;  // margin-bottom 12
   var sectionMT   = 12;
+  var extraBot    = 24;  // iOS 하단 주소줄 겹침 방지 여유값
 
-  var cardH = vh - shellPadTop - shellPadBot - topbarH - kpiH - dotsH - sectionMT;
+  var cardH = vh - shellPadTop - shellPadBot - topbarH - kpiH - dotsH - sectionMT - extraBot;
   cardH = Math.max(cardH, 480);
 
   cards.forEach(function(card) {
