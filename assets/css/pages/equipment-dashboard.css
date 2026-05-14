@@ -982,14 +982,6 @@
     margin-top: 12px;
   }
 
-  /* 카드 box-shadow가 잘리지 않도록 carousel-wrap에 여유 공간 */
-  .dashboard-panels-carousel-wrap {
-    padding: 6px;
-    margin: -6px;
-    box-sizing: content-box;
-    overflow: visible;
-  }
-
   .dashboard-panels-scroll {
     height: auto;
     min-height: 0;
@@ -1084,6 +1076,7 @@
     border-radius: 20px;
     padding: 0;
     box-sizing: border-box;
+    box-shadow: none;
   }
 
   .dashboard-page .dashboard-section-head {
