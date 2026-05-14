@@ -691,64 +691,6 @@ async function loadDashboard() {
   setDashboardSessionCache(loaded);
 }
 
-// ─────────────────────────────────────────────
-// 모바일 키보드 대응 — iOS Safari 화면 밀림 방지
-// ─────────────────────────────────────────────
-function initMobileKeyboardHandler() {
-  // 모바일이 아니거나 visualViewport 미지원 시 무시
-  if (window.innerWidth > 768) return;
-  if (!window.visualViewport) return;
-
-  // iOS Safari 판별 — Android Chrome은 키보드가 레이아웃 위에 올라오는 방식이라
-  // shell 높이를 건드리면 오히려 레이아웃이 줄어드는 문제가 생기므로 iOS만 처리
-  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!isIOS) return;
-
-  const shell = document.querySelector('.dashboard-page-shell');
-  if (!shell) return;
-
-  const mobileInput = document.getElementById('dashboardMobileSearch');
-  if (!mobileInput) return;
-
-  var isKeyboardOpen = false;
-  var initialHeight  = window.visualViewport.height;
-
-  function onViewportResize() {
-    var currentHeight = window.visualViewport.height;
-    var diff = initialHeight - currentHeight;
-
-    if (diff > 100) {
-      // 키보드 올라옴 — shell 높이를 visualViewport 높이로 고정
-      isKeyboardOpen = true;
-      shell.style.height = currentHeight + 'px';
-      shell.style.maxHeight = currentHeight + 'px';
-      // 스크롤 위치 보정 — 페이지가 밀리지 않도록
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-    } else {
-      // 키보드 내려감 — 원래 상태 복귀
-      isKeyboardOpen = false;
-      shell.style.height = '';
-      shell.style.maxHeight = '';
-    }
-  }
-
-  function onBlur() {
-    // blur 후 약간의 딜레이 후 복귀 (iOS 키보드 내려가는 애니메이션 대기)
-    setTimeout(function () {
-      if (!isKeyboardOpen) return;
-      shell.style.height = '';
-      shell.style.maxHeight = '';
-      isKeyboardOpen = false;
-      window.scrollTo(0, 0);
-    }, 100);
-  }
-
-  window.visualViewport.addEventListener('resize', onViewportResize);
-  mobileInput.addEventListener('blur', onBlur);
-}
-
 document.addEventListener('DOMContentLoaded', async function () {
   if (DASHBOARD_BOOTSTRAPPED) return;
   DASHBOARD_BOOTSTRAPPED = true;
@@ -771,7 +713,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     applyDashboardPermissionUi();
     initDashboardQuickSearch();
-    initMobileKeyboardHandler();
 
     const cached = getDashboardSessionCache();
     if (cached) {
