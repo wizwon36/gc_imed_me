@@ -1912,6 +1912,19 @@ select.input {
     gap: 10px;
   }
 
+  /* 버튼 수에 따른 열 수 조정 */
+  .portal-page .portal-top-actions.top-actions--cols-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-page .portal-top-actions.top-actions--cols-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .portal-page .portal-top-actions.top-actions--cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .portal-page .portal-header-btn {
     width: 100%;
     min-height: 50px;
