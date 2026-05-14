@@ -402,6 +402,8 @@ function applyListPermissionUi() {
   if (exportBtn) {
     exportBtn.style.display = (equipmentListState.canEdit || equipmentListState.isAdmin) ? '' : 'none';
   }
+
+  if (typeof applyTopActionsColClass === 'function') applyTopActionsColClass();
 }
 
 function buildListRequestParams(filters, nextPage) {
