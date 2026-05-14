@@ -953,7 +953,7 @@
     line-height: 1;
   }
 
-  /* 모바일: 상하 스크롤 자유, 카드는 자연스럽게 흘러내림 */
+  /* 모바일: 상하 스크롤 자유, 카드 높이는 JS로 고정 */
   .dashboard-page {
     padding-bottom: 0;
   }
@@ -992,8 +992,8 @@
   }
 
   .dashboard-page .dashboard-panel--portal {
-    height: auto !important;
-    min-height: 520px !important;
+    /* 높이는 JS의 setDashboardCardHeight()가 계산해서 고정 */
+    min-height: 480px;
   }
 
   /* dots visible on top */
