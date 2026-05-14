@@ -366,16 +366,6 @@
     font-size: 15px;
   }
 
-  .page-shell .top-brand-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .page-shell .top-brand-actions .nav-link {
-    width: 100%;
-    font-size: 13px;
-    padding: 0 6px;
-  }
-
   .page-hero-simple .page-title {
     font-size: 26px;
   }
@@ -436,15 +426,6 @@
 
 .equipment-form-section-desc {
   margin-top: 8px;
-}
-
-.equipment-form-page .portal-header-btn {
-  min-height: 48px;
-  border-radius: 16px;
-}
-
-.equipment-form-page .top-brand-actions {
-  align-items: center;
 }
 
 .equipment-form-page .form-card .section-title {
