@@ -138,6 +138,8 @@ function applyActionVisibility() {
   const isMobile = window.innerWidth <= 768;
   if (printLabelBtn) printLabelBtn.style.display = (detailPermission.canView && !isMobile) ? '' : 'none';
   if (inspectionCertBtn) inspectionCertBtn.style.display = (isAdmin || isAppAdmin) ? '' : 'none';
+
+  if (typeof applyTopActionsColClass === 'function') applyTopActionsColClass();
 }
 
 function buildEquipmentDetailUrl(equipmentId) {
