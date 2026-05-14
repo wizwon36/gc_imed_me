@@ -1013,18 +1013,16 @@
   /* 모바일: KPI + dots + 카드가 화면을 꽉 채우도록 */
   .dashboard-page {
     padding-bottom: 0;
-    overflow: hidden;
   }
 
   .dashboard-page .dashboard-page-shell {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
+    min-height: 100dvh;
     gap: 0;
     padding-top: 16px;
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
     box-sizing: border-box;
-    overflow: hidden;
   }
 
   .dashboard-page .dashboard-topbar {
@@ -1117,7 +1115,7 @@
   /* bottom panels swipe */
   .dashboard-panels-scroll {
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
     padding-bottom: 0;
