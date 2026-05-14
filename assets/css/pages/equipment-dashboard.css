@@ -988,7 +988,7 @@
     flex-shrink: 0;
   }
 
-  /* 패널 영역이 남은 공간 전부 차지 */
+  /* 패널 영역 — flex-shrink:0으로 키보드에 눌리지 않게 */
   .dashboard-page .dashboard-panels-section {
     flex: 1 1 auto;
     display: flex;
@@ -1001,15 +1001,18 @@
     flex: 1 1 auto;
     min-height: 0;
     height: 100%;
+    /* iOS 키보드 대응: 최소 높이 보장 */
+    min-height: 400px;
   }
 
   .dashboard-panels-grid {
     height: 100%;
+    min-height: 400px;
   }
 
   .dashboard-page .dashboard-panel--portal {
     height: 100% !important;
-    min-height: 0 !important;
+    min-height: 400px !important;
   }
 
   /* dots visible on top */
