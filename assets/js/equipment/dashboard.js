@@ -699,6 +699,12 @@ function initMobileKeyboardHandler() {
   if (window.innerWidth > 768) return;
   if (!window.visualViewport) return;
 
+  // iOS Safari 판별 — Android Chrome은 키보드가 레이아웃 위에 올라오는 방식이라
+  // shell 높이를 건드리면 오히려 레이아웃이 줄어드는 문제가 생기므로 iOS만 처리
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIOS) return;
+
   const shell = document.querySelector('.dashboard-page-shell');
   if (!shell) return;
 
@@ -729,7 +735,7 @@ function initMobileKeyboardHandler() {
   }
 
   function onBlur() {
-    // blur 후 약간의 딜레이 후 복귀 (iOS 애니메이션 대기)
+    // blur 후 약간의 딜레이 후 복귀 (iOS 키보드 내려가는 애니메이션 대기)
     setTimeout(function () {
       if (!isKeyboardOpen) return;
       shell.style.height = '';
