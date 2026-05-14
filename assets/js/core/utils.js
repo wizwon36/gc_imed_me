@@ -240,3 +240,30 @@ function isEquipmentClinicAllowed(user) {
   var clinicName = String((user && user.clinic_name) || '').trim();
   return ALLOWED.some(function(name) { return clinicName.indexOf(name) !== -1; });
 }
+
+// ============================
+// 모바일 topbar 버튼 수 자동 열 조정
+// portal-top-actions 안의 portal-header-btn 수를 세어
+// top-actions--cols-1/2/3 클래스를 자동으로 부여
+// 새 페이지를 추가해도 별도 작업 불필요
+// ============================
+
+(function applyTopActionsColClass() {
+  function apply() {
+    var containers = document.querySelectorAll('.portal-top-actions, .top-brand-actions');
+    containers.forEach(function (container) {
+      var btnCount = container.querySelectorAll('.portal-header-btn').length;
+      if (btnCount < 1) return;
+      var cols = Math.min(btnCount, 3);
+      // 기존 cols 클래스 제거 후 재적용
+      container.classList.remove('top-actions--cols-1', 'top-actions--cols-2', 'top-actions--cols-3');
+      container.classList.add('top-actions--cols-' + cols);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', apply);
+  } else {
+    apply();
+  }
+})();
