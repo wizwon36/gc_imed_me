@@ -953,23 +953,18 @@
     line-height: 1;
   }
 
-  /* 모바일: KPI + dots + 카드가 화면을 꽉 채우도록 */
+  /* 모바일: 상하 스크롤 자유, 카드는 자연스럽게 흘러내림 */
   .dashboard-page {
     padding-bottom: 0;
   }
 
   .dashboard-page .dashboard-page-shell {
-    display: flex;
-    flex-direction: column;
-    min-height: 100dvh;
-    gap: 0;
     padding-top: 16px;
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
     box-sizing: border-box;
   }
 
   .dashboard-page .dashboard-topbar {
-    flex-shrink: 0;
     margin-top: 0;
     margin-bottom: 12px;
   }
@@ -979,40 +974,26 @@
   }
 
   .dashboard-page .dashboard-kpi-grid--portal {
-    flex-shrink: 0;
     margin-top: 0;
     margin-bottom: 0;
   }
 
-  .dashboard-panel-dots-wrapper {
-    flex-shrink: 0;
-  }
-
-  /* 패널 영역 — flex-shrink:0으로 키보드에 눌리지 않게 */
   .dashboard-page .dashboard-panels-section {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
     margin-top: 12px;
   }
 
   .dashboard-panels-scroll {
-    flex: 1 1 auto;
+    height: auto;
     min-height: 0;
-    height: 100%;
-    /* iOS 키보드 대응: 최소 높이 보장 */
-    min-height: 400px;
   }
 
   .dashboard-panels-grid {
-    height: 100%;
-    min-height: 400px;
+    height: auto;
   }
 
   .dashboard-page .dashboard-panel--portal {
-    height: 100% !important;
-    min-height: 400px !important;
+    height: auto !important;
+    min-height: 520px !important;
   }
 
   /* dots visible on top */
