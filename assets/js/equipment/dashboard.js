@@ -691,36 +691,6 @@ async function loadDashboard() {
   setDashboardSessionCache(loaded);
 }
 
-// ─────────────────────────────────────────────
-// iOS 키보드 대응 — dashboard-page-shell 높이 고정
-// 검색창 포커스 시 iOS가 viewport를 줄여 화면이 밀리는 현상 방지
-// ─────────────────────────────────────────────
-function initDashboardShellHeightLock() {
-  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!isIOS) return;
-  if (window.innerWidth > 768) return;
-
-  var shell = document.querySelector('.dashboard-page-shell');
-  var input = document.getElementById('dashboardMobileSearch');
-  if (!shell || !input) return;
-
-  function lockHeight() {
-    shell.style.minHeight = shell.offsetHeight + 'px';
-    shell.style.height    = shell.offsetHeight + 'px';
-  }
-
-  function unlockHeight() {
-    shell.style.minHeight = '';
-    shell.style.height    = '';
-  }
-
-  input.addEventListener('focus', lockHeight);
-  input.addEventListener('blur',  function() {
-    setTimeout(unlockHeight, 300);
-  });
-}
-
 document.addEventListener('DOMContentLoaded', async function () {
   if (DASHBOARD_BOOTSTRAPPED) return;
   DASHBOARD_BOOTSTRAPPED = true;
@@ -743,7 +713,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     applyDashboardPermissionUi();
     initDashboardQuickSearch();
-    initDashboardShellHeightLock();
 
     const cached = getDashboardSessionCache();
     if (cached) {
