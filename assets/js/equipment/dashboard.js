@@ -693,7 +693,8 @@ async function loadDashboard() {
 
 // ─────────────────────────────────────────────
 // 모바일 카드 높이 고정
-// topbar + kpi + dots + margin을 제외한 나머지 높이로 카드 고정
+// 100dvh 기준으로 상단 요소를 제외한 높이로 카드 고정
+// window.innerHeight 대신 dvh를 사용해 iOS 주소창 영향 제거
 // ─────────────────────────────────────────────
 function setDashboardCardHeight() {
   if (window.innerWidth > 768) return;
@@ -706,19 +707,32 @@ function setDashboardCardHeight() {
 
   if (!topbar || !kpi || !section || cards.length === 0) return;
 
-  var vh          = window.innerHeight;
+  // 100dvh 측정 — iOS 주소창 변화에 흔들리지 않는 안정적인 viewport 높이
+  var dvhEl = document.createElement('div');
+  dvhEl.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:100dvh;pointer-events:none;visibility:hidden;';
+  document.body.appendChild(dvhEl);
+  var vh = dvhEl.offsetHeight;
+  document.body.removeChild(dvhEl);
+
+  // safe-area-inset-bottom: CSS env() 값을 읽기 위한 측정
+  var safeEl = document.createElement('div');
+  safeEl.style.cssText = 'position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
+  document.body.appendChild(safeEl);
+  var safeBot = safeEl.offsetHeight || 0;
+  document.body.removeChild(safeEl);
+
   var shellPadTop = 16;
-  var shellPadBot = Math.max(parseInt(getComputedStyle(document.body).getPropertyValue('--safe-area-inset-bottom') || '0'), 16);
-  var topbarH     = topbar.offsetHeight  + 12; // margin-bottom
+  var shellPadBot = Math.max(safeBot, 16);
+  var topbarH     = topbar.offsetHeight + 12;  // margin-bottom 12
   var kpiH        = kpi.offsetHeight;
-  var dotsH       = dots ? (dots.offsetHeight + 12) : 0; // dots margin-bottom
-  var sectionMT   = 12; // margin-top
+  var dotsH       = dots ? (dots.offsetHeight + 12) : 0;  // margin-bottom 12
+  var sectionMT   = 12;
 
   var cardH = vh - shellPadTop - shellPadBot - topbarH - kpiH - dotsH - sectionMT;
-  cardH = Math.max(cardH, 480); // 최소 480px 보장
+  cardH = Math.max(cardH, 480);
 
   cards.forEach(function(card) {
-    card.style.height = cardH + 'px';
+    card.style.height    = cardH + 'px';
     card.style.minHeight = cardH + 'px';
   });
 }
