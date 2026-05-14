@@ -114,6 +114,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnHistory) btnHistory.style.display = tab === 'form'    ? '' : 'none';
     if (btnForm)    btnForm.style.display    = tab === 'history' ? '' : 'none';
 
+    // 버튼 가시성 변경 후 topbar 열 수 재계산
+    if (typeof applyTopActionsColClass === 'function') applyTopActionsColClass();
+
     document.querySelectorAll('.signage-tab-pane').forEach(p => p.classList.remove('is-active'));
     document.getElementById(tab === 'form' ? 'tabPaneForm' : 'tabPaneHistory').classList.add('is-active');
 
