@@ -788,7 +788,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 window.addEventListener('resize', function() {
-  setDashboardCardHeight();
+  if (window.innerWidth > 768) {
+    // PC 폭으로 돌아오면 인라인 스타일 제거
+    document.querySelectorAll('.dashboard-page .dashboard-panel--portal').forEach(function(card) {
+      card.style.height    = '';
+      card.style.minHeight = '';
+    });
+  } else {
+    setDashboardCardHeight();
+  }
 });
 
 // ─────────────────────────────────────────────
