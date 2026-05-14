@@ -143,6 +143,7 @@ async function loadPublicEquipment() {
         detailBtn.style.display = 'none';
         renderLoginBanner();
       }
+      if (typeof applyTopActionsColClass === 'function') applyTopActionsColClass();
     }
   } catch (error) {
     showMessage(error.message || '장비 정보를 불러오지 못했습니다.', 'error');
