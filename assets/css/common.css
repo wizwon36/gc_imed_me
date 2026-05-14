@@ -1517,12 +1517,6 @@ select.input {
     align-items: flex-start;
   }
 
-  .portal-page .portal-top-actions {
-    width: 100%;
-    justify-content: flex-start;
-    margin-left: 0;
-  }
-
   .portal-header-btn {
     min-height: 42px;
     padding: 0 14px;
@@ -1743,8 +1737,6 @@ select.input {
 
   .portal-page .portal-top-actions {
     width: 100%;
-    justify-content: flex-start;
-    gap: 10px;
   }
 
   .portal-header-btn {
@@ -1752,7 +1744,6 @@ select.input {
     padding: 0 18px;
     border-radius: 18px;
     font-size: 15px;
-    flex: 0 0 auto;
   }
 
   .portal-intro {
