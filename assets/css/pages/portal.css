@@ -4,8 +4,8 @@
   display: inline-flex;
   gap: 8px;
   padding: 0 14px;
-  border-radius: 16px;
-  border: 1px solid #d9dee7;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-card);
   background: #fff;
 }
 
