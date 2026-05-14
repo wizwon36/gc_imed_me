@@ -1047,6 +1047,10 @@
     scroll-snap-type: x mandatory;
     padding-bottom: 0;
     height: 100%;
+    /* 카드 box-shadow가 잘리지 않도록 */
+    padding: 4px;
+    margin: -4px;
+    box-sizing: content-box;
   }
 
   .dashboard-panels-scroll::-webkit-scrollbar {
