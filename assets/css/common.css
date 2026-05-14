@@ -1906,7 +1906,8 @@ select.input {
     white-space: normal;
   }
 
-  .top-brand-actions {
+  .top-brand-actions,
+  .portal-top-actions {
     width: 100%;
     margin-top: 14px;
     display: grid;
@@ -1915,15 +1916,18 @@ select.input {
   }
 
   /* 버튼 수에 따른 열 수 조정 (JS applyTopActionsColClass 자동 부여) */
-  .top-brand-actions.top-actions--cols-1 {
+  .top-brand-actions.top-actions--cols-1,
+  .portal-top-actions.top-actions--cols-1 {
     grid-template-columns: 1fr;
   }
 
-  .top-brand-actions.top-actions--cols-2 {
+  .top-brand-actions.top-actions--cols-2,
+  .portal-top-actions.top-actions--cols-2 {
     grid-template-columns: 1fr 1fr;
   }
 
-  .top-brand-actions.top-actions--cols-3 {
+  .top-brand-actions.top-actions--cols-3,
+  .portal-top-actions.top-actions--cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
