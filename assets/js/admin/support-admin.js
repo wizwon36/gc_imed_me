@@ -421,9 +421,8 @@
     if (!el) return;
     el.textContent = msg;
     el.style.display = 'block';
-    el.style.background = type === 'success' ? '#ecfdf5' : '#fef2f2';
-    el.style.color      = type === 'success' ? '#065f46' : '#991b1b';
-    el.style.border     = type === 'success' ? '1px solid #a7f3d0' : '1px solid #fca5a5';
+    el.classList.remove('is-success', 'is-error');
+    el.classList.add(type === 'success' ? 'is-success' : 'is-error');
     // 4초 후 자동 숨김
     setTimeout(function() { el.style.display = 'none'; }, 4000);
   }
