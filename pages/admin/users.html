@@ -1365,7 +1365,7 @@
                 </div>
               </div>
               <div id="userListAllCount" class="list-count" style="margin-bottom:4px"></div>
-              <div id="userCardGrid" class="user-card-grid"></div>
+              <div id="userListAll"></div>
             </div>
           </div><!-- /.left-tab-panel tab-user-list -->
           <!-- ★ 탭 패널: 가입 신청 관리 -->
@@ -1411,6 +1411,23 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/org-select.js"></script>
   <script src="../../assets/js/admin/admin-users.js"></script>
+<!-- ★ 등록/수정 탭 검색 결과 모달 -->
+<div class="user-modal-backdrop" id="userSearchModal">
+  <div class="user-modal" style="max-width:960px">
+    <div class="user-modal-header">
+      <h2 class="user-modal-title">검색 결과</h2>
+      <button type="button" class="user-modal-close" id="closeUserSearchModalBtn" aria-label="닫기">×</button>
+    </div>
+    <div class="user-modal-body" style="padding:0">
+      <div id="adminUserMessage" class="message-box" style="margin:16px 24px 0" aria-live="polite"></div>
+      <div style="padding:12px 24px 4px">
+        <div id="userListCount" class="list-count"></div>
+      </div>
+      <div id="userList" style="padding:0 24px 16px"></div>
+      <div id="userListPagination" style="padding:0 24px 16px" class="user-list-pagination"></div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
