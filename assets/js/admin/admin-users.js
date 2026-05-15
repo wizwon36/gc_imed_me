@@ -44,16 +44,29 @@ function bindEvents() {
   document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
   document.getElementById('cancelEditBtn')?.addEventListener('click', () => resetEditMode());
 
-  // 사용자 목록 탭 — 검색 → 결과 모달
+  // 등록 탭 — 검색창
+  document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
+  document.getElementById('userSearchKeyword')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchUsers();
+  });
+
+  // 사용자 목록 탭 — 그리드 검색
   document.getElementById('searchUsersListBtn')?.addEventListener('click', searchUsersAll);
   document.getElementById('userFilterKeyword')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') searchUsersAll();
   });
 
-  // 검색 결과 모달 닫기
-  document.getElementById('closeUserListModalBtn')?.addEventListener('click', closeUserListModal);
-  document.getElementById('userListModal')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('userListModal')) closeUserListModal();
+  // 사용자 목록 탭 — 카드 클릭 → 수정 폼으로 이동
+  document.getElementById('userCardGrid')?.addEventListener('click', async (event) => {
+    const card = event.target.closest('.user-card');
+    if (!card) return;
+    const email = card.dataset.email;
+    if (email) {
+      await editUser(email);
+      switchToTab('user-form');
+      // 폼 상단으로 스크롤
+      document.querySelector('.panel-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 
   document.getElementById('loadPendingBtn')?.addEventListener('click', loadPendingRegistrations);
@@ -112,7 +125,6 @@ function bindEvents() {
       const email = editBtn.dataset.email;
       if (email) {
         await editUser(email);
-        closeUserListModal();       // 검색 결과 모달 닫기
         switchToTab('user-form');   // 등록/수정 폼 탭으로 이동
       }
       return;
@@ -376,31 +388,15 @@ function switchToTab(tabId) {
   if (panel) panel.style.display = 'block';
 }
 
-// ─────────────────────────────────────────────
-// 검색 결과 모달 오픈 / 닫기
-// ─────────────────────────────────────────────
-function openUserListModal() {
-  const modal = document.getElementById('userListModal');
-  if (modal) {
-    modal.classList.add('is-open');
-    document.body.style.overflow = 'hidden';
-  }
-}
 
-function closeUserListModal() {
-  const modal = document.getElementById('userListModal');
-  if (modal) {
-    modal.classList.remove('is-open');
-    document.body.style.overflow = '';
-  }
-}
 
+// ─────────────────────────────────────────────
+// 사용자 등록 탭 — 검색 (결과를 목록 테이블로 렌더 후 탭 전환)
+// ─────────────────────────────────────────────
 async function searchUsers() {
   const searchBtn = document.getElementById('searchUsersBtn');
   if (searchBtn) searchBtn.disabled = true;
-
   try {
-    // 캐시 없으면 1회 로드, 있으면 즉시 필터링
     if (!hasLoadedUsers) {
       showGlobalLoading('목록을 불러오는 중입니다');
       await loadUsers();
@@ -415,20 +411,22 @@ async function searchUsers() {
   }
 }
 
+// ─────────────────────────────────────────────
+// 사용자 목록 탭 — 그리드 카드 렌더링
+// ─────────────────────────────────────────────
 async function searchUsersAll() {
   const searchBtn = document.getElementById('searchUsersListBtn');
   if (searchBtn) searchBtn.disabled = true;
 
   try {
-    // 캐시 없으면 1회 로드, 있으면 즉시 필터링
     if (!hasLoadedUsers) {
       showGlobalLoading('목록을 불러오는 중입니다');
       await loadUsers();
       hideGlobalLoading();
     }
 
-    const countEl = document.getElementById('userListCount');
-    const listEl  = document.getElementById('userList');
+    const countEl = document.getElementById('userListAllCount');
+    const gridEl  = document.getElementById('userCardGrid');
 
     const keyword      = normalize(document.getElementById('userFilterKeyword')?.value).toLowerCase();
     const activeFilter = normalize(document.getElementById('userFilterActive')?.value).toUpperCase();
@@ -449,29 +447,29 @@ async function searchUsersAll() {
 
     if (countEl) countEl.textContent = `총 ${filtered.length}명 / 전체 ${allUsers.length}명`;
 
-    if (listEl) {
+    if (gridEl) {
       if (!filtered.length) {
-        listEl.innerHTML = '<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>';
+        gridEl.innerHTML = '<div class="user-list-empty" style="grid-column:1/-1">조건에 맞는 사용자가 없습니다.</div>';
       } else {
-        listEl.innerHTML = `
-          <table class="user-tbl">
-            <thead>
-              <tr>
-                <th class="user-tbl-th user-tbl-th--name">이름 / 이메일</th>
-                <th class="user-tbl-th user-tbl-th--org">소속</th>
-                <th class="user-tbl-th user-tbl-th--role">역할</th>
-                <th class="user-tbl-th user-tbl-th--status">상태</th>
-                <th class="user-tbl-th user-tbl-th--actions">관리</th>
-              </tr>
-            </thead>
-            <tbody>${filtered.map(renderUserRow).join('')}</tbody>
-          </table>
-        `;
+        gridEl.innerHTML = filtered.map((user) => {
+          const isActive = normalize(user.active || 'Y').toUpperCase() === 'Y';
+          const clinicText = normalize(user.clinic_name) || '';
+          const teamText   = normalize(user.team_name) || '';
+          const orgLine = clinicText && teamText ? `${clinicText} / ${teamText}` : (normalize(user.department) || '-');
+          return `
+            <div class="user-card" data-email="${escapeHtml(user.user_email || '')}">
+              <div class="user-card-name">${escapeHtml(user.user_name || '-')}</div>
+              <div class="user-card-email">${escapeHtml(user.user_email || '')}</div>
+              <div class="user-card-meta">
+                <div class="user-card-org">${escapeHtml(orgLine)}</div>
+                <span class="user-card-badge role">${escapeHtml(user.role || 'user')}</span>
+                <span class="user-card-badge ${isActive ? 'active' : 'inactive'}">${isActive ? '활성' : '비활성'}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
     }
-
-    // 결과 모달 오픈
-    openUserListModal();
   } catch (error) {
     hideGlobalLoading();
     setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
