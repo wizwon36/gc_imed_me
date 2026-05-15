@@ -128,11 +128,10 @@ async function loadPublicEquipment() {
     renderPublicHero(item);
     renderPublicInfo(item);
 
-    // 로그인 여부 확인 — 세션 있으면 상세 링크 활성화
-    var sessionRaw = null;
-    try {
-      sessionRaw = JSON.parse(localStorage.getItem('imed_portal_user'));
-    } catch (e) {}
+    // 로그인 여부 확인 — auth.getSession() 사용으로 통일
+    var sessionRaw = (window.auth && typeof window.auth.getSession === 'function')
+      ? window.auth.getSession()
+      : null;
 
     var detailBtn = document.getElementById('goToDetailBtn');
     if (detailBtn) {
