@@ -1,5 +1,9 @@
 window.ORG_CONFIG = {
-  CACHE_KEY: 'gc_imed_me_org_data_v1',
+  get CACHE_KEY() {
+    return (typeof CONFIG !== 'undefined' && CONFIG.CACHE_KEYS)
+      ? CONFIG.CACHE_KEYS.ORG_DATA
+      : 'gc_imed_me_org_data_v1';
+  },
   CACHE_TTL: 1000 * 60 * 30,
   cache: {
     loaded: false,
