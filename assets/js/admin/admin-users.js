@@ -40,7 +40,29 @@ function bindEvents() {
 
   document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
   document.getElementById('cancelEditBtn')?.addEventListener('click', () => resetEditMode());
+
+  // 사용자 등록/수정 탭 — 검색
   document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
+  document.getElementById('userSearchKeyword')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchUsers();
+  });
+
+  // 사용자 목록 탭 — 상세 검색
+  document.getElementById('searchUsersListBtn')?.addEventListener('click', searchUsersAll);
+
+  // 신규 등록 버튼 → 모달 오픈
+  document.getElementById('openCreateModalBtn')?.addEventListener('click', () => {
+    resetEditMode(false);
+    openUserModal();
+  });
+
+  // 모달 닫기
+  document.getElementById('closeModalBtn')?.addEventListener('click', closeUserModal);
+  document.getElementById('closeModalBtnFooter')?.addEventListener('click', closeUserModal);
+  document.getElementById('userFormModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('userFormModal')) closeUserModal();
+  });
+
   document.getElementById('loadPendingBtn')?.addEventListener('click', loadPendingRegistrations);
 
   // 가입신청 목록 이벤트 위임 (승인 / 거절)
@@ -93,7 +115,6 @@ function bindEvents() {
       btn.classList.add('is-active');
       var panel = document.getElementById('tab-' + target);
       if (panel) panel.style.display = 'block';
-
     });
   });
 
@@ -101,7 +122,10 @@ function bindEvents() {
     const editBtn = event.target.closest('.js-edit-user');
     if (editBtn) {
       const email = editBtn.dataset.email;
-      if (email) await editUser(email);
+      if (email) {
+        await editUser(email);
+        openUserModal();  // 수정 모드 → 모달 오픈
+      }
       return;
     }
 
@@ -353,6 +377,81 @@ async function updateUser() {
   } finally {
     if (saveBtn) saveBtn.disabled = false;
     hideGlobalLoading();
+  }
+}
+
+// ─────────────────────────────────────────────
+// 모달 오픈 / 닫기
+// ─────────────────────────────────────────────
+function openUserModal() {
+  const modal = document.getElementById('userFormModal');
+  if (modal) {
+    modal.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeUserModal() {
+  const modal = document.getElementById('userFormModal');
+  if (modal) {
+    modal.classList.remove('is-open');
+    document.body.style.overflow = '';
+    resetEditMode(false);
+  }
+}
+
+// ─────────────────────────────────────────────
+// 사용자 목록 탭 전용 검색
+// (userFilterKeyword, userFilterActive 등 목록탭 필터 사용)
+// ─────────────────────────────────────────────
+async function searchUsersAll() {
+  const searchBtn = document.getElementById('searchUsersListBtn');
+  if (searchBtn) searchBtn.disabled = true;
+
+  try {
+    const listEl  = document.getElementById('userListAll');
+    const countEl = document.getElementById('userListAllCount');
+
+    showGlobalLoading('목록을 불러오는 중입니다');
+
+    const result = await apiGet('listUsers', {
+      request_user_email: getRequestUserEmail()
+    });
+
+    const all = Array.isArray(result.data) ? result.data : [];
+
+    // 필터 적용
+    const keyword      = normalize(document.getElementById('userFilterKeyword')?.value).toLowerCase();
+    const activeFilter = normalize(document.getElementById('userFilterActive')?.value).toUpperCase();
+    const roleFilter   = normalize(document.getElementById('userFilterRole')?.value).toLowerCase();
+    const clinicFilter = normalize(document.getElementById('userFilterClinic')?.value);
+
+    const filtered = all.filter((user) => {
+      const matchKeyword = !keyword ||
+        normalize(user.user_name).toLowerCase().includes(keyword) ||
+        normalize(user.user_email).toLowerCase().includes(keyword) ||
+        normalize(user.clinic_name).toLowerCase().includes(keyword) ||
+        normalize(user.team_name).toLowerCase().includes(keyword);
+      const matchActive = !activeFilter || normalize(user.active).toUpperCase() === activeFilter;
+      const matchRole   = !roleFilter   || normalize(user.role).toLowerCase() === roleFilter;
+      const matchClinic = !clinicFilter || normalize(user.clinic_code) === clinicFilter;
+      return matchKeyword && matchActive && matchRole && matchClinic;
+    });
+
+    if (countEl) countEl.textContent = `총 ${filtered.length}명`;
+
+    if (!filtered.length) {
+      if (listEl) listEl.innerHTML = '<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>';
+    } else {
+      if (listEl) listEl.innerHTML = filtered.map(renderUserCard).join('');
+    }
+
+    hasLoadedUsers = true;
+  } catch (error) {
+    setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
+  } finally {
+    hideGlobalLoading();
+    if (searchBtn) searchBtn.disabled = false;
   }
 }
 
