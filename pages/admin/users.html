@@ -177,38 +177,39 @@
       gap: 0;
     }
 
-    /* ── 폼 섹션 구분 ── */
+    /* ── 폼 섹션 구분 — 배경색으로 시각적 분리 ── */
     .form-section {
-      padding: 20px 0;
+      padding: 20px 22px;
       border-bottom: 1px solid var(--line-soft);
+      margin: 0 -22px;
     }
 
-    .form-section:first-child {
-      padding-top: 0;
-    }
+    .form-section:first-child { margin-top: -22px; }
+    .form-section:last-child  { border-bottom: none; }
 
-    .form-section:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
+    .form-section:nth-child(odd)  { background: #fff; }
+    .form-section:nth-child(even) { background: #f8fafc; }
 
     .form-section-label {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 14px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: #6b7a9a;
+      color: #2563eb;
     }
 
-    .form-section-label::after {
+    .form-section-label::before {
       content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--line-soft);
+      display: inline-block;
+      width: 3px;
+      height: 12px;
+      border-radius: 2px;
+      background: #2563eb;
+      flex-shrink: 0;
     }
 
     .form-fields {
@@ -279,7 +280,6 @@
       box-sizing: border-box;
     }
 
-    /* select 화살표 복원 */
     .select {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
@@ -311,11 +311,7 @@
       line-height: 1.6;
     }
 
-    .required-guide {
-      margin-top: 2px;
-    }
-
-    /* permission styles → 아래 통합 블록으로 이동 */
+    .required-guide { margin-top: 2px; }
 
     .message-box {
       display: none;
@@ -328,10 +324,7 @@
       line-height: 1.6;
     }
 
-    .message-box.success,
-    .message-box.error {
-      display: block;
-    }
+    .message-box.success, .message-box.error { display: block; }
 
     .message-box.success {
       background: var(--success-soft);
@@ -350,12 +343,73 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      margin-top: 2px;
-      padding: 20px 22px;
+      padding: 18px 22px;
       margin: 0 -22px -22px;
-      background: #f8fafc;
-      border-top: 1px solid var(--line-soft);
+      background: #f0f4ff;
+      border-top: 2px solid #dbeafe;
     }
+
+    /* ── 사용자 목록 탭 — 그리드 카드 ── */
+    .user-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .user-card {
+      background: #fff;
+      border: 1.5px solid var(--border-card, #e2e8f0);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+
+    .user-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.10);
+      transform: translateY(-1px);
+    }
+
+    .user-card-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0b1f44;
+      margin-bottom: 2px;
+    }
+
+    .user-card-email {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+
+    .user-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .user-card-org {
+      font-size: 12px;
+      color: #475569;
+      flex: 1 1 100%;
+    }
+
+    .user-card-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .user-card-badge.active   { background: #dcfce7; color: #166534; }
+    .user-card-badge.inactive { background: #f1f5f9; color: #64748b; }
+    .user-card-badge.role     { background: #eff6ff; color: #1d4ed8; }
 
     .filter-row {
       display: grid;
@@ -1118,6 +1172,15 @@
 
           <!-- ★ 탭 패널: 사용자 등록/수정 — 폼이 페이지에 고정 -->
           <div id="tab-user-form" class="left-tab-panel is-default">
+
+            <!-- 상단 검색창 -->
+            <div class="user-search-bar">
+              <div class="form-group">
+                <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 이메일, 의원, 팀으로 검색" />
+              </div>
+              <button type="button" id="searchUsersBtn" class="admin-btn secondary">🔍 검색</button>
+            </div>
+
             <div class="panel-header">
               <h2 class="panel-title" id="formTitle">사용자 등록</h2>
               <p class="panel-desc" id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
@@ -1262,11 +1325,11 @@
             </div>
           </div><!-- /.left-tab-panel tab-user-form -->
 
-          <!-- ★ 탭 패널: 사용자 목록 — 검색 → 결과 모달 -->
+          <!-- ★ 탭 패널: 사용자 목록 — 그리드 카드 페이지 직접 출력 -->
           <div id="tab-user-list" class="left-tab-panel" style="display:none;">
             <div class="panel-header">
               <h2 class="panel-title">사용자 목록</h2>
-              <p class="panel-desc">조건을 설정한 뒤 조회 버튼을 눌러 주세요.</p>
+              <p class="panel-desc">조건을 설정한 뒤 조회 버튼을 눌러 주세요. 카드를 클릭하면 해당 사용자를 수정할 수 있습니다.</p>
             </div>
             <div class="panel-body">
               <div class="filter-row">
@@ -1301,6 +1364,8 @@
                   <button type="button" id="searchUsersListBtn" class="admin-btn secondary">사용자 조회</button>
                 </div>
               </div>
+              <div id="userListAllCount" class="list-count" style="margin-bottom:4px"></div>
+              <div id="userCardGrid" class="user-card-grid"></div>
             </div>
           </div><!-- /.left-tab-panel tab-user-list -->
           <!-- ★ 탭 패널: 가입 신청 관리 -->
@@ -1346,23 +1411,6 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/org-select.js"></script>
   <script src="../../assets/js/admin/admin-users.js"></script>
-<!-- ★ 사용자 목록 검색 결과 모달 -->
-<div class="user-modal-backdrop" id="userListModal">
-  <div class="user-modal" style="max-width:900px">
-    <div class="user-modal-header">
-      <h2 class="user-modal-title">사용자 목록 <span id="userListModalCount" style="font-size:14px;font-weight:600;color:#64748b;margin-left:8px"></span></h2>
-      <button type="button" class="user-modal-close" id="closeUserListModalBtn" aria-label="닫기">×</button>
-    </div>
-    <div class="user-modal-body" style="padding:0">
-      <div id="adminUserMessage" class="message-box" style="margin:16px 24px 0" aria-live="polite"></div>
-      <div class="list-topbar" style="padding:12px 24px 0">
-        <div id="userListCount" class="list-count"></div>
-      </div>
-      <div id="userList" class="user-list" style="padding:0 24px 16px"></div>
-      <div id="userListPagination" class="user-list-pagination" style="padding:0 24px 16px"></div>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
