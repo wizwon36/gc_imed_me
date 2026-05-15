@@ -44,26 +44,16 @@ function bindEvents() {
   document.getElementById('saveUserBtn')?.addEventListener('click', handleSaveUser);
   document.getElementById('cancelEditBtn')?.addEventListener('click', () => resetEditMode());
 
-  // 사용자 등록/수정 탭 — 검색
-  document.getElementById('searchUsersBtn')?.addEventListener('click', searchUsers);
-  document.getElementById('userSearchKeyword')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') searchUsers();
-  });
-
-  // 사용자 목록 탭 — 상세 검색
+  // 사용자 목록 탭 — 검색 → 결과 모달
   document.getElementById('searchUsersListBtn')?.addEventListener('click', searchUsersAll);
-
-  // 신규 등록 버튼 → 모달 오픈
-  document.getElementById('openCreateModalBtn')?.addEventListener('click', () => {
-    resetEditMode(false);
-    openUserModal();
+  document.getElementById('userFilterKeyword')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchUsersAll();
   });
 
-  // 모달 닫기
-  document.getElementById('closeModalBtn')?.addEventListener('click', closeUserModal);
-  document.getElementById('closeModalBtnFooter')?.addEventListener('click', closeUserModal);
-  document.getElementById('userFormModal')?.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('userFormModal')) closeUserModal();
+  // 검색 결과 모달 닫기
+  document.getElementById('closeUserListModalBtn')?.addEventListener('click', closeUserListModal);
+  document.getElementById('userListModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('userListModal')) closeUserListModal();
   });
 
   document.getElementById('loadPendingBtn')?.addEventListener('click', loadPendingRegistrations);
@@ -112,12 +102,7 @@ function bindEvents() {
   // ★ 좌측 탭 전환 이벤트
   document.querySelectorAll('.left-tab-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      var target = btn.dataset.tab;
-      document.querySelectorAll('.left-tab-btn').forEach(function(b) { b.classList.remove('is-active'); });
-      document.querySelectorAll('.left-tab-panel').forEach(function(p) { p.style.display = 'none'; });
-      btn.classList.add('is-active');
-      var panel = document.getElementById('tab-' + target);
-      if (panel) panel.style.display = 'block';
+      switchToTab(btn.dataset.tab);
     });
   });
 
@@ -127,7 +112,8 @@ function bindEvents() {
       const email = editBtn.dataset.email;
       if (email) {
         await editUser(email);
-        openUserModal();  // 수정 모드 → 모달 오픈
+        closeUserListModal();       // 검색 결과 모달 닫기
+        switchToTab('user-form');   // 등록/수정 폼 탭으로 이동
       }
       return;
     }
@@ -331,7 +317,6 @@ async function createUser() {
     setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
 
     resetEditMode(false);
-    closeUserModal();
 
     // 캐시 강제 갱신 후 목록 재렌더
     await loadUsers(true);
@@ -370,7 +355,6 @@ async function updateUser() {
     setAdminMessage(result.message || '사용자 정보가 수정되었습니다.', 'success');
 
     resetEditMode(false);
-    closeUserModal();
 
     await loadUsers(true);
     renderUserList(true);
@@ -381,22 +365,33 @@ async function updateUser() {
 }
 
 // ─────────────────────────────────────────────
-// 모달 오픈 / 닫기
+// 탭 전환 헬퍼
 // ─────────────────────────────────────────────
-function openUserModal() {
-  const modal = document.getElementById('userFormModal');
+function switchToTab(tabId) {
+  document.querySelectorAll('.left-tab-btn').forEach((b) => b.classList.remove('is-active'));
+  document.querySelectorAll('.left-tab-panel').forEach((p) => { p.style.display = 'none'; });
+  const btn = document.querySelector(`.left-tab-btn[data-tab="${tabId}"]`);
+  const panel = document.getElementById(`tab-${tabId}`);
+  if (btn) btn.classList.add('is-active');
+  if (panel) panel.style.display = 'block';
+}
+
+// ─────────────────────────────────────────────
+// 검색 결과 모달 오픈 / 닫기
+// ─────────────────────────────────────────────
+function openUserListModal() {
+  const modal = document.getElementById('userListModal');
   if (modal) {
     modal.classList.add('is-open');
     document.body.style.overflow = 'hidden';
   }
 }
 
-function closeUserModal() {
-  const modal = document.getElementById('userFormModal');
+function closeUserListModal() {
+  const modal = document.getElementById('userListModal');
   if (modal) {
     modal.classList.remove('is-open');
     document.body.style.overflow = '';
-    resetEditMode(false);
   }
 }
 
@@ -432,8 +427,8 @@ async function searchUsersAll() {
       hideGlobalLoading();
     }
 
-    const listEl  = document.getElementById('userListAll');
-    const countEl = document.getElementById('userListAllCount');
+    const countEl = document.getElementById('userListCount');
+    const listEl  = document.getElementById('userList');
 
     const keyword      = normalize(document.getElementById('userFilterKeyword')?.value).toLowerCase();
     const activeFilter = normalize(document.getElementById('userFilterActive')?.value).toUpperCase();
@@ -452,12 +447,31 @@ async function searchUsersAll() {
       return matchKeyword && matchActive && matchRole && matchClinic;
     });
 
-    if (countEl) countEl.textContent = `총 ${filtered.length}명`;
+    if (countEl) countEl.textContent = `총 ${filtered.length}명 / 전체 ${allUsers.length}명`;
+
     if (listEl) {
-      listEl.innerHTML = filtered.length
-        ? filtered.map(renderUserCard).join('')
-        : '<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>';
+      if (!filtered.length) {
+        listEl.innerHTML = '<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>';
+      } else {
+        listEl.innerHTML = `
+          <table class="user-tbl">
+            <thead>
+              <tr>
+                <th class="user-tbl-th user-tbl-th--name">이름 / 이메일</th>
+                <th class="user-tbl-th user-tbl-th--org">소속</th>
+                <th class="user-tbl-th user-tbl-th--role">역할</th>
+                <th class="user-tbl-th user-tbl-th--status">상태</th>
+                <th class="user-tbl-th user-tbl-th--actions">관리</th>
+              </tr>
+            </thead>
+            <tbody>${filtered.map(renderUserRow).join('')}</tbody>
+          </table>
+        `;
+      }
     }
+
+    // 결과 모달 오픈
+    openUserListModal();
   } catch (error) {
     hideGlobalLoading();
     setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
@@ -488,6 +502,43 @@ async function loadUsers(forceReload = false) {
   } finally {
     usersLoading = false;
   }
+}
+
+// 단일 사용자 행 HTML 생성 — renderUserList와 searchUsersAll에서 공유
+function renderUserRow(user) {
+  const isActive = normalize(user.active || 'Y').toUpperCase() === 'Y';
+  const statusClass = isActive ? 'active' : 'inactive';
+  const statusText  = isActive ? '활성' : '비활성';
+  const clinicText  = normalize(user.clinic_name) || '';
+  const teamText    = normalize(user.team_name) || '';
+  const orgLine = clinicText && teamText
+    ? `${clinicText} / ${teamText}`
+    : (normalize(user.department) || '-');
+  const orgHtml = `<div class="user-tbl-org-main">${escapeHtml(orgLine)}</div>`;
+
+  return `
+    <tr class="user-tbl-row">
+      <td class="user-tbl-cell user-tbl-cell--name">
+        <div class="user-tbl-name">${escapeHtml(user.user_name || '-')}</div>
+        <div class="user-tbl-sub">${escapeHtml(user.user_email || '')}</div>
+      </td>
+      <td class="user-tbl-cell user-tbl-cell--org">${orgHtml}</td>
+      <td class="user-tbl-cell user-tbl-cell--role">${escapeHtml(user.role || 'user')}</td>
+      <td class="user-tbl-cell user-tbl-cell--status">
+        <span class="status-chip ${statusClass}">${statusText}</span>
+      </td>
+      <td class="user-tbl-cell user-tbl-cell--actions">
+        <div class="user-tbl-actions">
+          <button type="button" class="user-tbl-btn js-edit-user" data-email="${escapeHtml(user.user_email || '')}">수정</button>
+          <button type="button" class="user-tbl-btn js-reset-password" data-email="${escapeHtml(user.user_email || '')}">PW초기화</button>
+          <button type="button" class="user-tbl-btn ${isActive ? 'danger' : ''} js-toggle-active"
+            data-email="${escapeHtml(user.user_email || '')}" data-active="${isActive ? 'N' : 'Y'}">
+            ${isActive ? '비활성화' : '활성화'}
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
 }
 
 function renderUserList(resetPage) {
@@ -544,40 +595,7 @@ function renderUserList(resetPage) {
     return;
   }
 
-  const rows = pagedUsers.map((user) => {
-    const isActive = normalize(user.active || 'Y').toUpperCase() === 'Y';
-    const statusClass = isActive ? 'active' : 'inactive';
-    const statusText = isActive ? '활성' : '비활성';
-    const clinicText = normalize(user.clinic_name) || '';
-    const teamText = normalize(user.team_name) || '';
-    const orgLine = clinicText && teamText
-      ? `${clinicText} / ${teamText}`
-      : (normalize(user.department) || '-');
-    const orgHtml = `<div class="user-tbl-org-main">${escapeHtml(orgLine)}</div>`;
-
-    return `
-      <tr class="user-tbl-row">
-        <td class="user-tbl-cell user-tbl-cell--name">
-          <div class="user-tbl-name">${escapeHtml(user.user_name || '-')}</div>
-          <div class="user-tbl-sub">${escapeHtml(user.user_email || '')}</div>
-        </td>
-        <td class="user-tbl-cell user-tbl-cell--org">${orgHtml}</td>
-        <td class="user-tbl-cell user-tbl-cell--role">${escapeHtml(user.role || 'user')}</td>
-        <td class="user-tbl-cell user-tbl-cell--status">
-          <span class="status-chip ${statusClass}">${statusText}</span>
-        </td>
-        <td class="user-tbl-cell user-tbl-cell--actions">
-          <div class="user-tbl-actions">
-            <button type="button" class="user-tbl-btn js-edit-user" data-email="${escapeHtml(user.user_email || '')}">수정</button>
-            <button type="button" class="user-tbl-btn js-reset-password" data-email="${escapeHtml(user.user_email || '')}">PW초기화</button>
-            <button type="button" class="user-tbl-btn ${isActive ? 'danger' : ''} js-toggle-active" data-email="${escapeHtml(user.user_email || '')}" data-active="${isActive ? 'N' : 'Y'}">
-              ${isActive ? '비활성화' : '활성화'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  const rows = pagedUsers.map(renderUserRow).join('');
 
   listEl.innerHTML = `
     <table class="user-tbl">
