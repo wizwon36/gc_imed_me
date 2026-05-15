@@ -2,6 +2,7 @@ let currentSessionUser = null;
 let editingUserEmail = '';
 let allUsers = [];
 let hasLoadedUsers = false;
+let usersLoading = false;   // 중복 API 호출 방지
 let orgBinder = null;
 
 // ★ 페이지네이션 state
@@ -25,6 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   showGlobalLoading('초기 정보를 불러오는 중...');
   try {
     await initializeOrgData();
+    // 페이지 진입 시 사용자 데이터 선제 로드 (백그라운드)
+    loadUsers().catch(() => {});
   } catch (error) {
     setAdminMessage(error.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -328,15 +331,12 @@ async function createUser() {
     setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
 
     resetEditMode(false);
+    closeUserModal();
 
-    hasLoadedUsers = false;
-    allUsers = [];
-    document.getElementById('userListCount').textContent = '아직 조회하지 않았습니다.';
-    document.getElementById('userList').innerHTML = `
-      <div class="user-list-empty">
-        등록이 완료되었습니다. 필요하면 <strong>사용자 조회</strong>를 눌러 목록을 다시 불러와 주세요.
-      </div>
-    `;
+    // 캐시 강제 갱신 후 목록 재렌더
+    await loadUsers(true);
+    renderUserList(true);
+    setAdminMessage(result.message || '사용자가 등록되었습니다. 초기 비밀번호는 1111입니다.', 'success');
   } finally {
     if (saveBtn) saveBtn.disabled = false;
     hideGlobalLoading();
@@ -370,10 +370,10 @@ async function updateUser() {
     setAdminMessage(result.message || '사용자 정보가 수정되었습니다.', 'success');
 
     resetEditMode(false);
+    closeUserModal();
 
-    if (hasLoadedUsers) {
-      await loadUsers();
-    }
+    await loadUsers(true);
+    renderUserList(true);
   } finally {
     if (saveBtn) saveBtn.disabled = false;
     hideGlobalLoading();
@@ -400,33 +400,47 @@ function closeUserModal() {
   }
 }
 
-// ─────────────────────────────────────────────
-// 사용자 목록 탭 전용 검색
-// (userFilterKeyword, userFilterActive 등 목록탭 필터 사용)
-// ─────────────────────────────────────────────
+async function searchUsers() {
+  const searchBtn = document.getElementById('searchUsersBtn');
+  if (searchBtn) searchBtn.disabled = true;
+
+  try {
+    // 캐시 없으면 1회 로드, 있으면 즉시 필터링
+    if (!hasLoadedUsers) {
+      showGlobalLoading('목록을 불러오는 중입니다');
+      await loadUsers();
+      hideGlobalLoading();
+    }
+    renderUserList(true);
+  } catch (error) {
+    hideGlobalLoading();
+    setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if (searchBtn) searchBtn.disabled = false;
+  }
+}
+
 async function searchUsersAll() {
   const searchBtn = document.getElementById('searchUsersListBtn');
   if (searchBtn) searchBtn.disabled = true;
 
   try {
+    // 캐시 없으면 1회 로드, 있으면 즉시 필터링
+    if (!hasLoadedUsers) {
+      showGlobalLoading('목록을 불러오는 중입니다');
+      await loadUsers();
+      hideGlobalLoading();
+    }
+
     const listEl  = document.getElementById('userListAll');
     const countEl = document.getElementById('userListAllCount');
 
-    showGlobalLoading('목록을 불러오는 중입니다');
-
-    const result = await apiGet('listUsers', {
-      request_user_email: getRequestUserEmail()
-    });
-
-    const all = Array.isArray(result.data) ? result.data : [];
-
-    // 필터 적용
     const keyword      = normalize(document.getElementById('userFilterKeyword')?.value).toLowerCase();
     const activeFilter = normalize(document.getElementById('userFilterActive')?.value).toUpperCase();
     const roleFilter   = normalize(document.getElementById('userFilterRole')?.value).toLowerCase();
     const clinicFilter = normalize(document.getElementById('userFilterClinic')?.value);
 
-    const filtered = all.filter((user) => {
+    const filtered = allUsers.filter((user) => {
       const matchKeyword = !keyword ||
         normalize(user.user_name).toLowerCase().includes(keyword) ||
         normalize(user.user_email).toLowerCase().includes(keyword) ||
@@ -439,63 +453,40 @@ async function searchUsersAll() {
     });
 
     if (countEl) countEl.textContent = `총 ${filtered.length}명`;
-
-    if (!filtered.length) {
-      if (listEl) listEl.innerHTML = '<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>';
-    } else {
-      if (listEl) listEl.innerHTML = filtered.map(renderUserCard).join('');
+    if (listEl) {
+      listEl.innerHTML = filtered.length
+        ? filtered.map(renderUserCard).join('')
+        : '<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>';
     }
-
-    hasLoadedUsers = true;
   } catch (error) {
-    setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
-  } finally {
     hideGlobalLoading();
-    if (searchBtn) searchBtn.disabled = false;
-  }
-}
-
-async function searchUsers() {
-  const searchBtn = document.getElementById('searchUsersBtn');
-  if (searchBtn) searchBtn.disabled = true;
-
-  try {
-    await loadUsers();
-    hasLoadedUsers = true;
-  } catch (error) {
     setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
   } finally {
     if (searchBtn) searchBtn.disabled = false;
   }
 }
 
-async function loadUsers() {
-  const listEl = document.getElementById('userList');
-  const countEl = document.getElementById('userListCount');
+// ─────────────────────────────────────────────
+// 사용자 데이터 로드 (API 1회 호출 → allUsers 캐시)
+// 이미 로드됐으면 재사용, forceReload=true면 강제 갱신
+// ─────────────────────────────────────────────
+async function loadUsers(forceReload = false) {
+  if (usersLoading) return;                        // 중복 호출 방지
+  if (hasLoadedUsers && !forceReload) return;      // 캐시 있으면 재사용
 
-  showGlobalLoading('목록을 불러오는 중입니다');
-
+  usersLoading = true;
   try {
     const result = await apiGet('listUsers', {
       request_user_email: getRequestUserEmail()
     });
-
     allUsers = Array.isArray(result.data) ? result.data : [];
-    renderUserList();
+    hasLoadedUsers = true;
   } catch (error) {
     allUsers = [];
-    if (countEl) countEl.textContent = '';
-
-    if (listEl) {
-      listEl.innerHTML = `
-        <div class="user-list-empty error">
-          ${escapeHtml(error.message || '사용자 목록을 불러오지 못했습니다.')}
-        </div>
-      `;
-    }
+    hasLoadedUsers = false;
     throw error;
   } finally {
-    hideGlobalLoading();
+    usersLoading = false;
   }
 }
 
@@ -704,9 +695,8 @@ async function resetUserPassword(userEmail) {
 
     setAdminMessage(result.message || '비밀번호가 초기화되었습니다.', 'success');
 
-    if (hasLoadedUsers) {
-      await loadUsers();
-    }
+    await loadUsers(true);
+    renderUserList(true);
   } catch (error) {
     setAdminMessage(error.message || '비밀번호 초기화 중 오류가 발생했습니다.', 'error');
   } finally {
@@ -736,9 +726,8 @@ async function setUserActive(userEmail, active) {
       resetEditMode(false);
     }
 
-    if (hasLoadedUsers) {
-      await loadUsers();
-    }
+    await loadUsers(true);
+    renderUserList(true);
   } catch (error) {
     setAdminMessage(error.message || `사용자 ${actionLabel} 중 오류가 발생했습니다.`, 'error');
   } finally {
