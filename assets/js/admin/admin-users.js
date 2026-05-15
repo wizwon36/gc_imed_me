@@ -7,7 +7,8 @@ let orgBinder = null;
 
 // ★ 페이지네이션 state
 const USER_LIST_PAGE_SIZE = 10;
-let userListPage = 1;
+let userListPage    = 1;
+let userListAllPage = 1;   // 사용자 목록 탭 페이지
 
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
@@ -463,6 +464,8 @@ async function searchUsersAll() {
       hideGlobalLoading();
     }
 
+    userListAllPage = 1;   // 새 검색 시 1페이지로 초기화
+
     const countEl = document.getElementById('userListAllCount');
     const listEl  = document.getElementById('userListAll');
 
@@ -485,6 +488,13 @@ async function searchUsersAll() {
 
     if (countEl) countEl.textContent = `총 ${filtered.length}명 / 전체 ${allUsers.length}명`;
 
+    // 페이지네이션 계산
+    const totalCount = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / USER_LIST_PAGE_SIZE));
+    if (userListAllPage > totalPages) userListAllPage = totalPages;
+    const start     = (userListAllPage - 1) * USER_LIST_PAGE_SIZE;
+    const pagedList = filtered.slice(start, start + USER_LIST_PAGE_SIZE);
+
     if (listEl) {
       if (!filtered.length) {
         listEl.innerHTML = '<div class="user-list-empty">조건에 맞는 사용자가 없습니다.</div>';
@@ -500,11 +510,13 @@ async function searchUsersAll() {
                 <th class="user-tbl-th user-tbl-th--actions">관리</th>
               </tr>
             </thead>
-            <tbody>${filtered.map(renderUserRow).join('')}</tbody>
+            <tbody>${pagedList.map(renderUserRow).join('')}</tbody>
           </table>
         `;
       }
     }
+
+    renderUserListAllPagination(totalCount, totalPages, filtered);
   } catch (error) {
     hideGlobalLoading();
     setAdminMessage(error.message || '사용자 목록 조회 중 오류가 발생했습니다.', 'error');
@@ -543,6 +555,54 @@ async function loadUsers(forceReload = false) {
   } finally {
     usersLoading = false;
   }
+}
+
+function renderUserListAllPagination(totalCount, totalPages, filtered) {
+  const area = document.getElementById('userListAllPagination');
+  if (!area) return;
+
+  if (totalPages <= 1) { area.innerHTML = ''; return; }
+
+  const page = userListAllPage;
+  let btns = '';
+  btns += `<button type="button" class="user-pg-btn" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>&#8249;</button>`;
+  const start = Math.max(1, page - 2);
+  const end   = Math.min(totalPages, page + 2);
+  for (let i = start; i <= end; i++) {
+    btns += `<button type="button" class="user-pg-btn ${i === page ? 'is-active' : ''}" data-page="${i}">${i}</button>`;
+  }
+  btns += `<button type="button" class="user-pg-btn" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''}>&#8250;</button>`;
+  area.innerHTML = btns;
+
+  area.querySelectorAll('.user-pg-btn[data-page]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const next = Number(btn.dataset.page);
+      if (!next || next === userListAllPage || btn.disabled) return;
+      userListAllPage = next;
+      // 현재 필터 기준으로 해당 페이지 렌더
+      const countEl = document.getElementById('userListAllCount');
+      const listEl  = document.getElementById('userListAll');
+      const totalCount2 = filtered.length;
+      const totalPages2 = Math.max(1, Math.ceil(totalCount2 / USER_LIST_PAGE_SIZE));
+      const s = (userListAllPage - 1) * USER_LIST_PAGE_SIZE;
+      const paged = filtered.slice(s, s + USER_LIST_PAGE_SIZE);
+      if (countEl) countEl.textContent = `총 ${totalCount2}명 / 전체 ${allUsers.length}명`;
+      if (listEl && paged.length) {
+        listEl.innerHTML = `
+          <table class="user-tbl">
+            <thead><tr>
+              <th class="user-tbl-th user-tbl-th--name">이름 / 이메일</th>
+              <th class="user-tbl-th user-tbl-th--org">소속</th>
+              <th class="user-tbl-th user-tbl-th--role">역할</th>
+              <th class="user-tbl-th user-tbl-th--status">상태</th>
+              <th class="user-tbl-th user-tbl-th--actions">관리</th>
+            </tr></thead>
+            <tbody>${paged.map(renderUserRow).join('')}</tbody>
+          </table>`;
+      }
+      renderUserListAllPagination(totalCount2, totalPages2, filtered);
+    });
+  });
 }
 
 // 단일 사용자 행 HTML 생성 — renderUserList와 searchUsersAll에서 공유
