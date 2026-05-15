@@ -802,6 +802,96 @@
     .left-tab-panel { display: none; }
     .left-tab-panel.is-default { display: block; }
 
+    /* ── 사용자 등록 탭 — 검색 + 신규등록 헤더 ── */
+    .user-search-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    /* ── 등록/수정 모달 ── */
+    .user-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .user-modal {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: var(--shadow-modal, 0 20px 60px rgba(15,23,42,0.18));
+      width: 100%;
+      max-width: 720px;
+      max-height: 90vh;
+      overflow-y: auto;
+      margin: 16px;
+    }
+
+    .user-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--line-soft);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .user-modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .user-modal-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border: none;
+      background: #f1f5f9;
+      border-radius: 50%;
+      color: #64748b;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .user-modal-close:hover {
+      background: #e2e8f0;
+    }
+
+    .user-modal-body {
+      padding: 22px 24px;
+    }
+
+    .user-modal-footer {
+      display: flex;
+      gap: 10px;
+      padding: 16px 24px;
+      background: #f8fafc;
+      border-top: 1px solid var(--line-soft);
+      border-radius: 0 0 20px 20px;
+      position: sticky;
+      bottom: 0;
+    }
+
     /* ── 권한 카드 개선 ── */
     /* ── 앱별 권한: compact 행 레이아웃 (통합) ── */
     .permission-grid {
@@ -974,303 +1064,88 @@
           <!-- ★ 탭 헤더 -->
           <div class="left-tabs">
             <button type="button" class="left-tab-btn is-active" data-tab="user-form">👤 사용자 등록 / 수정</button>
-            <button type="button" class="left-tab-btn" data-tab="pending">📋 가입 신청 관리 <span class="left-tab-badge" id="pendingBadge" style="display:none;"></span></button>
+            <button type="button" class="left-tab-btn" data-tab="user-list">📋 사용자 목록</button>
+            <button type="button" class="left-tab-btn" data-tab="pending">📬 가입 신청 관리 <span class="left-tab-badge" id="pendingBadge" style="display:none;"></span></button>
           </div>
 
-          <!-- ★ 탭 패널: 사용자 등록 -->
+          <!-- ★ 탭 패널: 사용자 등록/수정 -->
           <div id="tab-user-form" class="left-tab-panel is-default">
-          <div class="panel-header">
-            <h2 class="panel-title" id="formTitle">사용자 등록</h2>
-            <p class="panel-desc" id="formDesc">신규 사용자를 등록하고 앱별 권한을 부여합니다.</p>
-          </div>
 
-          <div class="panel-body">
-            <div id="adminUserMessage" class="message-box" aria-live="polite"></div>
+            <!-- 검색 + 신규 등록 버튼 -->
+            <div class="user-search-bar">
+              <div class="form-group">
+                <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 이메일, 의원, 팀으로 검색" />
+              </div>
+              <button type="button" id="searchUsersBtn" class="admin-btn secondary">🔍 검색</button>
+              <button type="button" id="openCreateModalBtn" class="admin-btn primary">+ 신규 등록</button>
+            </div>
 
-            <div class="form-grid">
-
-              <!-- 기본 정보 섹션 -->
-              <div class="form-section">
-                <div class="form-section-label">기본 정보</div>
-                <div class="form-fields">
-                  <div class="form-group">
-                    <label for="userEmail" class="form-label">이메일(아이디) <span class="field-badge required">필수</span></label>
-                    <input type="email" id="userEmail" class="input" placeholder="이메일 주소 입력" />
-                  </div>
-
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label for="userName" class="form-label">이름 <span class="field-badge required">필수</span></label>
-                      <input type="text" id="userName" class="input" placeholder="사용자 이름" />
-                    </div>
-
-                    <div class="form-group">
-                      <label for="phone" class="form-label">연락처 <span class="field-badge optional">선택</span></label>
-                      <input type="text" id="phone" class="input" placeholder="연락처" />
-                    </div>
-                  </div>
+            <!-- 목록 -->
+            <div class="panel-body">
+              <div id="adminUserMessage" class="message-box" aria-live="polite"></div>
+              <div class="list-topbar">
+                <div id="userListCount" class="list-count"></div>
+              </div>
+              <div id="userList" class="user-list">
+                <div class="user-list-empty">
+                  검색어를 입력하거나 <strong>검색</strong> 버튼을 눌러 사용자를 조회하세요.
                 </div>
               </div>
-
-              <!-- 소속 섹션 -->
-              <div class="form-section">
-                <div class="form-section-label">소속</div>
-                <div class="form-fields">
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label for="clinic_code" class="form-label">의원 <span class="field-badge required">필수</span></label>
-                      <select id="clinic_code" class="select">
-                        <option value="">의원을 선택하세요</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group">
-                      <label for="team_code" class="form-label">팀 <span class="field-badge required">필수</span></label>
-                      <select id="team_code" class="select" disabled>
-                        <option value="">팀을 선택하세요</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="form-row">
-                    <div class="form-group">
-                      <label for="globalRole" class="form-label">기본 역할 <span class="field-badge optional">선택</span></label>
-                      <select id="globalRole" class="select">
-                        <option value="user">user</option>
-                        <option value="admin">admin</option>
-                      </select>
-                    </div>
-
-                    <div class="form-group">
-                      <label for="userActive" class="form-label">사용 여부 <span class="field-badge optional">선택</span></label>
-                      <select id="userActive" class="select">
-                        <option value="Y">활성</option>
-                        <option value="N">비활성</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 앱별 권한 섹션 -->
-              <div class="form-section">
-                <div class="form-section-label">앱별 권한 <span class="field-badge optional" style="text-transform:none;letter-spacing:0">선택</span></div>
-                <p class="form-help" style="margin-bottom:14px">권한을 선택하지 않으면 해당 앱에 접근할 수 없습니다.</p>
-
-                <div class="permission-grid">
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <p class="permission-title">의료장비 관리</p>
-                      <p class="permission-desc">장비 조회, 등록, 수정, 이력 및 재고조사</p>
-                    </div>
-                    <div class="perm-radio-group">
-                      <span class="perm-opt perm-opt-none">
-                        <input type="radio" class="app-permission" id="perm-equipment-none" name="perm-equipment" data-app-id="equipment" value="" checked>
-                        <label for="perm-equipment-none">없음</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-equipment-view" name="perm-equipment" data-app-id="equipment" value="view">
-                        <label for="perm-equipment-view">view</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-equipment-edit" name="perm-equipment" data-app-id="equipment" value="edit">
-                        <label for="perm-equipment-edit">edit</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-equipment-admin" name="perm-equipment" data-app-id="equipment" value="admin">
-                        <label for="perm-equipment-admin">admin</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <p class="permission-title">사인물 신청</p>
-                      <p class="permission-desc">사인물, 명판 신청기능</p>
-                    </div>
-                    <div class="perm-radio-group">
-                      <span class="perm-opt perm-opt-none">
-                        <input type="radio" class="app-permission" id="perm-signage-none" name="perm-signage" data-app-id="signage" value="" checked>
-                        <label for="perm-signage-none">없음</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-signage-view" name="perm-signage" data-app-id="signage" value="view">
-                        <label for="perm-signage-view">view</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-signage-admin" name="perm-signage" data-app-id="signage" value="admin">
-                        <label for="perm-signage-admin">admin</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <p class="permission-title">정도관리 시스템</p>
-                      <p class="permission-desc">QC 데이터 관리 및 Westgard 규칙 분석</p>
-                    </div>
-                    <div class="perm-radio-group">
-                      <span class="perm-opt perm-opt-none">
-                        <input type="radio" class="app-permission" id="perm-lj-chart-none" name="perm-lj-chart" data-app-id="lj_chart" value="" checked>
-                        <label for="perm-lj-chart-none">없음</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-lj-chart-view" name="perm-lj-chart" data-app-id="lj_chart" value="view">
-                        <label for="perm-lj-chart-view">view</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-lj-chart-edit" name="perm-lj-chart" data-app-id="lj_chart" value="edit">
-                        <label for="perm-lj-chart-edit">edit</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-lj-chart-admin" name="perm-lj-chart" data-app-id="lj_chart" value="admin">
-                        <label for="perm-lj-chart-admin">admin</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <p class="permission-title">프로그램 수정요청</p>
-                      <p class="permission-desc">불편사항·기능 개선 요청 제출</p>
-                    </div>
-                    <div class="perm-radio-group">
-                      <span class="perm-opt perm-opt-none">
-                        <input type="radio" class="app-permission" id="perm-support-none" name="perm-support" data-app-id="support" value="" checked>
-                        <label for="perm-support-none">없음</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-support-view" name="perm-support" data-app-id="support" value="view">
-                        <label for="perm-support-view">view</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <p class="permission-title">수정요청 관리</p>
-                      <p class="permission-desc">접수된 수정요청 처리 및 답변</p>
-                    </div>
-                    <div class="perm-radio-group">
-                      <span class="perm-opt perm-opt-none">
-                        <input type="radio" class="app-permission" id="perm-support-admin-none" name="perm-support-admin" data-app-id="support_admin" value="" checked>
-                        <label for="perm-support-admin-none">없음</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-support-admin-view" name="perm-support-admin" data-app-id="support_admin" value="view">
-                        <label for="perm-support-admin-view">view</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-support-admin-admin" name="perm-support-admin" data-app-id="support_admin" value="admin">
-                        <label for="perm-support-admin-admin">admin</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <p class="permission-title">로그 조회</p>
-                      <p class="permission-desc">시스템 작업 로그 및 변경 이력 확인</p>
-                    </div>
-                    <div class="perm-radio-group">
-                      <span class="perm-opt perm-opt-none">
-                        <input type="radio" class="app-permission" id="perm-logs-none" name="perm-logs" data-app-id="logs" value="" checked>
-                        <label for="perm-logs-none">없음</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-logs-view" name="perm-logs" data-app-id="logs" value="view">
-                        <label for="perm-logs-view">view</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-logs-admin" name="perm-logs" data-app-id="logs" value="admin">
-                        <label for="perm-logs-admin">admin</label>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="permission-card">
-                    <div class="permission-card-head">
-                      <p class="permission-title">사용자 관리</p>
-                      <p class="permission-desc">사용자 등록, 권한 관리, 비밀번호 초기화</p>
-                    </div>
-                    <div class="perm-radio-group">
-                      <span class="perm-opt perm-opt-none">
-                        <input type="radio" class="app-permission" id="perm-users-admin-none" name="perm-users-admin" data-app-id="users_admin" value="" checked>
-                        <label for="perm-users-admin-none">없음</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-users-admin-view" name="perm-users-admin" data-app-id="users_admin" value="view">
-                        <label for="perm-users-admin-view">view</label>
-                      </span>
-                      <span class="perm-opt">
-                        <input type="radio" class="app-permission" id="perm-users-admin-admin" name="perm-users-admin" data-app-id="users_admin" value="admin">
-                        <label for="perm-users-admin-admin">admin</label>
-                      </span>
-                    </div>
-                  </div>
-              </div><!-- /.permission-grid -->
-              </div><!-- /.form-section (앱별 권한) -->
-
-              <!-- 안내 섹션 -->
-              <div class="form-section">
-                <div class="form-section-label">안내</div>
-                <div class="form-fields">
-                  <p class="form-help" id="passwordHint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</p>
-                  <p class="form-help required-guide"><span class="field-badge required">필수</span> 항목을 먼저 입력한 뒤 저장해 주세요.</p>
-                </div>
-              </div>
-
-            </div><!-- /.form-grid -->
-
-            <div class="form-actions">
-              <button type="button" id="saveUserBtn" class="admin-btn primary">사용자 등록</button>
-              <button type="button" id="cancelEditBtn" class="admin-btn secondary" style="display:none;">취소</button>
+              <div id="userListPagination" class="user-list-pagination"></div>
             </div>
-          </div><!-- /.panel-body -->
-          <!-- ★ 사용자 목록: 사용자 등록/수정 탭 하단 -->
-          <div class="panel-header" style="margin-top: 0;">
-            <h2 class="panel-title">사용자 목록</h2>
-            <p class="panel-desc">조건을 확인한 뒤 조회 버튼을 눌러 주세요.</p>
-          </div>
-          <div class="panel-body">
-            <div class="filter-row">
-              <div class="form-group">
-                <label for="userSearchKeyword" class="form-label">검색어</label>
-                <input type="text" id="userSearchKeyword" class="input" placeholder="이름, 이메일, 부서, 의원, 팀으로 검색" />
-              </div>
-              <div class="form-group">
-                <label for="userFilterActive" class="form-label">상태</label>
-                <select id="userFilterActive" class="select">
-                  <option value="">전체</option>
-                  <option value="Y">활성</option>
-                  <option value="N">비활성</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="userFilterRole" class="form-label">역할</label>
-                <select id="userFilterRole" class="select">
-                  <option value="">전체</option>
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="userFilterClinic" class="form-label">의원</label>
-                <select id="userFilterClinic" class="select">
-                  <option value="">전체 의원</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">&nbsp;</label>
-                <button type="button" id="searchUsersBtn" class="admin-btn secondary">사용자 조회</button>
-              </div>
-            </div>
-            <div class="list-topbar">
-              <div id="userListCount" class="list-count">아직 조회하지 않았습니다.</div>
-            </div>
-            <div id="userList" class="user-list">
-              <div class="user-list-empty">
-                조건을 확인한 뒤 <strong>사용자 조회</strong>를 눌러 주세요.
-              </div>
-            </div>
-            <div id="userListPagination" class="user-list-pagination"></div>
-          </div>
+
           </div><!-- /.left-tab-panel tab-user-form -->
 
+          <!-- ★ 탭 패널: 사용자 목록 -->
+          <div id="tab-user-list" class="left-tab-panel" style="display:none;">
+            <div class="panel-header">
+              <h2 class="panel-title">사용자 목록</h2>
+              <p class="panel-desc">조건을 설정한 뒤 조회 버튼을 눌러 주세요.</p>
+            </div>
+            <div class="panel-body">
+              <div class="filter-row">
+                <div class="form-group">
+                  <label for="userFilterKeyword" class="form-label">검색어</label>
+                  <input type="text" id="userFilterKeyword" class="input" placeholder="이름, 이메일, 부서, 의원, 팀으로 검색" />
+                </div>
+                <div class="form-group">
+                  <label for="userFilterActive" class="form-label">상태</label>
+                  <select id="userFilterActive" class="select">
+                    <option value="">전체</option>
+                    <option value="Y">활성</option>
+                    <option value="N">비활성</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="userFilterRole" class="form-label">역할</label>
+                  <select id="userFilterRole" class="select">
+                    <option value="">전체</option>
+                    <option value="user">user</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="userFilterClinic" class="form-label">의원</label>
+                  <select id="userFilterClinic" class="select">
+                    <option value="">전체 의원</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">&nbsp;</label>
+                  <button type="button" id="searchUsersListBtn" class="admin-btn secondary">사용자 조회</button>
+                </div>
+              </div>
+              <div class="list-topbar">
+                <div id="userListAllCount" class="list-count">아직 조회하지 않았습니다.</div>
+              </div>
+              <div id="userListAll" class="user-list">
+                <div class="user-list-empty">
+                  조건을 확인한 뒤 <strong>사용자 조회</strong>를 눌러 주세요.
+                </div>
+              </div>
+              <div id="userListAllPagination" class="user-list-pagination"></div>
+            </div>
+          </div><!-- /.left-tab-panel tab-user-list -->
           <!-- ★ 탭 패널: 가입 신청 관리 -->
           <div id="tab-pending" class="left-tab-panel" style="display:none;">
           <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
@@ -1314,5 +1189,157 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/org-select.js"></script>
   <script src="../../assets/js/admin/admin-users.js"></script>
+<!-- ★ 사용자 등록/수정 모달 -->
+<div class="user-modal-backdrop" id="userFormModal">
+  <div class="user-modal">
+    <div class="user-modal-header">
+      <h2 class="user-modal-title" id="modalTitle">사용자 등록</h2>
+      <button type="button" class="user-modal-close" id="closeModalBtn" aria-label="닫기">×</button>
+    </div>
+    <div class="user-modal-body">
+      <div id="adminUserMessage" class="message-box" aria-live="polite"></div>
+
+      <div class="form-grid">
+        <!-- 기본 정보 -->
+        <div class="form-section">
+          <div class="form-section-label">기본 정보</div>
+          <div class="form-fields">
+            <div class="form-group">
+              <label for="userEmail" class="form-label">이메일(아이디) <span class="field-badge required">필수</span></label>
+              <input type="email" id="userEmail" class="input" placeholder="이메일 주소 입력" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="userName" class="form-label">이름 <span class="field-badge required">필수</span></label>
+                <input type="text" id="userName" class="input" placeholder="사용자 이름" />
+              </div>
+              <div class="form-group">
+                <label for="phone" class="form-label">연락처 <span class="field-badge optional">선택</span></label>
+                <input type="text" id="phone" class="input" placeholder="연락처" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 소속 -->
+        <div class="form-section">
+          <div class="form-section-label">소속</div>
+          <div class="form-fields">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="clinic_code" class="form-label">의원 <span class="field-badge required">필수</span></label>
+                <select id="clinic_code" class="select">
+                  <option value="">의원을 선택하세요</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="team_code" class="form-label">팀 <span class="field-badge required">필수</span></label>
+                <select id="team_code" class="select" disabled>
+                  <option value="">팀을 선택하세요</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="globalRole" class="form-label">기본 역할 <span class="field-badge optional">선택</span></label>
+                <select id="globalRole" class="select">
+                  <option value="user">user</option>
+                  <option value="admin">admin</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="userActive" class="form-label">사용 여부 <span class="field-badge optional">선택</span></label>
+                <select id="userActive" class="select">
+                  <option value="Y">활성</option>
+                  <option value="N">비활성</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 앱별 권한 -->
+        <div class="form-section">
+          <div class="form-section-label">앱별 권한 <span class="field-badge optional" style="text-transform:none;letter-spacing:0">선택</span></div>
+          <p class="form-help" style="margin-bottom:14px">권한을 선택하지 않으면 해당 앱에 접근할 수 없습니다.</p>
+          <div class="permission-grid">
+            <div class="permission-card">
+              <div class="permission-card-head"><p class="permission-title">의료장비 관리</p><p class="permission-desc">장비 조회, 등록, 수정, 이력 및 재고조사</p></div>
+              <div class="perm-radio-group">
+                <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-equipment-none" name="perm-equipment" data-app-id="equipment" value="" checked><label for="perm-equipment-none">없음</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-equipment-view" name="perm-equipment" data-app-id="equipment" value="view"><label for="perm-equipment-view">view</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-equipment-edit" name="perm-equipment" data-app-id="equipment" value="edit"><label for="perm-equipment-edit">edit</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-equipment-admin" name="perm-equipment" data-app-id="equipment" value="admin"><label for="perm-equipment-admin">admin</label></span>
+              </div>
+            </div>
+            <div class="permission-card">
+              <div class="permission-card-head"><p class="permission-title">사인물 신청</p><p class="permission-desc">사인물, 명판 신청기능</p></div>
+              <div class="perm-radio-group">
+                <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-signage-none" name="perm-signage" data-app-id="signage" value="" checked><label for="perm-signage-none">없음</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-signage-view" name="perm-signage" data-app-id="signage" value="view"><label for="perm-signage-view">view</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-signage-admin" name="perm-signage" data-app-id="signage" value="admin"><label for="perm-signage-admin">admin</label></span>
+              </div>
+            </div>
+            <div class="permission-card">
+              <div class="permission-card-head"><p class="permission-title">정도관리 시스템</p><p class="permission-desc">QC 데이터 관리 및 Westgard 규칙 분석</p></div>
+              <div class="perm-radio-group">
+                <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-lj-chart-none" name="perm-lj-chart" data-app-id="lj_chart" value="" checked><label for="perm-lj-chart-none">없음</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-lj-chart-view" name="perm-lj-chart" data-app-id="lj_chart" value="view"><label for="perm-lj-chart-view">view</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-lj-chart-edit" name="perm-lj-chart" data-app-id="lj_chart" value="edit"><label for="perm-lj-chart-edit">edit</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-lj-chart-admin" name="perm-lj-chart" data-app-id="lj_chart" value="admin"><label for="perm-lj-chart-admin">admin</label></span>
+              </div>
+            </div>
+            <div class="permission-card">
+              <div class="permission-card-head"><p class="permission-title">프로그램 수정요청</p><p class="permission-desc">불편사항·기능 개선 요청 제출</p></div>
+              <div class="perm-radio-group">
+                <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-support-none" name="perm-support" data-app-id="support" value="" checked><label for="perm-support-none">없음</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-support-view" name="perm-support" data-app-id="support" value="view"><label for="perm-support-view">view</label></span>
+              </div>
+            </div>
+            <div class="permission-card">
+              <div class="permission-card-head"><p class="permission-title">수정요청 관리</p><p class="permission-desc">접수된 수정요청 처리 및 답변</p></div>
+              <div class="perm-radio-group">
+                <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-support-admin-none" name="perm-support-admin" data-app-id="support_admin" value="" checked><label for="perm-support-admin-none">없음</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-support-admin-view" name="perm-support-admin" data-app-id="support_admin" value="view"><label for="perm-support-admin-view">view</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-support-admin-admin" name="perm-support-admin" data-app-id="support_admin" value="admin"><label for="perm-support-admin-admin">admin</label></span>
+              </div>
+            </div>
+            <div class="permission-card">
+              <div class="permission-card-head"><p class="permission-title">로그 조회</p><p class="permission-desc">시스템 작업 로그 및 변경 이력 확인</p></div>
+              <div class="perm-radio-group">
+                <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-logs-none" name="perm-logs" data-app-id="logs" value="" checked><label for="perm-logs-none">없음</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-logs-view" name="perm-logs" data-app-id="logs" value="view"><label for="perm-logs-view">view</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-logs-admin" name="perm-logs" data-app-id="logs" value="admin"><label for="perm-logs-admin">admin</label></span>
+              </div>
+            </div>
+            <div class="permission-card">
+              <div class="permission-card-head"><p class="permission-title">사용자 관리</p><p class="permission-desc">사용자 등록, 권한 관리, 비밀번호 초기화</p></div>
+              <div class="perm-radio-group">
+                <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-users-admin-none" name="perm-users-admin" data-app-id="users_admin" value="" checked><label for="perm-users-admin-none">없음</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-users-admin-view" name="perm-users-admin" data-app-id="users_admin" value="view"><label for="perm-users-admin-view">view</label></span>
+                <span class="perm-opt"><input type="radio" class="app-permission" id="perm-users-admin-admin" name="perm-users-admin" data-app-id="users_admin" value="admin"><label for="perm-users-admin-admin">admin</label></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 안내 -->
+        <div class="form-section">
+          <div class="form-section-label">안내</div>
+          <div class="form-fields">
+            <p class="form-help" id="passwordHint">신규 사용자는 초기 비밀번호 <strong>1111</strong>로 등록되며, 첫 로그인 후 변경하도록 안내됩니다.</p>
+            <p class="form-help required-guide"><span class="field-badge required">필수</span> 항목을 먼저 입력한 뒤 저장해 주세요.</p>
+          </div>
+        </div>
+      </div><!-- /.form-grid -->
+    </div><!-- /.user-modal-body -->
+    <div class="user-modal-footer">
+      <button type="button" id="saveUserBtn" class="admin-btn primary" style="min-width:120px">사용자 등록</button>
+      <button type="button" id="cancelEditBtn" class="admin-btn secondary" style="display:none;">취소</button>
+      <button type="button" id="closeModalBtnFooter" class="admin-btn secondary" style="margin-left:auto">닫기</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
