@@ -236,9 +236,11 @@ function formatDateTimeKR(value) {
 // ============================
 
 function isEquipmentClinicAllowed(user) {
-  var ALLOWED = ['서울숲의원'];
+  var allowed = (typeof CONFIG !== 'undefined' && Array.isArray(CONFIG.EQUIPMENT_ALLOWED_CLINICS))
+    ? CONFIG.EQUIPMENT_ALLOWED_CLINICS
+    : ['서울숲의원'];
   var clinicName = String((user && user.clinic_name) || '').trim();
-  return ALLOWED.some(function(name) { return clinicName.indexOf(name) !== -1; });
+  return allowed.some(function(name) { return clinicName.indexOf(name) !== -1; });
 }
 
 // ============================
