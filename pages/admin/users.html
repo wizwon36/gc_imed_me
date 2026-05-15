@@ -677,6 +677,36 @@
         flex: 1 1 auto;
       }
 
+      /* 탭 — 모바일에서 좌우 스크롤 */
+      .left-tabs {
+        padding: 12px 14px 0;
+        gap: 2px;
+      }
+
+      .left-tab-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+
+      /* 검색바 — 모바일에서 신규등록 버튼 아래로 */
+      .user-search-bar {
+        flex-wrap: wrap;
+        padding: 14px 16px;
+        gap: 8px;
+      }
+
+      .user-search-bar .form-group {
+        flex: 1 1 100%;
+      }
+
+      .user-search-bar #searchUsersBtn {
+        flex: 1 1 auto;
+      }
+
+      .user-search-bar #openCreateModalBtn {
+        flex: 1 1 auto;
+      }
+
       .panel-header,
       .panel-body {
         padding: 18px;
@@ -756,7 +786,12 @@
       padding: 16px 22px 0;
       border-bottom: 1px solid var(--line-soft);
       background: var(--bg-panel);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+
+    .left-tabs::-webkit-scrollbar { display: none; }
 
     .left-tab-btn {
       display: inline-flex;
@@ -772,6 +807,8 @@
       border-bottom: 2px solid transparent;
       margin-bottom: -1px;
       border-radius: 8px 8px 0 0;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
 
@@ -804,12 +841,22 @@
 
     /* ── 사용자 등록 탭 — 검색 + 신규등록 헤더 ── */
     .user-search-bar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: end;
-      padding: 20px 22px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 16px 22px;
       border-bottom: 1px solid var(--line-soft);
+      flex-wrap: nowrap;
+    }
+
+    .user-search-bar .form-group {
+      flex: 1 1 auto;
+      min-width: 0;
+      gap: 0;
+    }
+
+    .user-search-bar .admin-btn {
+      flex-shrink: 0;
     }
 
     /* ── 등록/수정 모달 ── */
