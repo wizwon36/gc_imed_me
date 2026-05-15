@@ -518,7 +518,15 @@ async function searchUsersAll() {
 // 이미 로드됐으면 재사용, forceReload=true면 강제 갱신
 // ─────────────────────────────────────────────
 async function loadUsers(forceReload = false) {
-  if (usersLoading) return;                        // 중복 호출 방지
+  // 로딩 중이면 완료될 때까지 대기
+  if (usersLoading) {
+    await new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (!usersLoading) { clearInterval(interval); resolve(); }
+      }, 100);
+    });
+    if (!forceReload) return;
+  }
   if (hasLoadedUsers && !forceReload) return;      // 캐시 있으면 재사용
 
   usersLoading = true;
