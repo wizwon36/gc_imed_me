@@ -2615,3 +2615,37 @@ select.input {
   0% { background-position: 100% 0 }
   100% { background-position: 0 0 }
 }
+
+/* =========================
+ * ADMIN / WIDE PAGE LAYOUT
+ * ========================= */
+
+/* 관리자 페이지 공통 최대 너비 */
+.admin-page-wrap,
+.logs-page,
+.page-shell {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 관리자/wide 페이지 배경 */
+body.admin-body {
+  background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+  min-height: 100vh;
+}
+
+/* 모달/인라인 피드백 메시지 */
+.modal-feedback.is-success,
+#modalFeedback.is-success {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid #a7f3d0;
+}
+
+.modal-feedback.is-error,
+#modalFeedback.is-error {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border: 1px solid #fca5a5;
+}
