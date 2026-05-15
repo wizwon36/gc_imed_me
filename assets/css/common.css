@@ -2620,10 +2620,9 @@ select.input {
  * ADMIN / WIDE PAGE LAYOUT
  * ========================= */
 
-/* 관리자 페이지 공통 최대 너비 */
+/* 관리자 페이지 공통 최대 너비 — admin 전용 클래스에만 적용 */
 .admin-page-wrap,
-.logs-page,
-.page-shell {
+.logs-page {
   max-width: 1440px;
   margin-left: auto;
   margin-right: auto;
