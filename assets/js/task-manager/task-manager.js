@@ -153,6 +153,13 @@
       }
     });
 
+    // 검색
+    document.getElementById('searchRunBtn')?.addEventListener('click', runSearch);
+    document.getElementById('searchResetBtn')?.addEventListener('click', resetSearch);
+    document.getElementById('searchKeyword')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runSearch();
+    });
+
     // 카테고리 관리
     document.getElementById('categoryManageBtn')?.addEventListener('click', openCategoryModal);
     document.getElementById('categoryModalClose')?.addEventListener('click', closeCategoryModal);
@@ -221,6 +228,13 @@
     document.getElementById('panelWeekly').style.display  = tab === 'weekly'  ? '' : 'none';
     document.getElementById('panelJournal').style.display = tab === 'journal' ? '' : 'none';
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
+    document.getElementById('panelSearch').style.display  = tab === 'search'  ? '' : 'none';
+
+    // 검색 탭 진입 시 카테고리 체크박스 갱신
+    if (tab === 'search') renderSearchCategoryChecks();
+
+    // 검색 탭에서는 공통 네비게이터 숨김
+    document.getElementById('sharedWeekNav').style.display = tab === 'search' ? 'none' : '';
 
     // 탭 전환 즉시 공통 네비게이터 레이블 갱신
     updateSharedWeekNav();
@@ -1514,6 +1528,166 @@
       setTaskModalLoading(false);
     }
   }
+
+  // ── 검색 ─────────────────────────────────────────────────────
+
+  function renderSearchCategoryChecks() {
+    const container = document.getElementById('searchCategoryGroup');
+    if (!container) return;
+    container.innerHTML = Object.entries(CATEGORY_LABELS).map(([v, n]) => `
+      <label class="search-check">
+        <input type="checkbox" name="searchCategory" value="${esc(v)}" />
+        ${esc(n)}
+      </label>
+    `).join('');
+  }
+
+  async function runSearch() {
+    const dateFrom   = document.getElementById('searchDateFrom').value.trim();
+    const dateTo     = document.getElementById('searchDateTo').value.trim();
+    const keyword    = document.getElementById('searchKeyword').value.trim();
+
+    const categories = [...document.querySelectorAll('input[name="searchCategory"]:checked')]
+      .map(el => el.value).join(',');
+    const statuses   = [...document.querySelectorAll('input[name="searchStatus"]:checked')]
+      .map(el => el.value);
+    const priorities = [...document.querySelectorAll('input[name="searchPriority"]:checked')]
+      .map(el => el.value);
+
+    // 검색 조건 하나라도 있어야 실행
+    if (!dateFrom && !dateTo && !keyword && !categories && !statuses.length && !priorities.length) {
+      showMessage('검색 조건을 하나 이상 입력하세요.', 'error');
+      return;
+    }
+
+    const resultList = document.getElementById('searchResultList');
+    const resultHead = document.getElementById('searchResultHead');
+    resultHead.style.display = 'none';
+    resultList.innerHTML = `
+      <div class="search-loading">
+        <div class="task-loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>
+        검색 중...
+      </div>`;
+
+    try {
+      const params = { request_user_email: currentUser.email };
+      if (dateFrom)       params.date_from = dateFrom;
+      if (dateTo)         params.date_to   = dateTo;
+      if (keyword)        params.keyword   = keyword;
+      if (categories)     params.category  = categories;
+      // 상태/중요도는 단일값만 지원 — 복수 선택 시 각각 OR 처리 (클라이언트 필터)
+      const res = await apiGet('taskSearch', params);
+
+      let results = res.data || [];
+
+      // 복수 상태 클라이언트 필터
+      if (statuses.length > 0) {
+        results = results.filter(t => statuses.includes(t.status));
+      }
+      // 복수 중요도 클라이언트 필터
+      if (priorities.length > 0) {
+        results = results.filter(t => priorities.includes(t.priority));
+      }
+
+      renderSearchResults(results, keyword);
+
+    } catch (err) {
+      resultList.innerHTML = `
+        <div class="task-empty task-empty--error">
+          <div class="task-empty-icon">⚠️</div>
+          <div class="task-empty-text">${esc(err.message || '검색에 실패했습니다.')}</div>
+        </div>`;
+    }
+  }
+
+  function renderSearchResults(results, keyword) {
+    const resultList = document.getElementById('searchResultList');
+    const resultHead = document.getElementById('searchResultHead');
+    const countEl   = document.getElementById('searchResultCount');
+
+    resultHead.style.display = '';
+    countEl.innerHTML = `총 <strong>${results.length}</strong>건`;
+
+    if (!results.length) {
+      resultList.innerHTML = `
+        <div class="task-empty">
+          <div class="task-empty-icon">🔍</div>
+          <div class="task-empty-text">검색 결과가 없습니다.</div>
+        </div>`;
+      return;
+    }
+
+    resultList.innerHTML = `<div style="padding:8px 22px 16px;">` +
+      results.map(t => {
+        const priorityCls  = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
+        const statusCls    = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
+        const statusLabel  = STATUS_LABELS[t.status] || t.status;
+        const catLabel     = CATEGORY_LABELS[t.category] || t.category || '';
+        const isSingle     = !t.end_date || t.start_date === t.end_date;
+        const dateStr      = isSingle
+          ? t.start_date.substring(5).replace('-', '/')
+          : t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
+
+        // 키워드 하이라이트
+        const titleHtml       = keyword ? highlight(t.title, keyword)       : esc(t.title);
+        const descHtml        = keyword ? highlight(t.description, keyword)  : esc(t.description);
+
+        return `
+          <div class="task-item" onclick="TASK_APP.openSearchItem('${esc(t.task_id)}')">
+            <span class="task-priority-dot ${priorityCls}"></span>
+            <div class="task-item-body">
+              <div class="task-item-title">${titleHtml}</div>
+              <div class="task-item-meta">
+                <span class="task-badge badge-category">${esc(catLabel)}</span>
+                <span class="task-badge ${statusCls}">${esc(statusLabel)}</span>
+                ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${descHtml}</span>` : ''}
+              </div>
+            </div>
+            <span class="search-item-date">${esc(dateStr)}</span>
+          </div>`;
+      }).join('') + `</div>`;
+  }
+
+  function highlight(text, keyword) {
+    if (!text || !keyword) return esc(text);
+    const escaped   = esc(text);
+    const escapedKw = esc(keyword);
+    const re = new RegExp('(' + escapedKw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return escaped.replace(re, '<mark style="background:#fef08a;border-radius:2px;padding:0 1px;">$1</mark>');
+  }
+
+  function resetSearch() {
+    document.getElementById('searchDateFrom').value = '';
+    document.getElementById('searchDateTo').value   = '';
+    document.getElementById('searchKeyword').value  = '';
+    document.querySelectorAll('input[name="searchCategory"]').forEach(el => el.checked = false);
+    document.querySelectorAll('input[name="searchStatus"]').forEach(el => el.checked = false);
+    document.querySelectorAll('input[name="searchPriority"]').forEach(el => el.checked = false);
+    document.getElementById('searchResultHead').style.display = 'none';
+    document.getElementById('searchResultList').innerHTML = `
+      <div class="task-empty">
+        <div class="task-empty-icon">🔍</div>
+        <div class="task-empty-text">검색 조건을 입력하고 검색 버튼을 눌러주세요.</div>
+      </div>`;
+  }
+
+  // 검색 결과에서 업무 클릭 시 해당 주차로 이동해서 수정 모달 열기
+  window.TASK_APP.openSearchItem = function(taskId) {
+    apiGet('taskGetItems', {
+      request_user_email: currentUser.email,
+      date_from: '2000-01-01',
+      date_to:   '2099-12-31'
+    }).then(res => {
+      const task = (res.data || []).find(t => t.task_id === taskId);
+      if (!task) return;
+      // 해당 주차로 이동 후 수정 모달 열기
+      weeklyWeekStart = getWeekStart(task.start_date);
+      loadWeeklyTasks().then(() => {
+        switchTab('weekly');
+        TASK_APP.openEditModal(taskId);
+      });
+    }).catch(err => showMessage(err.message, 'error'));
+  };
 
   // ── 카테고리 관리 ────────────────────────────────────────────
 
