@@ -393,11 +393,26 @@
     updateWeekLabel('weekRangeLabelJ', 'weekSubLabelJ', journalWeekStart);
     clearAutosave();
 
+    // 이번 주 기준으로 과거/현재+미래 판단
+    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
+    const isPastWeek     = journalWeekStart < todayWeekStart;
+
     try {
-      const res = await apiGet('journalGetOrCreate', {
-        request_user_email: currentUser.email,
-        week_start:         journalWeekStart
-      });
+      let res;
+
+      if (isPastWeek) {
+        // 과거 주: 조회만 (없으면 생성하지 않음)
+        res = await apiGet('journalGet', {
+          request_user_email: currentUser.email,
+          week_start:         journalWeekStart
+        });
+      } else {
+        // 이번 주 또는 미래 주: 없으면 자동 생성
+        res = await apiGet('journalGetOrCreate', {
+          request_user_email: currentUser.email,
+          week_start:         journalWeekStart
+        });
+      }
 
       currentJournal      = res.data.journal;
       currentJournalTasks = res.data.tasks;
@@ -411,7 +426,33 @@
   }
 
   function renderJournal() {
-    if (!currentJournal) return;
+    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
+    const isPastWeek     = journalWeekStart < todayWeekStart;
+
+    if (!currentJournal) {
+      // 과거 주에 일지가 없는 경우 — 빈 상태 표시
+      const badgeEl = document.getElementById('journalStatusBadge');
+      badgeEl.className = 'journal-status-badge journal-status-draft';
+      badgeEl.textContent = '-';
+
+      const weekEnd = getWeekEnd(journalWeekStart);
+      document.getElementById('journalStatusText').textContent = `${journalWeekStart} ~ ${weekEnd}`;
+
+      document.getElementById('journalSaveBtn').style.display   = 'none';
+      document.getElementById('journalSubmitBtn').style.display = 'none';
+      document.getElementById('journalCloseBtn').style.display  = 'none';
+
+      ['attendanceThisWeek','attendanceNextWeek','journalSummary',
+       'journalAchievements','journalNextPlan','journalIssues'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.disabled = true; el.placeholder = '작성된 일지가 없습니다.'; }
+      });
+
+      document.getElementById('autosaveText').textContent = isPastWeek
+        ? '해당 주에 작성된 일지가 없습니다.'
+        : '-';
+      return;
+    }
 
     const j      = currentJournal;
     const status   = j.status || 'DRAFT';
