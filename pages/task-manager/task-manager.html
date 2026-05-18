@@ -6,7 +6,6 @@
   <title>업무일정 관리</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="../../assets/css/pages/task-manager.css" />
-  <link rel="stylesheet" href="../../assets/css/pages/equipment-form.css" />
 </head>
 <body class="portal-page task-page">
   <div class="container page-shell equipment-form-shell">
@@ -55,10 +54,10 @@
           📅 주간 업무
         </button>
         <button class="task-tab-btn" data-tab="journal" id="tabJournal">
-          📝 주간 업무일지
+          📝 주간일지
         </button>
         <button class="task-tab-btn" id="tabTeam" data-tab="team" style="display:none;">
-          👥 팀원 작성현황
+          👥 팀원 현황
         </button>
       </div>
 
@@ -112,6 +111,14 @@
               <div class="task-empty-text">불러오는 중...</div>
             </div>
           </div>
+
+          <!-- 업무일지 생성 버튼 -->
+          <div style="display:flex;justify-content:flex-end;padding:16px 20px 20px;border-top:1px solid #e0e7f2;margin-top:4px;">
+            <button class="btn btn-primary" id="generateJournalBtn">
+              📝 이 주차 업무일지 생성
+            </button>
+          </div>
+
         </div>
 
       </div>
