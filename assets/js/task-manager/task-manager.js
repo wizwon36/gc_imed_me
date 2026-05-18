@@ -563,29 +563,45 @@
     updateWeekLabel('weekRangeLabelJ', 'weekSubLabelJ', journalWeekStart);
     clearAutosave();
 
-    // 즉시 로딩 상태 표시
+    // ── 전체 일지 영역 로딩 상태 표시 ──────────────────────────
     document.getElementById('autosaveText').textContent = '불러오는 중...';
+
+    // 업무현황 스피너
     document.getElementById('journalTaskSummary').innerHTML =
       '<div class="task-loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>';
+
+    // 업무 목록도 로딩 표시
+    document.getElementById('journalTaskList').innerHTML =
+      '<div style="font-size:12px;color:var(--text-muted);">불러오는 중...</div>';
+
+    // 모든 textarea/input 비우고 비활성화
     ['attendanceThisWeek','attendanceNextWeek','journalSummary',
      'journalAchievements','journalNextPlan','journalIssues'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) { el.value = ''; el.disabled = true; }
+      if (el) {
+        el.value       = '';
+        el.disabled    = true;
+        el.placeholder = '';
+      }
     });
+
+    // 버튼 숨김
     document.getElementById('journalSaveBtn').style.display   = 'none';
     document.getElementById('journalSubmitBtn').style.display = 'none';
     document.getElementById('journalCloseBtn').style.display  = 'none';
 
-    // 탭 진입 시 항상 조회만 (생성은 "업무일지 생성" 버튼 전용)
-    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
-    const isPastWeek     = journalWeekStart < todayWeekStart;
+    // 상태 배지 초기화
+    const badgeEl = document.getElementById('journalStatusBadge');
+    badgeEl.className   = 'journal-status-badge journal-status-draft';
+    badgeEl.textContent = '-';
+    document.getElementById('journalStatusText').textContent =
+      `${journalWeekStart} ~ ${getWeekEnd(journalWeekStart)}`;
 
-    // ★ FIX: journalGet → journalGetOrCreate 로 통일
-    //         journalGet은 journal=null + tasks(빈 배열 가능) 반환으로 "미작성" 화면 오표시 버그 있음
-    //         journalGetOrCreate는 항상 journal 객체 반환 + task_items 시트에서 tasks 직접 집계 반환
-    //         → 두 시트(task_items / task_journals) 연결이 항상 보장됨
+    // ── API 호출 ────────────────────────────────────────────────
+    // journalGet: 조회 전용 — 일지가 없으면 null 반환, 생성 안 함
+    // journalGetOrCreate: "업무일지 생성" 버튼 전용 (handleGenerateJournal에서만 사용)
     try {
-      const res = await apiGet('journalGetOrCreate', {
+      const res = await apiGet('journalGet', {
         request_user_email: currentUser.email,
         week_start:         journalWeekStart
       });
@@ -598,6 +614,7 @@
 
     } catch (err) {
       showMessage(err.message || '일지를 불러오지 못했습니다.', 'error');
+      document.getElementById('autosaveText').textContent = '불러오기 실패';
     }
   }
 
@@ -626,7 +643,7 @@
 
       document.getElementById('autosaveText').textContent = isPastWeek
         ? '해당 주에 작성된 일지가 없습니다.'
-        : '일지를 불러오지 못했습니다. 페이지를 새로고침해 주세요.';
+        : '주간업무 탭에서 [업무일지 생성] 버튼을 눌러 주세요.';
       return;
     }
 
