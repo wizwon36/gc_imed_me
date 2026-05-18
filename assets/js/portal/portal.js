@@ -52,6 +52,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '📈',
       url: `${CONFIG.SITE_BASE_URL}/pages/lj-chart/lj-chart.html`
     },
+    task_manager: {
+      title: '업무일정 관리',
+      desc: '일별 업무 등록 · 주간업무일지 작성',
+      icon: '📋',
+      url: `${CONFIG.SITE_BASE_URL}/pages/task-manager/task-manager.html`
+    },
     // ── 수정요청: 권한 없어도 모든 사용자에게 노출 ──────────────────
     support: {
       title: '프로그램 수정요청',
@@ -122,9 +128,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       gridEl.innerHTML = visiblePermissions.map(item => {
         const app = APP_MAP[item.app_id];
         const permissionLabel =
-          item.permission === 'admin' ? '관리자' :
-          item.permission === 'edit'  ? '편집'   :
-          item.permission === 'view'  ? '조회'   :
+          item.permission === 'admin'   ? '관리자' :
+          item.permission === 'manager' ? '팀장'   :
+          item.permission === 'edit'    ? '편집'   :
+          item.permission === 'view'    ? '조회'   :
           (item.permission || '');
 
         return `
