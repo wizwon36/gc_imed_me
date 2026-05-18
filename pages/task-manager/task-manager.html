@@ -122,6 +122,10 @@
             <div class="progress-bar-wrap">
               <div class="progress-bar-fill" id="progressBar" style="width:0%;"></div>
             </div>
+            <!-- 카테고리 관리 버튼 (manager/admin 전용) -->
+            <button class="category-manage-btn" id="categoryManageBtn" style="display:none;" title="카테고리 관리">
+              ⚙ 카테고리
+            </button>
           </div>
 
           <!-- 요일별 타임라인 -->
@@ -385,6 +389,57 @@
       <div class="task-modal-footer">
         <button class="btn btn-primary" id="memberJournalCloseActionBtn" style="display:none;">마감 처리</button>
         <button class="btn" id="memberJournalDismissBtn">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────
+       카테고리 관리 모달 (manager / admin 전용)
+  ──────────────────────────────────────── -->
+  <div class="task-modal-overlay" id="categoryModal">
+    <div class="task-modal" style="max-width:480px;">
+      <div class="task-modal-head">
+        <span class="task-modal-title">업무 카테고리 관리</span>
+        <button class="task-modal-close" id="categoryModalClose">✕</button>
+      </div>
+      <div class="task-modal-body" style="max-height:60vh;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <p style="font-size:12px;color:var(--text-muted);margin:0;">
+            팀 전용 카테고리를 등록하면 기본 카테고리 대신 사용됩니다.
+          </p>
+          <span class="category-source-badge" id="categorySourceBadge"></span>
+        </div>
+
+        <!-- 카테고리 목록 -->
+        <div id="categoryList" style="margin-bottom:16px;"></div>
+
+        <!-- 추가/수정 폼 -->
+        <div class="category-add-form" id="categoryAddForm">
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div style="flex:1;">
+              <label class="form-label">카테고리 이름 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="catInputName"
+                placeholder="예) 원무, 인사, 기획 등" maxlength="20" style="height:38px;" />
+            </div>
+            <div style="width:80px;">
+              <label class="form-label">순서</label>
+              <input type="number" class="form-input" id="catInputOrder"
+                placeholder="1" min="1" style="height:38px;" />
+            </div>
+            <button class="btn btn-primary" id="catAddBtn"
+              style="height:38px;padding:0 14px;font-size:13px;white-space:nowrap;">
+              추가
+            </button>
+          </div>
+          <input type="hidden" id="catEditValue" />
+          <input type="hidden" id="catEditGroup" />
+        </div>
+
+      </div>
+      <div class="task-modal-footer">
+        <p class="category-tip" id="categoryTip"></p>
+        <button class="btn" id="categoryModalDone">닫기</button>
       </div>
     </div>
   </div>
