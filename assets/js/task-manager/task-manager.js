@@ -230,8 +230,11 @@
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
     document.getElementById('panelSearch').style.display  = tab === 'search'  ? '' : 'none';
 
-    // 검색 탭 진입 시 카테고리 체크박스 갱신
-    if (tab === 'search') renderSearchCategoryChecks();
+    // 검색 탭 진입 시 카테고리 셀렉트 갱신 + 기본 날짜 설정
+    if (tab === 'search') {
+      updateSearchCategorySelect();
+      setSearchDefaultDates();
+    }
 
     // 검색 탭에서는 공통 네비게이터 숨김
     document.getElementById('sharedWeekNav').style.display = tab === 'search' ? 'none' : '';
@@ -1536,31 +1539,40 @@
 
   // ── 검색 ─────────────────────────────────────────────────────
 
-  function renderSearchCategoryChecks() {
-    const container = document.getElementById('searchCategoryGroup');
-    if (!container) return;
-    container.innerHTML = Object.entries(CATEGORY_LABELS).map(([v, n]) => `
-      <label class="search-check">
-        <input type="checkbox" name="searchCategory" value="${esc(v)}" />
-        ${esc(n)}
-      </label>
-    `).join('');
+  function setSearchDefaultDates() {
+    const fromEl = document.getElementById('searchDateFrom');
+    const toEl   = document.getElementById('searchDateTo');
+    if (!fromEl || !toEl) return;
+    // 이미 값이 있으면 덮어쓰지 않음
+    if (fromEl.value && toEl.value) return;
+    const today  = new Date();
+    const from   = new Date(today);
+    from.setDate(today.getDate() - 7);
+    toEl.value   = formatDateStr(today);
+    fromEl.value = formatDateStr(from);
   }
 
+  function updateSearchCategorySelect() {
+    const sel = document.getElementById('searchCategory');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">전체</option>' +
+      Object.entries(CATEGORY_LABELS).map(([v, n]) =>
+        `<option value="${esc(v)}"${v === current ? ' selected' : ''}>${esc(n)}</option>`
+      ).join('');
+  }
+
+  // applyCategories 후 검색 셀렉트도 동기화됨 (applyCategories 내부에서 처리)
+
   async function runSearch() {
-    const dateFrom   = document.getElementById('searchDateFrom').value.trim();
-    const dateTo     = document.getElementById('searchDateTo').value.trim();
-    const keyword    = document.getElementById('searchKeyword').value.trim();
+    const dateFrom  = document.getElementById('searchDateFrom').value.trim();
+    const dateTo    = document.getElementById('searchDateTo').value.trim();
+    const keyword   = document.getElementById('searchKeyword').value.trim();
+    const category  = document.getElementById('searchCategory').value.trim();
+    const status    = document.getElementById('searchStatus').value.trim();
+    const priority  = document.getElementById('searchPriority').value.trim();
 
-    const categories = [...document.querySelectorAll('input[name="searchCategory"]:checked')]
-      .map(el => el.value).join(',');
-    const statuses   = [...document.querySelectorAll('input[name="searchStatus"]:checked')]
-      .map(el => el.value);
-    const priorities = [...document.querySelectorAll('input[name="searchPriority"]:checked')]
-      .map(el => el.value);
-
-    // 검색 조건 하나라도 있어야 실행
-    if (!dateFrom && !dateTo && !keyword && !categories && !statuses.length && !priorities.length) {
+    if (!dateFrom && !dateTo && !keyword && !category && !status && !priority) {
       showMessage('검색 조건을 하나 이상 입력하세요.', 'error');
       return;
     }
@@ -1576,23 +1588,15 @@
 
     try {
       const params = { request_user_email: currentUser.email };
-      if (dateFrom)       params.date_from = dateFrom;
-      if (dateTo)         params.date_to   = dateTo;
-      if (keyword)        params.keyword   = keyword;
-      if (categories)     params.category  = categories;
-      // 상태/중요도는 단일값만 지원 — 복수 선택 시 각각 OR 처리 (클라이언트 필터)
-      const res = await apiGet('taskSearch', params);
+      if (dateFrom)  params.date_from = dateFrom;
+      if (dateTo)    params.date_to   = dateTo;
+      if (keyword)   params.keyword   = keyword;
+      if (category)  params.category  = category;
+      if (status)    params.status    = status;
+      if (priority)  params.priority  = priority;
 
-      let results = res.data || [];
-
-      // 복수 상태 클라이언트 필터
-      if (statuses.length > 0) {
-        results = results.filter(t => statuses.includes(t.status));
-      }
-      // 복수 중요도 클라이언트 필터
-      if (priorities.length > 0) {
-        results = results.filter(t => priorities.includes(t.priority));
-      }
+      const res     = await apiGet('taskSearch', params);
+      const results = res.data || [];
 
       renderSearchResults(results, keyword);
 
@@ -1624,18 +1628,17 @@
 
     resultList.innerHTML = `<div style="padding:8px 22px 16px;">` +
       results.map(t => {
-        const priorityCls  = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
-        const statusCls    = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
-        const statusLabel  = STATUS_LABELS[t.status] || t.status;
-        const catLabel     = CATEGORY_LABELS[t.category] || t.category || '';
-        const isSingle     = !t.end_date || t.start_date === t.end_date;
-        const dateStr      = isSingle
+        const priorityCls = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
+        const statusCls   = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
+        const statusLabel = STATUS_LABELS[t.status] || t.status;
+        const catLabel    = CATEGORY_LABELS[t.category] || t.category || '';
+        const isSingle    = !t.end_date || t.start_date === t.end_date;
+        const dateStr     = isSingle
           ? t.start_date.substring(5).replace('-', '/')
           : t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
 
-        // 키워드 하이라이트
-        const titleHtml       = keyword ? highlight(t.title, keyword)       : esc(t.title);
-        const descHtml        = keyword ? highlight(t.description, keyword)  : esc(t.description);
+        const titleHtml = keyword ? highlight(t.title, keyword)      : esc(t.title);
+        const descHtml  = keyword ? highlight(t.description, keyword) : esc(t.description);
 
         return `
           <div class="task-item" onclick="TASK_APP.openSearchItem('${esc(t.task_id)}')">
@@ -1656,18 +1659,19 @@
   function highlight(text, keyword) {
     if (!text || !keyword) return esc(text);
     const escaped   = esc(text);
-    const escapedKw = esc(keyword);
-    const re = new RegExp('(' + escapedKw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-    return escaped.replace(re, '<mark style="background:#fef08a;border-radius:2px;padding:0 1px;">$1</mark>');
+    const escapedKw = esc(keyword).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return escaped.replace(new RegExp('(' + escapedKw + ')', 'gi'),
+      '<mark style="background:#fef08a;border-radius:2px;padding:0 1px;">$1</mark>');
   }
 
   function resetSearch() {
     document.getElementById('searchDateFrom').value = '';
     document.getElementById('searchDateTo').value   = '';
     document.getElementById('searchKeyword').value  = '';
-    document.querySelectorAll('input[name="searchCategory"]').forEach(el => el.checked = false);
-    document.querySelectorAll('input[name="searchStatus"]').forEach(el => el.checked = false);
-    document.querySelectorAll('input[name="searchPriority"]').forEach(el => el.checked = false);
+    document.getElementById('searchCategory').value = '';
+    document.getElementById('searchStatus').value   = '';
+    document.getElementById('searchPriority').value = '';
+    setSearchDefaultDates();
     document.getElementById('searchResultHead').style.display = 'none';
     document.getElementById('searchResultList').innerHTML = `
       <div class="task-empty">
@@ -1676,16 +1680,14 @@
       </div>`;
   }
 
-  // 검색 결과에서 업무 클릭 시 해당 주차로 이동해서 수정 모달 열기
   window.TASK_APP.openSearchItem = function(taskId) {
-    apiGet('taskGetItems', {
+    apiGet('taskSearch', {
       request_user_email: currentUser.email,
       date_from: '2000-01-01',
       date_to:   '2099-12-31'
     }).then(res => {
       const task = (res.data || []).find(t => t.task_id === taskId);
       if (!task) return;
-      // 해당 주차로 이동 후 수정 모달 열기
       weeklyWeekStart = getWeekStart(task.start_date);
       loadWeeklyTasks().then(() => {
         switchTab('weekly');
@@ -1713,11 +1715,12 @@
     res.data.forEach(function(c) {
       newLabels[c.code_value] = c.code_name;
     });
-    CATEGORY_LABELS     = newLabels;
-    categoryCodeGroup   = res.code_group   || 'TASK_CATEGORY';
-    categoryIsCustom    = res.is_team_custom || false;
-    // 모달 카테고리 셀렉트 옵션 갱신
+    CATEGORY_LABELS   = newLabels;
+    categoryCodeGroup = res.code_group    || 'TASK_CATEGORY';
+    categoryIsCustom  = res.is_team_custom || false;
+    // 모달 + 검색 카테고리 셀렉트 동시 갱신
     updateCategorySelect();
+    updateSearchCategorySelect();
   }
 
   function updateCategorySelect() {
