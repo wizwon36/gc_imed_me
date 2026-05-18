@@ -540,7 +540,7 @@
 
     const DOW_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
     const PRI_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
-    const PRI_LABEL = { HIGH: '[ 중요도 높음 ]', MEDIUM: '[ 중요도 보통 ]', LOW: '[ 중요도 낮음 ]' };
+    const PRI_LABEL = { HIGH: '  ▸ 높음', MEDIUM: '  ▸ 보통', LOW: '  ▸ 낮음' };
     const weekEnd   = getWeekEnd(weekStart);
     const lines     = [];
 
@@ -569,7 +569,7 @@
       const dow      = d.getDay();
       const mmdd     = dateStr.substring(5).replace('-', '/');
 
-      lines.push('[' + mmdd + ' ' + DOW_LABEL[dow] + ']');
+      lines.push('■ ' + mmdd + ' ' + DOW_LABEL[dow]);
 
       const priMap = { HIGH: [], MEDIUM: [], LOW: [] };
       dayItems.forEach(function(t) {
@@ -589,9 +589,9 @@
           const dateRange    = (t.start_date !== t.end_date)
             ? ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')'
             : '';
-          lines.push('    ' + num + ' [' + catLabel + '] ' + t.title + dateRange + statusSuffix);
+          lines.push('    ' + num + ' ' + catLabel + ' · ' + t.title + dateRange + statusSuffix);
           if (t.description && t.description.trim()) {
-            lines.push('        └ ' + t.description.trim());
+            lines.push('          └ ' + t.description.trim());
           }
         });
       });
@@ -612,23 +612,23 @@
       });
 
       if (ongoingCarry.length > 0) {
-        lines.push('[ 이월 진행 업무 ]');
+        lines.push('◎ 이월 진행 업무');
         ongoingCarry.forEach(function(t, idx) {
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const endLabel  = t.end_date > weekEnd ? '계속' : (t.status === 'IN_PROGRESS' ? '진행중' : '예정');
           const dateRange = ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')';
-          lines.push('  ' + String(idx + 1) + '. [' + catLabel + '] ' + t.title + dateRange + ' (' + endLabel + ')');
+          lines.push('  ' + String(idx + 1) + '. ' + catLabel + ' · ' + t.title + dateRange + ' (' + endLabel + ')');
           if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
         });
       }
 
       if (completedCarry.length > 0) {
         if (ongoingCarry.length > 0) lines.push('');
-        lines.push('[ 이월 완료 업무 ]');
+        lines.push('◎ 이월 완료 업무');
         completedCarry.forEach(function(t, idx) {
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const dateRange = ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')';
-          lines.push('  ' + String(idx + 1) + '. [' + catLabel + '] ' + t.title + dateRange + ' (완료)');
+          lines.push('  ' + String(idx + 1) + '. ' + catLabel + ' · ' + t.title + dateRange + ' (완료)');
           if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
         });
       }
