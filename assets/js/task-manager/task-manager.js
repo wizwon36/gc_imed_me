@@ -368,9 +368,13 @@
   async function loadWeeklyTasks() {
     updateWeekLabel('weekRangeLabel', 'weekSubLabel', weeklyWeekStart);
 
-    // 주 이동 즉시 타임라인 스켈레톤으로 교체 (이전 주 데이터 오인 방지)
+    // 즉시 로딩 스피너 표시
+    document.getElementById('weekTimeline').innerHTML = `
+      <div class="task-empty">
+        <div class="task-loading-spinner"></div>
+        <div class="task-empty-text">업무를 불러오는 중...</div>
+      </div>`;
     weeklyTasks = [];
-    renderWeekTimeline();
     updateWeeklySummary();
 
     try {
@@ -385,6 +389,11 @@
 
     } catch (err) {
       showMessage(err.message || '업무 목록을 불러오지 못했습니다.', 'error');
+      document.getElementById('weekTimeline').innerHTML = `
+        <div class="task-empty task-empty--error">
+          <div class="task-empty-icon">⚠️</div>
+          <div class="task-empty-text">불러오기 실패. 다시 시도해 주세요.</div>
+        </div>`;
     }
   }
 
@@ -498,6 +507,19 @@
   async function loadJournal() {
     updateWeekLabel('weekRangeLabelJ', 'weekSubLabelJ', journalWeekStart);
     clearAutosave();
+
+    // 즉시 로딩 상태 표시
+    document.getElementById('autosaveText').textContent = '불러오는 중...';
+    document.getElementById('journalTaskSummary').innerHTML =
+      '<div class="task-loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>';
+    ['attendanceThisWeek','attendanceNextWeek','journalSummary',
+     'journalAchievements','journalNextPlan','journalIssues'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = ''; el.disabled = true; }
+    });
+    document.getElementById('journalSaveBtn').style.display   = 'none';
+    document.getElementById('journalSubmitBtn').style.display = 'none';
+    document.getElementById('journalCloseBtn').style.display  = 'none';
 
     // 탭 진입 시 항상 조회만 (생성은 "업무일지 생성" 버튼 전용)
     const todayWeekStart = getWeekStart(formatDateStr(new Date()));
