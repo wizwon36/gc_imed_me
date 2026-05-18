@@ -7,15 +7,10 @@
   'use strict';
 
   // ── 상수 ────────────────────────────────────────────────────
-  const CATEGORY_LABELS = {
-    PURCHASE:  '구매',
-    STRATEGY:  '전략기획',
-    OPERATION: '운영',
-    FACILITY:  '시설',
-    SAFETY:    '안전보건',
-    MARKETING: '홍보마케팅',
-    ETC:       '기타'
-  };
+  // 카테고리 — 앱 로드 시 서버에서 동적으로 채워짐 (하드코딩 없음)
+  let CATEGORY_LABELS   = {};
+  let categoryCodeGroup = 'TASK_CATEGORY';
+  let categoryIsCustom  = false;
 
   const STATUS_LABELS = {
     TODO:        '예정',
@@ -43,7 +38,10 @@
 
   // 팀 탭
   let teamWeekStart  = '';
-  let _lastTeamData  = [];  // 통합 보기용 캐시
+  let _lastTeamData  = [];
+
+  // 캘린더 팝업
+  let calendarPopupMonth = '';   // 'yyyy-MM' 형태
 
   // 모달
   let editingTaskId   = null;
@@ -83,16 +81,22 @@
 
       document.getElementById('appBody').style.display = '';
 
+      // 카테고리 관리 버튼 (manager/admin 전용)
       if (isManager) {
         document.getElementById('tabTeam').style.display = '';
+        document.getElementById('categoryManageBtn').style.display = '';
       }
 
       const todayStr      = formatDateStr(new Date());
       weeklyWeekStart     = getWeekStart(todayStr);
       journalWeekStart    = weeklyWeekStart;
       teamWeekStart       = weeklyWeekStart;
+      calendarPopupMonth  = weeklyWeekStart.substring(0, 7);
 
+      // 카테고리 먼저 로드 후 나머지 초기화
+      await loadCategories();
       bindEvents();
+      updateSharedWeekNav();
       await loadWeeklyTasks();
 
       if (isManager) {
@@ -114,45 +118,65 @@
     });
 
     // 주간 업무 — 주 이동
+    // ── 공통 주차 네비게이터 ───────────────────────────────────
     document.getElementById('prevWeekBtn')?.addEventListener('click', () => {
-      weeklyWeekStart = offsetWeek(weeklyWeekStart, -1);
-      loadWeeklyTasks();
+      navigateWeek(-1);
     });
     document.getElementById('nextWeekBtn')?.addEventListener('click', () => {
-      weeklyWeekStart = offsetWeek(weeklyWeekStart, 1);
-      loadWeeklyTasks();
+      navigateWeek(1);
     });
     document.getElementById('todayBtn')?.addEventListener('click', () => {
-      weeklyWeekStart = getWeekStart(formatDateStr(new Date()));
-      loadWeeklyTasks();
+      navigateWeekTo(getWeekStart(formatDateStr(new Date())));
     });
 
-    // 주간일지 — 주 이동
-    document.getElementById('prevWeekJBtn')?.addEventListener('click', () => {
-      journalWeekStart = offsetWeek(journalWeekStart, -1);
-      loadJournal();
-    });
-    document.getElementById('nextWeekJBtn')?.addEventListener('click', () => {
-      journalWeekStart = offsetWeek(journalWeekStart, 1);
-      loadJournal();
-    });
-    document.getElementById('todayJBtn')?.addEventListener('click', () => {
-      journalWeekStart = getWeekStart(formatDateStr(new Date()));
-      loadJournal();
+    // 날짜 범위 버튼 → 캘린더 팝업 토글
+    document.getElementById('weekNavRangeBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleCalendarPopup();
     });
 
-    // 팀 탭 — 주 이동
-    document.getElementById('prevWeekTBtn')?.addEventListener('click', () => {
-      teamWeekStart = offsetWeek(teamWeekStart, -1);
-      loadTeamJournals();
+    // 캘린더 팝업 월 이동
+    document.getElementById('wcpPrevMonth')?.addEventListener('click', () => {
+      calendarPopupMonth = offsetMonth(calendarPopupMonth, -1);
+      renderCalendarPopup();
     });
-    document.getElementById('nextWeekTBtn')?.addEventListener('click', () => {
-      teamWeekStart = offsetWeek(teamWeekStart, 1);
-      loadTeamJournals();
+    document.getElementById('wcpNextMonth')?.addEventListener('click', () => {
+      calendarPopupMonth = offsetMonth(calendarPopupMonth, 1);
+      renderCalendarPopup();
     });
-    document.getElementById('todayTBtn')?.addEventListener('click', () => {
-      teamWeekStart = getWeekStart(formatDateStr(new Date()));
-      loadTeamJournals();
+
+    // 팝업 외부 클릭 시 닫기
+    document.addEventListener('click', (e) => {
+      const nav = document.getElementById('sharedWeekNav');
+      if (nav && !nav.contains(e.target)) {
+        document.getElementById('weekCalendarPopup')?.classList.remove('open');
+      }
+    });
+
+    // 검색
+    document.getElementById('searchRunBtn')?.addEventListener('click', runSearch);
+    document.getElementById('searchResetBtn')?.addEventListener('click', resetSearch);
+    document.getElementById('searchKeyword')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runSearch();
+    });
+
+    // 카테고리 관리
+    document.getElementById('categoryManageBtn')?.addEventListener('click', openCategoryModal);
+    document.getElementById('categoryModalClose')?.addEventListener('click', closeCategoryModal);
+    document.getElementById('categoryModalDone')?.addEventListener('click', closeCategoryModal);
+    document.getElementById('catAddBtn')?.addEventListener('click', saveCategoryItem);
+
+    // 단기업무 체크박스
+    document.getElementById('modalSingleDay')?.addEventListener('change', (e) => {
+      setSingleDay(e.target.checked);
+    });
+    // 시작일 변경 시 종료일 최솟값 동기화
+    document.getElementById('modalStartDate')?.addEventListener('change', (e) => {
+      const endEl = document.getElementById('modalEndDate');
+      if (endEl && endEl.value && endEl.value < e.target.value) {
+        endEl.value = e.target.value;
+      }
+      endEl.min = e.target.value;
     });
 
     // 모달
@@ -204,13 +228,29 @@
     document.getElementById('panelWeekly').style.display  = tab === 'weekly'  ? '' : 'none';
     document.getElementById('panelJournal').style.display = tab === 'journal' ? '' : 'none';
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
+    document.getElementById('panelSearch').style.display  = tab === 'search'  ? '' : 'none';
+
+    // 검색 탭 진입 시 카테고리 셀렉트 갱신 + 기본 날짜 설정
+    if (tab === 'search') {
+      updateSearchCategorySelect();
+      setSearchDefaultDates();
+    }
+
+    // 검색 탭에서는 공통 네비게이터 숨김
+    document.getElementById('sharedWeekNav').style.display = tab === 'search' ? 'none' : '';
+
+    // 탭 전환 즉시 공통 네비게이터 레이블 갱신
+    updateSharedWeekNav();
 
     if (tab === 'journal') {
-      journalWeekStart = weeklyWeekStart;
-      // 생성 버튼으로 이미 데이터가 세팅된 경우 재로드 스킵
       if (currentJournal && currentJournal._fromGenerate) {
         delete currentJournal._fromGenerate;
       } else {
+        // 일지 탭에 한 번도 진입하지 않은 경우(초기)에만 주간업무 주차로 동기화
+        // 이미 일지 탭에서 직접 다른 주로 이동한 경우 그 주차 유지
+        if (!journalWeekStart || journalWeekStart === weeklyWeekStart) {
+          journalWeekStart = weeklyWeekStart;
+        }
         loadJournal();
       }
     }
@@ -243,6 +283,12 @@
     return formatDateStr(d);
   }
 
+  function offsetMonth(yyyyMM, delta) {
+    const [y, m] = yyyyMM.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
   function formatWeekRange(weekStart) {
     const weekEnd = getWeekEnd(weekStart);
     const s = weekStart.substring(5).replace('-', '/');
@@ -254,6 +300,139 @@
     return weekStart === getWeekStart(formatDateStr(new Date()));
   }
 
+  // ── 공통 네비게이터: 주 이동 ─────────────────────────────────
+  function getCurrentTabWeekStart() {
+    const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+    if (activeTab === 'journal') return journalWeekStart;
+    if (activeTab === 'team')    return teamWeekStart;
+    return weeklyWeekStart;
+  }
+
+  function navigateWeek(delta) {
+    const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+    if (activeTab === 'journal') {
+      journalWeekStart = offsetWeek(journalWeekStart, delta);
+      loadJournal();
+    } else if (activeTab === 'team') {
+      teamWeekStart = offsetWeek(teamWeekStart, delta);
+      showGlobalLoading('불러오는 중...');
+      loadTeamJournals().finally(() => hideGlobalLoading());
+    } else {
+      weeklyWeekStart = offsetWeek(weeklyWeekStart, delta);
+      loadWeeklyTasks();
+    }
+    updateSharedWeekNav();
+  }
+
+  function navigateWeekTo(weekStart) {
+    const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+    if (activeTab === 'journal') {
+      journalWeekStart = weekStart;
+      loadJournal();
+    } else if (activeTab === 'team') {
+      teamWeekStart = weekStart;
+      showGlobalLoading('불러오는 중...');
+      loadTeamJournals().finally(() => hideGlobalLoading());
+    } else {
+      weeklyWeekStart = weekStart;
+      loadWeeklyTasks();
+    }
+    updateSharedWeekNav();
+  }
+
+  // 공통 네비게이터 레이블 갱신
+  function updateSharedWeekNav() {
+    const ws = getCurrentTabWeekStart();
+    const rangeEl = document.getElementById('weekRangeLabel');
+    const subEl   = document.getElementById('weekSubLabel');
+    if (rangeEl) rangeEl.textContent = formatWeekRange(ws);
+    if (subEl)   subEl.textContent   = isThisWeek(ws) ? '이번 주' : '';
+  }
+
+  // ── 월 캘린더 팝업 ───────────────────────────────────────────
+  function toggleCalendarPopup() {
+    const popup = document.getElementById('weekCalendarPopup');
+    if (!popup) return;
+    if (popup.classList.contains('open')) {
+      popup.classList.remove('open');
+    } else {
+      // 현재 탭의 주차 기준으로 팝업 달력 초기화
+      const ws = getCurrentTabWeekStart();
+      calendarPopupMonth = ws.substring(0, 7); // 'yyyy-MM'
+      renderCalendarPopup();
+      popup.classList.add('open');
+    }
+  }
+
+  function renderCalendarPopup() {
+    const [year, month] = calendarPopupMonth.split('-').map(Number);
+    const titleEl = document.getElementById('wcpMonthTitle');
+    const gridEl  = document.getElementById('wcpGrid');
+    if (!titleEl || !gridEl) return;
+
+    titleEl.textContent = `${year}년 ${month}월`;
+
+    const todayStr       = formatDateStr(new Date());
+    const currentWS      = getCurrentTabWeekStart();
+
+    // 해당 월 1일의 요일 (0=일)
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    // 해당 월 마지막 날
+    const lastDate = new Date(year, month, 0).getDate();
+
+    // 캘린더 시작일: 1일 기준 이전 일요일
+    const startDate = new Date(year, month - 1, 1 - firstDay);
+
+    // 6주 * 7일 = 42칸
+    const totalCells = 42;
+    let html = '';
+    let weekStartDate = null;
+
+    for (let i = 0; i < totalCells; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const ds  = formatDateStr(d);
+      const dow = d.getDay();
+
+      // 일요일마다 주 행 시작
+      if (dow === 0) {
+        weekStartDate = ds;
+        const isSelected = weekStartDate === currentWS;
+        html += `<div class="wcp-week-row${isSelected ? ' is-selected' : ''}" data-week="${weekStartDate}">`;
+      }
+
+      const isCurrentMonth = (d.getMonth() + 1) === month;
+      const isToday        = ds === todayStr;
+      const isSun          = dow === 0;
+      const isSat          = dow === 6;
+
+      const cls = [
+        'wcp-day',
+        !isCurrentMonth ? 'is-other-month' : '',
+        isToday         ? 'is-today'        : '',
+        isSun           ? 'is-sunday'       : '',
+        isSat           ? 'is-saturday'     : ''
+      ].filter(Boolean).join(' ');
+
+      html += `<span class="${cls}">${d.getDate()}</span>`;
+
+      // 토요일마다 주 행 닫기
+      if (dow === 6) html += `</div>`;
+    }
+
+    gridEl.innerHTML = html;
+
+    // 주 행 클릭 이벤트
+    gridEl.querySelectorAll('.wcp-week-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const ws = row.dataset.week;
+        document.getElementById('weekCalendarPopup').classList.remove('open');
+        navigateWeekTo(ws);
+        calendarPopupMonth = ws.substring(0, 7);
+      });
+    });
+  }
+
   function getDaysOfWeek(weekStart) {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart + 'T00:00:00');
@@ -263,55 +442,7 @@
   }
 
   // ── 주간 업무 로드 ───────────────────────────────────────────
-  // ── 일지 텍스트 포맷터 ──────────────────────────────────────
-  /**
-   * 업무 목록을 [카테고리] → 날짜 → 번호. 제목 + 상세 형태로 포맷
-   * @param {Array} items - taskGetItems 결과
-   * @param {string} mode - 'all' | 'done' | 'pending'
-   */
-  function buildJournalText(items, mode) {
-    const filtered = items.filter(function(t) {
-      if (mode === 'done')    return t.status === 'DONE';
-      if (mode === 'pending') return t.status !== 'DONE';
-      return true;
-    });
-
-    if (!filtered.length) return '';
-
-    // 카테고리 → 날짜별 그룹핑
-    const byCategory = {};
-    filtered.forEach(function(t) {
-      const cat = CATEGORY_LABELS[t.category] || t.category || '기타';
-      if (!byCategory[cat]) byCategory[cat] = {};
-      const date = t.task_date ? t.task_date.substring(5).replace('-', '/') : '-';
-      const dow  = ['일','월','화','수','목','금','토'][new Date(t.task_date + 'T00:00:00').getDay()] || '';
-      const dateKey = date + ' (' + dow + ')';
-      if (!byCategory[cat][dateKey]) byCategory[cat][dateKey] = [];
-      byCategory[cat][dateKey].push(t);
-    });
-
-    const lines = [];
-    Object.keys(byCategory).forEach(function(cat) {
-      lines.push('[' + cat + ']');
-      const byDate = byCategory[cat];
-      Object.keys(byDate).forEach(function(dateKey) {
-        lines.push('  ' + dateKey);
-        byDate[dateKey].forEach(function(t, idx) {
-          const statusSuffix = mode === 'all'
-            ? ' [' + (STATUS_LABELS[t.status] || t.status) + ']'
-            : '';
-          lines.push('    ' + (idx + 1) + '. ' + t.title + statusSuffix);
-          if (t.description) {
-            lines.push('       └ ' + t.description);
-          }
-        });
-      });
-    });
-
-    return lines.join('\n');
-  }
-
-  // ── 업무일지 생성 (주간업무 → 일지 생성) ───────────────────
+  // ── 업무일지 생성 (주간업무 → 일지 자동 작성) ───────────────
   async function handleGenerateJournal() {
     const todayWeekStart = getWeekStart(formatDateStr(new Date()));
     const isPastWeek     = weeklyWeekStart < todayWeekStart;
@@ -323,75 +454,88 @@
 
     showGlobalLoading('업무일지를 생성하는 중...');
     try {
-      // journalGetOrCreate 한 번으로 기존 일지 확인 + 없으면 생성 동시 처리
-      const res = await apiGet('journalGetOrCreate', {
-        request_user_email: currentUser.email,
-        week_start:         weeklyWeekStart
-      });
+      // 이번주 일지 + 업무 목록, 다음주 업무 목록 병렬 로드
+      const nextWeekStart = offsetWeek(weeklyWeekStart, 1);
 
-      const journal      = res.data.journal;
-      // tasks는 API 응답 대신 이미 로드된 weeklyTasks를 직접 사용 (화면과 일치 보장)
-      const items        = weeklyTasks || [];
-      const done         = items.filter(t => t.status === 'DONE').length;
-      const inProgress   = items.filter(t => t.status === 'IN_PROGRESS').length;
-      const high         = items.filter(t => t.priority === 'HIGH').length;
-      const tasks        = {
-        week_start: weeklyWeekStart,
-        week_end:   getWeekEnd(weeklyWeekStart),
-        items:      items,
-        summary:    { total: items.length, done, in_progress: inProgress, todo: items.length - done - inProgress, high }
-      };
-      const isExisting   = !!journal.created_at &&
-                           (journal.summary || journal.achievements || journal.next_plan);
+      const [thisRes, nextRes] = await Promise.all([
+        apiGet('journalGetOrCreate', {
+          request_user_email: currentUser.email,
+          week_start:         weeklyWeekStart
+        }),
+        apiGet('taskGetItems', {
+          request_user_email: currentUser.email,
+          week_start:         nextWeekStart
+        })
+      ]);
 
-      // 기존 일지가 있고 내용이 있는 경우 덮어쓰기 확인
+      const journal      = thisRes.data.journal;
+      const serverTasks  = thisRes.data.tasks;
+      const thisItems    = serverTasks.items || [];
+      const nextItems    = nextRes.data      || [];
+
+      // 기존 일지에 내용이 있으면 덮어쓰기 확인
+      const isExisting = !!journal.created_at &&
+                         (journal.summary || journal.achievements || journal.next_plan);
+
       if (isExisting) {
         if (journal.status === 'CLOSED') {
           showMessage('이미 마감된 업무일지는 덮어쓸 수 없습니다.', 'error');
           hideGlobalLoading();
           return;
         }
-        const statusLabel = { DRAFT: '작성중', SUBMITTED: '제출됨' };
-        const label = statusLabel[journal.status] || journal.status;
+        const labelMap = { DRAFT: '작성중', SUBMITTED: '제출됨' };
         hideGlobalLoading();
-        const confirmed = confirm(
-          `이 주차(${weeklyWeekStart})에 이미 [${label}] 상태의 업무일지가 있습니다.\n` +
-          `현재 등록된 업무 목록으로 내용을 덮어쓸까요?`
+
+        // 커스텀 모달로 확인
+        const confirmed = await showOverwriteConfirm(
+          weeklyWeekStart,
+          labelMap[journal.status] || journal.status
         );
         if (!confirmed) return;
         showGlobalLoading('업무일지를 생성하는 중...');
       }
 
-      // 업무 목록 → 일지 필드 자동 구성
-      const allItems     = buildJournalText(items, 'all');
-      const doneItems    = buildJournalText(items, 'done');
-      const pendingItems = buildJournalText(items, 'pending');
+      // ── 주간업무요약: 이번주 업무를 일별로 그룹화 (상태 표시)
+      const summary = buildDailyGroupedText(thisItems, weeklyWeekStart, true);
 
-      // 덮어쓰기 저장
+      // ── 금주 성과: 이번주 완료 업무 (카테고리+날짜 구조)
+      const doneItems    = thisItems.filter(t => t.status === 'DONE');
+      const achievements = buildDailyGroupedText(doneItems, weeklyWeekStart, false);
+
+      // ── 차주업무계획: 다음주 업무를 일별로 그룹화 (상태 미표시)
+      const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, false);
+
+      // 저장 — 근태 특이사항(this/next week), 이슈/건의사항은 기존 값 유지
       await apiPost('journalUpdate', {
-        request_user_email:  currentUser.email,
-        journal_id:          journal.journal_id,
-        summary:             allItems,
-        achievements:        doneItems,
-        next_plan:           pendingItems,
-        issues:              journal.issues || ''
+        request_user_email:   currentUser.email,
+        journal_id:           journal.journal_id,
+        summary:              summary,
+        achievements:         achievements,
+        next_plan:            nextPlan,
+        attendance_this_week: journal.attendance_this_week || '',
+        attendance_next_week: journal.attendance_next_week || '',
+        issues:               journal.issues || ''
       });
 
-      // 생성된 일지 데이터를 직접 세팅 후 일지 탭으로 이동
       journalWeekStart    = weeklyWeekStart;
       currentJournal      = Object.assign({}, journal, {
-        summary:         allItems,
-        achievements:    doneItems,
-        next_plan:       pendingItems,
-        issues:          journal.issues || '',
-        _fromGenerate:   true   // switchTab에서 loadJournal 재호출 방지 플래그
+        summary:              summary,
+        achievements:         achievements,
+        next_plan:            nextPlan,
+        attendance_this_week: journal.attendance_this_week || '',
+        attendance_next_week: journal.attendance_next_week || '',
+        issues:               journal.issues || '',
+        _fromGenerate:        true
       });
-      currentJournalTasks = tasks;
+      currentJournalTasks = serverTasks;
 
-      // 탭 전환 — _fromGenerate 플래그로 loadJournal 재호출 방지
       switchTab('journal');
-      renderJournal();
-      renderJournalTaskSummary();
+      // switchTab 내부(_fromGenerate 삭제 등) 처리 완료 후 렌더링
+      Promise.resolve().then(() => {
+        renderJournal();
+        renderJournalTaskSummary();
+        showMessage('업무일지가 생성되었습니다.', 'success');
+      });
 
     } catch (err) {
       showMessage(err.message || '업무일지 생성에 실패했습니다.', 'error');
@@ -400,9 +544,150 @@
     }
   }
 
+  /**
+   * 업무 목록을 일별로 그룹화한 텍스트 생성
+   * @param {Array}   items      - 업무 항목 배열
+   * @param {string}  weekStart  - 해당 주 시작일 (yyyy-MM-dd)
+   * 날짜 헤더 + 들여쓰기 구조로 통일 (이번주/다음주 동일 포맷)
+   * 출력 예시:
+   *   [05/19 월]
+   *     🔴 [구매] 제목 (완료)
+   *     🟡 [운영] 제목 (진행중)
+   *
+   *   [05/20 화]
+   *     🟢 [시설] 제목 (예정)
+   */
+  function buildDailyGroupedText(items, weekStart, showStatus) {
+    if (!items || items.length === 0) return '';
+
+    const DOW_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekEnd   = getWeekEnd(weekStart);
+    const lines     = [];
+
+    // 이번 주 시작 업무 vs 이월 분리
+    const thisWeekItems  = [];
+    const carryOverItems = [];
+    items.forEach(function(t) {
+      const s = t.start_date || '';
+      if (s >= weekStart && s <= weekEnd) thisWeekItems.push(t);
+      else carryOverItems.push(t);
+    });
+
+    // 중요도 정렬
+    const PRI_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+    function sortByPri(a, b) {
+      const pa = PRI_ORDER[(a.priority || 'MEDIUM').toUpperCase()] ?? 1;
+      const pb = PRI_ORDER[(b.priority || 'MEDIUM').toUpperCase()] ?? 1;
+      if (pa !== pb) return pa - pb;
+      return (a.start_date || '').localeCompare(b.start_date || '');
+    }
+
+    // 카테고리 순서
+    const CAT_ORDER = Object.keys(CATEGORY_LABELS);
+    function catIndex(t) {
+      const i = CAT_ORDER.indexOf(t.category || 'ETC');
+      return i === -1 ? 99 : i;
+    }
+
+    // ── 1) 카테고리로 먼저 묶고, 그 안에 날짜 표기
+    const catMap = {};
+    const catOrder = [];
+    thisWeekItems.forEach(function(t) {
+      const cat = t.category || 'ETC';
+      if (!catMap[cat]) { catMap[cat] = []; catOrder.push(cat); }
+      catMap[cat].push(t);
+    });
+
+    // 카테고리 정의 순서로 정렬
+    catOrder.sort(function(a, b) {
+      return catIndex({ category: a }) - catIndex({ category: b });
+    });
+
+    catOrder.forEach(function(cat, catIdx) {
+      const catLabel = CATEGORY_LABELS[cat] || cat || '기타';
+      const group    = catMap[cat].slice().sort(sortByPri);
+
+      if (catIdx > 0) lines.push('');
+      lines.push('[' + catLabel + ']');
+
+      // 날짜별 소그룹
+      const dayMap = {};
+      const dayOrder = [];
+      group.forEach(function(t) {
+        const d = t.start_date || '';
+        if (!dayMap[d]) { dayMap[d] = []; dayOrder.push(d); }
+        dayMap[d].push(t);
+      });
+      dayOrder.sort();
+
+      dayOrder.forEach(function(dateStr) {
+        const dayItems = dayMap[dateStr];
+        const d        = new Date(dateStr + 'T00:00:00');
+        const dow      = d.getDay();
+        const mmdd     = dateStr.substring(5).replace('-', '/');
+
+        lines.push('  ' + mmdd + ' (' + DOW_LABEL[dow] + ')');
+
+        let num = 1;
+        dayItems.forEach(function(t) {
+          const priTag       = t.priority === 'HIGH' ? ' *' : '';
+          const statusLabel  = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+          const statusSuffix = showStatus ? '  [' + statusLabel + ']' : '';
+          const dateRange    = (t.start_date !== t.end_date)
+            ? '  ' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/')
+            : '';
+
+          lines.push('    ' + num + '.  ' + t.title + priTag + statusSuffix + dateRange);
+          if (t.description && t.description.trim()) {
+            lines.push('        └ ' + t.description.trim());
+          }
+          num++;
+        });
+      });
+    });
+
+    // ── 2) 이월 업무
+    if (carryOverItems.length > 0) {
+      lines.push('');
+      lines.push('── 이월 업무 ──');
+
+      const completedCarry = carryOverItems.filter(function(t) {
+        return t.end_date <= weekEnd && t.status === 'DONE';
+      }).sort(function(a,b){ return catIndex(a)-catIndex(b) || sortByPri(a,b); });
+
+      const ongoingCarry = carryOverItems.filter(function(t) {
+        return !(t.end_date <= weekEnd && t.status === 'DONE');
+      }).sort(function(a,b){ return catIndex(a)-catIndex(b) || sortByPri(a,b); });
+
+      if (ongoingCarry.length > 0) {
+        lines.push('');
+        ongoingCarry.forEach(function(t, idx) {
+          const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
+          const endLabel  = t.end_date > weekEnd ? '계속' : '진행중';
+          const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
+          lines.push('  ' + String(idx+1) + '.  [' + catLabel + ']  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
+          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+        });
+      }
+
+      if (completedCarry.length > 0) {
+        if (ongoingCarry.length > 0) lines.push('');
+        completedCarry.forEach(function(t, idx) {
+          const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
+          const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
+          lines.push('  ' + String(idx+1) + '.  [' + catLabel + ']  ' + t.title + '  [완료]  ' + dateRange);
+          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+        });
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+
   // ── 주간업무 로드 ────────────────────────────────────────────
   async function loadWeeklyTasks() {
-    updateWeekLabel('weekRangeLabel', 'weekSubLabel', weeklyWeekStart);
+    updateSharedWeekNav();
 
     // 즉시 로딩 스피너 표시
     document.getElementById('weekTimeline').innerHTML = `
@@ -433,11 +718,6 @@
     }
   }
 
-  function updateWeekLabel(rangeId, subId, weekStart) {
-    document.getElementById(rangeId).textContent = formatWeekRange(weekStart);
-    document.getElementById(subId).textContent   = isThisWeek(weekStart) ? '이번 주' : '';
-  }
-
   function updateWeeklySummary() {
     const total  = weeklyTasks.length;
     const done   = weeklyTasks.filter(t => t.status === 'DONE').length;
@@ -465,7 +745,12 @@
       const isSun   = dow === 0;
       const isSat   = dow === 6;
 
-      const dayTasks = weeklyTasks.filter(t => t.task_date === dateStr);
+      // 해당 날짜가 start_date ~ end_date 범위에 포함된 업무 표시
+      const dayTasks = weeklyTasks.filter(t => {
+        const s = t.start_date || '';
+        const e = t.end_date   || s;
+        return s <= dateStr && e >= dateStr;
+      });
 
       const chips = dayTasks.slice(0, 3).map(t => {
         const cls = t.priority === 'HIGH' ? 'chip-high' : t.priority === 'LOW' ? 'chip-low' : 'chip-medium';
@@ -476,7 +761,7 @@
         ? `<span class="day-chip chip-medium" style="cursor:default;">+${dayTasks.length - 3}개</span>`
         : '';
 
-      const taskItems = dayTasks.map(t => renderTaskItem(t)).join('');
+      const taskItems = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
 
       const headClasses = ['day-row-head',
         isToday ? 'is-today'    : '',
@@ -511,10 +796,29 @@
     }).join('');
   }
 
-  function renderTaskItem(t) {
+  function renderTaskItem(t, dateStr) {
     const priorityCls = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
-    const statusCls   = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
-    const isDone      = t.status === 'DONE';
+    const isSingleDay = !t.end_date || t.start_date === t.end_date;
+    const isEndDate   = !isSingleDay && dateStr && t.end_date === dateStr;
+    const isMidDate   = !isSingleDay && dateStr && t.end_date > dateStr && t.start_date < dateStr;
+
+    // 날짜별 표시 상태 결정
+    // - 단기업무: status 그대로
+    // - 기간 중간 날짜: 항상 진행중
+    // - 마지막 날(end_date): DONE이면 완료, 아니면 종료예정
+    let displayStatus, statusCls;
+    if (isMidDate) {
+      displayStatus = '진행중';
+      statusCls     = 'badge-status-inprogress';
+    } else if (isEndDate) {
+      displayStatus = t.status === 'DONE' ? '완료' : '종료예정';
+      statusCls     = t.status === 'DONE' ? 'badge-status-done' : 'badge-status-inprogress';
+    } else {
+      displayStatus = STATUS_LABELS[t.status] || t.status;
+      statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
+    }
+
+    const isDone = t.status === 'DONE' && (isSingleDay || isEndDate);
 
     return `
       <div class="task-item${isDone ? ' is-done' : ''}" onclick="TASK_APP.openEditModal('${esc(t.task_id)}')">
@@ -523,8 +827,11 @@
           <div class="task-item-title">${esc(t.title)}</div>
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
-            <span class="task-badge ${statusCls}">${esc(STATUS_LABELS[t.status] || t.status)}</span>
-            ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.description)}</span>` : ''}
+            <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
+            ${!isSingleDay
+              ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
+              : ''}
+            ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.description)}</span>` : ''}
           </div>
         </div>
         <div class="task-item-actions" onclick="event.stopPropagation();">
@@ -541,25 +848,22 @@
 
   // ── 주간일지 로드 ────────────────────────────────────────────
   async function loadJournal() {
-    updateWeekLabel('weekRangeLabelJ', 'weekSubLabelJ', journalWeekStart);
+    updateSharedWeekNav();
     clearAutosave();
 
-    // 즉시 로딩 상태 표시
+    // ── 일지 카드 전체 로딩 오버레이 표시 ──────────────────────
+    document.getElementById('journalLoading')?.classList.add('active');
+
+    // 버튼·배지·텍스트 초기화
     document.getElementById('autosaveText').textContent = '불러오는 중...';
-    document.getElementById('journalTaskSummary').innerHTML =
-      '<div class="task-loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>';
-    ['attendanceThisWeek','attendanceNextWeek','journalSummary',
-     'journalAchievements','journalNextPlan','journalIssues'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.value = ''; el.disabled = true; }
-    });
     document.getElementById('journalSaveBtn').style.display   = 'none';
     document.getElementById('journalSubmitBtn').style.display = 'none';
     document.getElementById('journalCloseBtn').style.display  = 'none';
-
-    // 탭 진입 시 항상 조회만 (생성은 "업무일지 생성" 버튼 전용)
-    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
-    const isPastWeek     = journalWeekStart < todayWeekStart;
+    const badgeEl = document.getElementById('journalStatusBadge');
+    badgeEl.className   = 'journal-status-badge journal-status-draft';
+    badgeEl.textContent = '-';
+    document.getElementById('journalStatusText').textContent =
+      `${journalWeekStart} ~ ${getWeekEnd(journalWeekStart)}`;
 
     try {
       const res = await apiGet('journalGet', {
@@ -575,6 +879,9 @@
 
     } catch (err) {
       showMessage(err.message || '일지를 불러오지 못했습니다.', 'error');
+      document.getElementById('autosaveText').textContent = '불러오기 실패';
+    } finally {
+      document.getElementById('journalLoading')?.classList.remove('active');
     }
   }
 
@@ -640,31 +947,17 @@
     submitBtn.style.display = isClosed || status === 'SUBMITTED' ? 'none' : '';
     closeBtn.style.display  = isManager && !isClosed ? '' : 'none';
 
-    // 필드 채우기
+    // 필드 채우기 — currentJournal에 세팅된 값을 그대로 표시
+    // (handleGenerateJournal에서 저장 후 직접 세팅하므로 별도 자동채우기 로직 불필요)
     setField('attendanceThisWeek', j.attendance_this_week, isClosed);
     setField('attendanceNextWeek', j.attendance_next_week, isClosed);
-
-    // 최초 생성(DRAFT이고 모든 텍스트 필드가 비어있음)인 경우 업무 목록으로 자동 채우기
-    const isNew = status === 'DRAFT' && !j.summary && !j.achievements && !j.next_plan && !j.issues;
-
-    if (isNew && currentJournalTasks && (currentJournalTasks.items || []).length > 0) {
-      const items = currentJournalTasks.items || [];
-
-      setField('journalSummary',      buildJournalText(items, 'all'),     isClosed);
-      setField('journalAchievements', buildJournalText(items, 'done'),    isClosed);
-      setField('journalNextPlan',     buildJournalText(items, 'pending'), isClosed);
-      setField('journalIssues',       '',                                 isClosed);
-
-      journalDirty = true; // 자동 생성 내용을 저장 대상으로 표시
-    } else {
-      setField('journalSummary',      j.summary,      isClosed);
-      setField('journalAchievements', j.achievements, isClosed);
-      setField('journalNextPlan',     j.next_plan,    isClosed);
-      setField('journalIssues',       j.issues,       isClosed);
-    }
+    setField('journalSummary',      j.summary,      isClosed);
+    setField('journalAchievements', j.achievements, isClosed);
+    setField('journalNextPlan',     j.next_plan,    isClosed);
+    setField('journalIssues',       j.issues,       isClosed);
 
     updateAutosaveStatus('');
-    if (!isNew) journalDirty = false;
+    journalDirty = false;
   }
 
   function setField(id, value, disabled) {
@@ -719,7 +1012,7 @@
           <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f3f8;">
             <span style="width:7px;height:7px;border-radius:50%;background:${priorityColor};flex-shrink:0;"></span>
             <span style="flex:1;font-size:12px;color:var(--text-primary);">${esc(t.title)}</span>
-            <span style="font-size:11px;color:var(--text-muted);">${t.task_date ? t.task_date.substring(5) : ''}</span>
+            <span style="font-size:11px;color:var(--text-muted);">${t.start_date && t.start_date !== t.end_date ? t.start_date.substring(5) + ' ~ ' + (t.end_date ? t.end_date.substring(5) : '') : (t.start_date ? t.start_date.substring(5) : '')}</span>
             ${statusBadge}
           </div>
         `;
@@ -832,7 +1125,7 @@
 
   // ── 팀원 현황 로드 ────────────────────────────────────────────
   async function loadTeamJournals() {
-    updateWeekLabel('weekRangeLabelT', 'weekSubLabelT', teamWeekStart);
+    updateSharedWeekNav();
     document.getElementById('teamWeekLabel').textContent =
       `${teamWeekStart} ~ ${getWeekEnd(teamWeekStart)}`;
 
@@ -1068,10 +1361,12 @@
   window.TASK_APP.openAddModal = function(dateStr) {
     editingTaskId = null;
     document.getElementById('taskModalTitle').textContent = '업무 등록';
-    document.getElementById('modalTaskDate').value        = dateStr;
+    document.getElementById('modalStartDate').value       = dateStr;
+    document.getElementById('modalEndDate').value         = dateStr;
     document.getElementById('modalCategory').value        = '';
     document.getElementById('modalTitle').value           = '';
     document.getElementById('modalDescription').value     = '';
+    setSingleDay(true);
     updatePriorityUI('MEDIUM');
     updateStatusUI('TODO');
     openTaskModal();
@@ -1083,10 +1378,13 @@
 
     editingTaskId = taskId;
     document.getElementById('taskModalTitle').textContent = '업무 수정';
-    document.getElementById('modalTaskDate').value        = task.task_date   || '';
-    document.getElementById('modalCategory').value        = task.category    || '';
-    document.getElementById('modalTitle').value           = task.title       || '';
+    document.getElementById('modalStartDate').value       = task.start_date || '';
+    document.getElementById('modalEndDate').value         = task.end_date   || task.start_date || '';
+    document.getElementById('modalCategory').value        = task.category   || '';
+    document.getElementById('modalTitle').value           = task.title      || '';
     document.getElementById('modalDescription').value     = task.description || '';
+    const isSingle = !task.end_date || task.end_date === task.start_date;
+    setSingleDay(isSingle);
     updatePriorityUI(task.priority || 'MEDIUM');
     updateStatusUI(task.status    || 'TODO');
     openTaskModal();
@@ -1101,10 +1399,9 @@
   window.TASK_APP.toggleTaskStatus = async function(taskId) {
     const task = weeklyTasks.find(t => t.task_id === taskId);
     if (!task) return;
-
     const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
-
     try {
+      showGlobalLoading(newStatus === 'DONE' ? '완료 처리 중...' : '되돌리는 중...');
       await apiPost('taskUpdateItem', {
         request_user_email: currentUser.email,
         task_id:            taskId,
@@ -1115,6 +1412,8 @@
       updateWeeklySummary();
     } catch (err) {
       showMessage(err.message || '상태 변경에 실패했습니다.', 'error');
+    } finally {
+      hideGlobalLoading();
     }
   };
 
@@ -1122,8 +1421,8 @@
     const task = weeklyTasks.find(t => t.task_id === taskId);
     if (!task) return;
     if (!confirm(`"${task.title}" 업무를 삭제하시겠습니까?`)) return;
-
     try {
+      showGlobalLoading('삭제 중...');
       await apiPost('taskDeleteItem', {
         request_user_email: currentUser.email,
         task_id:            taskId
@@ -1134,8 +1433,26 @@
       showMessage('삭제되었습니다.', 'success');
     } catch (err) {
       showMessage(err.message || '삭제에 실패했습니다.', 'error');
+    } finally {
+      hideGlobalLoading();
     }
   };
+
+  function setSingleDay(single) {
+    const checkbox = document.getElementById('modalSingleDay');
+    const endInput = document.getElementById('modalEndDate');
+    if (!checkbox || !endInput) return;
+    checkbox.checked = single;
+    if (single) {
+      endInput.style.display = 'none';
+      // 종료일을 시작일과 동일하게 맞춤
+      const startVal = document.getElementById('modalStartDate')?.value || '';
+      endInput.value = startVal;
+    } else {
+      endInput.style.display = '';
+      endInput.min = document.getElementById('modalStartDate')?.value || '';
+    }
+  }
 
   function openTaskModal() {
     document.getElementById('taskModal').classList.add('open');
@@ -1147,20 +1464,24 @@
   }
 
   async function saveTask() {
-    const taskDate    = document.getElementById('modalTaskDate').value.trim();
+    const startDate   = document.getElementById('modalStartDate').value.trim();
+    const isSingle    = document.getElementById('modalSingleDay').checked;
+    const endDate     = isSingle ? startDate : (document.getElementById('modalEndDate').value.trim() || startDate);
     const category    = document.getElementById('modalCategory').value.trim();
     const title       = document.getElementById('modalTitle').value.trim();
     const description = document.getElementById('modalDescription').value.trim();
     const priority    = document.querySelector('input[name="priority"]:checked')?.value || 'MEDIUM';
     const status      = document.querySelector('input[name="status"]:checked')?.value   || 'TODO';
 
-    if (!taskDate)  { alert('업무일을 입력하세요.');    return; }
+    if (!startDate) { alert('시작일을 입력하세요.');    return; }
     if (!category)  { alert('업무 구분을 선택하세요.'); return; }
     if (!title)     { alert('업무 제목을 입력하세요.'); return; }
+    if (endDate < startDate) { alert('종료일은 시작일보다 빠를 수 없습니다.'); return; }
 
     const payload = {
       request_user_email: currentUser.email,
-      task_date:    taskDate,
+      start_date:   startDate,
+      end_date:     endDate,
       category:     category,
       title:        title,
       description:  description,
@@ -1171,14 +1492,27 @@
     const saveBtn = document.getElementById('taskModalSaveBtn');
 
     try {
-      saveBtn.disabled    = true;
-      saveBtn.textContent = '저장 중...';
+      setTaskModalLoading(true, editingTaskId ? '수정 중...' : '저장 중...');
 
       if (editingTaskId) {
         payload.task_id = editingTaskId;
         await apiPost('taskUpdateItem', payload);
         const idx = weeklyTasks.findIndex(t => t.task_id === editingTaskId);
-        if (idx !== -1) weeklyTasks[idx] = Object.assign({}, weeklyTasks[idx], payload);
+        if (idx !== -1) {
+          const newWeekStart = getWeekStart(startDate);
+          const newWeekEnd   = getWeekEnd(newWeekStart);
+          // start_date 또는 end_date 가 현재 주에 걸쳐 있으면 로컬 갱신, 아니면 제거
+          const overlapsCurrentWeek = startDate <= getWeekEnd(weeklyWeekStart) &&
+                                      endDate   >= weeklyWeekStart;
+          if (overlapsCurrentWeek) {
+            weeklyTasks[idx] = Object.assign({}, weeklyTasks[idx], payload, {
+              week_start: newWeekStart,
+              week_end:   newWeekEnd
+            });
+          } else {
+            weeklyTasks.splice(idx, 1);
+          }
+        }
         showMessage('업무가 수정되었습니다.', 'success');
       } else {
         const res = await apiPost('taskCreateItem', payload);
@@ -1193,8 +1527,361 @@
     } catch (err) {
       showMessage(err.message || '저장에 실패했습니다.', 'error');
     } finally {
-      saveBtn.disabled    = false;
-      saveBtn.textContent = '저장';
+      setTaskModalLoading(false);
+    }
+  }
+
+  // ── 덮어쓰기 확인 모달 ──────────────────────────────────────
+  function showOverwriteConfirm(weekStart, statusLabel) {
+    return new Promise(function(resolve) {
+      document.getElementById('overwriteWeekLabel').textContent  = weekStart;
+      document.getElementById('overwriteStatusLabel').textContent = statusLabel;
+      document.getElementById('overwriteModal').classList.add('open');
+
+      function onConfirm() { cleanup(); resolve(true); }
+      function onCancel()  { cleanup(); resolve(false); }
+
+      function cleanup() {
+        document.getElementById('overwriteModal').classList.remove('open');
+        document.getElementById('overwriteConfirmBtn').removeEventListener('click', onConfirm);
+        document.getElementById('overwriteCancelBtn').removeEventListener('click', onCancel);
+      }
+
+      document.getElementById('overwriteConfirmBtn').addEventListener('click', onConfirm);
+      document.getElementById('overwriteCancelBtn').addEventListener('click', onCancel);
+    });
+  }
+
+  // ── 검색 ─────────────────────────────────────────────────────
+
+  function setSearchDefaultDates() {
+    const fromEl = document.getElementById('searchDateFrom');
+    const toEl   = document.getElementById('searchDateTo');
+    if (!fromEl || !toEl) return;
+    // 이미 값이 있으면 덮어쓰지 않음
+    if (fromEl.value && toEl.value) return;
+    const today  = new Date();
+    const from   = new Date(today);
+    from.setDate(today.getDate() - 7);
+    toEl.value   = formatDateStr(today);
+    fromEl.value = formatDateStr(from);
+  }
+
+  function updateSearchCategorySelect() {
+    const sel = document.getElementById('searchCategory');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">전체</option>' +
+      Object.entries(CATEGORY_LABELS).map(([v, n]) =>
+        `<option value="${esc(v)}"${v === current ? ' selected' : ''}>${esc(n)}</option>`
+      ).join('');
+  }
+
+  // applyCategories 후 검색 셀렉트도 동기화됨 (applyCategories 내부에서 처리)
+
+  async function runSearch() {
+    const dateFrom  = document.getElementById('searchDateFrom').value.trim();
+    const dateTo    = document.getElementById('searchDateTo').value.trim();
+    const keyword   = document.getElementById('searchKeyword').value.trim();
+    const category  = document.getElementById('searchCategory').value.trim();
+    const status    = document.getElementById('searchStatus').value.trim();
+    const priority  = document.getElementById('searchPriority').value.trim();
+
+    if (!dateFrom && !dateTo && !keyword && !category && !status && !priority) {
+      showMessage('검색 조건을 하나 이상 입력하세요.', 'error');
+      return;
+    }
+
+    const resultList = document.getElementById('searchResultList');
+    const resultHead = document.getElementById('searchResultHead');
+    resultHead.style.display = 'none';
+    resultList.innerHTML = `
+      <div class="search-loading">
+        <div class="task-loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>
+        검색 중...
+      </div>`;
+
+    try {
+      const params = { request_user_email: currentUser.email };
+      if (dateFrom)  params.date_from = dateFrom;
+      if (dateTo)    params.date_to   = dateTo;
+      if (keyword)   params.keyword   = keyword;
+      if (category)  params.category  = category;
+      if (status)    params.status    = status;
+      if (priority)  params.priority  = priority;
+
+      const res     = await apiGet('taskSearch', params);
+      const results = res.data || [];
+
+      renderSearchResults(results, keyword);
+
+    } catch (err) {
+      resultList.innerHTML = `
+        <div class="task-empty task-empty--error">
+          <div class="task-empty-icon">⚠️</div>
+          <div class="task-empty-text">${esc(err.message || '검색에 실패했습니다.')}</div>
+        </div>`;
+    }
+  }
+
+  function renderSearchResults(results, keyword) {
+    const resultList = document.getElementById('searchResultList');
+    const resultHead = document.getElementById('searchResultHead');
+    const countEl   = document.getElementById('searchResultCount');
+
+    resultHead.style.display = '';
+    countEl.innerHTML = `총 <strong>${results.length}</strong>건`;
+
+    if (!results.length) {
+      resultList.innerHTML = `
+        <div class="task-empty">
+          <div class="task-empty-icon">🔍</div>
+          <div class="task-empty-text">검색 결과가 없습니다.</div>
+        </div>`;
+      return;
+    }
+
+    resultList.innerHTML = `<div style="padding:8px 22px 16px;">` +
+      results.map(t => {
+        const priorityCls = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
+        const statusCls   = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
+        const statusLabel = STATUS_LABELS[t.status] || t.status;
+        const catLabel    = CATEGORY_LABELS[t.category] || t.category || '';
+        const isSingle    = !t.end_date || t.start_date === t.end_date;
+        const dateStr     = isSingle
+          ? t.start_date.substring(5).replace('-', '/')
+          : t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
+
+        const titleHtml = keyword ? highlight(t.title, keyword)      : esc(t.title);
+        const descHtml  = keyword ? highlight(t.description, keyword) : esc(t.description);
+
+        return `
+          <div class="task-item" onclick="TASK_APP.openSearchItem('${esc(t.task_id)}')">
+            <span class="task-priority-dot ${priorityCls}"></span>
+            <div class="task-item-body">
+              <div class="task-item-title">${titleHtml}</div>
+              <div class="task-item-meta">
+                <span class="task-badge badge-category">${esc(catLabel)}</span>
+                <span class="task-badge ${statusCls}">${esc(statusLabel)}</span>
+                ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${descHtml}</span>` : ''}
+              </div>
+            </div>
+            <span class="search-item-date">${esc(dateStr)}</span>
+          </div>`;
+      }).join('') + `</div>`;
+  }
+
+  function highlight(text, keyword) {
+    if (!text || !keyword) return esc(text);
+    const escaped   = esc(text);
+    const escapedKw = esc(keyword).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return escaped.replace(new RegExp('(' + escapedKw + ')', 'gi'),
+      '<mark style="background:#fef08a;border-radius:2px;padding:0 1px;">$1</mark>');
+  }
+
+  function resetSearch() {
+    document.getElementById('searchDateFrom').value = '';
+    document.getElementById('searchDateTo').value   = '';
+    document.getElementById('searchKeyword').value  = '';
+    document.getElementById('searchCategory').value = '';
+    document.getElementById('searchStatus').value   = '';
+    document.getElementById('searchPriority').value = '';
+    setSearchDefaultDates();
+    document.getElementById('searchResultHead').style.display = 'none';
+    document.getElementById('searchResultList').innerHTML = `
+      <div class="task-empty">
+        <div class="task-empty-icon">🔍</div>
+        <div class="task-empty-text">검색 조건을 입력하고 검색 버튼을 눌러주세요.</div>
+      </div>`;
+  }
+
+  window.TASK_APP.openSearchItem = function(taskId) {
+    apiGet('taskSearch', {
+      request_user_email: currentUser.email,
+      date_from: '2000-01-01',
+      date_to:   '2099-12-31'
+    }).then(res => {
+      const task = (res.data || []).find(t => t.task_id === taskId);
+      if (!task) return;
+      weeklyWeekStart = getWeekStart(task.start_date);
+      loadWeeklyTasks().then(() => {
+        switchTab('weekly');
+        TASK_APP.openEditModal(taskId);
+      });
+    }).catch(err => showMessage(err.message, 'error'));
+  };
+
+  // ── 카테고리 관리 ────────────────────────────────────────────
+
+  async function loadCategories() {
+    try {
+      const res = await apiGet('taskGetCategories', {
+        request_user_email: currentUser.email
+      });
+      applyCategories(res);
+    } catch (err) {
+      // 실패해도 기본값 유지
+    }
+  }
+
+  function applyCategories(res) {
+    if (!res || !res.data) return;
+    const newLabels = {};
+    res.data.forEach(function(c) {
+      newLabels[c.code_value] = c.code_name;
+    });
+    CATEGORY_LABELS   = newLabels;
+    categoryCodeGroup = res.code_group    || 'TASK_CATEGORY';
+    categoryIsCustom  = res.is_team_custom || false;
+    // 모달 + 검색 카테고리 셀렉트 동시 갱신
+    updateCategorySelect();
+    updateSearchCategorySelect();
+  }
+
+  function updateCategorySelect() {
+    const sel = document.getElementById('modalCategory');
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">선택하세요</option>' +
+      Object.entries(CATEGORY_LABELS).map(function([v, n]) {
+        return `<option value="${esc(v)}">${esc(n)}</option>`;
+      }).join('');
+    sel.value = currentVal;
+  }
+
+  async function openCategoryModal() {
+    document.getElementById('categoryModal').classList.add('open');
+    await renderCategoryList();
+  }
+
+  function closeCategoryModal() {
+    document.getElementById('categoryModal').classList.remove('open');
+    resetCategoryForm();
+  }
+
+  async function renderCategoryList() {
+    const listEl  = document.getElementById('categoryList');
+    const badgeEl = document.getElementById('categorySourceBadge');
+    const tipEl   = document.getElementById('categoryTip');
+
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">불러오는 중...</div>';
+
+    try {
+      const res = await apiGet('taskGetCategories', { request_user_email: currentUser.email });
+      applyCategories(res);
+
+      badgeEl.textContent  = categoryIsCustom ? '팀 전용' : '기본 공통';
+      badgeEl.className    = 'category-source-badge ' + (categoryIsCustom ? 'is-custom' : 'is-default');
+      tipEl.textContent    = categoryIsCustom
+        ? '팀 전용 카테고리가 적용 중입니다. 항목을 모두 삭제하면 기본 카테고리로 복원됩니다.'
+        : '기본 카테고리 사용 중입니다. 항목을 추가하면 팀 전용으로 전환됩니다.';
+
+      if (!res.data || res.data.length === 0) {
+        listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">등록된 카테고리가 없습니다.</div>';
+        return;
+      }
+
+      listEl.innerHTML = res.data.map(function(c) {
+        const canDelete = categoryIsCustom; // 팀 전용만 삭제 가능
+        return `
+          <div class="category-item">
+            <span class="category-item-order">${c.sort_order}</span>
+            <span class="category-item-name">${esc(c.code_name)}</span>
+            <span class="category-item-code">${esc(c.code_value)}</span>
+            <div class="category-item-actions">
+              <button class="task-icon-btn" title="수정" onclick="TASK_APP.editCategory('${esc(c.code_value)}','${esc(c.code_name)}',${c.sort_order},'${esc(c.code_group)}')">✎</button>
+              ${canDelete ? `<button class="task-icon-btn danger" title="삭제" onclick="TASK_APP.deleteCategory('${esc(c.code_value)}','${esc(c.code_name)}','${esc(c.code_group)}')">🗑</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (err) {
+      listEl.innerHTML = `<div style="font-size:12px;color:#dc2626;">${esc(err.message)}</div>`;
+    }
+  }
+
+  function resetCategoryForm() {
+    document.getElementById('catInputName').value  = '';
+    document.getElementById('catInputOrder').value = '';
+    document.getElementById('catEditValue').value  = '';
+    document.getElementById('catEditGroup').value  = '';
+    document.getElementById('catAddBtn').textContent = '추가';
+  }
+
+  window.TASK_APP.editCategory = function(codeValue, codeName, sortOrder, codeGroup) {
+    document.getElementById('catInputName').value  = codeName;
+    document.getElementById('catInputOrder').value = sortOrder;
+    document.getElementById('catEditValue').value  = codeValue;
+    document.getElementById('catEditGroup').value  = codeGroup;
+    document.getElementById('catAddBtn').textContent = '수정';
+    document.getElementById('catInputName').focus();
+  };
+
+  window.TASK_APP.deleteCategory = async function(codeValue, codeName, codeGroup) {
+    if (!confirm(`"${codeName}" 카테고리를 삭제하시겠습니까?`)) return;
+    try {
+      await apiPost('taskDeleteCategory', {
+        request_user_email: currentUser.email,
+        code_value:         codeValue,
+        code_group:         codeGroup
+      });
+      showMessage('카테고리가 삭제되었습니다.', 'success');
+      await renderCategoryList();
+    } catch (err) {
+      showMessage(err.message || '삭제에 실패했습니다.', 'error');
+    }
+  };
+
+  async function saveCategoryItem() {
+    const name       = document.getElementById('catInputName').value.trim();
+    const order      = Number(document.getElementById('catInputOrder').value) || 1;
+    const editValue  = document.getElementById('catEditValue').value.trim();
+    const editGroup  = document.getElementById('catEditGroup').value.trim();
+
+    if (!name) { alert('카테고리 이름을 입력하세요.'); return; }
+
+    // 신규 추가 시 code_value 자동 생성 (한글 → 영문 불가, 타임스탬프 기반)
+    const codeValue = editValue || ('CAT_' + Date.now().toString(36).toUpperCase());
+
+    try {
+      document.getElementById('catAddBtn').disabled = true;
+      await apiPost('taskSaveCategory', {
+        request_user_email: currentUser.email,
+        code_value:         codeValue,
+        code_name:          name,
+        sort_order:         order
+      });
+      showMessage(editValue ? '카테고리가 수정되었습니다.' : '카테고리가 추가되었습니다.', 'success');
+      resetCategoryForm();
+      await renderCategoryList();
+      // 모달 카테고리 셀렉트 갱신
+      updateCategorySelect();
+    } catch (err) {
+      showMessage(err.message || '저장에 실패했습니다.', 'error');
+    } finally {
+      document.getElementById('catAddBtn').disabled = false;
+    }
+  }
+
+  function setTaskModalLoading(active, text) {
+    const overlay  = document.getElementById('taskModalLoading');
+    const textEl   = document.getElementById('taskModalLoadingText');
+    const saveBtn  = document.getElementById('taskModalSaveBtn');
+    const cancelBtn = document.getElementById('taskModalCancelBtn');
+    const closeBtn  = document.getElementById('taskModalClose');
+    if (!overlay) return;
+    if (active) {
+      if (textEl) textEl.textContent = text || '저장 중...';
+      overlay.classList.add('active');
+      if (saveBtn)   saveBtn.disabled  = true;
+      if (cancelBtn) cancelBtn.disabled = true;
+      if (closeBtn)  closeBtn.disabled  = true;
+    } else {
+      overlay.classList.remove('active');
+      if (saveBtn)   saveBtn.disabled  = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+      if (closeBtn)  closeBtn.disabled  = false;
     }
   }
 
