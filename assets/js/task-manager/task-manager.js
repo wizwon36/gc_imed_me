@@ -206,11 +206,12 @@
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
 
     if (tab === 'journal') {
-      journalWeekStart = weeklyWeekStart;
-      // 생성 버튼으로 이미 데이터가 세팅된 경우 재로드 스킵
+      // _fromGenerate: handleGenerateJournal이 currentJournal/currentJournalTasks를 직접 세팅 후
+      // renderJournal/renderJournalTaskSummary까지 호출했으므로 loadJournal 재호출 불필요
       if (currentJournal && currentJournal._fromGenerate) {
         delete currentJournal._fromGenerate;
       } else {
+        journalWeekStart = weeklyWeekStart;
         loadJournal();
       }
     }
@@ -281,18 +282,13 @@
         week_start:         weeklyWeekStart
       });
 
-      const journal      = res.data.journal;
-      // tasks는 API 응답 대신 이미 로드된 weeklyTasks를 직접 사용 (화면과 일치 보장)
-      const items        = weeklyTasks || [];
-      const done         = items.filter(t => t.status === 'DONE').length;
-      const inProgress   = items.filter(t => t.status === 'IN_PROGRESS').length;
-      const high         = items.filter(t => t.priority === 'HIGH').length;
-      const tasks        = {
-        week_start: weeklyWeekStart,
-        week_end:   getWeekEnd(weeklyWeekStart),
-        items:      items,
-        summary:    { total: items.length, done, in_progress: inProgress, todo: items.length - done - inProgress, high }
-      };
+      const journal = res.data.journal;
+      // ★ FIX: 로컬 weeklyTasks 대신 API 응답 tasks 사용
+      //         weeklyTasks는 비동기 로드가 완료되지 않았거나 다른 주차일 수 있어 신뢰 불가
+      //         journalGetOrCreate가 task_items 시트에서 직접 집계한 tasks가 항상 정확함
+      const serverTasks  = res.data.tasks;
+      const items        = serverTasks.items || [];
+      const tasks        = serverTasks;
       const isExisting   = !!journal.created_at &&
                            (journal.summary || journal.achievements || journal.next_plan);
 
@@ -342,21 +338,24 @@
         issues:              journal.issues || ''
       });
 
-      // 생성된 일지 데이터를 직접 세팅 후 일지 탭으로 이동
+      // currentJournal에 저장된 내용 직접 세팅
       journalWeekStart    = weeklyWeekStart;
       currentJournal      = Object.assign({}, journal, {
-        summary:         allItems,
-        achievements:    doneItems,
-        next_plan:       pendingItems,
-        issues:          journal.issues || '',
-        _fromGenerate:   true   // switchTab에서 loadJournal 재호출 방지 플래그
+        summary:       allItems,
+        achievements:  doneItems,
+        next_plan:     pendingItems,
+        issues:        journal.issues || '',
+        _fromGenerate: true
       });
       currentJournalTasks = tasks;
 
-      // 탭 전환 — _fromGenerate 플래그로 loadJournal 재호출 방지
+      // ★ FIX: switchTab → renderJournal → renderJournalTaskSummary 순서 보장
+      //         switchTab 내부에서 _fromGenerate 플래그 감지 → loadJournal 스킵
+      //         패널 전환 후 즉시 렌더링해 화면에 반영
       switchTab('journal');
       renderJournal();
       renderJournalTaskSummary();
+      showMessage('업무일지가 생성되었습니다.', 'success');
 
     } catch (err) {
       showMessage(err.message || '업무일지 생성에 실패했습니다.', 'error');
@@ -526,8 +525,12 @@
     const todayWeekStart = getWeekStart(formatDateStr(new Date()));
     const isPastWeek     = journalWeekStart < todayWeekStart;
 
+    // ★ FIX: journalGet → journalGetOrCreate 로 통일
+    //         journalGet은 journal=null + tasks(빈 배열 가능) 반환으로 "미작성" 화면 오표시 버그 있음
+    //         journalGetOrCreate는 항상 journal 객체 반환 + task_items 시트에서 tasks 직접 집계 반환
+    //         → 두 시트(task_items / task_journals) 연결이 항상 보장됨
     try {
-      const res = await apiGet('journalGet', {
+      const res = await apiGet('journalGetOrCreate', {
         request_user_email: currentUser.email,
         week_start:         journalWeekStart
       });
@@ -568,7 +571,7 @@
 
       document.getElementById('autosaveText').textContent = isPastWeek
         ? '해당 주에 작성된 일지가 없습니다.'
-        : '주간업무 탭에서 [업무일지 생성] 버튼을 눌러 주세요.';
+        : '일지를 불러오지 못했습니다. 페이지를 새로고침해 주세요.';
       return;
     }
 
@@ -605,56 +608,17 @@
     submitBtn.style.display = isClosed || status === 'SUBMITTED' ? 'none' : '';
     closeBtn.style.display  = isManager && !isClosed ? '' : 'none';
 
-    // 필드 채우기
+    // 필드 채우기 — currentJournal에 세팅된 값을 그대로 표시
+    // (handleGenerateJournal에서 저장 후 직접 세팅하므로 별도 자동채우기 로직 불필요)
     setField('attendanceThisWeek', j.attendance_this_week, isClosed);
     setField('attendanceNextWeek', j.attendance_next_week, isClosed);
-
-    // 최초 생성(DRAFT이고 모든 텍스트 필드가 비어있음)인 경우 업무 목록으로 자동 채우기
-    const isNew = status === 'DRAFT' && !j.summary && !j.achievements && !j.next_plan && !j.issues;
-
-    if (isNew && currentJournalTasks && (currentJournalTasks.items || []).length > 0) {
-      const items = currentJournalTasks.items || [];
-
-      const allItems = items
-        .map(function(t) {
-          var statusLabel = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-          var catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
-          return '• [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')';
-        })
-        .join('\n');
-
-      var doneItems = items
-        .filter(function(t) { return t.status === 'DONE'; })
-        .map(function(t) {
-          var catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
-          return '• [' + catLabel + '] ' + t.title;
-        })
-        .join('\n');
-
-      var pendingItems = items
-        .filter(function(t) { return t.status !== 'DONE'; })
-        .map(function(t) {
-          var statusLabel = t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-          var catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
-          return '• [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')';
-        })
-        .join('\n');
-
-      setField('journalSummary',      allItems,      isClosed);
-      setField('journalAchievements', doneItems,     isClosed);
-      setField('journalNextPlan',     pendingItems,  isClosed);
-      setField('journalIssues',       '',            isClosed);
-
-      journalDirty = true; // 자동 생성 내용을 저장 대상으로 표시
-    } else {
-      setField('journalSummary',      j.summary,      isClosed);
-      setField('journalAchievements', j.achievements, isClosed);
-      setField('journalNextPlan',     j.next_plan,    isClosed);
-      setField('journalIssues',       j.issues,       isClosed);
-    }
+    setField('journalSummary',      j.summary,      isClosed);
+    setField('journalAchievements', j.achievements, isClosed);
+    setField('journalNextPlan',     j.next_plan,    isClosed);
+    setField('journalIssues',       j.issues,       isClosed);
 
     updateAutosaveStatus('');
-    if (!isNew) journalDirty = false;
+    journalDirty = false;
   }
 
   function setField(id, value, disabled) {
