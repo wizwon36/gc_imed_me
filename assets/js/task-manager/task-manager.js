@@ -211,7 +211,11 @@
       if (currentJournal && currentJournal._fromGenerate) {
         delete currentJournal._fromGenerate;
       } else {
-        journalWeekStart = weeklyWeekStart;
+        // 일지 탭에 한 번도 진입하지 않은 경우(초기)에만 주간업무 주차로 동기화
+        // 이미 일지 탭에서 직접 다른 주로 이동한 경우 그 주차 유지
+        if (!journalWeekStart || journalWeekStart === weeklyWeekStart) {
+          journalWeekStart = weeklyWeekStart;
+        }
         loadJournal();
       }
     }
@@ -491,9 +495,12 @@
       currentJournalTasks = serverTasks;
 
       switchTab('journal');
-      renderJournal();
-      renderJournalTaskSummary();
-      showMessage('업무일지가 생성되었습니다.', 'success');
+      // switchTab 내부(_fromGenerate 삭제 등) 처리 완료 후 렌더링
+      Promise.resolve().then(() => {
+        renderJournal();
+        renderJournalTaskSummary();
+        showMessage('업무일지가 생성되었습니다.', 'success');
+      });
 
     } catch (err) {
       showMessage(err.message || '업무일지 생성에 실패했습니다.', 'error');
@@ -1334,7 +1341,19 @@
         payload.task_id = editingTaskId;
         await apiPost('taskUpdateItem', payload);
         const idx = weeklyTasks.findIndex(t => t.task_id === editingTaskId);
-        if (idx !== -1) weeklyTasks[idx] = Object.assign({}, weeklyTasks[idx], payload);
+        if (idx !== -1) {
+          const newWeekStart = getWeekStart(taskDate);
+          if (newWeekStart === weeklyWeekStart) {
+            // 같은 주 안에서 수정 — 로컬 갱신
+            weeklyTasks[idx] = Object.assign({}, weeklyTasks[idx], payload, {
+              week_start: newWeekStart,
+              week_end:   getWeekEnd(newWeekStart)
+            });
+          } else {
+            // 다른 주로 날짜 변경 — 현재 주 목록에서 제거
+            weeklyTasks.splice(idx, 1);
+          }
+        }
         showMessage('업무가 수정되었습니다.', 'success');
       } else {
         const res = await apiPost('taskCreateItem', payload);
