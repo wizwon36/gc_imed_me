@@ -1126,6 +1126,24 @@
   color: #dc2626;
 }
 
+/* ── 단기업무 체크박스 ── */
+.single-day-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.single-day-check input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
 /* ── 모달 내부 로딩 오버레이 ── */
 .task-modal-loading {
   display: none;
