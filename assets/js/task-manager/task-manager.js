@@ -205,6 +205,11 @@
     document.getElementById('panelJournal').style.display = tab === 'journal' ? '' : 'none';
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
 
+    if (tab === 'journal') {
+      // 주간 업무 탭과 같은 주로 맞추고 새로 로드 (업무 추가/변경 반영)
+      journalWeekStart = weeklyWeekStart;
+      loadJournal();
+    }
     if (tab === 'team' && isManager) loadTeamJournals();
   }
 
@@ -256,6 +261,11 @@
   // ── 주간 업무 로드 ───────────────────────────────────────────
   async function loadWeeklyTasks() {
     updateWeekLabel('weekRangeLabel', 'weekSubLabel', weeklyWeekStart);
+
+    // 주 이동 즉시 타임라인 스켈레톤으로 교체 (이전 주 데이터 오인 방지)
+    weeklyTasks = [];
+    renderWeekTimeline();
+    updateWeeklySummary();
 
     try {
       const res = await apiGet('taskGetItems', {
