@@ -60,6 +60,9 @@
         <button class="task-tab-btn" id="tabTeam" data-tab="team" style="display:none;">
           👥 팀원 현황
         </button>
+        <button class="task-tab-btn" data-tab="search" id="tabSearch">
+          🔍 검색
+        </button>
       </div>
 
       <!-- ── 공통 주차 네비게이터 ──────────────────────────────── -->
@@ -267,7 +270,86 @@
           </div>
         </div>
 
-      </div>
+      </div><!-- /panelTeam -->
+
+      <!-- ────────────────────────────────────────
+           탭: 검색
+      ──────────────────────────────────────── -->
+      <div id="panelSearch" style="display:none;">
+        <div class="task-card">
+
+          <!-- 검색 폼 -->
+          <div class="search-form">
+
+            <!-- 기간 -->
+            <div class="search-row">
+              <div class="search-field">
+                <label class="search-label">시작일</label>
+                <input type="date" class="form-input search-input" id="searchDateFrom" />
+              </div>
+              <span class="search-range-sep">~</span>
+              <div class="search-field">
+                <label class="search-label">종료일</label>
+                <input type="date" class="form-input search-input" id="searchDateTo" />
+              </div>
+            </div>
+
+            <!-- 키워드 -->
+            <div class="search-row">
+              <div class="search-field search-field--full">
+                <label class="search-label">키워드 <span style="color:var(--text-muted);font-weight:400;">(제목 · 상세내용)</span></label>
+                <div class="search-keyword-wrap">
+                  <input type="text" class="form-input" id="searchKeyword"
+                    placeholder="검색어를 입력하세요" />
+                  <button class="btn btn-primary search-btn" id="searchRunBtn">검색</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 카테고리 / 상태 / 중요도 -->
+            <div class="search-row search-row--filters">
+              <div class="search-field">
+                <label class="search-label">카테고리</label>
+                <div class="search-check-group" id="searchCategoryGroup"></div>
+              </div>
+              <div class="search-field">
+                <label class="search-label">상태</label>
+                <div class="search-check-group">
+                  <label class="search-check"><input type="checkbox" name="searchStatus" value="TODO" /> 예정</label>
+                  <label class="search-check"><input type="checkbox" name="searchStatus" value="IN_PROGRESS" /> 진행중</label>
+                  <label class="search-check"><input type="checkbox" name="searchStatus" value="DONE" /> 완료</label>
+                </div>
+              </div>
+              <div class="search-field">
+                <label class="search-label">중요도</label>
+                <div class="search-check-group">
+                  <label class="search-check"><input type="checkbox" name="searchPriority" value="HIGH" /> 높음</label>
+                  <label class="search-check"><input type="checkbox" name="searchPriority" value="MEDIUM" /> 보통</label>
+                  <label class="search-check"><input type="checkbox" name="searchPriority" value="LOW" /> 낮음</label>
+                </div>
+              </div>
+              <div class="search-field" style="align-self:flex-end;">
+                <button class="btn search-reset-btn" id="searchResetBtn">초기화</button>
+              </div>
+            </div>
+
+          </div><!-- /search-form -->
+
+          <!-- 검색 결과 헤더 -->
+          <div class="search-result-head" id="searchResultHead" style="display:none;">
+            <span id="searchResultCount"></span>
+          </div>
+
+          <!-- 검색 결과 목록 -->
+          <div id="searchResultList">
+            <div class="task-empty">
+              <div class="task-empty-icon">🔍</div>
+              <div class="task-empty-text">검색 조건을 입력하고 검색 버튼을 눌러주세요.</div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /panelSearch -->
 
     </div><!-- /appBody -->
 
