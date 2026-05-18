@@ -312,7 +312,8 @@
       loadJournal();
     } else if (activeTab === 'team') {
       teamWeekStart = offsetWeek(teamWeekStart, delta);
-      loadTeamJournals();
+      showGlobalLoading('불러오는 중...');
+      loadTeamJournals().finally(() => hideGlobalLoading());
     } else {
       weeklyWeekStart = offsetWeek(weeklyWeekStart, delta);
       loadWeeklyTasks();
@@ -327,7 +328,8 @@
       loadJournal();
     } else if (activeTab === 'team') {
       teamWeekStart = weekStart;
-      loadTeamJournals();
+      showGlobalLoading('불러오는 중...');
+      loadTeamJournals().finally(() => hideGlobalLoading());
     } else {
       weeklyWeekStart = weekStart;
       loadWeeklyTasks();
@@ -1400,10 +1402,9 @@
   window.TASK_APP.toggleTaskStatus = async function(taskId) {
     const task = weeklyTasks.find(t => t.task_id === taskId);
     if (!task) return;
-
     const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
-
     try {
+      showGlobalLoading(newStatus === 'DONE' ? '완료 처리 중...' : '되돌리는 중...');
       await apiPost('taskUpdateItem', {
         request_user_email: currentUser.email,
         task_id:            taskId,
@@ -1414,6 +1415,8 @@
       updateWeeklySummary();
     } catch (err) {
       showMessage(err.message || '상태 변경에 실패했습니다.', 'error');
+    } finally {
+      hideGlobalLoading();
     }
   };
 
@@ -1421,8 +1424,8 @@
     const task = weeklyTasks.find(t => t.task_id === taskId);
     if (!task) return;
     if (!confirm(`"${task.title}" 업무를 삭제하시겠습니까?`)) return;
-
     try {
+      showGlobalLoading('삭제 중...');
       await apiPost('taskDeleteItem', {
         request_user_email: currentUser.email,
         task_id:            taskId
@@ -1433,6 +1436,8 @@
       showMessage('삭제되었습니다.', 'success');
     } catch (err) {
       showMessage(err.message || '삭제에 실패했습니다.', 'error');
+    } finally {
+      hideGlobalLoading();
     }
   };
 
