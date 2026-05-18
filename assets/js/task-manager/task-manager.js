@@ -547,6 +547,9 @@
 
         const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
         lines.push('  ' + priLabel + ' [' + catLabel + '] ' + t.title + statusSuffix);
+        if (t.description && t.description.trim()) {
+          lines.push('     └ ' + t.description.trim());
+        }
       });
 
       // 날짜 그룹 사이 빈 줄 (마지막 제외)
