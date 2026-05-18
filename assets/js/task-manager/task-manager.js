@@ -7,18 +7,10 @@
   'use strict';
 
   // ── 상수 ────────────────────────────────────────────────────
-  // 카테고리 — 초기값, 앱 로드 시 서버에서 동적으로 교체됨
-  let CATEGORY_LABELS = {
-    PURCHASE:  '구매',
-    STRATEGY:  '전략기획',
-    OPERATION: '운영',
-    FACILITY:  '시설',
-    SAFETY:    '안전보건',
-    MARKETING: '홍보마케팅',
-    ETC:       '기타'
-  };
-  let categoryCodeGroup   = 'TASK_CATEGORY';  // 현재 사용 중인 code_group
-  let categoryIsCustom    = false;             // 팀 전용 카테고리 여부
+  // 카테고리 — 앱 로드 시 서버에서 동적으로 채워짐 (하드코딩 없음)
+  let CATEGORY_LABELS   = {};
+  let categoryCodeGroup = 'TASK_CATEGORY';
+  let categoryIsCustom  = false;
 
   const STATUS_LABELS = {
     TODO:        '예정',
