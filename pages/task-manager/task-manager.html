@@ -468,6 +468,50 @@
   </div>
 
   <!-- ────────────────────────────────────────
+       덮어쓰기 확인 모달
+  ──────────────────────────────────────── -->
+  <div class="task-modal-overlay" id="overwriteModal">
+    <div class="task-modal" style="max-width:420px;">
+      <div class="task-modal-head">
+        <span class="task-modal-title">업무일지 덮어쓰기 확인</span>
+      </div>
+      <div class="task-modal-body">
+        <p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px;">
+          <strong id="overwriteWeekLabel"></strong> 주차에 이미
+          <strong id="overwriteStatusLabel"></strong> 상태의 업무일지가 있습니다.
+        </p>
+
+        <div class="overwrite-section overwrite-section--replace">
+          <div class="overwrite-section-head">
+            <span>🔄</span>
+            <span>업무 목록 기반으로 <strong>새로 작성</strong></span>
+          </div>
+          <ul class="overwrite-list">
+            <li>📋 주간 업무 요약</li>
+            <li>🏆 금주 성과 및 완료 사항</li>
+            <li>🎯 차주 업무 계획</li>
+          </ul>
+        </div>
+
+        <div class="overwrite-section overwrite-section--keep">
+          <div class="overwrite-section-head">
+            <span>🔒</span>
+            <span>기존 내용 <strong>그대로 유지</strong></span>
+          </div>
+          <ul class="overwrite-list">
+            <li>🗓️ 이번 주 / 다음 주 근태 특이사항</li>
+            <li>⚠️ 이슈 / 건의사항</li>
+          </ul>
+        </div>
+      </div>
+      <div class="task-modal-footer">
+        <button class="btn" id="overwriteCancelBtn">취소</button>
+        <button class="btn btn-primary" id="overwriteConfirmBtn" style="background:#0369a1;border-color:#0369a1;">덮어쓰기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────
        카테고리 관리 모달 (manager / admin 전용)
   ──────────────────────────────────────── -->
   <div class="task-modal-overlay" id="categoryModal">
