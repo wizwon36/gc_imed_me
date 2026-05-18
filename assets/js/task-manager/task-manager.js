@@ -430,13 +430,53 @@
     // 필드 채우기
     setField('attendanceThisWeek', j.attendance_this_week, isClosed);
     setField('attendanceNextWeek', j.attendance_next_week, isClosed);
-    setField('journalSummary',      j.summary,      isClosed);
-    setField('journalAchievements', j.achievements, isClosed);
-    setField('journalNextPlan',     j.next_plan,    isClosed);
-    setField('journalIssues',       j.issues,       isClosed);
+
+    // 최초 생성(DRAFT이고 모든 텍스트 필드가 비어있음)인 경우 업무 목록으로 자동 채우기
+    const isNew = status === 'DRAFT' && !j.summary && !j.achievements && !j.next_plan && !j.issues;
+
+    if (isNew && currentJournalTasks && (currentJournalTasks.items || []).length > 0) {
+      const items = currentJournalTasks.items || [];
+
+      const allItems = items
+        .map(function(t) {
+          var statusLabel = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+          var catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
+          return '• [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')';
+        })
+        .join('\n');
+
+      var doneItems = items
+        .filter(function(t) { return t.status === 'DONE'; })
+        .map(function(t) {
+          var catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
+          return '• [' + catLabel + '] ' + t.title;
+        })
+        .join('\n');
+
+      var pendingItems = items
+        .filter(function(t) { return t.status !== 'DONE'; })
+        .map(function(t) {
+          var statusLabel = t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+          var catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
+          return '• [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')';
+        })
+        .join('\n');
+
+      setField('journalSummary',      allItems,      isClosed);
+      setField('journalAchievements', doneItems,     isClosed);
+      setField('journalNextPlan',     pendingItems,  isClosed);
+      setField('journalIssues',       '',            isClosed);
+
+      journalDirty = true; // 자동 생성 내용을 저장 대상으로 표시
+    } else {
+      setField('journalSummary',      j.summary,      isClosed);
+      setField('journalAchievements', j.achievements, isClosed);
+      setField('journalNextPlan',     j.next_plan,    isClosed);
+      setField('journalIssues',       j.issues,       isClosed);
+    }
 
     updateAutosaveStatus('');
-    journalDirty = false;
+    if (!isNew) journalDirty = false;
   }
 
   function setField(id, value, disabled) {
