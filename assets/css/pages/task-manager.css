@@ -1144,7 +1144,7 @@
   cursor: pointer;
 }
 
-/* ── 모달 내부 로딩 오버레이 ── */
+/* ── 모달 내부 로딩 오버레이 (업무 등록 모달용 — position: absolute) ── */
 .task-modal-loading {
   display: none;
   position: absolute;
@@ -1158,6 +1158,22 @@
 }
 
 .task-modal-loading.active {
+  display: flex;
+}
+
+/* ── 일지 카드 로딩 오버레이 (뷰포트 고정 — 스크롤과 무관하게 화면 중앙) ── */
+.journal-card-loading {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
+}
+
+.journal-card-loading.active {
   display: flex;
 }
 
