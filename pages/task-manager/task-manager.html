@@ -281,52 +281,53 @@
           <!-- 검색 폼 -->
           <div class="search-form">
 
-            <!-- 기간 -->
-            <div class="search-row">
-              <div class="search-field">
-                <label class="search-label">시작일</label>
-                <input type="date" class="form-input search-input" id="searchDateFrom" />
+            <!-- 1행: 기간 + 키워드 + 검색버튼 -->
+            <div class="search-main-row">
+              <div class="search-date-group">
+                <div class="search-field">
+                  <label class="search-label">시작일</label>
+                  <input type="date" class="form-input search-date-input" id="searchDateFrom" />
+                </div>
+                <span class="search-range-sep">~</span>
+                <div class="search-field">
+                  <label class="search-label">종료일</label>
+                  <input type="date" class="form-input search-date-input" id="searchDateTo" />
+                </div>
               </div>
-              <span class="search-range-sep">~</span>
-              <div class="search-field">
-                <label class="search-label">종료일</label>
-                <input type="date" class="form-input search-input" id="searchDateTo" />
-              </div>
-            </div>
-
-            <!-- 키워드 -->
-            <div class="search-row">
-              <div class="search-field search-field--full">
+              <div class="search-keyword-group">
                 <label class="search-label">키워드 <span style="color:var(--text-muted);font-weight:400;">(제목 · 상세내용)</span></label>
                 <div class="search-keyword-wrap">
-                  <input type="text" class="form-input" id="searchKeyword"
-                    placeholder="검색어를 입력하세요" />
+                  <input type="text" class="form-input" id="searchKeyword" placeholder="검색어를 입력하세요" />
                   <button class="btn btn-primary search-btn" id="searchRunBtn">검색</button>
                 </div>
               </div>
             </div>
 
-            <!-- 카테고리 / 상태 / 중요도 -->
-            <div class="search-row search-row--filters">
+            <!-- 2행: 카테고리 / 상태 / 중요도 콤보박스 + 초기화 -->
+            <div class="search-filter-row">
               <div class="search-field">
                 <label class="search-label">카테고리</label>
-                <div class="search-check-group" id="searchCategoryGroup"></div>
+                <select class="form-select search-select" id="searchCategory">
+                  <option value="">전체</option>
+                </select>
               </div>
               <div class="search-field">
                 <label class="search-label">상태</label>
-                <div class="search-check-group">
-                  <label class="search-check"><input type="checkbox" name="searchStatus" value="TODO" /> 예정</label>
-                  <label class="search-check"><input type="checkbox" name="searchStatus" value="IN_PROGRESS" /> 진행중</label>
-                  <label class="search-check"><input type="checkbox" name="searchStatus" value="DONE" /> 완료</label>
-                </div>
+                <select class="form-select search-select" id="searchStatus">
+                  <option value="">전체</option>
+                  <option value="TODO">예정</option>
+                  <option value="IN_PROGRESS">진행중</option>
+                  <option value="DONE">완료</option>
+                </select>
               </div>
               <div class="search-field">
                 <label class="search-label">중요도</label>
-                <div class="search-check-group">
-                  <label class="search-check"><input type="checkbox" name="searchPriority" value="HIGH" /> 높음</label>
-                  <label class="search-check"><input type="checkbox" name="searchPriority" value="MEDIUM" /> 보통</label>
-                  <label class="search-check"><input type="checkbox" name="searchPriority" value="LOW" /> 낮음</label>
-                </div>
+                <select class="form-select search-select" id="searchPriority">
+                  <option value="">전체</option>
+                  <option value="HIGH">높음</option>
+                  <option value="MEDIUM">보통</option>
+                  <option value="LOW">낮음</option>
+                </select>
               </div>
               <div class="search-field" style="align-self:flex-end;">
                 <button class="btn search-reset-btn" id="searchResetBtn">초기화</button>
