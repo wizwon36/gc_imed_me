@@ -282,8 +282,17 @@
       });
 
       const journal      = res.data.journal;
-      const tasks        = res.data.tasks;
-      const items        = tasks.items || [];
+      // tasks는 API 응답 대신 이미 로드된 weeklyTasks를 직접 사용 (화면과 일치 보장)
+      const items        = weeklyTasks || [];
+      const done         = items.filter(t => t.status === 'DONE').length;
+      const inProgress   = items.filter(t => t.status === 'IN_PROGRESS').length;
+      const high         = items.filter(t => t.priority === 'HIGH').length;
+      const tasks        = {
+        week_start: weeklyWeekStart,
+        week_end:   getWeekEnd(weeklyWeekStart),
+        items:      items,
+        summary:    { total: items.length, done, in_progress: inProgress, todo: items.length - done - inProgress, high }
+      };
       const isExisting   = !!journal.created_at &&
                            (journal.summary || journal.achievements || journal.next_plan);
 
@@ -559,7 +568,7 @@
 
       document.getElementById('autosaveText').textContent = isPastWeek
         ? '해당 주에 작성된 일지가 없습니다.'
-        : '주간업무 탭에서 [이 주차 업무일지 생성] 버튼을 눌러 주세요.';
+        : '주간업무 탭에서 [업무일지 생성] 버튼을 눌러 주세요.';
       return;
     }
 
