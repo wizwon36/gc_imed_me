@@ -485,9 +485,11 @@
         }
         const labelMap = { DRAFT: '작성중', SUBMITTED: '제출됨' };
         hideGlobalLoading();
-        const confirmed = confirm(
-          `이 주차(${weeklyWeekStart})에 이미 [${labelMap[journal.status] || journal.status}] 상태의 업무일지가 있습니다.\n` +
-          `현재 등록된 업무 목록으로 내용을 덮어쓸까요?`
+
+        // 커스텀 모달로 확인
+        const confirmed = await showOverwriteConfirm(
+          weeklyWeekStart,
+          labelMap[journal.status] || journal.status
         );
         if (!confirmed) return;
         showGlobalLoading('업무일지를 생성하는 중...');
@@ -1535,6 +1537,27 @@
     } finally {
       setTaskModalLoading(false);
     }
+  }
+
+  // ── 덮어쓰기 확인 모달 ──────────────────────────────────────
+  function showOverwriteConfirm(weekStart, statusLabel) {
+    return new Promise(function(resolve) {
+      document.getElementById('overwriteWeekLabel').textContent  = weekStart;
+      document.getElementById('overwriteStatusLabel').textContent = statusLabel;
+      document.getElementById('overwriteModal').classList.add('open');
+
+      function onConfirm() { cleanup(); resolve(true); }
+      function onCancel()  { cleanup(); resolve(false); }
+
+      function cleanup() {
+        document.getElementById('overwriteModal').classList.remove('open');
+        document.getElementById('overwriteConfirmBtn').removeEventListener('click', onConfirm);
+        document.getElementById('overwriteCancelBtn').removeEventListener('click', onCancel);
+      }
+
+      document.getElementById('overwriteConfirmBtn').addEventListener('click', onConfirm);
+      document.getElementById('overwriteCancelBtn').addEventListener('click', onCancel);
+    });
   }
 
   // ── 검색 ─────────────────────────────────────────────────────
