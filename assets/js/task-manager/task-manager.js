@@ -715,43 +715,20 @@
     updateSharedWeekNav();
     clearAutosave();
 
-    // ── 전체 일지 영역 로딩 상태 표시 ──────────────────────────
+    // ── 일지 카드 전체 로딩 오버레이 표시 ──────────────────────
+    document.getElementById('journalLoading')?.classList.add('active');
+
+    // 버튼·배지·텍스트 초기화
     document.getElementById('autosaveText').textContent = '불러오는 중...';
-
-    // 업무현황 스피너
-    document.getElementById('journalTaskSummary').innerHTML =
-      '<div class="task-loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>';
-
-    // 업무 목록도 로딩 표시
-    document.getElementById('journalTaskList').innerHTML =
-      '<div style="font-size:12px;color:var(--text-muted);">불러오는 중...</div>';
-
-    // 모든 textarea/input 비우고 비활성화
-    ['attendanceThisWeek','attendanceNextWeek','journalSummary',
-     'journalAchievements','journalNextPlan','journalIssues'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.value       = '';
-        el.disabled    = true;
-        el.placeholder = '';
-      }
-    });
-
-    // 버튼 숨김
     document.getElementById('journalSaveBtn').style.display   = 'none';
     document.getElementById('journalSubmitBtn').style.display = 'none';
     document.getElementById('journalCloseBtn').style.display  = 'none';
-
-    // 상태 배지 초기화
     const badgeEl = document.getElementById('journalStatusBadge');
     badgeEl.className   = 'journal-status-badge journal-status-draft';
     badgeEl.textContent = '-';
     document.getElementById('journalStatusText').textContent =
       `${journalWeekStart} ~ ${getWeekEnd(journalWeekStart)}`;
 
-    // ── API 호출 ────────────────────────────────────────────────
-    // journalGet: 조회 전용 — 일지가 없으면 null 반환, 생성 안 함
-    // journalGetOrCreate: "업무일지 생성" 버튼 전용 (handleGenerateJournal에서만 사용)
     try {
       const res = await apiGet('journalGet', {
         request_user_email: currentUser.email,
@@ -767,6 +744,8 @@
     } catch (err) {
       showMessage(err.message || '일지를 불러오지 못했습니다.', 'error');
       document.getElementById('autosaveText').textContent = '불러오기 실패';
+    } finally {
+      document.getElementById('journalLoading')?.classList.remove('active');
     }
   }
 
