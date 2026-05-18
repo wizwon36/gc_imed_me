@@ -42,7 +42,8 @@
   let journalDirty        = false;
 
   // 팀 탭
-  let teamWeekStart = '';
+  let teamWeekStart  = '';
+  let _lastTeamData  = [];  // 통합 보기용 캐시
 
   // 모달
   let editingTaskId   = null;
@@ -187,6 +188,14 @@
     // 팀원 일지 모달
     document.getElementById('memberJournalClose')?.addEventListener('click', closeMemberModal);
     document.getElementById('memberJournalDismissBtn')?.addEventListener('click', closeMemberModal);
+
+    // 통합 보기 모달
+    document.getElementById('mergeViewBtn')?.addEventListener('click', openMergeView);
+    document.getElementById('mergeViewClose')?.addEventListener('click', closeMergeView);
+    document.getElementById('mergeViewDismissBtn')?.addEventListener('click', closeMergeView);
+    document.getElementById('mergeViewModal')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('mergeViewModal')) closeMergeView();
+    });
   }
 
   // ── 탭 전환 ─────────────────────────────────────────────────
@@ -661,6 +670,7 @@
   }
 
   function renderTeamGrid(members) {
+    _lastTeamData = members || [];  // 통합 보기용 캐시
     const grid = document.getElementById('teamJournalGrid');
 
     if (!members.length) {
@@ -778,6 +788,101 @@
 
   function closeMemberModal() {
     document.getElementById('memberJournalModal').classList.remove('open');
+  }
+
+  // ── 통합 보기 ────────────────────────────────────────────────
+
+  function openMergeView() {
+    const weekEnd = getWeekEnd(teamWeekStart);
+    document.getElementById('mergeViewTitle').textContent =
+      `팀원 주간일지 통합 보기 · ${teamWeekStart} ~ ${weekEnd}`;
+
+    const members = _lastTeamData;
+    const body    = document.getElementById('mergeViewBody');
+
+    if (!members.length) {
+      body.innerHTML = `<div class="task-empty" style="padding:40px 0;"><div class="task-empty-icon">👥</div><div class="task-empty-text">팀원 데이터가 없습니다.</div></div>`;
+      document.getElementById('mergeViewModal').classList.add('open');
+      return;
+    }
+
+    const FIELDS = [
+      { key: 'attendance_this_week', label: '이번 주 근태' },
+      { key: 'attendance_next_week', label: '다음 주 근태 예정' },
+      { key: 'summary',             label: '주간 업무 요약' },
+      { key: 'achievements',        label: '금주 성과 및 완료' },
+      { key: 'next_plan',           label: '차주 업무 계획' },
+      { key: 'issues',              label: '이슈 / 건의사항' }
+    ];
+
+    const statusColor = { CLOSED: '#166534', SUBMITTED: '#1e40af', DRAFT: '#64748b' };
+    const statusBg    = { CLOSED: '#dcfce7', SUBMITTED: '#dbeafe', DRAFT: '#f1f5f9' };
+    const statusLabel = { CLOSED: '마감', SUBMITTED: '제출', DRAFT: '작성중' };
+
+    let html = '';
+
+    members.forEach((m, idx) => {
+      const j      = m.journal;
+      const s      = m.task_summary || {};
+      const pct    = s.total ? Math.round((s.done || 0) / s.total * 100) : 0;
+      const status = j ? (j.status || 'DRAFT') : null;
+      const initial = (m.user_name || '?').charAt(0);
+
+      const badgeStyle = status
+        ? `background:${statusBg[status]};color:${statusColor[status]};`
+        : 'background:#fef2f2;color:#b91c1c;';
+      const badgeText = status ? statusLabel[status] : '미작성';
+
+      html += `
+        <div style="padding:22px 24px;${idx > 0 ? 'border-top:2px solid #e0e7f2;' : ''}">
+
+          <!-- 멤버 헤더 -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:#e0f2fe;color:#0369a1;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${esc(initial)}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${esc(m.user_name)}${m.is_manager ? ' 👑' : ''}</div>
+              <div style="font-size:12px;color:var(--text-muted);">${esc(m.team_name || m.department || '')}</div>
+            </div>
+            <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;${badgeStyle}">${badgeText}</span>
+          </div>
+
+          <!-- 업무 현황 바 -->
+          <div style="background:#f8fafc;border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">업무 현황</span>
+            <span style="font-size:12px;color:#1e293b;">전체 ${s.total||0}건</span>
+            <span style="font-size:12px;color:#16a34a;">✓ 완료 ${s.done||0}</span>
+            <span style="font-size:12px;color:#d97706;">⏳ 진행중 ${s.in_progress||0}</span>
+            ${s.high ? `<span style="font-size:12px;color:#dc2626;">🔴 높은중요도 ${s.high}</span>` : ''}
+            <div style="flex:1;min-width:60px;height:5px;background:#dbeafe;border-radius:999px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#0369a1,#38bdf8);border-radius:999px;"></div>
+            </div>
+            <span style="font-size:11px;color:var(--text-muted);">${pct}%</span>
+          </div>
+
+          ${!j ? `
+            <div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;">아직 일지를 작성하지 않았습니다.</div>
+          ` : FIELDS.map(f => {
+              const val = j[f.key] || '';
+              if (!val) return '';
+              return `
+                <div style="margin-bottom:12px;">
+                  <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em;">${esc(f.label)}</div>
+                  <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">${esc(val)}</div>
+                </div>
+              `;
+            }).join('')}
+
+          ${j?.submitted_at ? `<div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;">제출: ${j.submitted_at.substring(0,16)}</div>` : ''}
+        </div>
+      `;
+    });
+
+    body.innerHTML = html;
+    document.getElementById('mergeViewModal').classList.add('open');
+  }
+
+  function closeMergeView() {
+    document.getElementById('mergeViewModal').classList.remove('open');
   }
 
   // ── 업무 모달 ────────────────────────────────────────────────
