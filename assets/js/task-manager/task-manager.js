@@ -148,10 +148,9 @@
 
     // 팝업 외부 클릭 시 닫기
     document.addEventListener('click', (e) => {
-      const popup = document.getElementById('weekCalendarPopup');
-      const btn   = document.getElementById('weekNavRangeBtn');
-      if (popup && !popup.contains(e.target) && !btn?.contains(e.target)) {
-        popup.classList.remove('open');
+      const nav = document.getElementById('sharedWeekNav');
+      if (nav && !nav.contains(e.target)) {
+        document.getElementById('weekCalendarPopup')?.classList.remove('open');
       }
     });
 
