@@ -541,49 +541,52 @@
     const DOW_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
     const PRI_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
     const PRI_LABEL = { HIGH: '[ 중요도 높음 ]', MEDIUM: '[ 중요도 보통 ]', LOW: '[ 중요도 낮음 ]' };
+    const weekEnd   = getWeekEnd(weekStart);
     const lines     = [];
 
-    // start_date 기준 그룹화 (기간 업무도 시작일 기준으로 배치)
-    const dayMap = {};
+    // 이번 주 시작 업무 vs 이전 주에서 이월된 기간 업무 분리
+    const thisWeekItems  = [];
+    const carryOverItems = [];
+
     items.forEach(function(t) {
+      const s = t.start_date || '';
+      if (s >= weekStart && s <= weekEnd) thisWeekItems.push(t);
+      else carryOverItems.push(t);
+    });
+
+    // ── 1) 이번 주 시작 업무: 날짜 헤더 + 중요도 그룹
+    const dayMap = {};
+    thisWeekItems.forEach(function(t) {
       const d = t.start_date || '';
       if (!dayMap[d]) dayMap[d] = [];
       dayMap[d].push(t);
     });
 
     const sortedDates = Object.keys(dayMap).sort();
-
     sortedDates.forEach(function(dateStr, dateIdx) {
       const dayItems = dayMap[dateStr];
       const d        = new Date(dateStr + 'T00:00:00');
       const dow      = d.getDay();
       const mmdd     = dateStr.substring(5).replace('-', '/');
 
-      // 날짜 헤더
       lines.push('[' + mmdd + ' ' + DOW_LABEL[dow] + ']');
 
-      // 중요도별 그룹화
       const priMap = { HIGH: [], MEDIUM: [], LOW: [] };
       dayItems.forEach(function(t) {
         const p = (t.priority || 'MEDIUM').toUpperCase();
-        if (priMap[p]) priMap[p].push(t);
-        else priMap['MEDIUM'].push(t);
+        if (priMap[p]) priMap[p].push(t); else priMap['MEDIUM'].push(t);
       });
 
       PRI_ORDER.forEach(function(pri) {
         const group = priMap[pri];
         if (!group.length) return;
-
         lines.push('  ' + PRI_LABEL[pri]);
-
         group.forEach(function(t, itemIdx) {
           const catLabel     = CATEGORY_LABELS[t.category] || t.category || '기타';
-          const statusLabel  = t.status === 'DONE'        ? '완료'
-                             : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+          const statusLabel  = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
           const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
           const num          = String(itemIdx + 1) + '.';
-
-          const dateRange = (t.start_date && t.end_date && t.start_date !== t.end_date)
+          const dateRange    = (t.start_date !== t.end_date)
             ? ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')'
             : '';
           lines.push('    ' + num + ' [' + catLabel + '] ' + t.title + dateRange + statusSuffix);
@@ -595,6 +598,41 @@
 
       if (dateIdx < sortedDates.length - 1) lines.push('');
     });
+
+    // ── 2) 이전 주에서 이월된 기간 업무
+    if (carryOverItems.length > 0) {
+      if (lines.length > 0) lines.push('');
+
+      // 이번 주 안에 종료 + DONE → 이월 완료, 그 외 → 이월 진행중
+      const completedCarry = carryOverItems.filter(function(t) {
+        return t.end_date <= weekEnd && t.status === 'DONE';
+      });
+      const ongoingCarry = carryOverItems.filter(function(t) {
+        return !(t.end_date <= weekEnd && t.status === 'DONE');
+      });
+
+      if (ongoingCarry.length > 0) {
+        lines.push('[ 이월 진행 업무 ]');
+        ongoingCarry.forEach(function(t, idx) {
+          const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
+          const endLabel  = t.end_date > weekEnd ? '계속' : (t.status === 'IN_PROGRESS' ? '진행중' : '예정');
+          const dateRange = ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')';
+          lines.push('  ' + String(idx + 1) + '. [' + catLabel + '] ' + t.title + dateRange + ' (' + endLabel + ')');
+          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+        });
+      }
+
+      if (completedCarry.length > 0) {
+        if (ongoingCarry.length > 0) lines.push('');
+        lines.push('[ 이월 완료 업무 ]');
+        completedCarry.forEach(function(t, idx) {
+          const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
+          const dateRange = ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')';
+          lines.push('  ' + String(idx + 1) + '. [' + catLabel + '] ' + t.title + dateRange + ' (완료)');
+          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+        });
+      }
+    }
 
     return lines.join('\n');
   }
