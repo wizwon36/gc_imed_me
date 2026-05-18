@@ -154,6 +154,19 @@
       }
     });
 
+    // 단기업무 체크박스
+    document.getElementById('modalSingleDay')?.addEventListener('change', (e) => {
+      setSingleDay(e.target.checked);
+    });
+    // 시작일 변경 시 종료일 최솟값 동기화
+    document.getElementById('modalStartDate')?.addEventListener('change', (e) => {
+      const endEl = document.getElementById('modalEndDate');
+      if (endEl && endEl.value && endEl.value < e.target.value) {
+        endEl.value = e.target.value;
+      }
+      endEl.min = e.target.value;
+    });
+
     // 모달
     document.getElementById('taskModalClose')?.addEventListener('click', closeTaskModal);
     document.getElementById('taskModalCancelBtn')?.addEventListener('click', closeTaskModal);
@@ -530,10 +543,10 @@
     const PRI_LABEL = { HIGH: '[ 중요도 높음 ]', MEDIUM: '[ 중요도 보통 ]', LOW: '[ 중요도 낮음 ]' };
     const lines     = [];
 
-    // 날짜별 그룹화
+    // start_date 기준 그룹화 (기간 업무도 시작일 기준으로 배치)
     const dayMap = {};
     items.forEach(function(t) {
-      const d = t.task_date || '';
+      const d = t.start_date || '';
       if (!dayMap[d]) dayMap[d] = [];
       dayMap[d].push(t);
     });
@@ -570,7 +583,10 @@
           const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
           const num          = String(itemIdx + 1) + '.';
 
-          lines.push('    ' + num + ' [' + catLabel + '] ' + t.title + statusSuffix);
+          const dateRange = (t.start_date && t.end_date && t.start_date !== t.end_date)
+            ? ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')'
+            : '';
+          lines.push('    ' + num + ' [' + catLabel + '] ' + t.title + dateRange + statusSuffix);
           if (t.description && t.description.trim()) {
             lines.push('        └ ' + t.description.trim());
           }
@@ -643,7 +659,12 @@
       const isSun   = dow === 0;
       const isSat   = dow === 6;
 
-      const dayTasks = weeklyTasks.filter(t => t.task_date === dateStr);
+      // 해당 날짜가 start_date ~ end_date 범위에 포함된 업무 표시
+      const dayTasks = weeklyTasks.filter(t => {
+        const s = t.start_date || '';
+        const e = t.end_date   || s;
+        return s <= dateStr && e >= dateStr;
+      });
 
       const chips = dayTasks.slice(0, 3).map(t => {
         const cls = t.priority === 'HIGH' ? 'chip-high' : t.priority === 'LOW' ? 'chip-low' : 'chip-medium';
@@ -702,7 +723,10 @@
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
             <span class="task-badge ${statusCls}">${esc(STATUS_LABELS[t.status] || t.status)}</span>
-            ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.description)}</span>` : ''}
+            ${t.start_date !== t.end_date
+              ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
+              : ''}
+            ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.description)}</span>` : ''}
           </div>
         </div>
         <div class="task-item-actions" onclick="event.stopPropagation();">
@@ -883,7 +907,7 @@
           <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f3f8;">
             <span style="width:7px;height:7px;border-radius:50%;background:${priorityColor};flex-shrink:0;"></span>
             <span style="flex:1;font-size:12px;color:var(--text-primary);">${esc(t.title)}</span>
-            <span style="font-size:11px;color:var(--text-muted);">${t.task_date ? t.task_date.substring(5) : ''}</span>
+            <span style="font-size:11px;color:var(--text-muted);">${t.start_date && t.start_date !== t.end_date ? t.start_date.substring(5) + ' ~ ' + (t.end_date ? t.end_date.substring(5) : '') : (t.start_date ? t.start_date.substring(5) : '')}</span>
             ${statusBadge}
           </div>
         `;
@@ -1232,10 +1256,12 @@
   window.TASK_APP.openAddModal = function(dateStr) {
     editingTaskId = null;
     document.getElementById('taskModalTitle').textContent = '업무 등록';
-    document.getElementById('modalTaskDate').value        = dateStr;
+    document.getElementById('modalStartDate').value       = dateStr;
+    document.getElementById('modalEndDate').value         = dateStr;
     document.getElementById('modalCategory').value        = '';
     document.getElementById('modalTitle').value           = '';
     document.getElementById('modalDescription').value     = '';
+    setSingleDay(true);
     updatePriorityUI('MEDIUM');
     updateStatusUI('TODO');
     openTaskModal();
@@ -1247,10 +1273,13 @@
 
     editingTaskId = taskId;
     document.getElementById('taskModalTitle').textContent = '업무 수정';
-    document.getElementById('modalTaskDate').value        = task.task_date   || '';
-    document.getElementById('modalCategory').value        = task.category    || '';
-    document.getElementById('modalTitle').value           = task.title       || '';
+    document.getElementById('modalStartDate').value       = task.start_date || '';
+    document.getElementById('modalEndDate').value         = task.end_date   || task.start_date || '';
+    document.getElementById('modalCategory').value        = task.category   || '';
+    document.getElementById('modalTitle').value           = task.title      || '';
     document.getElementById('modalDescription').value     = task.description || '';
+    const isSingle = !task.end_date || task.end_date === task.start_date;
+    setSingleDay(isSingle);
     updatePriorityUI(task.priority || 'MEDIUM');
     updateStatusUI(task.status    || 'TODO');
     openTaskModal();
@@ -1301,6 +1330,22 @@
     }
   };
 
+  function setSingleDay(single) {
+    const checkbox = document.getElementById('modalSingleDay');
+    const endInput = document.getElementById('modalEndDate');
+    if (!checkbox || !endInput) return;
+    checkbox.checked = single;
+    if (single) {
+      endInput.style.display = 'none';
+      // 종료일을 시작일과 동일하게 맞춤
+      const startVal = document.getElementById('modalStartDate')?.value || '';
+      endInput.value = startVal;
+    } else {
+      endInput.style.display = '';
+      endInput.min = document.getElementById('modalStartDate')?.value || '';
+    }
+  }
+
   function openTaskModal() {
     document.getElementById('taskModal').classList.add('open');
   }
@@ -1311,20 +1356,24 @@
   }
 
   async function saveTask() {
-    const taskDate    = document.getElementById('modalTaskDate').value.trim();
+    const startDate   = document.getElementById('modalStartDate').value.trim();
+    const isSingle    = document.getElementById('modalSingleDay').checked;
+    const endDate     = isSingle ? startDate : (document.getElementById('modalEndDate').value.trim() || startDate);
     const category    = document.getElementById('modalCategory').value.trim();
     const title       = document.getElementById('modalTitle').value.trim();
     const description = document.getElementById('modalDescription').value.trim();
     const priority    = document.querySelector('input[name="priority"]:checked')?.value || 'MEDIUM';
     const status      = document.querySelector('input[name="status"]:checked')?.value   || 'TODO';
 
-    if (!taskDate)  { alert('업무일을 입력하세요.');    return; }
+    if (!startDate) { alert('시작일을 입력하세요.');    return; }
     if (!category)  { alert('업무 구분을 선택하세요.'); return; }
     if (!title)     { alert('업무 제목을 입력하세요.'); return; }
+    if (endDate < startDate) { alert('종료일은 시작일보다 빠를 수 없습니다.'); return; }
 
     const payload = {
       request_user_email: currentUser.email,
-      task_date:    taskDate,
+      start_date:   startDate,
+      end_date:     endDate,
       category:     category,
       title:        title,
       description:  description,
@@ -1342,15 +1391,17 @@
         await apiPost('taskUpdateItem', payload);
         const idx = weeklyTasks.findIndex(t => t.task_id === editingTaskId);
         if (idx !== -1) {
-          const newWeekStart = getWeekStart(taskDate);
-          if (newWeekStart === weeklyWeekStart) {
-            // 같은 주 안에서 수정 — 로컬 갱신
+          const newWeekStart = getWeekStart(startDate);
+          const newWeekEnd   = getWeekEnd(newWeekStart);
+          // start_date 또는 end_date 가 현재 주에 걸쳐 있으면 로컬 갱신, 아니면 제거
+          const overlapsCurrentWeek = startDate <= getWeekEnd(weeklyWeekStart) &&
+                                      endDate   >= weeklyWeekStart;
+          if (overlapsCurrentWeek) {
             weeklyTasks[idx] = Object.assign({}, weeklyTasks[idx], payload, {
               week_start: newWeekStart,
-              week_end:   getWeekEnd(newWeekStart)
+              week_end:   newWeekEnd
             });
           } else {
-            // 다른 주로 날짜 변경 — 현재 주 목록에서 제거
             weeklyTasks.splice(idx, 1);
           }
         }
