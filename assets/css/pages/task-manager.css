@@ -1349,16 +1349,43 @@
 
 /* ── 반응형 ── */
 @media (max-width: 640px) {
-  .category-manage-btn { display: none !important; }
-}
-  .week-summary-bar { flex-wrap: wrap; gap: 10px; }
-  .attendance-grid { grid-template-columns: 1fr; }
-  .team-journal-grid { grid-template-columns: 1fr; }
-  .task-tabs { gap: 2px; }
-  .task-tab-btn { font-size: 12px; padding: 0 10px; }
-  .day-chip { max-width: 100px; }
+  .category-manage-btn    { display: none !important; }
+  .week-summary-bar       { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+  .summary-stat-num       { font-size: 16px; }
+  .attendance-grid        { grid-template-columns: 1fr; }
+  .team-journal-grid      { grid-template-columns: 1fr; }
+  .task-tabs              { gap: 2px; }
+  .task-tab-btn           { font-size: 11px; padding: 0 8px; gap: 3px; }
+  .day-chip               { max-width: 80px; }
   .priority-group,
-  .status-group { gap: 4px; }
+  .status-group           { gap: 4px; }
+
+  /* 주차 네비게이터 */
+  .week-nav-shared        { gap: 6px; padding: 10px 12px; }
+  .week-nav-range-btn     { min-width: 0; flex: 1; padding: 5px 8px; }
+  .week-nav-range-btn span { font-size: 12px; }
+  .week-nav-sub           { font-size: 11px; }
+  .week-calendar-popup    { width: 260px; }
+
+  /* 일지 헤더 — 버튼 세로 배치 */
+  .task-card-head         { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .task-card-head > div:last-child { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+
+  /* 카드 여백 축소 */
+  .task-card-body,
+  .journal-section,
+  .week-timeline,
+  .day-tasks              { padding-left: 14px; padding-right: 14px; }
+  .task-card-head         { padding: 14px 14px 12px; }
+  .week-nav               { padding: 10px 14px; }
+  .week-summary-bar       { padding: 10px 14px; }
+  .team-journal-grid      { padding: 12px 14px; }
+
+  /* 검색 폼 */
+  .search-form            { padding: 14px 14px 12px; gap: 12px; }
+  .search-row--filters    { flex-direction: column; gap: 10px; }
+  .search-input           { width: 100%; }
+  .search-field--full     { min-width: 100%; }
 }
 
 /* ── 인라인 로딩 스피너 ── */
