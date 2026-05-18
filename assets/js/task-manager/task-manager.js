@@ -339,9 +339,23 @@
         issues:              existingJournal ? existingJournal.issues : ''
       });
 
-      // 일지 탭으로 이동
-      journalWeekStart = weeklyWeekStart;
-      switchTab('journal');
+      // 생성된 일지 데이터를 직접 세팅 후 일지 탭으로 이동
+      journalWeekStart    = weeklyWeekStart;
+      currentJournal      = Object.assign({}, journal, {
+        summary:      allItems,
+        achievements: doneItems,
+        next_plan:    pendingItems,
+        issues:       existingJournal ? existingJournal.issues : ''
+      });
+      currentJournalTasks = tasks;
+
+      // 탭 전환 (loadJournal 호출 없이 직접 렌더링)
+      document.querySelectorAll('.task-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'journal'));
+      document.getElementById('panelWeekly').style.display  = 'none';
+      document.getElementById('panelJournal').style.display = '';
+      document.getElementById('panelTeam').style.display    = 'none';
+      renderJournal();
+      renderJournalTaskSummary();
 
     } catch (err) {
       showMessage(err.message || '업무일지 생성에 실패했습니다.', 'error');
