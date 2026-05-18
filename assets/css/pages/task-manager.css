@@ -1085,8 +1085,118 @@
 .autosave-dot.saved   { background: #16a34a; }
 .autosave-dot.error   { background: #dc2626; }
 
+/* ── 카테고리 관리 버튼 ── */
+.category-manage-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1.5px solid var(--border-input);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.category-manage-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+/* ── 카테고리 출처 배지 ── */
+.category-source-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.category-source-badge.is-custom {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.category-source-badge.is-default {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ── 카테고리 목록 ── */
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-soft);
+  background: #fff;
+  margin-bottom: 6px;
+  transition: all 0.12s ease;
+}
+
+.category-item:hover {
+  border-color: var(--border);
+  background: #fafbfd;
+}
+
+.category-item-order {
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.category-item-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.category-item-code {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.category-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ── 카테고리 추가 폼 ── */
+.category-add-form {
+  padding-top: 14px;
+  border-top: 1.5px solid var(--border-soft);
+}
+
+/* ── 팁 텍스트 ── */
+.category-tip {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
+  flex: 1;
+}
+
 /* ── 반응형 ── */
 @media (max-width: 640px) {
+  .category-manage-btn { display: none !important; }
+}
   .week-summary-bar { flex-wrap: wrap; gap: 10px; }
   .attendance-grid { grid-template-columns: 1fr; }
   .team-journal-grid { grid-template-columns: 1fr; }
