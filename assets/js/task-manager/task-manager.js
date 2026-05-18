@@ -7,7 +7,8 @@
   'use strict';
 
   // ── 상수 ────────────────────────────────────────────────────
-  const CATEGORY_LABELS = {
+  // 카테고리 — 초기값, 앱 로드 시 서버에서 동적으로 교체됨
+  let CATEGORY_LABELS = {
     PURCHASE:  '구매',
     STRATEGY:  '전략기획',
     OPERATION: '운영',
@@ -16,6 +17,8 @@
     MARKETING: '홍보마케팅',
     ETC:       '기타'
   };
+  let categoryCodeGroup   = 'TASK_CATEGORY';  // 현재 사용 중인 code_group
+  let categoryIsCustom    = false;             // 팀 전용 카테고리 여부
 
   const STATUS_LABELS = {
     TODO:        '예정',
@@ -86,8 +89,10 @@
 
       document.getElementById('appBody').style.display = '';
 
+      // 카테고리 관리 버튼 (manager/admin 전용)
       if (isManager) {
         document.getElementById('tabTeam').style.display = '';
+        document.getElementById('categoryManageBtn').style.display = '';
       }
 
       const todayStr      = formatDateStr(new Date());
@@ -96,6 +101,8 @@
       teamWeekStart       = weeklyWeekStart;
       calendarPopupMonth  = weeklyWeekStart.substring(0, 7);
 
+      // 카테고리 먼저 로드 후 나머지 초기화
+      await loadCategories();
       bindEvents();
       updateSharedWeekNav();
       await loadWeeklyTasks();
@@ -153,6 +160,12 @@
         document.getElementById('weekCalendarPopup')?.classList.remove('open');
       }
     });
+
+    // 카테고리 관리
+    document.getElementById('categoryManageBtn')?.addEventListener('click', openCategoryModal);
+    document.getElementById('categoryModalClose')?.addEventListener('click', closeCategoryModal);
+    document.getElementById('categoryModalDone')?.addEventListener('click', closeCategoryModal);
+    document.getElementById('catAddBtn')?.addEventListener('click', saveCategoryItem);
 
     // 단기업무 체크박스
     document.getElementById('modalSingleDay')?.addEventListener('change', (e) => {
@@ -1507,6 +1520,158 @@
       showMessage(err.message || '저장에 실패했습니다.', 'error');
     } finally {
       setTaskModalLoading(false);
+    }
+  }
+
+  // ── 카테고리 관리 ────────────────────────────────────────────
+
+  async function loadCategories() {
+    try {
+      const res = await apiGet('taskGetCategories', {
+        request_user_email: currentUser.email
+      });
+      applyCategories(res);
+    } catch (err) {
+      // 실패해도 기본값 유지
+    }
+  }
+
+  function applyCategories(res) {
+    if (!res || !res.data) return;
+    const newLabels = {};
+    res.data.forEach(function(c) {
+      newLabels[c.code_value] = c.code_name;
+    });
+    CATEGORY_LABELS     = newLabels;
+    categoryCodeGroup   = res.code_group   || 'TASK_CATEGORY';
+    categoryIsCustom    = res.is_team_custom || false;
+    // 모달 카테고리 셀렉트 옵션 갱신
+    updateCategorySelect();
+  }
+
+  function updateCategorySelect() {
+    const sel = document.getElementById('modalCategory');
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">선택하세요</option>' +
+      Object.entries(CATEGORY_LABELS).map(function([v, n]) {
+        return `<option value="${esc(v)}">${esc(n)}</option>`;
+      }).join('');
+    sel.value = currentVal;
+  }
+
+  async function openCategoryModal() {
+    document.getElementById('categoryModal').classList.add('open');
+    await renderCategoryList();
+  }
+
+  function closeCategoryModal() {
+    document.getElementById('categoryModal').classList.remove('open');
+    resetCategoryForm();
+  }
+
+  async function renderCategoryList() {
+    const listEl  = document.getElementById('categoryList');
+    const badgeEl = document.getElementById('categorySourceBadge');
+    const tipEl   = document.getElementById('categoryTip');
+
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">불러오는 중...</div>';
+
+    try {
+      const res = await apiGet('taskGetCategories', { request_user_email: currentUser.email });
+      applyCategories(res);
+
+      badgeEl.textContent  = categoryIsCustom ? '팀 전용' : '기본 공통';
+      badgeEl.className    = 'category-source-badge ' + (categoryIsCustom ? 'is-custom' : 'is-default');
+      tipEl.textContent    = categoryIsCustom
+        ? '팀 전용 카테고리가 적용 중입니다. 항목을 모두 삭제하면 기본 카테고리로 복원됩니다.'
+        : '기본 카테고리 사용 중입니다. 항목을 추가하면 팀 전용으로 전환됩니다.';
+
+      if (!res.data || res.data.length === 0) {
+        listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">등록된 카테고리가 없습니다.</div>';
+        return;
+      }
+
+      listEl.innerHTML = res.data.map(function(c) {
+        const canDelete = categoryIsCustom; // 팀 전용만 삭제 가능
+        return `
+          <div class="category-item">
+            <span class="category-item-order">${c.sort_order}</span>
+            <span class="category-item-name">${esc(c.code_name)}</span>
+            <span class="category-item-code">${esc(c.code_value)}</span>
+            <div class="category-item-actions">
+              <button class="task-icon-btn" title="수정" onclick="TASK_APP.editCategory('${esc(c.code_value)}','${esc(c.code_name)}',${c.sort_order},'${esc(c.code_group)}')">✎</button>
+              ${canDelete ? `<button class="task-icon-btn danger" title="삭제" onclick="TASK_APP.deleteCategory('${esc(c.code_value)}','${esc(c.code_name)}','${esc(c.code_group)}')">🗑</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (err) {
+      listEl.innerHTML = `<div style="font-size:12px;color:#dc2626;">${esc(err.message)}</div>`;
+    }
+  }
+
+  function resetCategoryForm() {
+    document.getElementById('catInputName').value  = '';
+    document.getElementById('catInputOrder').value = '';
+    document.getElementById('catEditValue').value  = '';
+    document.getElementById('catEditGroup').value  = '';
+    document.getElementById('catAddBtn').textContent = '추가';
+  }
+
+  window.TASK_APP.editCategory = function(codeValue, codeName, sortOrder, codeGroup) {
+    document.getElementById('catInputName').value  = codeName;
+    document.getElementById('catInputOrder').value = sortOrder;
+    document.getElementById('catEditValue').value  = codeValue;
+    document.getElementById('catEditGroup').value  = codeGroup;
+    document.getElementById('catAddBtn').textContent = '수정';
+    document.getElementById('catInputName').focus();
+  };
+
+  window.TASK_APP.deleteCategory = async function(codeValue, codeName, codeGroup) {
+    if (!confirm(`"${codeName}" 카테고리를 삭제하시겠습니까?`)) return;
+    try {
+      await apiPost('taskDeleteCategory', {
+        request_user_email: currentUser.email,
+        code_value:         codeValue,
+        code_group:         codeGroup
+      });
+      showMessage('카테고리가 삭제되었습니다.', 'success');
+      await renderCategoryList();
+    } catch (err) {
+      showMessage(err.message || '삭제에 실패했습니다.', 'error');
+    }
+  };
+
+  async function saveCategoryItem() {
+    const name       = document.getElementById('catInputName').value.trim();
+    const order      = Number(document.getElementById('catInputOrder').value) || 1;
+    const editValue  = document.getElementById('catEditValue').value.trim();
+    const editGroup  = document.getElementById('catEditGroup').value.trim();
+
+    if (!name) { alert('카테고리 이름을 입력하세요.'); return; }
+
+    // 신규 추가 시 code_value 자동 생성 (한글 → 영문 불가, 타임스탬프 기반)
+    const codeValue = editValue || ('CAT_' + Date.now().toString(36).toUpperCase());
+
+    try {
+      document.getElementById('catAddBtn').disabled = true;
+      await apiPost('taskSaveCategory', {
+        request_user_email: currentUser.email,
+        code_value:         codeValue,
+        code_name:          name,
+        sort_order:         order
+      });
+      showMessage(editValue ? '카테고리가 수정되었습니다.' : '카테고리가 추가되었습니다.', 'success');
+      resetCategoryForm();
+      await renderCategoryList();
+      // 모달 카테고리 셀렉트 갱신
+      updateCategorySelect();
+    } catch (err) {
+      showMessage(err.message || '저장에 실패했습니다.', 'error');
+    } finally {
+      document.getElementById('catAddBtn').disabled = false;
     }
   }
 
