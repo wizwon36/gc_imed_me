@@ -949,3 +949,34 @@
 .task-empty--error .task-empty-text {
   color: #dc2626;
 }
+
+/* ── 모달 내부 로딩 오버레이 ── */
+.task-modal-loading {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(2px);
+  border-radius: var(--radius-xl);
+  align-items: center;
+  justify-content: center;
+}
+
+.task-modal-loading.active {
+  display: flex;
+}
+
+.task-modal-loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.task-modal-loading-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: 0.01em;
+}
