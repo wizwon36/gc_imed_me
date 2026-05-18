@@ -43,7 +43,10 @@
 
   // 팀 탭
   let teamWeekStart  = '';
-  let _lastTeamData  = [];  // 통합 보기용 캐시
+  let _lastTeamData  = [];
+
+  // 캘린더 팝업
+  let calendarPopupMonth = '';   // 'yyyy-MM' 형태
 
   // 모달
   let editingTaskId   = null;
@@ -91,8 +94,10 @@
       weeklyWeekStart     = getWeekStart(todayStr);
       journalWeekStart    = weeklyWeekStart;
       teamWeekStart       = weeklyWeekStart;
+      calendarPopupMonth  = weeklyWeekStart.substring(0, 7);
 
       bindEvents();
+      updateSharedWeekNav();
       await loadWeeklyTasks();
 
       if (isManager) {
@@ -114,45 +119,40 @@
     });
 
     // 주간 업무 — 주 이동
+    // ── 공통 주차 네비게이터 ───────────────────────────────────
     document.getElementById('prevWeekBtn')?.addEventListener('click', () => {
-      weeklyWeekStart = offsetWeek(weeklyWeekStart, -1);
-      loadWeeklyTasks();
+      navigateWeek(-1);
     });
     document.getElementById('nextWeekBtn')?.addEventListener('click', () => {
-      weeklyWeekStart = offsetWeek(weeklyWeekStart, 1);
-      loadWeeklyTasks();
+      navigateWeek(1);
     });
     document.getElementById('todayBtn')?.addEventListener('click', () => {
-      weeklyWeekStart = getWeekStart(formatDateStr(new Date()));
-      loadWeeklyTasks();
+      navigateWeekTo(getWeekStart(formatDateStr(new Date())));
     });
 
-    // 주간일지 — 주 이동
-    document.getElementById('prevWeekJBtn')?.addEventListener('click', () => {
-      journalWeekStart = offsetWeek(journalWeekStart, -1);
-      loadJournal();
-    });
-    document.getElementById('nextWeekJBtn')?.addEventListener('click', () => {
-      journalWeekStart = offsetWeek(journalWeekStart, 1);
-      loadJournal();
-    });
-    document.getElementById('todayJBtn')?.addEventListener('click', () => {
-      journalWeekStart = getWeekStart(formatDateStr(new Date()));
-      loadJournal();
+    // 날짜 범위 버튼 → 캘린더 팝업 토글
+    document.getElementById('weekNavRangeBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleCalendarPopup();
     });
 
-    // 팀 탭 — 주 이동
-    document.getElementById('prevWeekTBtn')?.addEventListener('click', () => {
-      teamWeekStart = offsetWeek(teamWeekStart, -1);
-      loadTeamJournals();
+    // 캘린더 팝업 월 이동
+    document.getElementById('wcpPrevMonth')?.addEventListener('click', () => {
+      calendarPopupMonth = offsetMonth(calendarPopupMonth, -1);
+      renderCalendarPopup();
     });
-    document.getElementById('nextWeekTBtn')?.addEventListener('click', () => {
-      teamWeekStart = offsetWeek(teamWeekStart, 1);
-      loadTeamJournals();
+    document.getElementById('wcpNextMonth')?.addEventListener('click', () => {
+      calendarPopupMonth = offsetMonth(calendarPopupMonth, 1);
+      renderCalendarPopup();
     });
-    document.getElementById('todayTBtn')?.addEventListener('click', () => {
-      teamWeekStart = getWeekStart(formatDateStr(new Date()));
-      loadTeamJournals();
+
+    // 팝업 외부 클릭 시 닫기
+    document.addEventListener('click', (e) => {
+      const popup = document.getElementById('weekCalendarPopup');
+      const btn   = document.getElementById('weekNavRangeBtn');
+      if (popup && !popup.contains(e.target) && !btn?.contains(e.target)) {
+        popup.classList.remove('open');
+      }
     });
 
     // 모달
@@ -205,9 +205,10 @@
     document.getElementById('panelJournal').style.display = tab === 'journal' ? '' : 'none';
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
 
+    // 탭 전환 즉시 공통 네비게이터 레이블 갱신
+    updateSharedWeekNav();
+
     if (tab === 'journal') {
-      // _fromGenerate: handleGenerateJournal이 currentJournal/currentJournalTasks를 직접 세팅 후
-      // renderJournal/renderJournalTaskSummary까지 호출했으므로 loadJournal 재호출 불필요
       if (currentJournal && currentJournal._fromGenerate) {
         delete currentJournal._fromGenerate;
       } else {
@@ -244,6 +245,12 @@
     return formatDateStr(d);
   }
 
+  function offsetMonth(yyyyMM, delta) {
+    const [y, m] = yyyyMM.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
   function formatWeekRange(weekStart) {
     const weekEnd = getWeekEnd(weekStart);
     const s = weekStart.substring(5).replace('-', '/');
@@ -253,6 +260,137 @@
 
   function isThisWeek(weekStart) {
     return weekStart === getWeekStart(formatDateStr(new Date()));
+  }
+
+  // ── 공통 네비게이터: 주 이동 ─────────────────────────────────
+  function getCurrentTabWeekStart() {
+    const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+    if (activeTab === 'journal') return journalWeekStart;
+    if (activeTab === 'team')    return teamWeekStart;
+    return weeklyWeekStart;
+  }
+
+  function navigateWeek(delta) {
+    const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+    if (activeTab === 'journal') {
+      journalWeekStart = offsetWeek(journalWeekStart, delta);
+      loadJournal();
+    } else if (activeTab === 'team') {
+      teamWeekStart = offsetWeek(teamWeekStart, delta);
+      loadTeamJournals();
+    } else {
+      weeklyWeekStart = offsetWeek(weeklyWeekStart, delta);
+      loadWeeklyTasks();
+    }
+    updateSharedWeekNav();
+  }
+
+  function navigateWeekTo(weekStart) {
+    const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+    if (activeTab === 'journal') {
+      journalWeekStart = weekStart;
+      loadJournal();
+    } else if (activeTab === 'team') {
+      teamWeekStart = weekStart;
+      loadTeamJournals();
+    } else {
+      weeklyWeekStart = weekStart;
+      loadWeeklyTasks();
+    }
+    updateSharedWeekNav();
+  }
+
+  // 공통 네비게이터 레이블 갱신
+  function updateSharedWeekNav() {
+    const ws = getCurrentTabWeekStart();
+    const rangeEl = document.getElementById('weekRangeLabel');
+    const subEl   = document.getElementById('weekSubLabel');
+    if (rangeEl) rangeEl.textContent = formatWeekRange(ws);
+    if (subEl)   subEl.textContent   = isThisWeek(ws) ? '이번 주' : '';
+  }
+
+  // ── 월 캘린더 팝업 ───────────────────────────────────────────
+  function toggleCalendarPopup() {
+    const popup = document.getElementById('weekCalendarPopup');
+    if (!popup) return;
+    if (popup.classList.contains('open')) {
+      popup.classList.remove('open');
+    } else {
+      // 현재 탭의 주차 기준으로 팝업 달력 초기화
+      const ws = getCurrentTabWeekStart();
+      calendarPopupMonth = ws.substring(0, 7); // 'yyyy-MM'
+      renderCalendarPopup();
+      popup.classList.add('open');
+    }
+  }
+
+  function renderCalendarPopup() {
+    const [year, month] = calendarPopupMonth.split('-').map(Number);
+    const titleEl = document.getElementById('wcpMonthTitle');
+    const gridEl  = document.getElementById('wcpGrid');
+    if (!titleEl || !gridEl) return;
+
+    titleEl.textContent = `${year}년 ${month}월`;
+
+    const todayStr       = formatDateStr(new Date());
+    const currentWS      = getCurrentTabWeekStart();
+
+    // 해당 월 1일의 요일 (0=일)
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    // 해당 월 마지막 날
+    const lastDate = new Date(year, month, 0).getDate();
+
+    // 캘린더 시작일: 1일 기준 이전 일요일
+    const startDate = new Date(year, month - 1, 1 - firstDay);
+
+    // 6주 * 7일 = 42칸
+    const totalCells = 42;
+    let html = '';
+    let weekStartDate = null;
+
+    for (let i = 0; i < totalCells; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const ds  = formatDateStr(d);
+      const dow = d.getDay();
+
+      // 일요일마다 주 행 시작
+      if (dow === 0) {
+        weekStartDate = ds;
+        const isSelected = weekStartDate === currentWS;
+        html += `<div class="wcp-week-row${isSelected ? ' is-selected' : ''}" data-week="${weekStartDate}">`;
+      }
+
+      const isCurrentMonth = (d.getMonth() + 1) === month;
+      const isToday        = ds === todayStr;
+      const isSun          = dow === 0;
+      const isSat          = dow === 6;
+
+      const cls = [
+        'wcp-day',
+        !isCurrentMonth ? 'is-other-month' : '',
+        isToday         ? 'is-today'        : '',
+        isSun           ? 'is-sunday'       : '',
+        isSat           ? 'is-saturday'     : ''
+      ].filter(Boolean).join(' ');
+
+      html += `<span class="${cls}">${d.getDate()}</span>`;
+
+      // 토요일마다 주 행 닫기
+      if (dow === 6) html += `</div>`;
+    }
+
+    gridEl.innerHTML = html;
+
+    // 주 행 클릭 이벤트
+    gridEl.querySelectorAll('.wcp-week-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const ws = row.dataset.week;
+        document.getElementById('weekCalendarPopup').classList.remove('open');
+        navigateWeekTo(ws);
+        calendarPopupMonth = ws.substring(0, 7);
+      });
+    });
   }
 
   function getDaysOfWeek(weekStart) {
@@ -421,7 +559,7 @@
 
   // ── 주간업무 로드 ────────────────────────────────────────────
   async function loadWeeklyTasks() {
-    updateWeekLabel('weekRangeLabel', 'weekSubLabel', weeklyWeekStart);
+    updateSharedWeekNav();
 
     // 즉시 로딩 스피너 표시
     document.getElementById('weekTimeline').innerHTML = `
@@ -450,11 +588,6 @@
           <div class="task-empty-text">불러오기 실패. 다시 시도해 주세요.</div>
         </div>`;
     }
-  }
-
-  function updateWeekLabel(rangeId, subId, weekStart) {
-    document.getElementById(rangeId).textContent = formatWeekRange(weekStart);
-    document.getElementById(subId).textContent   = isThisWeek(weekStart) ? '이번 주' : '';
   }
 
   function updateWeeklySummary() {
@@ -560,7 +693,7 @@
 
   // ── 주간일지 로드 ────────────────────────────────────────────
   async function loadJournal() {
-    updateWeekLabel('weekRangeLabelJ', 'weekSubLabelJ', journalWeekStart);
+    updateSharedWeekNav();
     clearAutosave();
 
     // ── 전체 일지 영역 로딩 상태 표시 ──────────────────────────
@@ -858,7 +991,7 @@
 
   // ── 팀원 현황 로드 ────────────────────────────────────────────
   async function loadTeamJournals() {
-    updateWeekLabel('weekRangeLabelT', 'weekSubLabelT', teamWeekStart);
+    updateSharedWeekNav();
     document.getElementById('teamWeekLabel').textContent =
       `${teamWeekStart} ~ ${getWeekEnd(teamWeekStart)}`;
 
