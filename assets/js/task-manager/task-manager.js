@@ -93,10 +93,7 @@
       teamWeekStart       = weeklyWeekStart;
 
       bindEvents();
-      await Promise.all([
-        loadWeeklyTasks(),
-        loadJournal()
-      ]);
+      await loadWeeklyTasks();
 
       if (isManager) {
         loadTeamJournals();
@@ -191,6 +188,9 @@
 
     // 통합 보기 모달
     document.getElementById('mergeViewBtn')?.addEventListener('click', openMergeView);
+
+    // 업무일지 생성 버튼
+    document.getElementById('generateJournalBtn')?.addEventListener('click', handleGenerateJournal);
     document.getElementById('mergeViewClose')?.addEventListener('click', closeMergeView);
     document.getElementById('mergeViewDismissBtn')?.addEventListener('click', closeMergeView);
     document.getElementById('mergeViewModal')?.addEventListener('click', e => {
@@ -206,7 +206,7 @@
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
 
     if (tab === 'journal') {
-      // 주간 업무 탭과 같은 주로 맞추고 새로 로드 (업무 추가/변경 반영)
+      // 주간업무 탭 기준 주차로 맞추고 기존 일지 조회 (생성 X)
       journalWeekStart = weeklyWeekStart;
       loadJournal();
     }
@@ -259,6 +259,98 @@
   }
 
   // ── 주간 업무 로드 ───────────────────────────────────────────
+  // ── 업무일지 생성 (주간업무 → 일지 생성) ───────────────────
+  async function handleGenerateJournal() {
+    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
+    const isPastWeek     = weeklyWeekStart < todayWeekStart;
+
+    // 과거 주는 생성 불가
+    if (isPastWeek) {
+      showMessage('지난 주차의 업무일지는 생성할 수 없습니다.', 'error');
+      return;
+    }
+
+    // 기존 일지 여부 확인 (journalGet으로 조회)
+    let existingJournal = null;
+    try {
+      const check = await apiGet('journalGet', {
+        request_user_email: currentUser.email,
+        week_start:         weeklyWeekStart
+      });
+      existingJournal = check.data.journal;
+    } catch (e) {
+      // 없는 경우 null
+    }
+
+    // 이미 일지가 있으면 덮어쓰기 확인
+    if (existingJournal) {
+      const statusLabel = { DRAFT: '작성중', SUBMITTED: '제출됨', CLOSED: '마감됨' };
+      const label = statusLabel[existingJournal.status] || existingJournal.status;
+
+      if (existingJournal.status === 'CLOSED') {
+        showMessage('이미 마감된 업무일지는 덮어쓸 수 없습니다.', 'error');
+        return;
+      }
+
+      const confirmed = confirm(
+        `이 주차(${weeklyWeekStart})에 이미 [${label}] 상태의 업무일지가 있습니다.\n` +
+        `현재 등록된 업무 목록으로 내용을 덮어쓸까요?`
+      );
+      if (!confirmed) return;
+    }
+
+    showGlobalLoading('업무일지를 생성하는 중...');
+    try {
+      // journalGetOrCreate로 일지 확보 후 업무 내용으로 update
+      const res = await apiGet('journalGetOrCreate', {
+        request_user_email: currentUser.email,
+        week_start:         weeklyWeekStart
+      });
+
+      const journal = res.data.journal;
+      const tasks   = res.data.tasks;
+      const items   = tasks.items || [];
+
+      // 업무 목록 → 일지 필드 자동 구성
+      const allItems = items.map(function(t) {
+        const statusLabel = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+        const catLabel    = CATEGORY_LABELS[t.category] || t.category || '기타';
+        return '• [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')';
+      }).join('\n');
+
+      const doneItems = items.filter(function(t) { return t.status === 'DONE'; })
+        .map(function(t) {
+          return '• [' + (CATEGORY_LABELS[t.category] || t.category || '기타') + '] ' + t.title;
+        }).join('\n');
+
+      const pendingItems = items.filter(function(t) { return t.status !== 'DONE'; })
+        .map(function(t) {
+          const statusLabel = t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+          return '• [' + (CATEGORY_LABELS[t.category] || t.category || '기타') + '] ' + t.title + ' (' + statusLabel + ')';
+        }).join('\n');
+
+      // 덮어쓰기 저장
+      await apiPost('journalUpdate', {
+        request_user_email:  currentUser.email,
+        journal_id:          journal.journal_id,
+        summary:             allItems,
+        achievements:        doneItems,
+        next_plan:           pendingItems,
+        issues:              existingJournal ? existingJournal.issues : ''
+      });
+
+      // 일지 탭으로 이동
+      journalWeekStart = weeklyWeekStart;
+      switchTab('journal');
+
+    } catch (err) {
+      showMessage(err.message || '업무일지 생성에 실패했습니다.', 'error');
+    } finally {
+      hideGlobalLoading();
+    }
+  }
+
+  // ── 주간업무 로드 ────────────────────────────────────────────
   async function loadWeeklyTasks() {
     updateWeekLabel('weekRangeLabel', 'weekSubLabel', weeklyWeekStart);
 
@@ -393,26 +485,15 @@
     updateWeekLabel('weekRangeLabelJ', 'weekSubLabelJ', journalWeekStart);
     clearAutosave();
 
-    // 이번 주 기준으로 과거/현재+미래 판단
+    // 탭 진입 시 항상 조회만 (생성은 "업무일지 생성" 버튼 전용)
     const todayWeekStart = getWeekStart(formatDateStr(new Date()));
     const isPastWeek     = journalWeekStart < todayWeekStart;
 
     try {
-      let res;
-
-      if (isPastWeek) {
-        // 과거 주: 조회만 (없으면 생성하지 않음)
-        res = await apiGet('journalGet', {
-          request_user_email: currentUser.email,
-          week_start:         journalWeekStart
-        });
-      } else {
-        // 이번 주 또는 미래 주: 없으면 자동 생성
-        res = await apiGet('journalGetOrCreate', {
-          request_user_email: currentUser.email,
-          week_start:         journalWeekStart
-        });
-      }
+      const res = await apiGet('journalGet', {
+        request_user_email: currentUser.email,
+        week_start:         journalWeekStart
+      });
 
       currentJournal      = res.data.journal;
       currentJournalTasks = res.data.tasks;
@@ -445,12 +526,12 @@
       ['attendanceThisWeek','attendanceNextWeek','journalSummary',
        'journalAchievements','journalNextPlan','journalIssues'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.value = ''; el.disabled = true; el.placeholder = '작성된 일지가 없습니다.'; }
+        if (el) { el.value = ''; el.disabled = true; el.placeholder = '업무일지를 먼저 생성해 주세요.'; }
       });
 
       document.getElementById('autosaveText').textContent = isPastWeek
         ? '해당 주에 작성된 일지가 없습니다.'
-        : '-';
+        : '주간업무 탭에서 [이 주차 업무일지 생성] 버튼을 눌러 주세요.';
       return;
     }
 
