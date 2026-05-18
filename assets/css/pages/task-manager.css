@@ -1094,15 +1094,35 @@
   gap: 14px;
 }
 
-.search-row {
+/* 1행: 기간 + 키워드 */
+.search-main-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-date-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.search-keyword-group {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 2행: 콤보박스 필터 */
+.search-filter-row {
   display: flex;
   align-items: flex-end;
   gap: 12px;
   flex-wrap: wrap;
-}
-
-.search-row--filters {
-  align-items: flex-start;
   padding-top: 4px;
   border-top: 1px solid var(--border-soft);
 }
@@ -1118,12 +1138,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 140px;
-}
-
-.search-field--full {
-  flex: 1;
-  min-width: 240px;
 }
 
 .search-label {
@@ -1132,9 +1146,16 @@
   color: var(--text-secondary);
 }
 
-.search-input {
+.search-date-input {
   height: 38px;
-  width: 150px;
+  width: 148px;
+}
+
+.search-select {
+  height: 38px;
+  min-width: 110px;
+  padding: 0 10px;
+  font-size: 13px;
 }
 
 .search-keyword-wrap {
@@ -1149,51 +1170,17 @@
 
 .search-btn {
   height: 38px;
-  padding: 0 18px;
+  padding: 0 20px;
   font-size: 13px;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .search-reset-btn {
-  height: 36px;
-  padding: 0 12px;
+  height: 38px;
+  padding: 0 14px;
   font-size: 12px;
-}
-
-/* 체크박스 그룹 */
-.search-check-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 2px;
-}
-
-.search-check {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 4px 8px;
-  border: 1.5px solid var(--border-input);
-  border-radius: 8px;
-  background: #fff;
-  transition: all 0.12s ease;
-  user-select: none;
-  white-space: nowrap;
-}
-
-.search-check:has(input:checked) {
-  border-color: var(--blue);
-  background: var(--blue-soft);
-  color: var(--blue);
-  font-weight: 600;
-}
-
-.search-check input[type="checkbox"] {
-  display: none;
+  color: var(--text-secondary);
 }
 
 /* 검색 결과 */
@@ -1213,7 +1200,6 @@
   font-weight: 700;
 }
 
-/* 검색 결과 아이템 — task-item에 날짜 정보 추가 */
 .search-item-date {
   font-size: 11px;
   color: var(--text-muted);
@@ -1222,7 +1208,6 @@
   padding-top: 2px;
 }
 
-/* 로딩 */
 .search-loading {
   display: flex;
   align-items: center;
@@ -1234,9 +1219,13 @@
 }
 
 @media (max-width: 640px) {
-  .search-row { gap: 8px; }
-  .search-input { width: 130px; }
-  .search-field--full { min-width: 100%; }
+  .search-form         { padding: 14px 14px 12px; gap: 12px; }
+  .search-main-row     { flex-direction: column; align-items: stretch; gap: 10px; }
+  .search-date-group   { justify-content: space-between; }
+  .search-date-input   { width: 130px; }
+  .search-filter-row   { gap: 8px; }
+  .search-select       { min-width: 90px; flex: 1; }
+  .search-reset-btn    { width: 100%; }
 }
 
 /* ── 카테고리 관리 버튼 ── */
