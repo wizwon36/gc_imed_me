@@ -55,7 +55,7 @@
           📅 주간 업무
         </button>
         <button class="task-tab-btn" data-tab="journal" id="tabJournal">
-          📝 주간일지
+          📝 주간업무일지
         </button>
         <button class="task-tab-btn" id="tabTeam" data-tab="team" style="display:none;">
           👥 팀원 현황
@@ -148,7 +148,14 @@
       ──────────────────────────────────────── -->
       <div id="panelJournal" style="display:none;">
 
-        <div class="task-card">
+        <div class="task-card" style="position:relative;">
+          <!-- 일지 로딩 오버레이 -->
+          <div class="task-modal-loading" id="journalLoading">
+            <div class="task-modal-loading-inner">
+              <div class="task-loading-spinner"></div>
+              <span class="task-modal-loading-text">불러오는 중...</span>
+            </div>
+          </div>
           <!-- 일지 헤더 -->
           <div class="task-card-head" style="border-top:1.5px solid #e0e7f2;">
             <div>
