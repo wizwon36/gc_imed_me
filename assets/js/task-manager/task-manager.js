@@ -315,10 +315,10 @@
         showGlobalLoading('업무일지를 생성하는 중...');
       }
 
-      // ── 주간업무요약: 이번주 업무를 일별로 그룹화 ──────────────
-      const summary = buildDailyGroupedText(thisItems, weeklyWeekStart, false);
+      // ── 주간업무요약: 이번주 업무를 일별로 그룹화 (상태 표시)
+      const summary = buildDailyGroupedText(thisItems, weeklyWeekStart, true);
 
-      // ── 금주 성과: 이번주 완료/진행 업무 ──────────────────────
+      // ── 금주 성과: 이번주 완료 업무 ──────────────────────────
       const doneItems = thisItems.filter(t => t.status === 'DONE');
       const achievements = doneItems.length > 0
         ? doneItems.map(t =>
@@ -326,8 +326,8 @@
           ).join('\n')
         : '';
 
-      // ── 차주업무계획: 다음주 업무를 일별로 그룹화 ─────────────
-      const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, true);
+      // ── 차주업무계획: 다음주 업무를 일별로 그룹화 (상태 미표시)
+      const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, false);
 
       // 저장
       await apiPost('journalUpdate', {
@@ -365,15 +365,22 @@
    * 업무 목록을 일별로 그룹화한 텍스트 생성
    * @param {Array}   items      - 업무 항목 배열
    * @param {string}  weekStart  - 해당 주 시작일 (yyyy-MM-dd)
-   * @param {boolean} showDate   - 날짜 줄 표시 여부 (차주계획은 날짜 표시)
+   * 날짜 헤더 + 들여쓰기 구조로 통일 (이번주/다음주 동일 포맷)
+   * 출력 예시:
+   *   [05/19 월]
+   *     🔴 [구매] 제목 (완료)
+   *     🟡 [운영] 제목 (진행중)
+   *
+   *   [05/20 화]
+   *     🟢 [시설] 제목 (예정)
    */
-  function buildDailyGroupedText(items, weekStart, showDate) {
+  function buildDailyGroupedText(items, weekStart, showStatus) {
     if (!items || items.length === 0) return '';
 
-    const DOW_LABEL = ['(일)', '(월)', '(화)', '(수)', '(목)', '(금)', '(토)'];
+    const DOW_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
     const lines     = [];
 
-    // 요일별 그룹화
+    // 날짜별 그룹화
     const dayMap = {};
     items.forEach(function(t) {
       const d = t.task_date || '';
@@ -384,40 +391,30 @@
     // 날짜 오름차순 정렬
     const sortedDates = Object.keys(dayMap).sort();
 
-    sortedDates.forEach(function(dateStr) {
+    sortedDates.forEach(function(dateStr, idx) {
       const dayItems = dayMap[dateStr];
       const d        = new Date(dateStr + 'T00:00:00');
       const dow      = d.getDay();
       const mmdd     = dateStr.substring(5).replace('-', '/'); // MM/DD
 
-      // 날짜 헤더 (차주계획은 날짜 표시, 이번주 요약은 선택적)
-      if (showDate) {
-        lines.push('[' + mmdd + ' ' + DOW_LABEL[dow] + ']');
-      }
+      // 날짜 헤더
+      lines.push('[' + mmdd + ' ' + DOW_LABEL[dow] + ']');
 
       // 해당 날짜 업무 목록
       dayItems.forEach(function(t) {
         const catLabel    = CATEGORY_LABELS[t.category] || t.category || '기타';
-        const statusLabel = t.status === 'DONE' ? '완료'
-          : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+        const statusLabel = t.status === 'DONE'        ? '완료'
+                          : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
         const priLabel    = t.priority === 'HIGH' ? '🔴'
-          : t.priority === 'LOW' ? '🟢' : '🟡';
+                          : t.priority === 'LOW'  ? '🟢' : '🟡';
 
-        if (showDate) {
-          // 차주 계획: 날짜 헤더 아래 들여쓰기
-          lines.push('  ' + priLabel + ' [' + catLabel + '] ' + t.title);
-        } else {
-          // 이번주 요약: 날짜 인라인 표시
-          lines.push(mmdd + ' ' + DOW_LABEL[dow] + '  ' + priLabel + ' [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')');
-        }
+        const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
+        lines.push('  ' + priLabel + ' [' + catLabel + '] ' + t.title + statusSuffix);
       });
 
-      // 차주 계획은 날짜 그룹 사이 빈 줄
-      if (showDate) lines.push('');
+      // 날짜 그룹 사이 빈 줄 (마지막 제외)
+      if (idx < sortedDates.length - 1) lines.push('');
     });
-
-    // 끝 빈 줄 제거
-    while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
 
     return lines.join('\n');
   }
