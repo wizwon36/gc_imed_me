@@ -206,9 +206,13 @@
     document.getElementById('panelTeam').style.display    = tab === 'team'    ? '' : 'none';
 
     if (tab === 'journal') {
-      // 주간업무 탭 기준 주차로 맞추고 기존 일지 조회 (생성 X)
       journalWeekStart = weeklyWeekStart;
-      loadJournal();
+      // 생성 버튼으로 이미 데이터가 세팅된 경우 재로드 스킵
+      if (currentJournal && currentJournal._fromGenerate) {
+        delete currentJournal._fromGenerate;
+      } else {
+        loadJournal();
+      }
     }
     if (tab === 'team' && isManager) loadTeamJournals();
   }
@@ -342,18 +346,16 @@
       // 생성된 일지 데이터를 직접 세팅 후 일지 탭으로 이동
       journalWeekStart    = weeklyWeekStart;
       currentJournal      = Object.assign({}, journal, {
-        summary:      allItems,
-        achievements: doneItems,
-        next_plan:    pendingItems,
-        issues:       existingJournal ? existingJournal.issues : ''
+        summary:         allItems,
+        achievements:    doneItems,
+        next_plan:       pendingItems,
+        issues:          existingJournal ? existingJournal.issues : '',
+        _fromGenerate:   true   // switchTab에서 loadJournal 재호출 방지 플래그
       });
       currentJournalTasks = tasks;
 
-      // 탭 전환 (loadJournal 호출 없이 직접 렌더링)
-      document.querySelectorAll('.task-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'journal'));
-      document.getElementById('panelWeekly').style.display  = 'none';
-      document.getElementById('panelJournal').style.display = '';
-      document.getElementById('panelTeam').style.display    = 'none';
+      // 탭 전환 — _fromGenerate 플래그로 loadJournal 재호출 방지
+      switchTab('journal');
       renderJournal();
       renderJournalTaskSummary();
 
@@ -666,7 +668,7 @@
   function renderJournalTaskSummary() {
     if (!currentJournalTasks) return;
 
-    const s   = currentJournalTasks.summary;
+    const s   = currentJournalTasks.summary || { total: 0, done: 0, in_progress: 0, todo: 0, high: 0 };
     const pct = s.total ? Math.round(s.done / s.total * 100) : 0;
 
     document.getElementById('journalTaskSummary').innerHTML = `
