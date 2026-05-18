@@ -268,52 +268,42 @@
     const todayWeekStart = getWeekStart(formatDateStr(new Date()));
     const isPastWeek     = weeklyWeekStart < todayWeekStart;
 
-    // 과거 주는 생성 불가
     if (isPastWeek) {
       showMessage('지난 주차의 업무일지는 생성할 수 없습니다.', 'error');
       return;
     }
 
-    // 기존 일지 여부 확인 (journalGet으로 조회)
-    let existingJournal = null;
-    try {
-      const check = await apiGet('journalGet', {
-        request_user_email: currentUser.email,
-        week_start:         weeklyWeekStart
-      });
-      existingJournal = check.data.journal;
-    } catch (e) {
-      // 없는 경우 null
-    }
-
-    // 이미 일지가 있으면 덮어쓰기 확인
-    if (existingJournal) {
-      const statusLabel = { DRAFT: '작성중', SUBMITTED: '제출됨', CLOSED: '마감됨' };
-      const label = statusLabel[existingJournal.status] || existingJournal.status;
-
-      if (existingJournal.status === 'CLOSED') {
-        showMessage('이미 마감된 업무일지는 덮어쓸 수 없습니다.', 'error');
-        return;
-      }
-
-      const confirmed = confirm(
-        `이 주차(${weeklyWeekStart})에 이미 [${label}] 상태의 업무일지가 있습니다.\n` +
-        `현재 등록된 업무 목록으로 내용을 덮어쓸까요?`
-      );
-      if (!confirmed) return;
-    }
-
     showGlobalLoading('업무일지를 생성하는 중...');
     try {
-      // journalGetOrCreate로 일지 확보 후 업무 내용으로 update
+      // journalGetOrCreate 한 번으로 기존 일지 확인 + 없으면 생성 동시 처리
       const res = await apiGet('journalGetOrCreate', {
         request_user_email: currentUser.email,
         week_start:         weeklyWeekStart
       });
 
-      const journal = res.data.journal;
-      const tasks   = res.data.tasks;
-      const items   = tasks.items || [];
+      const journal      = res.data.journal;
+      const tasks        = res.data.tasks;
+      const items        = tasks.items || [];
+      const isExisting   = !!journal.created_at &&
+                           (journal.summary || journal.achievements || journal.next_plan);
+
+      // 기존 일지가 있고 내용이 있는 경우 덮어쓰기 확인
+      if (isExisting) {
+        if (journal.status === 'CLOSED') {
+          showMessage('이미 마감된 업무일지는 덮어쓸 수 없습니다.', 'error');
+          hideGlobalLoading();
+          return;
+        }
+        const statusLabel = { DRAFT: '작성중', SUBMITTED: '제출됨' };
+        const label = statusLabel[journal.status] || journal.status;
+        hideGlobalLoading();
+        const confirmed = confirm(
+          `이 주차(${weeklyWeekStart})에 이미 [${label}] 상태의 업무일지가 있습니다.\n` +
+          `현재 등록된 업무 목록으로 내용을 덮어쓸까요?`
+        );
+        if (!confirmed) return;
+        showGlobalLoading('업무일지를 생성하는 중...');
+      }
 
       // 업무 목록 → 일지 필드 자동 구성
       const allItems = items.map(function(t) {
@@ -340,7 +330,7 @@
         summary:             allItems,
         achievements:        doneItems,
         next_plan:           pendingItems,
-        issues:              existingJournal ? existingJournal.issues : ''
+        issues:              journal.issues || ''
       });
 
       // 생성된 일지 데이터를 직접 세팅 후 일지 탭으로 이동
@@ -349,7 +339,7 @@
         summary:         allItems,
         achievements:    doneItems,
         next_plan:       pendingItems,
-        issues:          existingJournal ? existingJournal.issues : '',
+        issues:          journal.issues || '',
         _fromGenerate:   true   // switchTab에서 loadJournal 재호출 방지 플래그
       });
       currentJournalTasks = tasks;
