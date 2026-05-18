@@ -487,23 +487,27 @@
       // ── 차주업무계획: 다음주 업무를 일별로 그룹화 (상태 미표시)
       const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, false);
 
-      // 저장
+      // 저장 — 근태 특이사항(this/next week), 이슈/건의사항은 기존 값 유지
       await apiPost('journalUpdate', {
-        request_user_email:  currentUser.email,
-        journal_id:          journal.journal_id,
-        summary:             summary,
-        achievements:        achievements,
-        next_plan:           nextPlan,
-        issues:              journal.issues || ''
+        request_user_email:   currentUser.email,
+        journal_id:           journal.journal_id,
+        summary:              summary,
+        achievements:         achievements,
+        next_plan:            nextPlan,
+        attendance_this_week: journal.attendance_this_week || '',
+        attendance_next_week: journal.attendance_next_week || '',
+        issues:               journal.issues || ''
       });
 
       journalWeekStart    = weeklyWeekStart;
       currentJournal      = Object.assign({}, journal, {
-        summary:       summary,
-        achievements:  achievements,
-        next_plan:     nextPlan,
-        issues:        journal.issues || '',
-        _fromGenerate: true
+        summary:              summary,
+        achievements:         achievements,
+        next_plan:            nextPlan,
+        attendance_this_week: journal.attendance_this_week || '',
+        attendance_next_week: journal.attendance_next_week || '',
+        issues:               journal.issues || '',
+        _fromGenerate:        true
       });
       currentJournalTasks = serverTasks;
 
