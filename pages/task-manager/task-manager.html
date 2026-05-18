@@ -62,22 +62,42 @@
         </button>
       </div>
 
+      <!-- ── 공통 주차 네비게이터 ──────────────────────────────── -->
+      <div class="week-nav-shared" id="sharedWeekNav">
+        <button class="week-nav-btn" id="prevWeekBtn" title="이전 주">‹</button>
+
+        <div class="week-nav-label">
+          <!-- 클릭하면 월 캘린더 팝업 열림 -->
+          <button class="week-nav-range-btn" id="weekNavRangeBtn">
+            <span id="weekRangeLabel">-</span>
+          </button>
+          <span class="week-nav-sub" id="weekSubLabel"></span>
+        </div>
+
+        <button class="week-nav-btn" id="nextWeekBtn" title="다음 주">›</button>
+        <button class="week-nav-today" id="todayBtn">오늘</button>
+      </div>
+
+      <!-- ── 월 캘린더 팝업 ─────────────────────────────────────── -->
+      <div class="week-calendar-popup" id="weekCalendarPopup">
+        <div class="wcp-head">
+          <button class="wcp-nav" id="wcpPrevMonth">‹</button>
+          <span class="wcp-title" id="wcpMonthTitle">-</span>
+          <button class="wcp-nav" id="wcpNextMonth">›</button>
+        </div>
+        <div class="wcp-dow-row">
+          <span>일</span><span>월</span><span>화</span><span>수</span>
+          <span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="wcp-grid" id="wcpGrid"></div>
+      </div>
+
       <!-- ────────────────────────────────────────
            탭: 주간 업무
       ──────────────────────────────────────── -->
       <div id="panelWeekly">
 
         <div class="task-card">
-          <!-- 주차 네비게이터 -->
-          <div class="week-nav">
-            <button class="week-nav-btn" id="prevWeekBtn" title="이전 주">‹</button>
-            <div class="week-nav-label">
-              <span class="week-nav-range" id="weekRangeLabel">-</span>
-              <span class="week-nav-sub" id="weekSubLabel">이번 주</span>
-            </div>
-            <button class="week-nav-btn" id="nextWeekBtn" title="다음 주">›</button>
-            <button class="week-nav-today" id="todayBtn">오늘</button>
-          </div>
 
           <!-- 주간 요약 -->
           <div class="week-summary-bar">
@@ -130,17 +150,6 @@
       <div id="panelJournal" style="display:none;">
 
         <div class="task-card">
-          <!-- 주차 네비게이터 (일지용) -->
-          <div class="week-nav">
-            <button class="week-nav-btn" id="prevWeekJBtn" title="이전 주">‹</button>
-            <div class="week-nav-label">
-              <span class="week-nav-range" id="weekRangeLabelJ">-</span>
-              <span class="week-nav-sub" id="weekSubLabelJ">이번 주</span>
-            </div>
-            <button class="week-nav-btn" id="nextWeekJBtn" title="다음 주">›</button>
-            <button class="week-nav-today" id="todayJBtn">오늘</button>
-          </div>
-
           <!-- 일지 헤더 -->
           <div class="task-card-head" style="border-top:1.5px solid #e0e7f2;">
             <div>
@@ -232,16 +241,6 @@
       <div id="panelTeam" style="display:none;">
 
         <div class="task-card">
-          <div class="week-nav">
-            <button class="week-nav-btn" id="prevWeekTBtn" title="이전 주">‹</button>
-            <div class="week-nav-label">
-              <span class="week-nav-range" id="weekRangeLabelT">-</span>
-              <span class="week-nav-sub" id="weekSubLabelT">이번 주</span>
-            </div>
-            <button class="week-nav-btn" id="nextWeekTBtn" title="다음 주">›</button>
-            <button class="week-nav-today" id="todayTBtn">오늘</button>
-          </div>
-
           <div class="task-card-head" style="border-top:1.5px solid #e0e7f2;">
             <div>
               <h2 class="task-card-head-title">팀원 주간일지 현황</h2>
