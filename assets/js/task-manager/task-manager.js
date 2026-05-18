@@ -546,7 +546,7 @@
     const weekEnd   = getWeekEnd(weekStart);
     const lines     = [];
 
-    // 이번 주 시작 업무 vs 이전 주에서 이월된 기간 업무 분리
+    // 이번 주 시작 업무 vs 이월 분리
     const thisWeekItems  = [];
     const carryOverItems = [];
     items.forEach(function(t) {
@@ -555,78 +555,110 @@
       else carryOverItems.push(t);
     });
 
-    // 중요도 순 정렬 (HIGH → MEDIUM → LOW)
+    // 중요도 정렬
     const PRI_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
     function sortByPri(a, b) {
       const pa = PRI_ORDER[(a.priority || 'MEDIUM').toUpperCase()] ?? 1;
       const pb = PRI_ORDER[(b.priority || 'MEDIUM').toUpperCase()] ?? 1;
-      return pa - pb;
+      if (pa !== pb) return pa - pb;
+      return (a.start_date || '').localeCompare(b.start_date || '');
     }
 
-    // ── 1) 이번 주 시작 업무: 날짜 단락 + 번호 목록
-    const dayMap = {};
+    // 카테고리 순서
+    const CAT_ORDER = Object.keys(CATEGORY_LABELS);
+    function catIndex(t) {
+      const i = CAT_ORDER.indexOf(t.category || 'ETC');
+      return i === -1 ? 99 : i;
+    }
+
+    // ── 1) 카테고리로 먼저 묶고, 그 안에 날짜 표기
+    const catMap = {};
+    const catOrder = [];
     thisWeekItems.forEach(function(t) {
-      const d = t.start_date || '';
-      if (!dayMap[d]) dayMap[d] = [];
-      dayMap[d].push(t);
+      const cat = t.category || 'ETC';
+      if (!catMap[cat]) { catMap[cat] = []; catOrder.push(cat); }
+      catMap[cat].push(t);
     });
 
-    const sortedDates = Object.keys(dayMap).sort();
-    sortedDates.forEach(function(dateStr, dateIdx) {
-      const dayItems = dayMap[dateStr].slice().sort(sortByPri);
-      const d        = new Date(dateStr + 'T00:00:00');
-      const dow      = d.getDay();
-      const mmdd     = dateStr.substring(5).replace('-', '/');
+    // 카테고리 정의 순서로 정렬
+    catOrder.sort(function(a, b) {
+      return catIndex({ category: a }) - catIndex({ category: b });
+    });
 
-      // 날짜 헤더 — 이전 날짜 단락과 빈 줄로 구분
-      if (dateIdx > 0) lines.push('');
-      lines.push(mmdd + ' (' + DOW_LABEL[dow] + ')');
-      lines.push('');  // 헤더와 항목 사이 여백
+    catOrder.forEach(function(cat, catIdx) {
+      const catLabel = CATEGORY_LABELS[cat] || cat || '기타';
+      const group    = catMap[cat].slice().sort(sortByPri);
 
-      let num = 1;
-      dayItems.forEach(function(t) {
-        const catLabel     = CATEGORY_LABELS[t.category] || t.category || '기타';
-        const priTag       = t.priority === 'HIGH' ? ' *' : '';  // 높음만 * 표시
-        const statusLabel  = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-        const statusSuffix = showStatus ? '  [' + statusLabel + ']' : '';
-        const dateRange    = (t.start_date !== t.end_date)
-          ? '  ' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/')
-          : '';
+      if (catIdx > 0) lines.push('');
+      lines.push('[' + catLabel + ']');
 
-        lines.push('  ' + num + '.  ' + t.title + priTag + statusSuffix + dateRange);
-        lines.push('      ' + catLabel + (t.description && t.description.trim() ? '  |  ' + t.description.trim() : ''));
-        num++;
+      // 날짜별 소그룹
+      const dayMap = {};
+      const dayOrder = [];
+      group.forEach(function(t) {
+        const d = t.start_date || '';
+        if (!dayMap[d]) { dayMap[d] = []; dayOrder.push(d); }
+        dayMap[d].push(t);
+      });
+      dayOrder.sort();
+
+      dayOrder.forEach(function(dateStr) {
+        const dayItems = dayMap[dateStr];
+        const d        = new Date(dateStr + 'T00:00:00');
+        const dow      = d.getDay();
+        const mmdd     = dateStr.substring(5).replace('-', '/');
+
+        lines.push('  ' + mmdd + ' (' + DOW_LABEL[dow] + ')');
+
+        let num = 1;
+        dayItems.forEach(function(t) {
+          const priTag       = t.priority === 'HIGH' ? ' *' : '';
+          const statusLabel  = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+          const statusSuffix = showStatus ? '  [' + statusLabel + ']' : '';
+          const dateRange    = (t.start_date !== t.end_date)
+            ? '  ' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/')
+            : '';
+
+          lines.push('    ' + num + '.  ' + t.title + priTag + statusSuffix + dateRange);
+          if (t.description && t.description.trim()) {
+            lines.push('        └ ' + t.description.trim());
+          }
+          num++;
+        });
       });
     });
 
-    // ── 2) 이전 주에서 이월된 기간 업무
+    // ── 2) 이월 업무
     if (carryOverItems.length > 0) {
       lines.push('');
       lines.push('── 이월 업무 ──');
-      lines.push('');
 
       const completedCarry = carryOverItems.filter(function(t) {
         return t.end_date <= weekEnd && t.status === 'DONE';
-      });
+      }).sort(function(a,b){ return catIndex(a)-catIndex(b) || sortByPri(a,b); });
+
       const ongoingCarry = carryOverItems.filter(function(t) {
         return !(t.end_date <= weekEnd && t.status === 'DONE');
-      }).sort(sortByPri);
+      }).sort(function(a,b){ return catIndex(a)-catIndex(b) || sortByPri(a,b); });
 
-      ongoingCarry.forEach(function(t, idx) {
-        const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
-        const endLabel  = t.end_date > weekEnd ? '계속' : '진행중';
-        const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
-        lines.push('  ' + String(idx + 1) + '.  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
-        lines.push('      ' + catLabel + (t.description && t.description.trim() ? '  |  ' + t.description.trim() : ''));
-      });
+      if (ongoingCarry.length > 0) {
+        lines.push('');
+        ongoingCarry.forEach(function(t, idx) {
+          const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
+          const endLabel  = t.end_date > weekEnd ? '계속' : '진행중';
+          const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
+          lines.push('  ' + String(idx+1) + '.  [' + catLabel + ']  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
+          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+        });
+      }
 
       if (completedCarry.length > 0) {
         if (ongoingCarry.length > 0) lines.push('');
-        completedCarry.sort(sortByPri).forEach(function(t, idx) {
+        completedCarry.forEach(function(t, idx) {
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
-          lines.push('  ' + String(idx + 1) + '.  ' + t.title + '  [완료]  ' + dateRange);
-          lines.push('      ' + catLabel + (t.description && t.description.trim() ? '  |  ' + t.description.trim() : ''));
+          lines.push('  ' + String(idx+1) + '.  [' + catLabel + ']  ' + t.title + '  [완료]  ' + dateRange);
+          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
         });
       }
     }
