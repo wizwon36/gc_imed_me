@@ -717,7 +717,7 @@
         ? `<span class="day-chip chip-medium" style="cursor:default;">+${dayTasks.length - 3}개</span>`
         : '';
 
-      const taskItems = dayTasks.map(t => renderTaskItem(t)).join('');
+      const taskItems = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
 
       const headClasses = ['day-row-head',
         isToday ? 'is-today'    : '',
@@ -752,10 +752,29 @@
     }).join('');
   }
 
-  function renderTaskItem(t) {
+  function renderTaskItem(t, dateStr) {
     const priorityCls = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
-    const statusCls   = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
-    const isDone      = t.status === 'DONE';
+    const isSingleDay = !t.end_date || t.start_date === t.end_date;
+    const isEndDate   = !isSingleDay && dateStr && t.end_date === dateStr;
+    const isMidDate   = !isSingleDay && dateStr && t.end_date > dateStr && t.start_date < dateStr;
+
+    // 날짜별 표시 상태 결정
+    // - 단기업무: status 그대로
+    // - 기간 중간 날짜: 항상 진행중
+    // - 마지막 날(end_date): DONE이면 완료, 아니면 종료예정
+    let displayStatus, statusCls;
+    if (isMidDate) {
+      displayStatus = '진행중';
+      statusCls     = 'badge-status-inprogress';
+    } else if (isEndDate) {
+      displayStatus = t.status === 'DONE' ? '완료' : '종료예정';
+      statusCls     = t.status === 'DONE' ? 'badge-status-done' : 'badge-status-inprogress';
+    } else {
+      displayStatus = STATUS_LABELS[t.status] || t.status;
+      statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
+    }
+
+    const isDone = t.status === 'DONE' && (isSingleDay || isEndDate);
 
     return `
       <div class="task-item${isDone ? ' is-done' : ''}" onclick="TASK_APP.openEditModal('${esc(t.task_id)}')">
@@ -764,8 +783,8 @@
           <div class="task-item-title">${esc(t.title)}</div>
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
-            <span class="task-badge ${statusCls}">${esc(STATUS_LABELS[t.status] || t.status)}</span>
-            ${t.start_date !== t.end_date
+            <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
+            ${!isSingleDay
               ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
               : ''}
             ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.description)}</span>` : ''}
