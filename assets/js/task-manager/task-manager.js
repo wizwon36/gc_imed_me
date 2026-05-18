@@ -1183,8 +1183,7 @@
     const saveBtn = document.getElementById('taskModalSaveBtn');
 
     try {
-      saveBtn.disabled    = true;
-      saveBtn.textContent = '저장 중...';
+      setTaskModalLoading(true, editingTaskId ? '수정 중...' : '저장 중...');
 
       if (editingTaskId) {
         payload.task_id = editingTaskId;
@@ -1205,8 +1204,28 @@
     } catch (err) {
       showMessage(err.message || '저장에 실패했습니다.', 'error');
     } finally {
-      saveBtn.disabled    = false;
-      saveBtn.textContent = '저장';
+      setTaskModalLoading(false);
+    }
+  }
+
+  function setTaskModalLoading(active, text) {
+    const overlay  = document.getElementById('taskModalLoading');
+    const textEl   = document.getElementById('taskModalLoadingText');
+    const saveBtn  = document.getElementById('taskModalSaveBtn');
+    const cancelBtn = document.getElementById('taskModalCancelBtn');
+    const closeBtn  = document.getElementById('taskModalClose');
+    if (!overlay) return;
+    if (active) {
+      if (textEl) textEl.textContent = text || '저장 중...';
+      overlay.classList.add('active');
+      if (saveBtn)   saveBtn.disabled  = true;
+      if (cancelBtn) cancelBtn.disabled = true;
+      if (closeBtn)  closeBtn.disabled  = true;
+    } else {
+      overlay.classList.remove('active');
+      if (saveBtn)   saveBtn.disabled  = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+      if (closeBtn)  closeBtn.disabled  = false;
     }
   }
 
