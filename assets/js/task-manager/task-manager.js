@@ -462,7 +462,7 @@
             const catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
             const line = '• [' + catLabel + '] ' + t.title;
             return t.description && t.description.trim()
-              ? line + '\n     └ ' + t.description.trim()
+              ? line + '\n       └ ' + t.description.trim()
               : line;
           }).join('\n')
         : '';
@@ -519,6 +519,8 @@
     if (!items || items.length === 0) return '';
 
     const DOW_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
+    const PRI_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
+    const PRI_LABEL = { HIGH: '[ 중요도 높음 ]', MEDIUM: '[ 중요도 보통 ]', LOW: '[ 중요도 낮음 ]' };
     const lines     = [];
 
     // 날짜별 그룹화
@@ -529,36 +531,46 @@
       dayMap[d].push(t);
     });
 
-    // 날짜 오름차순 정렬
     const sortedDates = Object.keys(dayMap).sort();
 
-    sortedDates.forEach(function(dateStr, idx) {
+    sortedDates.forEach(function(dateStr, dateIdx) {
       const dayItems = dayMap[dateStr];
       const d        = new Date(dateStr + 'T00:00:00');
       const dow      = d.getDay();
-      const mmdd     = dateStr.substring(5).replace('-', '/'); // MM/DD
+      const mmdd     = dateStr.substring(5).replace('-', '/');
 
       // 날짜 헤더
       lines.push('[' + mmdd + ' ' + DOW_LABEL[dow] + ']');
 
-      // 해당 날짜 업무 목록
+      // 중요도별 그룹화
+      const priMap = { HIGH: [], MEDIUM: [], LOW: [] };
       dayItems.forEach(function(t) {
-        const catLabel    = CATEGORY_LABELS[t.category] || t.category || '기타';
-        const statusLabel = t.status === 'DONE'        ? '완료'
-                          : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-        const priLabel    = t.priority === 'HIGH' ? '[중요]'
-                          : t.priority === 'LOW'  ? '[일반]' : '';
-
-        const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
-        const priPrefix    = priLabel ? priLabel + ' ' : '';
-        lines.push('  ' + priPrefix + '[' + catLabel + '] ' + t.title + statusSuffix);
-        if (t.description && t.description.trim()) {
-          lines.push('     └ ' + t.description.trim());
-        }
+        const p = (t.priority || 'MEDIUM').toUpperCase();
+        if (priMap[p]) priMap[p].push(t);
+        else priMap['MEDIUM'].push(t);
       });
 
-      // 날짜 그룹 사이 빈 줄 (마지막 제외)
-      if (idx < sortedDates.length - 1) lines.push('');
+      PRI_ORDER.forEach(function(pri) {
+        const group = priMap[pri];
+        if (!group.length) return;
+
+        lines.push('  ' + PRI_LABEL[pri]);
+
+        group.forEach(function(t, itemIdx) {
+          const catLabel     = CATEGORY_LABELS[t.category] || t.category || '기타';
+          const statusLabel  = t.status === 'DONE'        ? '완료'
+                             : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+          const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
+          const num          = String(itemIdx + 1) + '.';
+
+          lines.push('    ' + num + ' [' + catLabel + '] ' + t.title + statusSuffix);
+          if (t.description && t.description.trim()) {
+            lines.push('        └ ' + t.description.trim());
+          }
+        });
+      });
+
+      if (dateIdx < sortedDates.length - 1) lines.push('');
     });
 
     return lines.join('\n');
