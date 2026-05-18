@@ -458,9 +458,13 @@
       // ── 금주 성과: 이번주 완료 업무 ──────────────────────────
       const doneItems = thisItems.filter(t => t.status === 'DONE');
       const achievements = doneItems.length > 0
-        ? doneItems.map(t =>
-            '• [' + (CATEGORY_LABELS[t.category] || t.category || '기타') + '] ' + t.title
-          ).join('\n')
+        ? doneItems.map(t => {
+            const catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
+            const line = '• [' + catLabel + '] ' + t.title;
+            return t.description && t.description.trim()
+              ? line + '\n     └ ' + t.description.trim()
+              : line;
+          }).join('\n')
         : '';
 
       // ── 차주업무계획: 다음주 업무를 일별로 그룹화 (상태 미표시)
@@ -542,11 +546,12 @@
         const catLabel    = CATEGORY_LABELS[t.category] || t.category || '기타';
         const statusLabel = t.status === 'DONE'        ? '완료'
                           : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-        const priLabel    = t.priority === 'HIGH' ? '🔴'
-                          : t.priority === 'LOW'  ? '🟢' : '🟡';
+        const priLabel    = t.priority === 'HIGH' ? '[중요]'
+                          : t.priority === 'LOW'  ? '[일반]' : '';
 
         const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
-        lines.push('  ' + priLabel + ' [' + catLabel + '] ' + t.title + statusSuffix);
+        const priPrefix    = priLabel ? priLabel + ' ' : '';
+        lines.push('  ' + priPrefix + '[' + catLabel + '] ' + t.title + statusSuffix);
         if (t.description && t.description.trim()) {
           lines.push('     └ ' + t.description.trim());
         }
