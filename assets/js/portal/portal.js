@@ -128,10 +128,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       gridEl.innerHTML = visiblePermissions.map(item => {
         const app = APP_MAP[item.app_id];
         const permissionLabel =
-          item.permission === 'admin'   ? '관리자' :
-          item.permission === 'manager' ? '팀장'   :
-          item.permission === 'edit'    ? '편집'   :
-          item.permission === 'view'    ? '조회'   :
+          item.permission === 'admin' ? '관리자' :
+          item.permission === 'edit'  ? '편집'   :
+          item.permission === 'view'  ? '조회'   :
           (item.permission || '');
 
         return `
