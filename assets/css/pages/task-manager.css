@@ -1094,33 +1094,30 @@
   gap: 12px;
 }
 
-/* ── 검색 폼 — 전체 구조 ── */
-/* 1행: 시작일 ~ 종료일 | 키워드 + 검색버튼 */
+/* 1행: 기간 | 키워드 + 검색버튼 */
 .search-main-row {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: end;
-  gap: 12px;
+  gap: 14px;
 }
 
-/* 날짜 그룹: 라벨 + [시작일 ~ 종료일] 인라인 */
+/* 날짜 그룹: 라벨 하나 + 인풋들 한 줄 */
 .search-date-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-shrink: 0;
 }
 
 .search-date-inputs {
   display: flex;
   align-items: center;
   gap: 6px;
+  height: 38px;
 }
 
 .search-range-sep {
   font-size: 13px;
   color: var(--text-muted);
   flex-shrink: 0;
-  line-height: 1;
 }
 
 .search-date-input {
@@ -1128,17 +1125,15 @@
   height: 38px;
 }
 
-/* 키워드 그룹: 라벨 + [입력 + 검색버튼] */
+/* 키워드 그룹: 라벨 + 인풋+버튼 */
 .search-keyword-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   min-width: 0;
 }
 
 .search-keyword-wrap {
   display: flex;
   gap: 8px;
+  height: 38px;
 }
 
 .search-keyword-wrap .form-input {
@@ -1180,11 +1175,11 @@
   margin-left: auto;
 }
 
-/* 공통 검색 라벨 / 필드 */
+/* 공통 필드: 라벨 + 인풋 세로 스택 */
 .search-field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .search-label {
@@ -1192,7 +1187,7 @@
   font-weight: 600;
   color: var(--text-secondary);
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 /* 검색 결과 */
@@ -1231,7 +1226,7 @@
 
 @media (max-width: 640px) {
   .search-form        { padding: 14px; gap: 10px; }
-  .search-main-row    { grid-template-columns: 1fr; align-items: stretch; gap: 8px; }
+  .search-main-row    { grid-template-columns: 1fr; }
   .search-date-inputs { justify-content: space-between; }
   .search-date-input  { width: 130px; }
   .search-filter-row  { flex-wrap: wrap; gap: 8px; }
