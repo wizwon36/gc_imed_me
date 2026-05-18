@@ -1229,6 +1229,47 @@
   .search-reset-btn   { margin-left: 0; width: 100%; }
 }
 
+/* ── 덮어쓰기 확인 모달 ── */
+.overwrite-section {
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.overwrite-section--replace {
+  background: #fff7ed;
+  border: 1.5px solid #fed7aa;
+}
+
+.overwrite-section--keep {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+}
+
+.overwrite-section-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.overwrite-list {
+  margin: 0;
+  padding: 0 0 0 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overwrite-list li {
+  font-size: 13px;
+  color: var(--text-primary);
+  padding-left: 4px;
+}
+
 /* ── 카테고리 관리 버튼 ── */
 .category-manage-btn {
   display: flex;
