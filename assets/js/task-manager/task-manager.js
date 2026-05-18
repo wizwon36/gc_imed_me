@@ -543,22 +543,27 @@
     if (!items || items.length === 0) return '';
 
     const DOW_LABEL = ['일', '월', '화', '수', '목', '금', '토'];
-    const PRI_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
-    const PRI_LABEL = { HIGH: '  ▸ 높음', MEDIUM: '  ▸ 보통', LOW: '  ▸ 낮음' };
     const weekEnd   = getWeekEnd(weekStart);
     const lines     = [];
 
     // 이번 주 시작 업무 vs 이전 주에서 이월된 기간 업무 분리
     const thisWeekItems  = [];
     const carryOverItems = [];
-
     items.forEach(function(t) {
       const s = t.start_date || '';
       if (s >= weekStart && s <= weekEnd) thisWeekItems.push(t);
       else carryOverItems.push(t);
     });
 
-    // ── 1) 이번 주 시작 업무: 날짜 헤더 + 중요도 그룹
+    // 중요도 순 정렬 (HIGH → MEDIUM → LOW)
+    const PRI_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+    function sortByPri(a, b) {
+      const pa = PRI_ORDER[(a.priority || 'MEDIUM').toUpperCase()] ?? 1;
+      const pb = PRI_ORDER[(b.priority || 'MEDIUM').toUpperCase()] ?? 1;
+      return pa - pb;
+    }
+
+    // ── 1) 이번 주 시작 업무: 날짜 단락 + 번호 목록
     const dayMap = {};
     thisWeekItems.forEach(function(t) {
       const d = t.start_date || '';
@@ -568,78 +573,67 @@
 
     const sortedDates = Object.keys(dayMap).sort();
     sortedDates.forEach(function(dateStr, dateIdx) {
-      const dayItems = dayMap[dateStr];
+      const dayItems = dayMap[dateStr].slice().sort(sortByPri);
       const d        = new Date(dateStr + 'T00:00:00');
       const dow      = d.getDay();
       const mmdd     = dateStr.substring(5).replace('-', '/');
 
-      lines.push('■ ' + mmdd + ' ' + DOW_LABEL[dow]);
+      // 날짜 헤더 — 이전 날짜 단락과 빈 줄로 구분
+      if (dateIdx > 0) lines.push('');
+      lines.push(mmdd + ' (' + DOW_LABEL[dow] + ')');
+      lines.push('');  // 헤더와 항목 사이 여백
 
-      const priMap = { HIGH: [], MEDIUM: [], LOW: [] };
+      let num = 1;
       dayItems.forEach(function(t) {
-        const p = (t.priority || 'MEDIUM').toUpperCase();
-        if (priMap[p]) priMap[p].push(t); else priMap['MEDIUM'].push(t);
-      });
+        const catLabel     = CATEGORY_LABELS[t.category] || t.category || '기타';
+        const priTag       = t.priority === 'HIGH' ? ' *' : '';  // 높음만 * 표시
+        const statusLabel  = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+        const statusSuffix = showStatus ? '  [' + statusLabel + ']' : '';
+        const dateRange    = (t.start_date !== t.end_date)
+          ? '  ' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/')
+          : '';
 
-      PRI_ORDER.forEach(function(pri) {
-        const group = priMap[pri];
-        if (!group.length) return;
-        lines.push('  ' + PRI_LABEL[pri]);
-        group.forEach(function(t, itemIdx) {
-          const catLabel     = CATEGORY_LABELS[t.category] || t.category || '기타';
-          const statusLabel  = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-          const statusSuffix = showStatus ? ' (' + statusLabel + ')' : '';
-          const num          = String(itemIdx + 1) + '.';
-          const dateRange    = (t.start_date !== t.end_date)
-            ? ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')'
-            : '';
-          lines.push('    ' + num + ' ' + catLabel + ' · ' + t.title + dateRange + statusSuffix);
-          if (t.description && t.description.trim()) {
-            lines.push('          └ ' + t.description.trim());
-          }
-        });
+        lines.push('  ' + num + '.  ' + t.title + priTag + statusSuffix + dateRange);
+        lines.push('      ' + catLabel + (t.description && t.description.trim() ? '  |  ' + t.description.trim() : ''));
+        num++;
       });
-
-      if (dateIdx < sortedDates.length - 1) lines.push('');
     });
 
     // ── 2) 이전 주에서 이월된 기간 업무
     if (carryOverItems.length > 0) {
-      if (lines.length > 0) lines.push('');
+      lines.push('');
+      lines.push('── 이월 업무 ──');
+      lines.push('');
 
-      // 이번 주 안에 종료 + DONE → 이월 완료, 그 외 → 이월 진행중
       const completedCarry = carryOverItems.filter(function(t) {
         return t.end_date <= weekEnd && t.status === 'DONE';
       });
       const ongoingCarry = carryOverItems.filter(function(t) {
         return !(t.end_date <= weekEnd && t.status === 'DONE');
-      });
+      }).sort(sortByPri);
 
-      if (ongoingCarry.length > 0) {
-        lines.push('◎ 이월 진행 업무');
-        ongoingCarry.forEach(function(t, idx) {
-          const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
-          const endLabel  = t.end_date > weekEnd ? '계속' : (t.status === 'IN_PROGRESS' ? '진행중' : '예정');
-          const dateRange = ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')';
-          lines.push('  ' + String(idx + 1) + '. ' + catLabel + ' · ' + t.title + dateRange + ' (' + endLabel + ')');
-          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
-        });
-      }
+      ongoingCarry.forEach(function(t, idx) {
+        const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
+        const endLabel  = t.end_date > weekEnd ? '계속' : '진행중';
+        const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
+        lines.push('  ' + String(idx + 1) + '.  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
+        lines.push('      ' + catLabel + (t.description && t.description.trim() ? '  |  ' + t.description.trim() : ''));
+      });
 
       if (completedCarry.length > 0) {
         if (ongoingCarry.length > 0) lines.push('');
-        lines.push('◎ 이월 완료 업무');
-        completedCarry.forEach(function(t, idx) {
+        completedCarry.sort(sortByPri).forEach(function(t, idx) {
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
-          const dateRange = ' (' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/') + ')';
-          lines.push('  ' + String(idx + 1) + '. ' + catLabel + ' · ' + t.title + dateRange + ' (완료)');
-          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+          const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
+          lines.push('  ' + String(idx + 1) + '.  ' + t.title + '  [완료]  ' + dateRange);
+          lines.push('      ' + catLabel + (t.description && t.description.trim() ? '  |  ' + t.description.trim() : ''));
         });
       }
     }
 
     return lines.join('\n');
   }
+
 
   // ── 주간업무 로드 ────────────────────────────────────────────
   async function loadWeeklyTasks() {
