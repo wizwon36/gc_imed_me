@@ -264,7 +264,7 @@
   }
 
   // ── 주간 업무 로드 ───────────────────────────────────────────
-  // ── 업무일지 생성 (주간업무 → 일지 생성) ───────────────────
+  // ── 업무일지 생성 (주간업무 → 일지 자동 작성) ───────────────
   async function handleGenerateJournal() {
     const todayWeekStart = getWeekStart(formatDateStr(new Date()));
     const isPastWeek     = weeklyWeekStart < todayWeekStart;
@@ -276,82 +276,79 @@
 
     showGlobalLoading('업무일지를 생성하는 중...');
     try {
-      // journalGetOrCreate 한 번으로 기존 일지 확인 + 없으면 생성 동시 처리
-      const res = await apiGet('journalGetOrCreate', {
-        request_user_email: currentUser.email,
-        week_start:         weeklyWeekStart
-      });
+      // 이번주 일지 + 업무 목록, 다음주 업무 목록 병렬 로드
+      const nextWeekStart = offsetWeek(weeklyWeekStart, 1);
 
-      const journal = res.data.journal;
-      // ★ FIX: 로컬 weeklyTasks 대신 API 응답 tasks 사용
-      //         weeklyTasks는 비동기 로드가 완료되지 않았거나 다른 주차일 수 있어 신뢰 불가
-      //         journalGetOrCreate가 task_items 시트에서 직접 집계한 tasks가 항상 정확함
-      const serverTasks  = res.data.tasks;
-      const items        = serverTasks.items || [];
-      const tasks        = serverTasks;
-      const isExisting   = !!journal.created_at &&
-                           (journal.summary || journal.achievements || journal.next_plan);
+      const [thisRes, nextRes] = await Promise.all([
+        apiGet('journalGetOrCreate', {
+          request_user_email: currentUser.email,
+          week_start:         weeklyWeekStart
+        }),
+        apiGet('taskGetItems', {
+          request_user_email: currentUser.email,
+          week_start:         nextWeekStart
+        })
+      ]);
 
-      // 기존 일지가 있고 내용이 있는 경우 덮어쓰기 확인
+      const journal      = thisRes.data.journal;
+      const serverTasks  = thisRes.data.tasks;
+      const thisItems    = serverTasks.items || [];
+      const nextItems    = nextRes.data      || [];
+
+      // 기존 일지에 내용이 있으면 덮어쓰기 확인
+      const isExisting = !!journal.created_at &&
+                         (journal.summary || journal.achievements || journal.next_plan);
+
       if (isExisting) {
         if (journal.status === 'CLOSED') {
           showMessage('이미 마감된 업무일지는 덮어쓸 수 없습니다.', 'error');
           hideGlobalLoading();
           return;
         }
-        const statusLabel = { DRAFT: '작성중', SUBMITTED: '제출됨' };
-        const label = statusLabel[journal.status] || journal.status;
+        const labelMap = { DRAFT: '작성중', SUBMITTED: '제출됨' };
         hideGlobalLoading();
         const confirmed = confirm(
-          `이 주차(${weeklyWeekStart})에 이미 [${label}] 상태의 업무일지가 있습니다.\n` +
+          `이 주차(${weeklyWeekStart})에 이미 [${labelMap[journal.status] || journal.status}] 상태의 업무일지가 있습니다.\n` +
           `현재 등록된 업무 목록으로 내용을 덮어쓸까요?`
         );
         if (!confirmed) return;
         showGlobalLoading('업무일지를 생성하는 중...');
       }
 
-      // 업무 목록 → 일지 필드 자동 구성
-      const allItems = items.map(function(t) {
-        const statusLabel = t.status === 'DONE' ? '완료' : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-        const catLabel    = CATEGORY_LABELS[t.category] || t.category || '기타';
-        return '• [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')';
-      }).join('\n');
+      // ── 주간업무요약: 이번주 업무를 일별로 그룹화 ──────────────
+      const summary = buildDailyGroupedText(thisItems, weeklyWeekStart, false);
 
-      const doneItems = items.filter(function(t) { return t.status === 'DONE'; })
-        .map(function(t) {
-          return '• [' + (CATEGORY_LABELS[t.category] || t.category || '기타') + '] ' + t.title;
-        }).join('\n');
+      // ── 금주 성과: 이번주 완료/진행 업무 ──────────────────────
+      const doneItems = thisItems.filter(t => t.status === 'DONE');
+      const achievements = doneItems.length > 0
+        ? doneItems.map(t =>
+            '• [' + (CATEGORY_LABELS[t.category] || t.category || '기타') + '] ' + t.title
+          ).join('\n')
+        : '';
 
-      const pendingItems = items.filter(function(t) { return t.status !== 'DONE'; })
-        .map(function(t) {
-          const statusLabel = t.status === 'IN_PROGRESS' ? '진행중' : '예정';
-          return '• [' + (CATEGORY_LABELS[t.category] || t.category || '기타') + '] ' + t.title + ' (' + statusLabel + ')';
-        }).join('\n');
+      // ── 차주업무계획: 다음주 업무를 일별로 그룹화 ─────────────
+      const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, true);
 
-      // 덮어쓰기 저장
+      // 저장
       await apiPost('journalUpdate', {
         request_user_email:  currentUser.email,
         journal_id:          journal.journal_id,
-        summary:             allItems,
-        achievements:        doneItems,
-        next_plan:           pendingItems,
+        summary:             summary,
+        achievements:        achievements,
+        next_plan:           nextPlan,
         issues:              journal.issues || ''
       });
 
-      // currentJournal에 저장된 내용 직접 세팅
       journalWeekStart    = weeklyWeekStart;
       currentJournal      = Object.assign({}, journal, {
-        summary:       allItems,
-        achievements:  doneItems,
-        next_plan:     pendingItems,
+        summary:       summary,
+        achievements:  achievements,
+        next_plan:     nextPlan,
         issues:        journal.issues || '',
         _fromGenerate: true
       });
-      currentJournalTasks = tasks;
+      currentJournalTasks = serverTasks;
 
-      // ★ FIX: switchTab → renderJournal → renderJournalTaskSummary 순서 보장
-      //         switchTab 내부에서 _fromGenerate 플래그 감지 → loadJournal 스킵
-      //         패널 전환 후 즉시 렌더링해 화면에 반영
       switchTab('journal');
       renderJournal();
       renderJournalTaskSummary();
@@ -362,6 +359,67 @@
     } finally {
       hideGlobalLoading();
     }
+  }
+
+  /**
+   * 업무 목록을 일별로 그룹화한 텍스트 생성
+   * @param {Array}   items      - 업무 항목 배열
+   * @param {string}  weekStart  - 해당 주 시작일 (yyyy-MM-dd)
+   * @param {boolean} showDate   - 날짜 줄 표시 여부 (차주계획은 날짜 표시)
+   */
+  function buildDailyGroupedText(items, weekStart, showDate) {
+    if (!items || items.length === 0) return '';
+
+    const DOW_LABEL = ['(일)', '(월)', '(화)', '(수)', '(목)', '(금)', '(토)'];
+    const lines     = [];
+
+    // 요일별 그룹화
+    const dayMap = {};
+    items.forEach(function(t) {
+      const d = t.task_date || '';
+      if (!dayMap[d]) dayMap[d] = [];
+      dayMap[d].push(t);
+    });
+
+    // 날짜 오름차순 정렬
+    const sortedDates = Object.keys(dayMap).sort();
+
+    sortedDates.forEach(function(dateStr) {
+      const dayItems = dayMap[dateStr];
+      const d        = new Date(dateStr + 'T00:00:00');
+      const dow      = d.getDay();
+      const mmdd     = dateStr.substring(5).replace('-', '/'); // MM/DD
+
+      // 날짜 헤더 (차주계획은 날짜 표시, 이번주 요약은 선택적)
+      if (showDate) {
+        lines.push('[' + mmdd + ' ' + DOW_LABEL[dow] + ']');
+      }
+
+      // 해당 날짜 업무 목록
+      dayItems.forEach(function(t) {
+        const catLabel    = CATEGORY_LABELS[t.category] || t.category || '기타';
+        const statusLabel = t.status === 'DONE' ? '완료'
+          : t.status === 'IN_PROGRESS' ? '진행중' : '예정';
+        const priLabel    = t.priority === 'HIGH' ? '🔴'
+          : t.priority === 'LOW' ? '🟢' : '🟡';
+
+        if (showDate) {
+          // 차주 계획: 날짜 헤더 아래 들여쓰기
+          lines.push('  ' + priLabel + ' [' + catLabel + '] ' + t.title);
+        } else {
+          // 이번주 요약: 날짜 인라인 표시
+          lines.push(mmdd + ' ' + DOW_LABEL[dow] + '  ' + priLabel + ' [' + catLabel + '] ' + t.title + ' (' + statusLabel + ')');
+        }
+      });
+
+      // 차주 계획은 날짜 그룹 사이 빈 줄
+      if (showDate) lines.push('');
+    });
+
+    // 끝 빈 줄 제거
+    while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+
+    return lines.join('\n');
   }
 
   // ── 주간업무 로드 ────────────────────────────────────────────
