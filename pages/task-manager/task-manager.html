@@ -67,7 +67,6 @@
         <button class="week-nav-btn" id="prevWeekBtn" title="이전 주">‹</button>
 
         <div class="week-nav-label">
-          <!-- 클릭하면 월 캘린더 팝업 열림 -->
           <button class="week-nav-range-btn" id="weekNavRangeBtn">
             <span id="weekRangeLabel">-</span>
           </button>
@@ -76,20 +75,20 @@
 
         <button class="week-nav-btn" id="nextWeekBtn" title="다음 주">›</button>
         <button class="week-nav-today" id="todayBtn">오늘</button>
-      </div>
 
-      <!-- ── 월 캘린더 팝업 ─────────────────────────────────────── -->
-      <div class="week-calendar-popup" id="weekCalendarPopup">
-        <div class="wcp-head">
-          <button class="wcp-nav" id="wcpPrevMonth">‹</button>
-          <span class="wcp-title" id="wcpMonthTitle">-</span>
-          <button class="wcp-nav" id="wcpNextMonth">›</button>
+        <!-- ── 월 캘린더 팝업 (week-nav-shared 안에 위치해야 absolute 기준이 맞음) -->
+        <div class="week-calendar-popup" id="weekCalendarPopup">
+          <div class="wcp-head">
+            <button class="wcp-nav" id="wcpPrevMonth">‹</button>
+            <span class="wcp-title" id="wcpMonthTitle">-</span>
+            <button class="wcp-nav" id="wcpNextMonth">›</button>
+          </div>
+          <div class="wcp-dow-row">
+            <span>일</span><span>월</span><span>화</span><span>수</span>
+            <span>목</span><span>금</span><span>토</span>
+          </div>
+          <div class="wcp-grid" id="wcpGrid"></div>
         </div>
-        <div class="wcp-dow-row">
-          <span>일</span><span>월</span><span>화</span><span>수</span>
-          <span>목</span><span>금</span><span>토</span>
-        </div>
-        <div class="wcp-grid" id="wcpGrid"></div>
       </div>
 
       <!-- ────────────────────────────────────────
