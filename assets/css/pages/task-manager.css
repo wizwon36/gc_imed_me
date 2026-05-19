@@ -1098,34 +1098,34 @@
 .search-main-row {
   display: grid;
   grid-template-columns: auto 1fr;
-  align-items: end;
+  align-items: end;   /* 각 컬럼 하단 기준 정렬 */
   gap: 14px;
 }
 
-.search-date-group {
-  flex-shrink: 0;
+/* ★ 라벨 + 입력 수직 배치 명시 — grid end 정렬 기준점 통일 */
+.search-date-group,
+.search-keyword-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .search-date-inputs {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 38px;
 }
 
 .search-range-sep {
   font-size: 13px;
   color: var(--text-muted);
+  line-height: 38px;  /* input 높이와 맞춤 */
   flex-shrink: 0;
 }
 
 .search-date-input {
   width: 136px;
   height: 38px;
-}
-
-.search-keyword-group {
-  min-width: 0;
 }
 
 .search-keyword-wrap {
