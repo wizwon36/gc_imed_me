@@ -99,10 +99,6 @@
       updateSharedWeekNav();
       await loadWeeklyTasks();
 
-      if (isManager) {
-        loadTeamJournals();
-      }
-
     } catch (err) {
       showMessage(err.message || '초기화에 실패했습니다.', 'error');
     } finally {
@@ -316,14 +312,16 @@
     const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
     if (activeTab === 'journal') {
       journalWeekStart = offsetWeek(journalWeekStart, delta);
-      loadJournal();
+      showGlobalLoading('불러오는 중...');
+      loadJournal().finally(() => hideGlobalLoading());
     } else if (activeTab === 'team') {
       teamWeekStart = offsetWeek(teamWeekStart, delta);
       showGlobalLoading('불러오는 중...');
       loadTeamJournals().finally(() => hideGlobalLoading());
     } else {
       weeklyWeekStart = offsetWeek(weeklyWeekStart, delta);
-      loadWeeklyTasks();
+      showGlobalLoading('불러오는 중...');
+      loadWeeklyTasks().finally(() => hideGlobalLoading());
     }
     updateSharedWeekNav();
   }
@@ -332,14 +330,16 @@
     const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
     if (activeTab === 'journal') {
       journalWeekStart = weekStart;
-      loadJournal();
+      showGlobalLoading('불러오는 중...');
+      loadJournal().finally(() => hideGlobalLoading());
     } else if (activeTab === 'team') {
       teamWeekStart = weekStart;
       showGlobalLoading('불러오는 중...');
       loadTeamJournals().finally(() => hideGlobalLoading());
     } else {
       weeklyWeekStart = weekStart;
-      loadWeeklyTasks();
+      showGlobalLoading('불러오는 중...');
+      loadWeeklyTasks().finally(() => hideGlobalLoading());
     }
     updateSharedWeekNav();
   }
@@ -701,14 +701,9 @@
   async function loadWeeklyTasks() {
     updateSharedWeekNav();
 
-    // 즉시 로딩 스피너 표시
-    document.getElementById('weekTimeline').innerHTML = `
-      <div class="task-empty">
-        <div class="task-loading-spinner"></div>
-        <div class="task-empty-text">업무를 불러오는 중...</div>
-      </div>`;
     weeklyTasks = [];
     updateWeeklySummary();
+    document.getElementById('weekTimeline').innerHTML = '';
 
     try {
       const res = await apiGet('taskGetItems', {
@@ -728,6 +723,7 @@
           <div class="task-empty-text">불러오기 실패. 다시 시도해 주세요.</div>
         </div>`;
     }
+  }
   }
 
   function updateWeeklySummary() {
@@ -863,8 +859,7 @@
     updateSharedWeekNav();
     clearAutosave();
 
-    // ── 일지 카드 전체 로딩 오버레이 표시 ──────────────────────
-    document.getElementById('journalLoading')?.classList.add('active');
+    showGlobalLoading('업무일지를 불러오는 중...');
 
     // 버튼·배지·텍스트 초기화
     document.getElementById('autosaveText').textContent = '불러오는 중...';
@@ -893,7 +888,7 @@
       showMessage(err.message || '일지를 불러오지 못했습니다.', 'error');
       document.getElementById('autosaveText').textContent = '불러오기 실패';
     } finally {
-      document.getElementById('journalLoading')?.classList.remove('active');
+      hideGlobalLoading();
     }
   }
 
