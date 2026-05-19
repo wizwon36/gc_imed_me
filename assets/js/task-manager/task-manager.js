@@ -724,7 +724,6 @@
         </div>`;
     }
   }
-  }
 
   function updateWeeklySummary() {
     const total  = weeklyTasks.length;
