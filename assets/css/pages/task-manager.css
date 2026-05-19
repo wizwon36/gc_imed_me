@@ -1174,7 +1174,14 @@
   font-size: 12px;
   color: var(--text-secondary);
   flex-shrink: 0;
-  margin-left: auto;  /* 오른쪽 끝 정렬 */
+}
+
+/* 검색+초기화 버튼 묶음 — 오른쪽 끝 정렬 */
+.search-filter-btns {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  align-items: center;
 }
 
 /* 공통 검색 라벨 */
@@ -1232,7 +1239,9 @@
   .search-date-input  { width: 130px; }
   .search-filter-row  { flex-wrap: wrap; gap: 8px; }
   .search-select      { min-width: 0; flex: 1; }
-  .search-reset-btn   { margin-left: 0; width: 100%; }
+  .search-filter-btns { width: 100%; margin-left: 0; flex-direction: column; }
+  .search-btn         { width: 100%; }
+  .search-reset-btn   { width: 100%; }
 }
 
 /* ── 덮어쓰기 확인 모달 ── */
