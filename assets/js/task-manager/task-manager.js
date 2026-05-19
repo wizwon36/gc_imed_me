@@ -1333,6 +1333,8 @@
       // A:구분  B~:의원별 (작성자 컬럼 제거)
       let r = 0;
 
+      const TOTAL_COLS = 2 + clinics.length;  // A:카테고리 B:금주/차주 C~:의원별
+
       const sc = (row, col, val, s) => {
         const a = window.XLSX.utils.encode_cell({ r: row, c: col });
         ws[a] = { v: val ?? '', t: 's', s };
@@ -1356,7 +1358,6 @@
       mg(r,r,0,TOTAL_COLS-1); r++;
 
       // 3행: 헤더 — A:카테고리 B:금주/차주 C~:의원별
-      const TOTAL_COLS = 2 + clinics.length;
       sc(r, 0, '구  분', { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
       sc(r, 1, '',       { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
       clinics.forEach((cl,i) => sc(r, 2+i, cl, { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD }));
