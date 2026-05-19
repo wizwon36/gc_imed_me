@@ -1331,7 +1331,6 @@
       const clinics = Object.keys(clinicMap).sort();
       const cats    = Object.entries(CATEGORY_LABELS);
       // A:구분  B~:의원별 (작성자 컬럼 제거)
-      const TOTAL   = 1 + clinics.length;
       let r = 0;
 
       const sc = (row, col, val, s) => {
@@ -1345,31 +1344,41 @@
 
       // 1행: 제목
       sc(r, 0, 'MSO관리팀 주간 업무보고', { font:FONT_TITLE, fill:FILL_TITLE, alignment:AL_C, border:BD_MED });
-      for (let c=1;c<TOTAL;c++) sc(r, c, '', { font:FONT_TITLE, fill:FILL_TITLE, alignment:AL_C, border:BD_MED });
-      mg(r,r,0,TOTAL-1); r++;
+      for (let c=1;c<TOTAL_COLS;c++) sc(r, c, '', { font:FONT_TITLE, fill:FILL_TITLE, alignment:AL_C, border:BD_MED });
+      mg(r,r,0,TOTAL_COLS-1); r++;
 
       // 2행: 기간
       const weekEnd = getWeekEnd(teamWeekStart);
       const fd = d => d ? d.substring(5).replace('-','/') : '';
       const period = `${teamWeekStart.substring(0,4)}년  ${fd(teamWeekStart)} ~ ${fd(weekEnd)}`;
       sc(r, 0, period, { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
-      for (let c=1;c<TOTAL;c++) sc(r, c, '', { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
-      mg(r,r,0,TOTAL-1); r++;
+      for (let c=1;c<TOTAL_COLS;c++) sc(r, c, '', { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
+      mg(r,r,0,TOTAL_COLS-1); r++;
 
-      // 3행: 헤더
+      // 3행: 헤더 — A:카테고리 B:금주/차주 C~:의원별
+      const TOTAL_COLS = 2 + clinics.length;
       sc(r, 0, '구  분', { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
-      clinics.forEach((cl,i) => sc(r, 1+i, cl, { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD }));
+      sc(r, 1, '',       { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
+      clinics.forEach((cl,i) => sc(r, 2+i, cl, { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD }));
+      mg(r, r, 0, 1);  // A~B 병합: "구  분"
       r++;
 
-      // 카테고리별 금주/차주 — 헤더 행 없이 구분 셀에 카테고리+금주/차주 표기
+      // 카테고리별 — A열=카테고리(금주/차주 두 행 병합), B열=금주/차주, C~=의원별
       cats.forEach(([catKey, catName], ci) => {
-        const fillData = ci % 2 === 0 ? FILL_ALT : FILL_WHITE;
+        const fillCat  = { patternType:'solid', fgColor:{ rgb: ci % 2 === 0 ? 'EBF3FB' : 'F5F9FE' } };
+        const catStart = r;
 
         ['summary','next_plan'].forEach((field, fi) => {
           const weekLabel = fi === 0 ? '금주' : '차주';
-          const divLabel  = fi === 0 ? catName : '차주';
+          const fillWeek  = fi === 0
+            ? { patternType:'solid', fgColor:{ rgb:'EBF3FB' } }
+            : { patternType:'solid', fgColor:{ rgb:'F5F9FE' } };
 
-          sc(r, 0, divLabel, { font:FONT_BOLD, fill: fi === 0 ? FILL_HEADER : FILL_WEEK, alignment:AL_C, border:BD });
+          // A열: 카테고리명 (금주 행에만 값, 차주 행은 빈칸 — 나중에 병합)
+          sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:fillCat, alignment:AL_C, border:BD });
+          // B열: 금주 / 차주 라벨
+          sc(r, 1, weekLabel, { font:FONT_BOLD, fill:fillWeek, alignment:AL_C, border:BD });
+
           clinics.forEach((cl, i) => {
             const lines = [];
             (clinicMap[cl]||[]).forEach(m => {
@@ -1377,16 +1386,23 @@
               const sec = extractCategorySection(m.journal[field] || '', catName);
               if (sec) { lines.push('○ ' + m.user_name); lines.push(sec); }
             });
-            sc(r, 1+i, lines.join('\n'), { font:FONT_BASE, fill:fillData, alignment:AL_L, border:BD });
+            sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:fillWeek, alignment:AL_L, border:BD });
           });
           r++;
         });
+
+        // A열 카테고리명 두 행 병합
+        mg(catStart, catStart + 1, 0, 0);
       });
 
-      // 근태 (금주/차주)
-      ['금주 근태', '차주 근태'].forEach((label, fi) => {
-        const fillData = fi % 2 === 0 ? FILL_ALT : FILL_WHITE;
-        sc(r, 0, label, { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
+      // 근태 (금주/차주) — 동일 구조
+      const attStart = r;
+      ['금주', '차주'].forEach((label, fi) => {
+        const fillWeek = fi === 0
+          ? { patternType:'solid', fgColor:{ rgb:'EBF3FB' } }
+          : { patternType:'solid', fgColor:{ rgb:'F5F9FE' } };
+        sc(r, 0, fi === 0 ? '근태' : '', { font:FONT_BOLD, fill:{ patternType:'solid', fgColor:{ rgb:'EBF3FB' } }, alignment:AL_C, border:BD });
+        sc(r, 1, label, { font:FONT_BOLD, fill:fillWeek, alignment:AL_C, border:BD });
         clinics.forEach((cl, i) => {
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
@@ -1396,13 +1412,17 @@
               : (m.journal.attendance_next_week || '');
             if (val) { lines.push('○ ' + m.user_name); lines.push(val); }
           });
-          sc(r, 1+i, lines.join('\n'), { font:FONT_BASE, fill:fillData, alignment:AL_L, border:BD });
+          sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:fillWeek, alignment:AL_L, border:BD });
         });
         r++;
       });
 
-      // 이슈 / 건의사항
-      sc(r, 0, '이슈/건의', { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
+      // 이슈 / 건의사항 — A열 단독 (B열 포함 병합)
+      const issueRow = r;
+      const fillIssue = { patternType:'solid', fgColor:{ rgb:'EBF3FB' } };
+      sc(r, 0, '이슈/건의', { font:FONT_BOLD, fill:fillIssue, alignment:AL_C, border:BD });
+      sc(r, 1, '',          { font:FONT_BOLD, fill:fillIssue, alignment:AL_C, border:BD });
+      mg(r, r, 0, 1);
       clinics.forEach((cl, i) => {
         const lines = [];
         (clinicMap[cl]||[]).forEach(m => {
@@ -1410,12 +1430,12 @@
           lines.push('○ ' + m.user_name);
           lines.push(m.journal.issues);
         });
-        sc(r, 1+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_ALT, alignment:AL_L, border:BD });
+        sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:fillIssue, alignment:AL_L, border:BD });
       });
       r++;
 
-      ws['!ref']  = window.XLSX.utils.encode_range({r:0,c:0},{r:r-1,c:TOTAL-1});
-      ws['!cols'] = [{ wch:14 }, ...clinics.map(()=>({ wch:50 }))];
+      ws['!ref']  = window.XLSX.utils.encode_range({r:0,c:0},{r:r-1,c:TOTAL_COLS-1});
+      ws['!cols'] = [{ wch:12 }, { wch:8 }, ...clinics.map(()=>({ wch:50 }))];
       ws['!rows'] = Array.from({ length: r }, (_, i) => i < 3 ? { hpt:22 } : { hpt:80 });
       ws['!rows'][0] = { hpt:30 };
 
