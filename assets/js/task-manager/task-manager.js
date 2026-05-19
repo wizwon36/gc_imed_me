@@ -99,10 +99,6 @@
       updateSharedWeekNav();
       await loadWeeklyTasks();
 
-      if (isManager) {
-        loadTeamJournals();
-      }
-
     } catch (err) {
       showMessage(err.message || '초기화에 실패했습니다.', 'error');
     } finally {
@@ -256,7 +252,10 @@
         loadJournal();
       }
     }
-    if (tab === 'team' && isManager) loadTeamJournals();
+    if (tab === 'team' && isManager) {
+      showGlobalLoading('팀원 현황을 불러오는 중...');
+      loadTeamJournals().finally(() => hideGlobalLoading());
+    }
   }
 
   // ── 날짜 유틸 ────────────────────────────────────────────────
