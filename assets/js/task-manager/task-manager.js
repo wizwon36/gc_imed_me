@@ -1306,19 +1306,16 @@
       const members = res.data || [];
       if (!members.length) { showMessage('다운로드할 데이터가 없습니다.', 'error'); return; }
 
-      // ── 스타일 정의 ────────────────────────────────────────────
       const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
       const FONT_TITLE  = { name: '맑은 고딕', sz: 14, bold: true, color: { rgb: 'FFFFFF' } };
       const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
-      const FONT_CAT    = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: 'FFFFFF' } };
       const FONT_BOLD   = { name: '맑은 고딕', sz: 10, bold: true };
       const FILL_TITLE  = { patternType: 'solid', fgColor: { rgb: '1F3864' } };
       const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
-      const FILL_CAT    = { patternType: 'solid', fgColor: { rgb: '2E75B6' } };
       const FILL_WEEK   = { patternType: 'solid', fgColor: { rgb: 'D6E4F7' } };
       const FILL_WHITE  = { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
       const FILL_ALT    = { patternType: 'solid', fgColor: { rgb: 'F2F7FD' } };
-      const BD = { top:{style:'thin',color:{rgb:'BFBFBF'}}, bottom:{style:'thin',color:{rgb:'BFBFBF'}}, left:{style:'thin',color:{rgb:'BFBFBF'}}, right:{style:'thin',color:{rgb:'BFBFBF'}} };
+      const BD     = { top:{style:'thin',color:{rgb:'BFBFBF'}}, bottom:{style:'thin',color:{rgb:'BFBFBF'}}, left:{style:'thin',color:{rgb:'BFBFBF'}}, right:{style:'thin',color:{rgb:'BFBFBF'}} };
       const BD_MED = { top:{style:'medium',color:{rgb:'2E75B6'}}, bottom:{style:'medium',color:{rgb:'2E75B6'}}, left:{style:'medium',color:{rgb:'2E75B6'}}, right:{style:'medium',color:{rgb:'2E75B6'}} };
       const AL_C = { horizontal:'center', vertical:'center', wrapText:true };
       const AL_L = { horizontal:'left',   vertical:'top',    wrapText:true };
@@ -1326,16 +1323,16 @@
       const ws  = {};
       const wb2 = window.XLSX.utils.book_new();
 
-      // 의원별 그룹화
       const clinicMap = {};
       members.forEach(m => {
         const c = m.clinic_name || '기타';
         if (!clinicMap[c]) clinicMap[c] = [];
         clinicMap[c].push(m);
       });
-      const clinics   = Object.keys(clinicMap).sort();
-      const cats      = Object.entries(CATEGORY_LABELS);
-      const TOTAL     = 2 + clinics.length;   // A:구분 B:작성자 C~:의원별
+      const clinics = Object.keys(clinicMap).sort();
+      const cats    = Object.entries(CATEGORY_LABELS);
+      // A:구분  B~:의원별 (작성자 컬럼 제거)
+      const TOTAL   = 1 + clinics.length;
       let r = 0;
 
       const sc = (row, col, val, s) => {
@@ -1362,72 +1359,65 @@
 
       // 3행: 헤더
       sc(r, 0, '구  분', { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
-      sc(r, 1, '작성자', { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
-      clinics.forEach((cl,i) => sc(r, 2+i, cl, { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD }));
+      clinics.forEach((cl,i) => sc(r, 1+i, cl, { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD }));
       r++;
 
-      // 카테고리별 금주/차주
+      // 카테고리별 금주/차주 — 헤더 행 없이 구분 셀에 카테고리+금주/차주 표기
       cats.forEach(([catKey, catName], ci) => {
-        const fill = ci % 2 === 0 ? FILL_ALT : FILL_WHITE;
-
-        // 카테고리 헤더행
-        sc(r, 0, catName, { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
-        sc(r, 1, '',      { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
-        clinics.forEach((_,i) => sc(r, 2+i, '', { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD }));
-        r++;
+        const fillData = ci % 2 === 0 ? FILL_ALT : FILL_WHITE;
 
         ['summary','next_plan'].forEach((field, fi) => {
-          const label = fi === 0 ? '금주' : '차주';
-          sc(r, 0, label, { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
-          sc(r, 1, '',    { font:FONT_BASE, fill:fill,      alignment:AL_C, border:BD });
+          const weekLabel = fi === 0 ? '금주' : '차주';
+          const divLabel  = fi === 0 ? catName : '차주';
+
+          sc(r, 0, divLabel, { font:FONT_BOLD, fill: fi === 0 ? FILL_HEADER : FILL_WEEK, alignment:AL_C, border:BD });
           clinics.forEach((cl, i) => {
             const lines = [];
             (clinicMap[cl]||[]).forEach(m => {
               if (!m.journal) return;
               const sec = extractCategorySection(m.journal[field] || '', catName);
-              if (sec) { lines.push(`【${m.user_name}】`); lines.push(sec); }
+              if (sec) { lines.push('○ ' + m.user_name); lines.push(sec); }
             });
-            sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill, alignment:AL_L, border:BD });
+            sc(r, 1+i, lines.join('\n'), { font:FONT_BASE, fill:fillData, alignment:AL_L, border:BD });
           });
           r++;
         });
       });
 
-      // 근태 / 이슈
-      [
-        { label:'근태 특이사항', key:'attendance' },
-        { label:'이슈 / 건의사항', key:'issues' }
-      ].forEach(({label, key}, si) => {
-        const fill = si % 2 === 0 ? FILL_ALT : FILL_WHITE;
-        sc(r, 0, label, { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
-        sc(r, 1, '',    { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
-        clinics.forEach((_,i) => sc(r, 2+i, '', { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD }));
-        r++;
-
-        sc(r, 0, '', { font:FONT_BASE, fill, alignment:AL_C, border:BD });
-        sc(r, 1, '', { font:FONT_BASE, fill, alignment:AL_C, border:BD });
+      // 근태 (금주/차주)
+      ['금주 근태', '차주 근태'].forEach((label, fi) => {
+        const fillData = fi % 2 === 0 ? FILL_ALT : FILL_WHITE;
+        sc(r, 0, label, { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
         clinics.forEach((cl, i) => {
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
             if (!m.journal) return;
-            let val = '';
-            if (key === 'attendance') {
-              const tw = m.journal.attendance_this_week || '';
-              const nw = m.journal.attendance_next_week || '';
-              val = [tw && `[금주] ${tw}`, nw && `[차주] ${nw}`].filter(Boolean).join('\n');
-            } else {
-              val = m.journal.issues || '';
-            }
-            if (val) { lines.push(`【${m.user_name}】`); lines.push(val); }
+            const val = fi === 0
+              ? (m.journal.attendance_this_week || '')
+              : (m.journal.attendance_next_week || '');
+            if (val) { lines.push('○ ' + m.user_name); lines.push(val); }
           });
-          sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill, alignment:AL_L, border:BD });
+          sc(r, 1+i, lines.join('\n'), { font:FONT_BASE, fill:fillData, alignment:AL_L, border:BD });
         });
         r++;
       });
 
+      // 이슈 / 건의사항
+      sc(r, 0, '이슈/건의', { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
+      clinics.forEach((cl, i) => {
+        const lines = [];
+        (clinicMap[cl]||[]).forEach(m => {
+          if (!m.journal || !m.journal.issues) return;
+          lines.push('○ ' + m.user_name);
+          lines.push(m.journal.issues);
+        });
+        sc(r, 1+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_ALT, alignment:AL_L, border:BD });
+      });
+      r++;
+
       ws['!ref']  = window.XLSX.utils.encode_range({r:0,c:0},{r:r-1,c:TOTAL-1});
-      ws['!cols'] = [{ wch:12 }, { wch:10 }, ...clinics.map(()=>({ wch:40 }))];
-      ws['!rows'] = Array.from({ length: r }, (_,i) => i < 3 ? { hpt:22 } : { hpt:60 });
+      ws['!cols'] = [{ wch:14 }, ...clinics.map(()=>({ wch:50 }))];
+      ws['!rows'] = Array.from({ length: r }, (_, i) => i < 3 ? { hpt:22 } : { hpt:80 });
       ws['!rows'][0] = { hpt:30 };
 
       window.XLSX.utils.book_append_sheet(wb2, ws, '주간업무보고');
@@ -1435,6 +1425,7 @@
       const ds = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
       window.XLSX.writeFile(wb2, `주간업무보고_${teamWeekStart}_${ds}.xlsx`);
       showMessage('엑셀 다운로드가 완료되었습니다.', 'success');
+
 
     } catch (err) {
       showMessage(err.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
