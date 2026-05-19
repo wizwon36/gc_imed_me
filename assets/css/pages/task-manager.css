@@ -1153,9 +1153,10 @@
   white-space: nowrap;
   flex-shrink: 0;
   margin-left: auto;
+  align-self: end;
 }
 
-/* 2행: 카테고리 / 상태 / 중요도 / 초기화 */
+/* 2행: 카테고리 / 상태 / 중요도 / 검색 / 초기화 */
 .search-filter-row {
   display: flex;
   align-items: flex-end;
@@ -1175,7 +1176,6 @@
   font-size: 12px;
   color: var(--text-secondary);
   flex-shrink: 0;
-  margin-left: auto;
 }
 
 /* 공통 검색 라벨 */
