@@ -52,13 +52,13 @@
       <!-- 탭 -->
       <div class="task-tabs">
         <button class="task-tab-btn active" data-tab="weekly" id="tabWeekly">
-          📅 주간업무
+          📅 주간 업무
         </button>
         <button class="task-tab-btn" data-tab="journal" id="tabJournal">
-          📝 업무일지
+          📝 주간업무일지
         </button>
         <button class="task-tab-btn" id="tabTeam" data-tab="team" style="display:none;">
-          👥 현황
+          👥 팀원 현황
         </button>
         <button class="task-tab-btn" data-tab="search" id="tabSearch">
           🔍 검색
@@ -295,7 +295,6 @@
                 <label class="search-label">키워드 <span style="color:var(--text-muted);font-weight:400;">(제목 · 상세내용)</span></label>
                 <div class="search-keyword-wrap">
                   <input type="text" class="form-input" id="searchKeyword" placeholder="검색어를 입력하세요" />
-                  <button class="btn btn-primary search-btn" id="searchRunBtn">검색</button>
                 </div>
               </div>
             </div>
@@ -326,6 +325,7 @@
                   <option value="LOW">낮음</option>
                 </select>
               </div>
+              <button class="btn btn-primary search-btn" id="searchRunBtn">검색</button>
               <button class="btn search-reset-btn" id="searchResetBtn">초기화</button>
             </div>
 
