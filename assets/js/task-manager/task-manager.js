@@ -498,9 +498,17 @@
       // ── 주간업무요약: 이번주 업무를 일별로 그룹화 (상태 표시)
       const summary = buildDailyGroupedText(thisItems, weeklyWeekStart, true);
 
-      // ── 금주 성과: 이번주 완료 업무 (카테고리+날짜 구조)
-      const doneItems    = thisItems.filter(t => t.status === 'DONE');
-      const achievements = buildDailyGroupedText(doneItems, weeklyWeekStart, false);
+      // ── 금주 성과: 이번주 완료 업무 ──────────────────────────
+      const doneItems = thisItems.filter(t => t.status === 'DONE');
+      const achievements = doneItems.length > 0
+        ? doneItems.map(t => {
+            const catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
+            const line = '• [' + catLabel + '] ' + t.title;
+            return t.description && t.description.trim()
+              ? line + '\n       └ ' + t.description.trim()
+              : line;
+          }).join('\n')
+        : '';
 
       // ── 차주업무계획: 다음주 업무를 일별로 그룹화 (상태 미표시)
       const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, false);
@@ -1656,7 +1664,7 @@
         const descHtml  = keyword ? highlight(t.description, keyword) : esc(t.description);
 
         return `
-          <div class="task-item" onclick="TASK_APP.openSearchItem('${esc(t.task_id)}')">
+          <div class="task-item" onclick="TASK_APP.openSearchItem('${esc(t.task_id)}','${esc(getWeekStart(t.start_date))}')">
             <span class="task-priority-dot ${priorityCls}"></span>
             <div class="task-item-body">
               <div class="task-item-title">${titleHtml}</div>
@@ -1695,20 +1703,18 @@
       </div>`;
   }
 
-  window.TASK_APP.openSearchItem = function(taskId) {
-    apiGet('taskSearch', {
-      request_user_email: currentUser.email,
-      date_from: '2000-01-01',
-      date_to:   '2099-12-31'
-    }).then(res => {
-      const task = (res.data || []).find(t => t.task_id === taskId);
-      if (!task) return;
-      weeklyWeekStart = getWeekStart(task.start_date);
-      loadWeeklyTasks().then(() => {
-        switchTab('weekly');
-        TASK_APP.openEditModal(taskId);
-      });
-    }).catch(err => showMessage(err.message, 'error'));
+  window.TASK_APP.openSearchItem = function(taskId, weekStart) {
+    // 검색 결과에서 week_start를 직접 받아 API 재호출 없이 즉시 이동
+    showGlobalLoading('업무를 불러오는 중...');
+    weeklyWeekStart = weekStart || getWeekStart(formatDateStr(new Date()));
+    loadWeeklyTasks().then(() => {
+      switchTab('weekly');
+      TASK_APP.openEditModal(taskId);
+    }).catch(err => {
+      showMessage(err.message, 'error');
+    }).finally(() => {
+      hideGlobalLoading();
+    });
   };
 
   // ── 카테고리 관리 ────────────────────────────────────────────
