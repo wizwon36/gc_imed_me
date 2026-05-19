@@ -139,10 +139,8 @@
     }
     /* 뱃지 컬럼: td를 flex 컨테이너로 만들어 가로·세로 정렬 */
     .support-grid td.col-center {
-      display: flex !important;
-      align-items: center;
-      justify-content: center;
       text-align: center;
+      vertical-align: middle;
     }
     /* 말줄임은 제목·미리보기 컬럼에만 */
     .support-grid td.col-title,
@@ -349,7 +347,7 @@
   </style>
 </head>
 <body class="portal-page admin-body">
-  <div class="page-shell" style="padding:28px 20px 48px;">
+
   <section class="top-brand-bar portal-topbar portal-hero-card" style="margin:0 0 12px;">
     <div class="top-brand-left">
       <div class="top-brand-logo">+</div>
@@ -362,6 +360,8 @@
       <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
     </div>
   </section>
+
+  <div class="page-shell" style="padding:28px 20px 48px;">
 
     <div id="messageBox" class="message-box"></div>
 
