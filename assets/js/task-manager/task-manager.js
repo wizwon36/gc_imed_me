@@ -255,7 +255,10 @@
         loadJournal();
       }
     }
-    if (tab === 'team' && isManager) loadTeamJournals();
+    if (tab === 'team' && isManager) {
+      showGlobalLoading('팀원 현황을 불러오는 중...');
+      loadTeamJournals().finally(() => hideGlobalLoading());
+    }
   }
 
   // ── 날짜 유틸 ────────────────────────────────────────────────
