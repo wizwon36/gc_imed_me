@@ -6,15 +6,18 @@
   <title>수정요청 관리 - MSO관리팀 업무포털</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <style>
+    :root { --page-max-width: 1440px; }
     body {
       background: linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
       min-height: 100vh;
     }
 
     /* 관리자 페이지 공통 너비 (logs, users 와 동일) */
-    :root { --page-max-width: 1440px; }
-    .page-shell {
-      max-width: var(--page-max-width) !important;
+    --page-max-width: 1440px;
+    .support-page {
+      max-width: var(--page-max-width);
+      margin: 0 auto;
+      padding: 28px 20px 48px;
     }
 
     .form-control-sm {
@@ -363,7 +366,7 @@
     </div>
   </section>
 
-  <div class="container page-shell">
+  <div class="support-page">
 
     <div id="messageBox" class="message-box"></div>
 
