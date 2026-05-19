@@ -1573,13 +1573,30 @@
             continue;
           }
         } else {
-          // 날짜 행 등 항목이 아닌 행
-          result.push(lines[i]);
+          // 날짜 행 등 — 이후에 실제 포함되는 항목이 있는지 미리 확인
+          // 현재 위치를 임시 저장하고 다음 항목 유무 확인 후 결정
+          const dateLineIdx = result.length; // 날짜 행을 넣을 위치
+          result.push(lines[i]);             // 일단 추가
+          // 나중에 날짜 행 뒤에 항목이 없으면 제거 (후처리)
+          // → 마커로 표시
+          result[dateLineIdx] = '\x00' + lines[i]; // 조건부 행 마커
         }
       }
       i++;
     }
-    return result.join('\n').trim();
+    // 날짜 행(\x00 마커) 후처리: 뒤에 실제 항목이 없으면 제거
+    const cleaned = [];
+    for (let k = 0; k < result.length; k++) {
+      if (result[k].startsWith('\x00')) {
+        // 다음 행이 항목(\x00 마커 아닌 일반 행)이면 날짜 행 포함
+        const nextIsItem = k + 1 < result.length && !result[k + 1].startsWith('\x00');
+        if (nextIsItem) cleaned.push(result[k].substring(1)); // 마커 제거 후 포함
+        // 아니면 제거 (다음 날짜 행이거나 끝이면 불필요)
+      } else {
+        cleaned.push(result[k]);
+      }
+    }
+    return cleaned.join('\n').trim();
   }
 
   // ── 통합 보기 ────────────────────────────────────────────────
