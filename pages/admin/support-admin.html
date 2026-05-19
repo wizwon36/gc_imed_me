@@ -12,10 +12,9 @@
       min-height: 100vh;
     }
 
-    .support-page {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 28px 20px 48px;
+    /* 관리자 페이지 공통 너비 (logs, users 와 동일) */
+    .page-shell {
+      max-width: var(--page-max-width) !important;
     }
 
     .form-control-sm {
@@ -104,7 +103,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
-      table-layout: auto;
+      table-layout: fixed;
     }
     .support-grid thead tr {
       background: var(--surface-soft, #f8fafc);
@@ -350,7 +349,7 @@
   </style>
 </head>
 <body class="portal-page admin-body">
-  <div class="support-page">
+  <div class="page-shell" style="padding:28px 20px 48px;">
   <section class="top-brand-bar portal-topbar portal-hero-card" style="margin:0 0 12px;">
     <div class="top-brand-left">
       <div class="top-brand-logo">+</div>
@@ -411,8 +410,8 @@
             <th class="th-center" style="width:88px;">카테고리</th>
             <th class="th-center" style="width:110px;">유형</th>
             <th class="th-center" style="width:72px;">상태</th>
-            <th style="width:22%;">제목</th>
-            <th style="width:auto;">내용 미리보기</th>
+            <th style="width:28%;">제목</th>
+            <th>내용 미리보기</th>
             <th class="th-center" style="width:72px;">요청자</th>
             <th class="th-center" style="width:96px;">일시</th>
             <th class="th-center" style="width:36px;">답변</th>
