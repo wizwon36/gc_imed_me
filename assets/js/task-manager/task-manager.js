@@ -1097,6 +1097,7 @@
 
     try {
       updateAutosaveStatus('saving');
+      if (!isAuto) showGlobalLoading('저장 중...');
       const res = await apiPost('journalUpdate', payload);
       currentJournal.updated_at = res.data?.updated_at || '';
       journalDirty = false;
@@ -1105,6 +1106,8 @@
     } catch (err) {
       updateAutosaveStatus('error');
       if (!isAuto) showMessage(err.message || '저장에 실패했습니다.', 'error');
+    } finally {
+      if (!isAuto) hideGlobalLoading();
     }
   }
 
@@ -1112,10 +1115,9 @@
     if (!currentJournal) return;
     if (!confirm('일지를 제출하시겠습니까?\n제출 후에도 팀장이 마감하기 전까지 수정할 수 있습니다.')) return;
 
-    await saveJournal(true);
-
     try {
-      showGlobalLoading('제출 중...');
+      showGlobalLoading('저장 및 제출 중...');
+      await saveJournal(true);  // isAuto=true 로 호출 (스피너 중복 방지)
       await apiPost('journalSubmit', {
         request_user_email: currentUser.email,
         journal_id:         currentJournal.journal_id
