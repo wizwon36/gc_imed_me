@@ -99,6 +99,10 @@
       updateSharedWeekNav();
       await loadWeeklyTasks();
 
+      if (isManager) {
+        loadTeamJournals();
+      }
+
     } catch (err) {
       showMessage(err.message || '초기화에 실패했습니다.', 'error');
     } finally {
@@ -206,10 +210,9 @@
     document.getElementById('memberJournalClose')?.addEventListener('click', closeMemberModal);
     document.getElementById('memberJournalDismissBtn')?.addEventListener('click', closeMemberModal);
 
-    document.getElementById('exportJournalBtn')?.addEventListener('click', exportJournalExcel);
-
     // 통합 보기 모달
     document.getElementById('mergeViewBtn')?.addEventListener('click', openMergeView);
+    document.getElementById('exportJournalBtn')?.addEventListener('click', exportJournalExcel);
 
     // 업무일지 생성 버튼
     document.getElementById('generateJournalBtn')?.addEventListener('click', handleGenerateJournal);
@@ -252,10 +255,7 @@
         loadJournal();
       }
     }
-    if (tab === 'team' && isManager) {
-      showGlobalLoading('팀원 현황을 불러오는 중...');
-      loadTeamJournals().finally(() => hideGlobalLoading());
-    }
+    if (tab === 'team' && isManager) loadTeamJournals();
   }
 
   // ── 날짜 유틸 ────────────────────────────────────────────────
@@ -1169,309 +1169,6 @@
     }
   }
 
-  // ── 주간업무 엑셀 다운로드 ──────────────────────────────────────
-  async function exportJournalExcel() {
-    if (!window.XLSX) {
-      showMessage('엑셀 라이브러리를 불러오지 못했습니다.', 'error');
-      return;
-    }
-
-    const btn = document.getElementById('exportJournalBtn');
-    try {
-      if (btn) { btn.disabled = true; btn.textContent = '다운로드 중...'; }
-      showGlobalLoading('업무일지 데이터를 불러오는 중...');
-
-      const res = await apiGet('journalListByTeam', {
-        request_user_email: currentUser.email,
-        week_start:         teamWeekStart
-      });
-
-      const members = res.data || [];
-      if (!members.length) {
-        showMessage('다운로드할 데이터가 없습니다.', 'error');
-        return;
-      }
-
-      // ── 스타일 정의 (의료장비와 동일) ───────────────────────────
-      const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
-      const FONT_TITLE  = { name: '맑은 고딕', sz: 14, bold: true, color: { rgb: '1F3864' } };
-      const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
-      const FONT_CAT    = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: 'FFFFFF' } };
-      const FONT_BOLD   = { name: '맑은 고딕', sz: 10, bold: true };
-      const FILL_TITLE  = { patternType: 'solid', fgColor: { rgb: '1F3864' } };
-      const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
-      const FILL_CAT    = { patternType: 'solid', fgColor: { rgb: '2E75B6' } };
-      const FILL_WEEK   = { patternType: 'solid', fgColor: { rgb: 'D6E4F7' } };
-      const FILL_ALT    = { patternType: 'solid', fgColor: { rgb: 'F2F7FD' } };
-      const BORDER = {
-        top:    { style: 'thin', color: { rgb: 'BFBFBF' } },
-        bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
-        left:   { style: 'thin', color: { rgb: 'BFBFBF' } },
-        right:  { style: 'thin', color: { rgb: 'BFBFBF' } }
-      };
-      const BORDER_MED = {
-        top:    { style: 'medium', color: { rgb: '2E75B6' } },
-        bottom: { style: 'medium', color: { rgb: '2E75B6' } },
-        left:   { style: 'medium', color: { rgb: '2E75B6' } },
-        right:  { style: 'medium', color: { rgb: '2E75B6' } }
-      };
-      const ALIGN_C  = { horizontal: 'center', vertical: 'center', wrapText: true };
-      const ALIGN_L  = { horizontal: 'left',   vertical: 'top',    wrapText: true };
-      const ALIGN_LC = { horizontal: 'left',   vertical: 'center', wrapText: true };
-
-      const ws  = {};
-      const wb2 = window.XLSX.utils.book_new();
-
-      // 의원 목록 — clinic_name 기준으로 그룹화
-      const clinicMap = {};
-      members.forEach(m => {
-        const clinic = m.clinic_name || '기타';
-        if (!clinicMap[clinic]) clinicMap[clinic] = [];
-        clinicMap[clinic].push(m);
-      });
-      const clinics = Object.keys(clinicMap).sort();
-
-      // 카테고리 목록 (CATEGORY_LABELS 순서)
-      const cats = Object.entries(CATEGORY_LABELS);
-      // 추가: 근태/이슈
-      const EXTRA_SECTIONS = [
-        { key: 'attendance', label: '근태 특이사항' },
-        { key: 'issues',     label: '이슈 / 건의사항' }
-      ];
-
-      // ── 컬럼 구조
-      // A: 구분(카테고리)  B: 작성자  C~: 의원별 내용 (의원 수만큼)
-      const COL_CAT    = 0;  // A
-      const COL_AUTHOR = 1;  // B
-      const COL_CLINIC_START = 2; // C~
-      const TOTAL_COLS = 2 + clinics.length;
-
-      let r = 0;
-      const setCell = (row, col, val, style) => {
-        const addr = window.XLSX.utils.encode_cell({ r: row, c: col });
-        ws[addr] = { v: val ?? '', t: 's', s: style };
-      };
-      const merge = (rs, re, cs, ce) => {
-        if (!ws['!merges']) ws['!merges'] = [];
-        ws['!merges'].push({ s: { r: rs, c: cs }, e: { r: re, c: ce } });
-      };
-
-      // ── 1행: 제목
-      setCell(r, 0, 'MSO관리팀 주간 업무보고',
-        { font: FONT_TITLE, fill: FILL_TITLE, alignment: ALIGN_C, border: BORDER_MED });
-      for (let c = 1; c < TOTAL_COLS; c++) {
-        setCell(r, c, '', { font: FONT_TITLE, fill: FILL_TITLE, alignment: ALIGN_C, border: BORDER_MED });
-      }
-      merge(r, r, 0, TOTAL_COLS - 1);
-      r++;
-
-      // ── 2행: 기간
-      const weekEnd = getWeekEnd(teamWeekStart);
-      const fmtDate = d => d ? d.substring(5).replace('-', '/') : '';
-      const periodLabel = `${teamWeekStart.substring(0, 4)}년  ${fmtDate(teamWeekStart)} ~ ${fmtDate(weekEnd)}`;
-      setCell(r, 0, periodLabel,
-        { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
-      for (let c = 1; c < TOTAL_COLS; c++) {
-        setCell(r, c, '', { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
-      }
-      merge(r, r, 0, TOTAL_COLS - 1);
-      r++;
-
-      // ── 3행: 헤더 (구분 | 작성자 | 의원1 | 의원2 | ...)
-      setCell(r, COL_CAT,    '구  분', { font: FONT_HEADER, fill: FILL_HEADER, alignment: ALIGN_C, border: BORDER });
-      setCell(r, COL_AUTHOR, '작성자', { font: FONT_HEADER, fill: FILL_HEADER, alignment: ALIGN_C, border: BORDER });
-      clinics.forEach((clinic, i) => {
-        setCell(r, COL_CLINIC_START + i, clinic,
-          { font: FONT_HEADER, fill: FILL_HEADER, alignment: ALIGN_C, border: BORDER });
-      });
-      r++;
-
-      // ── 카테고리별 데이터
-      cats.forEach(([catKey, catName], catIdx) => {
-        const fill = catIdx % 2 === 0 ? FILL_ALT : { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
-
-        // 카테고리 행 헤더
-        setCell(r, COL_CAT, catName,
-          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
-        setCell(r, COL_AUTHOR, '',
-          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
-        clinics.forEach((_, i) => {
-          setCell(r, COL_CLINIC_START + i, '',
-            { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
-        });
-        r++;
-
-        // 금주 업무 요약 행
-        setCell(r, COL_CAT, '금주', { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
-
-        // 해당 카테고리 작성자 목록 (의원별)
-        // 각 의원에서 해당 카테고리 task가 있는 멤버들
-        const authorsByClinic = {};
-        clinics.forEach(clinic => {
-          const clinicMembers = clinicMap[clinic] || [];
-          const authors = clinicMembers
-            .filter(m => {
-              const items = (m.journal_tasks || (m.task_summary && m.task_summary.total > 0)) ? true : false;
-              return m.journal; // 일지 작성자만
-            })
-            .map(m => m.user_name)
-            .join(', ');
-          authorsByClinic[clinic] = authors;
-        });
-
-        setCell(r, COL_AUTHOR, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
-
-        // 의원별 해당 카테고리 금주 내용 (summary에서 카테고리 섹션 추출)
-        clinics.forEach((clinic, i) => {
-          const clinicMembers = clinicMap[clinic] || [];
-          const lines = [];
-          clinicMembers.forEach(m => {
-            if (!m.journal) return;
-            const summary = m.journal.summary || '';
-            // 카테고리 섹션 추출: [catName] 이후 다음 카테고리까지
-            const catSection = extractCategorySection(summary, catName);
-            if (catSection) {
-              lines.push(`【${m.user_name}】`);
-              lines.push(catSection);
-            }
-          });
-          setCell(r, COL_CLINIC_START + i, lines.join('\n'),
-            { font: FONT_BASE, fill: fill, alignment: ALIGN_L, border: BORDER });
-        });
-        r++;
-
-        // 차주 업무 계획 행
-        setCell(r, COL_CAT, '차주', { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
-        setCell(r, COL_AUTHOR, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
-        clinics.forEach((clinic, i) => {
-          const clinicMembers = clinicMap[clinic] || [];
-          const lines = [];
-          clinicMembers.forEach(m => {
-            if (!m.journal) return;
-            const nextPlan = m.journal.next_plan || '';
-            const catSection = extractCategorySection(nextPlan, catName);
-            if (catSection) {
-              lines.push(`【${m.user_name}】`);
-              lines.push(catSection);
-            }
-          });
-          setCell(r, COL_CLINIC_START + i, lines.join('\n'),
-            { font: FONT_BASE, fill: fill, alignment: ALIGN_L, border: BORDER });
-        });
-        r++;
-      });
-
-      // ── 근태 / 이슈 섹션
-      EXTRA_SECTIONS.forEach((sec, secIdx) => {
-        // 섹션 헤더
-        setCell(r, COL_CAT, sec.label,
-          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
-        setCell(r, COL_AUTHOR, '',
-          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
-        clinics.forEach((_, i) => {
-          setCell(r, COL_CLINIC_START + i, '',
-            { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
-        });
-        r++;
-
-        const fill = secIdx % 2 === 0 ? FILL_ALT : { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
-        setCell(r, COL_CAT, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
-        setCell(r, COL_AUTHOR, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
-        clinics.forEach((clinic, i) => {
-          const clinicMembers = clinicMap[clinic] || [];
-          const lines = [];
-          clinicMembers.forEach(m => {
-            if (!m.journal) return;
-            let val = '';
-            if (sec.key === 'attendance') {
-              const thisWeek = m.journal.attendance_this_week || '';
-              const nextWeek = m.journal.attendance_next_week || '';
-              val = [thisWeek && `[금주] ${thisWeek}`, nextWeek && `[차주] ${nextWeek}`]
-                .filter(Boolean).join('\n');
-            } else {
-              val = m.journal.issues || '';
-            }
-            if (val) {
-              lines.push(`【${m.user_name}】`);
-              lines.push(val);
-            }
-          });
-          setCell(r, COL_CLINIC_START + i, lines.join('\n'),
-            { font: FONT_BASE, fill: fill, alignment: ALIGN_L, border: BORDER });
-        });
-        r++;
-      });
-
-      // ── 워크시트 범위 및 컬럼 너비
-      ws['!ref'] = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: r - 1, c: TOTAL_COLS - 1 });
-      ws['!cols'] = [
-        { wch: 12 },  // 구분
-        { wch: 10 },  // 작성자
-        ...clinics.map(() => ({ wch: 40 })) // 의원별
-      ];
-      ws['!rows'] = [];
-      for (let i = 0; i < r; i++) {
-        // 카테고리 헤더 행은 낮게, 데이터 행은 높게
-        ws['!rows'].push({ hpt: 60 });
-      }
-      ws['!rows'][0] = { hpt: 30 };
-      ws['!rows'][1] = { hpt: 22 };
-      ws['!rows'][2] = { hpt: 22 };
-
-      window.XLSX.utils.book_append_sheet(wb2, ws, '주간업무보고');
-
-      const now = new Date();
-      const dateStr = now.getFullYear() +
-        String(now.getMonth() + 1).padStart(2, '0') +
-        String(now.getDate()).padStart(2, '0');
-      window.XLSX.writeFile(wb2, `주간업무보고_${teamWeekStart}_${dateStr}.xlsx`);
-      showMessage('엑셀 다운로드가 완료되었습니다.', 'success');
-
-    } catch (err) {
-      showMessage(err.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '⬇ 엑셀 다운로드'; }
-      hideGlobalLoading(true);
-    }
-  }
-
-  /**
-   * 일지 텍스트에서 특정 카테고리 섹션 추출
-   * buildDailyGroupedText 형식: [카테고리명]\n  날짜\n  내용...
-   */
-  function extractCategorySection(text, catName) {
-    if (!text || !catName) return '';
-    const lines = text.split('\n');
-    let inSection = false;
-    const result = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmed = line.trim();
-
-      // 카테고리 헤더 감지: [카테고리명]
-      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-        const sectionName = trimmed.slice(1, -1).trim();
-        if (sectionName === catName) {
-          inSection = true;
-          continue;
-        } else if (inSection) {
-          break; // 다음 카테고리 시작 → 종료
-        }
-        continue;
-      }
-
-      // 이월 업무 구분선 → 종료
-      if (inSection && trimmed.startsWith('──')) break;
-
-      if (inSection && line.trim()) {
-        result.push(line);
-      }
-    }
-
-    return result.join('\n').trim();
-  }
-
   function renderTeamGrid(members) {
     _lastTeamData = members || [];  // 통합 보기용 캐시
     const grid = document.getElementById('teamJournalGrid');
@@ -1529,91 +1226,39 @@
 
   window.TASK_APP.openMemberJournal = function(memberJsonStr) {
     const m = JSON.parse(memberJsonStr);
-    const j     = m.journal;
-    const tasks = m.task_summary || {};
 
-    // 제목: 이름 + 소속 + 상태 배지
-    const statusMap   = { DRAFT: '작성중', SUBMITTED: '제출됨', CLOSED: '마감됨' };
-    const statusColor = { DRAFT: '#64748b', SUBMITTED: '#0369a1', CLOSED: '#16a34a' };
-    const status      = j ? (j.status || 'DRAFT') : null;
-    const statusLabel = status ? statusMap[status] || status : '';
-    const statusStyle = status ? `background:${statusColor[status] || '#64748b'}22;color:${statusColor[status] || '#64748b'};` : '';
-
-    document.getElementById('memberJournalTitle').innerHTML =
-      `${esc(m.user_name)}
-       <span style="font-size:11px;font-weight:500;color:var(--text-muted);margin-left:6px;">${esc(m.team_name || m.department || '')}</span>
-       ${status ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-left:8px;${statusStyle}">${esc(statusLabel)}</span>` : ''}`;
+    document.getElementById('memberJournalTitle').textContent = `${m.user_name} — 주간일지`;
 
     const closeActionBtn = document.getElementById('memberJournalCloseActionBtn');
     closeActionBtn.style.display =
-      (isManager && j && j.status !== 'CLOSED') ? '' : 'none';
+      (isManager && m.journal && m.journal.status !== 'CLOSED') ? '' : 'none';
 
-    let html = '';
+    const j     = m.journal;
+    const tasks = m.task_summary || {};
+    let html    = '';
 
     if (!j) {
       html = `<div class="task-empty"><div class="task-empty-icon">📝</div><div class="task-empty-text">아직 일지를 작성하지 않았습니다.</div></div>`;
     } else {
-      // 업무 현황 요약바
-      const total  = tasks.total || 0;
-      const done   = tasks.done  || 0;
-      const pct    = total > 0 ? Math.round(done / total * 100) : 0;
-      html += `
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f0f7ff;border-radius:12px;margin-bottom:16px;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;color:#0369a1;">📊 업무 현황</span>
-          <span style="font-size:12px;color:var(--text-secondary);">전체 <b>${total}</b>건</span>
-          <span style="font-size:12px;color:#16a34a;">✓ 완료 <b>${done}</b>건</span>
-          ${tasks.in_progress ? `<span style="font-size:12px;color:#d97706;">⏳ 진행중 <b>${tasks.in_progress}</b>건</span>` : ''}
-          ${tasks.high ? `<span style="font-size:12px;color:#dc2626;">● 높음 <b>${tasks.high}</b>건</span>` : ''}
-          <div style="flex:1;min-width:80px;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
-            <div style="width:${pct}%;background:#0369a1;height:100%;border-radius:4px;"></div>
-          </div>
-          <span style="font-size:11px;color:var(--text-muted);">${pct}%</span>
-        </div>`;
+      const fields = [
+        { icon: '📊', label: '업무 현황',         value: `전체 ${tasks.total||0}건 / 완료 ${tasks.done||0}건 / 높은중요도 ${tasks.high||0}건` },
+        { icon: '🗓️', label: '이번 주 근태',       value: j.attendance_this_week || '-' },
+        { icon: '🗓️', label: '다음 주 근태 예정',  value: j.attendance_next_week || '-' },
+        { icon: '📋', label: '주간 요약',          value: j.summary       || '-' },
+        { icon: '🏆', label: '성과 및 완료',       value: j.achievements  || '-' },
+        { icon: '🎯', label: '차주 계획',          value: j.next_plan     || '-' },
+        { icon: '⚠️', label: '이슈/건의',          value: j.issues        || '-' }
+      ];
 
-      // 섹션 렌더링 함수
-      const section = (icon, label, value, highlight) => {
-        if (!value || value === '-') return '';
-        const bg = highlight ? '#fff8f0' : '#f8fafc';
-        const border = highlight ? '1px solid #fed7aa' : '1px solid var(--border-soft)';
-        return `
-          <div style="margin-bottom:14px;">
-            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;letter-spacing:0.3px;">
-              ${icon} ${esc(label)}
-            </div>
-            <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.7;
-                        background:${bg};padding:10px 14px;border-radius:10px;border:${border};">
-              ${esc(value)}
-            </div>
-          </div>`;
-      };
+      html = fields.map(f => `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">${f.icon} ${esc(f.label)}</div>
+          <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.6;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(f.value)}</div>
+        </div>
+      `).join('');
 
-      // 근태 (금주/차주 나란히)
-      const thisAtt = j.attendance_this_week;
-      const nextAtt = j.attendance_next_week;
-      if (thisAtt || nextAtt) {
-        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">`;
-        html += `<div>
-          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 이번 주 근태</div>
-          <div style="font-size:13px;white-space:pre-wrap;line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(thisAtt || '-')}</div>
-        </div>`;
-        html += `<div>
-          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 다음 주 근태 예정</div>
-          <div style="font-size:13px;white-space:pre-wrap;line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(nextAtt || '-')}</div>
-        </div>`;
-        html += `</div>`;
-      }
-
-      html += section('📋', '주간 업무 요약',     j.summary      || '', false);
-      html += section('🏆', '금주 성과 및 완료', j.achievements || '', false);
-      html += section('🎯', '차주 업무 계획',    j.next_plan    || '', false);
-      html += section('⚠️', '이슈 / 건의사항',  j.issues       || '', true);
-
-      // 제출/마감 시각
-      const timestamps = [];
-      if (j.submitted_at) timestamps.push(`제출: ${j.submitted_at.substring(0,16)}`);
-      if (j.closed_at)    timestamps.push(`마감: ${j.closed_at.substring(0,16)} (${j.closed_by || ''})`);
-      if (timestamps.length) {
-        html += `<div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;">${timestamps.join('  |  ')}</div>`;
+      if (j.submitted_at) {
+        html += `<div style="font-size:11px;color:var(--text-muted);text-align:right;">제출: ${j.submitted_at.substring(0,16)}</div>`;
       }
     }
 
@@ -1630,8 +1275,7 @@
         });
         showMessage('마감되었습니다.', 'success');
         closeMemberModal();
-        showGlobalLoading('팀원 현황을 불러오는 중...');
-        loadTeamJournals().finally(() => hideGlobalLoading());
+        loadTeamJournals();
       } catch (err) {
         showMessage(err.message, 'error');
       } finally {
@@ -1644,6 +1288,180 @@
 
   function closeMemberModal() {
     document.getElementById('memberJournalModal').classList.remove('open');
+  }
+
+  // ── 주간업무 엑셀 다운로드 ──────────────────────────────────────
+  async function exportJournalExcel() {
+    if (!window.XLSX) {
+      showMessage('엑셀 라이브러리를 불러오지 못했습니다.', 'error');
+      return;
+    }
+    const btn = document.getElementById('exportJournalBtn');
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = '다운로드 중...'; }
+      showGlobalLoading('업무일지 데이터를 불러오는 중...');
+
+      const res = await apiGet('journalListByTeam', {
+        request_user_email: currentUser.email,
+        week_start:         teamWeekStart
+      });
+      const members = res.data || [];
+      if (!members.length) { showMessage('다운로드할 데이터가 없습니다.', 'error'); return; }
+
+      // ── 스타일 정의 ────────────────────────────────────────────
+      const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
+      const FONT_TITLE  = { name: '맑은 고딕', sz: 14, bold: true, color: { rgb: 'FFFFFF' } };
+      const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+      const FONT_CAT    = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: 'FFFFFF' } };
+      const FONT_BOLD   = { name: '맑은 고딕', sz: 10, bold: true };
+      const FILL_TITLE  = { patternType: 'solid', fgColor: { rgb: '1F3864' } };
+      const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+      const FILL_CAT    = { patternType: 'solid', fgColor: { rgb: '2E75B6' } };
+      const FILL_WEEK   = { patternType: 'solid', fgColor: { rgb: 'D6E4F7' } };
+      const FILL_WHITE  = { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
+      const FILL_ALT    = { patternType: 'solid', fgColor: { rgb: 'F2F7FD' } };
+      const BD = { top:{style:'thin',color:{rgb:'BFBFBF'}}, bottom:{style:'thin',color:{rgb:'BFBFBF'}}, left:{style:'thin',color:{rgb:'BFBFBF'}}, right:{style:'thin',color:{rgb:'BFBFBF'}} };
+      const BD_MED = { top:{style:'medium',color:{rgb:'2E75B6'}}, bottom:{style:'medium',color:{rgb:'2E75B6'}}, left:{style:'medium',color:{rgb:'2E75B6'}}, right:{style:'medium',color:{rgb:'2E75B6'}} };
+      const AL_C = { horizontal:'center', vertical:'center', wrapText:true };
+      const AL_L = { horizontal:'left',   vertical:'top',    wrapText:true };
+
+      const ws  = {};
+      const wb2 = window.XLSX.utils.book_new();
+
+      // 의원별 그룹화
+      const clinicMap = {};
+      members.forEach(m => {
+        const c = m.clinic_name || '기타';
+        if (!clinicMap[c]) clinicMap[c] = [];
+        clinicMap[c].push(m);
+      });
+      const clinics   = Object.keys(clinicMap).sort();
+      const cats      = Object.entries(CATEGORY_LABELS);
+      const TOTAL     = 2 + clinics.length;   // A:구분 B:작성자 C~:의원별
+      let r = 0;
+
+      const sc = (row, col, val, s) => {
+        const a = window.XLSX.utils.encode_cell({ r: row, c: col });
+        ws[a] = { v: val ?? '', t: 's', s };
+      };
+      const mg = (rs, re, cs, ce) => {
+        if (!ws['!merges']) ws['!merges'] = [];
+        ws['!merges'].push({ s:{r:rs,c:cs}, e:{r:re,c:ce} });
+      };
+
+      // 1행: 제목
+      sc(r, 0, 'MSO관리팀 주간 업무보고', { font:FONT_TITLE, fill:FILL_TITLE, alignment:AL_C, border:BD_MED });
+      for (let c=1;c<TOTAL;c++) sc(r, c, '', { font:FONT_TITLE, fill:FILL_TITLE, alignment:AL_C, border:BD_MED });
+      mg(r,r,0,TOTAL-1); r++;
+
+      // 2행: 기간
+      const weekEnd = getWeekEnd(teamWeekStart);
+      const fd = d => d ? d.substring(5).replace('-','/') : '';
+      const period = `${teamWeekStart.substring(0,4)}년  ${fd(teamWeekStart)} ~ ${fd(weekEnd)}`;
+      sc(r, 0, period, { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
+      for (let c=1;c<TOTAL;c++) sc(r, c, '', { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
+      mg(r,r,0,TOTAL-1); r++;
+
+      // 3행: 헤더
+      sc(r, 0, '구  분', { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
+      sc(r, 1, '작성자', { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD });
+      clinics.forEach((cl,i) => sc(r, 2+i, cl, { font:FONT_HEADER, fill:FILL_HEADER, alignment:AL_C, border:BD }));
+      r++;
+
+      // 카테고리별 금주/차주
+      cats.forEach(([catKey, catName], ci) => {
+        const fill = ci % 2 === 0 ? FILL_ALT : FILL_WHITE;
+
+        // 카테고리 헤더행
+        sc(r, 0, catName, { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
+        sc(r, 1, '',      { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
+        clinics.forEach((_,i) => sc(r, 2+i, '', { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD }));
+        r++;
+
+        ['summary','next_plan'].forEach((field, fi) => {
+          const label = fi === 0 ? '금주' : '차주';
+          sc(r, 0, label, { font:FONT_BOLD, fill:FILL_WEEK, alignment:AL_C, border:BD });
+          sc(r, 1, '',    { font:FONT_BASE, fill:fill,      alignment:AL_C, border:BD });
+          clinics.forEach((cl, i) => {
+            const lines = [];
+            (clinicMap[cl]||[]).forEach(m => {
+              if (!m.journal) return;
+              const sec = extractCategorySection(m.journal[field] || '', catName);
+              if (sec) { lines.push(`【${m.user_name}】`); lines.push(sec); }
+            });
+            sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill, alignment:AL_L, border:BD });
+          });
+          r++;
+        });
+      });
+
+      // 근태 / 이슈
+      [
+        { label:'근태 특이사항', key:'attendance' },
+        { label:'이슈 / 건의사항', key:'issues' }
+      ].forEach(({label, key}, si) => {
+        const fill = si % 2 === 0 ? FILL_ALT : FILL_WHITE;
+        sc(r, 0, label, { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
+        sc(r, 1, '',    { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD });
+        clinics.forEach((_,i) => sc(r, 2+i, '', { font:FONT_CAT, fill:FILL_CAT, alignment:AL_C, border:BD }));
+        r++;
+
+        sc(r, 0, '', { font:FONT_BASE, fill, alignment:AL_C, border:BD });
+        sc(r, 1, '', { font:FONT_BASE, fill, alignment:AL_C, border:BD });
+        clinics.forEach((cl, i) => {
+          const lines = [];
+          (clinicMap[cl]||[]).forEach(m => {
+            if (!m.journal) return;
+            let val = '';
+            if (key === 'attendance') {
+              const tw = m.journal.attendance_this_week || '';
+              const nw = m.journal.attendance_next_week || '';
+              val = [tw && `[금주] ${tw}`, nw && `[차주] ${nw}`].filter(Boolean).join('\n');
+            } else {
+              val = m.journal.issues || '';
+            }
+            if (val) { lines.push(`【${m.user_name}】`); lines.push(val); }
+          });
+          sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill, alignment:AL_L, border:BD });
+        });
+        r++;
+      });
+
+      ws['!ref']  = window.XLSX.utils.encode_range({r:0,c:0},{r:r-1,c:TOTAL-1});
+      ws['!cols'] = [{ wch:12 }, { wch:10 }, ...clinics.map(()=>({ wch:40 }))];
+      ws['!rows'] = Array.from({ length: r }, (_,i) => i < 3 ? { hpt:22 } : { hpt:60 });
+      ws['!rows'][0] = { hpt:30 };
+
+      window.XLSX.utils.book_append_sheet(wb2, ws, '주간업무보고');
+      const today = new Date();
+      const ds = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+      window.XLSX.writeFile(wb2, `주간업무보고_${teamWeekStart}_${ds}.xlsx`);
+      showMessage('엑셀 다운로드가 완료되었습니다.', 'success');
+
+    } catch (err) {
+      showMessage(err.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⬇ 엑셀 다운로드'; }
+      hideGlobalLoading();
+    }
+  }
+
+  function extractCategorySection(text, catName) {
+    if (!text || !catName) return '';
+    const lines = text.split('\n');
+    let inSection = false;
+    const result = [];
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        if (trimmed.slice(1,-1).trim() === catName) { inSection = true; continue; }
+        else if (inSection) break;
+        continue;
+      }
+      if (inSection && trimmed.startsWith('──')) break;
+      if (inSection && lines[i].trim()) result.push(lines[i]);
+    }
+    return result.join('\n').trim();
   }
 
   // ── 통합 보기 ────────────────────────────────────────────────
