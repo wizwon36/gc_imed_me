@@ -6,7 +6,6 @@
   <title>수정요청 관리 - MSO관리팀 업무포털</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <style>
-    :root { --page-max-width: 1440px; }
     body {
       background: linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
       min-height: 100vh;
@@ -347,7 +346,7 @@
   </style>
 </head>
 <body class="portal-page admin-body">
-
+  <div class="container page-shell">
   <section class="top-brand-bar portal-topbar portal-hero-card" style="margin:0 0 12px;">
     <div class="top-brand-left">
       <div class="top-brand-logo">+</div>
@@ -360,8 +359,6 @@
       <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
     </div>
   </section>
-
-  <div class="page-shell" style="padding:28px 20px 48px;">
 
     <div id="messageBox" class="message-box"></div>
 
@@ -410,8 +407,8 @@
             <th class="th-center" style="width:88px;">카테고리</th>
             <th class="th-center" style="width:110px;">유형</th>
             <th class="th-center" style="width:72px;">상태</th>
-            <th style="width:28%;">제목</th>
-            <th>내용 미리보기</th>
+            <th class="th-center" style="width:28%;">제목</th>
+            <th class="th-center">내용 미리보기</th>
             <th class="th-center" style="width:72px;">요청자</th>
             <th class="th-center" style="width:96px;">일시</th>
             <th class="th-center" style="width:36px;">답변</th>
