@@ -879,8 +879,9 @@ function clearUserForm() {
   const activeEl = document.getElementById('userActive');
   if (activeEl) activeEl.value = 'Y';
 
-  document.querySelectorAll('.app-permission').forEach((el) => {
-    el.value = '';
+  // radio 권한: value 덮어쓰지 않고 '없음'(value="") radio를 checked로 초기화
+  document.querySelectorAll('input.app-permission[value=""]').forEach((el) => {
+    el.checked = true;
   });
 
   clearFieldInvalid();
