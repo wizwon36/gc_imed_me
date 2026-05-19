@@ -1152,6 +1152,7 @@
   font-weight: 700;
   white-space: nowrap;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* 2행: 카테고리 / 상태 / 중요도 / 초기화 */
@@ -1226,14 +1227,21 @@
 }
 
 @media (max-width: 640px) {
-  .search-form        { padding: 14px; gap: 10px; }
-  .search-main-row    { grid-template-columns: 1fr; }
-  .search-date-inputs { grid-column: 1; }
-  .search-keyword-wrap { grid-column: 1; grid-row: 4; }
-  .search-date-input  { width: 130px; }
-  .search-filter-row  { flex-wrap: wrap; gap: 8px; }
-  .search-select      { min-width: 0; flex: 1; }
-  .search-reset-btn   { margin-left: 0; width: 100%; }
+  .search-form         { padding: 14px; gap: 10px; }
+  /* 1행 그리드를 세로 스택으로 */
+  .search-main-row     { grid-template-columns: 1fr; gap: 4px 0; }
+  /* 날짜 라벨·인풋 순서 유지 */
+  .search-date-group   { order: 1; }
+  .search-keyword-group { order: 2; }
+  .search-date-inputs  { grid-column: 1; }
+  .search-keyword-wrap { grid-column: 1; }
+  .search-date-input   { flex: 1; width: auto; }
+  /* 2행 필터 */
+  .search-filter-row   { flex-wrap: wrap; gap: 8px; padding-top: 12px; }
+  .search-select       { min-width: 0; flex: 1 1 calc(33% - 8px); }
+  /* 검색/초기화 버튼 전체 너비 */
+  .search-btn          { flex: 1; margin-left: 0; order: 10; }
+  .search-reset-btn    { flex: 1; margin-left: 0; order: 11; }
 }
 
 /* ── 덮어쓰기 확인 모달 ── */
