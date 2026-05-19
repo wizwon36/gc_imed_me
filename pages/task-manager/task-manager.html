@@ -31,7 +31,7 @@
       <div class="equipment-form-hero-copy">
         <span class="portal-section-kicker">TASK · JOURNAL</span>
         <h1 class="page-title">업무일정 관리</h1>
-        <p class="page-desc">일별 업무를 등록하고 주간업무일지를 작성하세요.</p>
+        <p class="page-desc">일별 업무를 등록하고 업무일지를 작성하세요.</p>
       </div>
     </section>
 
@@ -55,7 +55,7 @@
           📅 주간 업무
         </button>
         <button class="task-tab-btn" data-tab="journal" id="tabJournal">
-          📝 주간업무일지
+          📝 업무일지
         </button>
         <button class="task-tab-btn" id="tabTeam" data-tab="team" style="display:none;">
           👥 팀원 현황
@@ -166,7 +166,7 @@
           <!-- 일지 헤더 -->
           <div class="task-card-head" style="border-top:1.5px solid #e0e7f2;">
             <div>
-              <h2 class="task-card-head-title">주간업무일지</h2>
+              <h2 class="task-card-head-title">업무일지</h2>
               <p class="task-card-head-sub" id="journalStatusText">불러오는 중...</p>
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
@@ -259,10 +259,7 @@
               <h2 class="task-card-head-title">팀원 주간일지 현황</h2>
               <p class="task-card-head-sub" id="teamWeekLabel">-</p>
             </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary" id="mergeViewBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">📄 통합 보기</button>
-              <button class="btn" id="exportJournalBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">⬇ 엑셀 다운로드</button>
-            </div>
+            <button class="btn btn-primary" id="mergeViewBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">📄 통합 보기</button>
           </div>
 
           <div class="team-journal-grid" id="teamJournalGrid">
