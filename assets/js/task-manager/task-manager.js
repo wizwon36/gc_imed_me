@@ -1529,39 +1529,91 @@
 
   window.TASK_APP.openMemberJournal = function(memberJsonStr) {
     const m = JSON.parse(memberJsonStr);
+    const j     = m.journal;
+    const tasks = m.task_summary || {};
 
-    document.getElementById('memberJournalTitle').textContent = `${m.user_name} — 주간일지`;
+    // 제목: 이름 + 소속 + 상태 배지
+    const statusMap   = { DRAFT: '작성중', SUBMITTED: '제출됨', CLOSED: '마감됨' };
+    const statusColor = { DRAFT: '#64748b', SUBMITTED: '#0369a1', CLOSED: '#16a34a' };
+    const status      = j ? (j.status || 'DRAFT') : null;
+    const statusLabel = status ? statusMap[status] || status : '';
+    const statusStyle = status ? `background:${statusColor[status] || '#64748b'}22;color:${statusColor[status] || '#64748b'};` : '';
+
+    document.getElementById('memberJournalTitle').innerHTML =
+      `${esc(m.user_name)}
+       <span style="font-size:11px;font-weight:500;color:var(--text-muted);margin-left:6px;">${esc(m.team_name || m.department || '')}</span>
+       ${status ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-left:8px;${statusStyle}">${esc(statusLabel)}</span>` : ''}`;
 
     const closeActionBtn = document.getElementById('memberJournalCloseActionBtn');
     closeActionBtn.style.display =
-      (isManager && m.journal && m.journal.status !== 'CLOSED') ? '' : 'none';
+      (isManager && j && j.status !== 'CLOSED') ? '' : 'none';
 
-    const j     = m.journal;
-    const tasks = m.task_summary || {};
-    let html    = '';
+    let html = '';
 
     if (!j) {
       html = `<div class="task-empty"><div class="task-empty-icon">📝</div><div class="task-empty-text">아직 일지를 작성하지 않았습니다.</div></div>`;
     } else {
-      const fields = [
-        { icon: '📊', label: '업무 현황',         value: `전체 ${tasks.total||0}건 / 완료 ${tasks.done||0}건 / 높은중요도 ${tasks.high||0}건` },
-        { icon: '🗓️', label: '이번 주 근태',       value: j.attendance_this_week || '-' },
-        { icon: '🗓️', label: '다음 주 근태 예정',  value: j.attendance_next_week || '-' },
-        { icon: '📋', label: '주간 요약',          value: j.summary       || '-' },
-        { icon: '🏆', label: '성과 및 완료',       value: j.achievements  || '-' },
-        { icon: '🎯', label: '차주 계획',          value: j.next_plan     || '-' },
-        { icon: '⚠️', label: '이슈/건의',          value: j.issues        || '-' }
-      ];
+      // 업무 현황 요약바
+      const total  = tasks.total || 0;
+      const done   = tasks.done  || 0;
+      const pct    = total > 0 ? Math.round(done / total * 100) : 0;
+      html += `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f0f7ff;border-radius:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:700;color:#0369a1;">📊 업무 현황</span>
+          <span style="font-size:12px;color:var(--text-secondary);">전체 <b>${total}</b>건</span>
+          <span style="font-size:12px;color:#16a34a;">✓ 완료 <b>${done}</b>건</span>
+          ${tasks.in_progress ? `<span style="font-size:12px;color:#d97706;">⏳ 진행중 <b>${tasks.in_progress}</b>건</span>` : ''}
+          ${tasks.high ? `<span style="font-size:12px;color:#dc2626;">● 높음 <b>${tasks.high}</b>건</span>` : ''}
+          <div style="flex:1;min-width:80px;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
+            <div style="width:${pct}%;background:#0369a1;height:100%;border-radius:4px;"></div>
+          </div>
+          <span style="font-size:11px;color:var(--text-muted);">${pct}%</span>
+        </div>`;
 
-      html = fields.map(f => `
-        <div style="margin-bottom:16px;">
-          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">${f.icon} ${esc(f.label)}</div>
-          <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.6;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(f.value)}</div>
-        </div>
-      `).join('');
+      // 섹션 렌더링 함수
+      const section = (icon, label, value, highlight) => {
+        if (!value || value === '-') return '';
+        const bg = highlight ? '#fff8f0' : '#f8fafc';
+        const border = highlight ? '1px solid #fed7aa' : '1px solid var(--border-soft)';
+        return `
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;letter-spacing:0.3px;">
+              ${icon} ${esc(label)}
+            </div>
+            <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.7;
+                        background:${bg};padding:10px 14px;border-radius:10px;border:${border};">
+              ${esc(value)}
+            </div>
+          </div>`;
+      };
 
-      if (j.submitted_at) {
-        html += `<div style="font-size:11px;color:var(--text-muted);text-align:right;">제출: ${j.submitted_at.substring(0,16)}</div>`;
+      // 근태 (금주/차주 나란히)
+      const thisAtt = j.attendance_this_week;
+      const nextAtt = j.attendance_next_week;
+      if (thisAtt || nextAtt) {
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">`;
+        html += `<div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 이번 주 근태</div>
+          <div style="font-size:13px;white-space:pre-wrap;line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(thisAtt || '-')}</div>
+        </div>`;
+        html += `<div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 다음 주 근태 예정</div>
+          <div style="font-size:13px;white-space:pre-wrap;line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(nextAtt || '-')}</div>
+        </div>`;
+        html += `</div>`;
+      }
+
+      html += section('📋', '주간 업무 요약',     j.summary      || '', false);
+      html += section('🏆', '금주 성과 및 완료', j.achievements || '', false);
+      html += section('🎯', '차주 업무 계획',    j.next_plan    || '', false);
+      html += section('⚠️', '이슈 / 건의사항',  j.issues       || '', true);
+
+      // 제출/마감 시각
+      const timestamps = [];
+      if (j.submitted_at) timestamps.push(`제출: ${j.submitted_at.substring(0,16)}`);
+      if (j.closed_at)    timestamps.push(`마감: ${j.closed_at.substring(0,16)} (${j.closed_by || ''})`);
+      if (timestamps.length) {
+        html += `<div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;">${timestamps.join('  |  ')}</div>`;
       }
     }
 
@@ -1578,7 +1630,8 @@
         });
         showMessage('마감되었습니다.', 'success');
         closeMemberModal();
-        loadTeamJournals();
+        showGlobalLoading('팀원 현황을 불러오는 중...');
+        loadTeamJournals().finally(() => hideGlobalLoading());
       } catch (err) {
         showMessage(err.message, 'error');
       } finally {
