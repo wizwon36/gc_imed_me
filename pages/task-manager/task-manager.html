@@ -259,7 +259,10 @@
               <h2 class="task-card-head-title">팀원 주간일지 현황</h2>
               <p class="task-card-head-sub" id="teamWeekLabel">-</p>
             </div>
-            <button class="btn btn-primary" id="mergeViewBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">📄 통합 보기</button>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" id="mergeViewBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">📄 통합 보기</button>
+              <button class="btn" id="exportJournalBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">⬇ 엑셀 다운로드</button>
+            </div>
           </div>
 
           <div class="team-journal-grid" id="teamJournalGrid">
@@ -325,10 +328,8 @@
                   <option value="LOW">낮음</option>
                 </select>
               </div>
-              <div class="search-filter-btns">
-                <button class="btn btn-primary search-btn" id="searchRunBtn">검색</button>
-                <button class="btn search-reset-btn" id="searchResetBtn">초기화</button>
-              </div>
+              <button class="btn btn-primary search-btn" id="searchRunBtn">검색</button>
+              <button class="btn search-reset-btn" id="searchResetBtn">초기화</button>
             </div>
 
           </div><!-- /search-form -->
