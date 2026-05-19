@@ -210,6 +210,8 @@
     document.getElementById('memberJournalClose')?.addEventListener('click', closeMemberModal);
     document.getElementById('memberJournalDismissBtn')?.addEventListener('click', closeMemberModal);
 
+    document.getElementById('exportJournalBtn')?.addEventListener('click', exportJournalExcel);
+
     // 통합 보기 모달
     document.getElementById('mergeViewBtn')?.addEventListener('click', openMergeView);
 
@@ -1166,6 +1168,309 @@
       document.getElementById('teamJournalGrid').innerHTML =
         `<div class="task-empty" style="grid-column:1/-1;"><div class="task-empty-icon">⚠️</div><div class="task-empty-text">${esc(err.message)}</div></div>`;
     }
+  }
+
+  // ── 주간업무 엑셀 다운로드 ──────────────────────────────────────
+  async function exportJournalExcel() {
+    if (!window.XLSX) {
+      showMessage('엑셀 라이브러리를 불러오지 못했습니다.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('exportJournalBtn');
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = '다운로드 중...'; }
+      showGlobalLoading('업무일지 데이터를 불러오는 중...');
+
+      const res = await apiGet('journalListByTeam', {
+        request_user_email: currentUser.email,
+        week_start:         teamWeekStart
+      });
+
+      const members = res.data || [];
+      if (!members.length) {
+        showMessage('다운로드할 데이터가 없습니다.', 'error');
+        return;
+      }
+
+      // ── 스타일 정의 (의료장비와 동일) ───────────────────────────
+      const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
+      const FONT_TITLE  = { name: '맑은 고딕', sz: 14, bold: true, color: { rgb: '1F3864' } };
+      const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
+      const FONT_CAT    = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: 'FFFFFF' } };
+      const FONT_BOLD   = { name: '맑은 고딕', sz: 10, bold: true };
+      const FILL_TITLE  = { patternType: 'solid', fgColor: { rgb: '1F3864' } };
+      const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
+      const FILL_CAT    = { patternType: 'solid', fgColor: { rgb: '2E75B6' } };
+      const FILL_WEEK   = { patternType: 'solid', fgColor: { rgb: 'D6E4F7' } };
+      const FILL_ALT    = { patternType: 'solid', fgColor: { rgb: 'F2F7FD' } };
+      const BORDER = {
+        top:    { style: 'thin', color: { rgb: 'BFBFBF' } },
+        bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+        left:   { style: 'thin', color: { rgb: 'BFBFBF' } },
+        right:  { style: 'thin', color: { rgb: 'BFBFBF' } }
+      };
+      const BORDER_MED = {
+        top:    { style: 'medium', color: { rgb: '2E75B6' } },
+        bottom: { style: 'medium', color: { rgb: '2E75B6' } },
+        left:   { style: 'medium', color: { rgb: '2E75B6' } },
+        right:  { style: 'medium', color: { rgb: '2E75B6' } }
+      };
+      const ALIGN_C  = { horizontal: 'center', vertical: 'center', wrapText: true };
+      const ALIGN_L  = { horizontal: 'left',   vertical: 'top',    wrapText: true };
+      const ALIGN_LC = { horizontal: 'left',   vertical: 'center', wrapText: true };
+
+      const ws  = {};
+      const wb2 = window.XLSX.utils.book_new();
+
+      // 의원 목록 — clinic_name 기준으로 그룹화
+      const clinicMap = {};
+      members.forEach(m => {
+        const clinic = m.clinic_name || '기타';
+        if (!clinicMap[clinic]) clinicMap[clinic] = [];
+        clinicMap[clinic].push(m);
+      });
+      const clinics = Object.keys(clinicMap).sort();
+
+      // 카테고리 목록 (CATEGORY_LABELS 순서)
+      const cats = Object.entries(CATEGORY_LABELS);
+      // 추가: 근태/이슈
+      const EXTRA_SECTIONS = [
+        { key: 'attendance', label: '근태 특이사항' },
+        { key: 'issues',     label: '이슈 / 건의사항' }
+      ];
+
+      // ── 컬럼 구조
+      // A: 구분(카테고리)  B: 작성자  C~: 의원별 내용 (의원 수만큼)
+      const COL_CAT    = 0;  // A
+      const COL_AUTHOR = 1;  // B
+      const COL_CLINIC_START = 2; // C~
+      const TOTAL_COLS = 2 + clinics.length;
+
+      let r = 0;
+      const setCell = (row, col, val, style) => {
+        const addr = window.XLSX.utils.encode_cell({ r: row, c: col });
+        ws[addr] = { v: val ?? '', t: 's', s: style };
+      };
+      const merge = (rs, re, cs, ce) => {
+        if (!ws['!merges']) ws['!merges'] = [];
+        ws['!merges'].push({ s: { r: rs, c: cs }, e: { r: re, c: ce } });
+      };
+
+      // ── 1행: 제목
+      setCell(r, 0, 'MSO관리팀 주간 업무보고',
+        { font: FONT_TITLE, fill: FILL_TITLE, alignment: ALIGN_C, border: BORDER_MED });
+      for (let c = 1; c < TOTAL_COLS; c++) {
+        setCell(r, c, '', { font: FONT_TITLE, fill: FILL_TITLE, alignment: ALIGN_C, border: BORDER_MED });
+      }
+      merge(r, r, 0, TOTAL_COLS - 1);
+      r++;
+
+      // ── 2행: 기간
+      const weekEnd = getWeekEnd(teamWeekStart);
+      const fmtDate = d => d ? d.substring(5).replace('-', '/') : '';
+      const periodLabel = `${teamWeekStart.substring(0, 4)}년  ${fmtDate(teamWeekStart)} ~ ${fmtDate(weekEnd)}`;
+      setCell(r, 0, periodLabel,
+        { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
+      for (let c = 1; c < TOTAL_COLS; c++) {
+        setCell(r, c, '', { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
+      }
+      merge(r, r, 0, TOTAL_COLS - 1);
+      r++;
+
+      // ── 3행: 헤더 (구분 | 작성자 | 의원1 | 의원2 | ...)
+      setCell(r, COL_CAT,    '구  분', { font: FONT_HEADER, fill: FILL_HEADER, alignment: ALIGN_C, border: BORDER });
+      setCell(r, COL_AUTHOR, '작성자', { font: FONT_HEADER, fill: FILL_HEADER, alignment: ALIGN_C, border: BORDER });
+      clinics.forEach((clinic, i) => {
+        setCell(r, COL_CLINIC_START + i, clinic,
+          { font: FONT_HEADER, fill: FILL_HEADER, alignment: ALIGN_C, border: BORDER });
+      });
+      r++;
+
+      // ── 카테고리별 데이터
+      cats.forEach(([catKey, catName], catIdx) => {
+        const fill = catIdx % 2 === 0 ? FILL_ALT : { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
+
+        // 카테고리 행 헤더
+        setCell(r, COL_CAT, catName,
+          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
+        setCell(r, COL_AUTHOR, '',
+          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
+        clinics.forEach((_, i) => {
+          setCell(r, COL_CLINIC_START + i, '',
+            { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
+        });
+        r++;
+
+        // 금주 업무 요약 행
+        setCell(r, COL_CAT, '금주', { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
+
+        // 해당 카테고리 작성자 목록 (의원별)
+        // 각 의원에서 해당 카테고리 task가 있는 멤버들
+        const authorsByClinic = {};
+        clinics.forEach(clinic => {
+          const clinicMembers = clinicMap[clinic] || [];
+          const authors = clinicMembers
+            .filter(m => {
+              const items = (m.journal_tasks || (m.task_summary && m.task_summary.total > 0)) ? true : false;
+              return m.journal; // 일지 작성자만
+            })
+            .map(m => m.user_name)
+            .join(', ');
+          authorsByClinic[clinic] = authors;
+        });
+
+        setCell(r, COL_AUTHOR, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
+
+        // 의원별 해당 카테고리 금주 내용 (summary에서 카테고리 섹션 추출)
+        clinics.forEach((clinic, i) => {
+          const clinicMembers = clinicMap[clinic] || [];
+          const lines = [];
+          clinicMembers.forEach(m => {
+            if (!m.journal) return;
+            const summary = m.journal.summary || '';
+            // 카테고리 섹션 추출: [catName] 이후 다음 카테고리까지
+            const catSection = extractCategorySection(summary, catName);
+            if (catSection) {
+              lines.push(`【${m.user_name}】`);
+              lines.push(catSection);
+            }
+          });
+          setCell(r, COL_CLINIC_START + i, lines.join('\n'),
+            { font: FONT_BASE, fill: fill, alignment: ALIGN_L, border: BORDER });
+        });
+        r++;
+
+        // 차주 업무 계획 행
+        setCell(r, COL_CAT, '차주', { font: FONT_BOLD, fill: FILL_WEEK, alignment: ALIGN_C, border: BORDER });
+        setCell(r, COL_AUTHOR, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
+        clinics.forEach((clinic, i) => {
+          const clinicMembers = clinicMap[clinic] || [];
+          const lines = [];
+          clinicMembers.forEach(m => {
+            if (!m.journal) return;
+            const nextPlan = m.journal.next_plan || '';
+            const catSection = extractCategorySection(nextPlan, catName);
+            if (catSection) {
+              lines.push(`【${m.user_name}】`);
+              lines.push(catSection);
+            }
+          });
+          setCell(r, COL_CLINIC_START + i, lines.join('\n'),
+            { font: FONT_BASE, fill: fill, alignment: ALIGN_L, border: BORDER });
+        });
+        r++;
+      });
+
+      // ── 근태 / 이슈 섹션
+      EXTRA_SECTIONS.forEach((sec, secIdx) => {
+        // 섹션 헤더
+        setCell(r, COL_CAT, sec.label,
+          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
+        setCell(r, COL_AUTHOR, '',
+          { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
+        clinics.forEach((_, i) => {
+          setCell(r, COL_CLINIC_START + i, '',
+            { font: FONT_CAT, fill: FILL_CAT, alignment: ALIGN_C, border: BORDER });
+        });
+        r++;
+
+        const fill = secIdx % 2 === 0 ? FILL_ALT : { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
+        setCell(r, COL_CAT, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
+        setCell(r, COL_AUTHOR, '', { font: FONT_BASE, fill: fill, alignment: ALIGN_C, border: BORDER });
+        clinics.forEach((clinic, i) => {
+          const clinicMembers = clinicMap[clinic] || [];
+          const lines = [];
+          clinicMembers.forEach(m => {
+            if (!m.journal) return;
+            let val = '';
+            if (sec.key === 'attendance') {
+              const thisWeek = m.journal.attendance_this_week || '';
+              const nextWeek = m.journal.attendance_next_week || '';
+              val = [thisWeek && `[금주] ${thisWeek}`, nextWeek && `[차주] ${nextWeek}`]
+                .filter(Boolean).join('\n');
+            } else {
+              val = m.journal.issues || '';
+            }
+            if (val) {
+              lines.push(`【${m.user_name}】`);
+              lines.push(val);
+            }
+          });
+          setCell(r, COL_CLINIC_START + i, lines.join('\n'),
+            { font: FONT_BASE, fill: fill, alignment: ALIGN_L, border: BORDER });
+        });
+        r++;
+      });
+
+      // ── 워크시트 범위 및 컬럼 너비
+      ws['!ref'] = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: r - 1, c: TOTAL_COLS - 1 });
+      ws['!cols'] = [
+        { wch: 12 },  // 구분
+        { wch: 10 },  // 작성자
+        ...clinics.map(() => ({ wch: 40 })) // 의원별
+      ];
+      ws['!rows'] = [];
+      for (let i = 0; i < r; i++) {
+        // 카테고리 헤더 행은 낮게, 데이터 행은 높게
+        ws['!rows'].push({ hpt: 60 });
+      }
+      ws['!rows'][0] = { hpt: 30 };
+      ws['!rows'][1] = { hpt: 22 };
+      ws['!rows'][2] = { hpt: 22 };
+
+      window.XLSX.utils.book_append_sheet(wb2, ws, '주간업무보고');
+
+      const now = new Date();
+      const dateStr = now.getFullYear() +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0');
+      window.XLSX.writeFile(wb2, `주간업무보고_${teamWeekStart}_${dateStr}.xlsx`);
+      showMessage('엑셀 다운로드가 완료되었습니다.', 'success');
+
+    } catch (err) {
+      showMessage(err.message || '엑셀 다운로드 중 오류가 발생했습니다.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⬇ 엑셀 다운로드'; }
+      hideGlobalLoading(true);
+    }
+  }
+
+  /**
+   * 일지 텍스트에서 특정 카테고리 섹션 추출
+   * buildDailyGroupedText 형식: [카테고리명]\n  날짜\n  내용...
+   */
+  function extractCategorySection(text, catName) {
+    if (!text || !catName) return '';
+    const lines = text.split('\n');
+    let inSection = false;
+    const result = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // 카테고리 헤더 감지: [카테고리명]
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        const sectionName = trimmed.slice(1, -1).trim();
+        if (sectionName === catName) {
+          inSection = true;
+          continue;
+        } else if (inSection) {
+          break; // 다음 카테고리 시작 → 종료
+        }
+        continue;
+      }
+
+      // 이월 업무 구분선 → 종료
+      if (inSection && trimmed.startsWith('──')) break;
+
+      if (inSection && line.trim()) {
+        result.push(line);
+      }
+    }
+
+    return result.join('\n').trim();
   }
 
   function renderTeamGrid(members) {
