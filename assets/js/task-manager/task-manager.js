@@ -1364,16 +1364,39 @@
       mg(r, r, 0, 1);  // A~B 병합: "구  분"
       r++;
 
-      // 카테고리별 — A열=카테고리(금주/차주 두 행 병합), B열=금주/차주, C~=의원별
+      // ── 주요이슈 (중요도 HIGH) — 금주/차주 ──────────────────────
+
+
+
+      const highStart = r;
+
+      ['summary','next_plan'].forEach((field, fi) => {
+        const weekLabel = fi === 0 ? '금주' : '차주';
+        sc(r, 0, fi === 0 ? '주요이슈' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        sc(r, 1, weekLabel, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        clinics.forEach((cl, i) => {
+          const lines = [];
+          (clinicMap[cl]||[]).forEach(m => {
+            if (!m.journal) return;
+            const highSec = extractCategorySection(m.journal[field] || '', null, 'HIGH');
+            if (highSec) { lines.push('○ ' + m.user_name); highSec.split('\n').forEach(l => lines.push(l)); }
+          });
+          sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+        });
+        r++;
+      });
+      mg(highStart, highStart + 1, 0, 0);  // A열 "주요이슈" 2행 병합
+
+      // ── 카테고리별 — A열=카테고리(금주/차주 두 행 병합), B열=금주/차주, C~=의원별
       cats.forEach(([catKey, catName], ci) => {
-        const fillCat  = { patternType:'solid', fgColor:{ rgb: ci % 2 === 0 ? 'EBF3FB' : 'F5F9FE' } };
+        const fillCat  = FILL_WHITE;
         const catStart = r;
 
         ['summary','next_plan'].forEach((field, fi) => {
           const weekLabel = fi === 0 ? '금주' : '차주';
-          const fillWeek  = fi === 0
-            ? { patternType:'solid', fgColor:{ rgb:'EBF3FB' } }
-            : { patternType:'solid', fgColor:{ rgb:'F5F9FE' } };
+          const fillWeek  = FILL_WHITE;
+
+
 
           // A열: 카테고리명 (금주 행에만 값, 차주 행은 빈칸 — 나중에 병합)
           sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:fillCat, alignment:AL_C, border:BD });
@@ -1384,10 +1407,10 @@
             const lines = [];
             (clinicMap[cl]||[]).forEach(m => {
               if (!m.journal) return;
-              const sec = extractCategorySection(m.journal[field] || '', catName);
+              const sec = extractCategorySection(m.journal[field] || '', catName, 'NORMAL');
               if (sec) { lines.push('○ ' + m.user_name); lines.push(sec); }
             });
-            sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:fillWeek, alignment:AL_L, border:BD });
+            sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
           });
           r++;
         });
@@ -1396,14 +1419,11 @@
         mg(catStart, catStart + 1, 0, 0);
       });
 
-      // 근태 (금주/차주) — 동일 구조
+      // 근태 (금주/차주)
       const attStart = r;
       ['금주', '차주'].forEach((label, fi) => {
-        const fillWeek = fi === 0
-          ? { patternType:'solid', fgColor:{ rgb:'EBF3FB' } }
-          : { patternType:'solid', fgColor:{ rgb:'F5F9FE' } };
-        sc(r, 0, fi === 0 ? '근태' : '', { font:FONT_BOLD, fill:{ patternType:'solid', fgColor:{ rgb:'EBF3FB' } }, alignment:AL_C, border:BD });
-        sc(r, 1, label, { font:FONT_BOLD, fill:fillWeek, alignment:AL_C, border:BD });
+        sc(r, 0, fi === 0 ? '근태' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        sc(r, 1, label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
         clinics.forEach((cl, i) => {
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
@@ -1413,14 +1433,15 @@
               : (m.journal.attendance_next_week || '');
             if (val) { lines.push('○ ' + m.user_name); lines.push(val); }
           });
-          sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:fillWeek, alignment:AL_L, border:BD });
+          sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
         });
         r++;
       });
+      mg(attStart, attStart + 1, 0, 0);  // A열 "근태" 2행 병합
 
       // 이슈 / 건의사항 — A열 단독 (B열 포함 병합)
       const issueRow = r;
-      const fillIssue = { patternType:'solid', fgColor:{ rgb:'EBF3FB' } };
+      const fillIssue = FILL_WHITE;
       sc(r, 0, '이슈/건의', { font:FONT_BOLD, fill:fillIssue, alignment:AL_C, border:BD });
       sc(r, 1, '',          { font:FONT_BOLD, fill:fillIssue, alignment:AL_C, border:BD });
       mg(r, r, 0, 1);
@@ -1455,20 +1476,69 @@
     }
   }
 
-  function extractCategorySection(text, catName) {
-    if (!text || !catName) return '';
+  /**
+   * 일지 텍스트에서 카테고리 섹션 추출
+   * @param {string} text       - 일지 전체 텍스트
+   * @param {string} catName    - 카테고리명 (null 이면 전체)
+   * @param {string} [priority] - 'HIGH': HIGH만, 'NORMAL': HIGH 제외, 미전달: 전체
+   */
+  function extractCategorySection(text, catName, priority) {
+    if (!text) return '';
     const lines = text.split('\n');
-    let inSection = false;
+    let inSection = !catName;  // catName 없으면 전체 대상
     const result = [];
-    for (let i = 0; i < lines.length; i++) {
+    let i = 0;
+
+    while (i < lines.length) {
       const trimmed = lines[i].trim();
+
+      // 카테고리 헤더 감지
       if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-        if (trimmed.slice(1,-1).trim() === catName) { inSection = true; continue; }
+        const sectionName = trimmed.slice(1, -1).trim();
+        if (!catName) {
+          // 전체 모드: 카테고리 헤더 자체는 포함
+          inSection = true;
+          i++; continue;
+        }
+        if (sectionName === catName) { inSection = true; i++; continue; }
         else if (inSection) break;
-        continue;
+        i++; continue;
       }
+
+      // 이월 구분선 → 종료
       if (inSection && trimmed.startsWith('──')) break;
-      if (inSection && lines[i].trim()) result.push(lines[i]);
+
+      if (inSection && trimmed) {
+        // 항목 행 여부 판단: 숫자. 으로 시작
+        const isItem = /^\d+\.\s/.test(trimmed);
+        if (isItem) {
+          const isHigh = trimmed.includes(' * ') || trimmed.endsWith(' *') ||
+                         trimmed.includes(' *  ') || / \*\s+\[/.test(trimmed);
+          if (!priority ||
+              (priority === 'HIGH'   &&  isHigh) ||
+              (priority === 'NORMAL' && !isHigh)) {
+            result.push(lines[i]);
+            // 다음 줄이 상세(└)면 함께 포함
+            let j = i + 1;
+            while (j < lines.length && lines[j].trim().startsWith('└')) {
+              result.push(lines[j]);
+              j++;
+            }
+            i = j;
+            continue;
+          } else {
+            // 해당 항목 건너뛰기 (상세 행 포함)
+            let j = i + 1;
+            while (j < lines.length && lines[j].trim().startsWith('└')) j++;
+            i = j;
+            continue;
+          }
+        } else {
+          // 날짜 행 등 항목이 아닌 행
+          result.push(lines[i]);
+        }
+      }
+      i++;
     }
     return result.join('\n').trim();
   }
