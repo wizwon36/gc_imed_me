@@ -1094,42 +1094,51 @@
   gap: 12px;
 }
 
-/* 1행: 시작일 ~ 종료일 | 키워드 + 검색버튼 — 한 줄 정렬 */
+/* 1행: 기간 | 키워드+검색버튼 */
+/* 라벨 행 / 인풋 행 을 2-row 그리드로 분리해 정확히 정렬 */
 .search-main-row {
   display: grid;
   grid-template-columns: auto 1fr;
-  align-items: end;
-  gap: 14px;
+  grid-template-rows: auto auto;
+  gap: 6px 14px;
 }
+
+/* 라벨은 1행에 */
+.search-date-group > .search-label  { grid-row: 1; }
+.search-keyword-group > .search-label { grid-row: 1; }
 
 .search-date-group {
-  flex-shrink: 0;
+  display: contents;
 }
 
+.search-keyword-group {
+  display: contents;
+}
+
+/* 인풋 영역은 2행에, 세로 중앙 정렬 */
 .search-date-inputs {
   display: flex;
   align-items: center;
   gap: 6px;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.search-keyword-wrap {
+  display: flex;
+  gap: 8px;
+  grid-column: 2;
+  grid-row: 2;
 }
 
 .search-range-sep {
   font-size: 13px;
   color: var(--text-muted);
   flex-shrink: 0;
-  line-height: 42px;
 }
 
 .search-date-input {
   width: 136px;
-}
-
-.search-keyword-group {
-  min-width: 0;
-}
-
-.search-keyword-wrap {
-  display: flex;
-  gap: 8px;
 }
 
 .search-keyword-wrap .form-input {
@@ -1138,7 +1147,6 @@
 }
 
 .search-btn {
-  height: 42px;
   padding: 0 22px;
   font-size: 13px;
   font-weight: 700;
@@ -1146,35 +1154,34 @@
   flex-shrink: 0;
 }
 
-/* 2행: 카테고리 / 상태 / 중요도 / 초기화 — 한 줄 정렬 */
+/* 2행: 카테고리 / 상태 / 중요도 / 초기화 */
 .search-filter-row {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  padding-top: 4px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-soft);
+  margin-top: 4px;
 }
 
 .search-select {
-  height: 38px;
   min-width: 120px;
   font-size: 13px;
 }
 
 .search-reset-btn {
-  height: 38px;
   padding: 0 16px;
   font-size: 12px;
   color: var(--text-secondary);
   flex-shrink: 0;
-  margin-left: auto;  /* 오른쪽 끝 정렬 */
+  margin-left: auto;
 }
 
 /* 공통 검색 라벨 */
 .search-field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .search-label {
@@ -1221,7 +1228,8 @@
 @media (max-width: 640px) {
   .search-form        { padding: 14px; gap: 10px; }
   .search-main-row    { grid-template-columns: 1fr; }
-  .search-date-inputs { justify-content: space-between; }
+  .search-date-inputs { grid-column: 1; }
+  .search-keyword-wrap { grid-column: 1; grid-row: 4; }
   .search-date-input  { width: 130px; }
   .search-filter-row  { flex-wrap: wrap; gap: 8px; }
   .search-select      { min-width: 0; flex: 1; }
