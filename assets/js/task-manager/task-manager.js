@@ -1062,6 +1062,25 @@
     else if (status === 'error')  text.textContent = '저장 실패';
     else                          text.textContent = currentJournal?.updated_at
       ? '마지막 저장: ' + currentJournal.updated_at.substring(11, 16) : '-';
+
+    // 저장됨 / 실패 시 토스트 표시
+    if (status === 'saved' || status === 'error') {
+      showAutosaveToast(status);
+    }
+  }
+
+  function showAutosaveToast(status) {
+    let toast = document.getElementById('autosaveToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'autosaveToast';
+      document.body.appendChild(toast);
+    }
+    toast.className = 'autosave-toast autosave-toast--' + status;
+    toast.textContent = status === 'saved' ? '✓  일지가 저장되었습니다.' : '✕  저장에 실패했습니다.';
+    clearTimeout(toast._hideTimer);
+    toast.classList.add('is-visible');
+    toast._hideTimer = setTimeout(() => toast.classList.remove('is-visible'), 2500);
   }
 
   async function saveJournal(isAuto = false) {
