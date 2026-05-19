@@ -12,6 +12,7 @@
     }
 
     /* 관리자 페이지 공통 너비 (logs, users 와 동일) */
+    :root { --page-max-width: 1440px; }
     .page-shell {
       max-width: var(--page-max-width) !important;
     }
@@ -102,7 +103,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
-      table-layout: fixed;
+      table-layout: auto;
     }
     .support-grid thead tr {
       background: var(--surface-soft, #f8fafc);
@@ -411,8 +412,8 @@
             <th class="th-center" style="width:88px;">카테고리</th>
             <th class="th-center" style="width:110px;">유형</th>
             <th class="th-center" style="width:72px;">상태</th>
-            <th style="width:28%;">제목</th>
-            <th>내용 미리보기</th>
+            <th style="width:22%;">제목</th>
+            <th style="width:auto;">내용 미리보기</th>
             <th class="th-center" style="width:72px;">요청자</th>
             <th class="th-center" style="width:96px;">일시</th>
             <th class="th-center" style="width:36px;">답변</th>
