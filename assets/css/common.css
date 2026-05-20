@@ -1114,7 +1114,6 @@ button, input, select, textarea {
   inset: 0;
   display: none;
   z-index: 99999;
-  /* 오버레이 배경 제거 — 프로그레스 바만 표시 */
   background: transparent;
   pointer-events: none;
 }
@@ -1123,51 +1122,50 @@ button, input, select, textarea {
   display: block;
 }
 
-/* 기존 스피너 다이얼로그 숨김 */
 #globalLoading .global-loading__dialog {
-  display: none;
-}
-
-/* ── 상단 프로그레스 바 ── */
-#globalLoading::before {
-  content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  width: 0%;
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
-  border-radius: 0 2px 2px 0;
-  box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
-  transition: width 0.3s ease;
-  z-index: 100000;
-}
-
-#globalLoading.is-open::before {
-  animation: progress-bar-indeterminate 1.4s ease-in-out infinite;
-}
-
-@keyframes progress-bar-indeterminate {
-  0%   { left: -35%; width: 35%; }
-  60%  { left: 100%; width: 35%; }
-  100% { left: 100%; width: 35%; }
-}
-
-/* 완료 시 꽉 차고 사라지는 애니메이션 */
-#globalLoading.is-finishing::before {
-  animation: none;
-  left: 0;
-  width: 100%;
-  transition: width 0.2s ease;
-  opacity: 1;
-}
-
-#globalLoading.is-done::before {
-  animation: none;
-  left: 0;
-  width: 100%;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  white-space: nowrap;
   opacity: 0;
-  transition: opacity 0.3s ease 0.1s;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateX(-50%) translateY(-8px);
+  pointer-events: auto;
+}
+
+#globalLoading.is-open .global-loading__dialog {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#globalLoading .global-loading__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: globalLoadingSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+#globalLoading .global-loading__text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 1;
+}
+
+@keyframes globalLoadingSpin {
+  to { transform: rotate(360deg); }
 }
 
 
