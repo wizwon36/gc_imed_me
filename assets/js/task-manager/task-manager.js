@@ -1533,17 +1533,26 @@
   }
 
   /**
-   * 엑셀 출력용 — 이름행(○ 이름)과 날짜행(MM/DD (요일)) 제거
-   * 항목 내용과 └ 상세만 남김
+   * 엑셀 출력용 — 이름행, 날짜행, 날짜범위 제거 + 번호를 ○로 교체
    */
   function stripNameAndDate(lines) {
-    return lines.filter(l => {
-      const t = l.trim();
-      if (!t) return false;
-      if (t.startsWith('○ ')) return false;                     // 이름 행
-      if (/^\d{2}\/\d{2}\s*\(/.test(t)) return false;          // 날짜 행 (05/18 (월))
-      return true;
-    });
+    return lines
+      .filter(l => {
+        const t = l.trim();
+        if (!t) return false;
+        if (t.startsWith('○ ')) return false;           // 이름 행
+        if (/^\d{2}\/\d{2}\s*\(/.test(t)) return false; // 날짜 행 (05/18 (월))
+        return true;
+      })
+      .map(l => {
+        // 항목 번호(1.  제목) → ○ 제목 으로 교체
+        let result = l.replace(/^(\s*)\d+\.\s+/, '$1○ ');
+        // 항목 뒤 날짜 범위 제거 (05/18 ~ 05/19, 05/18 ~ 05/20 등)
+        result = result.replace(/\s+\d{2}\/\d{2}\s*~\s*\d{2}\/\d{2}/g, '');
+        // 단일 날짜도 제거 (예: 05/18)
+        result = result.replace(/\s+\d{2}\/\d{2}(?!\s*[~(])/g, '');
+        return result;
+      });
   }
 
   /**
@@ -1554,37 +1563,36 @@
    */
   function extractCategorySection(text, catName, priority) {
     if (!text) return '';
+
+    let catCode  = null;
+    let catLabel = null;
+    if (catName && Object.keys(CATEGORY_LABELS).length > 0) {
+      catCode  = Object.keys(CATEGORY_LABELS).find(k => CATEGORY_LABELS[k] === catName) || null;
+      catLabel = CATEGORY_LABELS[catName] || null;
+    }
+
     const lines = text.split('\n');
-    let inSection = !catName;  // catName 없으면 전체 대상
+    let inSection = !catName;
     const result = [];
     let i = 0;
 
     while (i < lines.length) {
       const trimmed = lines[i].trim();
 
-      // 카테고리 헤더 감지
       if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
         const sectionName = trimmed.slice(1, -1).trim();
-        if (!catName) {
-          // 전체 모드: 카테고리 헤더 자체는 포함
-          inSection = true;
-          i++; continue;
-        }
-        // 한글명 또는 영문 코드 둘 다 매칭
-        const catCode = catName
-          ? Object.keys(CATEGORY_LABELS).find(k => CATEGORY_LABELS[k] === catName) || null
-          : null;
-        if (sectionName === catName || (catCode && sectionName === catCode)) {
-          inSection = true; i++; continue;
-        } else if (inSection) break;
+        if (!catName) { inSection = true; i++; continue; }
+        const isMatch = sectionName === catName ||
+                        (catCode  && sectionName === catCode)  ||
+                        (catLabel && sectionName === catLabel);
+        if (isMatch) { inSection = true; i++; continue; }
+        else if (inSection) break;
         i++; continue;
       }
 
-      // 이월 구분선 → 종료
       if (inSection && trimmed.startsWith('──')) break;
 
       if (inSection && trimmed) {
-        // 항목 행 여부 판단: 숫자. 으로 시작
         const isItem = /^\d+\.\s/.test(trimmed);
         if (isItem) {
           const isHigh = trimmed.includes(' * ') || trimmed.endsWith(' *') ||
@@ -1593,41 +1601,28 @@
               (priority === 'HIGH'   &&  isHigh) ||
               (priority === 'NORMAL' && !isHigh)) {
             result.push(lines[i]);
-            // 다음 줄이 상세(└)면 함께 포함
             let j = i + 1;
             while (j < lines.length && lines[j].trim().startsWith('└')) {
-              result.push(lines[j]);
-              j++;
+              result.push(lines[j]); j++;
             }
-            i = j;
-            continue;
+            i = j; continue;
           } else {
-            // 해당 항목 건너뛰기 (상세 행 포함)
             let j = i + 1;
             while (j < lines.length && lines[j].trim().startsWith('└')) j++;
-            i = j;
-            continue;
+            i = j; continue;
           }
         } else {
-          // 날짜 행 등 — 이후에 실제 포함되는 항목이 있는지 미리 확인
-          // 현재 위치를 임시 저장하고 다음 항목 유무 확인 후 결정
-          const dateLineIdx = result.length; // 날짜 행을 넣을 위치
-          result.push(lines[i]);             // 일단 추가
-          // 나중에 날짜 행 뒤에 항목이 없으면 제거 (후처리)
-          // → 마커로 표시
-          result[dateLineIdx] = '\x00' + lines[i]; // 조건부 행 마커
+          result.push('\x00' + lines[i]);
         }
       }
       i++;
     }
-    // 날짜 행(\x00 마커) 후처리: 뒤에 실제 항목이 없으면 제거
+
     const cleaned = [];
     for (let k = 0; k < result.length; k++) {
       if (result[k].startsWith('\x00')) {
-        // 다음 행이 항목(\x00 마커 아닌 일반 행)이면 날짜 행 포함
         const nextIsItem = k + 1 < result.length && !result[k + 1].startsWith('\x00');
-        if (nextIsItem) cleaned.push(result[k].substring(1)); // 마커 제거 후 포함
-        // 아니면 제거 (다음 날짜 행이거나 끝이면 불필요)
+        if (nextIsItem) cleaned.push(result[k].substring(1));
       } else {
         cleaned.push(result[k]);
       }
