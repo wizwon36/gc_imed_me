@@ -2092,7 +2092,7 @@
       });
       applyCategories(res);
     } catch (err) {
-      console.warn('[loadCategories] 실패:', err.message);
+      console.error('[loadCategories] 실패:', err.message, err.stack);
     }
   }
 
