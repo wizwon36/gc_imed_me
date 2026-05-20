@@ -1371,7 +1371,11 @@
         clinicMap[c].push(m);
       });
       const clinics = Object.keys(clinicMap).sort();
-      const cats    = Object.entries(CATEGORY_LABELS);
+      // 카테고리 목록 — 비어있으면 서버에서 재조회
+      if (Object.keys(CATEGORY_LABELS).length === 0) {
+        await loadCategories(true);
+      }
+      const cats = Object.entries(CATEGORY_LABELS);
       // A:구분  B~:의원별 (작성자 컬럼 제거)
       let r = 0;
 
@@ -1499,8 +1503,14 @@
 
       ws['!ref']  = window.XLSX.utils.encode_range({r:0,c:0},{r:r-1,c:TOTAL_COLS-1});
       ws['!cols'] = [{ wch:12 }, { wch:8 }, ...clinics.map(()=>({ wch:50 }))];
-      ws['!rows'] = Array.from({ length: r }, (_, i) => i < 3 ? { hpt:22 } : { hpt:80 });
-      ws['!rows'][0] = { hpt:30 };
+      // 모든 데이터 행 고정 높이 — 빈 행도 표시
+      const rowHeights = [];
+      for (let ri = 0; ri < r; ri++) {
+        if (ri === 0) rowHeights.push({ hpt: 30 });       // 제목
+        else if (ri < 3) rowHeights.push({ hpt: 22 });    // 기간/헤더
+        else rowHeights.push({ hpt: 60 });                // 데이터 행
+      }
+      ws['!rows'] = rowHeights;
 
       window.XLSX.utils.book_append_sheet(wb2, ws, '주간업무보고');
       const today = new Date();
