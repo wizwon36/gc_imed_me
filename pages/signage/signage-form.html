@@ -224,6 +224,26 @@
           </div>
         </div>
 
+        <!-- 제작 방식 선택 (필수) -->
+        <div class="form-field" style="margin-bottom:20px;">
+          <span class="form-label required">제작 방식</span>
+          <div class="signage-method-grid">
+            <label class="signage-method-card" id="methodCard_NEW">
+              <input type="radio" name="nameplate_method" value="NEW" class="signage-sr-only" />
+              <span class="signage-method-icon">🆕</span>
+              <span class="signage-method-title">명판 신규 제작</span>
+              <span class="signage-method-desc">아크릴 등 명판 전체를 새로 제작합니다</span>
+            </label>
+            <label class="signage-method-card" id="methodCard_REUSE">
+              <input type="radio" name="nameplate_method" value="REUSE" class="signage-sr-only" />
+              <span class="signage-method-icon">♻️</span>
+              <span class="signage-method-title">기존 명판 활용</span>
+              <span class="signage-method-desc">기존 명판에 스티커만 교체하여 부착합니다</span>
+            </label>
+          </div>
+          <p class="signage-method-help">💡 안내: 팀 내에 보관 중인 동일한 모양과 크기의 명판이 있다면, <strong>'기존 명판 활용'</strong>을 선택해 주시기 바랍니다.</p>
+        </div>
+
         <!-- 세부 디자인 선택 (타입 선택 후 동적 생성) -->
         <div class="form-field" id="npSubtypeSection" style="display:none; margin-bottom:20px;">
           <span class="form-label required">세부 디자인 선택</span>
