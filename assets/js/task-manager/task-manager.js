@@ -96,11 +96,9 @@
       bindEvents();
       updateSharedWeekNav();
 
-      // 카테고리 로드와 업무 로드 병렬 처리
-      await Promise.all([
-        loadCategories(),
-        loadWeeklyTasks()
-      ]);
+      // 카테고리 먼저 로드 후 업무 로드 (카테고리 라벨 표시 보장)
+      await loadCategories();
+      await loadWeeklyTasks();
 
     } catch (err) {
       showMessage(err.message || '초기화에 실패했습니다.', 'error');
