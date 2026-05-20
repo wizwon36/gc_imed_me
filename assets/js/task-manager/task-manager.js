@@ -1418,9 +1418,9 @@
           (clinicMap[cl]||[]).forEach(m => {
             if (!m.journal) return;
             const highSec = extractCategorySection(m.journal[field] || '', null, 'HIGH');
-            if (highSec) { lines.push('○ ' + m.user_name); highSec.split('\n').forEach(l => lines.push(l)); }
+            if (highSec) highSec.split('\n').forEach(l => lines.push(l));
           });
-          sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+          sc(r, 2+i, stripNameAndDate(lines).join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
         });
         r++;
       });
@@ -1447,9 +1447,9 @@
             (clinicMap[cl]||[]).forEach(m => {
               if (!m.journal) return;
               const sec = extractCategorySection(m.journal[field] || '', catName, 'NORMAL');
-              if (sec) { lines.push('○ ' + m.user_name); lines.push(sec); }
+              if (sec) sec.split('\n').forEach(l => lines.push(l));
             });
-            sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+            sc(r, 2+i, stripNameAndDate(lines).join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
           });
           r++;
         });
@@ -1488,7 +1488,6 @@
         const lines = [];
         (clinicMap[cl]||[]).forEach(m => {
           if (!m.journal || !m.journal.issues) return;
-          lines.push('○ ' + m.user_name);
           lines.push(m.journal.issues);
         });
         sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:fillIssue, alignment:AL_L, border:BD });
@@ -1513,6 +1512,20 @@
       if (btn) { btn.disabled = false; btn.textContent = '⬇ 엑셀 다운로드'; }
       hideGlobalLoading();
     }
+  }
+
+  /**
+   * 엑셀 출력용 — 이름행(○ 이름)과 날짜행(MM/DD (요일)) 제거
+   * 항목 내용과 └ 상세만 남김
+   */
+  function stripNameAndDate(lines) {
+    return lines.filter(l => {
+      const t = l.trim();
+      if (!t) return false;
+      if (t.startsWith('○ ')) return false;                     // 이름 행
+      if (/^\d{2}\/\d{2}\s*\(/.test(t)) return false;          // 날짜 행 (05/18 (월))
+      return true;
+    });
   }
 
   /**
