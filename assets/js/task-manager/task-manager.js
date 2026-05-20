@@ -1435,7 +1435,7 @@
           const stripped = stripNameAndDate(lines);
           if (stripped.length > 0) {
             const addr = window.XLSX.utils.encode_cell({ r, c: 2+i });
-            ws[addr] = { r: buildRichText(stripped, FONT_BASE), s: { fill:FILL_WHITE, alignment:AL_L, border:BD } };
+            ws[addr] = buildRichTextCell(stripped, { fill:FILL_WHITE, alignment:AL_L, border:BD }) || { v:'', t:'s', s:{ fill:FILL_WHITE, alignment:AL_L, border:BD } };
           } else {
             sc(r, 2+i, '', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
           }
@@ -1470,7 +1470,7 @@
             const stripped = stripNameAndDate(lines);
             if (stripped.length > 0) {
               const addr = window.XLSX.utils.encode_cell({ r, c: 2+i });
-              ws[addr] = { r: buildRichText(stripped, FONT_BASE), s: { fill:FILL_WHITE, alignment:AL_L, border:BD } };
+              ws[addr] = buildRichTextCell(stripped, { fill:FILL_WHITE, alignment:AL_L, border:BD }) || { v:'', t:'s', s:{ fill:FILL_WHITE, alignment:AL_L, border:BD } };
             } else {
               sc(r, 2+i, '', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
             }
@@ -1565,22 +1565,21 @@
   }
 
   /**
-   * 엑셀 richText 생성 — ● 제목은 bold, └ 상세는 일반
+   * 엑셀 richText 셀 생성 — ● 제목은 bold, └ 상세는 일반
+   * xlsx-js-style 형식: { r: [{font, value}], s: style }
    */
-  function buildRichText(lines, baseFont) {
+  function buildRichTextCell(lines, style) {
+    if (!lines || lines.length === 0) return null;
     const rt = [];
     lines.forEach((l, idx) => {
       const t = l.trim();
-      const isTitle = t.startsWith('● ');
-      const text = (idx > 0 ? '\n' : '') + l;
+      const isBold = t.startsWith('● ');
       rt.push({
-        font: isTitle
-          ? { ...baseFont, bold: true }
-          : baseFont,
-        value: text
+        font: { name: '맑은 고딕', sz: 10, bold: isBold },
+        value: (idx > 0 ? '\n' : '') + l
       });
     });
-    return rt;
+    return { r: rt, s: style };
   }
 
   /**
