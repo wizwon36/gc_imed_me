@@ -79,28 +79,33 @@ function goToDetail(equipmentId) {
 }
 
 // ============================
-// 전역 로딩
+// 전역 로딩 (상단 프로그레스 바)
 // ============================
 
-let GLOBAL_LOADING_COUNT = 0;
+let GLOBAL_LOADING_COUNT    = 0;
 let GLOBAL_LOADING_OPENED_AT = 0;
-const GLOBAL_LOADING_MIN_MS = 350;
+const GLOBAL_LOADING_MIN_MS  = 200;  // 최소 표시 시간 단축 (스피너보다 덜 방해)
+let _progressBarTimer        = null;
 
 function showGlobalLoading(text = '불러오는 중...') {
   const overlay = qs('#globalLoading');
   if (!overlay) return;
 
-  const textEl = qs('#globalLoadingText');
-  if (textEl) {
-    textEl.textContent = text;
-  }
-
   GLOBAL_LOADING_COUNT += 1;
+
+  // 진행 중 클래스 정리
+  overlay.classList.remove('is-finishing', 'is-done');
 
   if (!overlay.classList.contains('is-open')) {
     GLOBAL_LOADING_OPENED_AT = Date.now();
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  // 타이머 취소 (hide 중이었다면 중단)
+  if (_progressBarTimer) {
+    clearTimeout(_progressBarTimer);
+    _progressBarTimer = null;
   }
 }
 
@@ -116,15 +121,26 @@ async function hideGlobalLoading(force = false) {
 
   if (GLOBAL_LOADING_COUNT > 0) return;
 
-  const elapsed = Date.now() - GLOBAL_LOADING_OPENED_AT;
+  const elapsed   = Date.now() - GLOBAL_LOADING_OPENED_AT;
   const remaining = Math.max(0, GLOBAL_LOADING_MIN_MS - elapsed);
 
   if (remaining > 0) {
     await new Promise(resolve => setTimeout(resolve, remaining));
   }
 
+  // 완료 애니메이션: 꽉 채운 후 페이드아웃
   overlay.classList.remove('is-open');
-  overlay.setAttribute('aria-hidden', 'true');
+  overlay.classList.add('is-finishing');
+
+  _progressBarTimer = setTimeout(() => {
+    overlay.classList.remove('is-finishing');
+    overlay.classList.add('is-done');
+    _progressBarTimer = setTimeout(() => {
+      overlay.classList.remove('is-done');
+      overlay.setAttribute('aria-hidden', 'true');
+      _progressBarTimer = null;
+    }, 400);
+  }, 200);
 }
 
 async function withGlobalLoading(task, text = '불러오는 중...') {
