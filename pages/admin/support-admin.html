@@ -62,22 +62,23 @@
     }
 
     /* ── 모바일 그리드 컬럼 숨김 ── */
-    /* 600px 이하: 내용 미리보기, 요청자, 답변 숨김 → 카테고리/유형/상태/제목/일시 */
+    /* 600px 이하: 내용 미리보기/요청자/답변/카테고리 숨김 → 유형/상태/제목/일시 */
     @media (max-width: 600px) {
       .support-grid .col-preview,
       .support-grid .th-preview { display: none; }
-      /* 요청자만 숨김 (col-meta에서 col-date가 아닌 것) */
       .support-grid .col-meta:not(.col-date),
       .support-grid .th-meta { display: none; }
       .support-grid .col-reply,
       .support-grid .th-reply { display: none; }
-    }
-    /* 400px 이하: 카테고리/유형/상태도 숨김 → 제목/일시만 */
-    @media (max-width: 400px) {
       .support-grid .col-app,
+      .support-grid .th-app { display: none; }
+      /* 제목 컬럼 넓게 */
+      .support-grid .col-title { width: auto; max-width: none; }
+    }
+    /* 400px 이하: 유형/상태도 숨김 → 제목/일시만 */
+    @media (max-width: 400px) {
       .support-grid .col-type,
       .support-grid .col-status,
-      .support-grid .th-app,
       .support-grid .th-type,
       .support-grid .th-status { display: none; }
     }
@@ -90,13 +91,24 @@
     }
     .date-range-wrap input[type="date"] {
       height: 38px;
-      padding: 0 10px;
+      padding: 0 8px;
       border: 1.5px solid var(--border);
       border-radius: var(--radius-sm);
       font-size: 14px;
       background: var(--surface);
       color: var(--text-primary);
       cursor: pointer;
+      width: 140px;
+    }
+    @media (max-width: 600px) {
+      .date-range-wrap input[type="date"] {
+        width: calc(50% - 14px);
+        font-size: 13px;
+        padding: 0 6px;
+      }
+      .support-filter-bar .date-range-wrap {
+        width: 100%;
+      }
     }
     .date-range-wrap input[type="date"]:focus {
       outline: none;
