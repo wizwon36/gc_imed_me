@@ -1436,12 +1436,7 @@
             if (highSec) highSec.split('\n').forEach(l => lines.push(l));
           });
           const stripped = stripNameAndDate(lines);
-          if (stripped.length > 0) {
-            const addr = window.XLSX.utils.encode_cell({ r, c: 2+i });
-            ws[addr] = buildRichTextCell(stripped, { fill:FILL_WHITE, alignment:AL_L, border:BD }) || { v:'', t:'s', s:{ fill:FILL_WHITE, alignment:AL_L, border:BD } };
-          } else {
-            sc(r, 2+i, '', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
-          }
+          sc(r, 2+i, stripped.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
         });
         r++;
       });
@@ -1471,12 +1466,7 @@
               if (sec) sec.split('\n').forEach(l => lines.push(l));
             });
             const stripped = stripNameAndDate(lines);
-            if (stripped.length > 0) {
-              const addr = window.XLSX.utils.encode_cell({ r, c: 2+i });
-              ws[addr] = buildRichTextCell(stripped, { fill:FILL_WHITE, alignment:AL_L, border:BD }) || { v:'', t:'s', s:{ fill:FILL_WHITE, alignment:AL_L, border:BD } };
-            } else {
-              sc(r, 2+i, '', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
-            }
+            sc(r, 2+i, stripped.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
           });
           r++;
         });
@@ -1567,23 +1557,6 @@
       });
   }
 
-  /**
-   * 엑셀 richText 셀 생성 — ● 제목은 bold, └ 상세는 일반
-   * xlsx-js-style 형식: { r: [{font, value}], s: style }
-   */
-  function buildRichTextCell(lines, style) {
-    if (!lines || lines.length === 0) return null;
-    const rt = [];
-    lines.forEach((l, idx) => {
-      const t = l.trim();
-      const isBold = t.startsWith('● ');
-      rt.push({
-        font: { name: '맑은 고딕', sz: 10, bold: isBold },
-        value: (idx > 0 ? '\n' : '') + l
-      });
-    });
-    return { r: rt, s: style };
-  }
 
   /**
    * 일지 텍스트에서 카테고리 섹션 추출
