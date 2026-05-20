@@ -358,6 +358,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="shm-grid">
           <div class="shm-item"><div class="shm-item-label">명판 타입</div><div class="shm-item-value">${hesc(row.nameplate_type || '-')} 타입</div></div>
           <div class="shm-item"><div class="shm-item-label">규격 사이즈</div><div class="shm-item-value">${hesc(row.sign_size || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">제작 방식</div><div class="shm-item-value">${row.nameplate_method === 'NEW' ? '명판 신규 제작' : row.nameplate_method === 'REUSE' ? '기존 명판 활용' : '-'}</div></div>
           <div class="shm-item"><div class="shm-item-label">자석 부착</div><div class="shm-item-value">${hesc(MAGNET[row.magnet_yn] || '-')}</div></div>
         </div>
         ${row.nameplate_text ? `<div class="shm-grid single" style="margin-top:8px;"><div class="shm-item"><div class="shm-item-label">명판 문구</div><div class="shm-item-value">${hesc(row.nameplate_text)}</div></div></div>` : ''}
@@ -572,6 +573,9 @@ function handleTypeChange(e) {
   }
 
   // 타입 전환 시 업로드 파일 상태 초기화 (이전 타입에서 올린 파일 ID가 잘못 포함되는 것 방지)
+  // 제작 방식 선택 초기화
+  document.querySelectorAll('.signage-method-card').forEach(c => c.classList.remove('is-selected'));
+  document.querySelectorAll('input[name="nameplate_method"]').forEach(r => r.checked = false);
   uploadedFileIds.main      = [];  uploadedFileSizes.main      = [];
   uploadedFileIds.location  = [];  uploadedFileSizes.location  = [];
   uploadedFileIds.reference = [];  uploadedFileSizes.reference = [];
@@ -963,14 +967,16 @@ function buildPayload() {
     return null;
   }
 
-  let nameplateType = '';
-  let nameplateText = '';
-  let magnetYn      = 'N'; // 자석 부착 미사용 — 기본값 N 고정
+  let nameplateType   = '';
+  let nameplateText   = '';
+  let nameplateMethod = '';
+  let magnetYn        = 'N'; // 자석 부착 미사용 — 기본값 N 고정
   const draftConfirm = document.getElementById('draft_confirm')?.checked ? 'Y' : 'N';
 
   if (type === 'NAMEPLATE') {
-    nameplateType = currentNpSubtype ? `${currentNpType}-${currentNpSubtype}` : currentNpType;
-    nameplateText = buildNameplateText();
+    nameplateType   = currentNpSubtype ? `${currentNpType}-${currentNpSubtype}` : currentNpType;
+    nameplateText   = buildNameplateText();
+    nameplateMethod = document.querySelector('input[name="nameplate_method"]:checked')?.value || '';
     // magnet_yn: 기본값 N 고정 (UI 미사용)
     setVal('nameplate_text', nameplateText);
   }
@@ -998,6 +1004,7 @@ function buildPayload() {
     install_env:        type === 'SIGN' ? getValue('install_env') : 'INDOOR',
     nameplate_type:     nameplateType,
     nameplate_text:     nameplateText,
+    nameplate_method:   nameplateMethod,
     magnet_yn:          magnetYn,
     created_by:         user.user_email || user.email || ''
   };
@@ -1028,6 +1035,7 @@ function validatePayload(p) {
 
   if (p.type === 'NAMEPLATE') {
     if (!currentNpType)    return fail('명판 타입을 선택해 주세요.', null);
+    if (!p.nameplate_method) return fail('제작 방식을 선택해 주세요.', null);
     if (!currentNpSubtype) return fail('세부 디자인을 선택해 주세요.', null);
     if (!currentLayout)    return fail('문구 레이아웃을 선택해 주세요.', null);
     // if (!p.magnet_yn) return fail('자석 부착 여부를 선택해 주세요.', null); // 미사용
@@ -1068,5 +1076,9 @@ document.addEventListener('change', (e) => {
   if (e.target.name === 'magnet_yn') {
     document.querySelectorAll('.signage-magnet-card').forEach(c => c.classList.remove('is-selected'));
     e.target.closest('.signage-magnet-card')?.classList.add('is-selected');
+  }
+  if (e.target.name === 'nameplate_method') {
+    document.querySelectorAll('.signage-method-card').forEach(c => c.classList.remove('is-selected'));
+    e.target.closest('.signage-method-card')?.classList.add('is-selected');
   }
 });
