@@ -1432,7 +1432,13 @@
             const highSec = extractCategorySection(m.journal[field] || '', null, 'HIGH');
             if (highSec) highSec.split('\n').forEach(l => lines.push(l));
           });
-          sc(r, 2+i, stripNameAndDate(lines).join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+          const stripped = stripNameAndDate(lines);
+          if (stripped.length > 0) {
+            const addr = window.XLSX.utils.encode_cell({ r, c: 2+i });
+            ws[addr] = { r: buildRichText(stripped, FONT_BASE), s: { fill:FILL_WHITE, alignment:AL_L, border:BD } };
+          } else {
+            sc(r, 2+i, '', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+          }
         });
         r++;
       });
@@ -1461,7 +1467,13 @@
               const sec = extractCategorySection(m.journal[field] || '', catName, 'NORMAL');
               if (sec) sec.split('\n').forEach(l => lines.push(l));
             });
-            sc(r, 2+i, stripNameAndDate(lines).join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+            const stripped = stripNameAndDate(lines);
+            if (stripped.length > 0) {
+              const addr = window.XLSX.utils.encode_cell({ r, c: 2+i });
+              ws[addr] = { r: buildRichText(stripped, FONT_BASE), s: { fill:FILL_WHITE, alignment:AL_L, border:BD } };
+            } else {
+              sc(r, 2+i, '', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+            }
           });
           r++;
         });
@@ -1533,26 +1545,42 @@
   }
 
   /**
-   * 엑셀 출력용 — 이름행, 날짜행, 날짜범위 제거 + 번호를 ○로 교체
+   * 엑셀 출력용 — 이름행, 날짜행, 날짜범위 제거 + 번호를 ●로 교체
    */
   function stripNameAndDate(lines) {
     return lines
       .filter(l => {
         const t = l.trim();
         if (!t) return false;
-        if (t.startsWith('○ ')) return false;           // 이름 행
-        if (/^\d{2}\/\d{2}\s*\(/.test(t)) return false; // 날짜 행 (05/18 (월))
+        if (t.startsWith('○ ')) return false;
+        if (/^\d{2}\/\d{2}\s*\(/.test(t)) return false;
         return true;
       })
       .map(l => {
-        // 항목 번호(1.  제목) → ○ 제목 으로 교체
-        let result = l.replace(/^(\s*)\d+\.\s+/, '$1○ ');
-        // 항목 뒤 날짜 범위 제거 (05/18 ~ 05/19, 05/18 ~ 05/20 등)
+        let result = l.replace(/^(\s*)\d+\.\s+/, '$1● ');
         result = result.replace(/\s+\d{2}\/\d{2}\s*~\s*\d{2}\/\d{2}/g, '');
-        // 단일 날짜도 제거 (예: 05/18)
         result = result.replace(/\s+\d{2}\/\d{2}(?!\s*[~(])/g, '');
         return result;
       });
+  }
+
+  /**
+   * 엑셀 richText 생성 — ● 제목은 bold, └ 상세는 일반
+   */
+  function buildRichText(lines, baseFont) {
+    const rt = [];
+    lines.forEach((l, idx) => {
+      const t = l.trim();
+      const isTitle = t.startsWith('● ');
+      const text = (idx > 0 ? '\n' : '') + l;
+      rt.push({
+        font: isTitle
+          ? { ...baseFont, bold: true }
+          : baseFont,
+        value: text
+      });
+    });
+    return rt;
   }
 
   /**
