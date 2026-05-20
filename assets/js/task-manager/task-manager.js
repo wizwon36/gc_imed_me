@@ -1373,13 +1373,14 @@
       const clinics = Object.keys(clinicMap).sort();
       // 카테고리 목록 — 비어있으면 서버에서 재조회
       if (Object.keys(CATEGORY_LABELS).length === 0) {
-        await loadCategories(true);
+        await loadCategories();
       }
-      // 여전히 비어있으면 기본값 사용
-      const catsData = Object.keys(CATEGORY_LABELS).length > 0
-        ? CATEGORY_LABELS
-        : { PURCHASE:'구매', STRATEGY:'전략기획', OPERATION:'운영', FACILITY:'시설', SAFETY:'안전보건', MARKETING:'홍보마케팅', ETC:'기타' };
-      const cats = Object.entries(catsData);
+      // 여전히 비어있으면 codes 시트에 카테고리 미등록 상태
+      if (Object.keys(CATEGORY_LABELS).length === 0) {
+        showMessage('카테고리가 등록되어 있지 않습니다. 카테고리 관리에서 먼저 등록해주세요.', 'error');
+        return;
+      }
+      const cats = Object.entries(CATEGORY_LABELS);
       // A:구분  B~:의원별 (작성자 컬럼 제거)
       let r = 0;
 
@@ -1731,7 +1732,6 @@
 
   // ── 업무 모달 ────────────────────────────────────────────────
   window.TASK_APP.openAddModal = async function(dateStr) {
-    if (Object.keys(CATEGORY_LABELS).length === 0) await loadCategories(true);
     editingTaskId = null;
     document.getElementById('taskModalTitle').textContent = '업무 등록';
     document.getElementById('modalStartDate').value       = dateStr;
@@ -1746,7 +1746,6 @@
   };
 
   window.TASK_APP.openEditModal = async function(taskId) {
-    if (Object.keys(CATEGORY_LABELS).length === 0) await loadCategories(true);
     const task = weeklyTasks.find(t => t.task_id === taskId);
     if (!task) return;
 
@@ -2091,7 +2090,6 @@
       const res = await apiGet('taskGetCategories', {
         request_user_email: currentUser.email
       });
-      console.log('[loadCategories] 응답:', JSON.stringify(res));
       applyCategories(res);
     } catch (err) {
       console.warn('[loadCategories] 실패:', err.message);
