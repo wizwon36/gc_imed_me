@@ -40,6 +40,47 @@
       flex-wrap: wrap;
       align-items: center;
     }
+
+    /* ── 모바일 필터바 ── */
+    @media (max-width: 600px) {
+      .support-filter-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .support-filter-bar .date-range-wrap {
+        grid-column: 1 / -1;
+      }
+      .support-filter-bar #filterKeyword {
+        grid-column: 1 / -1;
+        min-width: 0 !important;
+      }
+      .support-filter-bar #filterBtn {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+    }
+
+    /* ── 모바일 그리드 컬럼 숨김 ── */
+    /* 600px 이하: 내용 미리보기, 요청자, 답변 숨김 → 카테고리/유형/상태/제목/일시 */
+    @media (max-width: 600px) {
+      .support-grid .col-preview,
+      .support-grid .th-preview { display: none; }
+      /* 요청자만 숨김 (col-meta에서 col-date가 아닌 것) */
+      .support-grid .col-meta:not(.col-date),
+      .support-grid .th-meta { display: none; }
+      .support-grid .col-reply,
+      .support-grid .th-reply { display: none; }
+    }
+    /* 400px 이하: 카테고리/유형/상태도 숨김 → 제목/일시만 */
+    @media (max-width: 400px) {
+      .support-grid .col-app,
+      .support-grid .col-type,
+      .support-grid .col-status,
+      .support-grid .th-app,
+      .support-grid .th-type,
+      .support-grid .th-status { display: none; }
+    }
     /* 날짜 필터 */
     .date-range-wrap {
       display: flex;
@@ -412,14 +453,14 @@
       <table class="support-grid" id="requestList" style="display:none;">
         <thead>
           <tr>
-            <th class="th-center" style="width:88px;">카테고리</th>
-            <th class="th-center" style="width:110px;">유형</th>
-            <th class="th-center" style="width:72px;">상태</th>
-            <th class="th-center" style="width:28%;">제목</th>
-            <th class="th-center">내용 미리보기</th>
-            <th class="th-center" style="width:72px;">요청자</th>
-            <th class="th-center" style="width:96px;">일시</th>
-            <th class="th-center" style="width:36px;">답변</th>
+            <th class="th-center th-app"    style="width:88px;">카테고리</th>
+            <th class="th-center th-type"   style="width:110px;">유형</th>
+            <th class="th-center th-status" style="width:72px;">상태</th>
+            <th class="th-center th-title"  style="width:28%;">제목</th>
+            <th class="th-center th-preview">내용 미리보기</th>
+            <th class="th-center th-meta"   style="width:72px;">요청자</th>
+            <th class="th-center th-date"   style="width:96px;">일시</th>
+            <th class="th-center th-reply"  style="width:36px;">답변</th>
           </tr>
         </thead>
         <tbody id="requestBody"></tbody>
