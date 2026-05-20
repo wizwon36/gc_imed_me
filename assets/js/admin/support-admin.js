@@ -181,13 +181,13 @@
       const dateShort  = (item.created_at || '').slice(0, 10);
       return `
         <tr class="is-${item.status.toLowerCase()}" data-id="${escapeHtml(item.request_id)}">
-          <td class="col-center"><span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span></td>
-          <td class="col-center"><span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span></td>
-          <td class="col-center"><span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span></td>
+          <td class="col-center col-app"><span class="support-badge support-badge--app">${escapeHtml(item.app_name)}</span></td>
+          <td class="col-center col-type"><span class="support-badge support-badge--cat">${escapeHtml(item.category_label)}</span></td>
+          <td class="col-center col-status"><span class="support-badge support-badge--${item.status}">${escapeHtml(item.status_label)}</span></td>
           <td class="col-title">${escapeHtml(item.title)}</td>
           <td class="col-preview">${escapeHtml(item.content)}</td>
           <td class="col-meta col-center">${escapeHtml(requester)}</td>
-          <td class="col-meta col-center">${escapeHtml(dateShort)}</td>
+          <td class="col-meta col-center col-date">${escapeHtml(dateShort)}</td>
           <td class="col-reply">${item.reply ? '💬' : ''}</td>
         </tr>
       `;
