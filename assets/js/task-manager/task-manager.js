@@ -96,8 +96,9 @@
       bindEvents();
       updateSharedWeekNav();
 
-      // 권한 확인 완료 → 스피너 텍스트 변경
-      showGlobalLoading('업무 목록을 불러오는 중...');
+      // 권한 확인 완료 → 스피너 텍스트만 변경 (카운트 중복 방지)
+      const loadingTextEl = document.getElementById('globalLoadingText');
+      if (loadingTextEl) loadingTextEl.textContent = '업무 목록을 불러오는 중...';
 
       // 카테고리 먼저 로드 후 업무 로드
       await loadCategories();
@@ -316,8 +317,7 @@
     const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
     if (activeTab === 'journal') {
       journalWeekStart = offsetWeek(journalWeekStart, delta);
-      showGlobalLoading('불러오는 중...');
-      loadJournal().finally(() => hideGlobalLoading());
+      loadJournal();  // 내부에서 자체 스피너 관리
     } else if (activeTab === 'team') {
       teamWeekStart = offsetWeek(teamWeekStart, delta);
       showGlobalLoading('불러오는 중...');
@@ -334,8 +334,7 @@
     const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
     if (activeTab === 'journal') {
       journalWeekStart = weekStart;
-      showGlobalLoading('불러오는 중...');
-      loadJournal().finally(() => hideGlobalLoading());
+      loadJournal();  // 내부에서 자체 스피너 관리
     } else if (activeTab === 'team') {
       teamWeekStart = weekStart;
       showGlobalLoading('불러오는 중...');
