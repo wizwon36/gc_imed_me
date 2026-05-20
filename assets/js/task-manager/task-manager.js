@@ -96,7 +96,10 @@
       bindEvents();
       updateSharedWeekNav();
 
-      // 카테고리 먼저 로드 후 업무 로드 (카테고리 라벨 표시 보장)
+      // 권한 확인 완료 → 스피너 텍스트 변경
+      showGlobalLoading('업무 목록을 불러오는 중...');
+
+      // 카테고리 먼저 로드 후 업무 로드
       await loadCategories();
       await loadWeeklyTasks();
 
