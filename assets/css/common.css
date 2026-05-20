@@ -1114,48 +1114,62 @@ button, input, select, textarea {
   inset: 0;
   display: none;
   z-index: 99999;
-  background: rgba(15, 23, 42, 0.22);
+  /* 오버레이 배경 제거 — 프로그레스 바만 표시 */
+  background: transparent;
+  pointer-events: none;
 }
 
 #globalLoading.is-open {
   display: block;
 }
 
+/* 기존 스피너 다이얼로그 숨김 */
 #globalLoading .global-loading__dialog {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  min-width: 160px;
-  padding: 16px 18px;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: var(--shadow-modal);
-  text-align: center;
-  transform: translate(-50%, -50%);
+  display: none;
 }
 
-#globalLoading .global-loading__spinner {
-  width: 30px;
-  height: 30px;
-  margin: 0 auto 10px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: globalLoadingSpin 0.8s linear infinite;
+/* ── 상단 프로그레스 바 ── */
+#globalLoading::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+  transition: width 0.3s ease;
+  z-index: 100000;
 }
 
-#globalLoading .global-loading__text {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: #334155;
+#globalLoading.is-open::before {
+  animation: progress-bar-indeterminate 1.4s ease-in-out infinite;
 }
 
-@keyframes globalLoadingSpin {
-  to {
-  transform: rotate(360deg);
-  }
+@keyframes progress-bar-indeterminate {
+  0%   { left: -35%; width: 35%; }
+  60%  { left: 100%; width: 35%; }
+  100% { left: 100%; width: 35%; }
 }
+
+/* 완료 시 꽉 차고 사라지는 애니메이션 */
+#globalLoading.is-finishing::before {
+  animation: none;
+  left: 0;
+  width: 100%;
+  transition: width 0.2s ease;
+  opacity: 1;
+}
+
+#globalLoading.is-done::before {
+  animation: none;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease 0.1s;
+}
+
 
 .search-action-block {
   margin-top: 14px;
