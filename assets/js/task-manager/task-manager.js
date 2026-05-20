@@ -842,11 +842,11 @@
           </div>
         </div>
         <div class="task-item-actions" onclick="event.stopPropagation();">
-          <button class="task-icon-btn" title="상태 토글" onclick="TASK_APP.toggleTaskStatus('${esc(t.task_id)}')">
-            ${t.status === 'DONE' ? '↩' : '✓'}
+          <button class="task-icon-btn ${t.status === 'DONE' ? 'done' : ''}" onclick="TASK_APP.toggleTaskStatus('${esc(t.task_id)}')">
+            ${t.status === 'DONE' ? '↩ 되돌리기' : '✓ 완료'}
           </button>
-          <button class="task-icon-btn danger" title="삭제" onclick="TASK_APP.deleteTask('${esc(t.task_id)}')">
-            🗑
+          <button class="task-icon-btn danger" onclick="TASK_APP.deleteTask('${esc(t.task_id)}')">
+            🗑 삭제
           </button>
         </div>
       </div>
