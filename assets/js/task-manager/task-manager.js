@@ -477,16 +477,18 @@
       const thisItems    = serverTasks.items || [];
       const nextItems    = nextRes.data      || [];
 
+      // 마감된 일지는 무조건 차단 (내용 유무 무관)
+      if (journal.status === 'CLOSED') {
+        hideGlobalLoading();
+        showMessage('이미 팀장이 마감한 업무일지입니다. 덮어쓸 수 없습니다.', 'error');
+        return;
+      }
+
       // 기존 일지에 내용이 있으면 덮어쓰기 확인
       const isExisting = !!journal.created_at &&
                          (journal.summary || journal.achievements || journal.next_plan);
 
       if (isExisting) {
-        if (journal.status === 'CLOSED') {
-          showMessage('이미 마감된 업무일지는 덮어쓸 수 없습니다.', 'error');
-          hideGlobalLoading();
-          return;
-        }
         const labelMap = { DRAFT: '작성중', SUBMITTED: '제출됨' };
         hideGlobalLoading();
 
