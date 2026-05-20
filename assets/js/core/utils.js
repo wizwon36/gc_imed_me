@@ -79,21 +79,19 @@ function goToDetail(equipmentId) {
 }
 
 // ============================
-// 전역 로딩
+// 전역 로딩 (상단 토스트 스피너)
 // ============================
 
-let GLOBAL_LOADING_COUNT = 0;
+let GLOBAL_LOADING_COUNT     = 0;
 let GLOBAL_LOADING_OPENED_AT = 0;
-const GLOBAL_LOADING_MIN_MS = 350;
+const GLOBAL_LOADING_MIN_MS  = 300;
 
 function showGlobalLoading(text = '불러오는 중...') {
   const overlay = qs('#globalLoading');
   if (!overlay) return;
 
   const textEl = qs('#globalLoadingText');
-  if (textEl) {
-    textEl.textContent = text;
-  }
+  if (textEl) textEl.textContent = text;
 
   GLOBAL_LOADING_COUNT += 1;
 
@@ -116,7 +114,7 @@ async function hideGlobalLoading(force = false) {
 
   if (GLOBAL_LOADING_COUNT > 0) return;
 
-  const elapsed = Date.now() - GLOBAL_LOADING_OPENED_AT;
+  const elapsed   = Date.now() - GLOBAL_LOADING_OPENED_AT;
   const remaining = Math.max(0, GLOBAL_LOADING_MIN_MS - elapsed);
 
   if (remaining > 0) {
