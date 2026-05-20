@@ -1375,7 +1375,11 @@
       if (Object.keys(CATEGORY_LABELS).length === 0) {
         await loadCategories(true);
       }
-      const cats = Object.entries(CATEGORY_LABELS);
+      // 여전히 비어있으면 기본값 사용
+      const catsData = Object.keys(CATEGORY_LABELS).length > 0
+        ? CATEGORY_LABELS
+        : { PURCHASE:'구매', STRATEGY:'전략기획', OPERATION:'운영', FACILITY:'시설', SAFETY:'안전보건', MARKETING:'홍보마케팅', ETC:'기타' };
+      const cats = Object.entries(catsData);
       // A:구분  B~:의원별 (작성자 컬럼 제거)
       let r = 0;
 
@@ -1565,8 +1569,13 @@
           inSection = true;
           i++; continue;
         }
-        if (sectionName === catName) { inSection = true; i++; continue; }
-        else if (inSection) break;
+        // 한글명 또는 영문 코드 둘 다 매칭
+        const catCode = catName
+          ? Object.keys(CATEGORY_LABELS).find(k => CATEGORY_LABELS[k] === catName) || null
+          : null;
+        if (sectionName === catName || (catCode && sectionName === catCode)) {
+          inSection = true; i++; continue;
+        } else if (inSection) break;
         i++; continue;
       }
 
