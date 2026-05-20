@@ -166,11 +166,13 @@
           <!-- 일지 헤더 -->
           <div class="task-card-head" style="border-top:1.5px solid #e0e7f2;">
             <div>
-              <h2 class="task-card-head-title">업무일지</h2>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h2 class="task-card-head-title" style="margin:0;">업무일지</h2>
+                <span class="journal-status-badge journal-status-draft" id="journalStatusBadge">작성중</span>
+              </div>
               <p class="task-card-head-sub" id="journalStatusText">불러오는 중...</p>
             </div>
             <div style="display:flex;gap:8px;align-items:center;">
-              <span class="journal-status-badge journal-status-draft" id="journalStatusBadge">작성중</span>
               <button class="btn btn-primary" id="journalSaveBtn" style="height:36px;font-size:13px;padding:0 14px;border-radius:10px;display:none;">저장</button>
               <button class="btn btn-primary" id="journalSubmitBtn" style="height:36px;font-size:13px;padding:0 14px;border-radius:10px;background:#0369a1;border-color:#0369a1;display:none;">제출</button>
               <button class="btn" id="journalCloseBtn" style="height:36px;font-size:13px;padding:0 14px;border-radius:10px;display:none;">마감</button>
