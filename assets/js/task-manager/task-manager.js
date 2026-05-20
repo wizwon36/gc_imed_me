@@ -1515,9 +1515,9 @@
       // 모든 데이터 행 고정 높이 — 빈 행도 표시
       const rowHeights = [];
       for (let ri = 0; ri < r; ri++) {
-        if (ri === 0) rowHeights.push({ hpt: 30 });       // 제목
-        else if (ri < 3) rowHeights.push({ hpt: 22 });    // 기간/헤더
-        else rowHeights.push({ hpt: 60 });                // 데이터 행
+        if (ri === 0)      rowHeights.push({ hpt: 32 });  // 제목
+        else if (ri < 3)   rowHeights.push({ hpt: 22 });  // 기간/헤더
+        else               rowHeights.push({ hpt: 80, hpx: 80, customHeight: false });  // 데이터 행 — 자동
       }
       ws['!rows'] = rowHeights;
 
