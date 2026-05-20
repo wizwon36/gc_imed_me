@@ -1730,7 +1730,8 @@
   }
 
   // ── 업무 모달 ────────────────────────────────────────────────
-  window.TASK_APP.openAddModal = function(dateStr) {
+  window.TASK_APP.openAddModal = async function(dateStr) {
+    if (Object.keys(CATEGORY_LABELS).length === 0) await loadCategories(true);
     editingTaskId = null;
     document.getElementById('taskModalTitle').textContent = '업무 등록';
     document.getElementById('modalStartDate').value       = dateStr;
@@ -1744,7 +1745,8 @@
     openTaskModal();
   };
 
-  window.TASK_APP.openEditModal = function(taskId) {
+  window.TASK_APP.openEditModal = async function(taskId) {
+    if (Object.keys(CATEGORY_LABELS).length === 0) await loadCategories(true);
     const task = weeklyTasks.find(t => t.task_id === taskId);
     if (!task) return;
 
@@ -2089,9 +2091,10 @@
       const res = await apiGet('taskGetCategories', {
         request_user_email: currentUser.email
       });
+      console.log('[loadCategories] 응답:', JSON.stringify(res));
       applyCategories(res);
     } catch (err) {
-      // 실패해도 기본값 유지
+      console.warn('[loadCategories] 실패:', err.message);
     }
   }
 
