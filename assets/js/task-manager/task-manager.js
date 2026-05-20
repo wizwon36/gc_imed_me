@@ -93,11 +93,14 @@
       teamWeekStart       = weeklyWeekStart;
       calendarPopupMonth  = weeklyWeekStart.substring(0, 7);
 
-      // 카테고리 먼저 로드 후 나머지 초기화
-      await loadCategories();
       bindEvents();
       updateSharedWeekNav();
-      await loadWeeklyTasks();
+
+      // 카테고리 로드와 업무 로드 병렬 처리
+      await Promise.all([
+        loadCategories(),
+        loadWeeklyTasks()
+      ]);
 
     } catch (err) {
       showMessage(err.message || '초기화에 실패했습니다.', 'error');
@@ -2063,7 +2066,8 @@
 
   // ── 카테고리 관리 ────────────────────────────────────────────
 
-  async function loadCategories() {
+  async function loadCategories(force = false) {
+    if (!force && Object.keys(CATEGORY_LABELS).length > 0) return;
     try {
       const res = await apiGet('taskGetCategories', {
         request_user_email: currentUser.email
