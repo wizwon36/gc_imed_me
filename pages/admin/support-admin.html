@@ -91,6 +91,9 @@
       .support-grid .th-reply { display: none; }
       .support-grid .col-app,
       .support-grid .th-app { display: none; }
+      /* 유형/상태 폭 더 타이트하게 */
+      .support-grid .th-type  { width: 70px !important; }
+      .support-grid .th-status { width: 46px !important; }
       /* 제목 컬럼 넓게 */
       .support-grid .col-title { width: auto; max-width: none; }
     }
@@ -199,22 +202,27 @@
     .support-grid tbody tr.is-completed   { border-left: 3px solid #10b981; }
     .support-grid tbody tr.is-rejected    { border-left: 3px solid #ef4444; }
     .support-grid td {
-      padding: 10px 12px;
+      padding: 10px 8px;
       color: var(--text-primary);
       vertical-align: middle;
       overflow: hidden;
-      text-overflow: clip;
       white-space: nowrap;
     }
-    /* 뱃지 컬럼: td를 flex 컨테이너로 만들어 가로·세로 정렬 */
+    /* 뱃지 컬럼: 잘리지 않도록 overflow visible, 최소 폭 보장 */
     .support-grid td.col-center {
       text-align: center;
       vertical-align: middle;
+      overflow: visible;
+    }
+    .support-grid td.col-type,
+    .support-grid td.col-status {
+      overflow: visible;
     }
     /* 말줄임은 제목·미리보기 컬럼에만 */
     .support-grid td.col-title,
     .support-grid td.col-preview {
       text-overflow: ellipsis;
+      overflow: hidden;
     }
     .support-grid td.col-title {
       font-weight: 600;
