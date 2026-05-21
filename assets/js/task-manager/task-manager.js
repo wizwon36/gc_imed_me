@@ -850,7 +850,7 @@
             ${!isSingleDay
               ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
               : ''}
-            ${t.description ? `<span style="font-size:11px;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.description)}</span>` : ''}
+            ${t.description ? `<span class="task-item-desc">${esc(t.description)}</span>` : ''}
           </div>
         </div>
         <div class="task-item-actions" onclick="event.stopPropagation();">
