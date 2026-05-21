@@ -435,6 +435,51 @@
   padding: 0 8px;
 }
 
+.day-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  max-width: 220px;
+}
+
+.day-progress-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-progress-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.day-progress-high {
+  font-size: 11px;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.day-progress-bar {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.day-progress-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.day-empty-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .day-chip {
   display: inline-flex;
   align-items: center;
@@ -1425,8 +1470,8 @@
   .team-journal-grid      { grid-template-columns: 1fr; }
   .task-tabs              { gap: 2px; }
   .task-tab-btn           { font-size: 11px; padding: 0 8px; gap: 3px; }
-  /* 모바일: day-chip 뱃지 숨김 — 공간 부족 */
-  .day-chip               { display: none; }
+  /* 모바일: day-progress 폭 조정 */
+  .day-progress-wrap { min-width: 80px; max-width: 140px; }
   .priority-group,
   .status-group           { gap: 4px; }
 
