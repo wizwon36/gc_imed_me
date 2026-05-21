@@ -41,23 +41,42 @@
       align-items: center;
     }
 
-    /* ── 모바일 필터바 ── */
+    /* ── 모바일 필터바: 1행=콤보2+날짜범위, 2행=검색+버튼 ── */
     @media (max-width: 600px) {
       .support-filter-bar {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        flex-wrap: wrap;
+        gap: 6px;
       }
+      /* 콤보박스: 압축 */
+      .support-filter-bar #filterApp,
+      .support-filter-bar #filterStatus {
+        flex: 1 1 80px;
+        min-width: 0;
+        font-size: 12px;
+        padding: 0 4px;
+      }
+      /* 날짜범위: 1행 끝에 붙음 */
       .support-filter-bar .date-range-wrap {
-        grid-column: 1 / -1;
+        flex: 2 1 160px;
+        min-width: 0;
       }
+      .date-range-wrap input[type="date"] {
+        width: 0;
+        flex: 1;
+        font-size: 12px;
+        padding: 0 4px;
+        min-width: 0;
+      }
+      /* 검색어: 두 번째 줄 전체 */
       .support-filter-bar #filterKeyword {
-        grid-column: 1 / -1;
+        flex: 1 1 100%;
         min-width: 0 !important;
+        order: 10;
       }
+      /* 조회 버튼: 두 번째 줄 전체 */
       .support-filter-bar #filterBtn {
-        grid-column: 1 / -1;
-        width: 100%;
+        flex: 1 1 100%;
+        order: 11;
       }
     }
 
@@ -99,16 +118,6 @@
       color: var(--text-primary);
       cursor: pointer;
       width: 140px;
-    }
-    @media (max-width: 600px) {
-      .date-range-wrap input[type="date"] {
-        width: calc(50% - 14px);
-        font-size: 13px;
-        padding: 0 6px;
-      }
-      .support-filter-bar .date-range-wrap {
-        width: 100%;
-      }
     }
     .date-range-wrap input[type="date"]:focus {
       outline: none;
@@ -466,8 +475,8 @@
         <thead>
           <tr>
             <th class="th-center th-app"    style="width:88px;">카테고리</th>
-            <th class="th-center th-type"   style="width:110px;">유형</th>
-            <th class="th-center th-status" style="width:72px;">상태</th>
+            <th class="th-center th-type"   style="width:80px;">유형</th>
+            <th class="th-center th-status" style="width:56px;">상태</th>
             <th class="th-center th-title"  style="width:28%;">제목</th>
             <th class="th-center th-preview">내용 미리보기</th>
             <th class="th-center th-meta"   style="width:72px;">요청자</th>
