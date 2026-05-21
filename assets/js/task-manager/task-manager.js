@@ -202,7 +202,7 @@
     document.getElementById('journalCloseBtn')?.addEventListener('click', closeJournal);
 
     // 일지 자동 저장 (입력 후 2.5초 디바운스)
-    ['journalSummary','journalAchievements','journalNextPlan','journalIssues',
+    ['journalSummary','journalNextPlan','journalIssues',
      'attendanceThisWeek','attendanceNextWeek'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', onJournalInput);
     });
@@ -489,7 +489,7 @@
 
       // 기존 일지에 내용이 있으면 덮어쓰기 확인
       const isExisting = !!journal.created_at &&
-                         (journal.summary || journal.achievements || journal.next_plan);
+                         (journal.summary || journal.next_plan);
 
       if (isExisting) {
         const labelMap = { DRAFT: '작성중', SUBMITTED: '제출됨' };
@@ -507,18 +507,6 @@
       // ── 주간업무요약: 이번주 업무를 일별로 그룹화 (상태 표시)
       const summary = buildDailyGroupedText(thisItems, weeklyWeekStart, true);
 
-      // ── 금주 성과: 이번주 완료 업무 ──────────────────────────
-      const doneItems = thisItems.filter(t => t.status === 'DONE');
-      const achievements = doneItems.length > 0
-        ? doneItems.map(t => {
-            const catLabel = CATEGORY_LABELS[t.category] || t.category || '기타';
-            const line = '• [' + catLabel + '] ' + t.title;
-            return t.description && t.description.trim()
-              ? line + '\n       └ ' + t.description.trim()
-              : line;
-          }).join('\n')
-        : '';
-
       // ── 차주업무계획: 다음주 업무를 일별로 그룹화 (상태 미표시)
       const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, false);
 
@@ -527,7 +515,6 @@
         request_user_email:   currentUser.email,
         journal_id:           journal.journal_id,
         summary:              summary,
-        achievements:         achievements,
         next_plan:            nextPlan,
         attendance_this_week: journal.attendance_this_week || '',
         attendance_next_week: journal.attendance_next_week || '',
@@ -537,7 +524,6 @@
       journalWeekStart    = weeklyWeekStart;
       currentJournal      = Object.assign({}, journal, {
         summary:              summary,
-        achievements:         achievements,
         next_plan:            nextPlan,
         attendance_this_week: journal.attendance_this_week || '',
         attendance_next_week: journal.attendance_next_week || '',
@@ -919,7 +905,7 @@
       document.getElementById('journalCloseBtn').style.display  = 'none';
 
       ['attendanceThisWeek','attendanceNextWeek','journalSummary',
-       'journalAchievements','journalNextPlan','journalIssues'].forEach(id => {
+       'journalNextPlan','journalIssues'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.value = ''; el.disabled = true; el.placeholder = '업무일지를 먼저 생성해 주세요.'; }
       });
@@ -968,7 +954,6 @@
     setField('attendanceThisWeek', j.attendance_this_week, isClosed);
     setField('attendanceNextWeek', j.attendance_next_week, isClosed);
     setField('journalSummary',      j.summary,      isClosed);
-    setField('journalAchievements', j.achievements, isClosed);
     setField('journalNextPlan',     j.next_plan,    isClosed);
     setField('journalIssues',       j.issues,       isClosed);
 
@@ -1127,7 +1112,6 @@
       attendance_this_week: document.getElementById('attendanceThisWeek').value,
       attendance_next_week: document.getElementById('attendanceNextWeek').value,
       summary:              document.getElementById('journalSummary').value,
-      achievements:         document.getElementById('journalAchievements').value,
       next_plan:            document.getElementById('journalNextPlan').value,
       issues:               document.getElementById('journalIssues').value
     };
@@ -1329,7 +1313,6 @@
       }
 
       html += section('📋', '주간 업무 요약',     j.summary      || '', false);
-      html += section('🏆', '금주 성과 및 완료', j.achievements || '', false);
       html += section('🎯', '차주 업무 계획',    j.next_plan    || '', false);
       html += section('⚠️', '이슈 / 건의사항',  j.issues       || '', true);
 
@@ -1691,7 +1674,6 @@
       { key: 'attendance_this_week', label: '이번 주 근태' },
       { key: 'attendance_next_week', label: '다음 주 근태 예정' },
       { key: 'summary',             label: '주간 업무 요약' },
-      { key: 'achievements',        label: '금주 성과 및 완료' },
       { key: 'next_plan',           label: '차주 업무 계획' },
       { key: 'issues',              label: '이슈 / 건의사항' }
     ];
