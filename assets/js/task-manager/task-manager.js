@@ -837,7 +837,7 @@
       statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
     }
 
-    const isDone = t.status === 'DONE' && (isSingleDay || isEndDate);
+    const isDone = t.status === 'DONE' && (isSingleDay || isEndDate || isMidDate);
 
     return `
       <div class="task-item${isDone ? ' is-done' : ''}" onclick="TASK_APP.openEditModal('${esc(t.task_id)}')">
