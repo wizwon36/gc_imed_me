@@ -764,14 +764,22 @@
         return s <= dateStr && e >= dateStr;
       });
 
-      const chips = dayTasks.slice(0, 3).map(t => {
-        const cls = t.priority === 'HIGH' ? 'chip-high' : t.priority === 'LOW' ? 'chip-low' : 'chip-medium';
-        return `<span class="day-chip ${cls}" onclick="TASK_APP.openEditModal('${esc(t.task_id)}')">${esc(t.title)}</span>`;
-      }).join('');
+      const total = dayTasks.length;
+      const done  = dayTasks.filter(t => t.status === 'DONE').length;
+      const high  = dayTasks.filter(t => t.priority === 'HIGH').length;
+      const pct   = total > 0 ? Math.round(done / total * 100) : 0;
 
-      const moreChips = dayTasks.length > 3
-        ? `<span class="day-chip chip-medium" style="cursor:default;">+${dayTasks.length - 3}개</span>`
-        : '';
+      const dayProgress = total === 0
+        ? `<span class="day-empty-label">업무 없음</span>`
+        : `<div class="day-progress-wrap">
+            <div class="day-progress-info">
+              <span class="day-progress-count">${done}/${total} 완료</span>
+              ${high > 0 ? `<span class="day-progress-high">●${high}</span>` : ''}
+            </div>
+            <div class="day-progress-bar">
+              <div class="day-progress-fill" style="width:${pct}%"></div>
+            </div>
+          </div>`;
 
       const taskItems = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
 
@@ -790,8 +798,7 @@
                 <span class="day-date-dow">${DOW_KR[dow]}</span>
               </div>
               <div class="day-task-chips">
-                ${chips}${moreChips}
-                ${dayTasks.length === 0 ? '<span style="font-size:12px;color:var(--text-muted);">업무 없음</span>' : ''}
+                ${dayProgress}
               </div>
             </div>
             <div class="day-row-add">
