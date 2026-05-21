@@ -1047,17 +1047,58 @@
   }
 
   // ── 일지 입력/저장 ───────────────────────────────────────────
+  const AUTOSAVE_DELAY    = 60000; // 1분
+  const AUTOSAVE_RETRY_MS = 5000;  // 오류 시 5초 후 재시도
+  let   autosaveRetryCount = 0;
+  const AUTOSAVE_MAX_RETRY = 3;
+
   function onJournalInput() {
     journalDirty = true;
     updateAutosaveStatus('saving');
     clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(() => saveJournal(true), 2500);
+    autosaveTimer = setTimeout(() => saveJournal(true), AUTOSAVE_DELAY);
   }
 
   function clearAutosave() {
     clearTimeout(autosaveTimer);
-    autosaveTimer = null;
-    journalDirty  = false;
+    autosaveTimer      = null;
+    journalDirty       = false;
+    autosaveRetryCount = 0;
+  }
+
+  // 토스트 알림 표시 — 마우스 이동 또는 키보드 입력 시 사라짐
+  function showAutosaveToast(status) {
+    let toast = document.getElementById('autosaveToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'autosaveToast';
+      document.body.appendChild(toast);
+    }
+    toast.className = 'autosave-toast autosave-toast--' + status;
+    toast.textContent = status === 'saved'
+      ? '✓  일지가 자동 저장되었습니다.'
+      : '✕  자동 저장에 실패했습니다. 재시도 중...';
+
+    clearTimeout(toast._hideTimer);
+    // 기존 이벤트 제거 후 재등록
+    if (toast._dismissMouseMove) document.removeEventListener('mousemove', toast._dismissMouseMove);
+    if (toast._dismissKeydown)   document.removeEventListener('keydown',   toast._dismissKeydown);
+
+    toast.classList.add('is-visible');
+
+    const dismiss = () => {
+      toast.classList.remove('is-visible');
+      document.removeEventListener('mousemove', toast._dismissMouseMove);
+      document.removeEventListener('keydown',   toast._dismissKeydown);
+    };
+    toast._dismissMouseMove = dismiss;
+    toast._dismissKeydown   = dismiss;
+
+    // 마우스 이동 / 키보드 입력 시 사라짐 (500ms 후 감지 시작 — 저장 직후 이벤트 무시)
+    setTimeout(() => {
+      document.addEventListener('mousemove', toast._dismissMouseMove, { once: true });
+      document.addEventListener('keydown',   toast._dismissKeydown,   { once: true });
+    }, 500);
   }
 
   function updateAutosaveStatus(status) {
@@ -1073,24 +1114,10 @@
     else                          text.textContent = currentJournal?.updated_at
       ? '마지막 저장: ' + currentJournal.updated_at.substring(11, 16) : '-';
 
-    // 저장됨 / 실패 시 토스트 표시
+    // 자동저장 완료/실패 시 토스트 표시
     if (status === 'saved' || status === 'error') {
       showAutosaveToast(status);
     }
-  }
-
-  function showAutosaveToast(status) {
-    let toast = document.getElementById('autosaveToast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'autosaveToast';
-      document.body.appendChild(toast);
-    }
-    toast.className = 'autosave-toast autosave-toast--' + status;
-    toast.textContent = status === 'saved' ? '✓  일지가 저장되었습니다.' : '✕  저장에 실패했습니다.';
-    clearTimeout(toast._hideTimer);
-    toast.classList.add('is-visible');
-    toast._hideTimer = setTimeout(() => toast.classList.remove('is-visible'), 2500);
   }
 
   async function saveJournal(isAuto = false) {
@@ -1112,12 +1139,19 @@
       if (!isAuto) showGlobalLoading('저장 중...');
       const res = await apiPost('journalUpdate', payload);
       currentJournal.updated_at = res.data?.updated_at || '';
-      journalDirty = false;
+      journalDirty       = false;
+      autosaveRetryCount = 0;
       updateAutosaveStatus('saved');
       if (!isAuto) showMessage('일지가 저장되었습니다.', 'success');
     } catch (err) {
       updateAutosaveStatus('error');
-      if (!isAuto) showMessage(err.message || '저장에 실패했습니다.', 'error');
+      if (!isAuto) {
+        showMessage(err.message || '저장에 실패했습니다.', 'error');
+      } else if (autosaveRetryCount < AUTOSAVE_MAX_RETRY) {
+        // 자동저장 실패 시 재시도
+        autosaveRetryCount++;
+        autosaveTimer = setTimeout(() => saveJournal(true), AUTOSAVE_RETRY_MS);
+      }
     } finally {
       if (!isAuto) hideGlobalLoading();
     }
