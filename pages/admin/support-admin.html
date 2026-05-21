@@ -81,14 +81,17 @@
     }
 
     /* ── 모바일 그리드 컬럼 숨김 ── */
-    /* 600px 이하: 내용 미리보기/요청자/답변/카테고리 숨김 → 유형/상태/제목/일시 */
-    @media (max-width: 600px) {
+    /* 900px 이하: 내용 미리보기/요청자/답변 숨김 */
+    @media (max-width: 900px) {
       .support-grid .col-preview,
       .support-grid .th-preview { display: none; }
       .support-grid .col-meta:not(.col-date),
       .support-grid .th-meta { display: none; }
       .support-grid .col-reply,
       .support-grid .th-reply { display: none; }
+    }
+    /* 600px 이하: 카테고리도 숨김 */
+    @media (max-width: 600px) {
       .support-grid .col-app,
       .support-grid .th-app { display: none; }
       /* 유형/상태 폭 더 타이트하게 */
