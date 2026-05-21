@@ -1197,15 +1197,21 @@
   }
 
   function renderTeamGrid(members) {
-    _lastTeamData = members || [];  // 통합 보기용 캐시
+    // manager 맨 앞, 나머지 가나다순
+    const sorted = (members || []).slice().sort((a, b) => {
+      if (a.is_manager && !b.is_manager) return -1;
+      if (!a.is_manager && b.is_manager) return 1;
+      return (a.user_name || '').localeCompare(b.user_name || '', 'ko');
+    });
+    _lastTeamData = sorted;
     const grid = document.getElementById('teamJournalGrid');
 
-    if (!members.length) {
+    if (!sorted.length) {
       grid.innerHTML = `<div class="task-empty" style="grid-column:1/-1;"><div class="task-empty-icon">👥</div><div class="task-empty-text">팀원이 없습니다.</div></div>`;
       return;
     }
 
-    grid.innerHTML = members.map((m, idx) => {
+    grid.innerHTML = sorted.map((m, idx) => {
       const s       = m.task_summary || {};
       const pct     = s.total ? Math.round((s.done || 0) / s.total * 100) : 0;
       const jStatus = m.journal ? m.journal.status : null;
