@@ -1425,7 +1425,8 @@
   .team-journal-grid      { grid-template-columns: 1fr; }
   .task-tabs              { gap: 2px; }
   .task-tab-btn           { font-size: 11px; padding: 0 8px; gap: 3px; }
-  .day-chip               { max-width: 80px; }
+  /* 모바일: day-chip 뱃지 숨김 — 공간 부족 */
+  .day-chip               { display: none; }
   .priority-group,
   .status-group           { gap: 4px; }
 
@@ -1455,6 +1456,22 @@
   .search-row--filters    { flex-direction: column; gap: 10px; }
   .search-input           { width: 100%; }
   .search-field--full     { min-width: 100%; }
+
+  /* 모바일: task-item 버튼을 카드 하단으로 이동 */
+  .task-item {
+    flex-wrap: wrap;
+  }
+  .task-item-body {
+    width: 100%;
+    flex: none;
+  }
+  .task-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
 }
 
 /* ── 인라인 로딩 스피너 ── */
