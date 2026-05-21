@@ -764,21 +764,19 @@
         return s <= dateStr && e >= dateStr;
       });
 
-      const total = dayTasks.length;
-      const done  = dayTasks.filter(t => t.status === 'DONE').length;
-      const high  = dayTasks.filter(t => t.priority === 'HIGH').length;
-      const pct   = total > 0 ? Math.round(done / total * 100) : 0;
+      const total  = dayTasks.length;
+      const done   = dayTasks.filter(t => t.status === 'DONE').length;
+      const high   = dayTasks.filter(t => t.priority === 'HIGH').length;
+      const medium = dayTasks.filter(t => t.priority === 'MEDIUM').length;
+      const low    = dayTasks.filter(t => t.priority === 'LOW').length;
 
       const dayProgress = total === 0
         ? `<span class="day-empty-label">업무 없음</span>`
         : `<div class="day-progress-wrap">
-            <div class="day-progress-info">
-              <span class="day-progress-count">${done}/${total} 완료</span>
-              ${high > 0 ? `<span class="day-progress-high">●${high}</span>` : ''}
-            </div>
-            <div class="day-progress-bar">
-              <div class="day-progress-fill" style="width:${pct}%"></div>
-            </div>
+            <span class="day-progress-count">${done}/${total} 완료</span>
+            ${high   > 0 ? `<span class="day-priority-badge high">높음 ${high}</span>`   : ''}
+            ${medium > 0 ? `<span class="day-priority-badge medium">보통 ${medium}</span>` : ''}
+            ${low    > 0 ? `<span class="day-priority-badge low">낮음 ${low}</span>`    : ''}
           </div>`;
 
       const taskItems = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
