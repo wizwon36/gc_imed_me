@@ -437,16 +437,15 @@
 
 .day-progress-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 120px;
-  max-width: 220px;
+  align-items: center;
+  gap: 10px;
 }
 
 .day-progress-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .day-progress-count {
@@ -462,10 +461,12 @@
 }
 
 .day-progress-bar {
-  height: 5px;
+  width: 60px;
+  height: 4px;
   background: #e2e8f0;
   border-radius: 3px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .day-progress-fill {
@@ -1470,8 +1471,9 @@
   .team-journal-grid      { grid-template-columns: 1fr; }
   .task-tabs              { gap: 2px; }
   .task-tab-btn           { font-size: 11px; padding: 0 8px; gap: 3px; }
-  /* 모바일: day-progress 폭 조정 */
-  .day-progress-wrap { min-width: 80px; max-width: 140px; }
+  /* 모바일: day-progress 세로 배치 */
+  .day-progress-wrap { flex-direction: column; align-items: flex-start; gap: 3px; min-width: 80px; }
+  .day-progress-bar  { width: 80px; height: 4px; }
   .priority-group,
   .status-group           { gap: 4px; }
 
