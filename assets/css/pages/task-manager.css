@@ -438,43 +438,31 @@
 .day-progress-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.day-progress-info {
-  display: flex;
-  align-items: center;
   gap: 6px;
-  white-space: nowrap;
+  flex-wrap: wrap;
 }
 
 .day-progress-count {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
-.day-progress-high {
-  font-size: 11px;
-  font-weight: 700;
-  color: #dc2626;
+.day-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.day-progress-bar {
-  width: 60px;
-  height: 4px;
-  background: #e2e8f0;
-  border-radius: 3px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.day-progress-fill {
-  height: 100%;
-  background: #2563eb;
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
+.day-priority-badge.high   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.day-priority-badge.medium { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.day-priority-badge.low    { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
 
 .day-empty-label {
   font-size: 12px;
@@ -1483,9 +1471,9 @@
   .team-journal-grid      { grid-template-columns: 1fr; }
   .task-tabs              { gap: 2px; }
   .task-tab-btn           { font-size: 11px; padding: 0 8px; gap: 3px; }
-  /* 모바일: day-progress 세로 배치 */
-  .day-progress-wrap { flex-direction: column; align-items: flex-start; gap: 3px; min-width: 80px; }
-  .day-progress-bar  { width: 80px; height: 4px; }
+  /* 모바일: day-progress 폭 조정 */
+  .day-progress-wrap { gap: 4px; }
+  .day-priority-badge { height: 16px; font-size: 10px; }
   .priority-group,
   .status-group           { gap: 4px; }
 
