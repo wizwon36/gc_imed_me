@@ -654,9 +654,9 @@
             ? '  ' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/')
             : '';
 
-          lines.push('    ' + num + '.  ' + t.title + priTag + statusSuffix + dateRange);
+          lines.push('  ● ' + t.title + priTag + statusSuffix + dateRange);
           if (t.description && t.description.trim()) {
-            lines.push('        └ ' + t.description.trim());
+            lines.push('      └ ' + t.description.trim());
           }
           num++;
         });
@@ -682,7 +682,7 @@
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const endLabel  = t.end_date > weekEnd ? '계속' : '진행중';
           const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
-          lines.push('  ' + String(idx+1) + '.  [' + catLabel + ']  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
+          lines.push('  ● [' + catLabel + ']  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
           if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
         });
       }
@@ -692,7 +692,7 @@
         completedCarry.forEach(function(t, idx) {
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
-          lines.push('  ' + String(idx+1) + '.  [' + catLabel + ']  ' + t.title + '  [완료]  ' + dateRange);
+          lines.push('  ● [' + catLabel + ']  ' + t.title + '  [완료]  ' + dateRange);
           if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
         });
       }
@@ -1634,7 +1634,7 @@
       if (inSection && trimmed.startsWith('──')) break;
 
       if (inSection && trimmed) {
-        const isItem = /^\d+\.\s/.test(trimmed);
+        const isItem = /^●\s/.test(trimmed) || /^\d+\.\s/.test(trimmed);
         if (isItem) {
           const isHigh = trimmed.includes(' * ') || trimmed.endsWith(' *') ||
                          trimmed.includes(' *  ') || / \*\s+\[/.test(trimmed);
