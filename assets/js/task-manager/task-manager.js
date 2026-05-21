@@ -819,7 +819,7 @@
     const priorityCls = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
     const isSingleDay = !t.end_date || t.start_date === t.end_date;
     const isEndDate   = !isSingleDay && dateStr && t.end_date === dateStr;
-    const isMidDate   = !isSingleDay && dateStr && t.end_date > dateStr && t.start_date < dateStr;
+    const isMidDate   = !isSingleDay && dateStr && t.end_date > dateStr && t.start_date <= dateStr;
 
     // 날짜별 표시 상태 결정
     // - 단기업무: status 그대로
