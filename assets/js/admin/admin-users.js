@@ -79,7 +79,7 @@ function bindEvents() {
     if (activeBtn) {
       const email = activeBtn.dataset.email;
       const active = activeBtn.dataset.active;
-      if (email) await toggleUserActive(email, active);
+      if (email) await setUserActive(email, active);
     }
   });
 
