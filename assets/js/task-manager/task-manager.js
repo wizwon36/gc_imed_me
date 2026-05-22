@@ -1587,7 +1587,9 @@
         return true;
       })
       .map(l => {
-        let result = l.replace(/^(\s*)\d+\.\s+/, '$1● ');
+        // └ 가 포함된 줄이거나 continuation 들여쓰기(공백 8자 이상) 줄은 번호→● 변환 제외
+        const isSubLine = l.includes('└') || /^ {8,}/.test(l);
+        let result = isSubLine ? l : l.replace(/^(\s*)\d+\.\s+/, '$1● ');
         result = result.replace(/\s+\d{2}\/\d{2}\s*~\s*\d{2}\/\d{2}/g, '');
         result = result.replace(/\s+\d{2}\/\d{2}(?!\s*[~(])/g, '');
         return result;
