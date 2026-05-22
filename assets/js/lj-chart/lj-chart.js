@@ -314,84 +314,99 @@ function selectGroup(groupId) {
 }
 
 function openGroupManageModal() {
+  state._editingGroupId = null;
   renderGroupManageList();
+  renderAssignPanel(null);
   $('groupManageModal').classList.add('open');
 }
 
 function closeGroupManageModal() {
   $('groupManageModal').classList.remove('open');
   resetGroupForm();
+  state._editingGroupId = null;
 }
 
+// ── 그룹 목록 ──────────────────────────────
 function renderGroupManageList() {
   const list = $('groupManageList');
   if (!list) return;
 
   if (state.groups.length === 0) {
-    list.innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px 0;">등록된 그룹이 없습니다.</p>';
-  } else {
-    list.innerHTML = state.groups.map(g => `
-      <div class="lj-group-item">
-        <span class="lj-group-item-name">${escHtml(g.group_name)}</span>
-        ${g.memo ? `<span class="lj-group-item-memo">${escHtml(g.memo)}</span>` : ''}
-        <div class="lj-group-item-actions">
-          <button class="task-icon-btn" onclick="editGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}','${escHtml(g.memo||'')}')">✎</button>
-          <button class="task-icon-btn danger" onclick="deleteGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}')">🗑</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  renderItemAssignSection();
-}
-
-function renderItemAssignSection() {
-  const wrap = $('itemAssignSection');
-  if (!wrap) return;
-
-  if (state.items.length === 0) {
-    wrap.innerHTML = '';
+    list.innerHTML = '<p style="font-size:12px;color:#94a3b8;text-align:center;padding:12px 0;">그룹이 없습니다</p>';
     return;
   }
 
-  wrap.innerHTML = `
-    <div style="border-top:1.5px solid #e0e7f2;margin-top:14px;padding-top:14px;">
-      <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;">검사 항목별 그룹 지정</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">항목 옆 셀렉트에서 그룹을 선택하면 즉시 저장됩니다.</div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        ${state.items.map(it => {
-          const assignedGroup = state.groups.find(g => g.group_id === it.group_id);
-          return `
-            <div class="lj-assign-row">
-              <div style="flex:1;min-width:0;">
-                <div class="lj-assign-item-name">${escHtml(it.item_name)}</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">
-                  ${assignedGroup ? `그룹: ${escHtml(assignedGroup.group_name)}` : '미분류'}
-                </div>
-              </div>
-              <select class="input lj-assign-select" data-item-id="${escHtml(it.item_id)}"
-                style="height:32px;font-size:12px;min-width:110px;flex-shrink:0;"
-                onchange="assignItemGroup('${escHtml(it.item_id)}', this.value)">
-                <option value="">미분류</option>
-                ${state.groups.map(g =>
-                  `<option value="${escHtml(g.group_id)}" ${it.group_id === g.group_id ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
-                ).join('')}
-              </select>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `;
+  list.innerHTML = state.groups.map(g => {
+    const isActive = g.group_id === state._editingGroupId;
+    const cnt = state.items.filter(it => it.group_id === g.group_id).length;
+    return `
+      <div class="lj-gm-group-row${isActive ? ' is-active' : ''}"
+        onclick="selectGroupForAssign('${escHtml(g.group_id)}')">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(g.group_name)}</div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:1px;">항목 ${cnt}개</div>
+        </div>
+        <div style="display:flex;gap:2px;flex-shrink:0;">
+          <button class="task-icon-btn" title="수정"
+            onclick="event.stopPropagation();editGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}','${escHtml(g.memo||'')}')">✎</button>
+          <button class="task-icon-btn danger" title="삭제"
+            onclick="event.stopPropagation();deleteGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}')">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
 }
 
-async function assignItemGroup(itemId, groupId) {
+// ── 그룹 선택 → 오른쪽 패널 갱신 ──────────
+function selectGroupForAssign(groupId) {
+  state._editingGroupId = groupId;
+  renderGroupManageList();
+  renderAssignPanel(groupId);
+}
+
+function renderAssignPanel(groupId) {
+  const empty  = $('assignPanelEmpty');
+  const panel  = $('assignPanel');
+  if (!empty || !panel) return;
+
+  if (!groupId) {
+    empty.style.display = '';
+    panel.style.display = 'none';
+    return;
+  }
+
+  const group = state.groups.find(g => g.group_id === groupId);
+  if (!group) return;
+
+  empty.style.display = 'none';
+  panel.style.display = 'flex';
+  $('assignPanelTitle').textContent = group.group_name;
+
+  const assigned   = state.items.filter(it => it.group_id === groupId);
+  const unassigned = state.items.filter(it => !it.group_id || it.group_id === '');
+
+  $('assignedCount').textContent   = assigned.length ? `(${assigned.length})` : '';
+  $('unassignedCount').textContent = unassigned.length ? `(${unassigned.length})` : '';
+
+  const makeChip = (it, toGroup) => `
+    <div class="lj-assign-chip" title="${toGroup ? '그룹에서 제거' : '그룹에 추가'}"
+      onclick="toggleItemGroup('${escHtml(it.item_id)}','${toGroup ? '' : escHtml(groupId)}')">
+      <span>${escHtml(it.item_name)}</span>
+      <span style="font-size:10px;opacity:.6;">${toGroup ? '✕' : '＋'}</span>
+    </div>`;
+
+  $('assignedItems').innerHTML   = assigned.length
+    ? assigned.map(it => makeChip(it, true)).join('')
+    : '<p style="font-size:12px;color:#94a3b8;padding:12px;text-align:center;">배정된 항목 없음</p>';
+
+  $('unassignedItems').innerHTML = unassigned.length
+    ? unassigned.map(it => makeChip(it, false)).join('')
+    : '<p style="font-size:12px;color:#94a3b8;padding:12px;text-align:center;">미배정 항목 없음</p>';
+}
+
+async function toggleItemGroup(itemId, groupId) {
   const user = window.auth?.getSession?.();
   const item = state.items.find(it => it.item_id === itemId);
   if (!item) return;
-
-  const sel = document.querySelector(`[data-item-id="${itemId}"]`);
-  if (sel) { sel.disabled = true; }
 
   try {
     await apiPost('ljUpdateItem', {
@@ -399,27 +414,25 @@ async function assignItemGroup(itemId, groupId) {
       item_id:   itemId,
       item_name: item.item_name,
       item_type: item.item_type,
-      unit:      item.unit      || '',
-      mean:      item.mean      !== '' ? item.mean : '',
-      sd:        item.sd        !== '' ? item.sd   : '',
-      preset:    item.preset    || '',
+      unit:      item.unit || '',
+      mean:      item.mean !== '' ? item.mean : '',
+      sd:        item.sd   !== '' ? item.sd   : '',
+      preset:    item.preset || '',
       expected_value: item.expected_value || '',
-      memo:      item.memo      || '',
+      memo:      item.memo || '',
       group_id:  groupId,
       clinic_code: item.clinic_code || '',
       team_code:   item.team_code   || ''
     });
-    // state 업데이트
     state.items = state.items.map(it =>
       it.item_id === itemId ? { ...it, group_id: groupId } : it
     );
-    renderGroupTabs();
+    renderGroupManageList();
+    renderAssignPanel(state._editingGroupId);
+    renderGroupFilterSelect();
     renderItemSelect();
   } catch (err) {
-    alert(err.message || '그룹 지정에 실패했습니다.');
-    if (sel) sel.value = item.group_id || '';
-  } finally {
-    if (sel) sel.disabled = false;
+    alert(err.message || '변경에 실패했습니다.');
   }
 }
 
@@ -428,6 +441,9 @@ function resetGroupForm() {
   $('groupModalGroupName').value = '';
   $('groupModalMemo').value      = '';
   $('groupSaveBtn').textContent  = '추가';
+  $('groupFormTitle').textContent = '새 그룹 추가';
+  const cancelBtn = $('groupCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
 }
 
 function editGroup(groupId, groupName, memo) {
@@ -435,6 +451,9 @@ function editGroup(groupId, groupName, memo) {
   $('groupModalGroupName').value = groupName;
   $('groupModalMemo').value      = memo || '';
   $('groupSaveBtn').textContent  = '수정';
+  $('groupFormTitle').textContent = '그룹 수정';
+  const cancelBtn = $('groupCancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = '';
   $('groupModalGroupName').focus();
 }
 
@@ -444,7 +463,7 @@ async function saveGroup() {
   const groupName = $('groupModalGroupName').value.trim();
   const memo      = $('groupModalMemo').value.trim();
 
-  if (!groupName) { alert('그룹명을 입력하세요.'); return; }
+  if (!groupName) { $('groupModalGroupName').focus(); return; }
 
   const isEdit  = !!groupId;
   const action  = isEdit ? 'ljUpdateGroup' : 'ljCreateGroup';
@@ -462,7 +481,7 @@ async function saveGroup() {
     renderGroupTabs();
     renderGroupFilterSelect();
     renderGroupManageList();
-    renderItemAssignSection();
+    renderAssignPanel(state._editingGroupId);
     resetGroupForm();
   } catch (err) {
     alert(err.message || '저장에 실패했습니다.');
@@ -482,6 +501,10 @@ async function deleteGroup(groupId, groupName) {
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
     if (state.activeGroupId === groupId) { state.activeGroupId = null; renderItemSelect(); }
+    if (state._editingGroupId === groupId) {
+      state._editingGroupId = null;
+      renderAssignPanel(null);
+    }
     renderGroupTabs();
     renderGroupFilterSelect();
     renderGroupManageList();
