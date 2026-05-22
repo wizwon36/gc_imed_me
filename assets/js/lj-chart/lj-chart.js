@@ -22,13 +22,15 @@ const QUALITATIVE_PRESETS = {
 // 상태
 // ─────────────────────────────────────────────
 let state = {
+  groups: [],          // 그룹 목록
+  activeGroupId: null, // 선택된 그룹 ID (null = 전체)
   items: [],
   activeItemId: null,
   entries: {},
   chart: null,
-  orgData: null,   // admin용 org 데이터
-  dateFrom: '',    // 날짜 필터 시작일 (yyyy-MM-dd)
-  dateTo: ''       // 날짜 필터 종료일 (yyyy-MM-dd)
+  orgData: null,
+  dateFrom: '',
+  dateTo: ''
 };
 
 // ─────────────────────────────────────────────
@@ -58,6 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? Promise.resolve(true)
       : window.appPermission.hasPermission(APP_ID);
 
+    const groupsPromise = apiGet('ljGetGroups', { request_user_email: user.email })
+      .then(r => Array.isArray(r.data) ? r.data : [])
+      .catch(() => []);
+
     const itemsPromise = apiGet('ljGetItems', { request_user_email: user.email })
       .then(r => Array.isArray(r.data) ? r.data : [])
       .catch(() => null);
@@ -67,7 +73,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? apiGet('getOrgData', {}).catch(() => null)
       : Promise.resolve(null);
 
-    const [hasAccess, itemsResult, orgResult] = await Promise.all([permissionPromise, itemsPromise, orgPromise]);
+    const [hasAccess, groupsResult, itemsResult, orgResult] = await Promise.all([permissionPromise, groupsPromise, itemsPromise, orgPromise]);
+
+    state.groups = groupsResult;
+    renderGroupTabs();
 
     if (orgResult?.data) {
       state.orgData = orgResult.data;
@@ -263,17 +272,131 @@ async function loadEntriesForItem(itemId, isInitial = false) {
 // ─────────────────────────────────────────────
 // 검사 항목 탭 렌더링
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 그룹 탭 렌더링
+// ─────────────────────────────────────────────
+function renderGroupTabs() {
+  const wrap = $('groupTabsWrap');
+  if (!wrap) return;
+
+  const tabs = [{ group_id: null, group_name: '전체' }, ...state.groups];
+
+  wrap.innerHTML = tabs.map(g => {
+    const isActive = g.group_id === state.activeGroupId;
+    return `<button class="lj-group-tab${isActive ? ' is-active' : ''}" onclick="selectGroup(${g.group_id ? `'${escHtml(g.group_id)}'` : 'null'})">${escHtml(g.group_name)}</button>`;
+  }).join('') +
+  `<button class="lj-group-tab lj-group-tab--manage" onclick="openGroupManageModal()">⚙ 그룹 관리</button>`;
+}
+
+function selectGroup(groupId) {
+  state.activeGroupId = groupId;
+  state.activeItemId  = null;
+  renderGroupTabs();
+  renderItemSelect();
+}
+
+function openGroupManageModal() {
+  renderGroupManageList();
+  $('groupManageModal').classList.add('open');
+}
+
+function closeGroupManageModal() {
+  $('groupManageModal').classList.remove('open');
+  resetGroupForm();
+}
+
+function renderGroupManageList() {
+  const list = $('groupManageList');
+  if (!list) return;
+
+  if (state.groups.length === 0) {
+    list.innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px 0;">등록된 그룹이 없습니다.</p>';
+    return;
+  }
+
+  list.innerHTML = state.groups.map(g => `
+    <div class="lj-group-item">
+      <span class="lj-group-item-name">${escHtml(g.group_name)}</span>
+      ${g.memo ? `<span class="lj-group-item-memo">${escHtml(g.memo)}</span>` : ''}
+      <div class="lj-group-item-actions">
+        <button class="task-icon-btn" onclick="editGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}','${escHtml(g.memo||'')}')">✎</button>
+        <button class="task-icon-btn danger" onclick="deleteGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function resetGroupForm() {
+  $('groupModalGroupId').value   = '';
+  $('groupModalGroupName').value = '';
+  $('groupModalMemo').value      = '';
+  $('groupSaveBtn').textContent  = '추가';
+}
+
+function editGroup(groupId, groupName, memo) {
+  $('groupModalGroupId').value   = groupId;
+  $('groupModalGroupName').value = groupName;
+  $('groupModalMemo').value      = memo || '';
+  $('groupSaveBtn').textContent  = '수정';
+  $('groupModalGroupName').focus();
+}
+
+async function saveGroup() {
+  const user      = window.auth?.getSession?.();
+  const groupId   = $('groupModalGroupId').value.trim();
+  const groupName = $('groupModalGroupName').value.trim();
+  const memo      = $('groupModalMemo').value.trim();
+
+  if (!groupName) { alert('그룹명을 입력하세요.'); return; }
+
+  const isEdit  = !!groupId;
+  const action  = isEdit ? 'ljUpdateGroup' : 'ljCreateGroup';
+  const payload = { request_user_email: user.email, group_name: groupName, memo };
+  if (isEdit) payload.group_id = groupId;
+
+  try {
+    $('groupSaveBtn').disabled = true;
+    await apiPost(action, payload);
+    const res = await apiGet('ljGetGroups', { request_user_email: user.email });
+    state.groups = Array.isArray(res.data) ? res.data : [];
+    renderGroupTabs();
+    renderGroupManageList();
+    resetGroupForm();
+  } catch (err) {
+    alert(err.message || '저장에 실패했습니다.');
+  } finally {
+    $('groupSaveBtn').disabled = false;
+  }
+}
+
+async function deleteGroup(groupId, groupName) {
+  if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?\n하위 항목은 미분류로 이동됩니다.`)) return;
+
+  const user = window.auth?.getSession?.();
+  try {
+    await apiPost('ljDeleteGroup', { request_user_email: user.email, group_id: groupId });
+    state.items = state.items.map(it => it.group_id === groupId ? { ...it, group_id: '' } : it);
+    const res = await apiGet('ljGetGroups', { request_user_email: user.email });
+    state.groups = Array.isArray(res.data) ? res.data : [];
+    if (state.activeGroupId === groupId) { state.activeGroupId = null; renderItemSelect(); }
+    renderGroupTabs();
+    renderGroupManageList();
+  } catch (err) {
+    alert(err.message || '삭제에 실패했습니다.');
+  }
+}
+
 function renderItemSelect() {
   const selectEl  = $('itemSelect');
   const selectRow = $('itemSelectRow');
   const emptyRow  = $('itemEmptyRow');
 
-  // 의원/팀 필터 적용 (admin 전용)
-  const filterClinic = $('clinicFilterSelect')?.value || '';
-  const filterTeam   = $('teamFilterSelect')?.value   || '';
+  const filterClinic  = $('clinicFilterSelect')?.value || '';
+  const filterTeam    = $('teamFilterSelect')?.value   || '';
   const filteredItems = state.items.filter(it => {
     if (filterTeam   && (it.team_code   || '') !== filterTeam)   return false;
     if (filterClinic && (it.clinic_code || '') !== filterClinic) return false;
+    if (state.activeGroupId !== null && (it.group_id || '') !== state.activeGroupId) return false;
     return true;
   });
 
@@ -470,6 +593,17 @@ function openItemModal(item) {
   $('modalItemName').value  = item ? item.item_name : '';
   $('modalItemMemo').value  = item ? (item.memo || '') : '';
 
+  // 그룹 셀렉트 업데이트
+  const groupSel = $('modalItemGroup');
+  if (groupSel) {
+    groupSel.innerHTML = '<option value="">미분류 (그룹 없음)</option>' +
+      state.groups.map(g =>
+        `<option value="${escHtml(g.group_id)}" ${item && item.group_id === g.group_id ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
+      ).join('');
+    // 그룹 탭에서 열면 해당 그룹 자동 선택
+    if (!item && state.activeGroupId) groupSel.value = state.activeGroupId;
+  }
+
   // admin에게만 부서 선택 표시
   if (isAdmin && state.orgData) {
     $('modalOrgFields').style.display = 'contents';
@@ -555,6 +689,7 @@ async function saveItem() {
   }
 
   if (isEdit) payload.item_id = itemId;
+  payload.group_id = $('modalItemGroup')?.value || '';
 
   try {
     showGlobalLoading(isEdit ? '항목 수정 중...' : '항목 저장 중...');
