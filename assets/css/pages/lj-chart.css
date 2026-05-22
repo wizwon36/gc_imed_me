@@ -443,3 +443,27 @@
 .lj-group-item-name { font-size: 13px; font-weight: 600; color: #1e293b; flex: 1; }
 .lj-group-item-memo { font-size: 11px; color: #64748b; }
 .lj-group-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* ── 항목 그룹 지정 행 ── */
+.lj-assign-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.lj-assign-item-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lj-assign-select {
+  flex-shrink: 0;
+}
