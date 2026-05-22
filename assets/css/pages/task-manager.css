@@ -1321,15 +1321,29 @@
 }
 
 @media (max-width: 640px) {
-  .search-form        { padding: 14px; gap: 10px; }
-  .search-main-row    { flex-direction: column; align-items: stretch; gap: 8px; }
-  .search-date-group  { justify-content: space-between; }
-  .search-date-input  { width: 130px; }
-  .search-filter-row  { flex-wrap: wrap; gap: 8px; }
-  .search-select      { min-width: 0; flex: 1; }
-  .search-filter-btns { width: 100%; margin-left: 0; flex-direction: column; }
-  .search-btn         { width: 100%; }
-  .search-reset-btn   { width: 100%; }
+  /* 폼 전체 */
+  .search-form        { padding: 16px 14px; gap: 12px; }
+
+  /* 1행: 기간 · 키워드 — 세로 스택 */
+  .search-main-row    { flex-direction: column; align-items: stretch; gap: 10px; }
+  .search-date-group  { gap: 6px; }
+  .search-date-inputs { gap: 4px; }
+  .search-date-input  { flex: 1; width: auto; min-width: 0; min-height: 50px; font-size: 15px; border-radius: 12px; }
+  .search-keyword-wrap .form-input { min-height: 50px; font-size: 15px; border-radius: 12px; }
+
+  /* 2행: 필터 3개 한 줄 균등 + 버튼 한 줄 */
+  .search-filter-row  { flex-wrap: wrap; gap: 10px; }
+  .search-field       { flex: 1 1 0; min-width: 0; }
+  .search-select      { width: 100%; min-width: 0; min-height: 50px; font-size: 15px; border-radius: 12px; }
+  .search-filter-btns {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 2px;
+    flex-direction: row;
+    gap: 8px;
+  }
+  .search-btn         { flex: 1; }
+  .search-reset-btn   { flex: 1; }
 }
 
 /* ── 덮어쓰기 확인 모달 ── */
