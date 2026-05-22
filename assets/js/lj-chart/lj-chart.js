@@ -273,25 +273,43 @@ async function loadEntriesForItem(itemId, isInitial = false) {
 // 검사 항목 탭 렌더링
 // ─────────────────────────────────────────────
 // ─────────────────────────────────────────────
-// 그룹 탭 렌더링
+// 그룹 필터 콤보박스
 // ─────────────────────────────────────────────
 function renderGroupTabs() {
+  // 하위 호환 — groupTabsWrap이 있으면 비움
   const wrap = $('groupTabsWrap');
-  if (!wrap) return;
+  if (wrap) wrap.innerHTML = '';
 
-  const tabs = [{ group_id: null, group_name: '전체' }, ...state.groups];
+  renderGroupFilterSelect();
+}
 
-  wrap.innerHTML = tabs.map(g => {
-    const isActive = g.group_id === state.activeGroupId;
-    return `<button class="lj-group-tab${isActive ? ' is-active' : ''}" onclick="selectGroup(${g.group_id ? `'${escHtml(g.group_id)}'` : 'null'})">${escHtml(g.group_name)}</button>`;
-  }).join('') +
-  `<button class="lj-group-tab lj-group-tab--manage" onclick="openGroupManageModal()">⚙ 그룹 관리</button>`;
+function renderGroupFilterSelect() {
+  const sel = $('groupFilterSelect');
+  if (!sel) return;
+
+  const current = sel.value;
+  sel.innerHTML = '<option value="">전체 그룹</option>' +
+    state.groups.map(g =>
+      `<option value="${escHtml(g.group_id)}" ${g.group_id === state.activeGroupId ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
+    ).join('') +
+    '<option value="__ungrouped__">미분류</option>';
+
+  // 현재 선택 유지
+  if (state.activeGroupId === '__ungrouped__') sel.value = '__ungrouped__';
+  else if (state.activeGroupId) sel.value = state.activeGroupId;
+  else sel.value = '';
+}
+
+function onGroupFilterChange(val) {
+  state.activeGroupId = val || null;
+  state.activeItemId  = null;
+  renderItemSelect();
 }
 
 function selectGroup(groupId) {
   state.activeGroupId = groupId;
   state.activeItemId  = null;
-  renderGroupTabs();
+  renderGroupFilterSelect();
   renderItemSelect();
 }
 
@@ -442,6 +460,7 @@ async function saveGroup() {
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
     renderGroupTabs();
+    renderGroupFilterSelect();
     renderGroupManageList();
     renderItemAssignSection();
     resetGroupForm();
@@ -464,6 +483,7 @@ async function deleteGroup(groupId, groupName) {
     state.groups = Array.isArray(res.data) ? res.data : [];
     if (state.activeGroupId === groupId) { state.activeGroupId = null; renderItemSelect(); }
     renderGroupTabs();
+    renderGroupFilterSelect();
     renderGroupManageList();
   } catch (err) {
     alert(err.message || '삭제에 실패했습니다.');
@@ -471,32 +491,30 @@ async function deleteGroup(groupId, groupName) {
 }
 
 function renderItemSelect() {
-  const selectEl  = $('itemSelect');
-  const selectRow = $('itemSelectRow');
-  const emptyRow  = $('itemEmptyRow');
+  const selectEl = $('itemSelect');
+  if (!selectEl) return;
 
   const filterClinic  = $('clinicFilterSelect')?.value || '';
   const filterTeam    = $('teamFilterSelect')?.value   || '';
+
   const filteredItems = state.items.filter(it => {
     if (filterTeam   && (it.team_code   || '') !== filterTeam)   return false;
     if (filterClinic && (it.clinic_code || '') !== filterClinic) return false;
-    if (state.activeGroupId !== null && (it.group_id || '') !== state.activeGroupId) return false;
+    if (state.activeGroupId === '__ungrouped__') return !(it.group_id);
+    if (state.activeGroupId) return (it.group_id || '') === state.activeGroupId;
     return true;
   });
-
-  if (filteredItems.length === 0) {
-    selectRow.style.display = 'none';
-    emptyRow.style.display  = '';
-    return;
-  }
-
-  selectRow.style.display = 'flex';
-  emptyRow.style.display  = 'none';
 
   selectEl.innerHTML = '<option value="">검사 항목을 선택하세요</option>' +
     filteredItems.map(item =>
       `<option value="${escHtml(item.item_id)}" ${item.item_id === state.activeItemId ? 'selected' : ''}>${escHtml(item.item_name)}</option>`
     ).join('');
+
+  // 빈 상태 메시지 처리
+  const emptyState = $('itemEmptyState');
+  if (emptyState) {
+    emptyState.style.display = filteredItems.length === 0 ? '' : 'none';
+  }
 }
 
 function selectItem(itemId) {
