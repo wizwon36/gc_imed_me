@@ -408,6 +408,17 @@ async function toggleItemGroup(itemId, groupId) {
   const item = state.items.find(it => it.item_id === itemId);
   if (!item) return;
 
+  const prevGroupId = item.group_id || '';
+
+  // 즉시 state 업데이트 → UI 먼저 반영 (낙관적 업데이트)
+  state.items = state.items.map(it =>
+    it.item_id === itemId ? { ...it, group_id: groupId } : it
+  );
+  renderGroupManageList();
+  renderAssignPanel(state._editingGroupId);
+  renderGroupFilterSelect();
+  renderItemSelect();
+
   try {
     await apiPost('ljUpdateItem', {
       request_user_email: user.email,
@@ -424,14 +435,15 @@ async function toggleItemGroup(itemId, groupId) {
       clinic_code: item.clinic_code || '',
       team_code:   item.team_code   || ''
     });
+  } catch (err) {
+    // 실패 시 롤백
     state.items = state.items.map(it =>
-      it.item_id === itemId ? { ...it, group_id: groupId } : it
+      it.item_id === itemId ? { ...it, group_id: prevGroupId } : it
     );
     renderGroupManageList();
     renderAssignPanel(state._editingGroupId);
     renderGroupFilterSelect();
     renderItemSelect();
-  } catch (err) {
     alert(err.message || '변경에 실패했습니다.');
   }
 }
