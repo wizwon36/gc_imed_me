@@ -1549,13 +1549,13 @@
       r++;
 
       ws['!ref']  = window.XLSX.utils.encode_range({r:0,c:0},{r:r-1,c:TOTAL_COLS-1});
-      ws['!cols'] = [{ wch:12 }, { wch:8 }, ...clinics.map(()=>({ wch:50 }))];
+      ws['!cols'] = [{ wch:16 }, { wch:11 }, ...clinics.map(()=>({ wch:65 }))];
       // 모든 데이터 행 고정 높이 — 빈 행도 표시
       const rowHeights = [];
       for (let ri = 0; ri < r; ri++) {
-        if (ri === 0)      rowHeights.push({ hpt: 32 });  // 제목
-        else if (ri < 3)   rowHeights.push({ hpt: 22 });  // 기간/헤더
-        else               rowHeights.push({ hpt: 80, hpx: 80, customHeight: false });  // 데이터 행 — 자동
+        if (ri === 0)      rowHeights.push({ hpt: 42 });  // 제목
+        else if (ri < 3)   rowHeights.push({ hpt: 29 });  // 기간/헤더
+        else               rowHeights.push({ hpt: 104, hpx: 104, customHeight: false });  // 데이터 행 — 자동
       }
       ws['!rows'] = rowHeights;
 
