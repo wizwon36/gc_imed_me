@@ -170,6 +170,9 @@
           <select id="teamFilterSelect" class="input" style="flex:1;min-width:120px;min-height:38px;font-size:13px;font-weight:600;" disabled></select>
         </div>
 
+        <!-- 그룹 탭 -->
+        <div id="groupTabsWrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 22px;border-bottom:1.5px solid #e0e7f2;"></div>
+
         <!-- 항목 선택 셀렉트 + 추가 버튼 -->
         <div id="itemSelectRow" style="display:none;align-items:center;gap:10px;padding:14px 22px;border-bottom:1.5px solid #e0e7f2;">
           <select id="itemSelect" class="input" style="flex:1;min-height:44px;font-weight:600;"></select>
@@ -337,6 +340,12 @@
             <span class="form-label required">검사 항목명</span>
             <input type="text" id="modalItemName" class="input" placeholder="예: GLU, HbA1c, RPR" />
           </label>
+          <label class="form-field full-col">
+            <span class="form-label">그룹 (선택)</span>
+            <select id="modalItemGroup" class="input">
+              <option value="">미분류 (그룹 없음)</option>
+            </select>
+          </label>
           <!-- 부서 선택 (admin만 표시) -->
           <div id="modalOrgFields" style="display:none;contents:none;">
             <label class="form-field">
@@ -418,5 +427,34 @@
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/lj-chart/lj-chart.js"></script>
+<!-- 그룹 관리 모달 -->
+<div class="lj-modal-overlay" id="groupManageModal" onclick="if(event.target===this)closeGroupManageModal()">
+  <div class="lj-modal" style="max-width:420px;">
+    <div class="lj-modal-head">
+      <span class="lj-modal-title">그룹 관리</span>
+      <button class="lj-modal-close" onclick="closeGroupManageModal()">✕</button>
+    </div>
+    <div class="lj-modal-body" style="padding:16px 20px;">
+      <!-- 그룹 목록 -->
+      <div id="groupManageList" style="margin-bottom:16px;"></div>
+      <!-- 추가/수정 폼 -->
+      <div style="border-top:1.5px solid #e0e7f2;padding-top:14px;">
+        <input type="hidden" id="groupModalGroupId" />
+        <div class="form-grid two-col" style="gap:8px;">
+          <label class="form-field full-col" style="margin:0;">
+            <span class="form-label required">그룹명</span>
+            <input type="text" id="groupModalGroupName" class="input" placeholder="예: 혈액 검사, 자동화 장비" />
+          </label>
+          <label class="form-field full-col" style="margin:0;">
+            <span class="form-label">메모 (선택)</span>
+            <input type="text" id="groupModalMemo" class="input" placeholder="장비명, 검체 종류 등" />
+          </label>
+        </div>
+        <button class="btn btn-primary" id="groupSaveBtn" onclick="saveGroup()" style="width:100%;margin-top:10px;">추가</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
