@@ -983,11 +983,21 @@
     journalDirty = false;
   }
 
+  // 각 필드의 원래 placeholder (HTML에서 정의된 값)
+  const FIELD_PLACEHOLDERS = {
+    attendanceThisWeek: '예) 금요일 반차, 목요일 출장 등',
+    attendanceNextWeek: '예) 월요일 연차, 수요일 교육 등',
+    journalSummary:     '이번 주 전반적인 업무 현황을 간략히 작성해 주세요.',
+    journalNextPlan:    '다음 주 주요 업무 계획을 작성해 주세요.',
+    journalIssues:      '이슈, 지원 요청, 건의사항 등을 작성해 주세요.'
+  };
+
   function setField(id, value, disabled) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.value    = value || '';
-    el.disabled = !!disabled;
+    el.value       = value || '';
+    el.disabled    = !!disabled;
+    el.placeholder = FIELD_PLACEHOLDERS[id] || '';
   }
 
   function renderJournalTaskSummary() {
