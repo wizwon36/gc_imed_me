@@ -1029,12 +1029,21 @@
 
 .team-dept-header {
   grid-column: 1 / -1;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--primary, #2563eb);
-  padding: 6px 4px 2px;
-  border-bottom: 2px solid var(--primary, #2563eb);
-  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  letter-spacing: 0.04em;
+  margin-top: 6px;
+  margin-bottom: -2px;
+}
+.team-dept-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-soft, #e2e8f0);
 }
 
 .team-member-card {
