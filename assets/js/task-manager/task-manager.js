@@ -570,6 +570,18 @@
     });
   }
 
+  // 엑셀 출력용 — └ 줄의 들여쓰기를 웹과 동일하게 정규화
+  function normalizeSubLinesForExcel(line) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('└')) {
+      return '      └ ' + trimmed.slice(1).replace(/^\s+/, '');
+    }
+    if (/^ {8,}/.test(line) && !trimmed.startsWith('└')) {
+      return '           ' + trimmed;
+    }
+    return line;
+  }
+
   function buildDailyGroupedText(items, weekStart, showStatus) {
     if (!items || items.length === 0) return '';
 
@@ -1524,7 +1536,10 @@
             const val = fi === 0
               ? (m.journal.attendance_this_week || '')
               : (m.journal.attendance_next_week || '');
-            if (val) { lines.push('• ' + m.user_name); lines.push(val); }
+            if (val) {
+              lines.push('• ' + m.user_name);
+              val.split('\n').forEach(function(v) { lines.push('  ' + v); });
+            }
           });
           sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
         });
@@ -1587,9 +1602,9 @@
         return true;
       })
       .map(l => {
-        // └ 가 포함된 줄이거나 continuation 들여쓰기(공백 8자 이상) 줄은 번호→● 변환 제외
+        // └ 가 포함된 줄이거나 continuation 들여쓰기(공백 8자 이상) 줄은 번호→• 변환 제외 및 정규화
         const isSubLine = l.includes('└') || /^ {8,}/.test(l);
-        let result = isSubLine ? l : l.replace(/^(\s*)\d+\.\s+/, '$1• ');
+        let result = isSubLine ? normalizeSubLinesForExcel(l) : l.replace(/^(\s*)\d+\.\s+/, '$1• ');
         result = result.replace(/\s+\d{2}\/\d{2}\s*~\s*\d{2}\/\d{2}/g, '');
         result = result.replace(/\s+\d{2}\/\d{2}(?!\s*[~(])/g, '');
         return result;
@@ -1645,7 +1660,7 @@
             result.push(lines[i]);
             let j = i + 1;
             while (j < lines.length && lines[j].trim().startsWith('└')) {
-              result.push(lines[j]); j++;
+              result.push(normalizeSubLinesForExcel(lines[j])); j++;
             }
             i = j; continue;
           } else {
