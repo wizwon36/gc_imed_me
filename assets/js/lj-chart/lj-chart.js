@@ -381,8 +381,12 @@ function renderAssignPanel(groupId) {
   panel.style.display = 'flex';
   $('assignPanelTitle').textContent = group.group_name;
 
-  const assigned   = state.items.filter(it => it.group_id === groupId);
-  const unassigned = state.items.filter(it => !it.group_id || it.group_id === '');
+  // 같은 팀 항목만 배정 가능 (관리자 혼용 방지)
+  const sameTeamItems = state.items.filter(it =>
+    !group.team_code || !it.team_code || it.team_code === group.team_code
+  );
+  const assigned   = sameTeamItems.filter(it => it.group_id === groupId);
+  const unassigned = sameTeamItems.filter(it => !it.group_id || it.group_id === '');
 
   $('assignedCount').textContent   = assigned.length ? `(${assigned.length})` : '';
   $('unassignedCount').textContent = unassigned.length ? `(${unassigned.length})` : '';
@@ -477,44 +481,44 @@ async function saveGroup() {
 
   if (!groupName) { $('groupModalGroupName').focus(); return; }
 
-  const isEdit     = !!groupId;
-  const action     = isEdit ? 'ljUpdateGroup' : 'ljCreateGroup';
-  const payload    = { request_user_email: user.email, group_name: groupName, memo };
+  const isEdit  = !!groupId;
+  const action  = isEdit ? 'ljUpdateGroup' : 'ljCreateGroup';
+  const payload = { request_user_email: user.email, group_name: groupName, memo };
   if (isEdit) payload.group_id = groupId;
 
-  // 낙관적 업데이트 — 즉시 반영
+  // 수정은 낙관적 업데이트, 신규 추가는 서버 응답 후 반영 (임시ID 문제 방지)
   const prevGroups = [...state.groups];
-  const tempId     = '__temp_' + Date.now() + '__';
   if (isEdit) {
     state.groups = state.groups.map(g =>
       g.group_id === groupId ? { ...g, group_name: groupName, memo } : g
     );
-  } else {
-    state.groups = [...state.groups, { group_id: tempId, group_name: groupName, memo }];
+    renderGroupManageList();
+    renderGroupFilterSelect();
+    resetGroupForm();
   }
-  renderGroupManageList();
-  renderGroupFilterSelect();
-  resetGroupForm();
 
   const btn = $('groupSaveBtn');
   try {
-    btn.disabled = true;
+    btn.disabled    = true;
+    btn.textContent = isEdit ? '수정 중...' : '추가 중...';
     await apiPost(action, payload);
-    // 서버 확정 후 갱신
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
     renderGroupTabs();
     renderGroupFilterSelect();
     renderGroupManageList();
     renderAssignPanel(state._editingGroupId);
+    if (!isEdit) resetGroupForm();
   } catch (err) {
-    // 롤백
-    state.groups = prevGroups;
-    renderGroupManageList();
-    renderGroupFilterSelect();
+    if (isEdit) {
+      state.groups = prevGroups;
+      renderGroupManageList();
+      renderGroupFilterSelect();
+    }
     alert(err.message || '저장에 실패했습니다.');
   } finally {
-    btn.disabled = false;
+    btn.disabled    = false;
+    btn.textContent = isEdit ? '수정' : '추가';
   }
 }
 
