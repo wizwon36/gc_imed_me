@@ -467,3 +467,45 @@
 .lj-assign-select {
   flex-shrink: 0;
 }
+
+/* ── 그룹 관리 모달 재설계 ── */
+.lj-gm-group-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.12s;
+}
+.lj-gm-group-row:hover {
+  background: #f1f5f9;
+}
+.lj-gm-group-row.is-active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+/* ── 항목 배정 칩 ── */
+.lj-assign-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 4px;
+  transition: all 0.12s;
+}
+.lj-assign-chip:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
