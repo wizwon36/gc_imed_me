@@ -560,6 +560,16 @@
    *   [05/20 화]
    *     🟢 [시설] 제목 (예정)
    */
+  // description 여러 줄 처리: 첫 줄은 └ 뒤, 나머지 줄은 └ 너비만큼 공백 들여쓰기
+  function pushDescription(lines, description) {
+    const prefix       = '      └ ';  // 6공백 + └ + 1공백
+    const continuation = '        ';  // 동일 너비 공백 (8자)
+    const descLines = description.trim().split('\n');
+    descLines.forEach(function(line, i) {
+      lines.push((i === 0 ? prefix : continuation) + line);
+    });
+  }
+
   function buildDailyGroupedText(items, weekStart, showStatus) {
     if (!items || items.length === 0) return '';
 
@@ -642,7 +652,7 @@
 
           lines.push('  ● ' + t.title + priTag + statusSuffix + dateRange);
           if (t.description && t.description.trim()) {
-            lines.push('      └ ' + t.description.trim());
+            pushDescription(lines, t.description);
           }
           num++;
         });
@@ -669,7 +679,7 @@
           const endLabel  = t.end_date > weekEnd ? '계속' : '진행중';
           const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
           lines.push('  ● [' + catLabel + ']  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
-          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+          if (t.description && t.description.trim()) pushDescription(lines, t.description);
         });
       }
 
@@ -679,7 +689,7 @@
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
           lines.push('  ● [' + catLabel + ']  ' + t.title + '  [완료]  ' + dateRange);
-          if (t.description && t.description.trim()) lines.push('      └ ' + t.description.trim());
+          if (t.description && t.description.trim()) pushDescription(lines, t.description);
         });
       }
     }
