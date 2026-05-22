@@ -338,21 +338,30 @@ function renderItemAssignSection() {
 
   wrap.innerHTML = `
     <div style="border-top:1.5px solid #e0e7f2;margin-top:14px;padding-top:14px;">
-      <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px;">항목 그룹 지정</div>
+      <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;">검사 항목별 그룹 지정</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">항목 옆 셀렉트에서 그룹을 선택하면 즉시 저장됩니다.</div>
       <div style="display:flex;flex-direction:column;gap:6px;">
-        ${state.items.map(it => `
-          <div class="lj-assign-row">
-            <span class="lj-assign-item-name">${escHtml(it.item_name)}</span>
-            <select class="input lj-assign-select" data-item-id="${escHtml(it.item_id)}"
-              style="height:32px;font-size:12px;min-width:120px;"
-              onchange="assignItemGroup('${escHtml(it.item_id)}', this.value)">
-              <option value="">미분류</option>
-              ${state.groups.map(g =>
-                `<option value="${escHtml(g.group_id)}" ${it.group_id === g.group_id ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
-              ).join('')}
-            </select>
-          </div>
-        `).join('')}
+        ${state.items.map(it => {
+          const assignedGroup = state.groups.find(g => g.group_id === it.group_id);
+          return `
+            <div class="lj-assign-row">
+              <div style="flex:1;min-width:0;">
+                <div class="lj-assign-item-name">${escHtml(it.item_name)}</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">
+                  ${assignedGroup ? `그룹: ${escHtml(assignedGroup.group_name)}` : '미분류'}
+                </div>
+              </div>
+              <select class="input lj-assign-select" data-item-id="${escHtml(it.item_id)}"
+                style="height:32px;font-size:12px;min-width:110px;flex-shrink:0;"
+                onchange="assignItemGroup('${escHtml(it.item_id)}', this.value)">
+                <option value="">미분류</option>
+                ${state.groups.map(g =>
+                  `<option value="${escHtml(g.group_id)}" ${it.group_id === g.group_id ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
+                ).join('')}
+              </select>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;
