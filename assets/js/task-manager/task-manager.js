@@ -2231,7 +2231,6 @@
           <div class="category-item">
             <span class="category-item-order">${c.sort_order}</span>
             <span class="category-item-name">${esc(c.code_name)}</span>
-            <span class="category-item-code">${esc(c.code_value)}</span>
             <div class="category-item-actions">
               <button class="task-icon-btn" title="수정" onclick="TASK_APP.editCategory('${esc(c.code_value)}','${esc(c.code_name)}',${c.sort_order},'${esc(c.code_group)}')">✎</button>
               ${canDelete ? `<button class="task-icon-btn danger" title="삭제" onclick="TASK_APP.deleteCategory('${esc(c.code_value)}','${esc(c.code_name)}','${esc(c.code_group)}')">🗑</button>` : ''}
