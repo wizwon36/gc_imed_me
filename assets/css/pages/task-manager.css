@@ -1027,6 +1027,16 @@
   padding: 16px 22px;
 }
 
+.team-dept-header {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary, #2563eb);
+  padding: 6px 4px 2px;
+  border-bottom: 2px solid var(--primary, #2563eb);
+  margin-bottom: 2px;
+}
+
 .team-member-card {
   border: 1.5px solid var(--border-card);
   border-radius: var(--radius-lg);
