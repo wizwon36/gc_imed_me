@@ -477,29 +477,44 @@ async function saveGroup() {
 
   if (!groupName) { $('groupModalGroupName').focus(); return; }
 
-  const isEdit  = !!groupId;
-  const action  = isEdit ? 'ljUpdateGroup' : 'ljCreateGroup';
-  const payload = { request_user_email: user.email, group_name: groupName, memo };
+  const isEdit     = !!groupId;
+  const action     = isEdit ? 'ljUpdateGroup' : 'ljCreateGroup';
+  const payload    = { request_user_email: user.email, group_name: groupName, memo };
   if (isEdit) payload.group_id = groupId;
 
+  // 낙관적 업데이트 — 즉시 반영
+  const prevGroups = [...state.groups];
+  const tempId     = '__temp_' + Date.now() + '__';
+  if (isEdit) {
+    state.groups = state.groups.map(g =>
+      g.group_id === groupId ? { ...g, group_name: groupName, memo } : g
+    );
+  } else {
+    state.groups = [...state.groups, { group_id: tempId, group_name: groupName, memo }];
+  }
+  renderGroupManageList();
+  renderGroupFilterSelect();
+  resetGroupForm();
+
   const btn = $('groupSaveBtn');
-  const origText = btn.textContent;
   try {
-    btn.disabled    = true;
-    btn.textContent = isEdit ? '수정 중...' : '추가 중...';
+    btn.disabled = true;
     await apiPost(action, payload);
+    // 서버 확정 후 갱신
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
     renderGroupTabs();
     renderGroupFilterSelect();
     renderGroupManageList();
     renderAssignPanel(state._editingGroupId);
-    resetGroupForm();
   } catch (err) {
+    // 롤백
+    state.groups = prevGroups;
+    renderGroupManageList();
+    renderGroupFilterSelect();
     alert(err.message || '저장에 실패했습니다.');
   } finally {
-    btn.disabled    = false;
-    btn.textContent = origText;
+    btn.disabled = false;
   }
 }
 
@@ -507,20 +522,35 @@ async function deleteGroup(groupId, groupName) {
   if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?\n하위 항목은 미분류로 이동됩니다.`)) return;
 
   const user = window.auth?.getSession?.();
+
+  // 낙관적 업데이트 — 즉시 제거
+  const prevGroups = [...state.groups];
+  const prevItems  = state.items.map(it => ({ ...it }));
+  state.groups = state.groups.filter(g => g.group_id !== groupId);
+  state.items  = state.items.map(it => it.group_id === groupId ? { ...it, group_id: '' } : it);
+  if (state.activeGroupId === groupId)  { state.activeGroupId  = null; }
+  if (state._editingGroupId === groupId){ state._editingGroupId = null; renderAssignPanel(null); }
+  renderGroupTabs();
+  renderGroupFilterSelect();
+  renderGroupManageList();
+  renderItemSelect();
+
   try {
     await apiPost('ljDeleteGroup', { request_user_email: user.email, group_id: groupId });
-    state.items = state.items.map(it => it.group_id === groupId ? { ...it, group_id: '' } : it);
+    // 서버 확정
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
-    if (state.activeGroupId === groupId) { state.activeGroupId = null; renderItemSelect(); }
-    if (state._editingGroupId === groupId) {
-      state._editingGroupId = null;
-      renderAssignPanel(null);
-    }
     renderGroupTabs();
     renderGroupFilterSelect();
     renderGroupManageList();
   } catch (err) {
+    // 롤백
+    state.groups = prevGroups;
+    state.items  = prevItems;
+    renderGroupTabs();
+    renderGroupFilterSelect();
+    renderGroupManageList();
+    renderItemSelect();
     alert(err.message || '삭제에 실패했습니다.');
   }
 }
