@@ -563,7 +563,7 @@
   // description 여러 줄 처리: 첫 줄은 └ 뒤, 나머지 줄은 └ 너비만큼 공백 들여쓰기
   function pushDescription(lines, description) {
     const prefix       = '      └ ';  // 6공백 + └ + 1공백
-    const continuation = '        ';  // 동일 너비 공백 (8자)
+    const continuation = '           ';  // 11자 (8 + 3칸 추가)
     const descLines = description.trim().split('\n');
     descLines.forEach(function(line, i) {
       lines.push((i === 0 ? prefix : continuation) + line);
