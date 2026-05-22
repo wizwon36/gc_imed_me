@@ -311,19 +311,89 @@ function renderGroupManageList() {
 
   if (state.groups.length === 0) {
     list.innerHTML = '<p style="font-size:13px;color:var(--text-muted);text-align:center;padding:16px 0;">등록된 그룹이 없습니다.</p>';
+  } else {
+    list.innerHTML = state.groups.map(g => `
+      <div class="lj-group-item">
+        <span class="lj-group-item-name">${escHtml(g.group_name)}</span>
+        ${g.memo ? `<span class="lj-group-item-memo">${escHtml(g.memo)}</span>` : ''}
+        <div class="lj-group-item-actions">
+          <button class="task-icon-btn" onclick="editGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}','${escHtml(g.memo||'')}')">✎</button>
+          <button class="task-icon-btn danger" onclick="deleteGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderItemAssignSection();
+}
+
+function renderItemAssignSection() {
+  const wrap = $('itemAssignSection');
+  if (!wrap) return;
+
+  if (state.items.length === 0) {
+    wrap.innerHTML = '';
     return;
   }
 
-  list.innerHTML = state.groups.map(g => `
-    <div class="lj-group-item">
-      <span class="lj-group-item-name">${escHtml(g.group_name)}</span>
-      ${g.memo ? `<span class="lj-group-item-memo">${escHtml(g.memo)}</span>` : ''}
-      <div class="lj-group-item-actions">
-        <button class="task-icon-btn" onclick="editGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}','${escHtml(g.memo||'')}')">✎</button>
-        <button class="task-icon-btn danger" onclick="deleteGroup('${escHtml(g.group_id)}','${escHtml(g.group_name)}')">🗑</button>
+  wrap.innerHTML = `
+    <div style="border-top:1.5px solid #e0e7f2;margin-top:14px;padding-top:14px;">
+      <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px;">항목 그룹 지정</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${state.items.map(it => `
+          <div class="lj-assign-row">
+            <span class="lj-assign-item-name">${escHtml(it.item_name)}</span>
+            <select class="input lj-assign-select" data-item-id="${escHtml(it.item_id)}"
+              style="height:32px;font-size:12px;min-width:120px;"
+              onchange="assignItemGroup('${escHtml(it.item_id)}', this.value)">
+              <option value="">미분류</option>
+              ${state.groups.map(g =>
+                `<option value="${escHtml(g.group_id)}" ${it.group_id === g.group_id ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
+              ).join('')}
+            </select>
+          </div>
+        `).join('')}
       </div>
     </div>
-  `).join('');
+  `;
+}
+
+async function assignItemGroup(itemId, groupId) {
+  const user = window.auth?.getSession?.();
+  const item = state.items.find(it => it.item_id === itemId);
+  if (!item) return;
+
+  const sel = document.querySelector(`[data-item-id="${itemId}"]`);
+  if (sel) { sel.disabled = true; }
+
+  try {
+    await apiPost('ljUpdateItem', {
+      request_user_email: user.email,
+      item_id:   itemId,
+      item_name: item.item_name,
+      item_type: item.item_type,
+      unit:      item.unit      || '',
+      mean:      item.mean      !== '' ? item.mean : '',
+      sd:        item.sd        !== '' ? item.sd   : '',
+      preset:    item.preset    || '',
+      expected_value: item.expected_value || '',
+      memo:      item.memo      || '',
+      group_id:  groupId,
+      clinic_code: item.clinic_code || '',
+      team_code:   item.team_code   || ''
+    });
+    // state 업데이트
+    state.items = state.items.map(it =>
+      it.item_id === itemId ? { ...it, group_id: groupId } : it
+    );
+    renderGroupTabs();
+    renderItemSelect();
+  } catch (err) {
+    alert(err.message || '그룹 지정에 실패했습니다.');
+    if (sel) sel.value = item.group_id || '';
+  } finally {
+    if (sel) sel.disabled = false;
+  }
 }
 
 function resetGroupForm() {
@@ -354,18 +424,23 @@ async function saveGroup() {
   const payload = { request_user_email: user.email, group_name: groupName, memo };
   if (isEdit) payload.group_id = groupId;
 
+  const btn = $('groupSaveBtn');
+  const origText = btn.textContent;
   try {
-    $('groupSaveBtn').disabled = true;
+    btn.disabled    = true;
+    btn.textContent = isEdit ? '수정 중...' : '추가 중...';
     await apiPost(action, payload);
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
     renderGroupTabs();
     renderGroupManageList();
+    renderItemAssignSection();
     resetGroupForm();
   } catch (err) {
     alert(err.message || '저장에 실패했습니다.');
   } finally {
-    $('groupSaveBtn').disabled = false;
+    btn.disabled    = false;
+    btn.textContent = origText;
   }
 }
 
