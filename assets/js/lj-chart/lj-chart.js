@@ -763,12 +763,14 @@ function openItemModal(item) {
   // 그룹 셀렉트 업데이트
   const groupSel = $('modalItemGroup');
   if (groupSel) {
-    groupSel.innerHTML = '<option value="">미분류 (그룹 없음)</option>' +
+    groupSel.innerHTML = '<option value="" selected>미분류 (그룹 없음)</option>' +
       state.groups.map(g =>
         `<option value="${escHtml(g.group_id)}" ${item && item.group_id === g.group_id ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
       ).join('');
     // 그룹 탭에서 열면 해당 그룹 자동 선택
-    if (!item && state.activeGroupId) groupSel.value = state.activeGroupId;
+    if (!item && state.activeGroupId && state.activeGroupId !== '__ungrouped__') {
+      groupSel.value = state.activeGroupId;
+    }
   }
 
   // admin에게만 부서 선택 표시
