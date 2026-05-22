@@ -1219,8 +1219,11 @@
   }
 
   function renderTeamGrid(members) {
-    // manager 맨 앞, 나머지 가나다순
+    // 팀별 그룹 → 팀 내 팀장 우선 → 이름 가나다순
     const sorted = (members || []).slice().sort((a, b) => {
+      const teamA = a.team_name || a.department || '';
+      const teamB = b.team_name || b.department || '';
+      if (teamA !== teamB) return teamA.localeCompare(teamB, 'ko');
       if (a.is_manager && !b.is_manager) return -1;
       if (!a.is_manager && b.is_manager) return 1;
       return (a.user_name || '').localeCompare(b.user_name || '', 'ko');
@@ -1233,10 +1236,12 @@
       return;
     }
 
+    let prevTeam = null;
     grid.innerHTML = sorted.map((m, idx) => {
       const s       = m.task_summary || {};
       const pct     = s.total ? Math.round((s.done || 0) / s.total * 100) : 0;
       const jStatus = m.journal ? m.journal.status : null;
+      const teamName = m.team_name || m.department || '기타';
 
       const statusBadge = !m.journal
         ? `<span style="font-size:10px;background:#fef2f2;color:#b91c1c;padding:2px 6px;border-radius:4px;">미작성</span>`
@@ -1248,7 +1253,13 @@
 
       const initial = (m.user_name || '?').charAt(0);
 
-      return `
+      let header = '';
+      if (teamName !== prevTeam) {
+        header = `<div class="team-dept-header">${esc(teamName)}</div>`;
+        prevTeam = teamName;
+      }
+
+      return header + `
         <div class="team-member-card" onclick="TASK_APP.openMemberJournal(${idx})">
           <div class="team-member-card-head">
             <div class="member-avatar">${esc(initial)}</div>
