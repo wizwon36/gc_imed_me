@@ -157,10 +157,6 @@
             <h2 class="section-title">검사 항목 선택</h2>
             <p class="sub-text equipment-form-section-desc" style="margin-top:6px;">관리할 검사 항목을 선택하거나 새 항목을 추가하세요.</p>
           </div>
-          <div style="display:flex;flex-direction:row;align-items:center;gap:8px;flex-shrink:0;">
-            <button type="button" id="editItemBtn" class="btn" style="display:none;min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">항목 수정</button>
-            <button type="button" id="deleteItemBtn" class="btn btn-danger" style="display:none;min-height:40px;font-size:13px;padding:0 14px;border-radius:12px;">항목 삭제</button>
-          </div>
         </div>
 
         <!-- 부서 필터 (admin 전용) -->
@@ -170,18 +166,36 @@
           <select id="teamFilterSelect" class="input" style="flex:1;min-width:120px;min-height:38px;font-size:13px;font-weight:600;" disabled></select>
         </div>
 
-        <!-- 그룹 탭 -->
-        <div id="groupTabsWrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 22px;border-bottom:1.5px solid #e0e7f2;"></div>
-
-        <!-- 항목 선택 셀렉트 + 추가 버튼 -->
-        <div id="itemSelectRow" style="display:none;align-items:center;gap:10px;padding:14px 22px;border-bottom:1.5px solid #e0e7f2;">
-          <select id="itemSelect" class="input" style="flex:1;min-height:44px;font-weight:600;"></select>
-          <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtn" style="flex-shrink:0;border-radius:12px;padding:0 16px;min-height:44px;">+ 항목 추가</button>
+        <!-- 항목 컨트롤 바: 그룹 셀렉트 + 항목 셀렉트 + 버튼 -->
+        <div id="itemControlBar" style="display:flex;align-items:center;gap:8px;padding:12px 22px;border-bottom:1.5px solid #e0e7f2;flex-wrap:wrap;">
+          <!-- 그룹 필터 콤보박스 -->
+          <select id="groupFilterSelect" class="input"
+            style="height:40px;font-size:13px;font-weight:600;min-width:110px;flex-shrink:0;"
+            onchange="onGroupFilterChange(this.value)">
+            <option value="">전체 그룹</option>
+          </select>
+          <!-- 검사 항목 셀렉트 -->
+          <select id="itemSelect" class="input"
+            style="flex:1;min-width:140px;height:40px;font-weight:600;"></select>
+          <!-- 항목 추가 + 수정/삭제 + 그룹 관리 버튼 묶음 -->
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            <button type="button" class="btn btn-primary" id="addItemTabBtn"
+              style="height:40px;padding:0 14px;font-size:13px;white-space:nowrap;">+ 항목 추가</button>
+            <button type="button" class="btn" id="editItemBtn"
+              style="height:40px;padding:0 12px;font-size:13px;white-space:nowrap;display:none;">✎ 수정</button>
+            <button type="button" class="btn btn-danger" id="deleteItemBtn"
+              style="height:40px;padding:0 12px;font-size:13px;white-space:nowrap;display:none;">🗑 삭제</button>
+            <button type="button" class="btn" id="groupManageBtn"
+              onclick="openGroupManageModal()"
+              style="height:40px;padding:0 12px;font-size:13px;white-space:nowrap;">⚙ 그룹</button>
+          </div>
         </div>
 
-        <!-- 항목 없을 때 추가 버튼만 -->
-        <div id="itemEmptyRow" style="padding:14px 22px;border-bottom:1.5px solid #e0e7f2;">
-          <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtnEmpty" style="border-radius:12px;padding:0 16px;min-height:44px;">+ 항목 추가</button>
+        <!-- 항목 없을 때 (항목 추가 버튼만) - 하위 호환 -->
+        <div id="itemSelectRow"  style="display:none;"></div>
+        <div id="itemEmptyRow"   style="display:none;">
+          <button type="button" class="lj-item-tab lj-item-tab-add" id="addItemTabBtnEmpty"
+            style="display:none;"></button>
         </div>
 
         <div class="empty-state" id="itemEmptyState" style="margin:20px 22px;">
