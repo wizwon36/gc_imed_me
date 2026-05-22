@@ -650,7 +650,7 @@
             ? '  ' + t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/')
             : '';
 
-          lines.push('  ● ' + t.title + priTag + statusSuffix + dateRange);
+          lines.push('  • ' + t.title + priTag + statusSuffix + dateRange);
           if (t.description && t.description.trim()) {
             pushDescription(lines, t.description);
           }
@@ -678,7 +678,7 @@
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const endLabel  = t.end_date > weekEnd ? '계속' : '진행중';
           const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
-          lines.push('  ● [' + catLabel + ']  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
+          lines.push('  • [' + catLabel + ']  ' + t.title + '  [' + endLabel + ']  ' + dateRange);
           if (t.description && t.description.trim()) pushDescription(lines, t.description);
         });
       }
@@ -688,7 +688,7 @@
         completedCarry.forEach(function(t, idx) {
           const catLabel  = CATEGORY_LABELS[t.category] || t.category || '기타';
           const dateRange = t.start_date.substring(5).replace('-','/') + ' ~ ' + t.end_date.substring(5).replace('-','/');
-          lines.push('  ● [' + catLabel + ']  ' + t.title + '  [완료]  ' + dateRange);
+          lines.push('  • [' + catLabel + ']  ' + t.title + '  [완료]  ' + dateRange);
           if (t.description && t.description.trim()) pushDescription(lines, t.description);
         });
       }
@@ -1524,7 +1524,7 @@
             const val = fi === 0
               ? (m.journal.attendance_this_week || '')
               : (m.journal.attendance_next_week || '');
-            if (val) { lines.push('○ ' + m.user_name); lines.push(val); }
+            if (val) { lines.push('• ' + m.user_name); lines.push(val); }
           });
           sc(r, 2+i, lines.join('\n'), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
         });
@@ -1575,21 +1575,21 @@
   }
 
   /**
-   * 엑셀 출력용 — 이름행, 날짜행, 날짜범위 제거 + 번호를 ●로 교체
+   * 엑셀 출력용 — 이름행, 날짜행, 날짜범위 제거 + 번호를 •로 교체
    */
   function stripNameAndDate(lines) {
     return lines
       .filter(l => {
         const t = l.trim();
         if (!t) return false;
-        if (t.startsWith('○ ')) return false;
+        if (t.startsWith('• ') && /^•\s+\S+\s*$/.test(t)) return false;  // 근태 이름행(이름만 있는 줄) 제거
         if (/^\d{2}\/\d{2}\s*\(/.test(t)) return false;
         return true;
       })
       .map(l => {
         // └ 가 포함된 줄이거나 continuation 들여쓰기(공백 8자 이상) 줄은 번호→● 변환 제외
         const isSubLine = l.includes('└') || /^ {8,}/.test(l);
-        let result = isSubLine ? l : l.replace(/^(\s*)\d+\.\s+/, '$1● ');
+        let result = isSubLine ? l : l.replace(/^(\s*)\d+\.\s+/, '$1• ');
         result = result.replace(/\s+\d{2}\/\d{2}\s*~\s*\d{2}\/\d{2}/g, '');
         result = result.replace(/\s+\d{2}\/\d{2}(?!\s*[~(])/g, '');
         return result;
@@ -1635,7 +1635,7 @@
       if (inSection && trimmed.startsWith('──')) break;
 
       if (inSection && trimmed) {
-        const isItem = /^●\s/.test(trimmed) || /^\d+\.\s/.test(trimmed);
+        const isItem = /^•\s/.test(trimmed) || /^\d+\.\s/.test(trimmed);
         if (isItem) {
           const isHigh = trimmed.includes(' * ') || trimmed.endsWith(' *') ||
                          trimmed.includes(' *  ') || / \*\s+\[/.test(trimmed);
