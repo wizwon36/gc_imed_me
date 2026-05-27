@@ -1082,7 +1082,8 @@ async function handleApprove(regId) {
     hideGlobalLoading();
   }
 
-  await loadPendingRegistrations();
+  // 사용자 목록 캐시 강제 갱신 (승인된 계정이 즉시 반영되도록)
+  await Promise.all([loadPendingRegistrations(), loadUsers(true)]);
 }
 
 async function handleReject(regId) {
@@ -1108,5 +1109,6 @@ async function handleReject(regId) {
     hideGlobalLoading();
   }
 
-  await loadPendingRegistrations();
+  // 사용자 목록 캐시 강제 갱신
+  await Promise.all([loadPendingRegistrations(), loadUsers(true)]);
 }
