@@ -545,7 +545,7 @@ async function saveGroup() {
   try {
     btn.disabled    = true;
     btn.textContent = isEdit ? '수정 중...' : '추가 중...';
-    showGroupSpinner(isEdit ? '그룹 수정 중...' : '그룹 추가 중...');
+    if (!isEdit) showGroupSpinner('그룹 추가 중...');
     await apiPost(action, payload);
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
@@ -564,7 +564,7 @@ async function saveGroup() {
   } finally {
     btn.disabled    = false;
     btn.textContent = isEdit ? '수정' : '추가';
-    hideGroupSpinner();
+    if (!isEdit) hideGroupSpinner();
   }
 }
 
@@ -586,16 +586,13 @@ async function deleteGroup(groupId, groupName) {
   renderItemSelect();
 
   try {
-    showGroupSpinner('그룹 삭제 중...');
     await apiPost('ljDeleteGroup', { request_user_email: user.email, group_id: groupId });
-    // 서버 확정
     const res = await apiGet('ljGetGroups', { request_user_email: user.email });
     state.groups = Array.isArray(res.data) ? res.data : [];
     renderGroupTabs();
     renderGroupFilterSelect();
     renderGroupManageList();
   } catch (err) {
-    // 롤백
     state.groups = prevGroups;
     state.items  = prevItems;
     renderGroupTabs();
@@ -603,8 +600,6 @@ async function deleteGroup(groupId, groupName) {
     renderGroupManageList();
     renderItemSelect();
     alert(err.message || '삭제에 실패했습니다.');
-  } finally {
-    hideGroupSpinner();
   }
 }
 
