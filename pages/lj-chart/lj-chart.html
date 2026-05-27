@@ -443,7 +443,12 @@
   <script src="../../assets/js/lj-chart/lj-chart.js"></script>
 <!-- 그룹 관리 모달 -->
 <div class="lj-modal-overlay" id="groupManageModal" onclick="if(event.target===this)closeGroupManageModal()">
-  <div class="lj-modal" style="max-width:680px;width:95%;">
+  <div class="lj-modal" style="max-width:680px;width:95%;position:relative;">
+    <!-- 모달 내부 로딩 오버레이 -->
+    <div id="groupModalSpinner" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.78);border-radius:18px;z-index:10;align-items:center;justify-content:center;flex-direction:column;gap:10px;">
+      <div style="width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:globalLoadingSpin 0.75s linear infinite;"></div>
+      <span id="groupModalSpinnerText" style="font-size:13px;font-weight:600;color:#334155;"></span>
+    </div>
     <div class="lj-modal-head">
       <span class="lj-modal-title">⚙ 그룹 관리</span>
       <button class="lj-modal-close" onclick="closeGroupManageModal()">✕</button>
