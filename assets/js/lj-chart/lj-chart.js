@@ -348,12 +348,21 @@ function renderGroupManageList() {
   const list = $('groupManageList');
   if (!list) return;
 
-  if (state.groups.length === 0) {
+  const filterTeam   = $('teamFilterSelect')?.value   || '';
+  const filterClinic = $('clinicFilterSelect')?.value || '';
+
+  const visibleGroups = state.groups.filter(g => {
+    if (filterTeam   && g.team_code   && g.team_code   !== filterTeam)   return false;
+    if (filterClinic && g.clinic_code && g.clinic_code !== filterClinic) return false;
+    return true;
+  });
+
+  if (visibleGroups.length === 0) {
     list.innerHTML = '<p style="font-size:12px;color:#94a3b8;text-align:center;padding:12px 0;">그룹이 없습니다</p>';
     return;
   }
 
-  list.innerHTML = state.groups.map(g => {
+  list.innerHTML = visibleGroups.map(g => {
     const isActive = g.group_id === state._editingGroupId;
     const cnt = state.items.filter(it => it.group_id === g.group_id).length;
     return `
@@ -398,10 +407,16 @@ function renderAssignPanel(groupId) {
   panel.style.display = 'flex';
   $('assignPanelTitle').textContent = group.group_name;
 
-  // 같은 팀 항목만 배정 가능 (관리자 혼용 방지)
-  const sameTeamItems = state.items.filter(it =>
-    !group.team_code || !it.team_code || it.team_code === group.team_code
-  );
+  const filterTeam   = $('teamFilterSelect')?.value   || '';
+  const filterClinic = $('clinicFilterSelect')?.value || '';
+
+  // 같은 팀 항목만 + 현재 팀/의원 필터도 적용
+  const sameTeamItems = state.items.filter(it => {
+    if (filterTeam   && (it.team_code   || '') !== filterTeam)   return false;
+    if (filterClinic && (it.clinic_code || '') !== filterClinic) return false;
+    if (group.team_code && it.team_code && it.team_code !== group.team_code) return false;
+    return true;
+  });
   const assigned   = sameTeamItems.filter(it => it.group_id === groupId);
   const unassigned = sameTeamItems.filter(it => !it.group_id || it.group_id === '');
 
