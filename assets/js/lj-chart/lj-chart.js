@@ -103,7 +103,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         clinicSel.addEventListener('change', () => {
           updateTeams(clinicSel.value);
-          state.activeItemId = null;
+          state.activeItemId  = null;
+          state.activeGroupId = null;
+          renderGroupFilterSelect();
           renderItemSelect();
           showItemEmptyState();
         });
@@ -154,7 +156,9 @@ function bindEvents() {
 
   // 팀 필터 변경 (admin 전용)
   $('teamFilterSelect')?.addEventListener('change', () => {
-    state.activeItemId = null;
+    state.activeItemId  = null;
+    state.activeGroupId = null;
+    renderGroupFilterSelect();
     renderItemSelect();
     showItemEmptyState();
   });
@@ -287,17 +291,30 @@ function renderGroupFilterSelect() {
   const sel = $('groupFilterSelect');
   if (!sel) return;
 
-  const current = sel.value;
+  const filterTeam   = $('teamFilterSelect')?.value   || '';
+  const filterClinic = $('clinicFilterSelect')?.value || '';
+
+  // 현재 팀/의원 필터에 맞는 그룹만 표시
+  const visibleGroups = state.groups.filter(g => {
+    if (filterTeam   && g.team_code   && g.team_code   !== filterTeam)   return false;
+    if (filterClinic && g.clinic_code && g.clinic_code !== filterClinic) return false;
+    return true;
+  });
+
   sel.innerHTML = '<option value="">전체 그룹</option>' +
-    state.groups.map(g =>
+    visibleGroups.map(g =>
       `<option value="${escHtml(g.group_id)}" ${g.group_id === state.activeGroupId ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
     ).join('') +
-    '<option value="__ungrouped__">미분류</option>';
+    '<option value="__ungrouped__" ' + (state.activeGroupId === '__ungrouped__' ? 'selected' : '') + '>미분류</option>';
 
-  // 현재 선택 유지
-  if (state.activeGroupId === '__ungrouped__') sel.value = '__ungrouped__';
-  else if (state.activeGroupId) sel.value = state.activeGroupId;
-  else sel.value = '';
+  // 현재 선택된 그룹이 필터에 안 맞으면 초기화
+  if (state.activeGroupId && state.activeGroupId !== '__ungrouped__') {
+    const still = visibleGroups.find(g => g.group_id === state.activeGroupId);
+    if (!still) {
+      state.activeGroupId = null;
+      sel.value = '';
+    }
+  }
 }
 
 function onGroupFilterChange(val) {
