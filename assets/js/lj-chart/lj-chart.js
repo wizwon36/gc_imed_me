@@ -805,19 +805,28 @@ function updateExpectedOptions(selectedExpected) {
 }
 
 function openItemModal(item) {
-  const user = window.auth.getSession();
+  const user    = window.auth.getSession();
   const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
 
   $('itemModalTitle').textContent = item ? '검사 항목 수정' : '검사 항목 추가';
-  $('modalItemId').value    = item ? item.item_id : '';
-  $('modalItemName').value  = item ? item.item_name : '';
-  $('modalItemMemo').value  = item ? (item.memo || '') : '';
+  $('modalItemId').value   = item ? item.item_id : '';
+  $('modalItemName').value = item ? item.item_name : '';
+  $('modalItemMemo').value = item ? (item.memo || '') : '';
 
-  // 그룹 셀렉트 업데이트
+  // 현재 부서 필터값 (관리자 전용)
+  const filterClinic = $('clinicFilterSelect')?.value || '';
+  const filterTeam   = $('teamFilterSelect')?.value   || '';
+
+  // 그룹 셀렉트 — 현재 팀/의원 필터에 맞는 그룹만 표시
   const groupSel = $('modalItemGroup');
   if (groupSel) {
+    const visibleGroups = state.groups.filter(g => {
+      if (filterTeam   && g.team_code   && g.team_code   !== filterTeam)   return false;
+      if (filterClinic && g.clinic_code && g.clinic_code !== filterClinic) return false;
+      return true;
+    });
     groupSel.innerHTML = '<option value="" selected>미분류 (그룹 없음)</option>' +
-      state.groups.map(g =>
+      visibleGroups.map(g =>
         `<option value="${escHtml(g.group_id)}" ${item && item.group_id === g.group_id ? 'selected' : ''}>${escHtml(g.group_name)}</option>`
       ).join('');
     // 그룹 탭에서 열면 해당 그룹 자동 선택
@@ -833,16 +842,22 @@ function openItemModal(item) {
     const teams   = state.orgData.teams   || [];
 
     $('modalItemClinic').innerHTML = '<option value="">의원 선택</option>' +
-      clinics.map(c => `<option value="${escHtml(c.code_value)}" ${c.code_value === item?.clinic_code ? 'selected' : ''}>${escHtml(c.code_name)}</option>`).join('');
+      clinics.map(c => `<option value="${escHtml(c.code_value)}"
+        ${(item?.clinic_code || filterClinic) === c.code_value ? 'selected' : ''}
+        >${escHtml(c.code_name)}</option>`).join('');
 
-    const filterTeams = (clinicCode) => {
+    const appliedClinic = item?.clinic_code || filterClinic || '';
+
+    const filterTeamsFn = (clinicCode) => {
       $('modalItemTeam').innerHTML = '<option value="">팀 선택</option>' +
         teams.filter(t => !clinicCode || t.parent_code === clinicCode)
-             .map(t => `<option value="${escHtml(t.code_value)}" ${t.code_value === item?.team_code ? 'selected' : ''}>${escHtml(t.code_name)}</option>`).join('');
+             .map(t => `<option value="${escHtml(t.code_value)}"
+               ${(item?.team_code || filterTeam) === t.code_value ? 'selected' : ''}
+               >${escHtml(t.code_name)}</option>`).join('');
     };
-    filterTeams(item?.clinic_code || '');
+    filterTeamsFn(appliedClinic);
 
-    $('modalItemClinic').onchange = () => filterTeams($('modalItemClinic').value);
+    $('modalItemClinic').onchange = () => filterTeamsFn($('modalItemClinic').value);
   } else {
     $('modalOrgFields').style.display = 'none';
   }
