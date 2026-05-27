@@ -847,6 +847,8 @@ async function setUserActive(userEmail, active) {
 
     await loadUsers(true);
     renderUserList(true);
+    // 사용자 목록 탭도 갱신
+    await searchUsersAll();
   } catch (error) {
     setAdminMessage(error.message || `사용자 ${actionLabel} 중 오류가 발생했습니다.`, 'error');
   } finally {
