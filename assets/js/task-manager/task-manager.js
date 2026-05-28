@@ -1682,7 +1682,8 @@
       window.XLSX.utils.book_append_sheet(wb2, ws, '주간업무보고');
       const today = new Date();
       const ds = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
-      window.XLSX.writeFile(wb2, `주간업무보고_${teamWeekStart}_${ds}.xlsx`);
+      const weekStartDs = (teamWeekStart || '').replace(/-/g, '');
+      window.XLSX.writeFile(wb2, `주간업무보고_${weekStartDs}_${ds}.xlsx`);
       showMessage('엑셀 다운로드가 완료되었습니다.', 'success');
 
 
@@ -1866,21 +1867,24 @@
 
           ${!j ? `
             <div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;">아직 일지를 작성하지 않았습니다.</div>
-          ` : FIELDS.map(f => {
-              const val = j[f.key] || '';
-              if (!val) return '';
-              // Y/N 체크박스 타입
-              if (f.type === 'yn') {
-                if (val !== 'Y') return '';
-                return `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;margin:0 4px 4px 0;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;white-space:nowrap;">✓ ${esc(f.label)}</span>`;
-              }
-              return `
-                <div style="margin-bottom:12px;">
-                  <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em;">${esc(f.label)}</div>
-                  <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">${esc(val)}</div>
-                </div>
-              `;
-            }).join('')}
+          ` : (() => {
+              const ynChips = FIELDS.filter(f => f.type === 'yn' && (j[f.key] || '') === 'Y');
+              const ynHtml = ynChips.length
+                ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;">
+                    ${ynChips.map(f => `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;white-space:nowrap;">✓ ${esc(f.label)}</span>`).join('')}
+                  </div>`
+                : '';
+              const fieldHtml = FIELDS.filter(f => !f.type).map(f => {
+                const val = j[f.key] || '';
+                if (!val) return '';
+                return `
+                  <div style="margin-bottom:12px;">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em;">${esc(f.label)}</div>
+                    <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">${esc(val)}</div>
+                  </div>`;
+              }).join('');
+              return ynHtml + fieldHtml;
+            })()}
 
           ${j?.submitted_at ? `<div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;">제출: ${j.submitted_at.substring(0,16)}</div>` : ''}
         </div>
