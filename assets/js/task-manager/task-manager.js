@@ -1304,7 +1304,12 @@
                 ${s.high ? `<span style="color:#dc2626;">·🔴${s.high}</span>` : ''}
               </span>
             </div>
-            ${m.journal?.attendance_this_week ? `<div style="font-size:11px;color:var(--text-muted);">근태: ${esc(m.journal.attendance_this_week)}</div>` : ''}
+            ${m.journal?.attendance_this_week ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">근태: ${esc(m.journal.attendance_this_week)}</div>` : ''}
+            ${(m.journal?.early_work_this === 'Y' || m.journal?.sat_work_this === 'Y') ? `
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">
+                ${m.journal?.early_work_this === 'Y' ? `<span style="display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:5px;font-size:10px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;white-space:nowrap;">조출</span>` : ''}
+                ${m.journal?.sat_work_this   === 'Y' ? `<span style="display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:5px;font-size:10px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;white-space:nowrap;">토요근무</span>` : ''}
+              </div>` : ''}
           </div>
         </div>
       `;
@@ -1867,10 +1872,7 @@
               // Y/N 체크박스 타입
               if (f.type === 'yn') {
                 if (val !== 'Y') return '';
-                return `
-                  <div style="display:inline-flex;align-items:center;gap:4px;margin:0 4px 4px 0;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">
-                    ✓ ${esc(f.label)}
-                  </div>`;
+                return `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;margin:0 4px 4px 0;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;white-space:nowrap;">✓ ${esc(f.label)}</span>`;
               }
               return `
                 <div style="margin-bottom:12px;">
