@@ -23,6 +23,7 @@
   // ── 상태 ────────────────────────────────────────────────────
   let currentUser = null;
   let isManager   = false;
+  let isEdit      = false;
   let isAdmin     = false;
 
   // 주간 업무 탭
@@ -78,12 +79,13 @@
       }
 
       isManager = isAdmin || (perm && perm.permission === 'manager');
+      isEdit    = !!(perm && perm.permission === 'edit');
 
       document.getElementById('appBody').style.display = '';
 
       // tabTeam은 모든 사용자에게 표시
-      // 카테고리 관리, 엑셀 다운로드는 manager/admin 전용
-      if (isManager) {
+      // 카테고리 관리, 엑셀 다운로드는 manager/admin 전용 (edit 제외)
+      if (isManager && !isEdit) {
         document.getElementById('categoryManageBtn').style.display = '';
         document.getElementById('exportJournalBtn').style.display  = '';
       }
@@ -970,7 +972,7 @@
 
     saveBtn.style.display   = isClosed ? 'none' : '';
     submitBtn.style.display = isClosed || status === 'SUBMITTED' ? 'none' : '';
-    closeBtn.style.display  = isManager && !isClosed ? '' : 'none';
+    closeBtn.style.display  = (isManager && !isEdit && !isClosed) ? '' : 'none';
 
     // 필드 채우기 — currentJournal에 세팅된 값을 그대로 표시
     // (handleGenerateJournal에서 저장 후 직접 세팅하므로 별도 자동채우기 로직 불필요)
@@ -1308,8 +1310,8 @@
 
     const closeActionBtn  = document.getElementById('memberJournalCloseActionBtn');
     const reopenActionBtn = document.getElementById('memberJournalReopenBtn');
-    closeActionBtn.style.display  = (isManager && j && j.status !== 'CLOSED') ? '' : 'none';
-    reopenActionBtn.style.display = (isManager && j && j.status === 'CLOSED') ? '' : 'none';
+    closeActionBtn.style.display  = (isManager && !isEdit && j && j.status !== 'CLOSED') ? '' : 'none';
+    reopenActionBtn.style.display = (isManager && !isEdit && j && j.status === 'CLOSED') ? '' : 'none';
 
     let html = '';
 
