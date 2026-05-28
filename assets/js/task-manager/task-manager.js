@@ -1607,22 +1607,22 @@
       // 조출 / 토요근무
       const earlyWorkStart = r;
       [
-        { fi: 'early_work_this', label: '이번주 조출'     },
-        { fi: 'early_work_next', label: '다음주 조출'     },
-        { fi: 'sat_work_this',   label: '이번주 토요근무' },
-        { fi: 'sat_work_next',   label: '다음주 토요근무' }
+        { thisKey: 'early_work_this', satKey: 'sat_work_this', label: '이번주' },
+        { thisKey: 'early_work_next', satKey: 'sat_work_next', label: '다음주' }
       ].forEach((row, idx) => {
         sc(r, 0, idx === 0 ? '조출/토요근무' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
         sc(r, 1, row.label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
         clinics.forEach((cl, i) => {
-          const names = (clinicMap[cl]||[])
-            .filter(m => m.journal && m.journal[row.fi] === 'Y')
-            .map(m => m.user_name);
-          sc(r, 2+i, names.length ? names.join(', ') : '-', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+          const earlyNames = (clinicMap[cl]||[]).filter(m => m.journal && m.journal[row.thisKey] === 'Y').map(m => m.user_name);
+          const satNames   = (clinicMap[cl]||[]).filter(m => m.journal && m.journal[row.satKey]  === 'Y').map(m => m.user_name);
+          const lines = [];
+          if (earlyNames.length) lines.push('[조출] : ' + earlyNames.join(', '));
+          if (satNames.length)   lines.push('[토요근무] : ' + satNames.join(', '));
+          sc(r, 2+i, lines.length ? lines.join('\n') : '-', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
         });
         r++;
       });
-      mg(earlyWorkStart, earlyWorkStart + 3, 0, 0);
+      mg(earlyWorkStart, earlyWorkStart + 1, 0, 0);
 
       // 근태 (금주/차주)
       const attStart = r;
