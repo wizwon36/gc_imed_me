@@ -201,6 +201,35 @@
             <div id="journalTaskList" style="font-size:12px;color:var(--text-muted);">-</div>
           </div>
 
+          <!-- 조출 여부 -->
+          <div class="journal-section">
+            <div class="journal-section-title"><span class="icon">⏰</span> 조출 / 특근 여부</div>
+            <div class="early-work-grid">
+              <div class="early-work-week">
+                <div class="early-work-week-label">이번 주</div>
+                <label class="early-work-item">
+                  <input type="checkbox" id="earlyWorkThis" class="early-work-checkbox" />
+                  <span class="early-work-label">조출</span>
+                </label>
+                <label class="early-work-item">
+                  <input type="checkbox" id="satWorkThis" class="early-work-checkbox" />
+                  <span class="early-work-label">토요일 출근</span>
+                </label>
+              </div>
+              <div class="early-work-week">
+                <div class="early-work-week-label">다음 주</div>
+                <label class="early-work-item">
+                  <input type="checkbox" id="earlyWorkNext" class="early-work-checkbox" />
+                  <span class="early-work-label">조출</span>
+                </label>
+                <label class="early-work-item">
+                  <input type="checkbox" id="satWorkNext" class="early-work-checkbox" />
+                  <span class="early-work-label">토요일 출근</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <!-- 근태 특이사항 -->
           <div class="journal-section">
             <div class="journal-section-title"><span class="icon">🗓️</span> 근태 특이사항</div>
