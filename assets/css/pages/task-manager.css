@@ -771,6 +771,61 @@
 }
 
 /* ── 근태 입력 ── */
+/* ── 조출 / 특근 여부 ── */
+.early-work-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.early-work-week {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border-soft, #e2e8f0);
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+}
+
+.early-work-week-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.early-work-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.early-work-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue, #2563eb);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.early-work-checkbox:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.early-work-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+@media (max-width: 640px) {
+  .early-work-grid { grid-template-columns: 1fr; }
+}
+
 .attendance-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
