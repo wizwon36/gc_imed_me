@@ -81,10 +81,11 @@
 
       document.getElementById('appBody').style.display = '';
 
-      // 카테고리 관리 버튼 (manager/admin 전용)
+      // tabTeam은 모든 사용자에게 표시
+      // 카테고리 관리, 엑셀 다운로드는 manager/admin 전용
       if (isManager) {
-        document.getElementById('tabTeam').style.display = '';
         document.getElementById('categoryManageBtn').style.display = '';
+        document.getElementById('exportJournalBtn').style.display  = '';
       }
 
       const todayStr      = formatDateStr(new Date());
@@ -256,7 +257,7 @@
         loadJournal();
       }
     }
-    if (tab === 'team' && isManager) {
+    if (tab === 'team') {
       showGlobalLoading('팀원 현황을 불러오는 중...');
       loadTeamJournals().finally(() => hideGlobalLoading());
     }
@@ -983,21 +984,11 @@
     journalDirty = false;
   }
 
-  // 각 필드의 원래 placeholder (HTML에서 정의된 값)
-  const FIELD_PLACEHOLDERS = {
-    attendanceThisWeek: '예) 금요일 반차, 목요일 출장 등',
-    attendanceNextWeek: '예) 월요일 연차, 수요일 교육 등',
-    journalSummary:     '이번 주 전반적인 업무 현황을 간략히 작성해 주세요.',
-    journalNextPlan:    '다음 주 주요 업무 계획을 작성해 주세요.',
-    journalIssues:      '이슈, 지원 요청, 건의사항 등을 작성해 주세요.'
-  };
-
   function setField(id, value, disabled) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.value       = value || '';
-    el.disabled    = !!disabled;
-    el.placeholder = FIELD_PLACEHOLDERS[id] || '';
+    el.value    = value || '';
+    el.disabled = !!disabled;
   }
 
   function renderJournalTaskSummary() {
@@ -1315,9 +1306,10 @@
       `${esc(m.user_name)}<span style="font-size:11px;font-weight:500;color:var(--text-muted);margin-left:6px;">${esc(m.team_name || m.department || '')}</span>` +
       (status ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-left:8px;background:${statusColor[status]}22;color:${statusColor[status]};">${esc(statusMap[status] || status)}</span>` : '');
 
-    const closeActionBtn = document.getElementById('memberJournalCloseActionBtn');
-    closeActionBtn.style.display =
-      (isManager && j && j.status !== 'CLOSED') ? '' : 'none';
+    const closeActionBtn  = document.getElementById('memberJournalCloseActionBtn');
+    const reopenActionBtn = document.getElementById('memberJournalReopenBtn');
+    closeActionBtn.style.display  = (isManager && j && j.status !== 'CLOSED') ? '' : 'none';
+    reopenActionBtn.style.display = (isManager && j && j.status === 'CLOSED') ? '' : 'none';
 
     let html = '';
 
@@ -1385,6 +1377,26 @@
           journal_id:         j.journal_id
         });
         showMessage('마감되었습니다.', 'success');
+        closeMemberModal();
+        showGlobalLoading('팀원 현황을 불러오는 중...');
+        loadTeamJournals().finally(() => hideGlobalLoading());
+      } catch (err) {
+        showMessage(err.message, 'error');
+      } finally {
+        hideGlobalLoading();
+      }
+    };
+
+    reopenActionBtn.onclick = async () => {
+      if (!j) return;
+      if (!confirm(`${m.user_name}님의 일지 마감을 해제하시겠습니까?\n제출됨 상태로 돌아갑니다.`)) return;
+      try {
+        showGlobalLoading('마감 해제 중...');
+        await apiPost('journalReopen', {
+          request_user_email: currentUser.email,
+          journal_id:         j.journal_id
+        });
+        showMessage('마감이 해제되었습니다.', 'success');
         closeMemberModal();
         showGlobalLoading('팀원 현황을 불러오는 중...');
         loadTeamJournals().finally(() => hideGlobalLoading());
@@ -2231,6 +2243,7 @@
           <div class="category-item">
             <span class="category-item-order">${c.sort_order}</span>
             <span class="category-item-name">${esc(c.code_name)}</span>
+            <span class="category-item-code">${esc(c.code_value)}</span>
             <div class="category-item-actions">
               <button class="task-icon-btn" title="수정" onclick="TASK_APP.editCategory('${esc(c.code_value)}','${esc(c.code_name)}',${c.sort_order},'${esc(c.code_group)}')">✎</button>
               ${canDelete ? `<button class="task-icon-btn danger" title="삭제" onclick="TASK_APP.deleteCategory('${esc(c.code_value)}','${esc(c.code_name)}','${esc(c.code_group)}')">🗑</button>` : ''}
