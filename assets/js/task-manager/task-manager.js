@@ -1366,6 +1366,30 @@
         </div>`;
       };
 
+      // 조출 / 토요근무 여부
+      const earlyThis = j.early_work_this === 'Y';
+      const earlyNext = j.early_work_next === 'Y';
+      const satThis   = j.sat_work_this   === 'Y';
+      const satNext   = j.sat_work_next   === 'Y';
+      if (earlyThis || earlyNext || satThis || satNext) {
+        const chip = (on, label) => on
+          ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">${label}</span>`
+          : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;">${label}</span>`;
+        html += `<div style="margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">⏰ 조출 / 토요근무 여부</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="background:#f8fafc;padding:8px 12px;border-radius:10px;border:1px solid var(--border-soft);">
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">이번 주</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">${chip(earlyThis,'조출')} ${chip(satThis,'토요근무')}</div>
+            </div>
+            <div style="background:#f8fafc;padding:8px 12px;border-radius:10px;border:1px solid var(--border-soft);">
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">다음 주</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">${chip(earlyNext,'조출')} ${chip(satNext,'토요근무')}</div>
+            </div>
+          </div>
+        </div>`;
+      }
+
       // 근태 (금주/차주 나란히)
       if (j.attendance_this_week || j.attendance_next_week) {
         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
@@ -1580,6 +1604,26 @@
         mg(catStart, catStart + 1, 0, 0);
       });
 
+      // 조출 / 토요근무
+      const earlyWorkStart = r;
+      [
+        { fi: 'early_work_this', label: '이번주 조출'     },
+        { fi: 'early_work_next', label: '다음주 조출'     },
+        { fi: 'sat_work_this',   label: '이번주 토요근무' },
+        { fi: 'sat_work_next',   label: '다음주 토요근무' }
+      ].forEach((row, idx) => {
+        sc(r, 0, idx === 0 ? '조출/토요근무' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        sc(r, 1, row.label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        clinics.forEach((cl, i) => {
+          const names = (clinicMap[cl]||[])
+            .filter(m => m.journal && m.journal[row.fi] === 'Y')
+            .map(m => m.user_name);
+          sc(r, 2+i, names.length ? names.join(', ') : '-', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+        });
+        r++;
+      });
+      mg(earlyWorkStart, earlyWorkStart + 3, 0, 0);
+
       // 근태 (금주/차주)
       const attStart = r;
       ['금주', '차주'].forEach((label, fi) => {
@@ -1760,6 +1804,10 @@
     }
 
     const FIELDS = [
+      { key: 'early_work_this',      label: '이번주 조출',      type: 'yn' },
+      { key: 'early_work_next',      label: '다음주 조출',      type: 'yn' },
+      { key: 'sat_work_this',        label: '이번주 토요근무',  type: 'yn' },
+      { key: 'sat_work_next',        label: '다음주 토요근무',  type: 'yn' },
       { key: 'attendance_this_week', label: '이번 주 근태' },
       { key: 'attendance_next_week', label: '다음 주 근태 예정' },
       { key: 'summary',             label: '주간 업무 요약' },
@@ -1816,6 +1864,14 @@
           ` : FIELDS.map(f => {
               const val = j[f.key] || '';
               if (!val) return '';
+              // Y/N 체크박스 타입
+              if (f.type === 'yn') {
+                if (val !== 'Y') return '';
+                return `
+                  <div style="display:inline-flex;align-items:center;gap:4px;margin:0 4px 4px 0;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">
+                    ✓ ${esc(f.label)}
+                  </div>`;
+              }
               return `
                 <div style="margin-bottom:12px;">
                   <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em;">${esc(f.label)}</div>
