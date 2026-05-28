@@ -57,7 +57,7 @@
         <button class="task-tab-btn" data-tab="journal" id="tabJournal">
           📝 업무일지
         </button>
-        <button class="task-tab-btn" id="tabTeam" data-tab="team" style="display:none;">
+        <button class="task-tab-btn" id="tabTeam" data-tab="team">
           👥 팀원 현황
         </button>
         <button class="task-tab-btn" data-tab="search" id="tabSearch">
@@ -256,7 +256,7 @@
             </div>
             <div style="display:flex;gap:8px;">
               <button class="btn btn-primary" id="mergeViewBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">📄 통합 보기</button>
-              <button class="btn" id="exportJournalBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">⬇ 엑셀 다운로드</button>
+              <button class="btn" id="exportJournalBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;display:none;">⬇ 엑셀 다운로드</button>
             </div>
           </div>
 
@@ -459,6 +459,7 @@
       </div>
       <div class="task-modal-footer">
         <button class="btn btn-primary" id="memberJournalCloseActionBtn" style="display:none;">마감 처리</button>
+        <button class="btn" id="memberJournalReopenBtn" style="display:none;border-color:#d97706;color:#d97706;">마감 해제</button>
         <button class="btn" id="memberJournalDismissBtn">닫기</button>
       </div>
     </div>
