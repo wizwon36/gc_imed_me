@@ -204,10 +204,14 @@
     document.getElementById('journalSubmitBtn')?.addEventListener('click', submitJournal);
     document.getElementById('journalCloseBtn')?.addEventListener('click', closeJournal);
 
-    // 일지 자동 저장 (입력 후 2.5초 디바운스)
+    // 일지 자동 저장 (입력 후 디바운스)
     ['journalSummary','journalNextPlan','journalIssues',
      'attendanceThisWeek','attendanceNextWeek'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', onJournalInput);
+    });
+    // 체크박스는 change 이벤트
+    ['earlyWorkThis','earlyWorkNext','satWorkThis','satWorkNext'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', onJournalInput);
     });
 
     // 팀원 일지 모달
@@ -934,6 +938,10 @@
         const el = document.getElementById(id);
         if (el) { el.value = ''; el.disabled = true; el.placeholder = '업무일지를 먼저 생성해 주세요.'; }
       });
+      ['earlyWorkThis','earlyWorkNext','satWorkThis','satWorkNext'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.checked = false; el.disabled = true; }
+      });
 
       document.getElementById('autosaveText').textContent = isPastWeek
         ? '해당 주에 작성된 일지가 없습니다.'
@@ -976,6 +984,10 @@
 
     // 필드 채우기 — currentJournal에 세팅된 값을 그대로 표시
     // (handleGenerateJournal에서 저장 후 직접 세팅하므로 별도 자동채우기 로직 불필요)
+    setField('earlyWorkThis',      j.early_work_this, isClosed);
+    setField('earlyWorkNext',      j.early_work_next, isClosed);
+    setField('satWorkThis',        j.sat_work_this,   isClosed);
+    setField('satWorkNext',        j.sat_work_next,   isClosed);
     setField('attendanceThisWeek', j.attendance_this_week, isClosed);
     setField('attendanceNextWeek', j.attendance_next_week, isClosed);
     setField('journalSummary',      j.summary,      isClosed);
@@ -989,8 +1001,13 @@
   function setField(id, value, disabled) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.value    = value || '';
-    el.disabled = !!disabled;
+    if (el.type === 'checkbox') {
+      el.checked  = value === 'Y' || value === true;
+      el.disabled = !!disabled;
+    } else {
+      el.value    = value || '';
+      el.disabled = !!disabled;
+    }
   }
 
   function renderJournalTaskSummary() {
@@ -1134,6 +1151,10 @@
     const payload = {
       request_user_email:   currentUser.email,
       journal_id:           currentJournal.journal_id,
+      early_work_this:      document.getElementById('earlyWorkThis')?.checked ? 'Y' : 'N',
+      early_work_next:      document.getElementById('earlyWorkNext')?.checked ? 'Y' : 'N',
+      sat_work_this:        document.getElementById('satWorkThis')?.checked   ? 'Y' : 'N',
+      sat_work_next:        document.getElementById('satWorkNext')?.checked   ? 'Y' : 'N',
       attendance_this_week: document.getElementById('attendanceThisWeek').value,
       attendance_next_week: document.getElementById('attendanceNextWeek').value,
       summary:              document.getElementById('journalSummary').value,
