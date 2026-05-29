@@ -1482,7 +1482,7 @@
         const chip = (on, label) => on
           ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">${label}</span>`
           : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;">${label}</span>`;
-        const gridStyle2col = window.innerWidth <= 640
+        const gridStyle2col = window.innerWidth <= 900
           ? 'display:grid;grid-template-columns:1fr;gap:8px;'
           : 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
         html += `<div style="margin-bottom:14px;">
@@ -1502,7 +1502,7 @@
 
       // 근태 (금주/차주 나란히)
       if (j.attendance_this_week || j.attendance_next_week) {
-        const attGridStyle = window.innerWidth <= 640
+        const attGridStyle = window.innerWidth <= 900
           ? 'display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px;'
           : 'display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;';
         html += `<div style="${attGridStyle}">
@@ -1529,7 +1529,7 @@
       };
       if (hasSummary || hasNextPlan) {
         // 모바일(640px 이하)은 1컬럼, PC는 2컬럼
-        const isMobile   = window.innerWidth <= 640;
+        const isMobile   = window.innerWidth <= 900;
         const gridStyle  = isMobile
           ? 'display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px;'
           : 'display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;';
