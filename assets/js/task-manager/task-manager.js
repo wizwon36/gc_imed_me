@@ -1436,6 +1436,7 @@
       html += section('⚠️', '이슈 / 건의사항',  j.issues       || '', true);
 
       const timestamps = [];
+      if (j.updated_at)   timestamps.push(`최종 수정: ${j.updated_at.substring(0,16)}`);
       if (j.submitted_at) timestamps.push(`제출: ${j.submitted_at.substring(0,16)}`);
       if (j.closed_at)    timestamps.push(`마감: ${j.closed_at.substring(0,16)}${j.closed_by ? ' (' + j.closed_by + ')' : ''}`);
       if (timestamps.length) {
