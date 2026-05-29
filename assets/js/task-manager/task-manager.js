@@ -206,10 +206,11 @@
     document.getElementById('journalCloseBtn')?.addEventListener('click', closeJournal);
 
     // 일지 자동 저장 (입력 후 디바운스)
-    ['journalSummary','journalNextPlan','journalIssues',
+    ['journalSummary','journalIssues',
      'attendanceThisWeek','attendanceNextWeek'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', onJournalInput);
     });
+    // journalNextPlan은 다음 주 업무 자동생성 읽기 전용 — 자동저장 바인딩 제외
     // 체크박스는 change 이벤트
     ['earlyWorkThis','earlyWorkNext','satWorkThis','satWorkNext'].forEach(id => {
       document.getElementById(id)?.addEventListener('change', onJournalInput);
@@ -1034,7 +1035,9 @@
     const nextPlanValue = (currentNextJournal && currentNextJournal.summary)
       ? currentNextJournal.summary
       : (j.next_plan || '');
-    setField('journalNextPlan', nextPlanValue, isClosed);
+    // journalNextPlan은 readonly textarea — value만 세팅 (disabled 불필요)
+    const npEl = document.getElementById('journalNextPlan');
+    if (npEl) npEl.value = nextPlanValue;
     setField('journalIssues',       j.issues,       isClosed);
 
     updateAutosaveStatus('');
