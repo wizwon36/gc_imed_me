@@ -1401,5 +1401,29 @@ document.querySelector('.print-btn').addEventListener('mouseenter', function() {
 });
 </script>
 
+
+<!-- PRINT BUTTON -->
+<div class="print-btn-wrap">
+  <div class="print-hint">컬러 프린터: 배경 그래픽 옵션 켜기 권장</div>
+  <button class="print-btn" onclick="handlePrint()">
+    <svg viewBox="0 0 24 24">
+      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+      <rect x="6" y="14" width="12" height="8"></rect>
+    </svg>
+    이력서 인쇄 / PDF 저장
+  </button>
+</div>
+
+<script>
+function handlePrint() {
+  const hint = document.querySelector('.print-hint');
+  hint.style.opacity = '0';
+  hint.style.transition = 'opacity 0.3s';
+  setTimeout(() => { window.print(); }, 100);
+  setTimeout(() => { hint.style.opacity = '1'; }, 1500);
+}
+</script>
+
 </body>
 </html>
