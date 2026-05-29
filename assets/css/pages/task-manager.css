@@ -763,7 +763,7 @@
   background: #fff;
   color: var(--text-primary);
   font-size: 12.5px;
-  font-family: 'D2Coding', 'Consolas', 'Courier New', monospace;
+  font-family: 'D2Coding', 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', Consolas, monospace;
   line-height: 1.65;
   resize: vertical;
   transition: border-color 0.15s ease;
@@ -796,12 +796,58 @@
  *   style="white-space:pre-wrap; ..." → class에 journal-preformatted 추가
  * ============================================================= */
 .journal-preformatted {
-  font-family: 'D2Coding', 'Consolas', 'Courier New', monospace;
+  font-family: 'D2Coding', 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', Consolas, monospace;
   font-size: 12.5px;
   line-height: 1.65;
   white-space: pre-wrap;
   overflow-x: hidden;
   color: var(--text-primary);
+}
+
+/* ── 조출 / 토요근무 여부 ── */
+.early-work-grid {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.early-work-week {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.early-work-week-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 44px;
+}
+
+.early-work-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.early-work-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--blue);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.early-work-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  /* monospace 상속 차단 — journal-textarea 폰트가 전파되지 않도록 */
+  font-family: inherit;
 }
 
 /* ── 근태 입력 ── */
