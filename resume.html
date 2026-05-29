@@ -714,13 +714,13 @@
     .body {
       display: grid !important;
       grid-template-columns: 200px 1fr !important;
-      align-items: start !important;
+      align-items: stretch !important;  /* 사이드바가 본문 높이만큼 늘어나야 배경이 이어짐 */
     }
 
     /* ── 사이드바 ── */
     .sidebar {
       padding: 16px 16px !important;
-      align-self: start !important;
+      align-self: stretch !important;
     }
     .sidebar-section { margin-bottom: 14px !important; }
     .sidebar-title { font-size: 9px !important; margin-bottom: 8px !important; padding-bottom: 5px !important; }
