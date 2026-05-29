@@ -1484,12 +1484,30 @@
   // ── 팀원 일지 모달 ────────────────────────────────────────────
   window.TASK_APP = window.TASK_APP || {};
 
-  window.TASK_APP.openMemberJournal = function(idx) {
+  window.TASK_APP.openMemberJournal = async function(idx) {
     const m = _lastTeamData[idx];
     if (!m) return;
 
     const j     = m.journal;
     const tasks = m.task_summary || {};
+
+    // next_journal이 없으면 직접 조회
+    // (백엔드 next_journal 미배포 / 캐시 없는 경우 대비)
+    // 본인 일지이거나 팀장/admin이면 조회 가능
+    if (!m.next_journal && j) {
+      try {
+        const nextWeekStart = offsetWeek(j.week_start, 1);
+        const nParams = { request_user_email: currentUser.email, week_start: nextWeekStart };
+        // 본인 일지가 아닌 경우 target_user_email 추가 (팀장 권한 필요)
+        if (j.user_email && j.user_email.toLowerCase() !== currentUser.email.toLowerCase()) {
+          nParams.target_user_email = j.user_email;
+        }
+        const nRes = await apiGet('journalGet', nParams).catch(() => null);
+        if (nRes && nRes.data && nRes.data.journal) {
+          m.next_journal = nRes.data.journal;
+        }
+      } catch(e) { /* 실패해도 계속 진행 */ }
+    }
 
     // 제목: 이름 + 소속 + 상태 배지
     const statusMap   = { DRAFT: '작성중', SUBMITTED: '제출됨', CLOSED: '마감됨' };
