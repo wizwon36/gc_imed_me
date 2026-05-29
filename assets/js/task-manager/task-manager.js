@@ -221,6 +221,7 @@
     // 통합 보기 모달
     document.getElementById('mergeViewBtn')?.addEventListener('click', openMergeView);
     document.getElementById('exportJournalBtn')?.addEventListener('click', exportJournalExcel);
+    document.getElementById('exportPdfBtn')?.addEventListener('click', exportJournalPdf);
 
     // 업무일지 생성 버튼
     document.getElementById('generateJournalBtn')?.addEventListener('click', handleGenerateJournal);
@@ -1833,6 +1834,276 @@
    * 엑셀 출력용 — 이름행, 날짜행, 날짜범위 제거 + 번호를 •로 교체
    */
   // [수정] 이름행/날짜행 제거 + 들여쓰기 정규화 (isSubLine 헬퍼 사용)
+  // ── PDF 다운로드 ────────────────────────────────────────────
+  async function exportJournalPdf() {
+    if (!window.pdfMake) {
+      showMessage('PDF 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', 'error');
+      return;
+    }
+    const btn = document.getElementById('exportPdfBtn');
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = 'PDF 생성 중...'; }
+      showGlobalLoading('PDF를 생성하는 중...');
+
+      const res = await apiGet('journalListByTeam', {
+        request_user_email: currentUser.email,
+        week_start:         teamWeekStart
+      });
+      const members = res.data || [];
+      if (!members.length) { showMessage('다운로드할 데이터가 없습니다.', 'error'); return; }
+
+      if (Object.keys(CATEGORY_LABELS).length === 0) await loadCategories();
+
+      const weekEnd  = getWeekEnd(teamWeekStart);
+      const fd = d => d ? d.substring(5).replace('-', '/') : '';
+      const period   = teamWeekStart.substring(0, 4) + '년  ' + fd(teamWeekStart) + ' ~ ' + fd(weekEnd);
+
+      // 의원별 그룹
+      const clinicMap = {};
+      members.forEach(m => {
+        const c = m.clinic_name || '기타';
+        if (!clinicMap[c]) clinicMap[c] = [];
+        clinicMap[c].push(m);
+      });
+      const clinics = Object.keys(clinicMap).sort();
+      const cats    = Object.entries(CATEGORY_LABELS);
+
+      // ── 색상/스타일 상수
+      const C_NAVY    = '#1F3864';
+      const C_HEADER  = '#B8CCE4';
+      const C_WEEK    = '#D6E4F7';
+      const C_WHITE   = '#FFFFFF';
+      const C_BORDER  = '#BFBFBF';
+
+      const border = [
+        { color: C_BORDER }, { color: C_BORDER },
+        { color: C_BORDER }, { color: C_BORDER }
+      ];
+
+      const cellBase = (text, opts) => Object.assign({
+        text: text ?? '',
+        fontSize: 8,
+        font: 'Roboto',
+        border, margin: [3, 3, 3, 3]
+      }, opts || {});
+
+      const cellHeader = (text) => cellBase(text, {
+        bold: true, color: C_NAVY,
+        fillColor: C_HEADER,
+        alignment: 'center'
+      });
+
+      const cellLabel = (text) => cellBase(text, {
+        bold: true,
+        alignment: 'center',
+        fillColor: C_WHITE
+      });
+
+      const cellWeek = (text) => cellBase(text, {
+        bold: true,
+        alignment: 'center',
+        fillColor: C_WHITE,
+        fontSize: 7
+      });
+
+      const cellData = (text) => cellBase(text, {
+        fontSize: 7.5,
+        preserveLeadingSpaces: true,
+        lineHeight: 1.3
+      });
+
+      // 들여쓰기 텍스트를 pdfmake stack으로 변환
+      const textToStack = (raw) => {
+        if (!raw || !raw.trim()) return [{ text: '-', fontSize: 7.5, color: '#94a3b8' }];
+        return raw.split('\n').map(line => {
+          const trimmed = line.trimStart();
+          const indent  = line.length - trimmed.length;
+          return {
+            text: trimmed || ' ',
+            fontSize: 7.5,
+            lineHeight: 1.3,
+            margin: [indent * 4, 0, 0, 0]
+          };
+        });
+      };
+
+      const cellStack = (raw) => ({
+        stack: textToStack(raw),
+        border, margin: [3, 3, 3, 3]
+      });
+
+      // 컬럼 너비: A(구분) B(금주/차주) C~(의원)
+      const LABEL_W  = 52;
+      const WEEK_W   = 28;
+      const PAGE_W   = 841.89 - 40; // A4 가로 - 좌우 마진
+      const DATA_W   = (PAGE_W - LABEL_W - WEEK_W) / clinics.length;
+      const widths   = [LABEL_W, WEEK_W, ...clinics.map(() => DATA_W)];
+
+      // 섹션 행 생성 헬퍼
+      const makeRow = (labelCell, weekLabel, field, isHighOnly) => {
+        const cells = [labelCell, cellWeek(weekLabel)];
+        clinics.forEach(cl => {
+          const lines = [];
+          (clinicMap[cl] || []).forEach(m => {
+            if (!m.journal) return;
+            const sec = isHighOnly
+              ? extractCategorySection(m.journal[field] || '', null, 'HIGH')
+              : extractCategorySection(m.journal[field] || '', null, null);
+            if (sec) lines.push(...stripNameAndDate(sec.split('\n')));
+          });
+          cells.push(lines.length ? cellStack(lines.join('\n')) : cellData('-'));
+        });
+        return cells;
+      };
+
+      const makeCatRow = (catName, weekLabel, field) => {
+        const cells = [cellLabel(''), cellWeek(weekLabel)];
+        clinics.forEach(cl => {
+          const lines = [];
+          (clinicMap[cl] || []).forEach(m => {
+            if (!m.journal) return;
+            const sec = extractCategorySection(m.journal[field] || '', catName, 'NORMAL');
+            if (sec) lines.push(...stripNameAndDate(sec.split('\n')));
+          });
+          cells.push(lines.length ? cellStack(lines.join('\n')) : cellData('-'));
+        });
+        return cells;
+      };
+
+      const body = [];
+
+      // 1행: 제목
+      body.push([{
+        text: 'MSO관리팀 주간 업무보고',
+        colSpan: 2 + clinics.length,
+        bold: true, fontSize: 13, color: C_WHITE,
+        fillColor: C_NAVY, alignment: 'center',
+        border, margin: [4, 6, 4, 6]
+      }, ...Array(1 + clinics.length).fill({})]);
+
+      // 2행: 기간
+      body.push([{
+        text: period,
+        colSpan: 2 + clinics.length,
+        bold: true, fontSize: 9,
+        fillColor: C_WEEK, alignment: 'center',
+        border, margin: [4, 4, 4, 4]
+      }, ...Array(1 + clinics.length).fill({})]);
+
+      // 3행: 헤더
+      body.push([
+        Object.assign(cellHeader('구  분'), { colSpan: 2 }),
+        {},
+        ...clinics.map(cl => cellHeader(cl))
+      ]);
+
+      // 주요이슈 (HIGH)
+      body.push([
+        Object.assign(cellLabel('주요이슈'), { rowSpan: 2 }),
+        ...makeRow({}, '금주', 'summary',   true).slice(1)
+      ]);
+      body.push([{}, ...makeRow({}, '차주', 'next_plan', true).slice(1)]);
+
+      // 카테고리별
+      cats.forEach(([, catName]) => {
+        body.push([
+          Object.assign(cellLabel(catName), { rowSpan: 2 }),
+          ...makeCatRow(catName, '금주', 'summary').slice(1)
+        ]);
+        body.push([{}, ...makeCatRow(catName, '차주', 'next_plan').slice(1)]);
+      });
+
+      // 조출/토요근무
+      [
+        { thisKey: 'early_work_this', satKey: 'sat_work_this', label: '이번주' },
+        { thisKey: 'early_work_next', satKey: 'sat_work_next', label: '다음주' }
+      ].forEach((row, idx) => {
+        const labelCell = idx === 0
+          ? Object.assign(cellLabel('조출/\n토요근무'), { rowSpan: 2 })
+          : {};
+        const cells = [labelCell, cellWeek(row.label)];
+        clinics.forEach(cl => {
+          const earlyNames = (clinicMap[cl] || []).filter(m => m.journal && m.journal[row.thisKey] === 'Y').map(m => m.user_name);
+          const satNames   = (clinicMap[cl] || []).filter(m => m.journal && m.journal[row.satKey]  === 'Y').map(m => m.user_name);
+          const lines = [];
+          if (earlyNames.length) lines.push('[조출] : ' + earlyNames.join(', '));
+          if (satNames.length)   lines.push('[토요근무] : ' + satNames.join(', '));
+          cells.push(lines.length ? cellData(lines.join('\n')) : cellData('-'));
+        });
+        body.push(cells);
+      });
+
+      // 근태
+      ['금주', '차주'].forEach((label, fi) => {
+        const labelCell = fi === 0
+          ? Object.assign(cellLabel('근태'), { rowSpan: 2 })
+          : {};
+        const cells = [labelCell, cellWeek(label)];
+        clinics.forEach(cl => {
+          const lines = [];
+          (clinicMap[cl] || []).forEach(m => {
+            if (!m.journal) return;
+            const val = fi === 0
+              ? (m.journal.attendance_this_week || '')
+              : (m.journal.attendance_next_week || '');
+            if (val) { lines.push('• ' + m.user_name); val.split('\n').forEach(v => lines.push('  ' + v)); }
+          });
+          cells.push(lines.length ? cellStack(lines.join('\n')) : cellData('-'));
+        });
+        body.push(cells);
+      });
+
+      // 이슈/건의
+      const issueRow = [
+        Object.assign(cellLabel('이슈/건의'), { colSpan: 2 }),
+        {}
+      ];
+      clinics.forEach(cl => {
+        const lines = [];
+        (clinicMap[cl] || []).forEach(m => {
+          if (m.journal && m.journal.issues) lines.push(m.journal.issues);
+        });
+        issueRow.push(lines.length ? cellStack(lines.join('\n')) : cellData('-'));
+      });
+      body.push(issueRow);
+
+      // ── docDefinition
+      const today = new Date();
+      const ds = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+      const weekStartDs = (teamWeekStart || '').replace(/-/g, '');
+
+      const docDef = {
+        pageSize:        'A4',
+        pageOrientation: 'landscape',
+        pageMargins:     [20, 20, 20, 20],
+        content: [{
+          table: { headerRows: 3, widths, body },
+          layout: {
+            hLineWidth:  () => 0.5,
+            vLineWidth:  () => 0.5,
+            hLineColor:  () => C_BORDER,
+            vLineColor:  () => C_BORDER,
+            paddingLeft:   () => 0,
+            paddingRight:  () => 0,
+            paddingTop:    () => 0,
+            paddingBottom: () => 0,
+          }
+        }],
+        defaultStyle: { font: 'Roboto', fontSize: 8 }
+      };
+
+      pdfMake.createPdf(docDef).download('주간업무보고_' + weekStartDs + '_' + ds + '.pdf');
+      showMessage('PDF 다운로드가 완료되었습니다.', 'success');
+
+    } catch (err) {
+      showMessage(err.message || 'PDF 생성 중 오류가 발생했습니다.', 'error');
+      console.error(err);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⬇ PDF 다운로드'; }
+      hideGlobalLoading();
+    }
+  }
+
   function stripNameAndDate(lines) {
     return lines
       .filter(function(l) {
