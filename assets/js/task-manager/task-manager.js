@@ -1588,19 +1588,42 @@
     };
 
     document.getElementById('memberJournalModal').classList.add('open');
-    // 모달이 열린 후 실제 body 너비로 1컬럼/2컬럼 결정
-    requestAnimationFrame(function() {
-      const bodyEl = document.getElementById('memberJournalBody');
-      const isNarrow = bodyEl && bodyEl.offsetWidth < 560;
-      bodyEl?.querySelectorAll('.mj-2col-grid').forEach(function(el) {
-        el.style.gridTemplateColumns = isNarrow ? '1fr' : '1fr 1fr';
-        el.style.display = 'grid';
-        el.style.gap = isNarrow ? '10px' : '12px';
+
+    // ResizeObserver로 모달 body 실제 너비를 실시간 감지 → 1컬럼/2컬럼 전환
+    // 창 크기를 늘였다 줄여도 즉시 반응
+    const bodyEl = document.getElementById('memberJournalBody');
+    if (bodyEl) {
+      // 기존 observer 정리
+      if (bodyEl._mjResizeObserver) {
+        bodyEl._mjResizeObserver.disconnect();
+        bodyEl._mjResizeObserver = null;
+      }
+      const applyGrid = function(width) {
+        const isNarrow = width < 560;
+        bodyEl.querySelectorAll('.mj-2col-grid').forEach(function(el) {
+          el.style.gridTemplateColumns = isNarrow ? '1fr' : '1fr 1fr';
+          el.style.display = 'grid';
+          el.style.gap     = isNarrow ? '10px' : '12px';
+        });
+      };
+      // 초기 적용
+      requestAnimationFrame(function() { applyGrid(bodyEl.offsetWidth); });
+      // 이후 크기 변화 감지
+      const ro = new ResizeObserver(function(entries) {
+        applyGrid(entries[0].contentRect.width);
       });
-    });
+      ro.observe(bodyEl);
+      bodyEl._mjResizeObserver = ro;
+    }
   };
 
   function closeMemberModal() {
+    // 모달 닫을 때 observer 정리
+    const bodyEl = document.getElementById('memberJournalBody');
+    if (bodyEl?._mjResizeObserver) {
+      bodyEl._mjResizeObserver.disconnect();
+      bodyEl._mjResizeObserver = null;
+    }
     document.getElementById('memberJournalModal').classList.remove('open');
   }
 
