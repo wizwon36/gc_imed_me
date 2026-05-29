@@ -805,16 +805,18 @@
 }
 
 /* ── 조출 / 토요근무 여부 ── */
+/* early-work-grid: 이번 주 / 다음 주를 세로 2단으로 쌓음 */
 .early-work-grid {
   display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
 }
 
+/* 각 주 행: 레이블 + 체크박스들을 가로로 정렬 */
 .early-work-week {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
@@ -823,7 +825,7 @@
   font-weight: 600;
   color: var(--text-secondary);
   white-space: nowrap;
-  min-width: 44px;
+  min-width: 46px;
 }
 
 .early-work-item {
@@ -846,8 +848,7 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
-  /* monospace 상속 차단 — journal-textarea 폰트가 전파되지 않도록 */
-  font-family: inherit;
+  font-family: inherit;   /* monospace 상속 차단 */
 }
 
 /* ── 근태 입력 ── */
