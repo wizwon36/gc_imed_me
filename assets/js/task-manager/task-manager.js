@@ -1546,8 +1546,9 @@
         const isNarrow = width < 700;
         bodyEl.querySelectorAll('.mj-2col-grid').forEach(function(el) {
           el.style.gridTemplateColumns = isNarrow ? '1fr' : '1fr 1fr';
-          el.style.display = 'grid';
-          el.style.gap     = isNarrow ? '10px' : '12px';
+          el.style.display    = 'grid';
+          el.style.gap        = isNarrow ? '10px' : '12px';
+          el.style.alignItems = 'stretch';   // 두 카드 높이 동일하게
         });
       };
       // 초기 적용
@@ -1947,16 +1948,18 @@
 
   // 이번주/다음주 그룹 카드 렌더 헬퍼 (근태+조출+요약 통합)
   function renderWeekGroupCard(label, earlyOn, satOn, attendance, summaryText, formatFn) {
-    const chipRow = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:${attendance||summaryText?'8px':'0'};">
+    const chipRow = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:0;">
       ${renderWorkChip(earlyOn,'조출')} ${renderWorkChip(satOn,'토요근무')}
     </div>`;
-    const attRow = `<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;">근태 특이사항</div>
-      <div style="font-size:13px;white-space:pre-wrap;line-height:1.6;background:#fff;padding:7px 10px;border-radius:7px;border:1px solid var(--border-soft);margin-bottom:${summaryText?'10px':'0'};min-height:32px;color:${attendance?'var(--text-primary)':'var(--text-muted)'};">${attendance ? esc(attendance) : '-'}</div>`;
+    const attRow = `<div style="margin-top:12px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">근태 특이사항</div>
+      <div style="font-size:13px;white-space:pre-wrap;line-height:1.6;background:#fff;padding:7px 10px;border-radius:7px;border:1px solid var(--border-soft);margin-bottom:${summaryText?'12px':'0'};min-height:32px;color:${attendance?'var(--text-primary)':'var(--text-muted)'};">${attendance ? esc(attendance) : '-'}</div>
+    </div>`;
     const sumRow = summaryText
       ? `<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;">${label==='이번 주'?'주간 업무 요약':'차주 업무 계획'}</div>
          <div style="font-size:13px;line-height:1.65;background:#fff;padding:8px 12px;border-radius:8px;border:1px solid var(--border-soft);">${formatFn(summaryText)}</div>`
       : '';
-    return `<div style="background:#f8fafc;border:1.5px solid var(--border-soft);border-radius:12px;padding:12px 14px;">
+    return `<div style="background:#f8fafc;border:1.5px solid var(--border-soft);border-radius:12px;padding:12px 14px;box-sizing:border-box;">
       <div style="font-size:11px;font-weight:700;color:#0369a1;margin-bottom:8px;letter-spacing:0.03em;">${label}</div>
       ${chipRow}${attRow}${sumRow}
     </div>`;
@@ -2055,8 +2058,9 @@
       const isNarrow = width < 700;
       mergeBody.querySelectorAll('.mj-2col-grid').forEach(function(el) {
         el.style.gridTemplateColumns = isNarrow ? '1fr' : '1fr 1fr';
-        el.style.display = 'grid';
-        el.style.gap     = isNarrow ? '10px' : '14px';
+        el.style.display    = 'grid';
+        el.style.gap        = isNarrow ? '10px' : '14px';
+        el.style.alignItems = 'stretch';
       });
     };
     requestAnimationFrame(function() { applyMergeGrid(mergeBody.offsetWidth); });
