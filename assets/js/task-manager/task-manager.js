@@ -2369,6 +2369,12 @@
   }
 
   function closeMergeView() {
+    // ResizeObserver 정리
+    const mergeBody = document.getElementById('mergeViewBody');
+    if (mergeBody?._mjResizeObserver) {
+      mergeBody._mjResizeObserver.disconnect();
+      mergeBody._mjResizeObserver = null;
+    }
     document.getElementById('mergeViewModal').classList.remove('open');
   }
 
