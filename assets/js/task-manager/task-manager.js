@@ -1599,7 +1599,7 @@
         bodyEl._mjResizeObserver = null;
       }
       const applyGrid = function(width) {
-        const isNarrow = width < 560;
+        const isNarrow = width < 700;
         bodyEl.querySelectorAll('.mj-2col-grid').forEach(function(el) {
           el.style.gridTemplateColumns = isNarrow ? '1fr' : '1fr 1fr';
           el.style.display = 'grid';
