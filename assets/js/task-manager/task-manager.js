@@ -1467,9 +1467,10 @@
             j.early_work_this==='Y', j.sat_work_this==='Y',
             j.attendance_this_week||'', j.summary||'', formatJournalText)}
         ${renderWeekGroupCard('다음 주',
-            j.early_work_next==='Y', j.sat_work_next==='Y',
-            j.attendance_next_week||'',
-            (m && m.next_journal && m.next_journal.summary) || j.next_plan || '',
+            (m.next_journal ? m.next_journal.early_work_this==='Y' : j.early_work_next==='Y'),
+            (m.next_journal ? m.next_journal.sat_work_this==='Y'   : j.sat_work_next==='Y'),
+            (m.next_journal ? m.next_journal.attendance_this_week  : j.attendance_next_week) || '',
+            (m.next_journal && m.next_journal.summary) || j.next_plan || '',
             formatJournalText)}
       </div>`;
 
@@ -1761,15 +1762,19 @@
       // 조출 / 토요근무
       const earlyWorkStart = r;
       [
-        { thisKey: 'early_work_this', satKey: 'sat_work_this', label: '이번주' },
-        { thisKey: 'early_work_next', satKey: 'sat_work_next', label: '다음주' }
+        { thisKey: 'early_work_this', satKey: 'sat_work_this', label: '이번주', useNext: false },
+        { thisKey: 'early_work_this', satKey: 'sat_work_this', label: '다음주', useNext: true }
       ].forEach((row, idx) => {
         const rowBD = idx === 0 ? BD_SEC : BD_INNER;
         sc(r, 0, idx === 0 ? '조출/토요근무' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         sc(r, 1, row.label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         clinics.forEach((cl, i) => {
-          const earlyNames = (clinicMap[cl]||[]).filter(m => m.journal && m.journal[row.thisKey] === 'Y').map(m => m.user_name);
-          const satNames   = (clinicMap[cl]||[]).filter(m => m.journal && m.journal[row.satKey]  === 'Y').map(m => m.user_name);
+          // 다음주 행: next_journal.early_work_this/sat_work_this 우선, 없으면 journal.early_work_next(구 필드) 폴백
+          const getVal = (m, key, oldKey) => row.useNext
+            ? (m.next_journal ? m.next_journal[key]==='Y' : m.journal[oldKey]==='Y')
+            : (m.journal ? m.journal[key]==='Y' : false);
+          const earlyNames = (clinicMap[cl]||[]).filter(m => getVal(m, row.thisKey, 'early_work_next')).map(m => m.user_name);
+          const satNames   = (clinicMap[cl]||[]).filter(m => getVal(m, row.satKey,  'sat_work_next')).map(m => m.user_name);
           const lines = [];
           if (earlyNames.length) lines.push('[조출] : ' + earlyNames.join(', '));
           if (satNames.length)   lines.push('[토요근무] : ' + satNames.join(', '));
@@ -1789,9 +1794,15 @@
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
             if (!m.journal) return;
-            const val = fi === 0
-              ? (m.journal.attendance_this_week || '')
-              : (m.journal.attendance_next_week || '');
+            let val;
+            if (fi === 0) {
+              val = m.journal.attendance_this_week || '';
+            } else {
+              // 다음주 근태: next_journal.attendance_this_week 우선, 없으면 journal.attendance_next_week 폴백
+              val = (m.next_journal && m.next_journal.attendance_this_week)
+                ? m.next_journal.attendance_this_week
+                : (m.journal.attendance_next_week || '');
+            }
             if (val) {
               lines.push('• ' + m.user_name);
               val.split('\n').forEach(function(v) { lines.push('  ' + v); });
@@ -1971,15 +1982,18 @@
 
       // 조출/토요근무
       [
-        { thisKey:'early_work_this', satKey:'sat_work_this', label:'이번주' },
-        { thisKey:'early_work_next', satKey:'sat_work_next', label:'다음주' }
+        { thisKey:'early_work_this', satKey:'sat_work_this', label:'이번주', useNext: false },
+        { thisKey:'early_work_this', satKey:'sat_work_this', label:'다음주', useNext: true }
       ].forEach((row, idx) => {
         const _wkStyle = idx === 0 ? tdWeekStyleThis : tdWeekStyleNext;
         const _dtStyle = idx === 0 ? tdDataStyleThis : tdDataStyleNext;
         const labelCell = idx === 0 ? `<td rowspan="2" style="${tdLabelStyle}">조출/<br>토요근무</td>` : '';
         tableHtml += `<tr>${labelCell}<td style="${_wkStyle}">${row.label}</td>${clinics.map(cl => {
-          const early = (clinicMap[cl]||[]).filter(m=>m.journal&&m.journal[row.thisKey]==='Y').map(m=>m.user_name);
-          const sat   = (clinicMap[cl]||[]).filter(m=>m.journal&&m.journal[row.satKey]==='Y').map(m=>m.user_name);
+          const getV = (m, key, oldKey) => row.useNext
+            ? (m.next_journal ? m.next_journal[key]==='Y' : m.journal[oldKey]==='Y')
+            : (m.journal ? m.journal[key]==='Y' : false);
+          const early = (clinicMap[cl]||[]).filter(m=>getV(m,row.thisKey,'early_work_next')).map(m=>m.user_name);
+          const sat   = (clinicMap[cl]||[]).filter(m=>getV(m,row.satKey,'sat_work_next')).map(m=>m.user_name);
           const lines = [];
           if (early.length) lines.push('[조출] : '+early.join(', '));
           if (sat.length)   lines.push('[토요근무] : '+sat.join(', '));
@@ -1996,7 +2010,9 @@
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
             if (!m.journal) return;
-            const val = fi === 0 ? (m.journal.attendance_this_week||'') : (m.journal.attendance_next_week||'');
+            const val = fi === 0
+              ? (m.journal.attendance_this_week||'')
+              : ((m.next_journal && m.next_journal.attendance_this_week) || m.journal.attendance_next_week || '');
             if (val) { lines.push('• '+m.user_name); val.split('\n').forEach(v => lines.push('  '+v)); }
           });
           return `<td style="${_dtStyle2}">${lines.length ? textToHtml(lines.join('\n')) : '<span style="color:#94a3b8;">-</span>'}</td>`;
@@ -2327,8 +2343,9 @@
                    j.early_work_this==='Y', j.sat_work_this==='Y',
                    j.attendance_this_week||'', j.summary||'', formatJournalText)}
                ${renderWeekGroupCard('다음 주',
-                   j.early_work_next==='Y', j.sat_work_next==='Y',
-                   j.attendance_next_week||'',
+                   (m.next_journal ? m.next_journal.early_work_this==='Y' : j.early_work_next==='Y'),
+                   (m.next_journal ? m.next_journal.sat_work_this==='Y'   : j.sat_work_next==='Y'),
+                   (m.next_journal ? m.next_journal.attendance_this_week  : j.attendance_next_week) || '',
                    (m.next_journal && m.next_journal.summary) || j.next_plan || '',
                    formatJournalText)}
              </div>
