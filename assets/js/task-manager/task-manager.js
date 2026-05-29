@@ -456,6 +456,63 @@
   }
 
   // ── 주간 업무 로드 ───────────────────────────────────────────
+  // ── 업무 변경 시 일지 자동 동기화 ───────────────────────────
+  /**
+   * 업무 등록/수정/삭제/상태변경 후 자동 호출.
+   * 이번 주 일지가 존재하고 CLOSED가 아닌 경우에만
+   * summary / next_plan 을 백그라운드로 조용히 업데이트한다.
+   * - 로딩 스피너 없음
+   * - 실패해도 콘솔 경고만 (업무 작업 자체는 이미 성공)
+   * - 일지 탭이 열려 있으면 화면도 즉시 갱신
+   */
+  async function syncJournalIfExists() {
+    const targetWeek     = weeklyWeekStart;
+    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
+    if (targetWeek < todayWeekStart) return;   // 과거 주는 불필요
+
+    try {
+      const res     = await apiGet('journalGet', {
+        request_user_email: currentUser.email,
+        week_start:         targetWeek
+      });
+      const journal = res.data?.journal;
+      if (!journal || journal.status === 'CLOSED') return;   // 일지 없음·마감
+
+      const nextWeekStart = offsetWeek(targetWeek, 1);
+      const nextRes       = await apiGet('taskGetItems', {
+        request_user_email: currentUser.email,
+        week_start:         nextWeekStart
+      });
+      const nextItems = nextRes.data || [];
+
+      const newSummary  = buildDailyGroupedText(weeklyTasks, targetWeek,    true);
+      const newNextPlan = buildDailyGroupedText(nextItems,   nextWeekStart, false);
+
+      await apiPost('journalUpdate', {
+        request_user_email:   currentUser.email,
+        journal_id:           journal.journal_id,
+        summary:              newSummary,
+        next_plan:            newNextPlan,
+        attendance_this_week: journal.attendance_this_week || '',
+        attendance_next_week: journal.attendance_next_week || '',
+        issues:               journal.issues || ''
+      });
+
+      // 일지 탭이 같은 주차로 열려 있으면 화면 즉시 반영
+      const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+      if (activeTab === 'journal' && journalWeekStart === targetWeek && currentJournal) {
+        currentJournal.summary   = newSummary;
+        currentJournal.next_plan = newNextPlan;
+        document.getElementById('journalSummary').value  = newSummary;
+        document.getElementById('journalNextPlan').value = newNextPlan;
+        updateAutosaveStatus('saved');
+      }
+
+    } catch (err) {
+      console.warn('[syncJournalIfExists] 일지 자동 동기화 실패:', err.message || err);
+    }
+  }
+
   // ── 업무일지 생성 (주간업무 → 일지 자동 작성) ───────────────
   async function handleGenerateJournal() {
     const todayWeekStart = getWeekStart(formatDateStr(new Date()));
@@ -1421,15 +1478,26 @@
       // 주간 업무 요약 + 차주 업무 계획 — 2컬럼 나란히 배치
       const hasSummary  = !!(j.summary   && j.summary.trim());
       const hasNextPlan = !!(j.next_plan && j.next_plan.trim());
+      // └ 들여쓰기를 HTML로 변환: 줄바꿈 후 들여쓰기 공백을 &nbsp; padding으로 표현
+      const formatJournalText = (text) => {
+        if (!text) return '';
+        return text.split('\n').map(line => {
+          const trimmed = line.trimStart();
+          const indent  = line.length - trimmed.length;
+          const px      = indent * 7;   // 공백 1자 ≈ 7px (맑은 고딕 13px 기준)
+          const safe    = esc(trimmed);
+          return `<div style="padding-left:${px}px;">${safe || '&nbsp;'}</div>`;
+        }).join('');
+      };
       if (hasSummary || hasNextPlan) {
         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">`;
         html += `<div>
           <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">📋 주간 업무 요약</div>
-          <div style="font-size:12.5px;color:var(--text-primary);font-family:'D2Coding','Consolas','Courier New',monospace;white-space:pre;overflow-x:auto;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;">${esc(j.summary || '')}</div>
+          <div style="font-size:13px;color:var(--text-primary);line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;word-break:break-word;">${formatJournalText(j.summary)}</div>
         </div>`;
         html += `<div>
           <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🎯 차주 업무 계획</div>
-          <div style="font-size:12.5px;color:var(--text-primary);font-family:'D2Coding','Consolas','Courier New',monospace;white-space:pre;overflow-x:auto;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;">${esc(j.next_plan || '')}</div>
+          <div style="font-size:13px;color:var(--text-primary);line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;word-break:break-word;">${formatJournalText(j.next_plan)}</div>
         </div>`;
         html += `</div>`;
       }
@@ -2007,6 +2075,7 @@
       task.status = newStatus;
       renderWeekTimeline();
       updateWeeklySummary();
+      syncJournalIfExists();   // 일지 자동 동기화 (백그라운드)
     } catch (err) {
       showMessage(err.message || '상태 변경에 실패했습니다.', 'error');
     } finally {
@@ -2028,6 +2097,7 @@
       renderWeekTimeline();
       updateWeeklySummary();
       showMessage('삭제되었습니다.', 'success');
+      syncJournalIfExists();   // 일지 자동 동기화 (백그라운드)
     } catch (err) {
       showMessage(err.message || '삭제에 실패했습니다.', 'error');
     } finally {
@@ -2120,6 +2190,7 @@
       closeTaskModal();
       renderWeekTimeline();
       updateWeeklySummary();
+      syncJournalIfExists();   // 일지 자동 동기화 (백그라운드)
 
     } catch (err) {
       showMessage(err.message || '저장에 실패했습니다.', 'error');
