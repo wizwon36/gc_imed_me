@@ -2155,7 +2155,7 @@
       background: #fff;
       width: 277mm;
       min-height: 190mm;
-      padding: 10mm 8mm;
+      padding: 10mm 14mm;
       box-shadow: 0 4px 20px rgba(0,0,0,0.18);
       border-radius: 2px;
     }
@@ -2167,7 +2167,7 @@
       body { background: #fff; }
       .preview-page-wrap { padding: 0; }
       .preview-page { box-shadow: none; width: 100%; padding: 0; border-radius: 0; }
-      @page { size: A4 landscape; margin: 10mm 8mm; }
+      @page { size: A4 landscape; margin: 10mm 14mm; }
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
