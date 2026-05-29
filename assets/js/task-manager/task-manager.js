@@ -1621,7 +1621,7 @@
 
     // ResizeObserver로 모달 body 실제 너비를 실시간 감지 → 1컬럼/2컬럼 전환
     // 창 크기를 늘였다 줄여도 즉시 반응
-    const bodyEl = document.getElementById('memberJournalBody');
+    // bodyEl은 위에서 이미 선언됨 (스피너 세팅 시)
     if (bodyEl) {
       // 기존 observer 정리
       if (bodyEl._mjResizeObserver) {
