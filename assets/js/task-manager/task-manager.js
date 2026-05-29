@@ -1441,6 +1441,16 @@
     closeActionBtn.style.display  = (isManager && !isEdit && j && j.status !== 'CLOSED') ? '' : 'none';
     reopenActionBtn.style.display = (isManager && !isEdit && j && j.status === 'CLOSED') ? '' : 'none';
 
+    // └ 들여쓰기를 padding-left px 변환
+    const formatJournalText = (text) => {
+      if (!text) return '';
+      return text.split('\n').map(line => {
+        const trimmed = line.trimStart();
+        const px      = (line.length - trimmed.length) * 7;
+        return `<div style="padding-left:${px}px;">${esc(trimmed) || '&nbsp;'}</div>`;
+      }).join('');
+    };
+
     let html = '';
 
     if (!j) {
@@ -1450,91 +1460,35 @@
       const total = tasks.total || 0;
       const done  = tasks.done  || 0;
       const pct   = total > 0 ? Math.round(done / total * 100) : 0;
-      html += `
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f0f7ff;border-radius:12px;margin-bottom:16px;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;color:#0369a1;">📊 업무 현황</span>
-          <span style="font-size:12px;color:var(--text-secondary);">전체 <b>${total}</b>건</span>
-          <span style="font-size:12px;color:#16a34a;">✓ 완료 <b>${done}</b>건</span>
-          ${tasks.in_progress ? `<span style="font-size:12px;color:#d97706;">⏳ 진행중 <b>${tasks.in_progress}</b>건</span>` : ''}
-          ${tasks.high ? `<span style="font-size:12px;color:#dc2626;">● 높음 <b>${tasks.high}</b>건</span>` : ''}
-          <div style="flex:1;min-width:80px;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
-            <div style="width:${pct}%;background:#0369a1;height:100%;border-radius:4px;"></div>
-          </div>
-          <span style="font-size:11px;color:var(--text-muted);">${pct}%</span>
-        </div>`;
+      html += `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f0f7ff;border-radius:12px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:700;color:#0369a1;">📊 업무 현황</span>
+        <span style="font-size:12px;color:var(--text-secondary);">전체 <b>${total}</b>건</span>
+        <span style="font-size:12px;color:#16a34a;">✓ 완료 <b>${done}</b>건</span>
+        ${tasks.in_progress ? `<span style="font-size:12px;color:#d97706;">⏳ 진행중 <b>${tasks.in_progress}</b>건</span>` : ''}
+        ${tasks.high ? `<span style="font-size:12px;color:#dc2626;">● 높음 <b>${tasks.high}</b>건</span>` : ''}
+        <div style="flex:1;min-width:80px;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden;">
+          <div style="width:${pct}%;background:#0369a1;height:100%;border-radius:4px;"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text-muted);">${pct}%</span>
+      </div>`;
 
-      const section = (icon, label, value, highlight) => {
-        if (!value || value === '-') return '';
-        const bg     = highlight ? '#fff8f0' : '#f8fafc';
-        const border = highlight ? '1px solid #fed7aa' : '1px solid var(--border-soft)';
-        return `<div style="margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">${icon} ${esc(label)}</div>
-          <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.7;background:${bg};padding:10px 14px;border-radius:10px;border:${border};">${esc(value)}</div>
-        </div>`;
-      };
+      // 이번 주 / 다음 주 통합 그룹 카드 (2컬럼)
+      html += `<div class="mj-2col-grid" style="margin-bottom:14px;">
+        ${renderWeekGroupCard('이번 주',
+            j.early_work_this==='Y', j.sat_work_this==='Y',
+            j.attendance_this_week||'', j.summary||'', formatJournalText)}
+        ${renderWeekGroupCard('다음 주',
+            j.early_work_next==='Y', j.sat_work_next==='Y',
+            j.attendance_next_week||'', j.next_plan||'', formatJournalText)}
+      </div>`;
 
-      // 조출 / 토요근무 여부
-      const earlyThis = j.early_work_this === 'Y';
-      const earlyNext = j.early_work_next === 'Y';
-      const satThis   = j.sat_work_this   === 'Y';
-      const satNext   = j.sat_work_next   === 'Y';
-      if (earlyThis || earlyNext || satThis || satNext) {
-        const chip = (on, label) => on
-          ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">${label}</span>`
-          : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;">${label}</span>`;
-        html += `<div style="margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">⏰ 조출 / 토요근무 여부</div>
-          <div class="mj-2col-grid">
-            <div style="background:#f8fafc;padding:8px 12px;border-radius:10px;border:1px solid var(--border-soft);">
-              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">이번 주</div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">${chip(earlyThis,'조출')} ${chip(satThis,'토요근무')}</div>
-            </div>
-            <div style="background:#f8fafc;padding:8px 12px;border-radius:10px;border:1px solid var(--border-soft);">
-              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">다음 주</div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">${chip(earlyNext,'조출')} ${chip(satNext,'토요근무')}</div>
-            </div>
-          </div>
+      // 이슈 / 건의사항
+      if (j.issues && j.issues.trim()) {
+        html += `<div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#b45309;margin-bottom:5px;">⚠️ 이슈 / 건의사항</div>
+          <div style="font-size:13px;white-space:pre-wrap;line-height:1.65;background:#fff8f0;padding:10px 14px;border-radius:10px;border:1.5px solid #fed7aa;">${esc(j.issues)}</div>
         </div>`;
       }
-
-      // 근태 (금주/차주 나란히)
-      if (j.attendance_this_week || j.attendance_next_week) {
-        html += `<div class="mj-2col-grid" style="margin-bottom:14px;">
-          <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 이번 주 근태</div>
-          <div style="font-size:13px;white-space:pre-wrap;line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(j.attendance_this_week || '-')}</div></div>
-          <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 다음 주 근태 예정</div>
-          <div style="font-size:13px;white-space:pre-wrap;line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(j.attendance_next_week || '-')}</div></div>
-        </div>`;
-      }
-
-      // 주간 업무 요약 + 차주 업무 계획 — 2컬럼 나란히 배치
-      const hasSummary  = !!(j.summary   && j.summary.trim());
-      const hasNextPlan = !!(j.next_plan && j.next_plan.trim());
-      // └ 들여쓰기를 HTML로 변환: 줄바꿈 후 들여쓰기 공백을 &nbsp; padding으로 표현
-      const formatJournalText = (text) => {
-        if (!text) return '';
-        return text.split('\n').map(line => {
-          const trimmed = line.trimStart();
-          const indent  = line.length - trimmed.length;
-          const px      = indent * 7;   // 공백 1자 ≈ 7px (맑은 고딕 13px 기준)
-          const safe    = esc(trimmed);
-          return `<div style="padding-left:${px}px;">${safe || '&nbsp;'}</div>`;
-        }).join('');
-      };
-      if (hasSummary || hasNextPlan) {
-        // 모바일(640px 이하)은 1컬럼, PC는 2컬럼
-        html += `<div class="mj-2col-grid" style="margin-bottom:14px;">`;
-        html += `<div>
-          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">📋 주간 업무 요약</div>
-          <div style="font-size:13px;color:var(--text-primary);line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;word-break:break-word;">${formatJournalText(j.summary)}</div>
-        </div>`;
-        html += `<div>
-          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🎯 차주 업무 계획</div>
-          <div style="font-size:13px;color:var(--text-primary);line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;word-break:break-word;">${formatJournalText(j.next_plan)}</div>
-        </div>`;
-        html += `</div>`;
-      }
-      html += section('⚠️', '이슈 / 건의사항',  j.issues       || '', true);
 
       const timestamps = [];
       if (j.updated_at)   timestamps.push(`최종 수정: ${j.updated_at.substring(0,16)}`);
@@ -1984,6 +1938,32 @@
 
   // ── 통합 보기 ────────────────────────────────────────────────
 
+  // 조출/토요근무 칩 렌더 헬퍼
+  function renderWorkChip(on, label) {
+    return on
+      ? `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">✓ ${label}</span>`
+      : `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;">${label}</span>`;
+  }
+
+  // 이번주/다음주 그룹 카드 렌더 헬퍼 (근태+조출+요약 통합)
+  function renderWeekGroupCard(label, earlyOn, satOn, attendance, summaryText, formatFn) {
+    const chipRow = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:${attendance||summaryText?'8px':'0'};">
+      ${renderWorkChip(earlyOn,'조출')} ${renderWorkChip(satOn,'토요근무')}
+    </div>`;
+    const attRow = attendance
+      ? `<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;">근태 특이사항</div>
+         <div style="font-size:13px;white-space:pre-wrap;line-height:1.6;background:#fff;padding:7px 10px;border-radius:7px;border:1px solid var(--border-soft);margin-bottom:${summaryText?'10px':'0'};">${esc(attendance)}</div>`
+      : '';
+    const sumRow = summaryText
+      ? `<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;">${label==='이번 주'?'주간 업무 요약':'차주 업무 계획'}</div>
+         <div style="font-size:13px;line-height:1.65;background:#fff;padding:8px 12px;border-radius:8px;border:1px solid var(--border-soft);">${formatFn(summaryText)}</div>`
+      : '';
+    return `<div style="background:#f8fafc;border:1.5px solid var(--border-soft);border-radius:12px;padding:12px 14px;">
+      <div style="font-size:11px;font-weight:700;color:#0369a1;margin-bottom:8px;letter-spacing:0.03em;">${label}</div>
+      ${chipRow}${attRow}${sumRow}
+    </div>`;
+  }
+
   function openMergeView() {
     const weekEnd = getWeekEnd(teamWeekStart);
     document.getElementById('mergeViewTitle').textContent =
@@ -1998,18 +1978,6 @@
       return;
     }
 
-    const FIELDS = [
-      { key: 'early_work_this',      label: '이번주 조출',      type: 'yn' },
-      { key: 'early_work_next',      label: '다음주 조출',      type: 'yn' },
-      { key: 'sat_work_this',        label: '이번주 토요근무',  type: 'yn' },
-      { key: 'sat_work_next',        label: '다음주 토요근무',  type: 'yn' },
-      { key: 'attendance_this_week', label: '이번 주 근태' },
-      { key: 'attendance_next_week', label: '다음 주 근태 예정' },
-      { key: 'summary',             label: '주간 업무 요약' },
-      { key: 'next_plan',           label: '차주 업무 계획' },
-      { key: 'issues',              label: '이슈 / 건의사항' }
-    ];
-
     const statusColor = { CLOSED: '#166534', SUBMITTED: '#1e40af', DRAFT: '#64748b' };
     const statusBg    = { CLOSED: '#dcfce7', SUBMITTED: '#dbeafe', DRAFT: '#f1f5f9' };
     const statusLabel = { CLOSED: '마감', SUBMITTED: '제출', DRAFT: '작성중' };
@@ -2017,10 +1985,10 @@
     let html = '';
 
     members.forEach((m, idx) => {
-      const j      = m.journal;
-      const s      = m.task_summary || {};
-      const pct    = s.total ? Math.round((s.done || 0) / s.total * 100) : 0;
-      const status = j ? (j.status || 'DRAFT') : null;
+      const j       = m.journal;
+      const s       = m.task_summary || {};
+      const pct     = s.total ? Math.round((s.done || 0) / s.total * 100) : 0;
+      const status  = j ? (j.status || 'DRAFT') : null;
       const initial = (m.user_name || '?').charAt(0);
 
       const badgeStyle = status
@@ -2028,60 +1996,75 @@
         : 'background:#fef2f2;color:#b91c1c;';
       const badgeText = status ? statusLabel[status] : '미작성';
 
-      html += `
-        <div style="padding:22px 24px;${idx > 0 ? 'border-top:2px solid #e0e7f2;' : ''}">
+      html += `<div style="padding:22px 24px;${idx > 0 ? 'border-top:2px solid #e0e7f2;' : ''}">
 
-          <!-- 멤버 헤더 -->
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            <div style="width:40px;height:40px;border-radius:50%;background:#e0f2fe;color:#0369a1;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${esc(initial)}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${esc(m.user_name)}${m.is_manager ? ' 👑' : ''}</div>
-              <div style="font-size:12px;color:var(--text-muted);">${esc(m.team_name || m.department || '')}</div>
-            </div>
-            <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;${badgeStyle}">${badgeText}</span>
+        <!-- 멤버 헤더 -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:#e0f2fe;color:#0369a1;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${esc(initial)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${esc(m.user_name)}${m.is_manager ? ' 👑' : ''}</div>
+            <div style="font-size:12px;color:var(--text-muted);">${esc(m.team_name || m.department || '')}</div>
           </div>
-
-          <!-- 업무 현황 바 -->
-          <div style="background:#f8fafc;border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">업무 현황</span>
-            <span style="font-size:12px;color:#1e293b;">전체 ${s.total||0}건</span>
-            <span style="font-size:12px;color:#16a34a;">✓ 완료 ${s.done||0}</span>
-            <span style="font-size:12px;color:#d97706;">⏳ 진행중 ${s.in_progress||0}</span>
-            ${s.high ? `<span style="font-size:12px;color:#dc2626;">🔴 높은중요도 ${s.high}</span>` : ''}
-            <div style="flex:1;min-width:60px;height:5px;background:#dbeafe;border-radius:999px;overflow:hidden;">
-              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#0369a1,#38bdf8);border-radius:999px;"></div>
-            </div>
-            <span style="font-size:11px;color:var(--text-muted);">${pct}%</span>
-          </div>
-
-          ${!j ? `
-            <div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;">아직 일지를 작성하지 않았습니다.</div>
-          ` : (() => {
-              const ynChips = FIELDS.filter(f => f.type === 'yn' && (j[f.key] || '') === 'Y');
-              const ynHtml = ynChips.length
-                ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px;">
-                    ${ynChips.map(f => `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;white-space:nowrap;">✓ ${esc(f.label)}</span>`).join('')}
-                  </div>`
-                : '';
-              const fieldHtml = FIELDS.filter(f => !f.type).map(f => {
-                const val = j[f.key] || '';
-                if (!val) return '';
-                return `
-                  <div style="margin-bottom:12px;">
-                    <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em;">${esc(f.label)}</div>
-                    <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">${esc(val)}</div>
-                  </div>`;
-              }).join('');
-              return ynHtml + fieldHtml;
-            })()}
-
-          ${j?.submitted_at ? `<div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;">제출: ${j.submitted_at.substring(0,16)}</div>` : ''}
+          <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;${badgeStyle}">${badgeText}</span>
         </div>
-      `;
+
+        <!-- 업무 현황 바 -->
+        <div style="background:#f0f7ff;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">업무 현황</span>
+          <span style="font-size:12px;color:#1e293b;">전체 ${s.total||0}건</span>
+          <span style="font-size:12px;color:#16a34a;">✓ 완료 ${s.done||0}</span>
+          <span style="font-size:12px;color:#d97706;">⏳ 진행중 ${s.in_progress||0}</span>
+          ${s.high ? `<span style="font-size:12px;color:#dc2626;">🔴 높은중요도 ${s.high}</span>` : ''}
+          <div style="flex:1;min-width:60px;height:5px;background:#dbeafe;border-radius:999px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#0369a1,#38bdf8);border-radius:999px;"></div>
+          </div>
+          <span style="font-size:11px;color:var(--text-muted);">${pct}%</span>
+        </div>
+
+        ${!j
+          ? `<div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;">아직 일지를 작성하지 않았습니다.</div>`
+          : `<!-- 이번 주 / 다음 주 2컬럼 그룹 카드 -->
+             <div class="mj-2col-grid" style="margin-bottom:12px;">
+               ${renderWeekGroupCard('이번 주',
+                   j.early_work_this==='Y', j.sat_work_this==='Y',
+                   j.attendance_this_week||'', j.summary||'', formatJournalText)}
+               ${renderWeekGroupCard('다음 주',
+                   j.early_work_next==='Y', j.sat_work_next==='Y',
+                   j.attendance_next_week||'', j.next_plan||'', formatJournalText)}
+             </div>
+             ${j.issues ? `<div style="margin-bottom:10px;">
+               <div style="font-size:11px;font-weight:700;color:#b45309;margin-bottom:5px;">⚠️ 이슈 / 건의사항</div>
+               <div style="font-size:13px;white-space:pre-wrap;line-height:1.65;background:#fff8f0;padding:10px 14px;border-radius:10px;border:1.5px solid #fed7aa;">${esc(j.issues)}</div>
+             </div>` : ''}
+             <div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:2px;">
+               ${j.updated_at   ? `최종 수정: ${j.updated_at.substring(0,16)}` : ''}
+               ${j.submitted_at ? `&nbsp;|&nbsp; 제출: ${j.submitted_at.substring(0,16)}` : ''}
+             </div>`
+        }
+      </div>`;
     });
 
     body.innerHTML = html;
     document.getElementById('mergeViewModal').classList.add('open');
+
+    // ResizeObserver로 실제 body 너비 감지 → 1/2컬럼 전환
+    const mergeBody = body;
+    if (mergeBody._mjResizeObserver) {
+      mergeBody._mjResizeObserver.disconnect();
+      mergeBody._mjResizeObserver = null;
+    }
+    const applyMergeGrid = function(width) {
+      const isNarrow = width < 700;
+      mergeBody.querySelectorAll('.mj-2col-grid').forEach(function(el) {
+        el.style.gridTemplateColumns = isNarrow ? '1fr' : '1fr 1fr';
+        el.style.display = 'grid';
+        el.style.gap     = isNarrow ? '10px' : '14px';
+      });
+    };
+    requestAnimationFrame(function() { applyMergeGrid(mergeBody.offsetWidth); });
+    const ro = new ResizeObserver(function(entries) { applyMergeGrid(entries[0].contentRect.width); });
+    ro.observe(mergeBody);
+    mergeBody._mjResizeObserver = ro;
   }
 
   function closeMergeView() {
