@@ -613,7 +613,7 @@
     autoSyncToggle._bound = true;
     autoSyncToggle.addEventListener('change', async function() {
       journalAutoSync = this.checked;
-      updateAutoSyncToggleUI(journalAutoSync);
+      updateAutoSyncToggleUI(journalAutoSync, true);
       try {
         await apiPost('updateUserSetting', {
           request_user_email: currentUser.email,
@@ -1086,11 +1086,21 @@
 
   // ── 주간일지 로드 ────────────────────────────────────────────
   // 자동 동기화 토글 UI 업데이트
-  function updateAutoSyncToggleUI(isOn) {
+  // instant=true: 애니메이션 없이 즉시 전환 (초기 로드 시)
+  function updateAutoSyncToggleUI(isOn, instant = false) {
     const slider = document.getElementById('journalAutoSyncSlider');
     const knob   = document.getElementById('journalAutoSyncKnob');
     const toggle = document.getElementById('journalAutoSyncToggle');
     if (!slider) return;
+    if (instant) {
+      slider.style.transition = 'none';
+      if (knob) knob.style.transition = 'none';
+      // 다음 프레임에 transition 복원
+      requestAnimationFrame(() => {
+        slider.style.transition = '';
+        if (knob) knob.style.transition = '';
+      });
+    }
     slider.style.background = isOn ? '#0369a1' : '#cbd5e1';
     if (knob) knob.style.left = isOn ? '18px' : '2px';
     if (toggle) toggle.checked = isOn;
@@ -1112,13 +1122,9 @@
     } catch(e) {
       // API 미등록 또는 오류 — 기본값(켜짐) 유지
       journalAutoSync = true;
-      updateAutoSyncToggleUI(true);
+      updateAutoSyncToggleUI(true, true);
       _userSettingsLoaded = true;
       console.warn('[loadUserSettings] 설정 로드 실패:', e.message || e);
-    } finally {
-      // 설정 로드 완료 후 토글 표시
-      const wrap = document.getElementById('journalAutoSyncWrap');
-      if (wrap) wrap.style.visibility = 'visible';
     }
   }
 
