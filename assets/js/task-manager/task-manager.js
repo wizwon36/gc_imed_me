@@ -1624,7 +1624,7 @@
       const members = res.data || [];
       if (!members.length) { showMessage('다운로드할 데이터가 없습니다.', 'error'); return; }
 
-      const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
+      const FONT_BASE   = { name: 'Courier New', sz: 9 };  // 고정폭 — 공백 들여쓰기 정렬 유지
       const FONT_TITLE  = { name: '맑은 고딕', sz: 14, bold: true, color: { rgb: 'FFFFFF' } };
       const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
       const FONT_BOLD   = { name: '맑은 고딕', sz: 10, bold: true };
