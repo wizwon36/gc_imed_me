@@ -1441,16 +1441,6 @@
     closeActionBtn.style.display  = (isManager && !isEdit && j && j.status !== 'CLOSED') ? '' : 'none';
     reopenActionBtn.style.display = (isManager && !isEdit && j && j.status === 'CLOSED') ? '' : 'none';
 
-    // └ 들여쓰기를 padding-left px 변환
-    const formatJournalText = (text) => {
-      if (!text) return '';
-      return text.split('\n').map(line => {
-        const trimmed = line.trimStart();
-        const px      = (line.length - trimmed.length) * 7;
-        return `<div style="padding-left:${px}px;">${esc(trimmed) || '&nbsp;'}</div>`;
-      }).join('');
-    };
-
     let html = '';
 
     if (!j) {
@@ -1939,6 +1929,16 @@
   // ── 통합 보기 ────────────────────────────────────────────────
 
   // 조출/토요근무 칩 렌더 헬퍼
+  // 들여쓰기를 padding-left px 변환 (모달 공통)
+  function formatJournalText(text) {
+    if (!text) return '';
+    return text.split('\n').map(function(line) {
+      const trimmed = line.trimStart();
+      const px      = (line.length - trimmed.length) * 7;
+      return '<div style="padding-left:' + px + 'px;">' + (esc(trimmed) || '&nbsp;') + '</div>';
+    }).join('');
+  }
+
   function renderWorkChip(on, label) {
     return on
       ? `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">✓ ${label}</span>`
@@ -1950,10 +1950,8 @@
     const chipRow = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:${attendance||summaryText?'8px':'0'};">
       ${renderWorkChip(earlyOn,'조출')} ${renderWorkChip(satOn,'토요근무')}
     </div>`;
-    const attRow = attendance
-      ? `<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;">근태 특이사항</div>
-         <div style="font-size:13px;white-space:pre-wrap;line-height:1.6;background:#fff;padding:7px 10px;border-radius:7px;border:1px solid var(--border-soft);margin-bottom:${summaryText?'10px':'0'};">${esc(attendance)}</div>`
-      : '';
+    const attRow = `<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;">근태 특이사항</div>
+      <div style="font-size:13px;white-space:pre-wrap;line-height:1.6;background:#fff;padding:7px 10px;border-radius:7px;border:1px solid var(--border-soft);margin-bottom:${summaryText?'10px':'0'};min-height:32px;color:${attendance?'var(--text-primary)':'var(--text-muted)'};">${attendance ? esc(attendance) : '-'}</div>`;
     const sumRow = summaryText
       ? `<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:3px;">${label==='이번 주'?'주간 업무 요약':'차주 업무 계획'}</div>
          <div style="font-size:13px;line-height:1.65;background:#fff;padding:8px 12px;border-radius:8px;border:1px solid var(--border-soft);">${formatFn(summaryText)}</div>`
