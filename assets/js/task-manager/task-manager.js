@@ -1624,6 +1624,23 @@
       const members = res.data || [];
       if (!members.length) { showMessage('다운로드할 데이터가 없습니다.', 'error'); return; }
 
+      // next_journal 없으면 다음 주 일지 병렬 조회
+      const nextWeekStartExcel = offsetWeek(teamWeekStart, 1);
+      const needFetchExcel = members.some(m => !m.next_journal && m.journal);
+      if (needFetchExcel) {
+        await Promise.all(members.map(async m => {
+          if (m.next_journal || !m.journal) return;
+          try {
+            const nr = await apiGet('journalGet', {
+              request_user_email: currentUser.email,
+              week_start:         nextWeekStartExcel,
+              target_user_email:  m.user_email
+            }).catch(() => null);
+            if (nr && nr.data && nr.data.journal) m.next_journal = nr.data.journal;
+          } catch(e) {}
+        }));
+      }
+
       const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
       const FONT_TITLE  = { name: '맑은 고딕', sz: 14, bold: true, color: { rgb: 'FFFFFF' } };
       const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
@@ -1870,6 +1887,26 @@
       if (!members.length) { showMessage('다운로드할 데이터가 없습니다.', 'error'); return; }
 
       if (Object.keys(CATEGORY_LABELS).length === 0) await loadCategories();
+
+      // next_journal이 없으면 다음 주 일지를 병렬로 직접 조회
+      // (26_JournalService.gs 미배포 환경 대비)
+      const nextWeekStart = offsetWeek(teamWeekStart, 1);
+      const needFetch = members.some(m => !m.next_journal && m.journal);
+      if (needFetch) {
+        await Promise.all(members.map(async m => {
+          if (m.next_journal || !m.journal) return;
+          try {
+            const nr = await apiGet('journalGet', {
+              request_user_email: currentUser.email,
+              week_start:         nextWeekStart,
+              target_user_email:  m.user_email
+            }).catch(() => null);
+            if (nr && nr.data && nr.data.journal) {
+              m.next_journal = nr.data.journal;
+            }
+          } catch(e) { /* 실패해도 계속 */ }
+        }));
+      }
 
       const weekEnd = getWeekEnd(teamWeekStart);
       const fd = d => d ? d.substring(5).replace('-', '/') : '';
