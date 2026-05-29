@@ -762,14 +762,14 @@
   border-radius: var(--radius-sm);
   background: #fff;
   color: var(--text-primary);
-  font-size: 12.5px;        /* monospace는 같은 크기에서 살짝 넓어 보여 0.5px 줄임 */
+  font-size: 12.5px;
   font-family: 'D2Coding', 'Consolas', 'Courier New', monospace;
   line-height: 1.65;
   resize: vertical;
   transition: border-color 0.15s ease;
   box-sizing: border-box;
-  white-space: pre;         /* 줄바꿈·공백 그대로 유지 (가로 스크롤 허용) */
-  overflow-x: auto;         /* 내용이 길면 가로 스크롤 */
+  white-space: pre-wrap;    /* 줄바꿈 유지 + 자동 줄바꿈 허용 */
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
@@ -799,8 +799,8 @@
   font-family: 'D2Coding', 'Consolas', 'Courier New', monospace;
   font-size: 12.5px;
   line-height: 1.65;
-  white-space: pre;
-  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-x: hidden;
   color: var(--text-primary);
 }
 
