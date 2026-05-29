@@ -3111,7 +3111,10 @@
     const badgeEl = document.getElementById('categorySourceBadge');
     const tipEl   = document.getElementById('categoryTip');
 
-    listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">불러오는 중...</div>';
+    listEl.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:16px;">
+      <div class="task-loading-spinner" style="width:20px;height:20px;border-width:3px;flex-shrink:0;"></div>
+      <span style="font-size:12px;color:var(--text-muted);">불러오는 중...</span>
+    </div>`;
 
     try {
       const res = await apiGet('taskGetCategories', { request_user_email: currentUser.email });
@@ -3134,7 +3137,6 @@
           <div class="category-item">
             <span class="category-item-order">${c.sort_order}</span>
             <span class="category-item-name">${esc(c.code_name)}</span>
-            <span class="category-item-code">${esc(c.code_value)}</span>
             <div class="category-item-actions">
               <button class="task-icon-btn" title="수정" onclick="TASK_APP.editCategory('${esc(c.code_value)}','${esc(c.code_name)}',${c.sort_order},'${esc(c.code_group)}')">✎</button>
               ${canDelete ? `<button class="task-icon-btn danger" title="삭제" onclick="TASK_APP.deleteCategory('${esc(c.code_value)}','${esc(c.code_name)}','${esc(c.code_group)}')">🗑</button>` : ''}
