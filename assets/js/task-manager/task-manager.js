@@ -2072,34 +2072,109 @@
       const today = new Date();
       const ds = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
 
+      const fileName = '주간업무보고_' + (teamWeekStart||'').replace(/-/g,'') + '_' + ds;
+
       printWin.document.write(`<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>주간업무보고_${(teamWeekStart||'').replace(/-/g,'')}_${ds}</title>
+  <title>${fileName}</title>
   <style>
     @page { size: A4 landscape; margin: 10mm 8mm; }
     * { box-sizing: border-box; }
-    body { font-family: '맑은 고딕', 'Apple SD Gothic Neo', sans-serif; font-size: 8pt; margin: 0; }
+    body {
+      font-family: '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
+      font-size: 8pt;
+      margin: 0;
+      background: #f0f4f8;
+    }
+
+    /* ── 상단 툴바 (인쇄 시 숨김) ── */
+    .preview-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: #1F3864;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .preview-toolbar-title {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .preview-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 18px;
+      border: none;
+      border-radius: 8px;
+      font-family: '맑은 고딕', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .preview-btn:hover { opacity: 0.85; }
+    .preview-btn--print  { background: #fff;    color: #1F3864; }
+    .preview-btn--close  { background: rgba(255,255,255,0.15); color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
+
+    /* ── 미리보기 페이지 ── */
+    .preview-page-wrap {
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .preview-page {
+      background: #fff;
+      width: 277mm;
+      min-height: 190mm;
+      padding: 10mm 8mm;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      border-radius: 2px;
+    }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     td, th { word-break: break-word; overflow-wrap: break-word; }
+
     @media print {
+      .preview-toolbar { display: none !important; }
+      body { background: #fff; }
+      .preview-page-wrap { padding: 0; }
+      .preview-page { box-shadow: none; width: 100%; padding: 0; border-radius: 0; }
+      @page { size: A4 landscape; margin: 10mm 8mm; }
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
 <body>
-  <table>${tableHtml}</table>
-  <script>
-    window.onload = function() {
-      window.print();
-      window.onafterprint = function() { window.close(); };
-    };
-  <\/script>
+
+  <!-- 상단 툴바 -->
+  <div class="preview-toolbar">
+    <span class="preview-toolbar-title">📄 미리보기 — ${fileName}</span>
+    <button class="preview-btn preview-btn--print" onclick="window.print()">🖨 인쇄 / PDF 저장</button>
+    <button class="preview-btn preview-btn--close" onclick="window.close()">✕ 닫기</button>
+  </div>
+
+  <!-- 미리보기 본문 -->
+  <div class="preview-page-wrap">
+    <div class="preview-page">
+      <table>${tableHtml}</table>
+    </div>
+  </div>
+
 </body>
 </html>`);
       printWin.document.close();
-      showMessage('인쇄 창이 열렸습니다. PDF로 저장하려면 "PDF로 저장"을 선택하세요.', 'success');
+      showMessage('미리보기 창이 열렸습니다.', 'success');
 
     } catch (err) {
       showMessage(err.message || 'PDF 생성 중 오류가 발생했습니다.', 'error');
