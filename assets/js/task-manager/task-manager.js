@@ -1771,7 +1771,7 @@
         clinics.forEach((cl, i) => {
           // 다음주 행: next_journal.early_work_this/sat_work_this 우선, 없으면 journal.early_work_next(구 필드) 폴백
           const getVal = (m, key, oldKey) => row.useNext
-            ? (m.next_journal ? m.next_journal[key]==='Y' : m.journal[oldKey]==='Y')
+            ? (m.next_journal ? m.next_journal[key]==='Y' : (m.journal ? m.journal[oldKey]==='Y' : false))
             : (m.journal ? m.journal[key]==='Y' : false);
           const earlyNames = (clinicMap[cl]||[]).filter(m => getVal(m, row.thisKey, 'early_work_next')).map(m => m.user_name);
           const satNames   = (clinicMap[cl]||[]).filter(m => getVal(m, row.satKey,  'sat_work_next')).map(m => m.user_name);
@@ -1990,7 +1990,7 @@
         const labelCell = idx === 0 ? `<td rowspan="2" style="${tdLabelStyle}">조출/<br>토요근무</td>` : '';
         tableHtml += `<tr>${labelCell}<td style="${_wkStyle}">${row.label}</td>${clinics.map(cl => {
           const getV = (m, key, oldKey) => row.useNext
-            ? (m.next_journal ? m.next_journal[key]==='Y' : m.journal[oldKey]==='Y')
+            ? (m.next_journal ? m.next_journal[key]==='Y' : (m.journal ? m.journal[oldKey]==='Y' : false))
             : (m.journal ? m.journal[key]==='Y' : false);
           const early = (clinicMap[cl]||[]).filter(m=>getV(m,row.thisKey,'early_work_next')).map(m=>m.user_name);
           const sat   = (clinicMap[cl]||[]).filter(m=>getV(m,row.satKey,'sat_work_next')).map(m=>m.user_name);
