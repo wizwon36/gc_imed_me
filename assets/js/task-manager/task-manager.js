@@ -1014,13 +1014,21 @@
     submitBtn.style.display = isClosed || status === 'SUBMITTED' ? 'none' : '';
     closeBtn.style.display  = (isManager && !isEdit && !isClosed) ? '' : 'none';
 
-    // 필드 채우기 — currentJournal에 세팅된 값을 그대로 표시
+    // 필드 채우기
+    // next 관련 필드는 currentNextJournal(다음 주 일지)에서 읽음
+    // 다음 주 일지가 없거나 마감됐으면 이번 주 일지의 old 필드로 폴백
+    const nj          = currentNextJournal;
+    const nextClosed  = nj && nj.status === 'CLOSED';
+    const nextDisabled = isClosed || nextClosed;
+
     setField('earlyWorkThis',      j.early_work_this, isClosed);
-    setField('earlyWorkNext',      j.early_work_next, isClosed);
     setField('satWorkThis',        j.sat_work_this,   isClosed);
-    setField('satWorkNext',        j.sat_work_next,   isClosed);
     setField('attendanceThisWeek', j.attendance_this_week, isClosed);
-    setField('attendanceNextWeek', j.attendance_next_week, isClosed);
+
+    // 다음 주 필드: currentNextJournal.early_work_this/sat_work_this/attendance_this_week 우선
+    setField('earlyWorkNext',      nj ? nj.early_work_this      : j.early_work_next,      nextDisabled);
+    setField('satWorkNext',        nj ? nj.sat_work_this        : j.sat_work_next,        nextDisabled);
+    setField('attendanceNextWeek', nj ? nj.attendance_this_week : j.attendance_next_week, nextDisabled);
     setField('journalSummary',      j.summary,      isClosed);
     // 차주계획: 다음 주 일지의 summary 우선, 없으면 next_plan (하위 호환)
     const nextPlanValue = (currentNextJournal && currentNextJournal.summary)
@@ -1183,25 +1191,58 @@
   async function saveJournal(isAuto = false) {
     if (!currentJournal) return;
 
-    const payload = {
+    // ── 이번 주 일지 payload (next 관련 필드 제외)
+    const thisPayload = {
       request_user_email:   currentUser.email,
       journal_id:           currentJournal.journal_id,
       early_work_this:      document.getElementById('earlyWorkThis')?.checked ? 'Y' : 'N',
-      early_work_next:      document.getElementById('earlyWorkNext')?.checked ? 'Y' : 'N',
       sat_work_this:        document.getElementById('satWorkThis')?.checked   ? 'Y' : 'N',
-      sat_work_next:        document.getElementById('satWorkNext')?.checked   ? 'Y' : 'N',
       attendance_this_week: document.getElementById('attendanceThisWeek').value,
-      attendance_next_week: document.getElementById('attendanceNextWeek').value,
       summary:              document.getElementById('journalSummary').value,
-      next_plan:            document.getElementById('journalNextPlan').value,
       issues:               document.getElementById('journalIssues').value
     };
+
+    // ── 다음 주 일지 payload (next 관련 필드만)
+    const earlyNext    = document.getElementById('earlyWorkNext')?.checked ? 'Y' : 'N';
+    const satNext      = document.getElementById('satWorkNext')?.checked   ? 'Y' : 'N';
+    const attNext      = document.getElementById('attendanceNextWeek').value;
+    const hasNextData  = earlyNext === 'Y' || satNext === 'Y' || attNext.trim();
 
     try {
       updateAutosaveStatus('saving');
       if (!isAuto) showGlobalLoading('저장 중...');
-      const res = await apiPost('journalUpdate', payload);
+
+      // 이번 주 일지 저장
+      const res = await apiPost('journalUpdate', thisPayload);
       currentJournal.updated_at = res.data?.updated_at || '';
+
+      // 다음 주 일지 — 데이터가 있으면 반드시 저장 (없으면 자동생성)
+      if (hasNextData || currentNextJournal) {
+        const nextWeekStart = offsetWeek(journalWeekStart, 1);
+
+        // 다음 주 일지 없으면 자동 생성
+        if (!currentNextJournal) {
+          const createRes = await apiGet('journalGetOrCreate', {
+            request_user_email: currentUser.email,
+            week_start:         nextWeekStart
+          });
+          currentNextJournal = createRes.data?.journal || null;
+        }
+
+        if (currentNextJournal && currentNextJournal.status !== 'CLOSED') {
+          await apiPost('journalUpdate', {
+            request_user_email:   currentUser.email,
+            journal_id:           currentNextJournal.journal_id,
+            early_work_this:      earlyNext,   // 다음 주 일지의 "이번 주 조출" = 현재 화면의 "다음 주 조출"
+            sat_work_this:        satNext,
+            attendance_this_week: attNext
+          });
+          currentNextJournal.early_work_this      = earlyNext;
+          currentNextJournal.sat_work_this        = satNext;
+          currentNextJournal.attendance_this_week = attNext;
+        }
+      }
+
       journalDirty       = false;
       autosaveRetryCount = 0;
       updateAutosaveStatus('saved');
@@ -1211,7 +1252,6 @@
       if (!isAuto) {
         showMessage(err.message || '저장에 실패했습니다.', 'error');
       } else if (autosaveRetryCount < AUTOSAVE_MAX_RETRY) {
-        // 자동저장 실패 시 재시도
         autosaveRetryCount++;
         autosaveTimer = setTimeout(() => saveJournal(true), AUTOSAVE_RETRY_MS);
       }
