@@ -507,6 +507,8 @@
         document.getElementById('journalNextPlan').value = newNextPlan;
         updateAutosaveStatus('saved');
       }
+      // 일지 존재 확인됐으므로 생성 버튼 숨김
+      updateGenerateJournalBtn(journal, false);
 
     } catch (err) {
       console.warn('[syncJournalIfExists] 일지 자동 동기화 실패:', err.message || err);
@@ -602,6 +604,7 @@
         renderJournal();
         renderJournalTaskSummary();
         showMessage('업무일지가 생성되었습니다.', 'success');
+        updateGenerateJournalBtn(journal, false);  // 생성 완료 → 버튼 숨김
       });
 
     } catch (err) {
@@ -796,14 +799,31 @@
     document.getElementById('weekTimeline').innerHTML = '';
 
     try {
-      const res = await apiGet('taskGetItems', {
-        request_user_email: currentUser.email,
-        week_start:         weeklyWeekStart
-      });
+      // 업무 목록 + 일지 존재 여부 병렬 조회
+      const todayWeekStart = getWeekStart(formatDateStr(new Date()));
+      const isPastWeek     = weeklyWeekStart < todayWeekStart;
 
-      weeklyTasks = res.data || [];
+      const [tasksRes, journalRes] = await Promise.all([
+        apiGet('taskGetItems', {
+          request_user_email: currentUser.email,
+          week_start:         weeklyWeekStart
+        }),
+        // 과거 주는 확인 불필요 — null로 처리
+        isPastWeek
+          ? Promise.resolve(null)
+          : apiGet('journalGet', {
+              request_user_email: currentUser.email,
+              week_start:         weeklyWeekStart
+            }).catch(() => null)
+      ]);
+
+      weeklyTasks = tasksRes.data || [];
       renderWeekTimeline();
       updateWeeklySummary();
+
+      // 생성 버튼 표시 여부 갱신
+      const journal = journalRes?.data?.journal ?? null;
+      updateGenerateJournalBtn(journal, isPastWeek);
 
     } catch (err) {
       showMessage(err.message || '업무 목록을 불러오지 못했습니다.', 'error');
@@ -813,6 +833,18 @@
           <div class="task-empty-text">불러오기 실패. 다시 시도해 주세요.</div>
         </div>`;
     }
+  }
+
+  /**
+   * 업무일지 생성 버튼 표시/숨김 제어
+   * - 일지 없음(이번 주 이후)  → 표시
+   * - 일지 있음 or 과거 주     → 숨김 (자동동기화가 담당하므로 불필요)
+   */
+  function updateGenerateJournalBtn(journal, isPastWeek) {
+    const btn = document.getElementById('generateJournalBtn');
+    if (!btn) return;
+    const shouldShow = !isPastWeek && !journal;
+    btn.style.display = shouldShow ? '' : 'none';
   }
 
   function updateWeeklySummary() {
