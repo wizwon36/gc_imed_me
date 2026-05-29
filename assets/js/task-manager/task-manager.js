@@ -35,6 +35,7 @@
   let currentJournal      = null;
   let currentJournalTasks = null;
   let currentNextJournal  = null;   // 다음 주 일지 (차주계획 표시용)
+  let journalAutoSync     = true;   // 업무 자동 동기화 설정
   let autosaveTimer       = null;
   let journalDirty        = false;
 
@@ -211,6 +212,30 @@
       document.getElementById(id)?.addEventListener('input', onJournalInput);
     });
     // journalNextPlan은 다음 주 업무 자동생성 읽기 전용 — 자동저장 바인딩 제외
+
+    // 자동 동기화 토글
+    const autoSyncToggle = document.getElementById('journalAutoSyncToggle');
+    if (autoSyncToggle) {
+      autoSyncToggle.addEventListener('change', async function() {
+        journalAutoSync = this.checked;
+        updateAutoSyncToggleUI(journalAutoSync);
+        try {
+          await apiPost('updateUserSetting', {
+            request_user_email: currentUser.email,
+            journal_auto_sync:  journalAutoSync ? 'Y' : 'N'
+          });
+          showMessage(journalAutoSync
+            ? '자동 동기화가 켜졌습니다.'
+            : '자동 동기화가 꺼졌습니다. 주간 업무 요약을 직접 작성하세요.', 'success');
+        } catch(e) {
+          showMessage('설정 저장에 실패했습니다.', 'error');
+          // 실패 시 원래 상태로 롤백
+          journalAutoSync = !journalAutoSync;
+          autoSyncToggle.checked = journalAutoSync;
+          updateAutoSyncToggleUI(journalAutoSync);
+        }
+      });
+    }
     // 체크박스는 change 이벤트
     ['earlyWorkThis','earlyWorkNext','satWorkThis','satWorkNext'].forEach(id => {
       document.getElementById(id)?.addEventListener('change', onJournalInput);
@@ -262,6 +287,7 @@
           journalWeekStart = weeklyWeekStart;
         }
         loadJournal();
+        loadUserSettings();  // 자동 동기화 설정 로드
       }
     }
     if (tab === 'team') {
@@ -475,6 +501,8 @@
    */
   function onJournalAutoSynced(journal) {
     if (!journal) return;
+    // 자동 동기화가 꺼져 있으면 UI 갱신 스킵
+    if (!journalAutoSync) return;
     // 일지 탭이 같은 주차로 열려있으면 summary 즉시 반영
     const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
     if (activeTab === 'journal' && journalWeekStart === weeklyWeekStart && currentJournal) {
@@ -908,6 +936,32 @@
   }
 
   // ── 주간일지 로드 ────────────────────────────────────────────
+  // 자동 동기화 토글 UI 업데이트
+  function updateAutoSyncToggleUI(isOn) {
+    const slider = document.getElementById('journalAutoSyncSlider');
+    const knob   = document.getElementById('journalAutoSyncKnob');
+    const toggle = document.getElementById('journalAutoSyncToggle');
+    if (!slider) return;
+    slider.style.background = isOn ? '#0369a1' : '#cbd5e1';
+    if (knob) knob.style.left = isOn ? '18px' : '2px';
+    if (toggle) toggle.checked = isOn;
+  }
+
+  // 앱 초기화 시 사용자 설정 로드
+  async function loadUserSettings() {
+    try {
+      const res = await apiGet('getUserSetting', {
+        request_user_email: currentUser.email
+      });
+      journalAutoSync = (res.data?.journal_auto_sync || 'Y') !== 'N';
+      updateAutoSyncToggleUI(journalAutoSync);
+    } catch(e) {
+      // 실패 시 기본값 Y 유지
+      journalAutoSync = true;
+      updateAutoSyncToggleUI(true);
+    }
+  }
+
   async function loadJournal() {
     updateSharedWeekNav();
     clearAutosave();
