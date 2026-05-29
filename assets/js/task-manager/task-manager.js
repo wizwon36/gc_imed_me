@@ -1110,8 +1110,15 @@
       updateAutoSyncToggleUI(journalAutoSync);
       _userSettingsLoaded = true;
     } catch(e) {
-      // API 미등록 또는 오류 — 현재 상태 유지 (기본값 덮어쓰기 안 함)
+      // API 미등록 또는 오류 — 기본값(켜짐) 유지
+      journalAutoSync = true;
+      updateAutoSyncToggleUI(true);
+      _userSettingsLoaded = true;
       console.warn('[loadUserSettings] 설정 로드 실패:', e.message || e);
+    } finally {
+      // 설정 로드 완료 후 토글 표시
+      const wrap = document.getElementById('journalAutoSyncWrap');
+      if (wrap) wrap.style.visibility = 'visible';
     }
   }
 
