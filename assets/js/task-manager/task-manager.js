@@ -578,15 +578,28 @@
   }
 
   // 엑셀 출력용 — └ 줄의 들여쓰기를 웹과 동일하게 정규화
+  // [수정] 엑셀 들여쓰기 정규화
+  // 맑은 고딕은 가변폭 폰트라 공백 수로 정렬이 어긋남.
+  // • 줄: "  • ..."  └ 줄: "    └ ..."  continuation: "       ..."
   function normalizeSubLinesForExcel(line) {
     const trimmed = line.trim();
     if (trimmed.startsWith('└')) {
-      return '      └ ' + trimmed.slice(1).replace(/^\s+/, '');
+      return '    └ ' + trimmed.slice(1).replace(/^\s+/, '');
     }
-    if (/^ {8,}/.test(line) && !trimmed.startsWith('└')) {
-      return '           ' + trimmed;
+    // continuation 줄: 공백 4자 이상으로 시작하며 bullet/섹션헤더가 아닌 줄
+    if (/^ {4,}/.test(line) && !trimmed.startsWith('•') && !trimmed.startsWith('[') && trimmed !== '') {
+      return '       ' + trimmed;
     }
     return line;
+  }
+
+  // └ 줄 또는 continuation 줄 판별 (extractCategorySection의 while 조건용)
+  function isSubLine(line) {
+    if (!line) return false;
+    const trimmed = line.trim();
+    if (trimmed.startsWith('└')) return true;
+    if (/^ {4,}/.test(line) && !trimmed.startsWith('•') && !trimmed.startsWith('[') && trimmed !== '') return true;
+    return false;
   }
 
   function buildDailyGroupedText(items, weekStart, showStatus) {
@@ -1467,6 +1480,40 @@
   }
 
   // ── 주간업무 엑셀 다운로드 ──────────────────────────────────────
+  // [수정] 엑셀 행 높이 동적 계산 — 셀 내용 줄 수 기반
+  function calcRowHeights(ws, totalRows, totalCols, clinics) {
+    const colWidths   = [16, 11, ...clinics.map(function() { return 65; })];
+    const PT_PER_LINE = 14;
+    const PT_PADDING  = 6;
+    const MIN_PT      = 40;
+    const rowHeights  = [];
+
+    for (let ri = 0; ri < totalRows; ri++) {
+      if (ri === 0)  { rowHeights.push({ hpt: 42 }); continue; }
+      if (ri < 3)    { rowHeights.push({ hpt: 29 }); continue; }
+
+      let maxLines = 1;
+      for (let ci = 0; ci < totalCols; ci++) {
+        const addr = window.XLSX.utils.encode_cell({ r: ri, c: ci });
+        const cell = ws[addr];
+        if (!cell || !cell.v) continue;
+        const text     = String(cell.v);
+        const colWidth = colWidths[ci] || 20;
+        const segments = text.split('\n');
+        let totalLines = 0;
+        segments.forEach(function(seg) {
+          // 한글 2자 = 영문 약 2자 너비, 평균 1.8로 추산 (보수적)
+          const estimated = seg.length * 1.8;
+          totalLines += Math.max(1, Math.ceil(estimated / colWidth));
+        });
+        if (totalLines > maxLines) maxLines = totalLines;
+      }
+      rowHeights.push({ hpt: Math.max(MIN_PT, maxLines * PT_PER_LINE + PT_PADDING) });
+    }
+    return rowHeights;
+  }
+
+
   async function exportJournalExcel() {
     if (!window.XLSX) {
       showMessage('엑셀 라이브러리를 불러오지 못했습니다.', 'error');
@@ -1670,14 +1717,8 @@
 
       ws['!ref']  = window.XLSX.utils.encode_range({r:0,c:0},{r:r-1,c:TOTAL_COLS-1});
       ws['!cols'] = [{ wch:16 }, { wch:11 }, ...clinics.map(()=>({ wch:65 }))];
-      // 모든 데이터 행 고정 높이 — 빈 행도 표시
-      const rowHeights = [];
-      for (let ri = 0; ri < r; ri++) {
-        if (ri === 0)      rowHeights.push({ hpt: 42 });  // 제목
-        else if (ri < 3)   rowHeights.push({ hpt: 29 });  // 기간/헤더
-        else               rowHeights.push({ hpt: 104, hpx: 104, customHeight: false });  // 데이터 행 — 자동
-      }
-      ws['!rows'] = rowHeights;
+      // [수정] 데이터 행 높이 — 내용 줄 수 기반 동적 계산
+      ws['!rows'] = calcRowHeights(ws, r, TOTAL_COLS, clinics);
 
       window.XLSX.utils.book_append_sheet(wb2, ws, '주간업무보고');
       const today = new Date();
@@ -1698,19 +1739,19 @@
   /**
    * 엑셀 출력용 — 이름행, 날짜행, 날짜범위 제거 + 번호를 •로 교체
    */
+  // [수정] 이름행/날짜행 제거 + 들여쓰기 정규화 (isSubLine 헬퍼 사용)
   function stripNameAndDate(lines) {
     return lines
-      .filter(l => {
+      .filter(function(l) {
         const t = l.trim();
         if (!t) return false;
-        if (t.startsWith('• ') && /^•\s+\S+\s*$/.test(t)) return false;  // 근태 이름행(이름만 있는 줄) 제거
+        if (t.startsWith('• ') && /^•\s+\S+\s*$/.test(t)) return false;
         if (/^\d{2}\/\d{2}\s*\(/.test(t)) return false;
         return true;
       })
-      .map(l => {
-        // └ 가 포함된 줄이거나 continuation 들여쓰기(공백 8자 이상) 줄은 번호→• 변환 제외 및 정규화
-        const isSubLine = l.includes('└') || /^ {8,}/.test(l);
-        let result = isSubLine ? normalizeSubLinesForExcel(l) : l.replace(/^(\s*)\d+\.\s+/, '$1• ');
+      .map(function(l) {
+        const sub    = isSubLine(l);
+        let result   = sub ? normalizeSubLinesForExcel(l) : l.replace(/^(\s*)\d+\.\s+/, '$1• ');
         result = result.replace(/\s+\d{2}\/\d{2}\s*~\s*\d{2}\/\d{2}/g, '');
         result = result.replace(/\s+\d{2}\/\d{2}(?!\s*[~(])/g, '');
         return result;
@@ -1765,13 +1806,13 @@
               (priority === 'NORMAL' && !isHigh)) {
             result.push(lines[i]);
             let j = i + 1;
-            while (j < lines.length && lines[j].trim().startsWith('└')) {
+            while (j < lines.length && isSubLine(lines[j])) {
               result.push(normalizeSubLinesForExcel(lines[j])); j++;
             }
             i = j; continue;
           } else {
             let j = i + 1;
-            while (j < lines.length && lines[j].trim().startsWith('└')) j++;
+            while (j < lines.length && isSubLine(lines[j])) j++;
             i = j; continue;
           }
         } else {
