@@ -109,6 +109,10 @@
       await loadCategories();
       await loadWeeklyTasks();
 
+      // 자동 동기화 토글 초기화 + 설정 로드
+      initAutoSyncToggle();
+      loadUserSettings();
+
     } catch (err) {
       showMessage(err.message || '초기화에 실패했습니다.', 'error');
     } finally {
@@ -213,29 +217,18 @@
     });
     // journalNextPlan은 다음 주 업무 자동생성 읽기 전용 — 자동저장 바인딩 제외
 
-    // 자동 동기화 토글
-    const autoSyncToggle = document.getElementById('journalAutoSyncToggle');
-    if (autoSyncToggle) {
-      autoSyncToggle.addEventListener('change', async function() {
-        journalAutoSync = this.checked;
-        updateAutoSyncToggleUI(journalAutoSync);
-        try {
-          await apiPost('updateUserSetting', {
-            request_user_email: currentUser.email,
-            journal_auto_sync:  journalAutoSync ? 'Y' : 'N'
-          });
-          showMessage(journalAutoSync
-            ? '자동 동기화가 켜졌습니다.'
-            : '자동 동기화가 꺼졌습니다. 주간 업무 요약을 직접 작성하세요.', 'success');
-        } catch(e) {
-          showMessage('설정 저장에 실패했습니다.', 'error');
-          // 실패 시 원래 상태로 롤백
-          journalAutoSync = !journalAutoSync;
-          autoSyncToggle.checked = journalAutoSync;
-          updateAutoSyncToggleUI(journalAutoSync);
-        }
-      });
-    }
+    // 불러오기 버튼
+    document.getElementById('journalImportTasksBtn')?.addEventListener('click', openImportTasksModal);
+    document.getElementById('importTasksModalClose')?.addEventListener('click', () => {
+      document.getElementById('importTasksModal').style.display = 'none';
+    });
+    document.getElementById('importTasksCancelBtn')?.addEventListener('click', () => {
+      document.getElementById('importTasksModal').style.display = 'none';
+    });
+    document.getElementById('importTasksApplyBtn')?.addEventListener('click', applyImportTasks);
+    document.getElementById('importTasksSelectAll')?.addEventListener('change', function() {
+      document.querySelectorAll('.import-task-checkbox').forEach(cb => cb.checked = this.checked);
+    });
     // 체크박스는 change 이벤트
     ['earlyWorkThis','earlyWorkNext','satWorkThis','satWorkNext'].forEach(id => {
       document.getElementById(id)?.addEventListener('change', onJournalInput);
@@ -287,7 +280,6 @@
           journalWeekStart = weeklyWeekStart;
         }
         loadJournal();
-        loadUserSettings();  // 자동 동기화 설정 로드
       }
     }
     if (tab === 'team') {
@@ -479,6 +471,136 @@
       const d = new Date(weekStart + 'T00:00:00');
       d.setDate(d.getDate() + i);
       return formatDateStr(d);
+    });
+  }
+
+  // ── 업무에서 불러오기 ──────────────────────────────────────
+
+  function openImportTasksModal() {
+    if (!currentJournalTasks || !currentJournalTasks.items) {
+      showMessage('이번 주 업무 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.', 'error');
+      return;
+    }
+
+    const items = currentJournalTasks.items || [];
+    const listEl = document.getElementById('importTasksList');
+    const selectAll = document.getElementById('importTasksSelectAll');
+    if (selectAll) selectAll.checked = false;
+
+    if (!items.length) {
+      listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">이번 주 등록된 업무가 없습니다.</div>';
+    } else {
+      const grouped = {};
+      items.forEach(t => {
+        const cat = CATEGORY_LABELS[t.category] || t.category || '기타';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(t);
+      });
+
+      const STATUS_KR = { TODO: '예정', IN_PROGRESS: '진행중', DONE: '완료' };
+      const PRIORITY_COLOR = { HIGH: '#dc2626', MEDIUM: '#d97706', LOW: '#16a34a' };
+
+      listEl.innerHTML = Object.keys(grouped).map(cat => `
+        <div style="padding:6px 12px 2px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;
+            letter-spacing:0.05em;margin-bottom:4px;">${esc(cat)}</div>
+          ${grouped[cat].map(t => `
+            <label style="display:flex;align-items:flex-start;gap:10px;padding:7px 6px;border-radius:8px;
+              cursor:pointer;transition:background 0.1s;" onmouseover="this.style.background='#f1f5f9'"
+              onmouseout="this.style.background=''">
+              <input type="checkbox" class="import-task-checkbox" data-task-id="${t.task_id}"
+                style="width:15px;height:15px;margin-top:2px;cursor:pointer;flex-shrink:0;">
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:13px;font-weight:500;color:var(--text-primary);">${esc(t.title)}</span>
+                  ${t.priority === 'HIGH' ? '<span style="font-size:10px;font-weight:700;color:#dc2626;">★</span>' : ''}
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                  ${esc(t.start_date)}${t.end_date && t.end_date !== t.start_date ? ' ~ ' + esc(t.end_date) : ''}
+                  <span style="margin-left:6px;padding:1px 6px;border-radius:4px;background:#f1f5f9;
+                    color:var(--text-secondary);">${STATUS_KR[t.status] || t.status}</span>
+                </div>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    // 적용 방식 초기화
+    const appendRadio = document.querySelector('input[name="importMode"][value="append"]');
+    if (appendRadio) appendRadio.checked = true;
+
+    document.getElementById('importTasksModal').style.display = '';
+  }
+
+  async function applyImportTasks() {
+    const checked = [...document.querySelectorAll('.import-task-checkbox:checked')];
+    if (!checked.length) {
+      showMessage('불러올 업무를 선택해주세요.', 'error');
+      return;
+    }
+
+    const mode = document.querySelector('input[name="importMode"]:checked')?.value || 'append';
+    const selectedIds = new Set(checked.map(cb => cb.dataset.taskId));
+    const selectedItems = (currentJournalTasks?.items || []).filter(t => selectedIds.has(t.task_id));
+
+    // 선택된 업무들을 buildDailyGroupedText 포맷으로 변환
+    const newText = buildDailyGroupedText(selectedItems, journalWeekStart, true);
+
+    const summaryEl = document.getElementById('journalSummary');
+    if (!summaryEl) return;
+
+    if (mode === 'replace') {
+      summaryEl.value = newText;
+    } else {
+      const existing = summaryEl.value.trim();
+      summaryEl.value = existing ? existing + '\n\n' + newText : newText;
+    }
+
+    // 일지가 없으면 자동 생성
+    if (!currentJournal) {
+      try {
+        const createRes = await apiGet('journalGetOrCreate', {
+          request_user_email: currentUser.email,
+          week_start:         journalWeekStart
+        });
+        currentJournal      = createRes.data?.journal || null;
+        currentJournalTasks = createRes.data?.tasks   || null;
+      } catch(e) { /* 저장 시 생성됨 */ }
+    }
+
+    journalDirty = true;
+    updateAutosaveStatus('saving');
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => saveJournal(true), 1500);  // 1.5초 후 자동저장
+
+    document.getElementById('importTasksModal').style.display = 'none';
+    showMessage(`${selectedItems.length}개 업무를 불러왔습니다. 잠시 후 자동 저장됩니다.`, 'success');
+  }
+
+  // ── 자동 동기화 토글 초기화 ─────────────────────────────────
+  function initAutoSyncToggle() {
+    const autoSyncToggle = document.getElementById('journalAutoSyncToggle');
+    if (!autoSyncToggle || autoSyncToggle._bound) return;
+    autoSyncToggle._bound = true;
+    autoSyncToggle.addEventListener('change', async function() {
+      journalAutoSync = this.checked;
+      updateAutoSyncToggleUI(journalAutoSync);
+      try {
+        await apiPost('updateUserSetting', {
+          request_user_email: currentUser.email,
+          journal_auto_sync:  journalAutoSync ? 'Y' : 'N'
+        });
+        showMessage(journalAutoSync
+          ? '업무일지 자동 동기화가 켜졌습니다.'
+          : '업무일지 자동 동기화가 꺼졌습니다. 업무 요약을 직접 작성하세요.', 'success');
+      } catch(e) {
+        showMessage('설정 저장에 실패했습니다.', 'error');
+        journalAutoSync = !journalAutoSync;
+        autoSyncToggle.checked = journalAutoSync;
+        updateAutoSyncToggleUI(journalAutoSync);
+      }
     });
   }
 
@@ -948,17 +1070,21 @@
   }
 
   // 앱 초기화 시 사용자 설정 로드
+  // 설정 로드 완료 여부 — 초기 1회만 로드
+  let _userSettingsLoaded = false;
+
   async function loadUserSettings() {
+    if (_userSettingsLoaded) return;  // 이미 로드됐으면 스킵
     try {
       const res = await apiGet('getUserSetting', {
         request_user_email: currentUser.email
       });
       journalAutoSync = (res.data?.journal_auto_sync || 'Y') !== 'N';
       updateAutoSyncToggleUI(journalAutoSync);
+      _userSettingsLoaded = true;
     } catch(e) {
-      // 실패 시 기본값 Y 유지
-      journalAutoSync = true;
-      updateAutoSyncToggleUI(true);
+      // API 미등록 또는 오류 — 현재 상태 유지 (기본값 덮어쓰기 안 함)
+      console.warn('[loadUserSettings] 설정 로드 실패:', e.message || e);
     }
   }
 
