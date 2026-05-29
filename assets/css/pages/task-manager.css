@@ -762,13 +762,12 @@
   border-radius: var(--radius-sm);
   background: #fff;
   color: var(--text-primary);
-  font-size: 12.5px;
-  font-family: 'D2Coding', 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', Consolas, monospace;
+  font-size: 13px;
   line-height: 1.65;
   resize: vertical;
   transition: border-color 0.15s ease;
   box-sizing: border-box;
-  white-space: pre-wrap;    /* 줄바꿈 유지 + 자동 줄바꿈 허용 */
+  white-space: pre-wrap;
   overflow-x: hidden;
   overflow-y: auto;
 }
