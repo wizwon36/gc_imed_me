@@ -1418,8 +1418,21 @@
         </div>`;
       }
 
-      html += section('📋', '주간 업무 요약',     j.summary      || '', false);
-      html += section('🎯', '차주 업무 계획',    j.next_plan    || '', false);
+      // 주간 업무 요약 + 차주 업무 계획 — 2컬럼 나란히 배치
+      const hasSummary  = !!(j.summary   && j.summary.trim());
+      const hasNextPlan = !!(j.next_plan && j.next_plan.trim());
+      if (hasSummary || hasNextPlan) {
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">`;
+        html += `<div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">📋 주간 업무 요약</div>
+          <div style="font-size:12.5px;color:var(--text-primary);font-family:'D2Coding','Consolas','Courier New',monospace;white-space:pre;overflow-x:auto;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;">${esc(j.summary || '')}</div>
+        </div>`;
+        html += `<div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🎯 차주 업무 계획</div>
+          <div style="font-size:12.5px;color:var(--text-primary);font-family:'D2Coding','Consolas','Courier New',monospace;white-space:pre;overflow-x:auto;line-height:1.65;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;">${esc(j.next_plan || '')}</div>
+        </div>`;
+        html += `</div>`;
+      }
       html += section('⚠️', '이슈 / 건의사항',  j.issues       || '', true);
 
       const timestamps = [];
