@@ -1426,7 +1426,8 @@
 
     // next_journal이 없으면 직접 조회
     // (백엔드 next_journal 미배포 / 캐시 없는 경우 대비)
-    if (!m.next_journal && j) {
+    // has_next_journal:true인데 next_journal이 없으면 직접 조회
+    if (!m.next_journal && j && m.has_next_journal !== false) {
       try {
         const nextWeekStart = offsetWeek(j.week_start, 1);
         const nParams = { request_user_email: currentUser.email, week_start: nextWeekStart };
@@ -1626,7 +1627,8 @@
 
       // next_journal 없으면 다음 주 일지 병렬 조회
       const nextWeekStartExcel = offsetWeek(teamWeekStart, 1);
-      const needFetchExcel = members.some(m => !m.next_journal && m.journal);
+      // has_next_journal:true인데 next_journal 키가 없으면 직접 조회 (GAS null 직렬화 이슈)
+      const needFetchExcel = members.some(m => !m.next_journal && m.journal && m.has_next_journal !== false);
       if (needFetchExcel) {
         await Promise.all(members.map(async m => {
           if (m.next_journal || !m.journal) return;
@@ -1891,7 +1893,8 @@
       // next_journal이 없으면 다음 주 일지를 병렬로 직접 조회
       // (26_JournalService.gs 미배포 환경 대비)
       const nextWeekStart = offsetWeek(teamWeekStart, 1);
-      const needFetch = members.some(m => !m.next_journal && m.journal);
+      // has_next_journal:true인데 next_journal 키가 없으면 직접 조회 (GAS null 직렬화 이슈)
+      const needFetch = members.some(m => !m.next_journal && m.journal && m.has_next_journal !== false);
       if (needFetch) {
         await Promise.all(members.map(async m => {
           if (m.next_journal || !m.journal) return;
