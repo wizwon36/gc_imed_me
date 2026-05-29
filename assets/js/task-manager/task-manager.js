@@ -1491,25 +1491,7 @@
     const j     = m.journal;
     const tasks = m.task_summary || {};
 
-    // next_journal이 없으면 직접 조회
-    // (백엔드 next_journal 미배포 / 캐시 없는 경우 대비)
-    // 본인 일지이거나 팀장/admin이면 조회 가능
-    if (!m.next_journal && j) {
-      try {
-        const nextWeekStart = offsetWeek(j.week_start, 1);
-        const nParams = { request_user_email: currentUser.email, week_start: nextWeekStart };
-        // 본인 일지가 아닌 경우 target_user_email 추가 (팀장 권한 필요)
-        if (j.user_email && j.user_email.toLowerCase() !== currentUser.email.toLowerCase()) {
-          nParams.target_user_email = j.user_email;
-        }
-        const nRes = await apiGet('journalGet', nParams).catch(() => null);
-        if (nRes && nRes.data && nRes.data.journal) {
-          m.next_journal = nRes.data.journal;
-        }
-      } catch(e) { /* 실패해도 계속 진행 */ }
-    }
-
-    // 제목: 이름 + 소속 + 상태 배지
+    // ── 모달 즉시 열기: 제목 + 스피너 먼저 표시
     const statusMap   = { DRAFT: '작성중', SUBMITTED: '제출됨', CLOSED: '마감됨' };
     const statusColor = { DRAFT: '#64748b', SUBMITTED: '#0369a1', CLOSED: '#16a34a' };
     const status      = j ? (j.status || 'DRAFT') : null;
@@ -1521,6 +1503,29 @@
     const reopenActionBtn = document.getElementById('memberJournalReopenBtn');
     closeActionBtn.style.display  = (isManager && !isEdit && j && j.status !== 'CLOSED') ? '' : 'none';
     reopenActionBtn.style.display = (isManager && !isEdit && j && j.status === 'CLOSED') ? '' : 'none';
+
+    const bodyEl = document.getElementById('memberJournalBody');
+    bodyEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:60px 20px;">
+      <div class="task-loading-spinner" style="width:36px;height:36px;border-width:4px;"></div>
+      <div style="font-size:13px;color:var(--text-muted);">일지를 불러오는 중...</div>
+    </div>`;
+    document.getElementById('memberJournalModal').classList.add('open');
+
+    // next_journal이 없으면 직접 조회
+    // (백엔드 next_journal 미배포 / 캐시 없는 경우 대비)
+    if (!m.next_journal && j) {
+      try {
+        const nextWeekStart = offsetWeek(j.week_start, 1);
+        const nParams = { request_user_email: currentUser.email, week_start: nextWeekStart };
+        if (j.user_email && j.user_email.toLowerCase() !== currentUser.email.toLowerCase()) {
+          nParams.target_user_email = j.user_email;
+        }
+        const nRes = await apiGet('journalGet', nParams).catch(() => null);
+        if (nRes && nRes.data && nRes.data.journal) {
+          m.next_journal = nRes.data.journal;
+        }
+      } catch(e) { /* 실패해도 계속 진행 */ }
+    }
 
     let html = '';
 
@@ -1572,7 +1577,7 @@
       }
     }
 
-    document.getElementById('memberJournalBody').innerHTML = html;
+    bodyEl.innerHTML = html;
 
     closeActionBtn.onclick = async () => {
       if (!j) return;
@@ -1613,8 +1618,6 @@
         hideGlobalLoading();
       }
     };
-
-    document.getElementById('memberJournalModal').classList.add('open');
 
     // ResizeObserver로 모달 body 실제 너비를 실시간 감지 → 1컬럼/2컬럼 전환
     // 창 크기를 늘였다 줄여도 즉시 반응
