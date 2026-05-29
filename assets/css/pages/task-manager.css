@@ -743,6 +743,17 @@
   font-size: 15px;
 }
 
+/* =============================================================
+ * [수정 1] 업무일지 textarea — 줄바꿈 들여쓰기 문제 해결
+ *
+ * 문제: 공백 문자(스페이스)로 들여쓰기를 맞추는데, 일반 폰트
+ *       (맑은 고딕, sans-serif)는 고정폭이 아니라서 줄바꿈 시
+ *       └ 이하 continuation 줄이 기준선에서 벗어남.
+ *
+ * 해결: textarea에 monospace 폰트를 적용해 공백 너비를 고정시킴.
+ *       이렇게 하면 pushDescription()이 만드는 공백 기반 들여쓰기가
+ *       textarea 안에서 정확히 정렬됨.
+ * ============================================================= */
 .journal-textarea {
   width: 100%;
   min-height: 80px;
@@ -751,11 +762,15 @@
   border-radius: var(--radius-sm);
   background: #fff;
   color: var(--text-primary);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;        /* monospace는 같은 크기에서 살짝 넓어 보여 0.5px 줄임 */
+  font-family: 'D2Coding', 'Consolas', 'Courier New', monospace;
+  line-height: 1.65;
   resize: vertical;
   transition: border-color 0.15s ease;
   box-sizing: border-box;
+  white-space: pre;         /* 줄바꿈·공백 그대로 유지 (가로 스크롤 허용) */
+  overflow-x: auto;         /* 내용이 길면 가로 스크롤 */
+  overflow-y: auto;
 }
 
 .journal-textarea:focus {
@@ -770,62 +785,26 @@
   cursor: not-allowed;
 }
 
-/* ── 근태 입력 ── */
-/* ── 조출 / 특근 여부 ── */
-.early-work-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.early-work-week {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 1.5px solid var(--border-soft, #e2e8f0);
-  border-radius: var(--radius-sm);
-  background: #f8fafc;
-}
-
-.early-work-week-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 2px;
-}
-
-.early-work-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.early-work-checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--blue, #2563eb);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.early-work-checkbox:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.early-work-label {
-  font-size: 13px;
-  font-weight: 500;
+/* =============================================================
+ * [수정 1-B] 팀원 일지 모달 / 통합 보기 — pre-wrap 영역
+ *
+ * 팀원 일지를 읽기 전용으로 보여줄 때 사용하는 div.
+ * JS에서 white-space:pre-wrap; 인라인 스타일로 렌더링하므로
+ * 여기서 hanging-indent 기법을 클래스로 제공함.
+ *
+ * 사용법 (JS):
+ *   style="white-space:pre-wrap; ..." → class에 journal-preformatted 추가
+ * ============================================================= */
+.journal-preformatted {
+  font-family: 'D2Coding', 'Consolas', 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre;
+  overflow-x: auto;
   color: var(--text-primary);
-  user-select: none;
 }
 
-@media (max-width: 640px) {
-  .early-work-grid { grid-template-columns: 1fr; }
-}
-
+/* ── 근태 입력 ── */
 .attendance-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
