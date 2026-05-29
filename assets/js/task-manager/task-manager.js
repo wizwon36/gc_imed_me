@@ -211,14 +211,14 @@
     document.getElementById('journalCloseBtn')?.addEventListener('click', closeJournal);
 
     // 일지 자동 저장 (입력 후 디바운스)
-    ['journalSummary','journalIssues',
+    ['journalSummary','journalNextPlan','journalIssues',
      'attendanceThisWeek','attendanceNextWeek'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', onJournalInput);
     });
-    // journalNextPlan은 다음 주 업무 자동생성 읽기 전용 — 자동저장 바인딩 제외
 
-    // 불러오기 버튼
-    document.getElementById('journalImportTasksBtn')?.addEventListener('click', openImportTasksModal);
+    // 불러오기 버튼 (이번 주 / 차주)
+    document.getElementById('journalImportTasksBtn')?.addEventListener('click', () => openImportTasksModal('this'));
+    document.getElementById('journalImportNextTasksBtn')?.addEventListener('click', () => openImportTasksModal('next'));
     document.getElementById('importTasksModalClose')?.addEventListener('click', () => {
       document.getElementById('importTasksModal').classList.remove('open');
     });
@@ -476,20 +476,21 @@
 
   // ── 업무에서 불러오기 ──────────────────────────────────────
 
-  async function openImportTasksModal() {
-    // 일지 주차와 주간업무 주차가 같으면 weeklyTasks 사용
-    // 다르면 해당 주차 업무를 직접 조회
+  async function openImportTasksModal(mode = 'this') {
+    // mode: 'this' = 이번 주(주간업무요약), 'next' = 다음 주(차주계획)
+    const targetWeek = mode === 'next' ? offsetWeek(journalWeekStart, 1) : journalWeekStart;
+
     let items = [];
-    if (journalWeekStart === weeklyWeekStart && weeklyTasks && weeklyTasks.length > 0) {
+    if (mode === 'this' && journalWeekStart === weeklyWeekStart && weeklyTasks && weeklyTasks.length > 0) {
       items = weeklyTasks;
-    } else if (currentJournalTasks && currentJournalTasks.items && currentJournalTasks.items.length > 0) {
+    } else if (mode === 'this' && currentJournalTasks && currentJournalTasks.items && currentJournalTasks.items.length > 0) {
       items = currentJournalTasks.items;
     } else {
-      // 직접 조회
+      // 다음 주 또는 주차 불일치 시 직접 조회
       try {
         const res = await apiGet('taskGetItems', {
           request_user_email: currentUser.email,
-          week_start: journalWeekStart
+          week_start: targetWeek
         });
         items = res.data || [];
       } catch(e) {
@@ -497,6 +498,11 @@
         return;
       }
     }
+
+    // 모달 제목 및 적용 대상 저장
+    document.querySelector('#importTasksModal .task-modal-title').textContent =
+      mode === 'next' ? '📥 차주 업무에서 불러오기' : '📥 업무에서 불러오기';
+    document.getElementById('importTasksModal').dataset.mode = mode;
     const listEl = document.getElementById('importTasksList');
     const selectAll = document.getElementById('importTasksSelectAll');
     if (selectAll) selectAll.checked = false;
@@ -562,17 +568,21 @@
       : (currentJournalTasks?.items || []);
     const selectedItems = allItems.filter(t => selectedIds.has(t.task_id));
 
-    // 선택된 업무들을 buildDailyGroupedText 포맷으로 변환
-    const newText = buildDailyGroupedText(selectedItems, journalWeekStart, true);
+    // 적용 대상: 이번주 요약 or 차주 계획
+    const importMode = document.getElementById('importTasksModal').dataset.mode || 'this';
+    const targetWeekForText = importMode === 'next' ? offsetWeek(journalWeekStart, 1) : journalWeekStart;
+    const newText    = buildDailyGroupedText(selectedItems, targetWeekForText, importMode === 'this');
 
-    const summaryEl = document.getElementById('journalSummary');
-    if (!summaryEl) return;
+    const targetEl = importMode === 'next'
+      ? document.getElementById('journalNextPlan')
+      : document.getElementById('journalSummary');
+    if (!targetEl) return;
 
     if (mode === 'replace') {
-      summaryEl.value = newText;
+      targetEl.value = newText;
     } else {
-      const existing = summaryEl.value.trim();
-      summaryEl.value = existing ? existing + '\n\n' + newText : newText;
+      const existing = targetEl.value.trim();
+      targetEl.value = existing ? existing + '\n\n' + newText : newText;
     }
 
     // 일지가 없으면 자동 생성
@@ -1184,14 +1194,14 @@
         attendanceThisWeek: '이번 주 근태 특이사항을 입력하세요.',
         attendanceNextWeek: '다음 주 근태 예정을 입력하세요.',
         journalSummary:     '주간 업무 요약을 입력하세요.',
-        journalNextPlan:    '다음 주 업무를 등록하면 자동으로 채워집니다.',
+        journalNextPlan:    '다음 주 업무 계획을 작성해 주세요.',
         journalIssues:      '이슈 및 건의사항을 입력하세요.'
       };
       Object.entries(PLACEHOLDER).forEach(([id, ph]) => {
         const el = document.getElementById(id);
         if (el) {
           el.value       = '';
-          el.disabled    = id === 'journalNextPlan'; // 차주계획만 readonly
+          el.disabled    = false;
           el.placeholder = ph;
         }
       });
@@ -1257,9 +1267,8 @@
     const nextPlanValue = (currentNextJournal && currentNextJournal.summary)
       ? currentNextJournal.summary
       : (j.next_plan || '');
-    // journalNextPlan은 readonly textarea — value만 세팅 (disabled 불필요)
-    const npEl = document.getElementById('journalNextPlan');
-    if (npEl) npEl.value = nextPlanValue;
+    // 차주 업무 계획 — 수정 가능, CLOSED 시 disabled
+    setField('journalNextPlan', nextPlanValue, isClosed);
     setField('journalIssues',       j.issues,       isClosed);
 
     updateAutosaveStatus('');
@@ -1457,7 +1466,10 @@
       currentJournal.updated_at = res.data?.updated_at || '';
 
       // 다음 주 일지 — 데이터가 있으면 반드시 저장 (없으면 자동생성)
-      if (hasNextData || currentNextJournal) {
+      // 차주 업무 계획 (journalNextPlan) 값 가져오기
+      const nextPlanText = document.getElementById('journalNextPlan')?.value || '';
+
+      if (hasNextData || currentNextJournal || nextPlanText.trim()) {
         const nextWeekStart = offsetWeek(journalWeekStart, 1);
 
         // 다음 주 일지 없으면 자동 생성
@@ -1473,13 +1485,15 @@
           await apiPost('journalUpdate', {
             request_user_email:   currentUser.email,
             journal_id:           currentNextJournal.journal_id,
-            early_work_this:      earlyNext,   // 다음 주 일지의 "이번 주 조출" = 현재 화면의 "다음 주 조출"
+            early_work_this:      earlyNext,
             sat_work_this:        satNext,
-            attendance_this_week: attNext
+            attendance_this_week: attNext,
+            summary:              nextPlanText   // 차주 업무 계획 → 다음 주 일지 summary
           });
           currentNextJournal.early_work_this      = earlyNext;
           currentNextJournal.sat_work_this        = satNext;
           currentNextJournal.attendance_this_week = attNext;
+          currentNextJournal.summary              = nextPlanText;
         }
       }
 
