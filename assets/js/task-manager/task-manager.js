@@ -476,13 +476,27 @@
 
   // ── 업무에서 불러오기 ──────────────────────────────────────
 
-  function openImportTasksModal() {
-    if (!currentJournalTasks || !currentJournalTasks.items) {
-      showMessage('이번 주 업무 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.', 'error');
-      return;
+  async function openImportTasksModal() {
+    // 일지 주차와 주간업무 주차가 같으면 weeklyTasks 사용
+    // 다르면 해당 주차 업무를 직접 조회
+    let items = [];
+    if (journalWeekStart === weeklyWeekStart && weeklyTasks && weeklyTasks.length > 0) {
+      items = weeklyTasks;
+    } else if (currentJournalTasks && currentJournalTasks.items && currentJournalTasks.items.length > 0) {
+      items = currentJournalTasks.items;
+    } else {
+      // 직접 조회
+      try {
+        const res = await apiGet('taskGetItems', {
+          request_user_email: currentUser.email,
+          week_start: journalWeekStart
+        });
+        items = res.data || [];
+      } catch(e) {
+        showMessage('업무 목록을 불러오지 못했습니다.', 'error');
+        return;
+      }
     }
-
-    const items = currentJournalTasks.items || [];
     const listEl = document.getElementById('importTasksList');
     const selectAll = document.getElementById('importTasksSelectAll');
     if (selectAll) selectAll.checked = false;
@@ -543,7 +557,10 @@
 
     const mode = document.querySelector('input[name="importMode"]:checked')?.value || 'append';
     const selectedIds = new Set(checked.map(cb => cb.dataset.taskId));
-    const selectedItems = (currentJournalTasks?.items || []).filter(t => selectedIds.has(t.task_id));
+    const allItems = (weeklyTasks && weeklyTasks.length > 0)
+      ? weeklyTasks
+      : (currentJournalTasks?.items || []);
+    const selectedItems = allItems.filter(t => selectedIds.has(t.task_id));
 
     // 선택된 업무들을 buildDailyGroupedText 포맷으로 변환
     const newText = buildDailyGroupedText(selectedItems, journalWeekStart, true);
