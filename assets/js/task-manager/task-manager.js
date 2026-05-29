@@ -954,31 +954,56 @@
     const isPastWeek     = journalWeekStart < todayWeekStart;
 
     if (!currentJournal) {
-      // 과거 주에 일지가 없는 경우 — 빈 상태 표시
-      const badgeEl = document.getElementById('journalStatusBadge');
-      badgeEl.className = 'journal-status-badge journal-status-draft';
-      badgeEl.textContent = '-';
-
       const weekEnd = getWeekEnd(journalWeekStart);
+      document.getElementById('journalStatusBadge').className = 'journal-status-badge journal-status-draft';
+      document.getElementById('journalStatusBadge').textContent = '-';
       document.getElementById('journalStatusText').textContent = `${journalWeekStart} ~ ${weekEnd}`;
 
-      document.getElementById('journalSaveBtn').style.display   = 'none';
-      document.getElementById('journalSubmitBtn').style.display = 'none';
+      if (isPastWeek) {
+        // 과거 주 — 일지 없음, 입력 불가
+        document.getElementById('journalSaveBtn').style.display   = 'none';
+        document.getElementById('journalSubmitBtn').style.display = 'none';
+        document.getElementById('journalCloseBtn').style.display  = 'none';
+
+        ['attendanceThisWeek','attendanceNextWeek','journalSummary',
+         'journalNextPlan','journalIssues'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.value = ''; el.disabled = true; el.placeholder = '해당 주에 작성된 일지가 없습니다.'; }
+        });
+        ['earlyWorkThis','earlyWorkNext','satWorkThis','satWorkNext'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.checked = false; el.disabled = true; }
+        });
+        document.getElementById('autosaveText').textContent = '해당 주에 작성된 일지가 없습니다.';
+        return;
+      }
+
+      // 현재/미래 주 — 일지 없어도 입력 가능 (저장 시 자동 생성)
+      document.getElementById('journalSaveBtn').style.display   = '';
+      document.getElementById('journalSubmitBtn').style.display = 'none'; // 저장 후 제출 가능
       document.getElementById('journalCloseBtn').style.display  = 'none';
 
-      ['attendanceThisWeek','attendanceNextWeek','journalSummary',
-       'journalNextPlan','journalIssues'].forEach(id => {
+      const PLACEHOLDER = {
+        attendanceThisWeek: '이번 주 근태 특이사항을 입력하세요.',
+        attendanceNextWeek: '다음 주 근태 예정을 입력하세요.',
+        journalSummary:     '주간 업무 요약을 입력하세요.',
+        journalNextPlan:    '다음 주 업무를 등록하면 자동으로 채워집니다.',
+        journalIssues:      '이슈 및 건의사항을 입력하세요.'
+      };
+      Object.entries(PLACEHOLDER).forEach(([id, ph]) => {
         const el = document.getElementById(id);
-        if (el) { el.value = ''; el.disabled = true; el.placeholder = '업무일지를 먼저 생성해 주세요.'; }
+        if (el) {
+          el.value       = '';
+          el.disabled    = id === 'journalNextPlan'; // 차주계획만 readonly
+          el.placeholder = ph;
+        }
       });
       ['earlyWorkThis','earlyWorkNext','satWorkThis','satWorkNext'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.checked = false; el.disabled = true; }
+        if (el) { el.checked = false; el.disabled = false; }
       });
-
-      document.getElementById('autosaveText').textContent = isPastWeek
-        ? '해당 주에 작성된 일지가 없습니다.'
-        : '주간업무 탭에서 업무를 등록하면 일지가 자동으로 생성됩니다.';
+      document.getElementById('autosaveText').textContent = '업무를 등록하거나 직접 작성 후 저장하세요.';
+      // 저장 버튼 클릭 시 일지 자동 생성 후 저장되도록 saveJournal이 처리
       return;
     }
 
@@ -1192,7 +1217,22 @@
   }
 
   async function saveJournal(isAuto = false) {
-    if (!currentJournal) return;
+    // 일지가 없으면 먼저 자동 생성 후 저장
+    if (!currentJournal) {
+      try {
+        const createRes = await apiGet('journalGetOrCreate', {
+          request_user_email: currentUser.email,
+          week_start:         journalWeekStart
+        });
+        currentJournal      = createRes.data?.journal || null;
+        currentJournalTasks = createRes.data?.tasks   || null;
+        if (!currentJournal) return;
+        renderJournal();
+      } catch(e) {
+        showMessage('일지 생성에 실패했습니다: ' + (e.message || e), 'error');
+        return;
+      }
+    }
 
     // ── 이번 주 일지 payload (next 관련 필드 제외)
     const thisPayload = {
