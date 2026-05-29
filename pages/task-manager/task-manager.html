@@ -129,6 +129,22 @@
             <button class="category-manage-btn" id="categoryManageBtn" style="display:none;" title="카테고리 관리">
               ⚙ 카테고리
             </button>
+            <!-- 업무일지 자동 동기화 토글 -->
+            <label id="journalAutoSyncWrap"
+              style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;flex-shrink:0;margin-left:4px;"
+              title="켜짐: 업무 등록/수정 시 업무일지 요약이 자동으로 업데이트됩니다.&#10;꺼짐: 자동 업데이트를 하지 않고 직접 작성합니다.">
+              <span style="font-size:11.5px;color:var(--text-secondary);font-weight:500;">업무일지 자동 동기화</span>
+              <div style="position:relative;width:36px;height:20px;">
+                <input type="checkbox" id="journalAutoSyncToggle"
+                  style="opacity:0;width:0;height:0;position:absolute;"
+                  checked>
+                <span id="journalAutoSyncSlider"
+                  style="position:absolute;inset:0;border-radius:20px;background:#0369a1;transition:background 0.2s;cursor:pointer;">
+                  <span id="journalAutoSyncKnob"
+                    style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+                </span>
+              </div>
+            </label>
           </div>
 
           <!-- 요일별 타임라인 -->
@@ -173,28 +189,12 @@
             </div>
           </div>
 
-          <!-- 자동 저장 표시 + 자동 동기화 토글 -->
-          <div style="padding:8px 22px;border-bottom:1px solid var(--border-soft);background:#fafbfd;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <!-- 자동 저장 표시 -->
+          <div style="padding:8px 22px;border-bottom:1px solid var(--border-soft);background:#fafbfd;display:flex;align-items:center;justify-content:space-between;">
             <div class="autosave-indicator" id="autosaveIndicator">
               <span class="autosave-dot" id="autosaveDot"></span>
               <span id="autosaveText">-</span>
             </div>
-            <!-- 업무 자동 동기화 토글 -->
-            <label id="journalAutoSyncWrap"
-              style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;flex-shrink:0;"
-              title="켜짐: 업무 등록/수정 시 주간 업무 요약이 자동으로 업데이트됩니다.&#10;꺼짐: 자동 업데이트를 하지 않고 직접 작성합니다.">
-              <span style="font-size:11.5px;color:var(--text-secondary);font-weight:500;">업무일지 자동 동기화</span>
-              <div style="position:relative;width:36px;height:20px;">
-                <input type="checkbox" id="journalAutoSyncToggle"
-                  style="opacity:0;width:0;height:0;position:absolute;"
-                  checked>
-                <span id="journalAutoSyncSlider"
-                  style="position:absolute;inset:0;border-radius:20px;background:#0369a1;transition:background 0.2s;cursor:pointer;">
-                  <span id="journalAutoSyncKnob"
-                    style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
-                </span>
-              </div>
-            </label>
           </div>
 
           <!-- 업무 집계 요약 -->
@@ -259,7 +259,13 @@
 
           <!-- 주간 요약 -->
           <div class="journal-section">
-            <div class="journal-section-title"><span class="icon">📋</span> 주간 업무 요약</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div class="journal-section-title" style="margin-bottom:0;"><span class="icon">📋</span> 주간 업무 요약</div>
+              <button id="journalImportTasksBtn" class="btn"
+                style="height:30px;font-size:12px;padding:0 12px;border-radius:8px;display:flex;align-items:center;gap:5px;">
+                📥 업무에서 불러오기
+              </button>
+            </div>
             <textarea class="journal-textarea" id="journalSummary"
               placeholder="이번 주 전반적인 업무 현황을 간략히 작성해 주세요." rows="8"></textarea>
           </div>
@@ -596,6 +602,43 @@
       <div class="task-modal-footer">
         <p class="category-tip" id="categoryTip"></p>
         <button class="btn" id="categoryModalDone">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 업무에서 불러오기 모달 ──────────────────────────────── -->
+  <div class="task-modal-overlay" id="importTasksModal" style="display:none;">
+    <div class="task-modal" style="max-width:560px;">
+      <div class="task-modal-head">
+        <span class="task-modal-title">📥 업무에서 불러오기</span>
+        <button class="task-modal-close" id="importTasksModalClose">✕</button>
+      </div>
+      <div class="task-modal-body" style="max-height:60vh;">
+        <p style="font-size:13px;color:var(--text-secondary);margin:0 0 14px;">
+          이번 주 등록된 업무 중 요약에 추가할 항목을 선택하세요.
+        </p>
+        <!-- 전체 선택 -->
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border-soft);margin-bottom:4px;">
+          <input type="checkbox" id="importTasksSelectAll" style="width:15px;height:15px;cursor:pointer;">
+          <label for="importTasksSelectAll" style="font-size:13px;font-weight:600;cursor:pointer;color:var(--text-secondary);">전체 선택</label>
+        </div>
+        <div id="importTasksList" style="max-height:260px;overflow-y:auto;">
+          <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">불러오는 중...</div>
+        </div>
+        <!-- 적용 방식 -->
+        <div style="display:flex;align-items:center;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border-soft);">
+          <span style="font-size:13px;color:var(--text-secondary);font-weight:500;flex-shrink:0;">적용 방식:</span>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+            <input type="radio" name="importMode" value="append" checked> 기존 내용 뒤에 추가
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;">
+            <input type="radio" name="importMode" value="replace"> 전체 교체
+          </label>
+        </div>
+      </div>
+      <div class="task-modal-foot">
+        <button class="btn" id="importTasksCancelBtn">취소</button>
+        <button class="btn btn-primary" id="importTasksApplyBtn">적용</button>
       </div>
     </div>
   </div>
