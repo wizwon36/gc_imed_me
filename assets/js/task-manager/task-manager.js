@@ -224,8 +224,6 @@
     document.getElementById('exportJournalBtn')?.addEventListener('click', exportJournalExcel);
     document.getElementById('exportPdfBtn')?.addEventListener('click', exportJournalPdf);
 
-    // 업무일지 생성 버튼
-    document.getElementById('generateJournalBtn')?.addEventListener('click', handleGenerateJournal);
     document.getElementById('mergeViewClose')?.addEventListener('click', closeMergeView);
     document.getElementById('mergeViewDismissBtn')?.addEventListener('click', closeMergeView);
     document.getElementById('mergeViewModal')?.addEventListener('click', e => {
@@ -476,8 +474,6 @@
    */
   function onJournalAutoSynced(journal) {
     if (!journal) return;
-    // 생성 버튼 숨김 (일지가 생겼으므로)
-    updateGenerateJournalBtn(journal, false);
     // 일지 탭이 같은 주차로 열려있으면 summary 즉시 반영
     const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
     if (activeTab === 'journal' && journalWeekStart === weeklyWeekStart && currentJournal) {
@@ -490,104 +486,6 @@
     }
   }
 
-  // ── 업무일지 생성 (주간업무 → 일지 자동 작성) ───────────────
-  async function handleGenerateJournal() {
-    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
-    const isPastWeek     = weeklyWeekStart < todayWeekStart;
-
-    if (isPastWeek) {
-      showMessage('지난 주차의 업무일지는 생성할 수 없습니다.', 'error');
-      return;
-    }
-
-    showGlobalLoading('업무일지를 생성하는 중...');
-    try {
-      // 이번주 일지 + 업무 목록, 다음주 업무 목록 병렬 로드
-      const nextWeekStart = offsetWeek(weeklyWeekStart, 1);
-
-      const [thisRes, nextRes] = await Promise.all([
-        apiGet('journalGetOrCreate', {
-          request_user_email: currentUser.email,
-          week_start:         weeklyWeekStart
-        }),
-        apiGet('taskGetItems', {
-          request_user_email: currentUser.email,
-          week_start:         nextWeekStart
-        })
-      ]);
-
-      const journal      = thisRes.data.journal;
-      const serverTasks  = thisRes.data.tasks;
-      const thisItems    = serverTasks.items || [];
-      const nextItems    = nextRes.data      || [];
-
-      // 마감된 일지는 무조건 차단 (내용 유무 무관)
-      if (journal.status === 'CLOSED') {
-        hideGlobalLoading();
-        showMessage('이미 팀장이 마감한 업무일지입니다. 덮어쓸 수 없습니다.', 'error');
-        return;
-      }
-
-      // 기존 일지에 내용이 있으면 덮어쓰기 확인
-      const isExisting = !!journal.created_at &&
-                         (journal.summary || journal.next_plan);
-
-      if (isExisting) {
-        const labelMap = { DRAFT: '작성중', SUBMITTED: '제출됨' };
-        hideGlobalLoading();
-
-        // 커스텀 모달로 확인
-        const confirmed = await showOverwriteConfirm(
-          weeklyWeekStart,
-          labelMap[journal.status] || journal.status
-        );
-        if (!confirmed) return;
-        showGlobalLoading('업무일지를 생성하는 중...');
-      }
-
-      // ── 주간업무요약: 이번주 업무를 일별로 그룹화 (상태 표시)
-      const summary = buildDailyGroupedText(thisItems, weeklyWeekStart, true);
-
-      // ── 차주업무계획: 다음주 업무를 일별로 그룹화 (상태 미표시)
-      const nextPlan = buildDailyGroupedText(nextItems, nextWeekStart, false);
-
-      // 저장 — 근태 특이사항(this/next week), 이슈/건의사항은 기존 값 유지
-      await apiPost('journalUpdate', {
-        request_user_email:   currentUser.email,
-        journal_id:           journal.journal_id,
-        summary:              summary,
-        next_plan:            nextPlan,
-        attendance_this_week: journal.attendance_this_week || '',
-        attendance_next_week: journal.attendance_next_week || '',
-        issues:               journal.issues || ''
-      });
-
-      journalWeekStart    = weeklyWeekStart;
-      currentJournal      = Object.assign({}, journal, {
-        summary:              summary,
-        next_plan:            nextPlan,
-        attendance_this_week: journal.attendance_this_week || '',
-        attendance_next_week: journal.attendance_next_week || '',
-        issues:               journal.issues || '',
-        _fromGenerate:        true
-      });
-      currentJournalTasks = serverTasks;
-
-      switchTab('journal');
-      // switchTab 내부(_fromGenerate 삭제 등) 처리 완료 후 렌더링
-      Promise.resolve().then(() => {
-        renderJournal();
-        renderJournalTaskSummary();
-        showMessage('업무일지가 생성되었습니다.', 'success');
-        updateGenerateJournalBtn(journal, false);  // 생성 완료 → 버튼 숨김
-      });
-
-    } catch (err) {
-      showMessage(err.message || '업무일지 생성에 실패했습니다.', 'error');
-    } finally {
-      hideGlobalLoading();
-    }
-  }
 
   /**
    * 업무 목록을 일별로 그룹화한 텍스트 생성
@@ -854,31 +752,14 @@
     document.getElementById('weekTimeline').innerHTML = '';
 
     try {
-      // 업무 목록 + 일지 존재 여부 병렬 조회
-      const todayWeekStart = getWeekStart(formatDateStr(new Date()));
-      const isPastWeek     = weeklyWeekStart < todayWeekStart;
-
-      const [tasksRes, journalRes] = await Promise.all([
-        apiGet('taskGetItems', {
-          request_user_email: currentUser.email,
-          week_start:         weeklyWeekStart
-        }),
-        // 과거 주는 확인 불필요 — null로 처리
-        isPastWeek
-          ? Promise.resolve(null)
-          : apiGet('journalGet', {
-              request_user_email: currentUser.email,
-              week_start:         weeklyWeekStart
-            }).catch(() => null)
-      ]);
+      const tasksRes = await apiGet('taskGetItems', {
+        request_user_email: currentUser.email,
+        week_start:         weeklyWeekStart
+      });
 
       weeklyTasks = tasksRes.data || [];
       renderWeekTimeline();
       updateWeeklySummary();
-
-      // 생성 버튼 표시 여부 갱신
-      const journal = journalRes?.data?.journal ?? null;
-      updateGenerateJournalBtn(journal, isPastWeek);
 
     } catch (err) {
       showMessage(err.message || '업무 목록을 불러오지 못했습니다.', 'error');
@@ -890,17 +771,7 @@
     }
   }
 
-  /**
-   * 업무일지 생성 버튼 표시/숨김 제어
-   * - 일지 없음(이번 주 이후)  → 표시
-   * - 일지 있음 or 과거 주     → 숨김 (자동동기화가 담당하므로 불필요)
-   */
-  function updateGenerateJournalBtn(journal, isPastWeek) {
-    const btn = document.getElementById('generateJournalBtn');
-    if (!btn) return;
-    const shouldShow = !isPastWeek && !journal;
-    btn.style.display = shouldShow ? '' : 'none';
-  }
+
 
   function updateWeeklySummary() {
     const total  = weeklyTasks.length;
@@ -1106,7 +977,7 @@
 
       document.getElementById('autosaveText').textContent = isPastWeek
         ? '해당 주에 작성된 일지가 없습니다.'
-        : '주간업무 탭에서 [업무일지 생성] 버튼을 눌러 주세요.';
+        : '주간업무 탭에서 업무를 등록하면 일지가 자동으로 생성됩니다.';
       return;
     }
 
@@ -1144,7 +1015,6 @@
     closeBtn.style.display  = (isManager && !isEdit && !isClosed) ? '' : 'none';
 
     // 필드 채우기 — currentJournal에 세팅된 값을 그대로 표시
-    // (handleGenerateJournal에서 저장 후 직접 세팅하므로 별도 자동채우기 로직 불필요)
     setField('earlyWorkThis',      j.early_work_this, isClosed);
     setField('earlyWorkNext',      j.early_work_next, isClosed);
     setField('satWorkThis',        j.sat_work_this,   isClosed);
