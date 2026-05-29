@@ -1482,12 +1482,9 @@
         const chip = (on, label) => on
           ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;">${label}</span>`
           : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;">${label}</span>`;
-        const gridStyle2col = window.innerWidth <= 900
-          ? 'display:grid;grid-template-columns:1fr;gap:8px;'
-          : 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
         html += `<div style="margin-bottom:14px;">
           <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">⏰ 조출 / 토요근무 여부</div>
-          <div style="${gridStyle2col}">
+          <div class="mj-2col-grid">
             <div style="background:#f8fafc;padding:8px 12px;border-radius:10px;border:1px solid var(--border-soft);">
               <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">이번 주</div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">${chip(earlyThis,'조출')} ${chip(satThis,'토요근무')}</div>
@@ -1502,10 +1499,7 @@
 
       // 근태 (금주/차주 나란히)
       if (j.attendance_this_week || j.attendance_next_week) {
-        const attGridStyle = window.innerWidth <= 900
-          ? 'display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px;'
-          : 'display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;';
-        html += `<div style="${attGridStyle}">
+        html += `<div class="mj-2col-grid" style="margin-bottom:14px;">
           <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 이번 주 근태</div>
           <div style="font-size:13px;white-space:pre-wrap;line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);">${esc(j.attendance_this_week || '-')}</div></div>
           <div><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">🗓️ 다음 주 근태 예정</div>
@@ -1529,11 +1523,7 @@
       };
       if (hasSummary || hasNextPlan) {
         // 모바일(640px 이하)은 1컬럼, PC는 2컬럼
-        const isMobile   = window.innerWidth <= 900;
-        const gridStyle  = isMobile
-          ? 'display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px;'
-          : 'display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;';
-        html += `<div style="${gridStyle}">`;
+        html += `<div class="mj-2col-grid" style="margin-bottom:14px;">`;
         html += `<div>
           <div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">📋 주간 업무 요약</div>
           <div style="font-size:13px;color:var(--text-primary);line-height:1.7;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid var(--border-soft);min-height:60px;word-break:break-word;">${formatJournalText(j.summary)}</div>
@@ -1598,6 +1588,16 @@
     };
 
     document.getElementById('memberJournalModal').classList.add('open');
+    // 모달이 열린 후 실제 body 너비로 1컬럼/2컬럼 결정
+    requestAnimationFrame(function() {
+      const bodyEl = document.getElementById('memberJournalBody');
+      const isNarrow = bodyEl && bodyEl.offsetWidth < 560;
+      bodyEl?.querySelectorAll('.mj-2col-grid').forEach(function(el) {
+        el.style.gridTemplateColumns = isNarrow ? '1fr' : '1fr 1fr';
+        el.style.display = 'grid';
+        el.style.gap = isNarrow ? '10px' : '12px';
+      });
+    });
   };
 
   function closeMemberModal() {
