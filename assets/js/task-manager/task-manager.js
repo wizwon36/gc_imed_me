@@ -34,6 +34,7 @@
   let journalWeekStart    = '';
   let currentJournal      = null;
   let currentJournalTasks = null;
+  let currentNextJournal  = null;   // 다음 주 일지 (차주계획 표시용)
   let autosaveTimer       = null;
   let journalDirty        = false;
 
@@ -466,79 +467,26 @@
    * - 실패해도 콘솔 경고만 (업무 작업 자체는 이미 성공)
    * - 일지 탭이 열려 있으면 화면도 즉시 갱신
    */
-  async function syncJournalIfExists() {
-    const targetWeek     = weeklyWeekStart;
-    const todayWeekStart = getWeekStart(formatDateStr(new Date()));
-    if (targetWeek < todayWeekStart) return;
+  // syncJournalIfExists → 백엔드 journalAutoSync_ 로 이전
 
-    try {
-      // 현재 주 일지 + 이전 주 일지 동시 조회
-      const prevWeekStart = offsetWeek(targetWeek, -1);
-      const nextWeekStart = offsetWeek(targetWeek,  1);
-
-      const [res, prevRes, nextRes] = await Promise.all([
-        apiGet('journalGet', { request_user_email: currentUser.email, week_start: targetWeek }),
-        // 이전 주 일지: 이번 주 업무가 바뀌면 이전 주 next_plan도 갱신
-        apiGet('journalGet', { request_user_email: currentUser.email, week_start: prevWeekStart }).catch(() => null),
-        apiGet('taskGetItems', { request_user_email: currentUser.email, week_start: nextWeekStart })
-      ]);
-
-      const journal     = res.data?.journal;
-      const prevJournal = prevRes?.data?.journal;
-      const nextItems   = nextRes.data || [];
-
-      // ── 현재 주 일지 업데이트 (summary + next_plan)
-      if (journal && journal.status !== 'CLOSED') {
-        const newSummary  = buildDailyGroupedText(weeklyTasks, targetWeek,    true);
-        const newNextPlan = buildDailyGroupedText(nextItems,   nextWeekStart, false);
-
-        await apiPost('journalUpdate', {
-          request_user_email:   currentUser.email,
-          journal_id:           journal.journal_id,
-          summary:              newSummary,
-          next_plan:            newNextPlan,
-          attendance_this_week: journal.attendance_this_week || '',
-          attendance_next_week: journal.attendance_next_week || '',
-          issues:               journal.issues || ''
-        });
-
-        const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
-        if (activeTab === 'journal' && journalWeekStart === targetWeek && currentJournal) {
-          currentJournal.summary   = newSummary;
-          currentJournal.next_plan = newNextPlan;
-          document.getElementById('journalSummary').value  = newSummary;
-          document.getElementById('journalNextPlan').value = newNextPlan;
-          updateAutosaveStatus('saved');
-        }
-        updateGenerateJournalBtn(journal, false);
+  /**
+   * 서버가 taskCreate/Update/Delete 응답에 포함한 journal로
+   * 일지 탭 UI를 즉시 갱신하는 헬퍼.
+   * 일지 탭이 열려있는 경우에만 summary textarea를 업데이트.
+   */
+  function onJournalAutoSynced(journal) {
+    if (!journal) return;
+    // 생성 버튼 숨김 (일지가 생겼으므로)
+    updateGenerateJournalBtn(journal, false);
+    // 일지 탭이 같은 주차로 열려있으면 summary 즉시 반영
+    const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
+    if (activeTab === 'journal' && journalWeekStart === weeklyWeekStart && currentJournal) {
+      currentJournal.summary = journal.summary;
+      const el = document.getElementById('journalSummary');
+      if (el && !document.activeElement !== el) {
+        el.value = journal.summary;
       }
-
-      // ── 이전 주 일지의 next_plan 갱신
-      // (이번 주에 업무를 추가/수정하면 이전 주 차주계획도 자동 반영)
-      if (prevJournal && prevJournal.status !== 'CLOSED') {
-        const newNextPlanForPrev = buildDailyGroupedText(weeklyTasks, targetWeek, false);
-
-        await apiPost('journalUpdate', {
-          request_user_email:   currentUser.email,
-          journal_id:           prevJournal.journal_id,
-          summary:              prevJournal.summary              || '',
-          next_plan:            newNextPlanForPrev,
-          attendance_this_week: prevJournal.attendance_this_week || '',
-          attendance_next_week: prevJournal.attendance_next_week || '',
-          issues:               prevJournal.issues               || ''
-        });
-
-        // 일지 탭이 이전 주로 열려 있으면 화면도 갱신
-        const activeTab = document.querySelector('.task-tab-btn.active')?.dataset?.tab;
-        if (activeTab === 'journal' && journalWeekStart === prevWeekStart && currentJournal) {
-          currentJournal.next_plan = newNextPlanForPrev;
-          document.getElementById('journalNextPlan').value = newNextPlanForPrev;
-          updateAutosaveStatus('saved');
-        }
-      }
-
-    } catch (err) {
-      console.warn('[syncJournalIfExists] 일지 자동 동기화 실패:', err.message || err);
+      updateAutosaveStatus('saved');
     }
   }
 
@@ -1106,13 +1054,17 @@
       `${journalWeekStart} ~ ${getWeekEnd(journalWeekStart)}`;
 
     try {
-      const res = await apiGet('journalGet', {
-        request_user_email: currentUser.email,
-        week_start:         journalWeekStart
-      });
+      const nextWeekStart = offsetWeek(journalWeekStart, 1);
+
+      // 이번 주 일지 + 다음 주 일지 병렬 조회
+      const [res, nextRes] = await Promise.all([
+        apiGet('journalGet', { request_user_email: currentUser.email, week_start: journalWeekStart }),
+        apiGet('journalGet', { request_user_email: currentUser.email, week_start: nextWeekStart }).catch(() => null)
+      ]);
 
       currentJournal      = res.data.journal;
       currentJournalTasks = res.data.tasks;
+      currentNextJournal  = nextRes?.data?.journal || null;
 
       renderJournal();
       renderJournalTaskSummary();
@@ -1200,7 +1152,11 @@
     setField('attendanceThisWeek', j.attendance_this_week, isClosed);
     setField('attendanceNextWeek', j.attendance_next_week, isClosed);
     setField('journalSummary',      j.summary,      isClosed);
-    setField('journalNextPlan',     j.next_plan,    isClosed);
+    // 차주계획: 다음 주 일지의 summary 우선, 없으면 next_plan (하위 호환)
+    const nextPlanValue = (currentNextJournal && currentNextJournal.summary)
+      ? currentNextJournal.summary
+      : (j.next_plan || '');
+    setField('journalNextPlan', nextPlanValue, isClosed);
     setField('journalIssues',       j.issues,       isClosed);
 
     updateAutosaveStatus('');
@@ -1576,7 +1532,9 @@
             j.attendance_this_week||'', j.summary||'', formatJournalText)}
         ${renderWeekGroupCard('다음 주',
             j.early_work_next==='Y', j.sat_work_next==='Y',
-            j.attendance_next_week||'', j.next_plan||'', formatJournalText)}
+            j.attendance_next_week||'',
+            (m && m.next_journal && m.next_journal.summary) || j.next_plan || '',
+            formatJournalText)}
       </div>`;
 
       // 이슈 / 건의사항
@@ -1818,7 +1776,10 @@
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
             if (!m.journal) return;
-            const highSec = extractCategorySection(m.journal[field] || '', null, 'HIGH');
+            const rawHigh = field === 'next_plan'
+                ? ((m.next_journal && m.next_journal.summary) || m.journal.next_plan || '')
+                : (m.journal[field] || '');
+            const highSec = extractCategorySection(rawHigh, null, 'HIGH');
             if (highSec) highSec.split('\n').forEach(l => lines.push(l));
           });
           const stripped = stripNameAndDate(lines);
@@ -1847,7 +1808,10 @@
             const lines = [];
             (clinicMap[cl]||[]).forEach(m => {
               if (!m.journal) return;
-              const sec = extractCategorySection(m.journal[field] || '', catName, 'NORMAL');
+              const rawText = field === 'next_plan'
+                ? ((m.next_journal && m.next_journal.summary) || m.journal.next_plan || '')
+                : (m.journal[field] || '');
+            const sec = extractCategorySection(rawText, catName, 'NORMAL');
               if (sec) sec.split('\n').forEach(l => lines.push(l));
             });
             const stripped = stripNameAndDate(lines);
@@ -1994,7 +1958,11 @@
           const lines = [];
           (clinicMap[cl] || []).forEach(m => {
             if (!m.journal) return;
-            const sec = extractCategorySection(m.journal[field] || '', catName, priority);
+            // next_plan 필드는 다음 주 일지의 summary를 우선 사용
+            const rawText = field === 'next_plan'
+              ? ((m.next_journal && m.next_journal.summary) || m.journal.next_plan || '')
+              : (m.journal[field] || '');
+            const sec = extractCategorySection(rawText, catName, priority);
             if (sec) lines.push(...stripNameAndDate(sec.split('\n')));
           });
           result[cl] = lines.join('\n');
@@ -2426,7 +2394,9 @@
                    j.attendance_this_week||'', j.summary||'', formatJournalText)}
                ${renderWeekGroupCard('다음 주',
                    j.early_work_next==='Y', j.sat_work_next==='Y',
-                   j.attendance_next_week||'', j.next_plan||'', formatJournalText)}
+                   j.attendance_next_week||'',
+                   (m.next_journal && m.next_journal.summary) || j.next_plan || '',
+                   formatJournalText)}
              </div>
              ${j.issues ? `<div style="margin-bottom:10px;">
                <div style="font-size:11px;font-weight:700;color:#b45309;margin-bottom:5px;">⚠️ 이슈 / 건의사항</div>
@@ -2513,7 +2483,7 @@
     const newStatus = task.status === 'DONE' ? 'TODO' : 'DONE';
     try {
       showGlobalLoading(newStatus === 'DONE' ? '완료 처리 중...' : '되돌리는 중...');
-      await apiPost('taskUpdateItem', {
+      const toggleRes = await apiPost('taskUpdateItem', {
         request_user_email: currentUser.email,
         task_id:            taskId,
         status:             newStatus
@@ -2521,7 +2491,7 @@
       task.status = newStatus;
       renderWeekTimeline();
       updateWeeklySummary();
-      syncJournalIfExists();   // 일지 자동 동기화 (백그라운드)
+      if (toggleRes && toggleRes.journal) onJournalAutoSynced(toggleRes.journal);
     } catch (err) {
       showMessage(err.message || '상태 변경에 실패했습니다.', 'error');
     } finally {
@@ -2535,7 +2505,7 @@
     if (!confirm(`"${task.title}" 업무를 삭제하시겠습니까?`)) return;
     try {
       showGlobalLoading('삭제 중...');
-      await apiPost('taskDeleteItem', {
+      const deleteRes = await apiPost('taskDeleteItem', {
         request_user_email: currentUser.email,
         task_id:            taskId
       });
@@ -2543,7 +2513,7 @@
       renderWeekTimeline();
       updateWeeklySummary();
       showMessage('삭제되었습니다.', 'success');
-      syncJournalIfExists();   // 일지 자동 동기화 (백그라운드)
+      if (deleteRes && deleteRes.journal) onJournalAutoSynced(deleteRes.journal);
     } catch (err) {
       showMessage(err.message || '삭제에 실패했습니다.', 'error');
     } finally {
@@ -2607,14 +2577,14 @@
     try {
       setTaskModalLoading(true, editingTaskId ? '수정 중...' : '저장 중...');
 
+      let saveRes;
       if (editingTaskId) {
         payload.task_id = editingTaskId;
-        await apiPost('taskUpdateItem', payload);
+        saveRes = await apiPost('taskUpdateItem', payload);
         const idx = weeklyTasks.findIndex(t => t.task_id === editingTaskId);
         if (idx !== -1) {
           const newWeekStart = getWeekStart(startDate);
           const newWeekEnd   = getWeekEnd(newWeekStart);
-          // start_date 또는 end_date 가 현재 주에 걸쳐 있으면 로컬 갱신, 아니면 제거
           const overlapsCurrentWeek = startDate <= getWeekEnd(weeklyWeekStart) &&
                                       endDate   >= weeklyWeekStart;
           if (overlapsCurrentWeek) {
@@ -2628,15 +2598,18 @@
         }
         showMessage('업무가 수정되었습니다.', 'success');
       } else {
-        const res = await apiPost('taskCreateItem', payload);
-        weeklyTasks.push(res.data);
+        saveRes = await apiPost('taskCreateItem', payload);
+        weeklyTasks.push(saveRes.data);
         showMessage('업무가 등록되었습니다.', 'success');
       }
 
       closeTaskModal();
       renderWeekTimeline();
       updateWeeklySummary();
-      syncJournalIfExists();   // 일지 자동 동기화 (백그라운드)
+      // 서버가 반환한 journal로 일지탭 UI 즉시 갱신
+      if (saveRes && saveRes.journal) {
+        onJournalAutoSynced(saveRes.journal);
+      }
 
     } catch (err) {
       showMessage(err.message || '저장에 실패했습니다.', 'error');
