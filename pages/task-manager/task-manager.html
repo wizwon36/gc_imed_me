@@ -285,6 +285,7 @@
             </div>
             <div style="display:flex;gap:8px;">
               <button class="btn btn-primary" id="mergeViewBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">📄 통합 보기</button>
+              <button class="btn" id="exportPdfBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;">⬇ PDF 다운로드</button>
               <button class="btn" id="exportJournalBtn" style="height:36px;font-size:13px;padding:0 16px;border-radius:10px;display:none;">⬇ 엑셀 다운로드</button>
             </div>
           </div>
@@ -596,6 +597,8 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.9/build/pdfmake.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.9/build/vfs_fonts.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../../assets/js/core/config.js"></script>
   <script src="../../assets/js/core/api.js"></script>
