@@ -1714,8 +1714,12 @@
       const FILL_WEEK   = { patternType: 'solid', fgColor: { rgb: 'D6E4F7' } };
       const FILL_WHITE  = { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
       const FILL_ALT    = { patternType: 'solid', fgColor: { rgb: 'F2F7FD' } };
-      const BD     = { top:{style:'thin',color:{rgb:'BFBFBF'}}, bottom:{style:'thin',color:{rgb:'BFBFBF'}}, left:{style:'thin',color:{rgb:'BFBFBF'}}, right:{style:'thin',color:{rgb:'BFBFBF'}} };
-      const BD_MED = { top:{style:'medium',color:{rgb:'2E75B6'}}, bottom:{style:'medium',color:{rgb:'2E75B6'}}, left:{style:'medium',color:{rgb:'2E75B6'}}, right:{style:'medium',color:{rgb:'2E75B6'}} };
+      const BD       = { top:{style:'thin',color:{rgb:'BFBFBF'}}, bottom:{style:'thin',color:{rgb:'BFBFBF'}}, left:{style:'thin',color:{rgb:'BFBFBF'}}, right:{style:'thin',color:{rgb:'BFBFBF'}} };
+      const BD_MED   = { top:{style:'medium',color:{rgb:'2E75B6'}}, bottom:{style:'medium',color:{rgb:'2E75B6'}}, left:{style:'medium',color:{rgb:'2E75B6'}}, right:{style:'medium',color:{rgb:'2E75B6'}} };
+      // 카테고리 섹션 상단 — 굵은 구분선
+      const BD_SEC   = { top:{style:'medium',color:{rgb:'8EA9C8'}}, bottom:{style:'thin',color:{rgb:'BFBFBF'}}, left:{style:'thin',color:{rgb:'BFBFBF'}}, right:{style:'thin',color:{rgb:'BFBFBF'}} };
+      // 금주↔차주 내부선 — 점선(hair)으로 얇게
+      const BD_INNER = { top:{style:'hair',color:{rgb:'DEDEDE'}}, bottom:{style:'thin',color:{rgb:'BFBFBF'}}, left:{style:'thin',color:{rgb:'BFBFBF'}}, right:{style:'thin',color:{rgb:'BFBFBF'}} };
       const AL_C = { horizontal:'center', vertical:'center', wrapText:true };
       const AL_L = { horizontal:'left',   vertical:'top',    wrapText:true };
 
@@ -1781,8 +1785,9 @@
 
       ['summary','next_plan'].forEach((field, fi) => {
         const weekLabel = fi === 0 ? '금주' : '차주';
-        sc(r, 0, fi === 0 ? '주요이슈' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
-        sc(r, 1, weekLabel, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        const rowBD = fi === 0 ? BD_SEC : BD_INNER;
+        sc(r, 0, fi === 0 ? '주요이슈' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
+        sc(r, 1, weekLabel, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         clinics.forEach((cl, i) => {
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
@@ -1791,7 +1796,7 @@
             if (highSec) highSec.split('\n').forEach(l => lines.push(l));
           });
           const stripped = stripNameAndDate(lines);
-          sc(r, 2+i, wrapExcelLines(stripped), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+          sc(r, 2+i, wrapExcelLines(stripped), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
         });
         r++;
       });
@@ -1805,13 +1810,12 @@
         ['summary','next_plan'].forEach((field, fi) => {
           const weekLabel = fi === 0 ? '금주' : '차주';
           const fillWeek  = FILL_WHITE;
-
-
+          const rowBD     = fi === 0 ? BD_SEC : BD_INNER;
 
           // A열: 카테고리명 (금주 행에만 값, 차주 행은 빈칸 — 나중에 병합)
-          sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:fillCat, alignment:AL_C, border:BD });
+          sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:fillCat, alignment:AL_C, border:rowBD });
           // B열: 금주 / 차주 라벨
-          sc(r, 1, weekLabel, { font:FONT_BOLD, fill:fillWeek, alignment:AL_C, border:BD });
+          sc(r, 1, weekLabel, { font:FONT_BOLD, fill:fillWeek, alignment:AL_C, border:rowBD });
 
           clinics.forEach((cl, i) => {
             const lines = [];
@@ -1821,7 +1825,7 @@
               if (sec) sec.split('\n').forEach(l => lines.push(l));
             });
             const stripped = stripNameAndDate(lines);
-            sc(r, 2+i, wrapExcelLines(stripped), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+            sc(r, 2+i, wrapExcelLines(stripped), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
           });
           r++;
         });
@@ -1836,15 +1840,16 @@
         { thisKey: 'early_work_this', satKey: 'sat_work_this', label: '이번주' },
         { thisKey: 'early_work_next', satKey: 'sat_work_next', label: '다음주' }
       ].forEach((row, idx) => {
-        sc(r, 0, idx === 0 ? '조출/토요근무' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
-        sc(r, 1, row.label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        const rowBD = idx === 0 ? BD_SEC : BD_INNER;
+        sc(r, 0, idx === 0 ? '조출/토요근무' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
+        sc(r, 1, row.label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         clinics.forEach((cl, i) => {
           const earlyNames = (clinicMap[cl]||[]).filter(m => m.journal && m.journal[row.thisKey] === 'Y').map(m => m.user_name);
           const satNames   = (clinicMap[cl]||[]).filter(m => m.journal && m.journal[row.satKey]  === 'Y').map(m => m.user_name);
           const lines = [];
           if (earlyNames.length) lines.push('[조출] : ' + earlyNames.join(', '));
           if (satNames.length)   lines.push('[토요근무] : ' + satNames.join(', '));
-          sc(r, 2+i, lines.length ? lines.join('\n') : '-', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+          sc(r, 2+i, lines.length ? lines.join('\n') : '-', { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
         });
         r++;
       });
@@ -1853,8 +1858,9 @@
       // 근태 (금주/차주)
       const attStart = r;
       ['금주', '차주'].forEach((label, fi) => {
-        sc(r, 0, fi === 0 ? '근태' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
-        sc(r, 1, label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:BD });
+        const rowBD = fi === 0 ? BD_SEC : BD_INNER;
+        sc(r, 0, fi === 0 ? '근태' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
+        sc(r, 1, label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         clinics.forEach((cl, i) => {
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
@@ -1867,7 +1873,7 @@
               val.split('\n').forEach(function(v) { lines.push('  ' + v); });
             }
           });
-          sc(r, 2+i, wrapExcelLines(lines), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:BD });
+          sc(r, 2+i, wrapExcelLines(lines), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
         });
         r++;
       });
@@ -1972,10 +1978,17 @@
 
       // 테이블 헤더 행
       const colW = Math.floor(72 / clinics.length);
-      const thStyle = 'background:#1F3864;color:#fff;font-weight:700;text-align:center;padding:5px 4px;font-size:9pt;border:0.5px solid #999;';
-      const tdLabelStyle = 'background:#fff;font-weight:700;text-align:center;padding:4px 3px;font-size:8pt;border:0.5px solid #bbb;vertical-align:middle;';
-      const tdWeekStyle  = 'background:#fff;font-weight:600;text-align:center;padding:3px 2px;font-size:7.5pt;border:0.5px solid #bbb;vertical-align:middle;color:#374151;';
-      const tdDataStyle  = 'background:#fff;padding:4px 5px;font-size:7.5pt;border:0.5px solid #bbb;vertical-align:top;';
+      const thStyle        = 'background:#1F3864;color:#fff;font-weight:700;text-align:center;padding:5px 4px;font-size:9pt;border:0.5px solid #999;';
+      const tdLabelStyle   = 'background:#fff;font-weight:700;text-align:center;padding:4px 3px;font-size:8pt;border-left:0.5px solid #bbb;border-right:0.5px solid #bbb;border-bottom:0.5px solid #bbb;border-top:2px solid #8EA9C8;vertical-align:middle;';
+      // 금주: 카테고리 상단 굵은선
+      const tdWeekStyleThis = 'background:#fff;font-weight:600;text-align:center;padding:3px 2px;font-size:7.5pt;border-left:0.5px solid #bbb;border-right:0.5px solid #bbb;border-bottom:0.5px solid #bbb;border-top:2px solid #8EA9C8;vertical-align:middle;color:#374151;';
+      const tdDataStyleThis = 'background:#fff;padding:4px 5px;font-size:7.5pt;border-left:0.5px solid #bbb;border-right:0.5px solid #bbb;border-bottom:0.5px solid #bbb;border-top:2px solid #8EA9C8;vertical-align:top;';
+      // 차주: 얇은 내부선
+      const tdWeekStyleNext = 'background:#fff;font-weight:600;text-align:center;padding:3px 2px;font-size:7.5pt;border-left:0.5px solid #bbb;border-right:0.5px solid #bbb;border-bottom:0.5px solid #bbb;border-top:0.5px solid #dedede;vertical-align:middle;color:#374151;';
+      const tdDataStyleNext = 'background:#fff;padding:4px 5px;font-size:7.5pt;border-left:0.5px solid #bbb;border-right:0.5px solid #bbb;border-bottom:0.5px solid #bbb;border-top:0.5px solid #dedede;vertical-align:top;';
+      // 하위호환 별칭
+      const tdWeekStyle  = tdWeekStyleThis;
+      const tdDataStyle  = tdDataStyleThis;
 
       let tableHtml = `
         <colgroup>
@@ -2007,8 +2020,8 @@
           ${clinics.map(cl => `<td style="${tdDataStyle}">${textToHtml(highThis[cl])}</td>`).join('')}
         </tr>
         <tr>
-          <td style="${tdWeekStyle}">차주</td>
-          ${clinics.map(cl => `<td style="${tdDataStyle}">${textToHtml(highNext[cl])}</td>`).join('')}
+          <td style="${tdWeekStyleNext}">차주</td>
+          ${clinics.map(cl => `<td style="${tdDataStyleNext}">${textToHtml(highNext[cl])}</td>`).join('')}
         </tr>`;
 
       // 카테고리별
@@ -2023,8 +2036,8 @@
           ${clinics.map(cl => `<td style="${tdDataStyle}">${textToHtml(thisData[cl])}</td>`).join('')}
         </tr>
         <tr>
-          <td style="${tdWeekStyle}">차주</td>
-          ${clinics.map(cl => `<td style="${tdDataStyle}">${textToHtml(nextData[cl])}</td>`).join('')}
+          <td style="${tdWeekStyleNext}">차주</td>
+          ${clinics.map(cl => `<td style="${tdDataStyleNext}">${textToHtml(nextData[cl])}</td>`).join('')}
         </tr>`;
       });
 
@@ -2033,28 +2046,32 @@
         { thisKey:'early_work_this', satKey:'sat_work_this', label:'이번주' },
         { thisKey:'early_work_next', satKey:'sat_work_next', label:'다음주' }
       ].forEach((row, idx) => {
+        const _wkStyle = idx === 0 ? tdWeekStyleThis : tdWeekStyleNext;
+        const _dtStyle = idx === 0 ? tdDataStyleThis : tdDataStyleNext;
         const labelCell = idx === 0 ? `<td rowspan="2" style="${tdLabelStyle}">조출/<br>토요근무</td>` : '';
-        tableHtml += `<tr>${labelCell}<td style="${tdWeekStyle}">${row.label}</td>${clinics.map(cl => {
+        tableHtml += `<tr>${labelCell}<td style="${_wkStyle}">${row.label}</td>${clinics.map(cl => {
           const early = (clinicMap[cl]||[]).filter(m=>m.journal&&m.journal[row.thisKey]==='Y').map(m=>m.user_name);
           const sat   = (clinicMap[cl]||[]).filter(m=>m.journal&&m.journal[row.satKey]==='Y').map(m=>m.user_name);
           const lines = [];
           if (early.length) lines.push('[조출] : '+early.join(', '));
           if (sat.length)   lines.push('[토요근무] : '+sat.join(', '));
-          return `<td style="${tdDataStyle}">${lines.length ? lines.join('<br>') : '<span style="color:#94a3b8;">-</span>'}</td>`;
+          return `<td style="${_dtStyle}">${lines.length ? lines.join('<br>') : '<span style="color:#94a3b8;">-</span>'}</td>`;
         }).join('')}</tr>`;
       });
 
       // 근태
       ['금주','차주'].forEach((label, fi) => {
+        const _wkStyle2 = fi === 0 ? tdWeekStyleThis : tdWeekStyleNext;
+        const _dtStyle2 = fi === 0 ? tdDataStyleThis : tdDataStyleNext;
         const labelCell = fi === 0 ? `<td rowspan="2" style="${tdLabelStyle}">근태</td>` : '';
-        tableHtml += `<tr>${labelCell}<td style="${tdWeekStyle}">${label}</td>${clinics.map(cl => {
+        tableHtml += `<tr>${labelCell}<td style="${_wkStyle2}">${label}</td>${clinics.map(cl => {
           const lines = [];
           (clinicMap[cl]||[]).forEach(m => {
             if (!m.journal) return;
             const val = fi === 0 ? (m.journal.attendance_this_week||'') : (m.journal.attendance_next_week||'');
             if (val) { lines.push('• '+m.user_name); val.split('\n').forEach(v => lines.push('  '+v)); }
           });
-          return `<td style="${tdDataStyle}">${lines.length ? textToHtml(lines.join('\n')) : '<span style="color:#94a3b8;">-</span>'}</td>`;
+          return `<td style="${_dtStyle2}">${lines.length ? textToHtml(lines.join('\n')) : '<span style="color:#94a3b8;">-</span>'}</td>`;
         }).join('')}</tr>`;
       });
 
