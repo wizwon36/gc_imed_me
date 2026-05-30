@@ -486,7 +486,8 @@
     } else if (mode === 'this' && currentJournalTasks && currentJournalTasks.items && currentJournalTasks.items.length > 0) {
       items = currentJournalTasks.items;
     } else {
-      // 다음 주 또는 주차 불일치 시 직접 조회
+      // 다음 주 또는 주차 불일치 시 직접 조회 — 스피너 표시 후 조회
+      showGlobalLoading(mode === 'next' ? '차주 업무를 불러오는 중...' : '업무 목록을 불러오는 중...');
       try {
         const res = await apiGet('taskGetItems', {
           request_user_email: currentUser.email,
@@ -495,7 +496,10 @@
         items = res.data || [];
       } catch(e) {
         showMessage('업무 목록을 불러오지 못했습니다.', 'error');
+        hideGlobalLoading();
         return;
+      } finally {
+        hideGlobalLoading();
       }
     }
 
