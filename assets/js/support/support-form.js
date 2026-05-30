@@ -36,7 +36,8 @@
   const DEFAULT_APPS = [
     { app_id: 'equipment', app_name: '의료장비 관리' },
     { app_id: 'signage',   app_name: '사인물 신청'   },
-    { app_id: 'lj_chart',  app_name: '정도관리 시스템' }
+    { app_id: 'lj_chart',  app_name: '정도관리 시스템' },
+    { app_id: 'task_manager',  app_name: '업무일정 관리' } 
   ];
 
   // ── 카테고리/유형 목록 로드 ──────────────────────────────────────────
