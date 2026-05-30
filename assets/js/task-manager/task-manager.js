@@ -503,9 +503,15 @@
       }
     }
 
-    // 모달 제목 및 적용 대상 저장
+    // 모달 제목 및 안내문, 적용 대상 저장
     document.querySelector('#importTasksModal .task-modal-title').textContent =
-      mode === 'next' ? '📥 차주 업무에서 불러오기' : '📥 업무에서 불러오기';
+      mode === 'next' ? '📥 차주 업무 계획 불러오기' : '📥 이번 주 업무 불러오기';
+    const importDescEl = document.querySelector('#importTasksModal .task-modal-body > p');
+    if (importDescEl) {
+      importDescEl.textContent = mode === 'next'
+        ? '다음 주 등록된 업무 중 차주 계획에 추가할 항목을 선택하세요.'
+        : '이번 주 등록된 업무 중 주간 요약에 추가할 항목을 선택하세요.';
+    }
     document.getElementById('importTasksModal').dataset.mode = mode;
     const listEl = document.getElementById('importTasksList');
     const selectAll = document.getElementById('importTasksSelectAll');
