@@ -496,7 +496,6 @@
         items = res.data || [];
       } catch(e) {
         showMessage('업무 목록을 불러오지 못했습니다.', 'error');
-        hideGlobalLoading();
         return;
       } finally {
         hideGlobalLoading();
@@ -3130,11 +3129,11 @@
       const res = await apiGet('taskGetCategories', { request_user_email: currentUser.email });
       applyCategories(res);
 
-      badgeEl.textContent  = categoryIsCustom ? '팀 전용' : '기본 공통';
-      badgeEl.className    = 'category-source-badge ' + (categoryIsCustom ? 'is-custom' : 'is-default');
-      tipEl.textContent    = categoryIsCustom
-        ? '팀 전용 카테고리가 적용 중입니다. 항목을 모두 삭제하면 기본 카테고리로 복원됩니다.'
-        : '기본 카테고리 사용 중입니다. 항목을 추가하면 팀 전용으로 전환됩니다.';
+      badgeEl.textContent = '팀 전용';
+      badgeEl.className   = 'category-source-badge is-custom';
+      tipEl.textContent   = categoryIsCustom
+        ? '팀 전용 카테고리가 적용 중입니다.'
+        : '카테고리를 추가하면 팀 전용으로 사용됩니다.';
 
       if (!res.data || res.data.length === 0) {
         listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">등록된 카테고리가 없습니다.</div>';
