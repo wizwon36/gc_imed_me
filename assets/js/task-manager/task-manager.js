@@ -2218,15 +2218,25 @@
       const fd = d => d ? d.substring(5).replace('-', '/') : '';
       const period = teamWeekStart.substring(0, 4) + '년  ' + fd(teamWeekStart) + ' ~ ' + fd(weekEnd);
 
-      // 의원별 그룹
-      const clinicMap = {};
+      // ── [재설계] task 단위로 의원별 분류 ──────────────────────
+      const taskClinicMapPdf   = {};  // 업무 내용용 (work_clinic_name 기준)
+      const memberClinicMapPdf = {};  // 조출·근태·이슈용 (소속 의원 기준)
+
       members.forEach(m => {
-        // [NEW] 수행 의원 기준으로 분류 (없으면 소속 의원 fallback — 기존 데이터 호환)
-        const c = m.work_clinic_name || m.clinic_name || '기타';
-        if (!clinicMap[c]) clinicMap[c] = [];
-        clinicMap[c].push(m);
+        const mc = m.clinic_name || '기타';
+        if (!memberClinicMapPdf[mc]) memberClinicMapPdf[mc] = [];
+        memberClinicMapPdf[mc].push(m);
+
+        const tasks = (m.task_summary && m.task_summary.items) ? m.task_summary.items : [];
+        tasks.forEach(t => {
+          const tc = t.work_clinic_name || t.clinic_name || m.clinic_name || '기타';
+          if (!taskClinicMapPdf[tc]) taskClinicMapPdf[tc] = [];
+          taskClinicMapPdf[tc].push(t);
+        });
       });
-      const clinics = Object.keys(clinicMap).sort();
+
+      const clinicSetPdf = new Set([...Object.keys(taskClinicMapPdf), ...Object.keys(memberClinicMapPdf)]);
+      const clinics = Array.from(clinicSetPdf).sort();
       const cats    = Object.entries(CATEGORY_LABELS);
 
       // 셀 텍스트를 <pre> 스타일 div로 변환 (들여쓰기 보존)
