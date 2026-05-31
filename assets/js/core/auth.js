@@ -91,6 +91,36 @@
     localStorage.removeItem(STORAGE_KEY);
   }
 
+  // ── 전체 캐시 강제 초기화 ────────────────────────────────────
+  // localStorage / sessionStorage 전체 삭제 후 페이지 새로고침
+  // 버전 불일치(구버전 캐시)로 인한 접속 불가 문제 해결용
+  function clearAllCache(showConfirm) {
+    if (showConfirm) {
+      if (!confirm('브라우저 캐시를 모두 초기화합니다.\n로그인 정보가 삭제되며 페이지가 새로고침됩니다.\n계속할까요?')) return;
+    }
+    try { localStorage.clear(); }   catch(e) {}
+    try { sessionStorage.clear(); } catch(e) {}
+    // config.js 캐시 버전을 localStorage에 저장해두어 다음 로드 시 비교에 사용
+    try {
+      if (typeof CONFIG !== 'undefined' && CONFIG.CACHE_VERSION) {
+        localStorage.setItem('gc_imed_cache_version', CONFIG.CACHE_VERSION);
+      }
+    } catch(e) {}
+    location.reload(true);
+  }
+
+  // 페이지 로드 시 CACHE_VERSION 체크 — 구버전 캐시면 자동 초기화
+  function checkCacheVersion() {
+    try {
+      if (typeof CONFIG === 'undefined' || !CONFIG.CACHE_VERSION) return;
+      const stored = localStorage.getItem('gc_imed_cache_version');
+      if (stored === CONFIG.CACHE_VERSION) return;
+      // 버전이 다르면 조용히 초기화 (confirm 없이)
+      console.info('[auth] 캐시 버전 불일치(' + stored + ' → ' + CONFIG.CACHE_VERSION + '), 자동 초기화');
+      clearAllCache(false);
+    } catch(e) {}
+  }
+
   function logout() {
     window.appPermission?.clearCache?.();
     window.OrgService?.clearCache?.();
@@ -187,6 +217,12 @@
 
     if (!loginBtn || !emailEl || !passwordEl) return;
 
+    // 캐시 초기화 버튼 바인딩
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+    if (clearCacheBtn) {
+      clearCacheBtn.addEventListener('click', () => clearAllCache(true));
+    }
+
     redirectIfLoggedIn();
 
     loginBtn.addEventListener('click', login);
@@ -251,6 +287,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    checkCacheVersion();   // 캐시 버전 체크 — 구버전이면 자동 초기화
     bindLoginPage();
     bindHistoryGuard();
 
@@ -273,6 +310,7 @@
     saveSession,
     getSession,
     clearSession,
+    clearAllCache,
     logout,
     requireAuth,
     redirectIfLoggedIn
