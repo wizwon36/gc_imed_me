@@ -1938,25 +1938,84 @@
       const ws  = {};
       const wb2 = window.XLSX.utils.book_new();
 
-      const clinicMap = {};
+      // ── [재설계] task 단위로 의원별 분류 ──────────────────────
+      // taskClinicMap: { 의원명: [task, ...] }  — 업무 내용 분류용 (work_clinic_name 기준)
+      // memberClinicMap: { 의원명: [member, ...] } — 조출/근태/이슈 분류용 (소속 의원 기준)
+      const taskClinicMap   = {};
+      const memberClinicMap = {};
+
       members.forEach(m => {
-        // [NEW] 수행 의원 기준으로 분류 (없으면 소속 의원 fallback — 기존 데이터 호환)
-        const c = m.work_clinic_name || m.clinic_name || '기타';
-        if (!clinicMap[c]) clinicMap[c] = [];
-        clinicMap[c].push(m);
+        // member 단위: 소속 의원 기준 (조출·근태·이슈용)
+        const mc = m.clinic_name || '기타';
+        if (!memberClinicMap[mc]) memberClinicMap[mc] = [];
+        memberClinicMap[mc].push(m);
+
+        // task 단위: work_clinic_name 기준 (업무 내용용)
+        const tasks = (m.task_summary && m.task_summary.items) ? m.task_summary.items : [];
+        tasks.forEach(t => {
+          const tc = t.work_clinic_name || t.clinic_name || m.clinic_name || '기타';
+          if (!taskClinicMap[tc]) taskClinicMap[tc] = [];
+          taskClinicMap[tc].push(t);
+        });
       });
-      const clinics = Object.keys(clinicMap).sort();
+
+      // 의원 목록: task + member 양쪽 합집합으로 컬럼 결정
+      const clinicSet = new Set([...Object.keys(taskClinicMap), ...Object.keys(memberClinicMap)]);
+      const clinics = Array.from(clinicSet).sort();
+
       // 카테고리 목록 — 비어있으면 서버에서 재조회
       if (Object.keys(CATEGORY_LABELS).length === 0) {
         await loadCategories();
       }
-      // 여전히 비어있으면 codes 시트에 카테고리 미등록 상태
       if (Object.keys(CATEGORY_LABELS).length === 0) {
         showMessage('카테고리가 등록되어 있지 않습니다. 카테고리 관리에서 먼저 등록해주세요.', 'error');
         return;
       }
       const cats = Object.entries(CATEGORY_LABELS);
-      // A:구분  B~:의원별 (작성자 컬럼 제거)
+
+      // task 배열 → 엑셀 셀 텍스트 빌더
+      const buildTaskText = (tasks, catCode, isHigh, isNext) => {
+        if (!tasks || !tasks.length) return '';
+        const DOW = ['일','월','화','수','목','금','토'];
+        const ST  = { TODO:'예정', IN_PROGRESS:'진행중', DONE:'완료' };
+        const weekS = isNext ? offsetWeek(teamWeekStart, 1) : teamWeekStart;
+        const weekE = getWeekEnd(weekS);
+
+        const filtered = tasks.filter(t => {
+          const s = t.start_date || '';
+          const e = t.end_date   || s;
+          if (e < weekS || s > weekE) return false;
+          if (catCode && t.category !== catCode) return false;
+          const high = t.priority === 'HIGH';
+          if (isHigh === true  && !high) return false;
+          if (isHigh === false &&  high) return false;
+          return true;
+        });
+        if (!filtered.length) return '';
+
+        const lines = [];
+        filtered.sort((a,b) => (a.start_date||'').localeCompare(b.start_date||''));
+        filtered.forEach(t => {
+          const d   = new Date((t.start_date||'') + 'T00:00:00');
+          const dow = isNaN(d.getTime()) ? '' : DOW[d.getDay()];
+          const mm  = (t.start_date||'').substring(5,7);
+          const dd  = (t.start_date||'').substring(8,10);
+          const pri = t.priority === 'HIGH' ? ' *' : '';
+          const st  = ST[t.status] || t.status || '';
+          const end = (t.end_date && t.end_date !== t.start_date)
+            ? '  ' + (t.end_date||'').substring(5,7)+'/'+( t.end_date||'').substring(8,10) : '';
+          lines.push('  ' + mm + '/' + dd + ' (' + dow + ')');
+          lines.push('  • ' + (t.title||'') + pri + '  [' + st + ']' + (end ? '  '+mm+'/'+dd+' ~ '+end.trim() : ''));
+          if (t.description && t.description.trim()) {
+            t.description.trim().split('\n').forEach(dl => {
+              if (dl.trim()) lines.push('      └ ' + dl.trim());
+            });
+          }
+        });
+        return lines.join('\n');
+      };
+
+      // A:구분  B~:의원별
       let r = 0;
 
       const TOTAL_COLS = 2 + clinics.length;  // A:카테고리 B:금주/차주 C~:의원별
@@ -1996,64 +2055,40 @@
 
       const highStart = r;
 
-      ['summary','next_plan'].forEach((field, fi) => {
+      // 주요이슈 (HIGH) — task 단위
+      [false, true].forEach((isNext, fi) => {
         const weekLabel = fi === 0 ? '금주' : '차주';
         const rowBD = fi === 0 ? BD_SEC : BD_INNER;
         sc(r, 0, fi === 0 ? '주요이슈' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         sc(r, 1, weekLabel, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         clinics.forEach((cl, i) => {
-          const lines = [];
-          (clinicMap[cl]||[]).forEach(m => {
-            if (!m.journal) return;
-            const rawHigh = field === 'next_plan'
-                ? ((m.next_journal && m.next_journal.summary) || m.journal.next_plan || '')
-                : (m.journal[field] || '');
-            const highSec = extractCategorySection(rawHigh, null, 'HIGH');
-            if (highSec) highSec.split('\n').forEach(l => lines.push(l));
-          });
-          const stripped = stripNameAndDate(lines);
-          sc(r, 2+i, wrapExcelLines(stripped), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
+          const text = buildTaskText(taskClinicMap[cl] || [], null, true, isNext);
+          const lines = text ? text.split('\n') : [];
+          sc(r, 2+i, wrapExcelLines(stripNameAndDate(lines)), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
         });
         r++;
       });
-      mg(highStart, highStart + 1, 0, 0);  // A열 "주요이슈" 2행 병합
+      mg(highStart, highStart + 1, 0, 0);
 
-      // ── 카테고리별 — A열=카테고리(금주/차주 두 행 병합), B열=금주/차주, C~=의원별
+      // 카테고리별 — task 단위
       cats.forEach(([catKey, catName], ci) => {
-        const fillCat  = FILL_WHITE;
         const catStart = r;
-
-        ['summary','next_plan'].forEach((field, fi) => {
+        [false, true].forEach((isNext, fi) => {
           const weekLabel = fi === 0 ? '금주' : '차주';
-          const fillWeek  = FILL_WHITE;
           const rowBD     = fi === 0 ? BD_SEC : BD_INNER;
-
-          // A열: 카테고리명 (금주 행에만 값, 차주 행은 빈칸 — 나중에 병합)
-          sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:fillCat, alignment:AL_C, border:rowBD });
-          // B열: 금주 / 차주 라벨
-          sc(r, 1, weekLabel, { font:FONT_BOLD, fill:fillWeek, alignment:AL_C, border:rowBD });
-
+          sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
+          sc(r, 1, weekLabel, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
           clinics.forEach((cl, i) => {
-            const lines = [];
-            (clinicMap[cl]||[]).forEach(m => {
-              if (!m.journal) return;
-              const rawText = field === 'next_plan'
-                ? ((m.next_journal && m.next_journal.summary) || m.journal.next_plan || '')
-                : (m.journal[field] || '');
-            const sec = extractCategorySection(rawText, catName, 'NORMAL');
-              if (sec) sec.split('\n').forEach(l => lines.push(l));
-            });
-            const stripped = stripNameAndDate(lines);
-            sc(r, 2+i, wrapExcelLines(stripped), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
+            const text = buildTaskText(taskClinicMap[cl] || [], catKey, false, isNext);
+            const lines = text ? text.split('\n') : [];
+            sc(r, 2+i, wrapExcelLines(stripNameAndDate(lines)), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
           });
           r++;
         });
-
-        // A열 카테고리명 두 행 병합
         mg(catStart, catStart + 1, 0, 0);
       });
 
-      // 조출 / 토요근무
+      // 조출 / 토요근무 — 소속 의원(memberClinicMap) 기준
       const earlyWorkStart = r;
       [
         { thisKey: 'early_work_this', satKey: 'sat_work_this', label: '이번주', useNext: false },
@@ -2063,12 +2098,11 @@
         sc(r, 0, idx === 0 ? '조출/토요근무' : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         sc(r, 1, row.label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         clinics.forEach((cl, i) => {
-          // 다음주 행: next_journal.early_work_this/sat_work_this 우선, 없으면 journal.early_work_next(구 필드) 폴백
           const getVal = (m, key, oldKey) => row.useNext
             ? (m.next_journal ? m.next_journal[key]==='Y' : (m.journal ? m.journal[oldKey]==='Y' : false))
             : (m.journal ? m.journal[key]==='Y' : false);
-          const earlyNames = (clinicMap[cl]||[]).filter(m => getVal(m, row.thisKey, 'early_work_next')).map(m => m.user_name);
-          const satNames   = (clinicMap[cl]||[]).filter(m => getVal(m, row.satKey,  'sat_work_next')).map(m => m.user_name);
+          const earlyNames = (memberClinicMap[cl]||[]).filter(m => getVal(m, row.thisKey, 'early_work_next')).map(m => m.user_name);
+          const satNames   = (memberClinicMap[cl]||[]).filter(m => getVal(m, row.satKey,  'sat_work_next')).map(m => m.user_name);
           const lines = [];
           if (earlyNames.length) lines.push('[조출] : ' + earlyNames.join(', '));
           if (satNames.length)   lines.push('[토요근무] : ' + satNames.join(', '));
@@ -2078,7 +2112,7 @@
       });
       mg(earlyWorkStart, earlyWorkStart + 1, 0, 0);
 
-      // 근태 (금주/차주)
+      // 근태 (금주/차주) — 소속 의원 기준
       const attStart = r;
       ['금주', '차주'].forEach((label, fi) => {
         const rowBD = fi === 0 ? BD_SEC : BD_INNER;
@@ -2086,17 +2120,11 @@
         sc(r, 1, label, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
         clinics.forEach((cl, i) => {
           const lines = [];
-          (clinicMap[cl]||[]).forEach(m => {
+          (memberClinicMap[cl]||[]).forEach(m => {
             if (!m.journal) return;
-            let val;
-            if (fi === 0) {
-              val = m.journal.attendance_this_week || '';
-            } else {
-              // 다음주 근태: next_journal.attendance_this_week 우선, 없으면 journal.attendance_next_week 폴백
-              val = (m.next_journal && m.next_journal.attendance_this_week)
-                ? m.next_journal.attendance_this_week
-                : (m.journal.attendance_next_week || '');
-            }
+            const val = fi === 0
+              ? (m.journal.attendance_this_week || '')
+              : ((m.next_journal && m.next_journal.attendance_this_week) || m.journal.attendance_next_week || '');
             if (val) {
               lines.push('• ' + m.user_name);
               val.split('\n').forEach(function(v) { lines.push('  ' + v); });
@@ -2106,9 +2134,9 @@
         });
         r++;
       });
-      mg(attStart, attStart + 1, 0, 0);  // A열 "근태" 2행 병합
+      mg(attStart, attStart + 1, 0, 0);
 
-      // 이슈 / 건의사항 — A열 단독 (B열 포함 병합)
+      // 이슈 / 건의사항 — 소속 의원 기준
       const issueRow = r;
       const fillIssue = FILL_WHITE;
       sc(r, 0, '이슈/건의', { font:FONT_BOLD, fill:fillIssue, alignment:AL_C, border:BD });
@@ -2116,7 +2144,7 @@
       mg(r, r, 0, 1);
       clinics.forEach((cl, i) => {
         const lines = [];
-        (clinicMap[cl]||[]).forEach(m => {
+        (memberClinicMap[cl]||[]).forEach(m => {
           if (!m.journal || !m.journal.issues) return;
           lines.push(m.journal.issues);
         });
@@ -2212,21 +2240,47 @@
         }).join('');
       };
 
-      // 섹션 데이터 수집
-      const getSectionLines = (field, catName, priority) => {
+      // 섹션 데이터 수집 — task 단위 재설계
+      const getSectionLines = (isHigh, catCode, isNext) => {
         const result = {};
         clinics.forEach(cl => {
-          const lines = [];
-          (clinicMap[cl] || []).forEach(m => {
-            if (!m.journal) return;
-            // next_plan 필드는 다음 주 일지의 summary를 우선 사용
-            const rawText = field === 'next_plan'
-              ? ((m.next_journal && m.next_journal.summary) || m.journal.next_plan || '')
-              : (m.journal[field] || '');
-            const sec = extractCategorySection(rawText, catName, priority);
-            if (sec) lines.push(...stripNameAndDate(sec.split('\n')));
+          const DOW = ['일','월','화','수','목','금','토'];
+          const ST  = { TODO:'예정', IN_PROGRESS:'진행중', DONE:'완료' };
+          const weekS = isNext ? nextWeekStart : teamWeekStart;
+          const weekE = getWeekEnd(weekS);
+          const tasks = taskClinicMapPdf[cl] || [];
+
+          const filtered = tasks.filter(t => {
+            const s = t.start_date || '';
+            const e = t.end_date   || s;
+            if (e < weekS || s > weekE) return false;
+            if (catCode && t.category !== catCode) return false;
+            const high = t.priority === 'HIGH';
+            if (isHigh === true  && !high) return false;
+            if (isHigh === false &&  high) return false;
+            return true;
           });
-          result[cl] = lines.join('\n');
+
+          if (!filtered.length) { result[cl] = ''; return; }
+
+          const lines = [];
+          filtered.sort((a,b) => (a.start_date||'').localeCompare(b.start_date||''));
+          filtered.forEach(t => {
+            const d   = new Date((t.start_date||'') + 'T00:00:00');
+            const dow = isNaN(d.getTime()) ? '' : DOW[d.getDay()];
+            const mm  = (t.start_date||'').substring(5,7);
+            const dd  = (t.start_date||'').substring(8,10);
+            const pri = t.priority === 'HIGH' ? ' *' : '';
+            const st  = ST[t.status] || t.status || '';
+            lines.push('  ' + mm + '/' + dd + ' (' + dow + ')');
+            lines.push('  • ' + (t.title||'') + pri + '  [' + st + ']');
+            if (t.description && t.description.trim()) {
+              t.description.trim().split('\n').forEach(dl => {
+                if (dl.trim()) lines.push('      └ ' + dl.trim());
+              });
+            }
+          });
+          result[cl] = stripNameAndDate(lines).join('\n');
         });
         return result;
       };
@@ -2296,7 +2350,7 @@
         </tr>`;
       });
 
-      // 조출/토요근무
+      // 조출/토요근무 — 소속 의원 기준
       [
         { thisKey:'early_work_this', satKey:'sat_work_this', label:'이번주', useNext: false },
         { thisKey:'early_work_this', satKey:'sat_work_this', label:'다음주', useNext: true }
@@ -2308,8 +2362,8 @@
           const getV = (m, key, oldKey) => row.useNext
             ? (m.next_journal ? m.next_journal[key]==='Y' : (m.journal ? m.journal[oldKey]==='Y' : false))
             : (m.journal ? m.journal[key]==='Y' : false);
-          const early = (clinicMap[cl]||[]).filter(m=>getV(m,row.thisKey,'early_work_next')).map(m=>m.user_name);
-          const sat   = (clinicMap[cl]||[]).filter(m=>getV(m,row.satKey,'sat_work_next')).map(m=>m.user_name);
+          const early = (memberClinicMapPdf[cl]||[]).filter(m=>getV(m,row.thisKey,'early_work_next')).map(m=>m.user_name);
+          const sat   = (memberClinicMapPdf[cl]||[]).filter(m=>getV(m,row.satKey,'sat_work_next')).map(m=>m.user_name);
           const lines = [];
           if (early.length) lines.push('[조출] : '+early.join(', '));
           if (sat.length)   lines.push('[토요근무] : '+sat.join(', '));
@@ -2317,14 +2371,14 @@
         }).join('')}</tr>`;
       });
 
-      // 근태
+      // 근태 — 소속 의원 기준
       ['금주','차주'].forEach((label, fi) => {
         const _wkStyle2 = fi === 0 ? tdWeekStyleThis : tdWeekStyleNext;
         const _dtStyle2 = fi === 0 ? tdDataStyleThis : tdDataStyleNext;
         const labelCell = fi === 0 ? `<td rowspan="2" style="${tdLabelStyle}">근태</td>` : '';
         tableHtml += `<tr>${labelCell}<td style="${_wkStyle2}">${label}</td>${clinics.map(cl => {
           const lines = [];
-          (clinicMap[cl]||[]).forEach(m => {
+          (memberClinicMapPdf[cl]||[]).forEach(m => {
             if (!m.journal) return;
             const val = fi === 0
               ? (m.journal.attendance_this_week||'')
@@ -2335,10 +2389,10 @@
         }).join('')}</tr>`;
       });
 
-      // 이슈/건의
+      // 이슈/건의 — 소속 의원 기준
       tableHtml += `<tr><td colspan="2" style="${tdLabelStyle}">이슈/건의</td>${clinics.map(cl => {
         const lines = [];
-        (clinicMap[cl]||[]).forEach(m => { if (m.journal&&m.journal.issues) lines.push(m.journal.issues); });
+        (memberClinicMapPdf[cl]||[]).forEach(m => { if (m.journal&&m.journal.issues) lines.push(m.journal.issues); });
         return `<td style="${tdDataStyle}">${lines.length ? textToHtml(lines.join('\n')) : '<span style="color:#94a3b8;">-</span>'}</td>`;
       }).join('')}</tr>`;
 
