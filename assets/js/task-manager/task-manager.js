@@ -1614,7 +1614,7 @@
 
     let prevTeam = null;
     grid.innerHTML = sorted.map((m, idx) => {
-      const s       = m.task_summary || {};
+      const s       = (m.task_summary && m.task_summary.summary) ? m.task_summary.summary : (m.task_summary || {});
       const pct     = s.total ? Math.round((s.done || 0) / s.total * 100) : 0;
       const jStatus = m.journal ? m.journal.status : null;
       const teamName = m.team_name || m.department || '기타';
@@ -1676,7 +1676,7 @@
     if (!m) return;
 
     const j     = m.journal;
-    const tasks = m.task_summary || {};
+    const tasks = (m.task_summary && m.task_summary.summary) ? m.task_summary.summary : (m.task_summary || {});
 
     // ── 모달 즉시 열기: 제목 + 스피너 먼저 표시
     const statusMap   = { DRAFT: '작성중', SUBMITTED: '제출됨', CLOSED: '마감됨' };
@@ -2680,7 +2680,7 @@
 
     members.forEach((m, idx) => {
       const j       = m.journal;
-      const s       = m.task_summary || {};
+      const s       = (m.task_summary && m.task_summary.summary) ? m.task_summary.summary : (m.task_summary || {});
       const pct     = s.total ? Math.round((s.done || 0) / s.total * 100) : 0;
       const status  = j ? (j.status || 'DRAFT') : null;
       const initial = (m.user_name || '?').charAt(0);
