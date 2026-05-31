@@ -48,6 +48,7 @@
 
   // 모달
   let editingTaskId   = null;
+  let clinicOptions   = [];   // ORG_CLINIC 코드 목록 [{ code_value, code_name }]
 
   // ── 초기화 ──────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
@@ -105,8 +106,8 @@
       const loadingTextEl = document.getElementById('globalLoadingText');
       if (loadingTextEl) loadingTextEl.textContent = '업무 목록을 불러오는 중...';
 
-      // 카테고리 먼저 로드 후 업무 로드
-      await loadCategories();
+      // 카테고리 + 의원 목록 먼저 로드 후 업무 로드
+      await Promise.all([loadCategories(), loadClinics()]);
       await loadWeeklyTasks();
 
       // 자동 동기화 토글 초기화 + 설정 로드
@@ -1939,7 +1940,8 @@
 
       const clinicMap = {};
       members.forEach(m => {
-        const c = m.clinic_name || '기타';
+        // [NEW] 수행 의원 기준으로 분류 (없으면 소속 의원 fallback — 기존 데이터 호환)
+        const c = m.work_clinic_name || m.clinic_name || '기타';
         if (!clinicMap[c]) clinicMap[c] = [];
         clinicMap[c].push(m);
       });
@@ -2191,7 +2193,8 @@
       // 의원별 그룹
       const clinicMap = {};
       members.forEach(m => {
-        const c = m.clinic_name || '기타';
+        // [NEW] 수행 의원 기준으로 분류 (없으면 소속 의원 fallback — 기존 데이터 호환)
+        const c = m.work_clinic_name || m.clinic_name || '기타';
         if (!clinicMap[c]) clinicMap[c] = [];
         clinicMap[c].push(m);
       });
@@ -2720,6 +2723,8 @@
     setSingleDay(true);
     updatePriorityUI('MEDIUM');
     updateStatusUI('TODO');
+    // [NEW] 수행 의원 드롭다운: 기본값 = 로그인 사용자 소속 의원
+    populateWorkClinicSelect(currentUser.clinic_code || '', currentUser.clinic_name || '');
     openTaskModal();
   };
 
@@ -2738,6 +2743,11 @@
     setSingleDay(isSingle);
     updatePriorityUI(task.priority || 'MEDIUM');
     updateStatusUI(task.status    || 'TODO');
+    // [NEW] 수행 의원 드롭다운: 기존 저장값 (없으면 소속 의원 fallback)
+    populateWorkClinicSelect(
+      task.work_clinic_code || task.clinic_code || currentUser.clinic_code || '',
+      task.work_clinic_name || task.clinic_name || currentUser.clinic_name || ''
+    );
     openTaskModal();
   };
 
@@ -2826,6 +2836,13 @@
     const priority    = document.querySelector('input[name="priority"]:checked')?.value || 'MEDIUM';
     const status      = document.querySelector('input[name="status"]:checked')?.value   || 'TODO';
 
+    // [NEW] 수행 의원
+    const workClinicSel  = document.getElementById('modalWorkClinic');
+    const workClinicCode = workClinicSel ? workClinicSel.value : '';
+    const workClinicName = workClinicSel
+      ? (workClinicSel.options[workClinicSel.selectedIndex]?.text || '')
+      : '';
+
     if (!startDate) { alert('시작일을 입력하세요.');    return; }
     if (!category)  { alert('업무 구분을 선택하세요.'); return; }
     if (!title)     { alert('업무 제목을 입력하세요.'); return; }
@@ -2833,13 +2850,15 @@
 
     const payload = {
       request_user_email: currentUser.email,
-      start_date:   startDate,
-      end_date:     endDate,
-      category:     category,
-      title:        title,
-      description:  description,
-      priority:     priority,
-      status:       status
+      start_date:         startDate,
+      end_date:           endDate,
+      category:           category,
+      title:              title,
+      description:        description,
+      priority:           priority,
+      status:             status,
+      work_clinic_code:   workClinicCode,   // [NEW]
+      work_clinic_name:   workClinicName    // [NEW]
     };
 
     const saveBtn = document.getElementById('taskModalSaveBtn');
@@ -3065,6 +3084,50 @@
       hideGlobalLoading();
     });
   };
+
+  // ── 의원 목록 로드 ───────────────────────────────────────────
+  // codes 시트의 ORG_CLINIC 그룹에서 의원 목록을 로드해 clinicOptions 에 저장.
+  // 업무 등록/수정 모달의 "수행 의원" 드롭다운에 사용.
+  async function loadClinics() {
+    try {
+      const res = await apiGet('getCodes', {
+        request_user_email: currentUser.email,
+        code_group:         'ORG_CLINIC'
+      });
+      const data = res.data || res || [];
+      clinicOptions = Array.isArray(data)
+        ? data
+            .filter(c => String(c.use_yn || 'Y').toUpperCase() === 'Y')
+            .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+            .map(c => ({ code_value: c.code_value, code_name: c.code_name }))
+        : [];
+    } catch (err) {
+      // getCodes API 미등록 시 codes 직접 파싱 대신 빈 배열 유지
+      // → 드롭다운에 현재 소속 의원만 표시됨 (graceful degradation)
+      clinicOptions = [];
+      console.warn('[loadClinics] 의원 목록 로드 실패:', err.message || err);
+    }
+  }
+
+  // 업무 모달의 수행 의원 드롭다운을 채우고 selectedCode 로 초기값 설정.
+  // clinicOptions 가 비어있으면 currentUser 소속 의원만 옵션으로 추가.
+  function populateWorkClinicSelect(selectedCode, selectedName) {
+    const sel = document.getElementById('modalWorkClinic');
+    if (!sel) return;
+
+    let options = clinicOptions.length > 0
+      ? clinicOptions
+      : [{ code_value: currentUser.clinic_code || '', code_name: currentUser.clinic_name || '내 소속 의원' }];
+
+    // 선택값이 목록에 없을 경우(구 데이터 호환)를 대비해 추가
+    if (selectedCode && !options.find(o => o.code_value === selectedCode)) {
+      options = [{ code_value: selectedCode, code_name: selectedName || selectedCode }, ...options];
+    }
+
+    sel.innerHTML = options.map(o =>
+      `<option value="${esc(o.code_value)}"${o.code_value === selectedCode ? ' selected' : ''}>${esc(o.code_name)}</option>`
+    ).join('');
+  }
 
   // ── 카테고리 관리 ────────────────────────────────────────────
 
