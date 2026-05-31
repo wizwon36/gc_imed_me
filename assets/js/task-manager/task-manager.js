@@ -3164,6 +3164,7 @@
   }
 
   // 업무 모달의 수행 의원 드롭다운을 채우고 selectedCode 로 초기값 설정.
+  // selectedCode 미전달(undefined/빈 값) 시 → 로그인 사용자 소속 의원을 기본 선택.
   // clinicOptions 가 비어있으면 currentUser 소속 의원만 옵션으로 추가.
   function populateWorkClinicSelect(selectedCode, selectedName) {
     const sel = document.getElementById('modalWorkClinic');
@@ -3178,8 +3179,17 @@
       options = [{ code_value: selectedCode, code_name: selectedName || selectedCode }, ...options];
     }
 
+    // 기본값 결정:
+    // 1) selectedCode 가 명시된 경우 → 그 값 사용
+    // 2) 없으면 → currentUser.clinic_code (소속 의원)
+    // 3) 그것도 없으면 → 목록 첫 번째 옵션
+    const defaultCode = selectedCode
+      || currentUser.clinic_code
+      || (options[0] && options[0].code_value)
+      || '';
+
     sel.innerHTML = options.map(o =>
-      `<option value="${esc(o.code_value)}"${o.code_value === selectedCode ? ' selected' : ''}>${esc(o.code_name)}</option>`
+      `<option value="${esc(o.code_value)}"${o.code_value === defaultCode ? ' selected' : ''}>${esc(o.code_name)}</option>`
     ).join('');
   }
 
