@@ -477,6 +477,16 @@
             </label>
           </div>
         </div>
+        <!-- [NEW] 수행 의원 — 실제 업무를 수행한 의원 (소속과 다를 수 있음) -->
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:6px;">
+            수행 의원
+            <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(소속과 다른 의원에서 수행한 경우 변경)</span>
+          </label>
+          <select class="form-select" id="modalWorkClinic">
+            <option value="">불러오는 중...</option>
+          </select>
+        </div>
       </div>
       <div class="task-modal-footer">
         <button class="btn" id="taskModalCancelBtn">취소</button>
