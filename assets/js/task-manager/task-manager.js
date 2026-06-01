@@ -229,10 +229,10 @@
     document.getElementById('journalImportTasksBtn')?.addEventListener('click', () => openImportTasksModal('this'));
     document.getElementById('journalImportNextTasksBtn')?.addEventListener('click', () => openImportTasksModal('next'));
     document.getElementById('importTasksModalClose')?.addEventListener('click', () => {
-      document.getElementById('importTasksModal').classList.remove('open');
+      _closeModal('importTasksModal');
     });
     document.getElementById('importTasksCancelBtn')?.addEventListener('click', () => {
-      document.getElementById('importTasksModal').classList.remove('open');
+      _closeModal('importTasksModal');
     });
     document.getElementById('importTasksApplyBtn')?.addEventListener('click', applyImportTasks);
     document.getElementById('importTasksSelectAll')?.addEventListener('change', function() {
@@ -569,7 +569,7 @@
     const appendRadio = document.querySelector('input[name="importMode"][value="append"]');
     if (appendRadio) appendRadio.checked = true;
 
-    document.getElementById('importTasksModal').classList.add('open');
+    _openModal('importTasksModal');
   }
 
   async function applyImportTasks() {
@@ -620,7 +620,7 @@
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(() => saveJournal(true), 1500);  // 1.5초 후 자동저장
 
-    document.getElementById('importTasksModal').classList.remove('open');
+    _closeModal('importTasksModal');
     showMessage(`${selectedItems.length}개 업무를 불러왔습니다. 잠시 후 자동 저장됩니다.`, 'success');
   }
 
