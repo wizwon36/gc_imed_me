@@ -909,12 +909,26 @@ function initPdfDownload() {
     content.insertBefore(toc,    content.firstChild);
     content.insertBefore(cover,  content.firstChild);
 
-    window.print();
+    // 이미지 로드 완료 후 인쇄 (로고 출력 보장)
+    const imgs = cover.querySelectorAll('img');
+    const imgLoadPromises = Array.from(imgs).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload  = resolve;
+        img.onerror = resolve; // 실패해도 진행
+      });
+    });
 
-    // 인쇄 후 제거
-    cover.remove();
-    toc.remove();
-    header.remove();
+    Promise.all(imgLoadPromises).then(() => {
+      // 약간의 렌더링 여유 시간 부여
+      setTimeout(() => {
+        window.print();
+        // 인쇄 후 제거
+        cover.remove();
+        toc.remove();
+        header.remove();
+      }, 300);
+    });
   });
 }
 
