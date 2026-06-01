@@ -1704,8 +1704,7 @@
       <div class="task-loading-spinner" style="width:36px;height:36px;border-width:4px;"></div>
       <div style="font-size:13px;color:var(--text-muted);">일지를 불러오는 중...</div>
     </div>`;
-    document.getElementById('memberJournalModal').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    _openModal('memberJournalModal');
 
     // next_journal이 없으면 직접 조회
     // (백엔드 next_journal 미배포 / 캐시 없는 경우 대비)
@@ -1852,8 +1851,7 @@
       bodyEl._mjResizeObserver.disconnect();
       bodyEl._mjResizeObserver = null;
     }
-    document.getElementById('memberJournalModal').classList.remove('open');
-    document.body.style.overflow = '';
+    _closeModal('memberJournalModal');
   }
 
   // ── 주간업무 엑셀 다운로드 ──────────────────────────────────────
@@ -2684,7 +2682,7 @@
 
     if (!members.length) {
       body.innerHTML = `<div class="task-empty" style="padding:40px 0;"><div class="task-empty-icon">👥</div><div class="task-empty-text">팀원 데이터가 없습니다.</div></div>`;
-      document.getElementById('mergeViewModal').classList.add('open');
+      _openModal('mergeViewModal');
       return;
     }
 
@@ -2758,8 +2756,7 @@
     });
 
     body.innerHTML = html;
-    document.getElementById('mergeViewModal').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    _openModal('mergeViewModal');
 
     // ResizeObserver로 실제 body 너비 감지 → 1/2컬럼 전환
     const mergeBody = body;
@@ -2788,8 +2785,7 @@
       mergeBody._mjResizeObserver.disconnect();
       mergeBody._mjResizeObserver = null;
     }
-    document.getElementById('mergeViewModal').classList.remove('open');
-    document.body.style.overflow = '';
+    _closeModal('mergeViewModal');
   }
 
   // ── 업무 모달 ────────────────────────────────────────────────
@@ -2902,15 +2898,25 @@
     }
   }
 
-  function openTaskModal() {
-    document.getElementById('taskModal').classList.add('open');
+  // ── 모달 공통 헬퍼 — body overflow 관리 ──────────────────────
+  function _openModal(id) {
+    document.getElementById(id)?.classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+  function _closeModal(id) {
+    document.getElementById(id)?.classList.remove('open');
+    // 열려있는 다른 모달이 없을 때만 overflow 복원
+    const anyOpen = document.querySelector('.task-modal-overlay.open');
+    if (!anyOpen) document.body.style.overflow = '';
+  }
+
+  function openTaskModal() {
+    _openModal('taskModal');
   }
 
   function closeTaskModal() {
-    document.getElementById('taskModal').classList.remove('open');
+    _closeModal('taskModal');
     editingTaskId = null;
-    document.body.style.overflow = '';
   }
 
   async function saveTask() {
@@ -3266,14 +3272,12 @@
   }
 
   async function openCategoryModal() {
-    document.getElementById('categoryModal').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    _openModal('categoryModal');
     await renderCategoryList();
   }
 
   function closeCategoryModal() {
-    document.getElementById('categoryModal').classList.remove('open');
-    document.body.style.overflow = '';
+    _closeModal('categoryModal');
     resetCategoryForm();
   }
 
