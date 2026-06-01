@@ -235,6 +235,7 @@
 .pr-subsection {
   position: relative;
   margin-bottom: 32px;
+  padding-top: 4px;
   padding-bottom: 28px;
   border-bottom: 1px solid var(--border-soft);
 }
@@ -650,7 +651,7 @@ p {
 /* ─── 섹션 헤더 (제목 + 편집 버튼) ──────────────────────────── */
 .pr-subsection-header {
   display: block;
-  margin-bottom: 0;
+  margin-bottom: 12px;
   /* 버튼 공간 확보를 위해 오른쪽 padding */
   padding-right: 88px;
 }
