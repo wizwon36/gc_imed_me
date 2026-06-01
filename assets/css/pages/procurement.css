@@ -1327,14 +1327,14 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-gc-logo {
-    font-size: 18pt;
-    font-weight: 900;
-    color: #1a3a2a;
-    letter-spacing: -0.02em;
+    display: block;
+    height: 28pt;
   }
 
-  .pr-cover-gc-logo span {
-    color: #2d8a3e;
+  .pr-cover-gc-logo img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
   }
 
   /* ── 목차 페이지 ─────────────────────────────────────────────── */
