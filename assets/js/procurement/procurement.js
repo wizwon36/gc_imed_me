@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!q) { clearSearch(); return; }
 
-    // 이전 하이라이트 제거
     document.querySelectorAll('.pr-highlight').forEach(el => {
       el.outerHTML = el.textContent;
     });
@@ -97,59 +96,73 @@ document.addEventListener('DOMContentLoaded', async () => {
   function escapeRegex(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
   function escapeHtml(str)  { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  // ── 목차 클릭 → 정확한 위치 이동 ─────────────────────────────
-  // scrollIntoView('start')는 fixed 헤더와 겹칠 수 있으므로
-  // getBoundingClientRect + window.scrollBy 로 offset 보정
-  const SCROLL_OFFSET = 80; // 상단 여백 (px)
-
+  // ── 목차 ──────────────────────────────────────────────────────
+  const SCROLL_OFFSET = 80; // px — 상단 고정 요소 높이
   const tocLinks = document.querySelectorAll('.pr-toc-link[data-section]');
+
+  // 활성 링크 설정 헬퍼
+  function setActiveLink(id) {
+    tocLinks.forEach(l => l.classList.remove('active'));
+    const active = document.querySelector(`.pr-toc-link[data-section="${id}"]`);
+    if (!active) return;
+    active.classList.add('active');
+    active.closest('.pr-toc-group')
+      ?.querySelector('.pr-toc-link--h1')
+      ?.classList.add('active');
+  }
+
+  // ── 목차 클릭 → 정확한 위치 이동 ─────────────────────────────
+  // 클릭 중에는 Observer를 잠시 중단해서 오동작 방지
+  let isScrollingByClick = false;
+  let clickScrollTimer   = null;
 
   tocLinks.forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
-      const target = document.getElementById(link.dataset.section);
+      const id     = link.dataset.section;
+      const target = document.getElementById(id);
       if (!target) return;
+
+      // 클릭 즉시 활성화 고정
+      setActiveLink(id);
+
+      // Observer 일시 중단 (스크롤 완료까지 약 800ms)
+      isScrollingByClick = true;
+      clearTimeout(clickScrollTimer);
+      clickScrollTimer = setTimeout(() => { isScrollingByClick = false; }, 800);
 
       const top = target.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
       window.scrollTo({ top, behavior: 'smooth' });
-
-      // 클릭 즉시 활성화
-      tocLinks.forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-      link.closest('.pr-toc-group')?.querySelector('.pr-toc-link--h1')?.classList.add('active');
     });
   });
 
-  // ── 스크롤 시 목차 자동 활성화 ────────────────────────────────
-  // section(h1)과 subsection(h2) 모두 감지
-  const allAnchors = document.querySelectorAll(
-    '.pr-section[id], .pr-subsection[id]'
+  // ── 자연 스크롤 시 목차 활성화 (Observer) ────────────────────
+  // section + subsection 모두 감지
+  // 현재 뷰포트 상단에 가장 가까운 앵커를 활성화
+  const allAnchors = Array.from(
+    document.querySelectorAll('.pr-section[id], .pr-subsection[id]')
   );
 
-  const observer = new IntersectionObserver(entries => {
-    // 화면 상단 근처에 들어온 것 중 가장 위에 있는 것을 선택
-    const visible = entries
-      .filter(e => e.isIntersecting)
-      .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+  function updateTocByScroll() {
+    if (isScrollingByClick) return;
 
-    if (!visible.length) return;
+    const scrollTop = window.scrollY + SCROLL_OFFSET + 10;
 
-    const id = visible[0].target.id;
-    const activeLink = document.querySelector(`.pr-toc-link[data-section="${id}"]`);
-    if (!activeLink) return;
+    // 현재 스크롤 위치를 지난 앵커 중 가장 마지막(가장 아래)을 찾음
+    let current = allAnchors[0];
+    for (const el of allAnchors) {
+      if (el.offsetTop <= scrollTop) {
+        current = el;
+      } else {
+        break;
+      }
+    }
 
-    tocLinks.forEach(l => l.classList.remove('active'));
-    activeLink.classList.add('active');
-    activeLink.closest('.pr-toc-group')
-      ?.querySelector('.pr-toc-link--h1')
-      ?.classList.add('active');
-  }, {
-    root: null,
-    rootMargin: `-${SCROLL_OFFSET}px 0px -60% 0px`,
-    threshold: 0
-  });
+    if (current) setActiveLink(current.id);
+  }
 
-  allAnchors.forEach(el => observer.observe(el));
+  window.addEventListener('scroll', updateTocByScroll, { passive: true });
+  updateTocByScroll(); // 초기 실행
 
   // ── 목차 접기/펼치기 ──────────────────────────────────────────
   const tocToggle = document.getElementById('prTocToggle');
@@ -166,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const backToTop = document.getElementById('prBackToTop');
   window.addEventListener('scroll', () => {
     backToTop?.classList.toggle('visible', window.scrollY > 300);
-  });
+  }, { passive: true });
   backToTop?.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
