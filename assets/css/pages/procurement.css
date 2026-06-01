@@ -831,6 +831,89 @@ p {
   z-index: 99999 !important;
 }
 
+/* ── 편집기 내 procurement 스타일 미리보기 ───────────────────── */
+/* pr-* 클래스가 편집기 안에서도 실제 페이지와 동일하게 보임 */
+.ck-editor__editable .pr-h3,
+.ck-editor__editable h4.pr-h3 {
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  color: #2d4a7a !important;
+  margin: 20px 0 10px !important;
+  padding: 8px 12px !important;
+  background: #f0f6ff !important;
+  border-radius: 8px !important;
+  display: block !important;
+}
+
+.ck-editor__editable .pr-callout {
+  margin: 14px 0 !important;
+  padding: 14px 18px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+}
+
+.ck-editor__editable .pr-callout--info {
+  background: #eff6ff !important;
+  border-left: 4px solid #3b82f6 !important;
+  color: #1e3a5f !important;
+}
+
+.ck-editor__editable .pr-callout--warning {
+  background: #fffbeb !important;
+  border-left: 4px solid #f59e0b !important;
+  color: #78350f !important;
+}
+
+.ck-editor__editable .pr-callout--danger {
+  background: #fff1f2 !important;
+  border-left: 4px solid #ef4444 !important;
+  color: #7f1d1d !important;
+}
+
+.ck-editor__editable .pr-def-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
+  line-height: 1.55 !important;
+  margin: 6px 0 !important;
+  display: block !important;
+}
+
+.ck-editor__editable .pr-list {
+  list-style: none !important;
+  padding-left: 20px !important;
+}
+
+.ck-editor__editable .pr-list > li::before {
+  content: "•" !important;
+  color: #2563eb !important;
+  font-weight: 700 !important;
+  margin-right: 6px !important;
+}
+
+/* 편집기 내 테이블 스타일 */
+.ck-editor__editable table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  font-size: 13.5px !important;
+}
+
+.ck-editor__editable table th {
+  background: #f0f6ff !important;
+  color: #1e3a6e !important;
+  font-weight: 700 !important;
+  padding: 8px 12px !important;
+  border: 1px solid #d1e0f5 !important;
+}
+
+.ck-editor__editable table td {
+  padding: 8px 12px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
 /* ─── 모달 알림 ─────────────────────────────────────────────── */
 .pr-modal-msg {
   padding: 10px 14px;
