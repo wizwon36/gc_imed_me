@@ -1255,7 +1255,7 @@ p:empty + .pr-table-wrap {
 
   .pr-cover-body {
     flex: 1 !important;
-    padding: 22mm 16mm 80mm 16mm !important;
+    padding: 22mm 16mm 10mm 16mm !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;  /* 위에서 아래로 자연스럽게 */
@@ -1314,11 +1314,14 @@ p:empty + .pr-table-wrap {
 
   /* ── 표지 하단: 로고 영역 ── */
   .pr-cover-bottom {
-    padding: 0 16mm 14mm 16mm !important;
+    position: absolute !important;
+    bottom: 22mm !important;
+    left: 0 !important;
+    right: 0 !important;
+    padding: 0 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    /* 배경 명시적으로 흰색 — 인쇄 엔진 보장 */
     background: #ffffff !important;
   }
 
