@@ -1556,9 +1556,12 @@ input[type="date"].form-input {
 @media (max-width: 640px) {
   .category-manage-btn    { display: none !important; }
   .week-summary-bar       { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
-  /* 모바일: 날짜 그리드 세로 배치 */
+  /* 모바일: 날짜 그리드 세로 배치 + 넘침 방지 */
   .date-row-grid          { grid-template-columns: 1fr !important; }
-  .date-row-grid .form-label-row { height: auto; }
+  input[type="date"].form-input { width: 100%; min-width: 0; font-size: 13px; }
+  /* 모바일: 모달 좌우 여백 축소 + 내부 넘침 방지 */
+  .task-modal-overlay     { padding: 12px; }
+  .task-modal             { overflow-x: hidden; }
   /* 모바일: 모달 세로 스크롤 허용 */
   .task-modal             { max-height: 92vh; display: flex; flex-direction: column; }
   .task-modal-body        { overflow-y: auto; flex: 1; }
