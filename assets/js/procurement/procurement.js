@@ -306,6 +306,19 @@ function restoreHtmlClasses(html) {
   const parser = new DOMParser();
   const doc    = parser.parseFromString(html, 'text/html');
 
+  // 0. 표 앞뒤 빈 p 태그 제거 (CKEditor 자동 삽입 방지)
+  doc.querySelectorAll('p').forEach(p => {
+    if (p.innerHTML.trim() === '' || p.innerHTML.trim() === '<br>') {
+      // 표 바로 앞뒤의 빈 p만 제거
+      const prev = p.previousElementSibling;
+      const next = p.nextElementSibling;
+      if ((prev && (prev.tagName === 'TABLE' || prev.tagName === 'FIGURE')) ||
+          (next && (next.tagName === 'TABLE' || next.tagName === 'FIGURE'))) {
+        p.remove();
+      }
+    }
+  });
+
   // 1. <table> → pr-table 클래스 보장
   doc.querySelectorAll('table').forEach(table => {
     if (!table.classList.contains('pr-table')) {
