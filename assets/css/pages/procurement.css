@@ -20,8 +20,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-radius: 0 0 16px 16px;
+  border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: border-radius 0.15s;
+}
+
+/* 화면 상단에 붙으면 위쪽 모서리 각지게 */
+.pr-search-section.is-stuck {
+  border-radius: 0 0 16px 16px;
 }
 
 .pr-version-row {
