@@ -63,37 +63,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchClear.style.display = q ? 'block' : 'none';
     if (!q) { clearSearch(); return; }
 
+    // 이전 하이라이트 제거
     document.querySelectorAll('.pr-highlight').forEach(el => {
       el.outerHTML = el.textContent;
     });
 
-    let matchCount = 0;
+    const allSubsections = document.querySelectorAll('.pr-subsection');
+    let matchedSubsections = 0;
+
+    // ── 소섹션 단위 필터링 ──────────────────────────────────
+    allSubsections.forEach(sub => {
+      if ((sub.textContent || '').toLowerCase().includes(q.toLowerCase())) {
+        sub.classList.remove('pr-subsection-hidden');
+        highlightInElement(sub, q);
+        matchedSubsections++;
+      } else {
+        sub.classList.add('pr-subsection-hidden');
+      }
+    });
+
+    // ── 대섹션: 하나라도 매칭된 소섹션이 있으면 보임 ────────
     allSections.forEach(section => {
-      if ((section.textContent || '').toLowerCase().includes(q.toLowerCase())) {
+      const hasVisible = section.querySelector('.pr-subsection:not(.pr-subsection-hidden)');
+      if (hasVisible) {
         section.classList.remove('pr-section-hidden');
-        matchCount += highlightInElement(section, q);
       } else {
         section.classList.add('pr-section-hidden');
       }
     });
 
     searchInfo.style.display = 'block';
-    if (matchCount > 0) {
-      searchInfo.textContent = `"${q}" 검색 결과: ${matchCount}건 발견`;
+    if (matchedSubsections > 0) {
+      searchInfo.textContent = `"${q}" 검색 결과: ${matchedSubsections}개 조항 발견`;
       searchInfo.style.color = '#1d4ed8';
     } else {
-      searchInfo.textContent = `"${q}"에 해당하는 내용이 없습니다.`;
+      searchInfo.textContent = `"${q}"에 해당하는 조항이 없습니다.`;
       searchInfo.style.color = '#dc2626';
     }
 
-    const firstHL = document.querySelector('.pr-highlight');
-    if (firstHL) firstHL.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // 첫 번째 매칭 소섹션으로 스크롤
+    const firstMatch = document.querySelector('.pr-subsection:not(.pr-subsection-hidden)');
+    if (firstMatch) {
+      const top = firstMatch.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
   }
 
   function clearSearch() {
     document.querySelectorAll('.pr-highlight').forEach(el => {
       el.outerHTML = el.textContent;
     });
+    document.querySelectorAll('.pr-subsection').forEach(s => s.classList.remove('pr-subsection-hidden'));
     allSections.forEach(s => s.classList.remove('pr-section-hidden'));
     if (searchInfo) searchInfo.style.display = 'none';
     if (searchClear) searchClear.style.display = 'none';
