@@ -888,12 +888,15 @@
   z-index: 1000;
   padding: 20px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
   pointer-events: none;
 }
 
 .task-modal-overlay.open {
   opacity: 1;
+  visibility: visible;
+  transition: opacity 0.2s ease, visibility 0s linear 0s;
   pointer-events: all;
 }
 
@@ -1008,6 +1011,7 @@ input[type="date"].form-input {
   min-height: 42px;
   max-width: 100%;
   width: 100%;
+  min-width: 0;
   padding: 0 10px;
   line-height: normal;
   box-sizing: border-box;
@@ -1557,9 +1561,14 @@ input[type="date"].form-input {
 
 /* 업무 등록 모달 날짜 그리드 — PC: 2컬럼 */
 .date-row-grid {
+  display: grid;
   grid-template-columns: 1fr 1fr;
   max-width: 100%;
   overflow: hidden;
+}
+
+.date-row-grid .form-group {
+  min-width: 0;
 }
 
 /* ── 반응형 ── */
