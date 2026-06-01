@@ -3,8 +3,11 @@
  * GC녹십자아이메드 구매규정 앱
  *
  * view  : API로 섹션 내용 로드 후 렌더링
- * admin : 편집 버튼 노출 + 인라인 편집 모달
+ * admin : 편집 버튼 노출 + 인라인 편집 모달 (CKEditor 5 v43)
  */
+
+// CKEditor ESM 파일 경로 (procurement.js 기준 상대경로)
+const CKEDITOR_PATH = '../../assets/libs/ckeditor5/ckeditor5.js';
 document.addEventListener('DOMContentLoaded', async () => {
 
   // ── 전역 스피너 시작 ───────────────────────────────────────
@@ -276,7 +279,7 @@ function initEditModal() {
   let currentSecTitle = null;
   let ckEditor        = null; // CKEditor 인스턴스
 
-  // ── CKEditor 초기화 ────────────────────────────────────────
+  // ── CKEditor 초기화 (v43 ESM) ─────────────────────────────
   async function initCKEditor(initialContent) {
     // 이미 인스턴스가 있으면 내용만 교체
     if (ckEditor) {
@@ -284,26 +287,68 @@ function initEditModal() {
       return;
     }
 
+    const {
+      ClassicEditor,
+      Bold, Italic, Underline, Strikethrough,
+      Heading,
+      List, ListProperties,
+      BlockQuote,
+      Table, TableToolbar, TableProperties, TableCellProperties,
+      HorizontalLine,
+      Indent, IndentBlock,
+      Undo,
+      FontColor, FontBackgroundColor,
+      RemoveFormat,
+      SourceEditing,
+      Essentials, Paragraph,
+      AutoFormat,
+      Link
+    } = await import(CKEDITOR_PATH);
+
     ckEditor = await ClassicEditor.create(
       document.getElementById('prEditorArea'),
       {
-        toolbar: [
-          'heading', '|',
-          'bold', 'italic', 'underline', '|',
-          'bulletedList', 'numberedList', '|',
-          'outdent', 'indent', '|',
-          'blockQuote', 'insertTable', '|',
-          'undo', 'redo'
+        plugins: [
+          Essentials, Paragraph,
+          Bold, Italic, Underline, Strikethrough,
+          Heading,
+          List, ListProperties,
+          BlockQuote,
+          Table, TableToolbar, TableProperties, TableCellProperties,
+          HorizontalLine,
+          Indent, IndentBlock,
+          Undo,
+          FontColor, FontBackgroundColor,
+          RemoveFormat,
+          SourceEditing,
+          Link
         ],
+        toolbar: {
+          items: [
+            'heading', '|',
+            'bold', 'italic', 'underline', 'strikethrough', '|',
+            'fontColor', 'fontBackgroundColor', '|',
+            'bulletedList', 'numberedList', '|',
+            'outdent', 'indent', '|',
+            'blockQuote', 'insertTable', 'horizontalLine', 'link', '|',
+            'removeFormat', '|',
+            'undo', 'redo', '|',
+            'sourceEditing'
+          ],
+          shouldNotGroupWhenFull: false
+        },
         heading: {
           options: [
-            { model: 'paragraph', title: '본문', class: 'ck-heading_paragraph' },
-            { model: 'heading3',  view: 'h3', title: '제목 (h3)',   class: 'ck-heading_heading3' },
-            { model: 'heading4',  view: 'h4', title: '소제목 (h4)', class: 'ck-heading_heading4' }
+            { model: 'paragraph', title: '본문',        class: 'ck-heading_paragraph' },
+            { model: 'heading3',  view: 'h3', title: '제목 (H3)',    class: 'ck-heading_heading3' },
+            { model: 'heading4',  view: 'h4', title: '소제목 (H4)',  class: 'ck-heading_heading4' }
           ]
         },
         table: {
-          contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+          contentToolbar: [
+            'tableColumn', 'tableRow', 'mergeTableCells',
+            'tableProperties', 'tableCellProperties'
+          ]
         },
         initialData: initialContent || ''
       }
