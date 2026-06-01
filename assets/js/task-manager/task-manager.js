@@ -1950,12 +1950,16 @@
         if (!memberClinicMap[mc]) memberClinicMap[mc] = [];
         memberClinicMap[mc].push(m);
 
-        // task 단위: work_clinic_name 기준 (업무 내용용)
-        const tasks = (m.task_summary && m.task_summary.items) ? m.task_summary.items : [];
-        tasks.forEach(t => {
+        // task 단위: work_clinic_name 기준 (업무 내용용) — 금주+차주 모두 수집
+        const tasks     = (m.task_summary      && m.task_summary.items)      ? m.task_summary.items      : [];
+        const nextTasks = (m.next_task_summary && m.next_task_summary.items) ? m.next_task_summary.items : [];
+        [...tasks, ...nextTasks].forEach(t => {
           const tc = t.work_clinic_name || t.clinic_name || m.clinic_name || '기타';
           if (!taskClinicMap[tc]) taskClinicMap[tc] = [];
-          taskClinicMap[tc].push(t);
+          // 중복 방지
+          if (!taskClinicMap[tc].find(x => x.task_id === t.task_id)) {
+            taskClinicMap[tc].push(t);
+          }
         });
       });
 
@@ -2227,11 +2231,14 @@
         if (!memberClinicMapPdf[mc]) memberClinicMapPdf[mc] = [];
         memberClinicMapPdf[mc].push(m);
 
-        const tasks = (m.task_summary && m.task_summary.items) ? m.task_summary.items : [];
-        tasks.forEach(t => {
+        const tasks     = (m.task_summary      && m.task_summary.items)      ? m.task_summary.items      : [];
+        const nextTasks = (m.next_task_summary && m.next_task_summary.items) ? m.next_task_summary.items : [];
+        [...tasks, ...nextTasks].forEach(t => {
           const tc = t.work_clinic_name || t.clinic_name || m.clinic_name || '기타';
           if (!taskClinicMapPdf[tc]) taskClinicMapPdf[tc] = [];
-          taskClinicMapPdf[tc].push(t);
+          if (!taskClinicMapPdf[tc].find(x => x.task_id === t.task_id)) {
+            taskClinicMapPdf[tc].push(t);
+          }
         });
       });
 
