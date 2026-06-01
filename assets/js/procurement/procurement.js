@@ -261,12 +261,11 @@ async function loadSections() {
   }
 }
 
-// ── 편집 모달 ─────────────────────────────────────────────────
+// ── 편집 모달 (CKEditor 5) ────────────────────────────────────
 function initEditModal() {
   const modal      = document.getElementById('prEditModal');
   const titleEl    = document.getElementById('prEditModalTitle');
   const subtitleEl = document.getElementById('prEditModalSubtitle');
-  const editorArea = document.getElementById('prEditorArea');
   const saveBtn    = document.getElementById('prEditSaveBtn');
   const cancelBtn  = document.getElementById('prEditCancelBtn');
   const closeBtn   = document.getElementById('prEditModalClose');
@@ -275,10 +274,70 @@ function initEditModal() {
 
   let currentSecId    = null;
   let currentSecTitle = null;
+  let ckEditor        = null; // CKEditor 인스턴스
 
-  // 편집 버튼 클릭 → 모달 열기
+  // ── CKEditor 초기화 ────────────────────────────────────────
+  async function initCKEditor(initialContent) {
+    // 이미 인스턴스가 있으면 내용만 교체
+    if (ckEditor) {
+      ckEditor.setData(initialContent || '');
+      return;
+    }
+
+    ckEditor = await CKEDITOR.ClassicEditor.create(
+      document.getElementById('prEditorArea'),
+      {
+        toolbar: {
+          items: [
+            'heading', '|',
+            'bold', 'italic', 'underline', 'strikethrough', '|',
+            'fontColor', 'fontBackgroundColor', '|',
+            'bulletedList', 'numberedList', 'todoList', '|',
+            'outdent', 'indent', '|',
+            'blockQuote', 'insertTable', 'horizontalLine', '|',
+            'undo', 'redo', '|',
+            'removeFormat', 'sourceEditing'
+          ],
+          shouldNotGroupWhenFull: false
+        },
+        heading: {
+          options: [
+            { model: 'paragraph',  title: '본문',    class: 'ck-heading_paragraph' },
+            { model: 'heading3',   view: 'h3', title: '제목 (h3)', class: 'ck-heading_heading3' },
+            { model: 'heading4',   view: 'h4', title: '소제목 (h4)', class: 'ck-heading_heading4' },
+          ]
+        },
+        table: {
+          contentToolbar: [
+            'tableColumn', 'tableRow', 'mergeTableCells',
+            'tableProperties', 'tableCellProperties'
+          ]
+        },
+        language: 'ko',
+        initialData: initialContent || ''
+      }
+    );
+  }
+
+  // ── 섹션 현재 콘텐츠 추출 ─────────────────────────────────
+  function getSectionContent(secId) {
+    const subsection = document.getElementById(secId);
+    const contentDiv = subsection?.querySelector('.pr-subsection-content');
+    if (contentDiv) return contentDiv.innerHTML;
+
+    let html = '';
+    subsection?.childNodes.forEach(node => {
+      if (node.nodeType !== 1) return;
+      if (node.classList.contains('pr-subsection-header')) return;
+      if (node.classList.contains('pr-section-updated-info')) return;
+      html += node.outerHTML || '';
+    });
+    return html;
+  }
+
+  // ── 편집 버튼 클릭 → 모달 열기 ───────────────────────────
   document.querySelectorAll('.pr-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       currentSecId    = btn.dataset.secId;
       currentSecTitle = btn.dataset.secTitle;
 
@@ -287,46 +346,23 @@ function initEditModal() {
       msgEl.style.display    = 'none';
       lastUpdEl.textContent  = '';
 
-      // 현재 렌더링된 콘텐츠를 편집기로 불러오기
-      const subsection = document.getElementById(currentSecId);
-      const contentDiv = subsection?.querySelector('.pr-subsection-content');
-
-      if (contentDiv) {
-        editorArea.innerHTML = contentDiv.innerHTML;
-      } else {
-        // pr-subsection-header 를 제외한 모든 노드의 outerHTML
-        let html = '';
-        subsection?.childNodes.forEach(node => {
-          if (node.nodeType === 1 && node.classList.contains('pr-subsection-header')) return;
-          if (node.nodeType === 1 && node.classList.contains('pr-section-updated-info')) return;
-          html += node.outerHTML || node.textContent || '';
-        });
-        editorArea.innerHTML = html;
-      }
-
       openModal();
-    });
-  });
 
-  // 도구모음 버튼
-  document.querySelectorAll('.pr-tb-btn').forEach(btn => {
-    btn.addEventListener('mousedown', e => {
-      e.preventDefault(); // 포커스 유지
-      const cmd = btn.dataset.cmd || '';
-      if (cmd.startsWith('formatBlock:')) {
-        document.execCommand('formatBlock', false, cmd.split(':')[1]);
-      } else {
-        document.execCommand(cmd, false, null);
+      // CKEditor 초기화 (비동기)
+      try {
+        await initCKEditor(getSectionContent(currentSecId));
+      } catch (err) {
+        console.error('CKEditor 초기화 실패:', err);
+        showMsg('편집기 초기화에 실패했습니다.', 'error');
       }
-      editorArea.focus();
     });
   });
 
-  // 저장
+  // ── 저장 ──────────────────────────────────────────────────
   saveBtn?.addEventListener('click', async () => {
-    if (!currentSecId) return;
+    if (!currentSecId || !ckEditor) return;
 
-    const contentHtml = editorArea.innerHTML.trim();
+    const contentHtml = ckEditor.getData().trim();
     if (!contentHtml) {
       showMsg('내용을 입력해 주세요.', 'error');
       return;
@@ -338,7 +374,7 @@ function initEditModal() {
       return;
     }
 
-    saveBtn.disabled   = true;
+    saveBtn.disabled    = true;
     saveBtn.textContent = '저장 중...';
     msgEl.style.display = 'none';
 
@@ -383,12 +419,10 @@ function initEditModal() {
     }
   });
 
-  // 닫기
+  // ── 닫기 ──────────────────────────────────────────────────
   cancelBtn?.addEventListener('click', closeModal);
   closeBtn?.addEventListener('click', closeModal);
   modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-
-  // Esc 키
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && modal?.style.display !== 'none') closeModal();
   });
@@ -396,7 +430,6 @@ function initEditModal() {
   function openModal() {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    setTimeout(() => editorArea.focus(), 100);
   }
 
   function closeModal() {
@@ -404,8 +437,9 @@ function initEditModal() {
     document.body.style.overflow = '';
     currentSecId    = null;
     currentSecTitle = null;
-    editorArea.innerHTML = '';
-    msgEl.style.display  = 'none';
+    msgEl.style.display = 'none';
+    // 에디터 내용만 비움 (인스턴스 재사용)
+    if (ckEditor) ckEditor.setData('');
   }
 
   function showMsg(text, type) {
