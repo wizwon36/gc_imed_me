@@ -25,7 +25,6 @@
   transition: border-radius 0.15s;
 }
 
-/* 화면 상단에 붙으면 위쪽 모서리 각지게 */
 .pr-search-section.is-stuck {
   border-radius: 0 0 16px 16px;
 }
@@ -344,14 +343,12 @@ p {
   line-height: 1.65;
 }
 
-/* 제목 strong (callout 직접 자식) 만 block */
 .pr-callout > strong {
   display: block;
   margin-bottom: 6px;
   font-size: 14px;
 }
 
-/* p 안의 strong은 inline 유지 */
 .pr-callout p strong {
   display: inline;
 }
@@ -369,7 +366,6 @@ p {
   border-radius: 12px;
 }
 
-/* 표 바로 앞뒤 빈 p 여백 제거 */
 .pr-table-wrap + p:empty,
 p:empty + .pr-table-wrap {
   display: none;
@@ -415,7 +411,6 @@ p:empty + .pr-table-wrap {
   vertical-align: middle;
 }
 
-/* colspan 전체 병합 행 가운데 정렬 */
 .pr-table td[colspan="3"],
 .pr-table td[colspan="2"] {
   text-align: center;
@@ -685,7 +680,6 @@ p:empty + .pr-table-wrap {
     display: none;
   }
 
-  /* 모바일: 버전 배지 숨기고 검색창만 노출 */
   .pr-search-section {
     padding: 8px 12px 10px;
     gap: 6px;
@@ -708,7 +702,6 @@ p:empty + .pr-table-wrap {
   margin-bottom: 8px;
 }
 
-/* intro 편집 버튼은 pr-h1 안에 들어가므로 inline-flex */
 .pr-edit-btn--section {
   position: static !important;
   margin-left: auto;
@@ -725,11 +718,10 @@ p:empty + .pr-table-wrap {
   flex-shrink: 0;
 }
 
-/* ─── 섹션 헤더 (제목 + 편집 버튼) ──────────────────────────── */
+/* ─── 섹션 헤더 ──────────────────────────── */
 .pr-subsection-header {
   display: block;
   margin-bottom: 12px;
-  /* 버튼 공간 확보를 위해 오른쪽 padding */
   padding-right: 88px;
 }
 
@@ -737,7 +729,7 @@ p:empty + .pr-table-wrap {
   margin-bottom: 0;
 }
 
-/* ─── 편집 버튼 — 섹션 우측 상단 고정 ─────────────────────────── */
+/* ─── 편집 버튼 ─────────────────────────────────────────────── */
 .pr-edit-btn {
   position: absolute;
   top: 0;
@@ -765,7 +757,6 @@ p:empty + .pr-table-wrap {
   color: #1d4ed8;
 }
 
-/* ─── 최종 수정 정보 ─────────────────────────────────────────── */
 .pr-section-updated-info {
   margin: 10px 0 0;
   font-size: 11.5px;
@@ -773,7 +764,7 @@ p:empty + .pr-table-wrap {
   font-style: italic;
 }
 
-/* ─── 편집 모달 백드롭 ───────────────────────────────────────── */
+/* ─── 편집 모달 ───────────────────────────────────────── */
 .pr-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -785,7 +776,6 @@ p:empty + .pr-table-wrap {
   padding: 20px;
 }
 
-/* ─── 모달 본체 ─────────────────────────────────────────────── */
 .pr-modal {
   background: #fff;
   border-radius: 20px;
@@ -796,6 +786,7 @@ p:empty + .pr-table-wrap {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
 .pr-modal-header {
@@ -848,12 +839,8 @@ p:empty + .pr-table-wrap {
   gap: 10px;
 }
 
-/* ─── CKEditor 5 컨테이너 ────────────────────────────────────── */
-#prEditorArea {
-  /* CKEditor가 이 div 안에 마운트됨 */
-}
+#prEditorArea { }
 
-/* CKEditor 편집 영역 높이 제어 */
 .ck-editor__editable {
   min-height: 420px !important;
   max-height: 560px !important;
@@ -863,7 +850,6 @@ p:empty + .pr-table-wrap {
   color: var(--text-primary) !important;
 }
 
-/* CKEditor 툴바 border-radius 조정 */
 .ck.ck-toolbar {
   border-radius: 10px 10px 0 0 !important;
   border-color: var(--border-input) !important;
@@ -880,13 +866,10 @@ p:empty + .pr-table-wrap {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
 }
 
-/* 모달 안에서 CKEditor z-index 문제 방지 */
 .ck.ck-balloon-panel {
   z-index: 99999 !important;
 }
 
-/* ── 편집기 내 procurement 스타일 미리보기 ───────────────────── */
-/* pr-* 클래스가 편집기 안에서도 실제 페이지와 동일하게 보임 */
 .ck-editor__editable .pr-h3,
 .ck-editor__editable h4.pr-h3 {
   font-size: 14.5px !important;
@@ -948,11 +931,9 @@ p:empty + .pr-table-wrap {
   margin-right: 6px !important;
 }
 
-/* 편집기 내 테이블 스타일 */
 .ck-editor__editable .ck-widget.table {
   width: 100% !important;
   margin: 8px 0 !important;
-  /* 인라인 width 스타일 무시 */
   max-width: 100% !important;
 }
 
@@ -964,19 +945,16 @@ p:empty + .pr-table-wrap {
   font-size: 13.5px !important;
 }
 
-/* 표 셀 안의 text-align은 셀 단위로만 적용, 너비 변화 없음 */
 .ck-editor__editable .ck-widget.table table td,
 .ck-editor__editable .ck-widget.table table th {
   overflow: hidden !important;
   word-break: break-word !important;
 }
 
-/* 컬럼 리사이즈 핸들 숨기기 */
 .ck-editor__editable .ck-table-column-resizer {
   display: none !important;
 }
 
-/* 인라인 width 강제 무시 */
 .ck-editor__editable .ck-widget.table colgroup col {
   width: auto !important;
 }
@@ -996,7 +974,6 @@ p:empty + .pr-table-wrap {
   text-align: center !important;
 }
 
-/* colspan 전체 병합 행 */
 .ck-editor__editable .ck-widget.table table td[colspan="3"],
 .ck-editor__editable .ck-widget.table table td[colspan="2"] {
   text-align: center !important;
@@ -1023,7 +1000,6 @@ p:empty + .pr-table-wrap {
   color: #b42318;
 }
 
-/* ─── 모달 푸터 ─────────────────────────────────────────────── */
 .pr-modal-footer {
   display: flex;
   align-items: center;
@@ -1034,9 +1010,7 @@ p:empty + .pr-table-wrap {
   flex-shrink: 0;
 }
 
-.pr-save-btn {
-  min-width: 80px;
-}
+.pr-save-btn { min-width: 80px; }
 
 .pr-cancel-btn {
   background: #fff;
@@ -1050,7 +1024,6 @@ p:empty + .pr-table-wrap {
   color: var(--text-muted);
 }
 
-/* ─── 반응형 ─────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .pr-modal { max-height: 95vh; border-radius: 16px; }
   .pr-modal-header { padding: 16px 18px 12px; }
@@ -1060,10 +1033,8 @@ p:empty + .pr-table-wrap {
   .pr-edit-btn { font-size: 11px; padding: 4px 9px; }
 }
 
-/* ─── Diff 확인 패널 ─────────────────────────────────────────── */
-.pr-diff-body {
-  padding: 0 !important;
-}
+/* ─── Diff 패널 ─────────────────────────────────────────── */
+.pr-diff-body { padding: 0 !important; }
 
 .pr-diff-wrap {
   display: grid;
@@ -1090,17 +1061,8 @@ p:empty + .pr-table-wrap {
   flex-shrink: 0;
 }
 
-.pr-diff-label--before {
-  background: #fff8f0;
-  color: #c2410c;
-  border-bottom: 1px solid #fed7aa;
-}
-
-.pr-diff-label--after {
-  background: #f0fdf4;
-  color: #166534;
-  border-bottom: 1px solid #bbf7d0;
-}
+.pr-diff-label--before { background: #fff8f0; color: #c2410c; border-bottom: 1px solid #fed7aa; }
+.pr-diff-label--after  { background: #f0fdf4; color: #166534; border-bottom: 1px solid #bbf7d0; }
 
 .pr-diff-content {
   flex: 1;
@@ -1111,7 +1073,6 @@ p:empty + .pr-table-wrap {
   color: var(--text-primary);
 }
 
-/* diff 영역 내 기존 스타일 유지 */
 .pr-diff-content p        { margin: 0 0 10px; }
 .pr-diff-content ul,
 .pr-diff-content ol       { padding-left: 20px; margin: 6px 0; }
@@ -1128,18 +1089,12 @@ p:empty + .pr-table-wrap {
   background: #eff6ff; border-radius: 6px;
   color: #1e3a5f;
 }
-.pr-diff-content .pr-callout {
-  margin: 10px 0; padding: 10px 14px;
-  border-radius: 10px; font-size: 13.5px;
-}
+.pr-diff-content .pr-callout { margin: 10px 0; padding: 10px 14px; border-radius: 10px; font-size: 13.5px; }
 .pr-diff-content .pr-callout--info    { background: #eff6ff; border-left: 4px solid #3b82f6; }
 .pr-diff-content .pr-callout--warning { background: #fffbeb; border-left: 4px solid #f59e0b; }
 .pr-diff-content .pr-callout--danger  { background: #fff1f2; border-left: 4px solid #ef4444; }
 
-/* ─── 되돌리기 버튼 ─────────────────────────────────────────── */
-.pr-revert-wrap {
-  margin-left: auto;
-}
+.pr-revert-wrap { margin-left: auto; }
 
 .pr-revert-btn {
   background: #fff8f0;
@@ -1154,19 +1109,10 @@ p:empty + .pr-table-wrap {
   color: #9a3412;
 }
 
-.pr-revert-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* ─── 모달 크기 확장 (diff 패널 대응) ──────────────────────── */
-/* diff 패널은 기본 모달 크기 그대로 사용 */
+.pr-revert-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 @media (max-width: 768px) {
-  .pr-diff-wrap {
-    grid-template-columns: 1fr;
-    min-height: 0;
-  }
+  .pr-diff-wrap { grid-template-columns: 1fr; min-height: 0; }
   .pr-diff-col { max-height: 240px; }
   .pr-diff-col:first-child { border-right: none; border-bottom: 1px solid var(--border-soft); }
   .pr-revert-wrap { margin-left: 0; width: 100%; }
@@ -1178,19 +1124,21 @@ p:empty + .pr-table-wrap {
    ═══════════════════════════════════════════════════════════════ */
 @media print {
 
-  /* ── 기본 리셋 ──────────────────────────────────────────────── */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  /* ── 기본 페이지 설정 ── */
   @page {
     size: A4;
     margin: 18mm 16mm 20mm 20mm;
   }
 
+  /* 표지 전용 페이지: 여백 0, 정중앙 배치 */
   @page :first {
     margin: 0;
+    padding: 0;
   }
 
   body {
@@ -1199,9 +1147,11 @@ p:empty + .pr-table-wrap {
     font-size: 10pt !important;
     line-height: 1.65 !important;
     color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* ── 화면 전용 요소 숨기기 ────────────────────────────────────── */
+  /* ── 화면 전용 요소 숨기기 ── */
   .top-brand-bar,
   .pr-search-section,
   .pr-toc-aside,
@@ -1214,6 +1164,11 @@ p:empty + .pr-table-wrap {
   .pr-process-spacer,
   #globalLoading,
   .portal-header-btn {
+    display: none !important;
+  }
+
+  /* 화면 하단 여백 div 제거 */
+  .pr-content > div[style*="height"] {
     display: none !important;
   }
 
@@ -1239,7 +1194,7 @@ p:empty + .pr-table-wrap {
     position: static !important;
   }
 
-  /* ── 레이아웃 단일 컬럼 ──────────────────────────────────────── */
+  /* ── 레이아웃 단일 컬럼 ── */
   .container {
     max-width: 100% !important;
     padding: 0 !important;
@@ -1255,126 +1210,143 @@ p:empty + .pr-table-wrap {
     width: 100% !important;
   }
 
-  /* ── 표지 페이지 ─────────────────────────────────────────────── */
+  /* ══════════════════════════════════════════════
+     표지 — 인쇄 엔진이 A4 전체를 채우도록
+     position:fixed 대신 블록 흐름으로 처리
+     ============================================== */
   .pr-cover {
     page-break-after: always;
     break-after: page;
-    width: 210mm;
-    height: 297mm;
-    margin: 0;
-    padding: 0;
-    position: relative;
-    background: #fff;
+    /* 고정 너비/높이 제거 → 인쇄 엔진이 페이지 크기에 맞춤 */
+    width: 100% !important;
+    min-height: 100vh;      /* 화면에서는 전체 높이 */
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    background: #fff !important;
     display: flex !important;
-    flex-direction: column;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
   }
 
   .pr-cover-top {
-    background: #1a3a2a;
-    height: 55mm;
-    display: flex;
-    align-items: flex-end;
-    padding: 0 14mm 8mm 14mm;
+    background: #1a3a2a !important;
+    /* 고정 높이 대신 비율 패딩으로 처리 */
+    padding: 8mm 14mm 8mm 14mm !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    min-height: 52mm !important;
   }
 
   .pr-cover-top-text {
-    font-size: 11pt;
-    color: #a8c5a0;
-    letter-spacing: 0.12em;
-    font-weight: 600;
+    font-size: 11pt !important;
+    color: #a8c5a0 !important;
+    letter-spacing: 0.12em !important;
+    font-weight: 600 !important;
   }
 
   .pr-cover-body {
-    flex: 1;
-    padding: 18mm 14mm 10mm 14mm;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex: 1 !important;
+    padding: 18mm 14mm 10mm 14mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
   }
 
   .pr-cover-label {
-    font-size: 9pt;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    color: #1a3a2a;
-    margin-bottom: 6mm;
-    text-transform: uppercase;
+    font-size: 9pt !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.2em !important;
+    color: #1a3a2a !important;
+    margin-bottom: 6mm !important;
+    text-transform: uppercase !important;
   }
 
   .pr-cover-title {
-    font-size: 32pt;
-    font-weight: 900;
-    color: #0b1f44;
-    line-height: 1.15;
-    margin-bottom: 8mm;
-    letter-spacing: -0.01em;
+    font-size: 32pt !important;
+    font-weight: 900 !important;
+    color: #0b1f44 !important;
+    line-height: 1.15 !important;
+    margin-bottom: 8mm !important;
+    letter-spacing: -0.01em !important;
   }
 
   .pr-cover-subtitle {
-    font-size: 13pt;
-    color: #2d5a3d;
-    font-weight: 600;
-    margin-bottom: 14mm;
+    font-size: 13pt !important;
+    color: #2d5a3d !important;
+    font-weight: 600 !important;
+    margin-bottom: 14mm !important;
   }
 
   .pr-cover-divider {
-    width: 20mm;
-    height: 3pt;
-    background: #1a3a2a;
-    margin-bottom: 10mm;
+    width: 20mm !important;
+    height: 3pt !important;
+    background: #1a3a2a !important;
+    margin-bottom: 10mm !important;
   }
 
   .pr-cover-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 3mm;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3mm !important;
   }
 
   .pr-cover-meta-row {
-    display: flex;
-    gap: 4mm;
-    font-size: 9.5pt;
-    color: #444;
+    display: flex !important;
+    gap: 4mm !important;
+    font-size: 9.5pt !important;
+    color: #444 !important;
   }
 
   .pr-cover-meta-label {
-    font-weight: 700;
-    color: #1a3a2a;
-    min-width: 18mm;
+    font-weight: 700 !important;
+    color: #1a3a2a !important;
+    min-width: 18mm !important;
   }
 
+  /* ── 표지 하단: 로고 영역 ── */
   .pr-cover-bottom {
-    padding: 0 14mm 10mm 14mm;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #fff !important;
+    padding: 0 14mm 10mm 14mm !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    /* 배경 명시적으로 흰색 — 인쇄 엔진 보장 */
+    background: #ffffff !important;
   }
 
   .pr-cover-company {
-    font-size: 10pt;
-    font-weight: 700;
-    color: #1a3a2a;
+    font-size: 10pt !important;
+    font-weight: 700 !important;
+    color: #1a3a2a !important;
   }
 
+  /* 로고 컨테이너: 배경 강제 흰색 */
   .pr-cover-gc-logo {
     display: block !important;
-    height: 28pt;
-    background: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    height: auto !important;
+    background: #ffffff !important;
+    padding: 2mm !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
+  /* 로고 이미지: 흰 배경 + 크기 조정 */
   .pr-cover-gc-logo img {
     display: block !important;
-    height: 28pt !important;
+    height: 24pt !important;
     width: auto !important;
-    max-width: 160pt !important;
-    object-fit: contain;
-    background: #fff !important;
+    max-width: 140pt !important;
+    object-fit: contain !important;
+    /* 핵심: 인쇄 시 로고 배경 검게 나오는 원인 제거 */
+    background: #ffffff !important;
+    mix-blend-mode: normal !important;
+    /* SVG/PNG 투명 배경을 흰색으로 강제 */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* ── 목차 페이지 ─────────────────────────────────────────────── */
+  /* ── 목차 페이지 ── */
   .pr-print-toc {
     page-break-after: always;
     break-after: page;
@@ -1424,7 +1396,7 @@ p:empty + .pr-table-wrap {
     text-align: right;
   }
 
-  /* ── 헤더 / 푸터 ─────────────────────────────────────────────── */
+  /* ── 헤더 / 푸터 ── */
   .pr-print-page-header {
     position: running(pageHeader);
     display: flex;
@@ -1437,17 +1409,10 @@ p:empty + .pr-table-wrap {
   }
 
   @page { @top-center { content: element(pageHeader); } }
-
-  /* 푸터: 페이지 번호 */
-  @page { @bottom-center {
-    content: counter(page);
-    font-size: 8pt;
-    color: #666;
-  } }
-
+  @page { @bottom-center { content: counter(page); font-size: 8pt; color: #666; } }
   @page :first { @top-center { content: none; } @bottom-center { content: none; } }
 
-  /* ── 섹션 스타일 ─────────────────────────────────────────────── */
+  /* ── 섹션 스타일 ── */
   .pr-section {
     background: #fff !important;
     border: none !important;
@@ -1457,7 +1422,6 @@ p:empty + .pr-table-wrap {
     margin-bottom: 0 !important;
   }
 
-  /* intro 래퍼 여백 제거 */
   .pr-section-intro-wrap {
     margin-bottom: 3mm !important;
   }
@@ -1517,17 +1481,14 @@ p:empty + .pr-table-wrap {
     margin: 0 0 2mm !important;
   }
 
-  /* ── 리스트 ─────────────────────────────────────────────────── */
+  /* ── 리스트 ── */
   ul, ol, .pr-list {
     display: block !important;
     margin: 2mm 0 !important;
     padding-left: 5mm !important;
   }
 
-  /* pr-list: 커스텀 불릿 */
-  .pr-list {
-    list-style: none !important;
-  }
+  .pr-list { list-style: none !important; }
 
   .pr-list > li {
     font-size: 9.5pt !important;
@@ -1545,10 +1506,7 @@ p:empty + .pr-table-wrap {
     font-weight: bold !important;
   }
 
-  /* 일반 ul: 기본 불릿 유지 */
-  ul:not(.pr-list) {
-    list-style: disc !important;
-  }
+  ul:not(.pr-list) { list-style: disc !important; }
 
   ul:not(.pr-list) li,
   ol li {
@@ -1558,14 +1516,13 @@ p:empty + .pr-table-wrap {
     padding: 0.5mm 0 !important;
   }
 
-  /* pr-list가 없는 li도 동일하게 */
   li {
     display: list-item !important;
     font-size: 9.5pt !important;
     line-height: 1.6 !important;
   }
 
-  /* ── 콜아웃 ─────────────────────────────────────────────────── */
+  /* ── 콜아웃 ── */
   .pr-callout {
     border-radius: 3pt !important;
     padding: 3mm 4mm !important;
@@ -1574,11 +1531,12 @@ p:empty + .pr-table-wrap {
     break-inside: avoid;
   }
 
-  /* ── 테이블 ─────────────────────────────────────────────────── */
+  /* ── 테이블 ── */
   .pr-table-wrap {
     page-break-inside: avoid;
     break-inside: avoid;
     margin: 3mm 0 !important;
+    overflow: visible !important;
   }
 
   .pr-table {
@@ -1604,8 +1562,7 @@ p:empty + .pr-table-wrap {
     background: #f7f7f7 !important;
   }
 
-  /* ── 직무분리 플로우 ─────────────────────────────────────────── */
-  /* 직무분리: 박스4 + 화살표3 = 7열, 화살표는 좁게 */
+  /* ── 직무분리 플로우 ── */
   .pr-duty-flow {
     display: grid !important;
     grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr !important;
@@ -1630,17 +1587,8 @@ p:empty + .pr-table-wrap {
     border-radius: 4pt !important;
   }
 
-  .pr-duty-step strong {
-    font-size: 8pt !important;
-    display: block !important;
-    margin-bottom: 2mm !important;
-  }
-
-  .pr-duty-step p {
-    font-size: 7.5pt !important;
-    margin: 0 !important;
-    line-height: 1.5 !important;
-  }
+  .pr-duty-step strong { font-size: 8pt !important; display: block !important; margin-bottom: 2mm !important; }
+  .pr-duty-step p { font-size: 7.5pt !important; margin: 0 !important; line-height: 1.5 !important; }
 
   .pr-duty-num {
     width: 18pt !important;
@@ -1649,7 +1597,7 @@ p:empty + .pr-table-wrap {
     flex-shrink: 0 !important;
   }
 
-  /* ── 프로세스 다이어그램 ─────────────────────────────────────── */
+  /* ── 프로세스 다이어그램 ── */
   .pr-process-flow {
     font-size: 8.5pt !important;
     gap: 4mm !important;
@@ -1657,15 +1605,19 @@ p:empty + .pr-table-wrap {
 
   .pr-process-box { padding: 2mm 3mm !important; font-size: 8pt !important; }
 
-  /* ── 징계 배지 ──────────────────────────────────────────────── */
+  /* ── 징계 배지 ── */
   .pr-sanction--red    { background: #fef2f2 !important; color: #b42318 !important; }
   .pr-sanction--orange { background: #fff7ed !important; color: #c2410c !important; }
 
-  /* ── 페이지 나눔 제어 ────────────────────────────────────────── */
-  /* 섹션 강제 페이지 나눔 제거 — 내용 흐름에 따라 자연 분리 */
-
+  /* ── 페이지 나눔 제어 ── */
   h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
   table, figure, .pr-callout, .pr-duty-flow { page-break-inside: avoid; break-inside: avoid; }
+
+  /* ── 불필요한 빈 공간 제거 ── */
+  .pr-section:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
 }
 
 /* ─── 모달 로딩 오버레이 ─────────────────────────────────────── */
@@ -1677,7 +1629,7 @@ p:empty + .pr-table-wrap {
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: justify-content;
   border-radius: 20px;
 }
 
@@ -1706,9 +1658,4 @@ p:empty + .pr-table-wrap {
   font-weight: 700;
   color: #0b1f44;
   letter-spacing: 0.02em;
-}
-
-/* 모달에 relative 보장 (오버레이 position:absolute 기준) */
-.pr-modal {
-  position: relative;
 }
