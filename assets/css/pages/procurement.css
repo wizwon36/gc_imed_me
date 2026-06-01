@@ -948,6 +948,13 @@ p {
   font-size: 13.5px !important;
 }
 
+/* 표 셀 안의 text-align은 셀 단위로만 적용, 너비 변화 없음 */
+.ck-editor__editable .ck-widget.table table td,
+.ck-editor__editable .ck-widget.table table th {
+  overflow: hidden !important;
+  word-break: break-word !important;
+}
+
 /* 컬럼 리사이즈 핸들 숨기기 */
 .ck-editor__editable .ck-table-column-resizer {
   display: none !important;
