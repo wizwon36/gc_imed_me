@@ -332,33 +332,35 @@ function restoreHtmlClasses(html) {
   });
 
   // 2. <figure class="table"> → <div class="pr-table-wrap">로 래핑 복구
-  //    단, 이미 pr-table-wrap 안에 있으면 중복 래핑 방지
   doc.querySelectorAll('figure.table').forEach(figure => {
-    const table = figure.querySelector('table');
+    const table  = figure.querySelector('table');
+    const figcap = figure.querySelector('figcaption');
     if (!table) { figure.remove(); return; }
 
-    const parent = figure.parentNode;
-    if (parent && parent.classList && parent.classList.contains('pr-table-wrap')) {
-      // 이미 래퍼 안 → figure만 제거하고 table을 올림
-      parent.insertBefore(table, figure);
-      figure.remove();
-    } else {
-      const wrap = doc.createElement('div');
-      wrap.className = 'pr-table-wrap';
-      parent.insertBefore(wrap, figure);
-      wrap.appendChild(table);
-      figure.remove();
-    }
-  });
+    const wrap = doc.createElement('div');
+    wrap.className = 'pr-table-wrap';
 
-  // 2-1. 중첩된 pr-table-wrap 제거
-  doc.querySelectorAll('.pr-table-wrap').forEach(outer => {
-    const inner = outer.querySelector(':scope > .pr-table-wrap');
-    if (inner) {
-      // inner의 자식을 outer로 올리고 inner 제거
-      while (inner.firstChild) outer.insertBefore(inner.firstChild, inner);
-      inner.remove();
+    // figcaption → pr-table-caption 복구
+    if (figcap) {
+      const cap = doc.createElement('p');
+      cap.className   = 'pr-table-caption';
+      cap.textContent = figcap.textContent;
+      wrap.appendChild(cap);
+    } else {
+      // figure 바로 앞 p 태그가 캡션이면 wrap 안으로 이동
+      const prevEl = figure.previousElementSibling;
+      if (prevEl && prevEl.tagName === 'P' && /^\[표/.test(prevEl.textContent.trim())) {
+        const cap = doc.createElement('p');
+        cap.className   = 'pr-table-caption';
+        cap.textContent = prevEl.textContent;
+        wrap.appendChild(cap);
+        prevEl.remove();
+      }
     }
+
+    wrap.appendChild(table);
+    figure.parentNode.insertBefore(wrap, figure);
+    figure.remove();
   });
 
   // 3. <ul class="pr-list"> 가 없는 ul에 pr-list 부여
@@ -588,12 +590,12 @@ function initEditModal() {
     // 대섹션 intro (-intro 접미사)
     if (secId.endsWith('-intro')) {
       const contentDiv = el.querySelector('.pr-section-intro-content');
-      return contentDiv ? contentDiv.innerHTML : '';
+      return contentDiv ? unwrapTableWraps(contentDiv.innerHTML) : '';
     }
 
     // 소섹션
     const contentDiv = el.querySelector('.pr-subsection-content');
-    if (contentDiv) return contentDiv.innerHTML;
+    if (contentDiv) return unwrapTableWraps(contentDiv.innerHTML);
     let html = '';
     el.childNodes.forEach(node => {
       if (node.nodeType !== 1) return;
@@ -601,7 +603,33 @@ function initEditModal() {
       if (node.classList.contains('pr-section-updated-info')) return;
       html += node.outerHTML || '';
     });
-    return html;
+    return unwrapTableWraps(html);
+  }
+
+  // CKEditor에 넘기기 전 pr-table-wrap 래퍼 제거 (table만 남김)
+  // → CKEditor가 figure.table로 변환하고, 저장 시 다시 pr-table-wrap으로 복구
+  function unwrapTableWraps(html) {
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(html, 'text/html');
+
+    // pr-table-wrap 안의 table을 꺼내고 wrap 제거
+    doc.querySelectorAll('.pr-table-wrap').forEach(wrap => {
+      const table   = wrap.querySelector('table');
+      const caption = wrap.querySelector('.pr-table-caption');
+      if (!table) return;
+
+      // caption이 있으면 p태그로 table 앞에 삽입
+      if (caption) {
+        const p = doc.createElement('p');
+        p.textContent = caption.textContent;
+        wrap.parentNode.insertBefore(p, wrap);
+      }
+      // table을 wrap 위치로 올리기
+      wrap.parentNode.insertBefore(table, wrap);
+      wrap.remove();
+    });
+
+    return doc.body.innerHTML;
   }
 
   // ── 편집 버튼 클릭 ────────────────────────────────────────
