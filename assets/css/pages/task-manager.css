@@ -954,7 +954,7 @@
   padding: 20px 22px;
   max-height: 60vh;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .task-modal-footer {
@@ -1582,10 +1582,10 @@ input[type="date"].form-input {
   input[type="date"].form-input { width: 100%; min-width: 0; font-size: 13px; }
   /* 모바일: 모달 좌우 여백 축소 + 내부 넘침 방지 */
   .task-modal-overlay     { padding: 12px; }
-  .task-modal             { overflow-x: hidden; }
+  .task-modal             { overflow-x: clip; }
   /* 모바일: 모달 세로 스크롤 허용 */
   .task-modal             { max-height: 92vh; display: flex; flex-direction: column; }
-  .task-modal-body        { overflow-y: auto; flex: 1; }
+  .task-modal-body        { overflow-y: auto; overflow-x: clip; flex: 1; }
   .summary-stat-num       { font-size: 16px; }
   .attendance-grid        { grid-template-columns: 1fr; }
   .team-journal-grid      { grid-template-columns: 1fr; }
