@@ -1003,17 +1003,16 @@
   box-sizing: border-box;
 }
 
-/* type=date — 브라우저가 height 무시하는 경우 대비 */
+/* type=date — display:flex 금지 (캘린더 아이콘 위치 깨짐) */
 input[type="date"].form-input {
-  display: flex;
-  align-items: center;
+  display: block;
   height: 42px;
   min-height: 42px;
   max-width: 100%;
   width: 100%;
   min-width: 0;
   padding: 0 10px;
-  line-height: normal;
+  line-height: 40px;
   box-sizing: border-box;
 }
 
