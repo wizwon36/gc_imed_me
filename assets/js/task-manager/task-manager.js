@@ -181,13 +181,21 @@
     document.getElementById('modalSingleDay')?.addEventListener('change', (e) => {
       setSingleDay(e.target.checked);
     });
-    // 시작일 변경 시 종료일 최솟값 동기화
+    // 시작일 변경 시 종료일 동기화
     document.getElementById('modalStartDate')?.addEventListener('change', (e) => {
-      const endEl = document.getElementById('modalEndDate');
-      if (endEl && endEl.value && endEl.value < e.target.value) {
+      const endEl      = document.getElementById('modalEndDate');
+      const singleDay  = document.getElementById('modalSingleDay');
+      if (!endEl) return;
+      if (singleDay?.checked) {
+        // 단기업무 상태면 종료일도 시작일로 고정
         endEl.value = e.target.value;
+      } else {
+        // 종료일이 시작일보다 앞이면 맞춤
+        if (endEl.value && endEl.value < e.target.value) {
+          endEl.value = e.target.value;
+        }
+        endEl.min = e.target.value;
       }
-      endEl.min = e.target.value;
     });
 
     // 모달
@@ -2877,14 +2885,18 @@
     const endInput = document.getElementById('modalEndDate');
     if (!checkbox || !endInput) return;
     checkbox.checked = single;
+    const startVal = document.getElementById('modalStartDate')?.value || '';
     if (single) {
-      endInput.style.display = 'none';
-      // 종료일을 시작일과 동일하게 맞춤
-      const startVal = document.getElementById('modalStartDate')?.value || '';
-      endInput.value = startVal;
+      // 단기업무: 종료일을 시작일과 동일하게 고정 후 비활성화
+      endInput.value    = startVal;
+      endInput.disabled = true;
+      endInput.style.opacity = '0.5';
+      endInput.style.cursor  = 'not-allowed';
     } else {
-      endInput.style.display = '';
-      endInput.min = document.getElementById('modalStartDate')?.value || '';
+      endInput.disabled = false;
+      endInput.style.opacity = '';
+      endInput.style.cursor  = '';
+      endInput.min = startVal;
     }
   }
 
