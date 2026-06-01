@@ -256,27 +256,40 @@ async function loadSections() {
         updated_by:    section.updated_by     || ''
       };
 
-      const subsection = document.getElementById(section.sec_id);
-      if (!subsection || !section.content_html) return;
+      const el = document.getElementById(section.sec_id);
+      if (!el || !section.content_html) return;
 
-      // h3 헤더(pr-subsection-header) 는 보존하고 나머지 콘텐츠만 교체
-      const header = subsection.querySelector('.pr-subsection-header');
-      // header 이후 노드를 모두 제거
-      while (subsection.lastChild && subsection.lastChild !== header) {
-        subsection.removeChild(subsection.lastChild);
+      // 대섹션 intro
+      if (section.sec_id.endsWith('-intro')) {
+        const contentDiv = el.querySelector('.pr-section-intro-content');
+        if (contentDiv) contentDiv.innerHTML = section.content_html;
+        if (section.updated_at) {
+          let info = el.querySelector('.pr-section-updated-info');
+          if (!info) {
+            info = document.createElement('p');
+            info.className = 'pr-section-updated-info';
+            el.appendChild(info);
+          }
+          info.textContent = `최종 수정: ${section.updated_at.substring(0, 16)} · ${section.updated_by || ''}`;
+        }
+        return;
       }
-      // 새 콘텐츠 삽입
+
+      // 소섹션
+      const header = el.querySelector('.pr-subsection-header');
+      while (el.lastChild && el.lastChild !== header) {
+        el.removeChild(el.lastChild);
+      }
       const wrapper = document.createElement('div');
       wrapper.className = 'pr-subsection-content';
       wrapper.innerHTML = section.content_html;
-      subsection.appendChild(wrapper);
+      el.appendChild(wrapper);
 
-      // 마지막 수정 정보 표시
       if (section.updated_at) {
         const info = document.createElement('p');
         info.className = 'pr-section-updated-info';
         info.textContent = `최종 수정: ${section.updated_at.substring(0, 16)} · ${section.updated_by || ''}`;
-        subsection.appendChild(info);
+        el.appendChild(info);
       }
     });
 
@@ -525,11 +538,20 @@ function initEditModal() {
 
   // ── 섹션 현재 콘텐츠 추출 ─────────────────────────────────
   function getSectionContent(secId) {
-    const subsection = document.getElementById(secId);
-    const contentDiv = subsection?.querySelector('.pr-subsection-content');
+    const el = document.getElementById(secId);
+    if (!el) return '';
+
+    // 대섹션 intro (-intro 접미사)
+    if (secId.endsWith('-intro')) {
+      const contentDiv = el.querySelector('.pr-section-intro-content');
+      return contentDiv ? contentDiv.innerHTML : '';
+    }
+
+    // 소섹션
+    const contentDiv = el.querySelector('.pr-subsection-content');
     if (contentDiv) return contentDiv.innerHTML;
     let html = '';
-    subsection?.childNodes.forEach(node => {
+    el.childNodes.forEach(node => {
       if (node.nodeType !== 1) return;
       if (node.classList.contains('pr-subsection-header')) return;
       if (node.classList.contains('pr-section-updated-info')) return;
@@ -726,20 +748,38 @@ function initEditModal() {
   }
 
   function applyContentToDOM(secId, html, updatedAt, updatedBy) {
-    const subsection = document.getElementById(secId);
-    let contentDiv = subsection?.querySelector('.pr-subsection-content');
+    const el = document.getElementById(secId);
+    if (!el) return;
+
+    // 대섹션 intro
+    if (secId.endsWith('-intro')) {
+      const contentDiv = el.querySelector('.pr-section-intro-content');
+      if (contentDiv) contentDiv.innerHTML = html || '';
+
+      let infoEl = el.querySelector('.pr-section-updated-info');
+      if (!infoEl) {
+        infoEl = document.createElement('p');
+        infoEl.className = 'pr-section-updated-info';
+        el.appendChild(infoEl);
+      }
+      infoEl.textContent = `최종 수정: ${(updatedAt || '').substring(0, 16)} · ${updatedBy || ''}`;
+      return;
+    }
+
+    // 소섹션
+    let contentDiv = el.querySelector('.pr-subsection-content');
     if (!contentDiv) {
       contentDiv = document.createElement('div');
       contentDiv.className = 'pr-subsection-content';
-      subsection.appendChild(contentDiv);
+      el.appendChild(contentDiv);
     }
     contentDiv.innerHTML = html || '';
 
-    let infoEl = subsection?.querySelector('.pr-section-updated-info');
+    let infoEl = el.querySelector('.pr-section-updated-info');
     if (!infoEl) {
       infoEl = document.createElement('p');
       infoEl.className = 'pr-section-updated-info';
-      subsection.appendChild(infoEl);
+      el.appendChild(infoEl);
     }
     infoEl.textContent = `최종 수정: ${(updatedAt || '').substring(0, 16)} · ${updatedBy || ''}`;
   }
