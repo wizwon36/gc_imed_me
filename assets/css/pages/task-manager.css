@@ -900,7 +900,7 @@
 
 .task-modal {
   width: 100%;
-  max-width: 520px;
+  max-width: 640px;
   background: #fff;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-modal);
