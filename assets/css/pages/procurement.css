@@ -1167,9 +1167,15 @@ p:empty + .pr-table-wrap {
     display: none !important;
   }
 
-  /* 화면 하단 여백 div 제거 */
-  .pr-content > div[style*="height"] {
+  /* 화면 하단 여백 div 제거 — 인라인 스타일 선택자 대신 명시적 클래스 추가 */
+  .pr-content > div[style*="height"],
+  .pr-print-spacer {
     display: none !important;
+  }
+  /* pr-content 자체 하단 여백도 제거 */
+  .pr-content {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   /* 인쇄 전용 요소 표시 */
@@ -1219,8 +1225,8 @@ p:empty + .pr-table-wrap {
     break-after: page;
     /* 고정 너비/높이 제거 → 인쇄 엔진이 페이지 크기에 맞춤 */
     width: 100% !important;
-    min-height: 100vh;      /* 화면에서는 전체 높이 */
-    height: auto !important;
+    min-height: 297mm !important;  /* A4 전체 높이 고정 */
+    height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
     position: relative !important;
@@ -1533,8 +1539,9 @@ p:empty + .pr-table-wrap {
 
   /* ── 테이블 ── */
   .pr-table-wrap {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    /* page-break-inside: avoid 제거 — 큰 표가 통째로 밀려 빈 페이지 발생 방지 */
+    page-break-inside: auto;
+    break-inside: auto;
     margin: 3mm 0 !important;
     overflow: visible !important;
   }
@@ -1611,12 +1618,22 @@ p:empty + .pr-table-wrap {
 
   /* ── 페이지 나눔 제어 ── */
   h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
-  table, figure, .pr-callout, .pr-duty-flow { page-break-inside: avoid; break-inside: avoid; }
+  /* table은 auto로 — 큰 표 빈페이지 방지. callout/duty-flow만 avoid 유지 */
+  .pr-callout, .pr-duty-flow { page-break-inside: avoid; break-inside: avoid; }
 
   /* ── 불필요한 빈 공간 제거 ── */
-  .pr-section:last-child {
+  .pr-section:last-child,
+  .pr-subsection:last-child {
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+  /* pr-content 이후 어떤 여백도 차단 */
+  .pr-layout,
+  .container,
+  .page-shell {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
   }
 }
 
