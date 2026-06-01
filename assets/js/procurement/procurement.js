@@ -209,9 +209,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ── 맨 위로 버튼 ─────────────────────────────────────────
-  const backToTop = document.getElementById('prBackToTop');
+  const backToTop    = document.getElementById('prBackToTop');
+  const searchSection = document.getElementById('prSearchSection') ||
+                        document.querySelector('.pr-search-section');
+
   window.addEventListener('scroll', () => {
     backToTop?.classList.toggle('visible', window.scrollY > 300);
+    // 검색창이 상단에 붙으면 위쪽 모서리 각지게
+    if (searchSection) {
+      searchSection.classList.toggle('is-stuck', window.scrollY > 10);
+    }
   }, { passive: true });
   backToTop?.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
