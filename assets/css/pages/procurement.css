@@ -910,23 +910,39 @@ p {
 }
 
 /* 편집기 내 테이블 스타일 */
-.ck-editor__editable table {
+.ck-editor__editable .ck-widget.table {
+  width: 100% !important;
+  margin: 8px 0 !important;
+}
+
+.ck-editor__editable .ck-widget.table table {
   border-collapse: collapse !important;
   width: 100% !important;
   font-size: 13.5px !important;
 }
 
-.ck-editor__editable table th {
+.ck-editor__editable .ck-widget.table table th,
+.ck-editor__editable .ck-widget.table table td {
+  border: 1px solid #d1e0f5 !important;
+  padding: 8px 12px !important;
+  vertical-align: middle !important;
+  text-align: left !important;
+}
+
+.ck-editor__editable .ck-widget.table table th {
   background: #f0f6ff !important;
   color: #1e3a6e !important;
   font-weight: 700 !important;
-  padding: 8px 12px !important;
-  border: 1px solid #d1e0f5 !important;
+  text-align: center !important;
 }
 
-.ck-editor__editable table td {
-  padding: 8px 12px !important;
-  border: 1px solid #e2e8f0 !important;
+/* colspan 전체 병합 행 */
+.ck-editor__editable .ck-widget.table table td[colspan="3"],
+.ck-editor__editable .ck-widget.table table td[colspan="2"] {
+  text-align: center !important;
+  font-weight: 600 !important;
+  color: #1e3a6e !important;
+  background: #f8faff !important;
 }
 
 /* ─── 모달 알림 ─────────────────────────────────────────────── */
