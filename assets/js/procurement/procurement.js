@@ -336,8 +336,13 @@ function initEditModal() {
       RemoveFormat,
       SourceEditing,
       Essentials, Paragraph,
-      Link
+      Link,
+      Style,
+      GeneralHtmlSupport
     } = await import(CKEDITOR_PATH);
+
+    // procurement.css 경로
+    const cssUrl = `${CONFIG.SITE_BASE_URL}/assets/css/pages/procurement.css`;
 
     ckEditor = await ClassicEditor.create(
       document.getElementById('prEditorArea'),
@@ -355,11 +360,13 @@ function initEditModal() {
           FontColor, FontBackgroundColor,
           RemoveFormat,
           SourceEditing,
-          Link
+          Link,
+          Style,
+          GeneralHtmlSupport
         ],
         toolbar: {
           items: [
-            'heading', '|',
+            'heading', 'style', '|',
             'bold', 'italic', 'underline', 'strikethrough', '|',
             'fontColor', 'fontBackgroundColor', '|',
             'bulletedList', 'numberedList', '|',
@@ -373,9 +380,55 @@ function initEditModal() {
         },
         heading: {
           options: [
-            { model: 'paragraph', title: '본문',       class: 'ck-heading_paragraph' },
-            { model: 'heading3',  view: 'h3', title: '제목 (H3)',   class: 'ck-heading_heading3' },
-            { model: 'heading4',  view: 'h4', title: '소제목 (H4)', class: 'ck-heading_heading4' }
+            { model: 'paragraph', title: '본문',        class: 'ck-heading_paragraph' },
+            { model: 'heading3',  view: 'h3', title: '제목 (H3)',    class: 'ck-heading_heading3' },
+            { model: 'heading4',  view: 'h4', title: '소제목 (H4)',  class: 'ck-heading_heading4' }
+          ]
+        },
+        // ── 커스텀 스타일 드롭다운 ──────────────────────────────
+        style: {
+          definitions: [
+            // 소제목 박스 (pr-h3)
+            {
+              name: '소제목 박스',
+              element: 'h4',
+              classes: ['pr-h3']
+            },
+            // 콜아웃 - 안내 (파란색)
+            {
+              name: '콜아웃 - 안내 (파랑)',
+              element: 'div',
+              classes: ['pr-callout', 'pr-callout--info']
+            },
+            // 콜아웃 - 주의 (노란색)
+            {
+              name: '콜아웃 - 주의 (노랑)',
+              element: 'div',
+              classes: ['pr-callout', 'pr-callout--warning']
+            },
+            // 콜아웃 - 위험 (빨간색)
+            {
+              name: '콜아웃 - 위험 (빨강)',
+              element: 'div',
+              classes: ['pr-callout', 'pr-callout--danger']
+            },
+            // 정의 그리드 항목
+            {
+              name: '정의 항목',
+              element: 'div',
+              classes: ['pr-def-item']
+            }
+          ]
+        },
+        // ── GHS: pr-* 클래스를 편집기에서 보존 ─────────────────
+        htmlSupport: {
+          allow: [
+            {
+              name: /.*/,
+              attributes: true,
+              classes: true,
+              styles: true
+            }
           ]
         },
         table: {
@@ -384,9 +437,40 @@ function initEditModal() {
             'tableProperties', 'tableCellProperties'
           ]
         },
+        // ── 편집 영역에 procurement.css 주입 ───────────────────
+        // CKEditor iframe 없이 shadow DOM 방식이므로 contentsCss 대신
+        // editorReady 후 직접 주입
         initialData: initialContent || ''
       }
     );
+
+    // 편집 영역에 procurement.css 스타일 주입
+    injectEditorStyles(ckEditor, cssUrl);
+  }
+
+  // CKEditor 편집 영역에 외부 CSS 주입
+  function injectEditorStyles(editor, cssUrl) {
+    try {
+      const editable = editor.ui.view.editable.element;
+      if (!editable) return;
+
+      // 이미 주입됐으면 스킵
+      if (editable.closest('.ck-editor')?.querySelector('.pr-editor-injected-css')) return;
+
+      const link = document.createElement('link');
+      link.rel  = 'stylesheet';
+      link.href = cssUrl;
+      link.className = 'pr-editor-injected-css';
+
+      // CKEditor 편집 영역의 부모에 삽입
+      const ckRoot = editable.closest('.ck-editor__main') || editable.parentElement;
+      if (ckRoot) ckRoot.appendChild(link);
+
+      // editable 자체에 pr-content 클래스 추가 (CSS 셀렉터 매칭용)
+      editable.classList.add('pr-editor-preview');
+    } catch(e) {
+      console.warn('CSS 주입 실패:', e);
+    }
   }
 
   // ── 섹션 현재 콘텐츠 추출 ─────────────────────────────────
