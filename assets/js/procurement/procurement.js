@@ -401,7 +401,8 @@ function initEditModal() {
       Essentials, Paragraph,
       Link,
       Style,
-      GeneralHtmlSupport
+      GeneralHtmlSupport,
+      Alignment
     } = await import(CKEDITOR_PATH);
 
     // procurement.css 경로
@@ -425,7 +426,8 @@ function initEditModal() {
           SourceEditing,
           Link,
           Style,
-          GeneralHtmlSupport
+          GeneralHtmlSupport,
+          Alignment
         ],
         toolbar: {
           items: [
@@ -433,6 +435,7 @@ function initEditModal() {
             'bold', 'italic', 'underline', 'strikethrough', '|',
             'fontColor', 'fontBackgroundColor', '|',
             'bulletedList', 'numberedList', '|',
+            'alignment', '|',
             'outdent', 'indent', '|',
             'blockQuote', 'insertTable', 'horizontalLine', 'link', '|',
             'removeFormat', '|',
