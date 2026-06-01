@@ -233,7 +233,19 @@ async function loadSections() {
     if (result.data.length === 0) return; // 아직 저장된 내용 없음 → HTML 기본값 유지
 
     // 각 섹션의 content_html을 DOM에 반영
+    // 섹션 메타 캐시 초기화
+    window.__procurementMeta = window.__procurementMeta || {};
+
     result.data.forEach(section => {
+      // 메타 캐시 저장 (편집 모달에서 되돌리기/수정자 표시에 사용)
+      window.__procurementMeta[section.sec_id] = {
+        previous_html: section.previous_html || '',
+        previous_at:   section.previous_at   || '',
+        previous_by:   section.previous_by   || '',
+        updated_at:    section.updated_at     || '',
+        updated_by:    section.updated_by     || ''
+      };
+
       const subsection = document.getElementById(section.sec_id);
       if (!subsection || !section.content_html) return;
 
@@ -264,24 +276,44 @@ async function loadSections() {
   }
 }
 
-// ── 편집 모달 (CKEditor 5) ────────────────────────────────────
+// ── 편집 모달 (CKEditor 5 + diff 확인 + 되돌리기) ──────────────
 function initEditModal() {
-  const modal      = document.getElementById('prEditModal');
-  const titleEl    = document.getElementById('prEditModalTitle');
-  const subtitleEl = document.getElementById('prEditModalSubtitle');
-  const saveBtn    = document.getElementById('prEditSaveBtn');
-  const cancelBtn  = document.getElementById('prEditCancelBtn');
-  const closeBtn   = document.getElementById('prEditModalClose');
-  const msgEl      = document.getElementById('prEditModalMsg');
-  const lastUpdEl  = document.getElementById('prEditLastUpdated');
+  const modal       = document.getElementById('prEditModal');
+  const titleEl     = document.getElementById('prEditModalTitle');
+  const subtitleEl  = document.getElementById('prEditModalSubtitle');
+  const msgEl       = document.getElementById('prEditModalMsg');
+  const msgEl2      = document.getElementById('prEditModalMsg2');
+  const lastUpdEl   = document.getElementById('prEditLastUpdated');
 
-  let currentSecId    = null;
-  let currentSecTitle = null;
-  let ckEditor        = null; // CKEditor 인스턴스
+  // Step 1
+  const step1       = document.getElementById('prEditStep1');
+  const footer1     = document.getElementById('prEditFooter1');
+  const previewBtn  = document.getElementById('prEditPreviewBtn');
+  const cancelBtn   = document.getElementById('prEditCancelBtn');
 
-  // ── CKEditor 초기화 (v43 ESM) ─────────────────────────────
+  // Step 2
+  const step2       = document.getElementById('prEditStep2');
+  const footer2     = document.getElementById('prEditFooter2');
+  const saveBtn     = document.getElementById('prEditSaveBtn');
+  const backBtn     = document.getElementById('prEditBackBtn');
+  const cancelBtn2  = document.getElementById('prEditCancelBtn2');
+  const revertWrap  = document.getElementById('prRevertWrap');
+  const revertBtn   = document.getElementById('prRevertBtn');
+  const diffBefore  = document.getElementById('prDiffBefore');
+  const diffAfter   = document.getElementById('prDiffAfter');
+  const closeBtn    = document.getElementById('prEditModalClose');
+
+  let currentSecId      = null;
+  let currentSecTitle   = null;
+  let currentPrevHtml   = '';  // 되돌리기용 직전 HTML
+  let currentOrigHtml   = '';  // diff 비교용 편집 시작 시점 HTML
+  let ckEditor          = null;
+
+  // ── 섹션 메타데이터 맵 (로드 시 채워짐) ─────────────────────
+  window.__procurementMeta = window.__procurementMeta || {};
+
+  // ── CKEditor 초기화 ────────────────────────────────────────
   async function initCKEditor(initialContent) {
-    // 이미 인스턴스가 있으면 내용만 교체
     if (ckEditor) {
       ckEditor.setData(initialContent || '');
       return;
@@ -301,7 +333,6 @@ function initEditModal() {
       RemoveFormat,
       SourceEditing,
       Essentials, Paragraph,
-      AutoFormat,
       Link
     } = await import(CKEDITOR_PATH);
 
@@ -339,9 +370,9 @@ function initEditModal() {
         },
         heading: {
           options: [
-            { model: 'paragraph', title: '본문',        class: 'ck-heading_paragraph' },
-            { model: 'heading3',  view: 'h3', title: '제목 (H3)',    class: 'ck-heading_heading3' },
-            { model: 'heading4',  view: 'h4', title: '소제목 (H4)',  class: 'ck-heading_heading4' }
+            { model: 'paragraph', title: '본문',       class: 'ck-heading_paragraph' },
+            { model: 'heading3',  view: 'h3', title: '제목 (H3)',   class: 'ck-heading_heading3' },
+            { model: 'heading4',  view: 'h4', title: '소제목 (H4)', class: 'ck-heading_heading4' }
           ]
         },
         table: {
@@ -360,7 +391,6 @@ function initEditModal() {
     const subsection = document.getElementById(secId);
     const contentDiv = subsection?.querySelector('.pr-subsection-content');
     if (contentDiv) return contentDiv.innerHTML;
-
     let html = '';
     subsection?.childNodes.forEach(node => {
       if (node.nodeType !== 1) return;
@@ -371,48 +401,70 @@ function initEditModal() {
     return html;
   }
 
-  // ── 편집 버튼 클릭 → 모달 열기 ───────────────────────────
+  // ── 편집 버튼 클릭 ────────────────────────────────────────
   document.querySelectorAll('.pr-edit-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       currentSecId    = btn.dataset.secId;
       currentSecTitle = btn.dataset.secTitle;
+      currentOrigHtml = getSectionContent(currentSecId);
+
+      // 직전 버전 확인 (로드 시 캐싱된 메타에서)
+      const meta       = window.__procurementMeta[currentSecId] || {};
+      currentPrevHtml  = meta.previous_html || '';
 
       titleEl.textContent    = '섹션 편집';
       subtitleEl.textContent = currentSecTitle;
-      msgEl.style.display    = 'none';
-      lastUpdEl.textContent  = '';
+      lastUpdEl.textContent  = meta.updated_at
+        ? `최종 수정: ${meta.updated_at.substring(0, 16)} · ${meta.updated_by || ''}`
+        : '';
 
+      showStep(1);
       openModal();
 
-      // CKEditor 초기화 (비동기)
       try {
-        await initCKEditor(getSectionContent(currentSecId));
+        await initCKEditor(currentOrigHtml);
       } catch (err) {
         console.error('CKEditor 초기화 실패:', err);
-        showMsg('편집기 초기화에 실패했습니다.', 'error');
+        showMsg(msgEl, '편집기 초기화에 실패했습니다.', 'error');
       }
     });
   });
 
-  // ── 저장 ──────────────────────────────────────────────────
+  // ── Step1 → Step2: 변경 내용 확인 ────────────────────────
+  previewBtn?.addEventListener('click', () => {
+    if (!ckEditor) return;
+    const newHtml = ckEditor.getData().trim();
+    if (!newHtml) {
+      showMsg(msgEl, '내용을 입력해 주세요.', 'error');
+      return;
+    }
+
+    // diff 패널 채우기
+    diffBefore.innerHTML = currentOrigHtml || '<em style="color:#999">내용 없음</em>';
+    diffAfter.innerHTML  = newHtml;
+
+    // 되돌리기 버튼: 직전 버전이 있을 때만 노출
+    revertWrap.style.display = currentPrevHtml ? 'inline-flex' : 'none';
+
+    msgEl.style.display = 'none';
+    showStep(2);
+  });
+
+  // ── Step2 → Step1: 다시 편집 ─────────────────────────────
+  backBtn?.addEventListener('click', () => showStep(1));
+
+  // ── 저장 확정 ─────────────────────────────────────────────
   saveBtn?.addEventListener('click', async () => {
     if (!currentSecId || !ckEditor) return;
-
     const contentHtml = ckEditor.getData().trim();
-    if (!contentHtml) {
-      showMsg('내용을 입력해 주세요.', 'error');
-      return;
-    }
+    if (!contentHtml) return;
 
     const user = window.auth?.getSession?.();
-    if (!user?.email) {
-      showMsg('로그인 세션이 만료되었습니다.', 'error');
-      return;
-    }
+    if (!user?.email) { showMsg(msgEl2, '로그인 세션이 만료되었습니다.', 'error'); return; }
 
     saveBtn.disabled    = true;
     saveBtn.textContent = '저장 중...';
-    msgEl.style.display = 'none';
+    msgEl2.style.display = 'none';
 
     try {
       const result = await apiPost('updateProcurementSection', {
@@ -424,44 +476,87 @@ function initEditModal() {
 
       if (!result?.success) throw new Error(result?.message || '저장에 실패했습니다.');
 
-      // DOM 즉시 반영
-      const subsection = document.getElementById(currentSecId);
-      let contentDiv = subsection?.querySelector('.pr-subsection-content');
-      if (!contentDiv) {
-        contentDiv = document.createElement('div');
-        contentDiv.className = 'pr-subsection-content';
-        subsection.appendChild(contentDiv);
-      }
-      contentDiv.innerHTML = contentHtml;
+      // DOM 반영
+      applyContentToDOM(currentSecId, contentHtml, result.data?.updated_at, user.email);
 
-      // 수정 정보 갱신
-      let infoEl = subsection?.querySelector('.pr-section-updated-info');
-      if (!infoEl) {
-        infoEl = document.createElement('p');
-        infoEl.className = 'pr-section-updated-info';
-        subsection.appendChild(infoEl);
-      }
-      const updatedAt = result.data?.updated_at || '';
-      infoEl.textContent = `최종 수정: ${updatedAt.substring(0, 16)} · ${user.email}`;
+      // 메타 캐시 갱신
+      window.__procurementMeta[currentSecId] = {
+        previous_html: currentOrigHtml,
+        previous_at:   window.__procurementMeta[currentSecId]?.updated_at || '',
+        previous_by:   window.__procurementMeta[currentSecId]?.updated_by || '',
+        updated_at:    result.data?.updated_at || '',
+        updated_by:    user.email
+      };
 
-      showMsg('저장되었습니다.', 'success');
-      setTimeout(closeModal, 800);
+      showMsg(msgEl2, '저장되었습니다.', 'success');
+      setTimeout(closeModal, 700);
 
     } catch (err) {
-      showMsg(err.message || '저장에 실패했습니다.', 'error');
+      showMsg(msgEl2, err.message || '저장에 실패했습니다.', 'error');
     } finally {
       saveBtn.disabled    = false;
-      saveBtn.textContent = '저장';
+      saveBtn.textContent = '저장 확정';
+    }
+  });
+
+  // ── 되돌리기 ──────────────────────────────────────────────
+  revertBtn?.addEventListener('click', async () => {
+    if (!currentPrevHtml) return;
+    if (!confirm('이전 버전으로 되돌리시겠습니까?')) return;
+
+    const user = window.auth?.getSession?.();
+    if (!user?.email) { showMsg(msgEl2, '로그인 세션이 만료되었습니다.', 'error'); return; }
+
+    revertBtn.disabled    = true;
+    revertBtn.textContent = '되돌리는 중...';
+
+    try {
+      const result = await apiPost('revertProcurementSection', {
+        request_user_email: user.email,
+        sec_id: currentSecId
+      });
+
+      if (!result?.success) throw new Error(result?.message || '되돌리기에 실패했습니다.');
+
+      applyContentToDOM(currentSecId, result.data?.content_html, result.data?.updated_at, user.email);
+
+      // 메타 캐시 갱신
+      window.__procurementMeta[currentSecId] = {
+        ...window.__procurementMeta[currentSecId],
+        content_html: result.data?.content_html,
+        updated_at:   result.data?.updated_at || '',
+        updated_by:   user.email
+      };
+
+      showMsg(msgEl2, '이전 버전으로 되돌렸습니다.', 'success');
+      setTimeout(closeModal, 700);
+
+    } catch (err) {
+      showMsg(msgEl2, err.message || '되돌리기에 실패했습니다.', 'error');
+    } finally {
+      revertBtn.disabled    = false;
+      revertBtn.textContent = '↩ 이전 버전으로 되돌리기';
     }
   });
 
   // ── 닫기 ──────────────────────────────────────────────────
-  cancelBtn?.addEventListener('click', closeModal);
-  closeBtn?.addEventListener('click', closeModal);
+  [cancelBtn, cancelBtn2, closeBtn].forEach(el => {
+    el?.addEventListener('click', closeModal);
+  });
   modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && modal?.style.display !== 'none') closeModal();
   });
+
+  // ── 헬퍼 ──────────────────────────────────────────────────
+  function showStep(n) {
+    step1.style.display  = n === 1 ? '' : 'none';
+    footer1.style.display = n === 1 ? '' : 'none';
+    step2.style.display  = n === 2 ? '' : 'none';
+    footer2.style.display = n === 2 ? '' : 'none';
+    msgEl.style.display  = 'none';
+    msgEl2.style.display = 'none';
+  }
 
   function openModal() {
     modal.style.display = 'flex';
@@ -473,17 +568,39 @@ function initEditModal() {
     document.body.style.overflow = '';
     currentSecId    = null;
     currentSecTitle = null;
-    msgEl.style.display = 'none';
-    // 에디터 내용만 비움 (인스턴스 재사용)
+    currentOrigHtml = '';
+    currentPrevHtml = '';
+    showStep(1);
     if (ckEditor) ckEditor.setData('');
   }
 
-  function showMsg(text, type) {
-    msgEl.textContent   = text;
-    msgEl.className     = 'pr-modal-msg pr-modal-msg--' + type;
-    msgEl.style.display = 'block';
+  function applyContentToDOM(secId, html, updatedAt, updatedBy) {
+    const subsection = document.getElementById(secId);
+    let contentDiv = subsection?.querySelector('.pr-subsection-content');
+    if (!contentDiv) {
+      contentDiv = document.createElement('div');
+      contentDiv.className = 'pr-subsection-content';
+      subsection.appendChild(contentDiv);
+    }
+    contentDiv.innerHTML = html || '';
+
+    let infoEl = subsection?.querySelector('.pr-section-updated-info');
+    if (!infoEl) {
+      infoEl = document.createElement('p');
+      infoEl.className = 'pr-section-updated-info';
+      subsection.appendChild(infoEl);
+    }
+    infoEl.textContent = `최종 수정: ${(updatedAt || '').substring(0, 16)} · ${updatedBy || ''}`;
+  }
+
+  function showMsg(el, text, type) {
+    if (!el) return;
+    el.textContent   = text;
+    el.className     = 'pr-modal-msg pr-modal-msg--' + type;
+    el.style.display = 'block';
   }
 }
+
 
 window.addEventListener('pageshow', e => {
   if (e.persisted) { try { hideGlobalLoading(); } catch(e) {} }
