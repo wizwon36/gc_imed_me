@@ -710,14 +710,38 @@
         </div>
         <button class="pr-modal-close" id="prEditModalClose" title="닫기">✕</button>
       </div>
-      <div class="pr-modal-body">
+      <!-- Step 1: 편집 -->
+      <div class="pr-modal-body" id="prEditStep1">
         <div class="pr-modal-msg" id="prEditModalMsg" style="display:none;"></div>
         <div id="prEditorArea"></div>
       </div>
-      <div class="pr-modal-footer">
-        <button type="button" class="btn btn-primary pr-save-btn" id="prEditSaveBtn">저장</button>
+      <div class="pr-modal-footer" id="prEditFooter1">
+        <button type="button" class="btn btn-primary" id="prEditPreviewBtn">변경 내용 확인 →</button>
         <button type="button" class="btn pr-cancel-btn" id="prEditCancelBtn">취소</button>
         <span class="pr-modal-updated" id="prEditLastUpdated"></span>
+      </div>
+
+      <!-- Step 2: diff 확인 -->
+      <div class="pr-modal-body pr-diff-body" id="prEditStep2" style="display:none;">
+        <div class="pr-modal-msg" id="prEditModalMsg2" style="display:none;"></div>
+        <div class="pr-diff-wrap">
+          <div class="pr-diff-col">
+            <div class="pr-diff-label pr-diff-label--before">저장 전</div>
+            <div class="pr-diff-content" id="prDiffBefore"></div>
+          </div>
+          <div class="pr-diff-col">
+            <div class="pr-diff-label pr-diff-label--after">저장 후</div>
+            <div class="pr-diff-content" id="prDiffAfter"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pr-modal-footer" id="prEditFooter2" style="display:none;">
+        <button type="button" class="btn btn-primary pr-save-btn" id="prEditSaveBtn">저장 확정</button>
+        <button type="button" class="btn" id="prEditBackBtn">← 다시 편집</button>
+        <button type="button" class="btn pr-cancel-btn" id="prEditCancelBtn2">취소</button>
+        <span class="pr-revert-wrap" id="prRevertWrap" style="display:none;">
+          <button type="button" class="btn pr-revert-btn" id="prRevertBtn">↩ 이전 버전으로 되돌리기</button>
+        </span>
       </div>
     </div>
   </div>
