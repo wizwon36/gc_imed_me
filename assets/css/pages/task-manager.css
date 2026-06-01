@@ -1547,6 +1547,7 @@
   .week-summary-bar       { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
   /* 모바일: 날짜 그리드 세로 배치 */
   .date-row-grid          { grid-template-columns: 1fr !important; }
+  .date-row-grid .form-label-row { height: auto; }
   /* 모바일: 모달 세로 스크롤 허용 */
   .task-modal             { max-height: 92vh; display: flex; flex-direction: column; }
   .task-modal-body        { overflow-y: auto; flex: 1; }
@@ -1737,3 +1738,13 @@
   border: 1.5px solid #fecaca;
   color: #b91c1c;
 }
+
+/* 업무 등록 모달 — 시작일/종료일 라벨 행 높이 통일 */
+.date-row-grid .form-group { display: flex; flex-direction: column; }
+.date-row-grid .form-label-row {
+  display: flex;
+  align-items: center;
+  height: 26px;   /* form-label 기본 높이와 동일 */
+  margin-bottom: 6px;
+}
+.date-row-grid .form-input { flex: 1; }
