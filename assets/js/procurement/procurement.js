@@ -7,7 +7,7 @@
  */
 
 // CKEditor ESM 파일 경로 (procurement.js 기준 상대경로)
-const CKEDITOR_PATH = '../../assets/libs/ckeditor5/ckeditor5.js';
+const CKEDITOR_PATH = `${CONFIG.SITE_BASE_URL}/assets/libs/ckeditor5/ckeditor5.js`;
 document.addEventListener('DOMContentLoaded', async () => {
 
   // ── 전역 스피너 시작 ───────────────────────────────────────
