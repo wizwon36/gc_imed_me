@@ -955,8 +955,6 @@
   max-height: 60vh;
   overflow-y: auto;
   overflow-x: clip;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .task-modal-footer {
@@ -1018,6 +1016,11 @@ input[type="date"].form-input {
   padding: 0 10px;
   line-height: 40px;
   box-sizing: border-box;
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 13px;
 }
 
 .form-textarea {
