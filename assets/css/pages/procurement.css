@@ -1201,9 +1201,11 @@ p:empty + .pr-table-wrap {
   .pr-search-section,
   .pr-toc-aside,
   .pr-edit-btn,
+  .pr-edit-btn--section,
   .pr-back-to-top,
   .pr-modal-backdrop,
   .pr-section-updated-info,
+  .pr-modal-loading,
   #globalLoading,
   .portal-header-btn {
     display: none !important;
@@ -1327,13 +1329,17 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-gc-logo {
-    display: block;
+    display: block !important;
     height: 28pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .pr-cover-gc-logo img {
-    height: 100%;
-    width: auto;
+    display: block !important;
+    height: 28pt !important;
+    width: auto !important;
+    max-width: 160pt !important;
     object-fit: contain;
   }
 
@@ -1416,10 +1422,13 @@ p:empty + .pr-table-wrap {
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-    padding: 0 0 6mm !important;
+    padding: 0 0 4mm !important;
     margin-bottom: 0 !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
+  }
+
+  /* intro 래퍼 여백 제거 */
+  .pr-section-intro-wrap {
+    margin-bottom: 3mm !important;
   }
 
   .pr-h1 {
@@ -1427,8 +1436,8 @@ p:empty + .pr-table-wrap {
     font-weight: 900 !important;
     color: #0b1f44 !important;
     border-bottom: 1.5pt solid #1a3a2a !important;
-    padding-bottom: 3mm !important;
-    margin: 8mm 0 5mm !important;
+    padding-bottom: 2mm !important;
+    margin: 5mm 0 3mm !important;
     page-break-after: avoid;
     break-after: avoid;
   }
@@ -1443,10 +1452,8 @@ p:empty + .pr-table-wrap {
 
   .pr-subsection {
     border-bottom: 0.5pt solid #e8e8e8 !important;
-    padding: 4mm 0 !important;
+    padding: 2mm 0 3mm !important;
     margin-bottom: 0 !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
   }
 
   .pr-subsection:last-child { border-bottom: none !important; }
@@ -1553,7 +1560,7 @@ p:empty + .pr-table-wrap {
   .pr-sanction--orange { background: #fff7ed !important; color: #c2410c !important; }
 
   /* ── 페이지 나눔 제어 ────────────────────────────────────────── */
-  .pr-section + .pr-section { page-break-before: always; break-before: page; }
+  /* 섹션 강제 페이지 나눔 제거 — 내용 흐름에 따라 자연 분리 */
 
   h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
   table, figure, .pr-callout, .pr-duty-flow { page-break-inside: avoid; break-inside: avoid; }
