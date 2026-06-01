@@ -6,15 +6,23 @@
   grid-template-columns: 260px 1fr;
   gap: 24px;
   align-items: start;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 /* ─── 버전/검색 섹션 ─────────────────────────────── */
 .pr-search-section {
-  margin-top: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  margin-top: 0;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 10px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
 .pr-version-row {
@@ -97,7 +105,7 @@
 /* ─── 사이드 목차 ─────────────────────────────────── */
 .pr-toc-aside {
   position: sticky;
-  top: 20px;
+  top: 100px;
   background: #fff;
   border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
@@ -645,6 +653,23 @@ p {
 
   .pr-process-spacer {
     display: none;
+  }
+
+  /* 모바일: 버전 배지 숨기고 검색창만 노출 */
+  .pr-search-section {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .pr-version-row {
+    display: none;
+  }
+
+  .pr-search-input {
+    height: 42px;
+    font-size: 14px;
   }
 }
 
