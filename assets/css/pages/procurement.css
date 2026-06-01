@@ -1238,58 +1238,57 @@ p:empty + .pr-table-wrap {
 
   .pr-cover-top {
     background: #1a3a2a !important;
-    /* 고정 높이 대신 비율 패딩으로 처리 */
-    padding: 8mm 14mm 8mm 14mm !important;
+    padding: 10mm 16mm 10mm 16mm !important;
     display: flex !important;
     align-items: flex-end !important;
-    min-height: 52mm !important;
+    min-height: 80mm !important;   /* 헤더 영역 확대 */
   }
 
   .pr-cover-top-text {
-    font-size: 11pt !important;
+    font-size: 10pt !important;
     color: #a8c5a0 !important;
-    letter-spacing: 0.12em !important;
+    letter-spacing: 0.15em !important;
     font-weight: 600 !important;
   }
 
   .pr-cover-body {
     flex: 1 !important;
-    padding: 18mm 14mm 10mm 14mm !important;
+    padding: 22mm 16mm 10mm 16mm !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;  /* 위에서 아래로 자연스럽게 */
   }
 
   .pr-cover-label {
-    font-size: 9pt !important;
+    font-size: 10pt !important;
     font-weight: 700 !important;
-    letter-spacing: 0.2em !important;
+    letter-spacing: 0.25em !important;
     color: #1a3a2a !important;
-    margin-bottom: 6mm !important;
+    margin-bottom: 8mm !important;
     text-transform: uppercase !important;
   }
 
   .pr-cover-title {
-    font-size: 32pt !important;
+    font-size: 44pt !important;
     font-weight: 900 !important;
     color: #0b1f44 !important;
     line-height: 1.15 !important;
-    margin-bottom: 8mm !important;
+    margin-bottom: 10mm !important;
     letter-spacing: -0.01em !important;
   }
 
   .pr-cover-subtitle {
-    font-size: 13pt !important;
+    font-size: 16pt !important;
     color: #2d5a3d !important;
-    font-weight: 600 !important;
-    margin-bottom: 14mm !important;
+    font-weight: 700 !important;
+    margin-bottom: 18mm !important;
   }
 
   .pr-cover-divider {
-    width: 20mm !important;
-    height: 3pt !important;
+    width: 28mm !important;
+    height: 3.5pt !important;
     background: #1a3a2a !important;
-    margin-bottom: 10mm !important;
+    margin-bottom: 12mm !important;
   }
 
   .pr-cover-meta {
@@ -1300,20 +1299,20 @@ p:empty + .pr-table-wrap {
 
   .pr-cover-meta-row {
     display: flex !important;
-    gap: 4mm !important;
-    font-size: 9.5pt !important;
+    gap: 6mm !important;
+    font-size: 11pt !important;
     color: #444 !important;
   }
 
   .pr-cover-meta-label {
     font-weight: 700 !important;
     color: #1a3a2a !important;
-    min-width: 18mm !important;
+    min-width: 20mm !important;
   }
 
   /* ── 표지 하단: 로고 영역 ── */
   .pr-cover-bottom {
-    padding: 0 14mm 10mm 14mm !important;
+    padding: 0 16mm 14mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -1322,7 +1321,7 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-company {
-    font-size: 10pt !important;
+    font-size: 11pt !important;
     font-weight: 700 !important;
     color: #1a3a2a !important;
   }
@@ -1340,9 +1339,9 @@ p:empty + .pr-table-wrap {
   /* 로고 이미지: 흰 배경 + 크기 조정 */
   .pr-cover-gc-logo img {
     display: block !important;
-    height: 24pt !important;
+    height: 32pt !important;
     width: auto !important;
-    max-width: 140pt !important;
+    max-width: 180pt !important;
     object-fit: contain !important;
     /* 핵심: 인쇄 시 로고 배경 검게 나오는 원인 제거 */
     background: #ffffff !important;
