@@ -963,12 +963,16 @@ function buildTocPage() {
 
   let html = '<div class="pr-print-toc-title">CONTENTS</div>';
 
-  // 대섹션과 소섹션 순회
+  // 대섹션과 소섹션 순회 (편집 버튼 텍스트 제외)
   document.querySelectorAll('.pr-section').forEach(section => {
     const h1 = section.querySelector('.pr-h1');
     if (!h1) return;
 
-    const h1Text = h1.textContent.trim();
+    // 편집 버튼 제외한 순수 제목 텍스트만 추출
+    const h1Clone = h1.cloneNode(true);
+    h1Clone.querySelectorAll('.pr-edit-btn, .pr-edit-btn--section, button').forEach(el => el.remove());
+    const h1Text = h1Clone.textContent.trim();
+
     html += `
       <div class="pr-toc-entry pr-toc-entry--h1">
         <span>${h1Text}</span>
@@ -976,9 +980,12 @@ function buildTocPage() {
       </div>`;
 
     section.querySelectorAll('.pr-subsection').forEach(sub => {
+      const header = sub.querySelector('.pr-subsection-header');
       const h2 = sub.querySelector('.pr-h2');
       if (!h2) return;
-      const h2Text = h2.textContent.trim();
+      const h2Clone = h2.cloneNode(true);
+      h2Clone.querySelectorAll('button').forEach(el => el.remove());
+      const h2Text = h2Clone.textContent.trim();
       html += `
         <div class="pr-toc-entry" style="padding-left:4mm;">
           <span>${h2Text}</span>
