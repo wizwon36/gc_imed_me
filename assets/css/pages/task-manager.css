@@ -1007,6 +1007,7 @@ input[type="date"].form-input {
   height: 42px;
   min-height: 42px;
   max-width: 100%;
+  width: 100%;
   padding: 0 10px;
   line-height: normal;
   box-sizing: border-box;
@@ -1557,6 +1558,8 @@ input[type="date"].form-input {
 /* 업무 등록 모달 날짜 그리드 — PC: 2컬럼 */
 .date-row-grid {
   grid-template-columns: 1fr 1fr;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* ── 반응형 ── */
