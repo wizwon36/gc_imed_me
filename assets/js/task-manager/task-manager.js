@@ -202,8 +202,15 @@
     document.getElementById('taskModalClose')?.addEventListener('click', closeTaskModal);
     document.getElementById('taskModalCancelBtn')?.addEventListener('click', closeTaskModal);
     document.getElementById('taskModalSaveBtn')?.addEventListener('click', saveTask);
+
+    // overlay 클릭 시 닫기 — 단, 모달 내부에서 드래그해서 나온 경우는 닫지 않음
+    let _taskModalMousedownOnOverlay = false;
+    document.getElementById('taskModal')?.addEventListener('mousedown', e => {
+      _taskModalMousedownOnOverlay = (e.target === document.getElementById('taskModal'));
+    });
     document.getElementById('taskModal')?.addEventListener('click', e => {
-      if (e.target === document.getElementById('taskModal')) closeTaskModal();
+      if (e.target === document.getElementById('taskModal') && _taskModalMousedownOnOverlay) closeTaskModal();
+      _taskModalMousedownOnOverlay = false;
     });
 
     // 우선순위 & 상태 선택 UI
