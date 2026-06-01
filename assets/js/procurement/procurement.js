@@ -229,18 +229,65 @@ document.addEventListener('DOMContentLoaded', async () => {
   initPdfDownload();
 });
 
+// ── 스켈레톤 UI ──────────────────────────────────────────────
+function showSkeleton() {
+  const content = document.getElementById('prContent');
+  if (!content) return;
+
+  content.querySelectorAll('.pr-section').forEach(el => {
+    el.style.visibility = 'hidden';
+    el.style.position = 'absolute';
+  });
+
+  const skeletonBlock = () => `
+    <div class="pr-skeleton-section">
+      <div class="pr-skeleton-line pr-skeleton-line--title"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--h2"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--p1"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--p2"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--p3"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--p4"></div>
+      <div class="pr-skeleton-divider"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--h2"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--p1"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--p2"></div>
+      <div class="pr-skeleton-line pr-skeleton-line--p3"></div>
+    </div>
+  `;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'prSkeletonWrap';
+  wrap.className = 'pr-skeleton-wrap';
+  wrap.innerHTML = skeletonBlock() + skeletonBlock() + skeletonBlock();
+  content.insertBefore(wrap, content.firstChild);
+}
+
+function hideSkeleton() {
+  const skeleton = document.getElementById('prSkeletonWrap');
+  if (skeleton) skeleton.remove();
+
+  const content = document.getElementById('prContent');
+  if (!content) return;
+  content.querySelectorAll('.pr-section').forEach(el => {
+    el.style.visibility = '';
+    el.style.position = '';
+  });
+}
+
 // ── 섹션 로드 및 렌더링 ──────────────────────────────────────
 async function loadSections() {
   const user = window.auth?.getSession?.();
   if (!user?.email) return;
+
+  showSkeleton();
 
   try {
     const result = await apiGet('getProcurementSections', {
       request_user_email: user.email
     });
 
-    if (!result?.success || !Array.isArray(result.data)) return;
-    if (result.data.length === 0) return; // 아직 저장된 내용 없음 → HTML 기본값 유지
+    if (!result?.success || !Array.isArray(result.data)) { hideSkeleton(); return; }
+    if (result.data.length === 0) { hideSkeleton(); return; } // 아직 저장된 내용 없음 → HTML 기본값 유지
 
     // 각 섹션의 content_html을 DOM에 반영
     // 섹션 메타 캐시 초기화
@@ -293,8 +340,11 @@ async function loadSections() {
       }
     });
 
+    hideSkeleton();
+
   } catch (err) {
     // 로드 실패 시 기본 HTML 유지 (조용히 무시)
+    hideSkeleton();
     console.warn('구매규정 섹션 로드 실패:', err.message);
   }
 }
