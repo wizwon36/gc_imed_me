@@ -421,19 +421,27 @@
         <button class="task-modal-close" id="taskModalClose">✕</button>
       </div>
       <div class="task-modal-body">
-        <div class="form-group">
-          <label class="form-label">시작일 <span class="required">*</span></label>
-          <input type="date" class="form-input" id="modalStartDate" />
-        </div>
-        <div class="form-group">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <label class="form-label" style="margin:0;">종료일</label>
-            <label class="single-day-check">
-              <input type="checkbox" id="modalSingleDay" checked />
-              <span>단기업무 (당일 완료)</span>
-            </label>
+        <!-- 시작일 / 종료일 한 줄 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">시작일 <span class="required">*</span></label>
+            <input type="date" class="form-input" id="modalStartDate" />
           </div>
-          <input type="date" class="form-input" id="modalEndDate" style="display:none;" />
+          <div class="form-group" style="margin-bottom:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <label class="form-label" style="margin:0;">종료일</label>
+              <label class="single-day-check">
+                <input type="checkbox" id="modalSingleDay" checked />
+                <span>단기업무</span>
+              </label>
+            </div>
+            <input type="date" class="form-input" id="modalEndDate" style="display:none;" />
+          </div>
+        </div>
+        <!-- 수행 의원 (업무 구분 위) -->
+        <div class="form-group">
+          <label class="form-label">수행 의원 <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(소속과 다른 의원에서 수행한 경우 변경)</span></label>
+          <select class="form-select" id="modalWorkClinic"></select>
         </div>
         <div class="form-group">
           <label class="form-label">업무 구분 <span class="required">*</span></label>
@@ -476,16 +484,6 @@
               <input type="radio" name="status" value="DONE"> 완료
             </label>
           </div>
-        </div>
-        <!-- [NEW] 수행 의원 — 실제 업무를 수행한 의원 (소속과 다를 수 있음) -->
-        <div class="form-group">
-          <label class="form-label" style="display:flex;align-items:center;gap:6px;">
-            수행 의원
-            <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(소속과 다른 의원에서 수행한 경우 변경)</span>
-          </label>
-          <select class="form-select" id="modalWorkClinic">
-            <option value="">불러오는 중...</option>
-          </select>
         </div>
       </div>
       <div class="task-modal-footer">
