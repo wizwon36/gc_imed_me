@@ -1163,6 +1163,8 @@ p:empty + .pr-table-wrap {
   .pr-modal-loading,
   .pr-process-spacer,
   #globalLoading,
+  #prEditModal,
+  #prSkeletonWrap,
   .portal-header-btn {
     display: none !important;
   }
@@ -1253,7 +1255,7 @@ p:empty + .pr-table-wrap {
 
   .pr-cover-body {
     flex: 1 !important;
-    padding: 22mm 16mm 65mm 16mm !important;
+    padding: 22mm 16mm 80mm 16mm !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;  /* 위에서 아래로 자연스럽게 */
@@ -1674,51 +1676,4 @@ p:empty + .pr-table-wrap {
   font-weight: 700;
   color: #0b1f44;
   letter-spacing: 0.02em;
-}
-
-/* ══════════════════════════════════════════════
-   스켈레톤 로딩
-   ============================================== */
-.pr-skeleton-wrap {
-  padding: 24px 0;
-}
-
-.pr-skeleton-section {
-  margin-bottom: 40px;
-}
-
-.pr-skeleton-line {
-  background: linear-gradient(90deg, #e8ecf0 25%, #f4f6f8 50%, #e8ecf0 75%);
-  background-size: 400% 100%;
-  animation: pr-skeleton-shimmer 1.4s ease infinite;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.pr-skeleton-line--title {
-  height: 22px;
-  width: 40%;
-  margin-bottom: 16px;
-}
-
-.pr-skeleton-line--h2 {
-  height: 16px;
-  width: 28%;
-  margin-bottom: 12px;
-}
-
-.pr-skeleton-line--p1 { height: 13px; width: 100%; }
-.pr-skeleton-line--p2 { height: 13px; width: 96%; }
-.pr-skeleton-line--p3 { height: 13px; width: 88%; }
-.pr-skeleton-line--p4 { height: 13px; width: 72%; }
-
-.pr-skeleton-divider {
-  height: 1px;
-  background: #e8ecf0;
-  margin: 28px 0;
-}
-
-@keyframes pr-skeleton-shimmer {
-  0%   { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
 }
