@@ -2079,7 +2079,7 @@
           sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
           sc(r, 1, weekLabel, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
           clinics.forEach((cl, i) => {
-            const text = buildTaskText(taskClinicMap[cl] || [], catKey, false, isNext);
+            const text = buildTaskText(taskClinicMap[cl] || [], catKey, null, isNext);
             const lines = text ? text.split('\n') : [];
             sc(r, 2+i, wrapExcelLines(stripNameAndDate(lines)), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
           });
@@ -2329,9 +2329,9 @@
         </thead>
         <tbody>`;
 
-      // 주요이슈 행
-      const highThis = getSectionLines('summary',   null, 'HIGH');
-      const highNext = getSectionLines('next_plan', null, 'HIGH');
+      // 주요이슈 행 — HIGH 업무만
+      const highThis = getSectionLines(true, null, false);
+      const highNext = getSectionLines(true, null, true);
       tableHtml += `
         <tr>
           <td rowspan="2" style="${tdLabelStyle}">주요이슈</td>
@@ -2343,10 +2343,10 @@
           ${clinics.map(cl => `<td style="${tdDataStyleNext}">${textToHtml(highNext[cl])}</td>`).join('')}
         </tr>`;
 
-      // 카테고리별
-      cats.forEach(([, catName]) => {
-        const thisData = getSectionLines('summary',   catName, 'NORMAL');
-        const nextData = getSectionLines('next_plan', catName, 'NORMAL');
+      // 카테고리별 — 전체 업무 (HIGH 포함)
+      cats.forEach(([catKey, catName]) => {
+        const thisData = getSectionLines(null, catKey, false);
+        const nextData = getSectionLines(null, catKey, true);
         const label = catName.replace(/&/g,'&amp;').replace(/</g,'&lt;');
         tableHtml += `
         <tr>
