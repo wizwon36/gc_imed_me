@@ -219,6 +219,11 @@
   padding: 32px 36px;
   margin-bottom: 20px;
   box-shadow: var(--shadow-card);
+  visibility: hidden;  /* JS 로드 전 노출 방지 — hideSkeleton()에서 복원 */
+}
+
+.pr-section--visible {
+  visibility: visible;
 }
 
 .pr-h1 {
@@ -1174,10 +1179,9 @@ p:empty + .pr-table-wrap {
   .pr-print-spacer {
     display: none !important;
   }
-  /* pr-content 자체 하단 여백도 제거 */
-  .pr-content {
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
+  /* 인쇄 시 pr-section 항상 표시 (CSS 기본값 visibility:hidden 덮어쓰기) */
+  .pr-section {
+    visibility: visible !important;
   }
 
   /* 인쇄 전용 요소 표시 */
