@@ -129,9 +129,12 @@
             <button class="category-manage-btn" id="categoryManageBtn" style="display:none;" title="카테고리 관리">
               ⚙ 카테고리
             </button>
-            <!-- 업무일지 자동 동기화 토글 -->
+          </div>
+
+          <!-- 업무일지 자동 동기화 토글 — 타임라인 위 별도 행 -->
+          <div style="display:flex;align-items:center;justify-content:flex-end;padding:6px 22px 0;background:#f0f7ff;">
             <label id="journalAutoSyncWrap"
-              style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;flex-shrink:0;margin-left:4px;"
+              style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;"
               title="켜짐: 업무 등록/수정 시 업무일지 요약이 자동으로 업데이트됩니다.&#10;꺼짐: 자동 업데이트를 하지 않고 직접 작성합니다.">
               <span style="font-size:11.5px;color:var(--text-secondary);font-weight:500;">업무일지 자동 동기화</span>
               <div style="position:relative;width:36px;height:20px;">
@@ -422,7 +425,7 @@
       </div>
       <div class="task-modal-body">
         <!-- 시작일 / 종료일 한 줄 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div class="date-row-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
           <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">시작일 <span class="required">*</span></label>
             <input type="date" class="form-input" id="modalStartDate" />
