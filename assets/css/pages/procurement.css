@@ -1312,7 +1312,7 @@ p:empty + .pr-table-wrap {
 
   /* ── 표지 하단: 로고 영역 ── */
   .pr-cover-bottom {
-    padding: 0 16mm 14mm 16mm !important;
+    padding: 0 16mm 28mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
