@@ -904,6 +904,11 @@ function initPdfDownload() {
     // 인쇄용 헤더
     const header = buildPrintHeader();
 
+    // 화면에 보이지 않도록 숨긴 상태로 삽입
+    cover.style.cssText  = 'position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
+    toc.style.cssText    = 'position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
+    header.style.cssText = 'position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
+
     const content = document.querySelector('.pr-content');
     content.insertBefore(header, content.firstChild);
     content.insertBefore(toc,    content.firstChild);
@@ -915,19 +920,23 @@ function initPdfDownload() {
       if (img.complete) return Promise.resolve();
       return new Promise(resolve => {
         img.onload  = resolve;
-        img.onerror = resolve; // 실패해도 진행
+        img.onerror = resolve;
       });
     });
 
     Promise.all(imgLoadPromises).then(() => {
-      // 약간의 렌더링 여유 시간 부여
+      // 인쇄 직전 숨김 해제 (인쇄 CSS가 제어)
+      cover.style.cssText  = '';
+      toc.style.cssText    = '';
+      header.style.cssText = '';
+
       setTimeout(() => {
         window.print();
         // 인쇄 후 제거
         cover.remove();
         toc.remove();
         header.remove();
-      }, 300);
+      }, 100);
     });
   });
 }
