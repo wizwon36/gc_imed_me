@@ -508,6 +508,10 @@ function initEditModal() {
         tableColumnResize: {
           useResizingColumnsWidth: false
         },
+        // 정렬: 표 셀 안에서는 tableCellProperties 사용, 일반 텍스트만 alignment 적용
+        alignment: {
+          options: ['left', 'center', 'right', 'justify']
+        },
         // ── 편집 영역에 procurement.css 주입 ───────────────────
         // CKEditor iframe 없이 shadow DOM 방식이므로 contentsCss 대신
         // editorReady 후 직접 주입
