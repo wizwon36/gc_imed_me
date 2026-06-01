@@ -332,14 +332,33 @@ function restoreHtmlClasses(html) {
   });
 
   // 2. <figure class="table"> → <div class="pr-table-wrap">로 래핑 복구
+  //    단, 이미 pr-table-wrap 안에 있으면 중복 래핑 방지
   doc.querySelectorAll('figure.table').forEach(figure => {
-    const wrap = doc.createElement('div');
-    wrap.className = 'pr-table-wrap';
-    figure.parentNode.insertBefore(wrap, figure);
-    // figure 안의 table을 wrap으로 이동
     const table = figure.querySelector('table');
-    if (table) wrap.appendChild(table);
-    figure.remove();
+    if (!table) { figure.remove(); return; }
+
+    const parent = figure.parentNode;
+    if (parent && parent.classList && parent.classList.contains('pr-table-wrap')) {
+      // 이미 래퍼 안 → figure만 제거하고 table을 올림
+      parent.insertBefore(table, figure);
+      figure.remove();
+    } else {
+      const wrap = doc.createElement('div');
+      wrap.className = 'pr-table-wrap';
+      parent.insertBefore(wrap, figure);
+      wrap.appendChild(table);
+      figure.remove();
+    }
+  });
+
+  // 2-1. 중첩된 pr-table-wrap 제거
+  doc.querySelectorAll('.pr-table-wrap').forEach(outer => {
+    const inner = outer.querySelector(':scope > .pr-table-wrap');
+    if (inner) {
+      // inner의 자식을 outer로 올리고 inner 제거
+      while (inner.firstChild) outer.insertBefore(inner.firstChild, inner);
+      inner.remove();
+    }
   });
 
   // 3. <ul class="pr-list"> 가 없는 ul에 pr-list 부여
