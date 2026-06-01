@@ -1253,7 +1253,7 @@ p:empty + .pr-table-wrap {
 
   .pr-cover-body {
     flex: 1 !important;
-    padding: 22mm 16mm 40mm 16mm !important;
+    padding: 22mm 16mm 65mm 16mm !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;  /* 위에서 아래로 자연스럽게 */
