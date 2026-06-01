@@ -7,29 +7,38 @@
  */
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // ── 권한 체크 ─────────────────────────────────────────────
-  const ok = await window.appPermission?.requirePermission?.(
-    'procurement', ['admin', 'view']
-  );
-  if (ok === false) return;
+  // ── 전역 스피너 시작 ───────────────────────────────────────
+  try { showGlobalLoading('구매규정 불러오는 중...'); } catch(e) {}
 
-  const user = window.auth?.getSession?.();
+  try {
+    // ── 권한 체크 ───────────────────────────────────────────
+    const ok = await window.appPermission?.requirePermission?.(
+      'procurement', ['admin', 'view']
+    );
+    if (ok === false) return;
 
-  // role=admin 이면 app 권한 테이블과 무관하게 편집 가능
-  // 그 외에는 procurement 앱의 permission 값이 'admin'인 경우만 편집 가능
-  const isGlobalAdmin = String(user?.role || '').trim().toLowerCase() === 'admin';
-  const permission    = await window.appPermission?.getPermission?.('procurement');
-  const isAdmin       = isGlobalAdmin || permission === 'admin';
+    const user = window.auth?.getSession?.();
 
-  // ── 섹션 데이터 로드 및 렌더링 ───────────────────────────
-  await loadSections();
+    // role=admin 이면 app 권한 테이블과 무관하게 편집 가능
+    // 그 외에는 procurement 앱의 permission 값이 'admin'인 경우만 편집 가능
+    const isGlobalAdmin = String(user?.role || '').trim().toLowerCase() === 'admin';
+    const permission    = await window.appPermission?.getPermission?.('procurement');
+    const isAdmin       = isGlobalAdmin || permission === 'admin';
 
-  // admin이면 편집 버튼 노출
-  if (isAdmin) {
-    document.querySelectorAll('.pr-edit-btn').forEach(btn => {
-      btn.style.display = 'inline-flex';
-    });
-    initEditModal();
+    // ── 섹션 데이터 로드 및 렌더링 ─────────────────────────
+    await loadSections();
+
+    // admin이면 편집 버튼 노출
+    if (isAdmin) {
+      document.querySelectorAll('.pr-edit-btn').forEach(btn => {
+        btn.style.display = 'inline-flex';
+      });
+      initEditModal();
+    }
+
+  } finally {
+    // 권한체크 + 섹션 로드가 모두 끝난 뒤 스피너 해제
+    try { hideGlobalLoading(); } catch(e) {}
   }
 
   // ── 검색 ──────────────────────────────────────────────────
@@ -185,7 +194,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  try { hideGlobalLoading(); } catch(e) {}
 });
 
 // ── 섹션 로드 및 렌더링 ──────────────────────────────────────
