@@ -399,6 +399,15 @@ p {
   vertical-align: middle;
 }
 
+/* colspan 전체 병합 행 가운데 정렬 */
+.pr-table td[colspan="3"],
+.pr-table td[colspan="2"] {
+  text-align: center;
+  font-weight: 600;
+  color: #1e3a6e;
+  background: #f8faff;
+}
+
 .pr-table tbody tr:nth-child(even) td { background: #fafbff; }
 .pr-table tbody tr:hover td { background: #f0f6ff; }
 
