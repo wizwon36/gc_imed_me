@@ -990,6 +990,7 @@
   width: 100%;
   padding: 0 12px;
   height: 42px;
+  min-height: 42px;
   border: 1.5px solid var(--border-input);
   border-radius: var(--radius-sm);
   background: #fff;
@@ -997,6 +998,16 @@
   font-size: 13px;
   transition: border-color 0.15s ease;
   box-sizing: border-box;
+}
+
+/* type=date — 브라우저가 height 무시하는 경우 대비 */
+input[type="date"].form-input {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  min-height: 42px;
+  padding: 0 10px;
+  line-height: normal;
 }
 
 .form-textarea {
@@ -1738,13 +1749,3 @@
   border: 1.5px solid #fecaca;
   color: #b91c1c;
 }
-
-/* 업무 등록 모달 — 시작일/종료일 라벨 행 높이 통일 */
-.date-row-grid .form-group { display: flex; flex-direction: column; }
-.date-row-grid .form-label-row {
-  display: flex;
-  align-items: center;
-  height: 26px;   /* form-label 기본 높이와 동일 */
-  margin-bottom: 6px;
-}
-.date-row-grid .form-input { flex: 1; }
