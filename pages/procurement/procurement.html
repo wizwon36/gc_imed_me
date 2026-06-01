@@ -711,21 +711,7 @@
       </div>
       <div class="pr-modal-body">
         <div class="pr-modal-msg" id="prEditModalMsg" style="display:none;"></div>
-        <div class="pr-editor-toolbar">
-          <button type="button" class="pr-tb-btn" data-cmd="bold" title="굵게"><b>B</b></button>
-          <button type="button" class="pr-tb-btn" data-cmd="italic" title="기울임"><i>I</i></button>
-          <button type="button" class="pr-tb-btn pr-tb-btn--sep" data-cmd="insertUnorderedList" title="목록">≡</button>
-          <button type="button" class="pr-tb-btn" data-cmd="insertOrderedList" title="번호 목록">①</button>
-          <button type="button" class="pr-tb-btn pr-tb-btn--sep" data-cmd="formatBlock:h4" title="소제목">H4</button>
-          <button type="button" class="pr-tb-btn" data-cmd="removeFormat" title="서식 제거">✕</button>
-        </div>
-        <div
-          class="pr-editor-area"
-          id="prEditorArea"
-          contenteditable="true"
-          spellcheck="false"
-        ></div>
-        <p class="pr-editor-hint">HTML 직접 편집이 가능합니다. 서식 도구모음을 활용하거나 붙여넣기 후 저장하세요.</p>
+        <div id="prEditorArea"></div>
       </div>
       <div class="pr-modal-footer">
         <button type="button" class="btn btn-primary pr-save-btn" id="prEditSaveBtn">저장</button>
@@ -740,6 +726,8 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
+  <!-- CKEditor 5 CDN -->
+  <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
   <script src="../../assets/js/procurement/procurement.js"></script>
 
   <div id="globalLoading" aria-hidden="true">
