@@ -904,10 +904,10 @@ function initPdfDownload() {
     // 인쇄용 헤더
     const header = buildPrintHeader();
 
-    // 화면에 보이지 않도록 숨긴 상태로 삽입
-    cover.style.cssText  = 'position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
-    toc.style.cssText    = 'position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
-    header.style.cssText = 'position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
+    // pr-print-only 클래스로 화면에서 숨긴 채 삽입
+    cover.classList.add('pr-print-only');
+    toc.classList.add('pr-print-only');
+    header.classList.add('pr-print-only');
 
     const content = document.querySelector('.pr-content');
     content.insertBefore(header, content.firstChild);
@@ -925,18 +925,11 @@ function initPdfDownload() {
     });
 
     Promise.all(imgLoadPromises).then(() => {
-      // 인쇄 직전 숨김 해제 (인쇄 CSS가 제어)
-      cover.style.cssText  = '';
-      toc.style.cssText    = '';
-      header.style.cssText = '';
-
-      setTimeout(() => {
-        window.print();
-        // 인쇄 후 제거
-        cover.remove();
-        toc.remove();
-        header.remove();
-      }, 100);
+      window.print();
+      // 인쇄 후 제거
+      cover.remove();
+      toc.remove();
+      header.remove();
     });
   });
 }
