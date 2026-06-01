@@ -1212,6 +1212,13 @@ p:empty + .pr-table-wrap {
     display: none !important;
   }
 
+  /* 화면에서 숨긴 요소 인쇄 시 다시 표시 */
+  .pr-cover,
+  .pr-print-toc,
+  .pr-print-page-header {
+    display: block !important;
+  }
+
   /* ── 레이아웃 단일 컬럼 ──────────────────────────────────────── */
   .container {
     max-width: 100% !important;
@@ -1332,6 +1339,7 @@ p:empty + .pr-table-wrap {
   .pr-cover-gc-logo {
     display: block !important;
     height: 28pt;
+    background: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -1342,6 +1350,7 @@ p:empty + .pr-table-wrap {
     width: auto !important;
     max-width: 160pt !important;
     object-fit: contain;
+    background: #fff !important;
   }
 
   /* ── 목차 페이지 ─────────────────────────────────────────────── */
