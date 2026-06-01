@@ -234,11 +234,7 @@ function showSkeleton() {
   const content = document.getElementById('prContent');
   if (!content) return;
 
-  content.querySelectorAll('.pr-section').forEach(el => {
-    el.style.visibility = 'hidden';
-    el.style.position = 'absolute';
-  });
-
+  // CSS에서 이미 visibility:hidden 상태 — 스켈레톤만 삽입
   const skeletonBlock = () => `
     <div class="pr-skeleton-section">
       <div class="pr-skeleton-line pr-skeleton-line--title"></div>
@@ -268,9 +264,9 @@ function hideSkeleton() {
 
   const content = document.getElementById('prContent');
   if (!content) return;
+  // 클래스 추가로 콘텐츠 표시
   content.querySelectorAll('.pr-section').forEach(el => {
-    el.style.visibility = '';
-    el.style.position = '';
+    el.classList.add('pr-section--visible');
   });
 }
 
