@@ -2079,7 +2079,7 @@
           sc(r, 0, fi === 0 ? catName : '', { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
           sc(r, 1, weekLabel, { font:FONT_BOLD, fill:FILL_WHITE, alignment:AL_C, border:rowBD });
           clinics.forEach((cl, i) => {
-            const text = buildTaskText(taskClinicMap[cl] || [], catKey, null, isNext);
+            const text = buildTaskText(taskClinicMap[cl] || [], catKey, false, isNext);
             const lines = text ? text.split('\n') : [];
             sc(r, 2+i, wrapExcelLines(stripNameAndDate(lines)), { font:FONT_BASE, fill:FILL_WHITE, alignment:AL_L, border:rowBD });
           });
@@ -2345,8 +2345,8 @@
 
       // 카테고리별 — 전체 업무 (HIGH 포함)
       cats.forEach(([catKey, catName]) => {
-        const thisData = getSectionLines(null, catKey, false);
-        const nextData = getSectionLines(null, catKey, true);
+        const thisData = getSectionLines(false, catKey, false);
+        const nextData = getSectionLines(false, catKey, true);
         const label = catName.replace(/&/g,'&amp;').replace(/</g,'&lt;');
         tableHtml += `
         <tr>
