@@ -1488,18 +1488,22 @@ p:empty + .pr-table-wrap {
   }
 
   /* ── 리스트 ─────────────────────────────────────────────────── */
-  .pr-list {
-    padding-left: 5mm !important;
-    margin: 2mm 0 !important;
-    list-style: none !important;
+  ul, ol, .pr-list {
     display: block !important;
+    margin: 2mm 0 !important;
+    padding-left: 5mm !important;
+  }
+
+  /* pr-list: 커스텀 불릿 */
+  .pr-list {
+    list-style: none !important;
   }
 
   .pr-list > li {
     font-size: 9.5pt !important;
     padding: 1mm 0 1mm 3mm !important;
     line-height: 1.6 !important;
-    display: list-item !important;
+    display: block !important;
     position: relative !important;
   }
 
@@ -1508,15 +1512,27 @@ p:empty + .pr-table-wrap {
     position: absolute !important;
     left: 0 !important;
     color: #000 !important;
+    font-weight: bold !important;
   }
 
-  /* 일반 ul/ol 인쇄 */
-  ul, ol {
-    display: block !important;
+  /* 일반 ul: 기본 불릿 유지 */
+  ul:not(.pr-list) {
+    list-style: disc !important;
   }
 
-  ul li, ol li {
+  ul:not(.pr-list) li,
+  ol li {
+    font-size: 9.5pt !important;
+    line-height: 1.6 !important;
     display: list-item !important;
+    padding: 0.5mm 0 !important;
+  }
+
+  /* pr-list가 없는 li도 동일하게 */
+  li {
+    display: list-item !important;
+    font-size: 9.5pt !important;
+    line-height: 1.6 !important;
   }
 
   /* ── 콜아웃 ─────────────────────────────────────────────────── */
