@@ -323,10 +323,16 @@ p {
   line-height: 1.65;
 }
 
-.pr-callout strong {
+/* 제목 strong (callout 직접 자식) 만 block */
+.pr-callout > strong {
   display: block;
   margin-bottom: 6px;
   font-size: 14px;
+}
+
+/* p 안의 strong은 inline 유지 */
+.pr-callout p strong {
+  display: inline;
 }
 
 .pr-callout p { margin: 6px 0 0; font-size: 14px; }
