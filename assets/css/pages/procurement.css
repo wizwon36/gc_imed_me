@@ -977,3 +977,394 @@ p {
   .pr-revert-wrap { margin-left: 0; width: 100%; }
   .pr-revert-btn  { width: 100%; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   인쇄 / PDF 스타일
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+
+  /* ── 기본 리셋 ──────────────────────────────────────────────── */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 20mm;
+  }
+
+  @page :first {
+    margin: 0;
+  }
+
+  body {
+    background: #fff !important;
+    font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif !important;
+    font-size: 10pt !important;
+    line-height: 1.65 !important;
+    color: #000 !important;
+  }
+
+  /* ── 화면 전용 요소 숨기기 ────────────────────────────────────── */
+  .top-brand-bar,
+  .pr-search-section,
+  .pr-toc-aside,
+  .pr-edit-btn,
+  .pr-back-to-top,
+  .pr-modal-backdrop,
+  .pr-section-updated-info,
+  #globalLoading,
+  .portal-header-btn {
+    display: none !important;
+  }
+
+  /* ── 레이아웃 단일 컬럼 ──────────────────────────────────────── */
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .pr-layout {
+    display: block !important;
+    margin: 0 !important;
+  }
+
+  .pr-content {
+    width: 100% !important;
+  }
+
+  /* ── 표지 페이지 ─────────────────────────────────────────────── */
+  .pr-cover {
+    page-break-after: always;
+    break-after: page;
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    background: #fff;
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .pr-cover-top {
+    background: #1a3a2a;
+    height: 55mm;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 14mm 8mm 14mm;
+  }
+
+  .pr-cover-top-text {
+    font-size: 11pt;
+    color: #a8c5a0;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+  }
+
+  .pr-cover-body {
+    flex: 1;
+    padding: 18mm 14mm 10mm 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .pr-cover-label {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #1a3a2a;
+    margin-bottom: 6mm;
+    text-transform: uppercase;
+  }
+
+  .pr-cover-title {
+    font-size: 32pt;
+    font-weight: 900;
+    color: #0b1f44;
+    line-height: 1.15;
+    margin-bottom: 8mm;
+    letter-spacing: -0.01em;
+  }
+
+  .pr-cover-subtitle {
+    font-size: 13pt;
+    color: #2d5a3d;
+    font-weight: 600;
+    margin-bottom: 14mm;
+  }
+
+  .pr-cover-divider {
+    width: 20mm;
+    height: 3pt;
+    background: #1a3a2a;
+    margin-bottom: 10mm;
+  }
+
+  .pr-cover-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3mm;
+  }
+
+  .pr-cover-meta-row {
+    display: flex;
+    gap: 4mm;
+    font-size: 9.5pt;
+    color: #444;
+  }
+
+  .pr-cover-meta-label {
+    font-weight: 700;
+    color: #1a3a2a;
+    min-width: 18mm;
+  }
+
+  .pr-cover-bottom {
+    padding: 0 14mm 10mm 14mm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pr-cover-company {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1a3a2a;
+  }
+
+  .pr-cover-gc-logo {
+    font-size: 18pt;
+    font-weight: 900;
+    color: #1a3a2a;
+    letter-spacing: -0.02em;
+  }
+
+  .pr-cover-gc-logo span {
+    color: #2d8a3e;
+  }
+
+  /* ── 목차 페이지 ─────────────────────────────────────────────── */
+  .pr-print-toc {
+    page-break-after: always;
+    break-after: page;
+    padding: 12mm 0 0;
+  }
+
+  .pr-print-toc-title {
+    font-size: 18pt;
+    font-weight: 900;
+    color: #0b1f44;
+    margin-bottom: 8mm;
+    padding-bottom: 3mm;
+    border-bottom: 2pt solid #1a3a2a;
+  }
+
+  .pr-toc-entry {
+    display: flex;
+    align-items: baseline;
+    gap: 2mm;
+    padding: 1.8mm 0;
+    font-size: 9.5pt;
+    color: #000;
+    break-inside: avoid;
+  }
+
+  .pr-toc-entry--h1 {
+    font-weight: 800;
+    font-size: 10.5pt;
+    color: #0b1f44;
+    margin-top: 4mm;
+    padding-top: 2mm;
+    border-top: 0.5pt solid #e0e0e0;
+  }
+
+  .pr-toc-entry--h1:first-child { border-top: none; margin-top: 0; }
+
+  .pr-toc-entry-dots {
+    flex: 1;
+    border-bottom: 0.5pt dotted #aaa;
+    margin: 0 2mm 1.5mm;
+  }
+
+  .pr-toc-entry-page {
+    font-size: 9pt;
+    color: #555;
+    min-width: 6mm;
+    text-align: right;
+  }
+
+  /* ── 헤더 / 푸터 ─────────────────────────────────────────────── */
+  .pr-print-page-header {
+    position: running(pageHeader);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    color: #666;
+    border-bottom: 0.5pt solid #ccc;
+    padding-bottom: 2mm;
+  }
+
+  @page { @top-center { content: element(pageHeader); } }
+
+  /* 푸터: 페이지 번호 */
+  @page { @bottom-center {
+    content: counter(page);
+    font-size: 8pt;
+    color: #666;
+  } }
+
+  @page :first { @top-center { content: none; } @bottom-center { content: none; } }
+
+  /* ── 섹션 스타일 ─────────────────────────────────────────────── */
+  .pr-section {
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 0 6mm !important;
+    margin-bottom: 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .pr-h1 {
+    font-size: 16pt !important;
+    font-weight: 900 !important;
+    color: #0b1f44 !important;
+    border-bottom: 1.5pt solid #1a3a2a !important;
+    padding-bottom: 3mm !important;
+    margin: 8mm 0 5mm !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .pr-h1-num {
+    background: #1a3a2a !important;
+    color: #fff !important;
+    font-size: 10pt !important;
+    padding: 1mm 3mm !important;
+    border-radius: 3pt !important;
+  }
+
+  .pr-subsection {
+    border-bottom: 0.5pt solid #e8e8e8 !important;
+    padding: 4mm 0 !important;
+    margin-bottom: 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .pr-subsection:last-child { border-bottom: none !important; }
+
+  .pr-h2 {
+    font-size: 12pt !important;
+    font-weight: 800 !important;
+    color: #1a3a2a !important;
+    border-left: 3pt solid #1a3a2a !important;
+    padding: 0 0 0 3mm !important;
+    margin: 0 0 3mm !important;
+    background: none !important;
+  }
+
+  .pr-h3 {
+    font-size: 10.5pt !important;
+    font-weight: 700 !important;
+    color: #0b1f44 !important;
+    background: #f0f0f0 !important;
+    padding: 1.5mm 3mm !important;
+    border-radius: 2pt !important;
+    margin: 3mm 0 2mm !important;
+  }
+
+  .pr-subsection-header { padding-right: 0 !important; }
+
+  p {
+    font-size: 9.5pt !important;
+    line-height: 1.65 !important;
+    margin: 0 0 2mm !important;
+  }
+
+  /* ── 리스트 ─────────────────────────────────────────────────── */
+  .pr-list {
+    padding-left: 5mm !important;
+    margin: 2mm 0 !important;
+  }
+
+  .pr-list > li {
+    font-size: 9.5pt !important;
+    padding: 1mm 0 1mm 3mm !important;
+    line-height: 1.6 !important;
+  }
+
+  /* ── 콜아웃 ─────────────────────────────────────────────────── */
+  .pr-callout {
+    border-radius: 3pt !important;
+    padding: 3mm 4mm !important;
+    margin: 3mm 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ── 테이블 ─────────────────────────────────────────────────── */
+  .pr-table-wrap {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 3mm 0 !important;
+  }
+
+  .pr-table {
+    font-size: 8.5pt !important;
+    width: 100% !important;
+    border: 0.5pt solid #aaa !important;
+  }
+
+  .pr-table th {
+    background: #1a3a2a !important;
+    color: #fff !important;
+    padding: 2mm 3mm !important;
+    font-size: 8.5pt !important;
+  }
+
+  .pr-table td {
+    padding: 2mm 3mm !important;
+    border: 0.5pt solid #ccc !important;
+    font-size: 8.5pt !important;
+  }
+
+  .pr-table tbody tr:nth-child(even) td {
+    background: #f7f7f7 !important;
+  }
+
+  /* ── 직무분리 플로우 ─────────────────────────────────────────── */
+  .pr-duty-flow {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 2mm !important;
+  }
+
+  .pr-duty-arrow { font-size: 12pt !important; padding-top: 6mm !important; }
+  .pr-duty-step  { padding: 3mm !important; font-size: 8.5pt !important; }
+
+  /* ── 프로세스 다이어그램 ─────────────────────────────────────── */
+  .pr-process-flow {
+    font-size: 8.5pt !important;
+    gap: 4mm !important;
+  }
+
+  .pr-process-box { padding: 2mm 3mm !important; font-size: 8pt !important; }
+
+  /* ── 징계 배지 ──────────────────────────────────────────────── */
+  .pr-sanction--red    { background: #fef2f2 !important; color: #b42318 !important; }
+  .pr-sanction--orange { background: #fff7ed !important; color: #c2410c !important; }
+
+  /* ── 페이지 나눔 제어 ────────────────────────────────────────── */
+  .pr-section + .pr-section { page-break-before: always; break-before: page; }
+
+  h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
+  table, figure, .pr-callout, .pr-duty-flow { page-break-inside: avoid; break-inside: avoid; }
+}
