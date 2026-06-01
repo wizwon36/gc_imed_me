@@ -217,6 +217,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
+
+  // PDF 다운로드 버튼 초기화
+  initPdfDownload();
 });
 
 // ── 섹션 로드 및 렌더링 ──────────────────────────────────────
@@ -601,6 +604,116 @@ function initEditModal() {
   }
 }
 
+
+// ── PDF 다운로드 ──────────────────────────────────────────────
+function initPdfDownload() {
+  const btn = document.getElementById('prPdfDownload');
+  if (!btn) return;
+
+  btn.addEventListener('click', () => {
+    // 표지 생성
+    const cover = buildCoverPage();
+    // 목차 생성
+    const toc = buildTocPage();
+    // 인쇄용 헤더
+    const header = buildPrintHeader();
+
+    const content = document.querySelector('.pr-content');
+    content.insertBefore(header, content.firstChild);
+    content.insertBefore(toc,    content.firstChild);
+    content.insertBefore(cover,  content.firstChild);
+
+    window.print();
+
+    // 인쇄 후 제거
+    cover.remove();
+    toc.remove();
+    header.remove();
+  });
+}
+
+function buildCoverPage() {
+  const today = new Date();
+  const ver   = document.querySelector('.pr-badge--green')?.textContent || 'Ver 6.0';
+  const date  = document.querySelector('.pr-badge--blue')?.textContent  || '2023.07.01 시행';
+
+  const div = document.createElement('div');
+  div.className = 'pr-cover';
+  div.innerHTML = `
+    <div class="pr-cover-top">
+      <span class="pr-cover-top-text">GC PROCUREMENT REGULATION</span>
+    </div>
+    <div class="pr-cover-body">
+      <div class="pr-cover-label">Green Book</div>
+      <div class="pr-cover-title">구매규정</div>
+      <div class="pr-cover-subtitle">GC녹십자아이메드</div>
+      <div class="pr-cover-divider"></div>
+      <div class="pr-cover-meta">
+        <div class="pr-cover-meta-row">
+          <span class="pr-cover-meta-label">버전</span>
+          <span>${ver}</span>
+        </div>
+        <div class="pr-cover-meta-row">
+          <span class="pr-cover-meta-label">시행일</span>
+          <span>${date.replace(' 시행','')}</span>
+        </div>
+        <div class="pr-cover-meta-row">
+          <span class="pr-cover-meta-label">출력일</span>
+          <span>${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}</span>
+        </div>
+      </div>
+    </div>
+    <div class="pr-cover-bottom">
+      <span class="pr-cover-company">GC녹십자아이메드 MSO관리팀</span>
+      <span class="pr-cover-gc-logo">+<span>GC</span></span>
+    </div>
+  `;
+  return div;
+}
+
+function buildTocPage() {
+  const div = document.createElement('div');
+  div.className = 'pr-print-toc';
+
+  let html = '<div class="pr-print-toc-title">CONTENTS</div>';
+
+  // 대섹션과 소섹션 순회
+  document.querySelectorAll('.pr-section').forEach(section => {
+    const h1 = section.querySelector('.pr-h1');
+    if (!h1) return;
+
+    const h1Text = h1.textContent.trim();
+    html += `
+      <div class="pr-toc-entry pr-toc-entry--h1">
+        <span>${h1Text}</span>
+        <span class="pr-toc-entry-dots"></span>
+      </div>`;
+
+    section.querySelectorAll('.pr-subsection').forEach(sub => {
+      const h2 = sub.querySelector('.pr-h2');
+      if (!h2) return;
+      const h2Text = h2.textContent.trim();
+      html += `
+        <div class="pr-toc-entry" style="padding-left:4mm;">
+          <span>${h2Text}</span>
+          <span class="pr-toc-entry-dots"></span>
+        </div>`;
+    });
+  });
+
+  div.innerHTML = html;
+  return div;
+}
+
+function buildPrintHeader() {
+  const div = document.createElement('div');
+  div.className = 'pr-print-page-header';
+  div.innerHTML = `
+    <span>GC녹십자아이메드 구매규정</span>
+    <span>Green Book</span>
+  `;
+  return div;
+}
 
 window.addEventListener('pageshow', e => {
   if (e.persisted) { try { hideGlobalLoading(); } catch(e) {} }
