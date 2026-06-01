@@ -686,6 +686,29 @@ p {
   }
 }
 
+/* ─── 대섹션 intro 래퍼 ─────────────────────────────────────── */
+.pr-section-intro-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+/* intro 편집 버튼은 pr-h1 안에 들어가므로 inline-flex */
+.pr-edit-btn--section {
+  position: static !important;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.pr-h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pr-h1-num {
+  flex-shrink: 0;
+}
+
 /* ─── 섹션 헤더 (제목 + 편집 버튼) ──────────────────────────── */
 .pr-subsection-header {
   display: block;
