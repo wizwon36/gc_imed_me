@@ -1562,8 +1562,11 @@ input[type="date"].form-input {
 .date-row-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: end;
   max-width: 100%;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .date-row-grid .form-group {
