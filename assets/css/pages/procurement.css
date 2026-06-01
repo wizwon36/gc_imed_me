@@ -936,12 +936,26 @@ p {
 .ck-editor__editable .ck-widget.table {
   width: 100% !important;
   margin: 8px 0 !important;
+  /* 인라인 width 스타일 무시 */
+  max-width: 100% !important;
 }
 
 .ck-editor__editable .ck-widget.table table {
   border-collapse: collapse !important;
   width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
   font-size: 13.5px !important;
+}
+
+/* 컬럼 리사이즈 핸들 숨기기 */
+.ck-editor__editable .ck-table-column-resizer {
+  display: none !important;
+}
+
+/* 인라인 width 강제 무시 */
+.ck-editor__editable .ck-widget.table colgroup col {
+  width: auto !important;
 }
 
 .ck-editor__editable .ck-widget.table table th,
