@@ -59,17 +59,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       url: `${CONFIG.SITE_BASE_URL}/pages/task-manager/task-manager.html`
     },
     // ── 수정요청: 권한 없어도 모든 사용자에게 노출 ──────────────────
-    support: {
-      title: '프로그램 수정요청',
-      desc: '불편사항·기능 개선 요청',
-      icon: '🛠️',
-      url: `${CONFIG.SITE_BASE_URL}/pages/support/support-form.html`
-    },
     procurement: {
       title: '구매규정',
       desc: 'GC녹십자아이메드 구매규정 조회',
       icon: '📋',
       url: `${CONFIG.SITE_BASE_URL}/pages/procurement/procurement.html`
+    },
+    support: {
+      title: '프로그램 수정요청',
+      desc: '불편사항·기능 개선 요청',
+      icon: '🛠️',
+      url: `${CONFIG.SITE_BASE_URL}/pages/support/support-form.html`
     },
     users_admin: {
       title: '사용자 관리',
