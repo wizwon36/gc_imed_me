@@ -1705,6 +1705,7 @@
       <div style="font-size:13px;color:var(--text-muted);">일지를 불러오는 중...</div>
     </div>`;
     document.getElementById('memberJournalModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
 
     // next_journal이 없으면 직접 조회
     // (백엔드 next_journal 미배포 / 캐시 없는 경우 대비)
