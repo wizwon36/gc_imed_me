@@ -1551,6 +1551,11 @@ input[type="date"].form-input {
   flex: 1;
 }
 
+/* 업무 등록 모달 날짜 그리드 — PC: 2컬럼 */
+.date-row-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
 /* ── 반응형 ── */
 @media (max-width: 640px) {
   .category-manage-btn    { display: none !important; }
