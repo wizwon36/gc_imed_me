@@ -359,9 +359,20 @@ p {
 
 /* ─── 테이블 ─────────────────────────────────────── */
 .pr-table-wrap {
-  margin: 16px 0;
+  margin: 10px 0;
   overflow-x: auto;
   border-radius: 12px;
+}
+
+/* 표 바로 앞뒤 빈 p 여백 제거 */
+.pr-table-wrap + p:empty,
+p:empty + .pr-table-wrap {
+  display: none;
+}
+
+.pr-subsection-content > p:empty,
+.pr-subsection-content > p:blank {
+  display: none;
 }
 
 .pr-table-caption {
