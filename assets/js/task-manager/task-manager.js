@@ -1846,13 +1846,13 @@
   };
 
   function closeMemberModal() {
-    // 모달 닫을 때 observer 정리
     const bodyEl = document.getElementById('memberJournalBody');
     if (bodyEl?._mjResizeObserver) {
       bodyEl._mjResizeObserver.disconnect();
       bodyEl._mjResizeObserver = null;
     }
     document.getElementById('memberJournalModal').classList.remove('open');
+    document.body.style.overflow = '';
   }
 
   // ── 주간업무 엑셀 다운로드 ──────────────────────────────────────
@@ -2758,6 +2758,7 @@
 
     body.innerHTML = html;
     document.getElementById('mergeViewModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
 
     // ResizeObserver로 실제 body 너비 감지 → 1/2컬럼 전환
     const mergeBody = body;
@@ -2781,13 +2782,13 @@
   }
 
   function closeMergeView() {
-    // ResizeObserver 정리
     const mergeBody = document.getElementById('mergeViewBody');
     if (mergeBody?._mjResizeObserver) {
       mergeBody._mjResizeObserver.disconnect();
       mergeBody._mjResizeObserver = null;
     }
     document.getElementById('mergeViewModal').classList.remove('open');
+    document.body.style.overflow = '';
   }
 
   // ── 업무 모달 ────────────────────────────────────────────────
@@ -2902,11 +2903,13 @@
 
   function openTaskModal() {
     document.getElementById('taskModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
 
   function closeTaskModal() {
     document.getElementById('taskModal').classList.remove('open');
     editingTaskId = null;
+    document.body.style.overflow = '';
   }
 
   async function saveTask() {
@@ -3263,11 +3266,13 @@
 
   async function openCategoryModal() {
     document.getElementById('categoryModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
     await renderCategoryList();
   }
 
   function closeCategoryModal() {
     document.getElementById('categoryModal').classList.remove('open');
+    document.body.style.overflow = '';
     resetCategoryForm();
   }
 
