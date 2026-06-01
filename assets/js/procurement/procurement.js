@@ -603,6 +603,7 @@ function initEditModal() {
     saveBtn.disabled    = true;
     saveBtn.textContent = '저장 중...';
     msgEl2.style.display = 'none';
+    setModalLoading(true, '저장 중...');
 
     try {
       const result = await apiPost('updateProcurementSection', {
@@ -634,6 +635,7 @@ function initEditModal() {
     } finally {
       saveBtn.disabled    = false;
       saveBtn.textContent = '저장 확정';
+      setModalLoading(false);
     }
   });
 
@@ -647,6 +649,7 @@ function initEditModal() {
 
     revertBtn.disabled    = true;
     revertBtn.textContent = '되돌리는 중...';
+    setModalLoading(true, '이전 버전으로 되돌리는 중...');
 
     try {
       const result = await apiPost('revertProcurementSection', {
@@ -674,6 +677,7 @@ function initEditModal() {
     } finally {
       revertBtn.disabled    = false;
       revertBtn.textContent = '↩ 이전 버전으로 되돌리기';
+      setModalLoading(false);
     }
   });
 
@@ -736,6 +740,32 @@ function initEditModal() {
     el.textContent   = text;
     el.className     = 'pr-modal-msg pr-modal-msg--' + type;
     el.style.display = 'block';
+  }
+
+  // ── 모달 로딩 오버레이 ────────────────────────────────────
+  function setModalLoading(on, message) {
+    let overlay = modal.querySelector('.pr-modal-loading');
+
+    if (on) {
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'pr-modal-loading';
+        overlay.innerHTML = `
+          <div class="pr-modal-loading-inner">
+            <div class="pr-modal-spinner"></div>
+            <span class="pr-modal-loading-text"></span>
+          </div>`;
+        modal.appendChild(overlay);
+      }
+      overlay.querySelector('.pr-modal-loading-text').textContent = message || '처리 중...';
+      overlay.style.display = 'flex';
+      // 푸터 버튼 전체 비활성화
+      modal.querySelectorAll('.pr-modal-footer button').forEach(b => { b.disabled = true; });
+    } else {
+      if (overlay) overlay.style.display = 'none';
+      // 푸터 버튼 활성화 복구 (개별 버튼 disabled는 각자 처리)
+      modal.querySelectorAll('.pr-modal-footer button').forEach(b => { b.disabled = false; });
+    }
   }
 }
 
