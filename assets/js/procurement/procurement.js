@@ -685,7 +685,16 @@ function initEditModal() {
   [cancelBtn, cancelBtn2, closeBtn].forEach(el => {
     el?.addEventListener('click', closeModal);
   });
-  modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  // 백드롭 클릭으로 닫기 — mousedown 시작이 modal 자체일 때만 닫힘
+  // (편집 영역에서 드래그 후 백드롭에서 마우스를 떼는 경우 방지)
+  let mousedownOnBackdrop = false;
+  modal?.addEventListener('mousedown', e => {
+    mousedownOnBackdrop = e.target === modal;
+  });
+  modal?.addEventListener('click', e => {
+    if (e.target === modal && mousedownOnBackdrop) closeModal();
+    mousedownOnBackdrop = false;
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && modal?.style.display !== 'none') closeModal();
   });
