@@ -286,6 +286,49 @@ async function loadSections() {
   }
 }
 
+// ── HTML 클래스 복구 후처리 ──────────────────────────────────────
+// CKEditor가 getData() 시 일부 클래스/속성을 변환하므로
+// 저장 전 DOM 파싱으로 원래 클래스 패턴을 복구
+function restoreHtmlClasses(html) {
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(html, 'text/html');
+
+  // 1. <table> → pr-table 클래스 보장
+  doc.querySelectorAll('table').forEach(table => {
+    if (!table.classList.contains('pr-table')) {
+      table.classList.add('pr-table');
+    }
+    // 작은 표 (pr-table--compact) 판단: th가 4개 이상이면 compact
+    const thCount = table.querySelectorAll('th').length;
+    if (thCount >= 4 && !table.classList.contains('pr-table--compact')) {
+      table.classList.add('pr-table--compact');
+    }
+  });
+
+  // 2. <figure class="table"> → <div class="pr-table-wrap">로 래핑 복구
+  doc.querySelectorAll('figure.table').forEach(figure => {
+    const wrap = doc.createElement('div');
+    wrap.className = 'pr-table-wrap';
+    figure.parentNode.insertBefore(wrap, figure);
+    // figure 안의 table을 wrap으로 이동
+    const table = figure.querySelector('table');
+    if (table) wrap.appendChild(table);
+    figure.remove();
+  });
+
+  // 3. <ul class="pr-list"> 가 없는 ul에 pr-list 부여
+  doc.querySelectorAll('ul:not(.pr-list)').forEach(ul => {
+    ul.classList.add('pr-list');
+  });
+
+  // 4. h4에 pr-h3 클래스가 없으면 추가 (소제목)
+  doc.querySelectorAll('h4:not(.pr-h3)').forEach(h4 => {
+    h4.classList.add('pr-h3');
+  });
+
+  return doc.body.innerHTML;
+}
+
 // ── 편집 모달 (CKEditor 5 + diff 확인 + 되돌리기) ──────────────
 function initEditModal() {
   const modal       = document.getElementById('prEditModal');
@@ -550,7 +593,8 @@ function initEditModal() {
   // ── 저장 확정 ─────────────────────────────────────────────
   saveBtn?.addEventListener('click', async () => {
     if (!currentSecId || !ckEditor) return;
-    const contentHtml = ckEditor.getData().trim();
+    const rawHtml     = ckEditor.getData().trim();
+    const contentHtml = restoreHtmlClasses(rawHtml);
     if (!contentHtml) return;
 
     const user = window.auth?.getSession?.();
