@@ -970,25 +970,30 @@ function initPdfDownload() {
       });
     });
 
-    // 인쇄 전 fixed 요소 DOM에서 임시 제거 (PDF에 박스로 찍히는 문제 방지)
-    const globalLoading = document.getElementById('globalLoading');
-    const backToTop     = document.getElementById('prBackToTop');
-    const glParent      = globalLoading?.parentNode;
-    const glNext        = globalLoading?.nextSibling;
-    const btParent      = backToTop?.parentNode;
-    const btNext        = backToTop?.nextSibling;
-    if (globalLoading) globalLoading.remove();
-    if (backToTop)     backToTop.remove();
-
     Promise.all(imgLoadPromises).then(() => {
-      window.print();
-      // 인쇄 후 제거
-      cover.remove();
-      toc.remove();
-      header.remove();
-      // fixed 요소 복구
-      if (globalLoading && glParent) glParent.insertBefore(globalLoading, glNext);
-      if (backToTop     && btParent) btParent.insertBefore(backToTop, btNext);
+      // 인쇄 전 fixed 요소 DOM에서 완전 제거
+      const globalLoading = document.getElementById('globalLoading');
+      const backToTop     = document.getElementById('prBackToTop');
+      const modalBackdrop = document.querySelector('.pr-modal-backdrop');
+      const glParent = globalLoading?.parentNode;
+      const glNext   = globalLoading?.nextSibling;
+      const btParent = backToTop?.parentNode;
+      const btNext   = backToTop?.nextSibling;
+      const mbParent = modalBackdrop?.parentNode;
+      const mbNext   = modalBackdrop?.nextSibling;
+      if (globalLoading) globalLoading.remove();
+      if (backToTop)     backToTop.remove();
+      if (modalBackdrop) modalBackdrop.remove();
+
+      setTimeout(() => {
+        window.print();
+        cover.remove();
+        toc.remove();
+        header.remove();
+        if (globalLoading && glParent) glParent.insertBefore(globalLoading, glNext);
+        if (backToTop     && btParent) btParent.insertBefore(backToTop, btNext);
+        if (modalBackdrop && mbParent) mbParent.insertBefore(modalBackdrop, mbNext);
+      }, 100);
     });
   });
 }
