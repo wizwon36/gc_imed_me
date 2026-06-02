@@ -1320,7 +1320,7 @@ p:empty + .pr-table-wrap {
   .pr-cover-bottom {
     position: static !important;
     margin-top: auto !important;
-    padding: 0 16mm 0mm 16mm !important;
+    padding: 0 16mm 14mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -1628,6 +1628,10 @@ p:empty + .pr-table-wrap {
   .pr-callout, .pr-duty-flow { page-break-inside: avoid; break-inside: avoid; }
 
   /* ── 불필요한 빈 공간 제거 ── */
+  .pr-screen-only-spacer {
+    display: none !important;
+  }
+
   .pr-section:last-child,
   .pr-subsection:last-child {
     margin-bottom: 0 !important;
@@ -1652,7 +1656,7 @@ p:empty + .pr-table-wrap {
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: justify-content;
+  justify-content: center;
   border-radius: 20px;
 }
 
