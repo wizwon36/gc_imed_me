@@ -1275,6 +1275,7 @@ p:empty + .pr-table-wrap {
   .pr-cover-spacer {
     flex: 1 1 auto !important;
     display: block !important;
+    min-height: 60mm !important;
   }
 
   /* 표지 내부 요소: 전역 p/body font-size 상속 차단 */
@@ -1339,8 +1340,8 @@ p:empty + .pr-table-wrap {
   /* ── 표지 하단: 로고 영역 ── */
   .pr-cover-bottom {
     position: static !important;
-    margin-top: 0 !important;
-    padding: 0 16mm 16mm 16mm !important;
+    margin-top: auto !important;
+    padding: 0 16mm 20mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -1660,6 +1661,32 @@ p:empty + .pr-table-wrap {
   .page-shell {
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
+  }
+
+  /* globalLoading, 맨위버튼, 모달 등 완전 제거 */
+  #globalLoading,
+  #globalLoading *,
+  #prBackToTop,
+  #prEditModal,
+  #prEditModal *,
+  #prSkeletonWrap,
+  #prSkeletonWrap * {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -99999px !important;
+    top: -99999px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  /* body 직속 자식 중 pr-cover/pr-content 외 여백 제거 */
+  body > *:not(.container):not(#globalLoading):not(#prEditModal):not(#prBackToTop) {
+    display: none !important;
   }
 }
 
