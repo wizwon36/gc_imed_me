@@ -308,7 +308,7 @@ async function loadSections() {
       // 대섹션 intro
       if (section.sec_id.endsWith('-intro')) {
         const contentDiv = el.querySelector('.pr-section-intro-content');
-        if (contentDiv) contentDiv.innerHTML = section.content_html;
+        if (contentDiv) contentDiv.innerHTML = restoreHtmlClasses(section.content_html);
         if (section.updated_at) {
           let info = el.querySelector('.pr-section-updated-info');
           if (!info) {
@@ -328,7 +328,7 @@ async function loadSections() {
       }
       const wrapper = document.createElement('div');
       wrapper.className = 'pr-subsection-content';
-      wrapper.innerHTML = section.content_html;
+      wrapper.innerHTML = restoreHtmlClasses(section.content_html);
       el.appendChild(wrapper);
 
       if (section.updated_at) {
@@ -413,7 +413,6 @@ function restoreHtmlClasses(html) {
   });
 
   // 3. <td> 안의 <p> 태그 2개 이상 → <ul class="pr-table-list"><li>로 변환
-  //    (에디터와 웹 뷰 간 불릿 기호 불일치 방지)
   doc.querySelectorAll('td').forEach(td => {
     const paras = [...td.querySelectorAll(':scope > p')].filter(p => p.textContent.trim());
     if (paras.length >= 2) {
@@ -434,7 +433,7 @@ function restoreHtmlClasses(html) {
     ul.classList.add('pr-list');
   });
 
-  // 5. h4에 pr-h3 클래스가 없으면 추가 (소제목)
+  // 4. h4에 pr-h3 클래스가 없으면 추가 (소제목)
   doc.querySelectorAll('h4:not(.pr-h3)').forEach(h4 => {
     h4.classList.add('pr-h3');
   });
