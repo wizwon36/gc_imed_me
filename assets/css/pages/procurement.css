@@ -1169,12 +1169,18 @@ p:empty + .pr-table-wrap {
   .pr-modal-loading,
   .pr-process-spacer,
   #globalLoading,
+  #globalLoading *,
   #prEditModal,
   #prEditModal *,
   #prSkeletonWrap,
+  #prSkeletonWrap *,
   .portal-header-btn {
     display: none !important;
     visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
   }
 
   /* 화면 하단 여백 div 제거 — 인라인 스타일 선택자 대신 명시적 클래스 추가 */
@@ -1260,8 +1266,18 @@ p:empty + .pr-table-wrap {
     font-weight: 600 !important;
   }
 
-  /* 표지 body 영역: p/전역 font-size 상속 차단 */
-  .pr-cover-body,
+  .pr-cover-body {
+    flex: 0 0 auto !important;
+    padding: 22mm 16mm 10mm 16mm !important;
+  }
+
+  /* body와 bottom 사이 빈 공간 — bottom을 페이지 맨 아래로 */
+  .pr-cover-spacer {
+    flex: 1 1 auto !important;
+    display: block !important;
+  }
+
+  /* 표지 내부 요소: 전역 p/body font-size 상속 차단 */
   .pr-cover-body * {
     font-size: revert !important;
     line-height: revert !important;
@@ -1269,14 +1285,12 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-label {
-    display: block !important;
     font-size: 10pt !important;
     font-weight: 700 !important;
     letter-spacing: 0.25em !important;
     color: #1a3a2a !important;
     margin-bottom: 8mm !important;
     text-transform: uppercase !important;
-    line-height: 1.4 !important;
   }
 
   .pr-cover-title {
@@ -1290,16 +1304,13 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-subtitle {
-    display: block !important;
     font-size: 16pt !important;
     color: #2d5a3d !important;
     font-weight: 700 !important;
     margin-bottom: 18mm !important;
-    line-height: 1.4 !important;
   }
 
   .pr-cover-divider {
-    display: block !important;
     width: 28mm !important;
     height: 3.5pt !important;
     background: #1a3a2a !important;
@@ -1317,35 +1328,19 @@ p:empty + .pr-table-wrap {
     gap: 6mm !important;
     font-size: 11pt !important;
     color: #444 !important;
-    line-height: 1.6 !important;
-    margin: 0 !important;
   }
 
   .pr-cover-meta-label {
-    font-size: 11pt !important;
     font-weight: 700 !important;
     color: #1a3a2a !important;
     min-width: 20mm !important;
-    line-height: 1.6 !important;
-    margin: 0 !important;
-  }
-
-  /* ── 표지 body/bottom 사이 빈 공간 — bottom을 페이지 맨 아래로 ── */
-  .pr-cover-body {
-    flex: 0 0 auto !important;
-    padding: 22mm 16mm 10mm 16mm !important;
-  }
-
-  .pr-cover-spacer {
-    flex: 1 !important;
-    display: block !important;
   }
 
   /* ── 표지 하단: 로고 영역 ── */
   .pr-cover-bottom {
     position: static !important;
     margin-top: 0 !important;
-    padding: 0 16mm 14mm 16mm !important;
+    padding: 0 16mm 16mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -1353,12 +1348,9 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-company {
-    display: block !important;
     font-size: 11pt !important;
     font-weight: 700 !important;
     color: #1a3a2a !important;
-    line-height: 1.4 !important;
-    margin: 0 !important;
   }
 
   /* 로고 컨테이너: 배경 강제 흰색 */
