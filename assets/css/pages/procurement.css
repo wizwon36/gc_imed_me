@@ -1358,7 +1358,7 @@ p:empty + .pr-table-wrap {
    */
   .pr-cover-bottom {
     position: absolute;
-    bottom: 14mm;           /* ← 이 값을 키우면 더 위로, 줄이면 더 아래로 */
+    bottom: 30mm;           /* A4 297mm 기준 9/10 지점 (아래에서 ~30mm) */
     left: 14mm;
     right: 14mm;
     display: flex;
