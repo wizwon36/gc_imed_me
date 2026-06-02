@@ -1146,7 +1146,7 @@ p:empty + .pr-table-wrap {
     padding: 0;
   }
 
-  html, body {
+  html, body, body.admin-body {
     background: #fff !important;
     font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif !important;
     font-size: 10pt !important;
@@ -1154,14 +1154,17 @@ p:empty + .pr-table-wrap {
     color: #000 !important;
     margin: 0 !important;
     padding: 0 !important;
+    min-height: 0 !important;
   }
 
-  .container, .page-shell {
+  .container, .page-shell,
+  .container.page-shell {
     background: #fff !important;
     box-shadow: none !important;
     border: none !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
   }
 
   /* ── 화면 전용 요소 숨기기 ── */
