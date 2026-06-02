@@ -412,12 +412,29 @@ function restoreHtmlClasses(html) {
     figure.remove();
   });
 
-  // 3. <ul class="pr-list"> 가 없는 ul에 pr-list 부여
-  doc.querySelectorAll('ul:not(.pr-list)').forEach(ul => {
+  // 3. <td> 안의 <p> 태그 2개 이상 → <ul class="pr-table-list"><li>로 변환
+  //    (에디터와 웹 뷰 간 불릿 기호 불일치 방지)
+  doc.querySelectorAll('td').forEach(td => {
+    const paras = [...td.querySelectorAll(':scope > p')].filter(p => p.textContent.trim());
+    if (paras.length >= 2) {
+      const ul = doc.createElement('ul');
+      ul.className = 'pr-table-list';
+      paras.forEach(p => {
+        const li = doc.createElement('li');
+        li.innerHTML = p.innerHTML;
+        ul.appendChild(li);
+        p.remove();
+      });
+      td.appendChild(ul);
+    }
+  });
+
+  // 4. <ul class="pr-list"> 가 없는 ul에 pr-list 부여 (pr-table-list 제외)
+  doc.querySelectorAll('ul:not(.pr-list):not(.pr-table-list)').forEach(ul => {
     ul.classList.add('pr-list');
   });
 
-  // 4. h4에 pr-h3 클래스가 없으면 추가 (소제목)
+  // 5. h4에 pr-h3 클래스가 없으면 추가 (소제목)
   doc.querySelectorAll('h4:not(.pr-h3)').forEach(h4 => {
     h4.classList.add('pr-h3');
   });
