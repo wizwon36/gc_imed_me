@@ -912,7 +912,7 @@ function initEditModal() {
   // ── 모달 로딩 오버레이 ────────────────────────────────────
   function setModalLoading(on, message) {
     const modalBox = modal.querySelector('.pr-modal');
-    let overlay = modalBox.querySelector('.pr-modal-loading');
+    let overlay = modalBox ? modalBox.querySelector('.pr-modal-loading') : modal.querySelector('.pr-modal-loading');
 
     if (on) {
       if (!overlay) {
@@ -923,7 +923,7 @@ function initEditModal() {
             <div class="pr-modal-spinner"></div>
             <span class="pr-modal-loading-text"></span>
           </div>`;
-        modalBox.appendChild(overlay);
+        (modalBox || modal).appendChild(overlay);
       }
       overlay.querySelector('.pr-modal-loading-text').textContent = message || '처리 중...';
       overlay.style.display = 'flex';
@@ -972,29 +972,34 @@ function initPdfDownload() {
     });
 
     Promise.all(imgLoadPromises).then(() => {
-      // 인쇄 전 fixed 요소 DOM에서 완전 제거
-      const globalLoading = document.getElementById('globalLoading');
-      const backToTop     = document.getElementById('prBackToTop');
-      const modalBackdrop = document.querySelector('.pr-modal-backdrop');
-      const glParent = globalLoading?.parentNode;
-      const glNext   = globalLoading?.nextSibling;
-      const btParent = backToTop?.parentNode;
-      const btNext   = backToTop?.nextSibling;
-      const mbParent = modalBackdrop?.parentNode;
-      const mbNext   = modalBackdrop?.nextSibling;
-      if (globalLoading) globalLoading.remove();
-      if (backToTop)     backToTop.remove();
-      if (modalBackdrop) modalBackdrop.remove();
+      // 인쇄 전 — 비인쇄 요소 전부 DOM에서 제거 (CSS display:none만으로 불충분한 경우 대비)
+      const removeTargets = [
+        document.getElementById('globalLoading'),
+        document.getElementById('prBackToTop'),
+        document.getElementById('prEditModal'),
+        document.querySelector('.pr-modal-backdrop'),
+        document.getElementById('prSkeletonWrap'),
+      ].filter(Boolean);
 
-      setTimeout(() => {
-        window.print();
-        cover.remove();
-        toc.remove();
-        header.remove();
-        if (globalLoading && glParent) glParent.insertBefore(globalLoading, glNext);
-        if (backToTop     && btParent) btParent.insertBefore(backToTop, btNext);
-        if (modalBackdrop && mbParent) mbParent.insertBefore(modalBackdrop, mbNext);
-      }, 100);
+      const removed = removeTargets.map(el => ({
+        el,
+        parent: el.parentNode,
+        next:   el.nextSibling
+      }));
+      removed.forEach(({ el }) => el.remove());
+
+      // rAF 2회로 렌더링 반영 후 print
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.print();
+          cover.remove();
+          toc.remove();
+          header.remove();
+          removed.forEach(({ el, parent, next }) => {
+            if (parent) parent.insertBefore(el, next);
+          });
+        });
+      });
     });
   });
 }
