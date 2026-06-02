@@ -1172,13 +1172,16 @@ p:empty + .pr-table-wrap {
   #prEditModal,
   #prEditModal *,
   #prSkeletonWrap,
-  .portal-header-btn {
+  .portal-header-btn,
+  .pr-back-to-top {
     display: none !important;
     visibility: hidden !important;
     position: static !important;
     width: 0 !important;
     height: 0 !important;
     overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* 화면 하단 여백 div 제거 — 인라인 스타일 선택자 대신 명시적 클래스 추가 */
@@ -1324,7 +1327,7 @@ p:empty + .pr-table-wrap {
   .pr-cover-bottom {
     position: static !important;
     margin-top: auto !important;
-    padding: 0 16mm 4mm 16mm !important;
+    padding: 0 16mm 0mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
