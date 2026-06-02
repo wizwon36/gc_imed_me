@@ -438,14 +438,23 @@ p:empty + .pr-table-wrap {
 
 .pr-table-list {
   margin: 0;
-  padding-left: 16px;
-  list-style: disc;
+  padding-left: 0;
+  list-style: none;
 }
 
 .pr-table-list > li {
-  padding: 2px 0;
+  position: relative;
+  padding: 3px 0 3px 16px;
   font-size: 13px;
   line-height: 1.55;
+}
+
+.pr-table-list > li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #2563eb;
+  font-weight: 700;
 }
 
 .pr-table-note {
