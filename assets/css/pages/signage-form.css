@@ -163,19 +163,17 @@
 }
 
 .signage-np-img {
-  /* 가로형 이미지에 최적화 */
+  /* ★ 수정: 컬럼 너비에 맞게 이미지 수축 */
   width: 100%;
   max-width: 100%;
   height: auto;
-  max-height: 240px;
+  max-height: 280px;
   object-fit: contain;
-  object-position: center;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-card);
   display: block;
-  background: #ffffff;
+  background: #f8fafc;
   box-sizing: border-box;
-  aspect-ratio: 2 / 1;
 }
 
 .signage-np-size-badge {
@@ -195,7 +193,7 @@
   .signage-type-grid { grid-template-columns: 1fr; }
   .signage-np-type-grid { grid-template-columns: repeat(2, 1fr); }
   .signage-np-detail-grid { grid-template-columns: 1fr; }
-  .signage-np-img { max-height: 180px; aspect-ratio: 2 / 1; }
+  .signage-np-img { max-height: 200px; }
   .signage-np-layout-img { max-width: 100%; max-height: 180px; }
 }
 
