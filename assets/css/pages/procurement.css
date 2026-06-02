@@ -1146,7 +1146,7 @@ p:empty + .pr-table-wrap {
     padding: 0;
   }
 
-  body {
+  html, body {
     background: #fff !important;
     font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif !important;
     font-size: 10pt !important;
@@ -1154,6 +1154,14 @@ p:empty + .pr-table-wrap {
     color: #000 !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  .container, .page-shell {
+    background: #fff !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   /* ── 화면 전용 요소 숨기기 ── */
@@ -1276,13 +1284,6 @@ p:empty + .pr-table-wrap {
     flex: 1 1 auto !important;
     display: block !important;
     min-height: 60mm !important;
-  }
-
-  /* 표지 내부 요소: 전역 p/body font-size 상속 차단 */
-  .pr-cover-body * {
-    font-size: revert !important;
-    line-height: revert !important;
-    margin: revert !important;
   }
 
   .pr-cover-label {
@@ -1684,9 +1685,11 @@ p:empty + .pr-table-wrap {
     border: none !important;
   }
 
-  /* body 직속 자식 중 pr-cover/pr-content 외 여백 제거 */
-  body > *:not(.container):not(#globalLoading):not(#prEditModal):not(#prBackToTop) {
+  /* body 직속 자식 중 container 외 모두 숨김 */
+  body > *:not(.container) {
     display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
   }
 }
 
