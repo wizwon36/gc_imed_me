@@ -970,13 +970,13 @@ function initPdfDownload() {
       });
     });
 
-    // 인쇄 전 fixed 요소 DOM에서 임시 제거
-    const globalLoading  = document.getElementById('globalLoading');
-    const backToTop      = document.getElementById('prBackToTop');
-    const glParent       = globalLoading?.parentNode;
-    const glNext         = globalLoading?.nextSibling;
-    const btParent       = backToTop?.parentNode;
-    const btNext         = backToTop?.nextSibling;
+    // 인쇄 전 fixed 요소 DOM에서 임시 제거 (PDF에 박스로 찍히는 문제 방지)
+    const globalLoading = document.getElementById('globalLoading');
+    const backToTop     = document.getElementById('prBackToTop');
+    const glParent      = globalLoading?.parentNode;
+    const glNext        = globalLoading?.nextSibling;
+    const btParent      = backToTop?.parentNode;
+    const btNext        = backToTop?.nextSibling;
     if (globalLoading) globalLoading.remove();
     if (backToTop)     backToTop.remove();
 
