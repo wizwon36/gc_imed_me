@@ -970,12 +970,25 @@ function initPdfDownload() {
       });
     });
 
+    // 인쇄 전 fixed 요소 DOM에서 임시 제거
+    const globalLoading  = document.getElementById('globalLoading');
+    const backToTop      = document.getElementById('prBackToTop');
+    const glParent       = globalLoading?.parentNode;
+    const glNext         = globalLoading?.nextSibling;
+    const btParent       = backToTop?.parentNode;
+    const btNext         = backToTop?.nextSibling;
+    if (globalLoading) globalLoading.remove();
+    if (backToTop)     backToTop.remove();
+
     Promise.all(imgLoadPromises).then(() => {
       window.print();
       // 인쇄 후 제거
       cover.remove();
       toc.remove();
       header.remove();
+      // fixed 요소 복구
+      if (globalLoading && glParent) glParent.insertBefore(globalLoading, glNext);
+      if (backToTop     && btParent) btParent.insertBefore(backToTop, btNext);
     });
   });
 }
