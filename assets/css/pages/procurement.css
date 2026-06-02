@@ -1249,9 +1249,8 @@ p:empty + .pr-table-wrap {
   .pr-cover {
     page-break-after: always;
     break-after: page;
-    /* 고정 너비/높이 제거 → 인쇄 엔진이 페이지 크기에 맞춤 */
     width: 100% !important;
-    min-height: 297mm !important;  /* A4 전체 높이 고정 */
+    min-height: 297mm !important;
     height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -1260,6 +1259,9 @@ p:empty + .pr-table-wrap {
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
+    /* body font-size:10pt 상속 차단 */
+    font-size: medium !important;
+    line-height: normal !important;
   }
 
   .pr-cover-top {
@@ -1280,17 +1282,19 @@ p:empty + .pr-table-wrap {
   .pr-cover-body {
     flex: 0 0 auto !important;
     padding: 22mm 16mm 10mm 16mm !important;
+    font-size: medium !important;
+    line-height: normal !important;
   }
 
   /* body와 bottom 사이 빈 공간 — bottom을 페이지 맨 아래로 */
   .pr-cover-spacer {
     flex: 1 1 auto !important;
     display: block !important;
-    min-height: 60mm !important;
+    min-height: 80mm !important;
   }
 
   .pr-cover-label {
-    font-size: 10pt !important;
+    font-size: 11pt !important;
     font-weight: 700 !important;
     letter-spacing: 0.25em !important;
     color: #1a3a2a !important;
@@ -1309,7 +1313,7 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-subtitle {
-    font-size: 16pt !important;
+    font-size: 18pt !important;
     color: #2d5a3d !important;
     font-weight: 700 !important;
     margin-bottom: 18mm !important;
@@ -1331,7 +1335,7 @@ p:empty + .pr-table-wrap {
   .pr-cover-meta-row {
     display: flex !important;
     gap: 6mm !important;
-    font-size: 11pt !important;
+    font-size: 12pt !important;
     color: #444 !important;
   }
 
@@ -1345,7 +1349,7 @@ p:empty + .pr-table-wrap {
   .pr-cover-bottom {
     position: static !important;
     margin-top: auto !important;
-    padding: 0 16mm 20mm 16mm !important;
+    padding: 10mm 16mm 24mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
