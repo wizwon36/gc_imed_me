@@ -1261,8 +1261,13 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-body {
-    flex: 1 !important;
+    flex: 0 0 auto !important;
     padding: 22mm 16mm 10mm 16mm !important;
+  }
+
+  /* body와 bottom 사이 빈 공간 — bottom이 페이지 맨 아래에 붙도록 */
+  .pr-cover-spacer {
+    flex: 1 !important;
   }
 
   .pr-cover-label {
@@ -1319,7 +1324,7 @@ p:empty + .pr-table-wrap {
   /* ── 표지 하단: 로고 영역 ── */
   .pr-cover-bottom {
     position: static !important;
-    margin-top: auto !important;
+    margin-top: 0 !important;
     padding: 0 16mm 14mm 16mm !important;
     display: flex !important;
     align-items: center !important;
@@ -1628,7 +1633,9 @@ p:empty + .pr-table-wrap {
   .pr-callout, .pr-duty-flow { page-break-inside: avoid; break-inside: avoid; }
 
   /* ── 불필요한 빈 공간 제거 ── */
-  .pr-screen-only-spacer {
+  /* 화면 전용 하단 여백 div 숨김 */
+  main > div[style*="height:40px"],
+  main > div[style*="height: 40px"] {
     display: none !important;
   }
 
