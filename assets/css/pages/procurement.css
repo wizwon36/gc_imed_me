@@ -1137,7 +1137,7 @@ p:empty + .pr-table-wrap {
   /* ── 기본 페이지 설정 ── */
   @page {
     size: A4;
-    margin: 18mm 20mm 20mm 20mm;
+    margin: 18mm 16mm 20mm 20mm;
   }
 
   /* 표지 전용 페이지: 여백 0, 정중앙 배치 */
@@ -1175,6 +1175,10 @@ p:empty + .pr-table-wrap {
   .portal-header-btn {
     display: none !important;
     visibility: hidden !important;
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
   }
 
   /* 화면 하단 여백 div 제거 — 인라인 스타일 선택자 대신 명시적 클래스 추가 */
@@ -1423,7 +1427,6 @@ p:empty + .pr-table-wrap {
   @page { @top-center { content: element(pageHeader); } }
   @page { @bottom-center { content: counter(page); font-size: 8pt; color: #666; } }
   @page :first { @top-center { content: none; } @bottom-center { content: none; } }
-  @page :last { @bottom-center { content: none; } }
 
   /* ── 섹션 스타일 ── */
   .pr-section {
