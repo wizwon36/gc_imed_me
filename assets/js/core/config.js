@@ -7,7 +7,7 @@ const CONFIG = {
   EQUIPMENT_ALLOWED_CLINICS: ['서울숲의원'],
 
   // 앱 전체 캐시 버전 — 강제 초기화 시 이 값을 올리면 모든 사용자 캐시가 무효화됨
-  CACHE_VERSION: '20260601_04',
+  CACHE_VERSION: '20260602_01',
 
   // 세션/캐시 스토리지 키 — 버전 변경 시 여기만 수정
   CACHE_KEYS: {
