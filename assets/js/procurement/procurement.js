@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 첫 번째 매칭 소섹션으로 스크롤
     const firstMatch = document.querySelector('.pr-subsection:not(.pr-subsection-hidden)');
     if (firstMatch) {
-      const top = firstMatch.getBoundingClientRect().top + window.scrollY - 100;
+      const top = firstMatch.getBoundingClientRect().top + window.scrollY - getScrollOffset();
       window.scrollTo({ top, behavior: 'smooth' });
     }
   }
@@ -148,7 +148,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function escapeHtml(str)  { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   // ── 목차 ──────────────────────────────────────────────────
-  const SCROLL_OFFSET = 80;
+  function getScrollOffset() {
+    const searchSection = document.querySelector('.pr-search-section');
+    return (searchSection ? searchSection.getBoundingClientRect().height : 80) + 16;
+  }
   const tocLinks = document.querySelectorAll('.pr-toc-link[data-section]');
 
   function setActiveLink(id) {
@@ -174,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       isScrollingByClick = true;
       clearTimeout(clickScrollTimer);
       clickScrollTimer = setTimeout(() => { isScrollingByClick = false; }, 800);
-      const top = target.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
+      const top = target.getBoundingClientRect().top + window.scrollY - getScrollOffset();
       window.scrollTo({ top, behavior: 'smooth' });
     });
   });
@@ -185,7 +188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updateTocByScroll() {
     if (isScrollingByClick) return;
-    const scrollTop = window.scrollY + SCROLL_OFFSET + 10;
+    const scrollTop = window.scrollY + getScrollOffset() + 10;
     let current = allAnchors[0];
     for (const el of allAnchors) {
       if (el.offsetTop <= scrollTop) current = el;
