@@ -911,7 +911,7 @@ function initEditModal() {
 
   // ── 모달 로딩 오버레이 ────────────────────────────────────
   function setModalLoading(on, message) {
-    const modalBox = modal.querySelector('.pr-modal');  // 실제 흰 박스
+    const modalBox = modal.querySelector('.pr-modal');
     let overlay = modalBox.querySelector('.pr-modal-loading');
 
     if (on) {
