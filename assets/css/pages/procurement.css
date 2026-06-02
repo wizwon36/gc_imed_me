@@ -1261,6 +1261,7 @@ p:empty + .pr-table-wrap {
   }
 
   .pr-cover-body {
+    flex: 1 !important;
     padding: 22mm 16mm 10mm 16mm !important;
   }
 
