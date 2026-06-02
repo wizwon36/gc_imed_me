@@ -1348,7 +1348,7 @@ p:empty + .pr-table-wrap {
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    padding: 0 16mm 20mm 16mm !important;
+    padding: 0 16mm 8mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
