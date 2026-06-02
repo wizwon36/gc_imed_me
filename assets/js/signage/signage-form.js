@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     showMessage(err.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
-    hideGlobalLoading();
+    await hideGlobalLoading();
   }
 
   // ── 폼 이벤트 바인딩 (스피너 해제 후 등록 — 스피너가 클릭을 막는 현상 방지) ──
