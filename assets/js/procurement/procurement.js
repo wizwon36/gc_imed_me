@@ -959,7 +959,10 @@ function initPdfDownload() {
     const content = document.querySelector('.pr-content');
     content.insertBefore(header, content.firstChild);
     content.insertBefore(toc,    content.firstChild);
-    content.insertBefore(cover,  content.firstChild);
+
+    // cover는 pr-content 밖, pr-layout 앞에 삽입 (absolute 위치 기준 격리)
+    const prLayout = document.querySelector('.pr-layout');
+    prLayout.parentNode.insertBefore(cover, prLayout);
 
     // 이미지 로드 완료 후 인쇄 (로고 출력 보장)
     const imgs = cover.querySelectorAll('img');
