@@ -911,7 +911,8 @@ function initEditModal() {
 
   // ── 모달 로딩 오버레이 ────────────────────────────────────
   function setModalLoading(on, message) {
-    let overlay = modal.querySelector('.pr-modal-loading');
+    const modalBox = modal.querySelector('.pr-modal');  // 실제 흰 박스
+    let overlay = modalBox.querySelector('.pr-modal-loading');
 
     if (on) {
       if (!overlay) {
@@ -922,7 +923,7 @@ function initEditModal() {
             <div class="pr-modal-spinner"></div>
             <span class="pr-modal-loading-text"></span>
           </div>`;
-        modal.appendChild(overlay);
+        modalBox.appendChild(overlay);
       }
       overlay.querySelector('.pr-modal-loading-text').textContent = message || '처리 중...';
       overlay.style.display = 'flex';
