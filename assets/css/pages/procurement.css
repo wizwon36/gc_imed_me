@@ -1256,8 +1256,7 @@ p:empty + .pr-table-wrap {
     padding: 0 !important;
     position: relative !important;
     background: #fff !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     box-sizing: border-box !important;
     /* body font-size:10pt 상속 차단 */
     font-size: medium !important;
@@ -1286,11 +1285,9 @@ p:empty + .pr-table-wrap {
     line-height: normal !important;
   }
 
-  /* body와 bottom 사이 빈 공간 — bottom을 페이지 맨 아래로 */
+  /* spacer 숨김 — bottom은 absolute로 처리 */
   .pr-cover-spacer {
-    flex: 1 1 auto !important;
-    display: block !important;
-    min-height: 80mm !important;
+    display: none !important;
   }
 
   .pr-cover-label {
@@ -1345,11 +1342,13 @@ p:empty + .pr-table-wrap {
     min-width: 20mm !important;
   }
 
-  /* ── 표지 하단: 로고 영역 ── */
+  /* ── 표지 하단: 로고 영역 — absolute로 페이지 맨 아래 고정 ── */
   .pr-cover-bottom {
-    position: static !important;
-    margin-top: auto !important;
-    padding: 10mm 16mm 24mm 16mm !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    padding: 0 16mm 20mm 16mm !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
