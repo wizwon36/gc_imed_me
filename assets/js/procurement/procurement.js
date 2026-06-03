@@ -352,6 +352,18 @@ async function loadSections() {
 // CKEditor가 getData() 시 일부 클래스/속성을 변환하므로
 // 저장 전 DOM 파싱으로 원래 클래스 패턴을 복구
 function restoreHtmlClasses(html) {
+  // ── 파싱 전 정규식 처리: <td> 안의 연속 <p> → <ul class="pr-table-list"><li> ──
+  // DOMParser(HTML5)는 foster parenting 규칙으로 <td> 안 <p>를 table 밖으로 꺼내므로
+  // querySelector로는 잡을 수 없어 문자열 단계에서 치환
+  html = html.replace(/<td([^>]*)>((?:\s*<p[^>]*>[\s\S]*?<\/p>\s*){2,})<\/td>/gi, (match, attrs, inner) => {
+    const items = [];
+    inner.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (_, content) => {
+      if (content.trim()) items.push(`<li>${content}<\/li>`);
+    });
+    if (items.length < 2) return match;
+    return `<td${attrs}><ul class="pr-table-list">${items.join('')}<\/ul><\/td>`;
+  });
+
   const parser = new DOMParser();
   const doc    = parser.parseFromString(html, 'text/html');
 
@@ -412,21 +424,10 @@ function restoreHtmlClasses(html) {
     figure.remove();
   });
 
-  // 3. <td> 안의 <p> 태그 2개 이상 → <ul class="pr-table-list"><li>로 변환
-  doc.querySelectorAll('td').forEach(td => {
-    const paras = [...td.querySelectorAll(':scope > p')].filter(p => p.textContent.trim());
-    if (paras.length >= 2) {
-      const ul = doc.createElement('ul');
-      ul.className = 'pr-table-list';
-      paras.forEach(p => {
-        const li = doc.createElement('li');
-        li.innerHTML = p.innerHTML;
-        ul.appendChild(li);
-        p.remove();
-      });
-      td.appendChild(ul);
-    }
-  });
+  // 3. <td> 안의 <p> 태그 → <ul class="pr-table-list"><li>로 변환
+  //    ※ DOMParser의 foster parenting 규칙 때문에 파싱 전 정규식으로 먼저 치환해야 함
+  //    (브라우저 HTML5 파서는 <td> 안 <p>를 table 밖으로 꺼내버려 querySelector로 잡히지 않음)
+  // → 이 처리는 파싱 전 html 문자열 단계에서 수행 (함수 상단으로 이동)
 
   // 4. <ul class="pr-list"> 가 없는 ul에 pr-list 부여 (pr-table-list 제외)
   doc.querySelectorAll('ul:not(.pr-list):not(.pr-table-list)').forEach(ul => {
