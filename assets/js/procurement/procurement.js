@@ -352,16 +352,18 @@ async function loadSections() {
 // CKEditor가 getData() 시 일부 클래스/속성을 변환하므로
 // 저장 전 DOM 파싱으로 원래 클래스 패턴을 복구
 function restoreHtmlClasses(html) {
-  // ── 파싱 전 정규식 처리: <td> 안의 연속 <p> → <ul class="pr-table-list"><li> ──
-  // DOMParser(HTML5)는 foster parenting 규칙으로 <td> 안 <p>를 table 밖으로 꺼내므로
-  // querySelector로는 잡을 수 없어 문자열 단계에서 치환
-  html = html.replace(/<td([^>]*)>((?:\s*<p[^>]*>[\s\S]*?<\/p>\s*){2,})<\/td>/gi, (match, attrs, inner) => {
-    const items = [];
-    inner.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (_, content) => {
-      if (content.trim()) items.push(`<li>${content}<\/li>`);
-    });
-    if (items.length < 2) return match;
-    return `<td${attrs}><ul class="pr-table-list">${items.join('')}<\/ul><\/td>`;
+  // <td> 안의 연속 <p> 태그를 <ul class="pr-table-list"><li>로 변환
+  // DOMParser foster parenting 때문에 파싱 전 문자열 단계에서 처리
+  html = html.replace(/<td([^>]*)>([\s\S]*?)<\/td>/gi, function(match, attrs, inner) {
+    var pTags = [];
+    var re = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+    var m;
+    while ((m = re.exec(inner)) !== null) {
+      if (m[1].trim()) pTags.push(m[1]);
+    }
+    if (pTags.length < 2) return match;
+    var lis = pTags.map(function(c) { return '<li>' + c + '</li>'; }).join('');
+    return '<td' + attrs + '><ul class="pr-table-list">' + lis + '</ul></td>';
   });
 
   const parser = new DOMParser();
