@@ -739,8 +739,8 @@ function initEditModal() {
     }
 
     // diff 패널 채우기
-    diffBefore.innerHTML = currentOrigHtml || '<em style="color:#999">내용 없음</em>';
-    diffAfter.innerHTML  = newHtml;
+    diffBefore.innerHTML = restoreHtmlClasses(currentOrigHtml || '') || '<em style="color:#999">내용 없음</em>';
+    diffAfter.innerHTML  = restoreHtmlClasses(newHtml);
 
     // 되돌리기 버튼: 직전 버전이 있을 때만 노출
     revertWrap.style.display = currentPrevHtml ? 'inline-flex' : 'none';
