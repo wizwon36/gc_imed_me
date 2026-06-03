@@ -439,7 +439,7 @@ p:empty + .pr-table-wrap {
 .pr-table-list {
   margin: 0;
   padding-left: 0;
-  list-style: none;
+  list-style: none !important;
 }
 
 .pr-table-list > li {
