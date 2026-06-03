@@ -352,9 +352,12 @@ async function loadSections() {
 // CKEditor가 getData() 시 일부 클래스/속성을 변환하므로
 // 저장 전 DOM 파싱으로 원래 클래스 패턴을 복구
 function restoreHtmlClasses(html) {
-  // <td> 안의 연속 <p> 태그를 <ul class="pr-table-list"><li>로 변환
-  // DOMParser foster parenting 때문에 파싱 전 문자열 단계에서 처리
+  // <td> 안 정규화: ul이면 pr-table-list 부여, p태그면 ul.pr-table-list로 변환
   html = html.replace(/<td([^>]*)>([\s\S]*?)<\/td>/gi, function(match, attrs, inner) {
+    if (/<ul/i.test(inner)) {
+      inner = inner.replace(/<ul[^>]*>/gi, '<ul class="pr-table-list">');
+      return '<td' + attrs + '>' + inner + '</td>';
+    }
     var pTags = [];
     var re = /<p[^>]*>([\s\S]*?)<\/p>/gi;
     var m;
