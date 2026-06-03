@@ -891,7 +891,7 @@ function initEditModal() {
     // 대섹션 intro
     if (secId.endsWith('-intro')) {
       const contentDiv = el.querySelector('.pr-section-intro-content');
-      if (contentDiv) contentDiv.innerHTML = html || '';
+      if (contentDiv) contentDiv.innerHTML = restoreHtmlClasses(html || '');
 
       let infoEl = el.querySelector('.pr-section-updated-info');
       if (!infoEl) {
@@ -910,7 +910,7 @@ function initEditModal() {
       contentDiv.className = 'pr-subsection-content';
       el.appendChild(contentDiv);
     }
-    contentDiv.innerHTML = html || '';
+    contentDiv.innerHTML = restoreHtmlClasses(html || '');
 
     let infoEl = el.querySelector('.pr-section-updated-info');
     if (!infoEl) {
