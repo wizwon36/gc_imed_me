@@ -368,8 +368,8 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37,99,235,.1);
 }
-input[type="date"].lj-edit-input { min-width: 130px; }
-input[type="number"].lj-edit-input { min-width: 90px; }
+input[type="date"].lj-edit-input { width: 130px; min-width: 130px; }
+input[type="number"].lj-edit-input { width: 100%; min-width: 70px; }
 select.lj-edit-input { min-width: 120px; }
 
 /* ── 모달 ── */
