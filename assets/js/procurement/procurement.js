@@ -686,8 +686,12 @@ function initEditModal() {
     const parser = new DOMParser();
     const doc    = parser.parseFromString(html, 'text/html');
 
-    // pr-table-wrap 안의 table을 꺼내고 wrap 제거
-    doc.querySelectorAll('.pr-table-wrap').forEach(wrap => {
+    // 최상위 pr-table-wrap만 처리 (중첩 wrap은 건드리지 않음)
+    // — 안쪽에 있는 wrap은 부모 wrap이 처리될 때 함께 사라지므로 중복 처리 방지
+    const allWraps = Array.from(doc.querySelectorAll('.pr-table-wrap'));
+    const topWraps = allWraps.filter(wrap => !wrap.closest('.pr-table-wrap')?.isSameNode(wrap) && !wrap.parentElement?.closest('.pr-table-wrap'));
+
+    topWraps.forEach(wrap => {
       const table   = wrap.querySelector('table');
       const caption = wrap.querySelector('.pr-table-caption');
       if (!table) return;
