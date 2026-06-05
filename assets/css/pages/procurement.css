@@ -1843,9 +1843,10 @@ p:empty + .pr-table-wrap {
   white-space: nowrap;
 }
 .pr-vth--center { text-align: center; }
+.pr-vth--left { text-align: left; }
 .pr-vtd {
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: 12px;
   color: #374151;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
@@ -1908,7 +1909,7 @@ p:empty + .pr-table-wrap {
 .pr-version-view-btn {
   display: inline-block;
   font-size: 11px;
-  padding: 0 8px;
+  padding: 0 10px;
   border-radius: 4px;
   background: #2563eb;
   border: none;
@@ -1916,8 +1917,8 @@ p:empty + .pr-table-wrap {
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
-  height: 22px;
-  line-height: 22px;
+  height: 26px;
+  line-height: 26px;
   vertical-align: middle;
   box-sizing: border-box;
 }
