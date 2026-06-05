@@ -301,11 +301,16 @@ async function loadLatestVersionBadge() {
       greenBadge.textContent = latest.version_label;
     }
 
-    // 시행일 배지 업데이트
+    // 시행일 배지 업데이트 — 다양한 날짜 형식 처리
     const blueBadge = document.querySelector('.pr-badge--blue');
     if (blueBadge && latest.effective_date) {
-      const m = latest.effective_date.match(/(\d{4})-(\d{2})-(\d{2})/);
-      if (m) blueBadge.textContent = `${m[1]}.${m[2]}.${m[3]} 시행`;
+      const d = parseToDate(latest.effective_date);
+      if (d) {
+        const y = d.getFullYear();
+        const mo = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        blueBadge.textContent = `${y}.${mo}.${day} 시행`;
+      }
     }
   } catch (e) {
     // 실패 시 하드코딩 값 유지
