@@ -1417,13 +1417,13 @@ function initVersionManagement() {
           <td class="pr-vtd">
             ${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">-</span>'}
           </td>
-          <td class="pr-vtd pr-vtd--center">
+          <td class="pr-vtd pr-vtd--center pr-vtd--sm">
             ${v.effective_date ? escHtml(formatDateKo(v.effective_date)) : '<span class="pr-version-no-memo">-</span>'}
           </td>
-          <td class="pr-vtd pr-vtd--center">
+          <td class="pr-vtd pr-vtd--center pr-vtd--sm">
             ${escHtml(formatDateTimeKo(v.snapshot_at || ''))}
           </td>
-          <td class="pr-vtd pr-vtd--center">
+          <td class="pr-vtd pr-vtd--center pr-vtd--sm">
             ${escHtml(v.created_by_name || v.created_by || '-')}
           </td>
           <td class="pr-vtd pr-vtd--center">
