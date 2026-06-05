@@ -386,14 +386,6 @@
               <input type="text" id="modalItemUnit" class="input" placeholder="예: mg/dL, %" />
             </label>
             <label class="form-field">
-              <span class="form-label required">목표 평균 (Mean)</span>
-              <input type="number" id="modalItemMean" class="input" step="any" placeholder="0.00" />
-            </label>
-            <label class="form-field full-col">
-              <span class="form-label required">표준편차 (SD)</span>
-              <input type="number" id="modalItemSd" class="input" step="any" placeholder="0.00" min="0.0001" />
-            </label>
-            <label class="form-field full-col">
               <span class="form-label">소수점 자리수</span>
               <select id="modalItemDecimal" class="input select">
                 <option value="0">0자리 (예: 1)</option>
@@ -402,6 +394,14 @@
                 <option value="3" selected>3자리 (예: 1.000)</option>
                 <option value="4">4자리 (예: 1.0000)</option>
               </select>
+            </label>
+            <label class="form-field">
+              <span class="form-label required">목표 평균 (Mean)</span>
+              <input type="number" id="modalItemMean" class="input" step="any" placeholder="0.00" />
+            </label>
+            <label class="form-field">
+              <span class="form-label required">표준편차 (SD)</span>
+              <input type="number" id="modalItemSd" class="input" step="any" placeholder="0.00" min="0.0001" />
             </label>
           </div>
 
