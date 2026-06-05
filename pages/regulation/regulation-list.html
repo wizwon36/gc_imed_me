@@ -264,7 +264,7 @@
   </div>
 
   <!-- 편집 권한 관리 모달 -->
-  <div class="perm-modal-backdrop" id="permModal" style="display:none;" onclick="if(event.target===this)closePermModal()">
+  <div class="perm-modal-backdrop" id="permModal" style="display:none;">
     <div class="perm-modal">
       <div class="perm-modal-head">
         <span class="perm-modal-title">🔐 편집 권한 관리</span>
@@ -455,6 +455,19 @@
     document.getElementById('permSearchResults').style.display = 'none';
     document.getElementById('permSearchInput').value = '';
   }
+
+  // 드래그로 모달 닫히는 버그 방지 — mousedown 시작점 추적
+  (function() {
+    let mouseDownOnBackdrop = false;
+    const backdrop = document.getElementById('permModal');
+    backdrop.addEventListener('mousedown', function(e) {
+      mouseDownOnBackdrop = (e.target === backdrop);
+    });
+    backdrop.addEventListener('click', function(e) {
+      if (e.target === backdrop && mouseDownOnBackdrop) closePermModal();
+      mouseDownOnBackdrop = false;
+    });
+  })();
 
   async function onRegSelectChange(sel) {
     activeEditPerm = sel.value;
