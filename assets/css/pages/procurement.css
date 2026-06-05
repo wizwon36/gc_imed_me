@@ -1963,3 +1963,14 @@ p:empty + .pr-table-wrap {
   border-top: 1px solid #f1f5f9;
   margin: 0;
 }
+
+/* 시행일 표시 */
+.pr-version-detail-effdate {
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
