@@ -1183,13 +1183,6 @@ window.addEventListener('pageshow', e => {
 });
 
 // ── 버전관리 (배포 / 히스토리 / 복원) ────────────────────────
-// ── 버전 히스토리 배포자 이름 매핑 ──────────────────────────────
-const versionUserMap = {};
-function resolveVersionUserName(email) {
-  if (!email) return '-';
-  return versionUserMap[email] || email.split('@')[0];
-}
-
 function initVersionManagement() {
   const deployBtn        = document.getElementById('prDeployBtn');
   const historyBtn       = document.getElementById('prVersionHistoryBtn');
@@ -1443,7 +1436,7 @@ function initVersionManagement() {
             ${escHtml(formatDateTimeKo(v.snapshot_at || ''))}
           </div>
           <div class="pr-version-item-cell pr-version-item-by">
-            ${escHtml(resolveVersionUserName(v.created_by))}
+            ${escHtml(v.created_by_name || v.created_by || '-')}
           </div>
           <div class="pr-version-item-cell pr-version-item-right">
             <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
@@ -1521,7 +1514,7 @@ function initVersionManagement() {
           <span class="pr-version-badge pr-version-badge--detail">${escHtml(v.version_label)}</span>
           ${v.effective_date ? `<span class="pr-version-detail-effdate">시행일: ${escHtml(formatDateKo(v.effective_date))}</span>` : ''}
           <span class="pr-version-detail-date">배포일: ${escHtml(formatDateTimeKo(v.snapshot_at || ''))}</span>
-          <span class="pr-version-detail-by">배포자: ${escHtml(resolveVersionUserName(v.created_by))}</span>
+          <span class="pr-version-detail-by">배포자: ${escHtml(v.created_by_name || v.created_by || '-')}</span>
           ${v.memo ? `<span class="pr-version-detail-memo">${escHtml(v.memo)}</span>` : ''}
         </div>
       `;
