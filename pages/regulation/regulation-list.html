@@ -413,7 +413,8 @@
     tabsEl.style.display = '';
     tabsEl.innerHTML = REGULATION_LIST.map(function(reg) {
       const isActive = reg.edit_perm === activeEditPerm ? ' is-active' : '';
-      return '<button class="perm-reg-tab' + isActive + '" onclick="switchPermTab('' + escapeHtml(reg.edit_perm) + '', this)">'
+      const ep = escapeHtml(reg.edit_perm);
+      return '<button class="perm-reg-tab' + isActive + '" onclick="switchPermTab(\'' + ep + '\', this)">'
         + escapeHtml(reg.icon) + ' ' + escapeHtml(reg.title) + '</button>';
     }).join('');
 
