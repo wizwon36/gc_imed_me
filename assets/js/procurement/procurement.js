@@ -1309,6 +1309,7 @@ function initVersionManagement() {
 
   // ── 버전 목록 로드 ─────────────────────────────────────────
   async function loadVersionList() {
+    versionListWrap.style.display = 'block';
     versionListWrap.innerHTML = `
       <div class="pr-version-loading">
         <div class="pr-version-spinner"></div>
@@ -1334,6 +1335,7 @@ function initVersionManagement() {
       versionPage = 1;
 
       if (versionList.length === 0) {
+        versionListWrap.style.display = 'block';
         versionListWrap.innerHTML = '<div class="pr-version-empty">배포된 버전이 없습니다.</div>';
         return;
       }
@@ -1347,29 +1349,50 @@ function initVersionManagement() {
   }
 
   function renderVersionPage() {
+    versionListWrap.style.display = 'table';
     const totalPages = Math.ceil(versionList.length / VERSION_PAGE_SIZE);
     const start      = (versionPage - 1) * VERSION_PAGE_SIZE;
     const pageItems  = versionList.slice(start, start + VERSION_PAGE_SIZE);
 
-    versionListWrap.innerHTML = pageItems.map((v) => {
-      // 전체 목록 기준 index 0이 최신
+    // 테이블 헤더 + 행 렌더링
+    const tableHead = `
+      <div class="pr-version-table-head">
+        <div class="pr-version-table-head-row">
+          <span style="width:100px;">버전</span>
+          <span>변경 사유</span>
+          <span style="width:110px;">시행일</span>
+          <span style="width:140px;">배포일시</span>
+          <span style="width:160px;">배포자</span>
+          <span style="width:80px;"></span>
+        </div>
+      </div>`;
+
+    const tableRows = pageItems.map((v) => {
       const isLatest = versionList.indexOf(v) === 0;
       return `
         <div class="pr-version-item" data-history-id="${escHtml(v.history_id)}">
-          <div class="pr-version-item-left">
+          <div class="pr-version-item-cell pr-version-item-left">
             <span class="pr-version-badge ${isLatest ? 'pr-version-badge--latest' : ''}">${escHtml(v.version_label)}</span>
-            <span class="pr-version-item-memo">${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">메모 없음</span>'}</span>
           </div>
-          <div class="pr-version-item-right">
-            <div class="pr-version-item-meta">
-              ${v.effective_date ? `<span class="pr-version-item-date">시행: ${escHtml(v.effective_date)}</span>` : ''}
-              <span class="pr-version-item-date">${escHtml((v.snapshot_at || '').substring(0, 16))} 배포</span>
-              <span class="pr-version-item-by">${escHtml(v.created_by || '')}</span>
-            </div>
+          <div class="pr-version-item-cell">
+            ${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">-</span>'}
+          </div>
+          <div class="pr-version-item-cell pr-version-item-date">
+            ${v.effective_date ? escHtml(v.effective_date) : '<span class="pr-version-no-memo">-</span>'}
+          </div>
+          <div class="pr-version-item-cell pr-version-item-date">
+            ${escHtml((v.snapshot_at || '').substring(0, 16))}
+          </div>
+          <div class="pr-version-item-cell pr-version-item-by">
+            ${escHtml(v.created_by || '')}
+          </div>
+          <div class="pr-version-item-cell pr-version-item-right">
             <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
           </div>
         </div>`;
     }).join('');
+
+    versionListWrap.innerHTML = tableHead + tableRows;
 
     // 상세 보기 버튼 이벤트
     versionListWrap.querySelectorAll('.pr-version-view-btn').forEach(btn => {
