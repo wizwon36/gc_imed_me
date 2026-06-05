@@ -1445,7 +1445,7 @@ function initVersionManagement() {
         <thead>
           <tr>
             <th class="pr-vth pr-vth--center">버전</th>
-            <th class="pr-vth">변경 사유</th>
+            <th class="pr-vth pr-vth--left">변경 사유</th>
             <th class="pr-vth pr-vth--center">시행일</th>
             <th class="pr-vth pr-vth--center">배포일시</th>
             <th class="pr-vth pr-vth--center">배포자</th>
