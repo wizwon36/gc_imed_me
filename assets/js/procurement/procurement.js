@@ -1142,6 +1142,7 @@ function initVersionManagement() {
   const deployConfirm    = document.getElementById('prDeployConfirmBtn');
   const deployMsg        = document.getElementById('prDeployModalMsg');
   const deployLabel      = document.getElementById('prDeployVersionLabel');
+  const deployEffDate    = document.getElementById('prDeployEffectiveDate');
   const deployMemo       = document.getElementById('prDeployMemo');
 
   // ── 버전 히스토리 모달 요소 ────────────────────────────────
@@ -1164,10 +1165,12 @@ function initVersionManagement() {
 
   // ── 배포 모달 열기 ─────────────────────────────────────────
   deployBtn?.addEventListener('click', () => {
-    // 현재 버전 배지에서 다음 버전 자동 제안
+    // 버전명 자동 제안
     const curVer = document.querySelector('.pr-badge--green')?.textContent?.trim() || '';
-    const suggested = suggestNextVersion(curVer);
-    deployLabel.value = suggested;
+    deployLabel.value = suggestNextVersion(curVer);
+    // 시행일 기본값 — 현재 배지 날짜 파싱, 없으면 오늘
+    const curDateText = document.querySelector('.pr-badge--blue')?.textContent?.trim() || '';
+    deployEffDate.value = parseBadgeDateToInput(curDateText) || new Date().toISOString().slice(0, 10);
     deployMemo.value  = '';
     showMsg(deployMsg, '', '');
     deployModal.style.display = 'flex';
@@ -1186,11 +1189,18 @@ function initVersionManagement() {
 
   // ── 배포 확정 ──────────────────────────────────────────────
   deployConfirm?.addEventListener('click', async () => {
-    const label = deployLabel.value.trim();
-    const memo  = deployMemo.value.trim();
+    const label   = deployLabel.value.trim();
+    const effDate = deployEffDate.value.trim();
+    const memo    = deployMemo.value.trim();
+
     if (!label) {
       showMsg(deployMsg, '버전명을 입력해 주세요.', 'error');
       deployLabel.focus();
+      return;
+    }
+    if (!effDate) {
+      showMsg(deployMsg, '시행일을 입력해 주세요.', 'error');
+      deployEffDate.focus();
       return;
     }
 
@@ -1215,14 +1225,18 @@ function initVersionManagement() {
       const result = await apiPost('deployProcurementVersion', {
         request_user_email: user.email,
         version_label:      label,
+        effective_date:     effDate,
         memo:               memo
       });
 
       if (!result?.success) throw new Error(result?.message || '배포에 실패했습니다.');
 
       // 버전 배지 업데이트
-      const badge = document.querySelector('.pr-badge--green');
-      if (badge) badge.textContent = label;
+      const greenBadge = document.querySelector('.pr-badge--green');
+      if (greenBadge) greenBadge.textContent = label;
+      // 시행일 배지 업데이트
+      const blueBadge = document.querySelector('.pr-badge--blue');
+      if (blueBadge) blueBadge.textContent = formatEffectiveDateBadge(effDate);
 
       showMsg(deployMsg, `"${label}" 버전으로 배포되었습니다.`, 'success');
       setTimeout(closeDeployModal, 1000);
@@ -1447,5 +1461,19 @@ function initVersionManagement() {
     const m = current.match(/Ver\s+(\d+)\.(\d+)/i);
     if (!m) return '';
     return `Ver ${m[1]}.${parseInt(m[2]) + 1}`;
+  }
+
+  // "2026.07.01 시행 (예정)" → "2026-07-01" (input[type=date] 형식)
+  function parseBadgeDateToInput(badgeText) {
+    const m = badgeText.match(/(\d{4})\.(\d{2})\.(\d{2})/);
+    if (!m) return '';
+    return `${m[1]}-${m[2]}-${m[3]}`;
+  }
+
+  // "2026-07-01" → "2026.07.01 시행"
+  function formatEffectiveDateBadge(dateStr) {
+    const m = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return dateStr;
+    return `${m[1]}.${m[2]}.${m[3]} 시행`;
   }
 }
