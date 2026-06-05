@@ -298,12 +298,13 @@
 
   // ── 초기화 ──────────────────────────────────────────────────
   (async function () {
+    showGlobalLoading('불러오는 중...');
+
     const user = window.auth?.requireAuth?.();
-    if (!user) return;
+    if (!user) { hideGlobalLoading(); return; }
     currentUser = user;
 
     try {
-      showGlobalLoading('불러오는 중...');
 
       const isGlobalAdmin = String(user.role || '').toLowerCase() === 'admin';
       const regPerm = await window.appPermission?.getPermission?.('regulation');
