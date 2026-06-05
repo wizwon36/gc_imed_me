@@ -208,7 +208,7 @@
           <span class="top-brand-sub">열람 권한이 있는 규정을 확인하세요</span>
         </div>
       </div>
-      <div class="top-brand-actions" id="topbarActions">
+      <div class="top-brand-actions top-actions--cols-1" id="topbarActions">
         <a href="../../portal.html" class="portal-header-btn portal-header-btn--secondary">HOME</a>
       </div>
     </section>
@@ -354,6 +354,7 @@
         permBtn.textContent = '🔐 편집 권한 관리';
         permBtn.onclick = openPermModal;
         actions.insertBefore(permBtn, actions.firstChild);
+        actions.classList.replace('top-actions--cols-1', 'top-actions--cols-2');
       }
 
       // 사용자 목록 캐시 (배포자 이름 변환용) — admin이면 로드
