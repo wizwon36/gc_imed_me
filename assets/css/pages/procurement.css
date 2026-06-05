@@ -1830,7 +1830,7 @@ p:empty + .pr-table-wrap {
 .pr-version-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
 }
 .pr-vth {
   padding: 8px 12px;
@@ -1841,8 +1841,6 @@ p:empty + .pr-table-wrap {
   background: #f8fafc;
   border-bottom: 2px solid #e2e8f0;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .pr-vth--center { text-align: center; }
 .pr-vtd {
@@ -1852,8 +1850,6 @@ p:empty + .pr-table-wrap {
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .pr-vtd--center { text-align: center; }
 .pr-version-table tbody tr:last-child .pr-vtd { border-bottom: none; }
