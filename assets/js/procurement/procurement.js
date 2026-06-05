@@ -1439,7 +1439,7 @@ function initVersionManagement() {
             ${escHtml(v.created_by_name || v.created_by || '-')}
           </div>
           <div class="pr-version-item-cell pr-version-item-right">
-            <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
+            <button class="pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
           </div>
         </div>`;
     }).join('');
