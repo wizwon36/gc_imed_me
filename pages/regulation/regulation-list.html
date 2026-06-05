@@ -6,53 +6,67 @@
   <title>규정 및 가이드라인</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <style>
-    /* 규정 카드 그리드 */
-    .reg-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 16px;
+    /* 규정 게시판 테이블 */
+    .reg-table-wrap {
+      border: 1px solid var(--border-soft);
+      border-radius: 12px; overflow: hidden;
       margin-bottom: 40px;
     }
-    .reg-card {
-      display: flex; flex-direction: column;
-      border-radius: var(--radius-xl);
-      border: 1.5px solid var(--border-card);
-      background: #fff; overflow: hidden;
-      text-decoration: none; color: inherit;
-      transition: box-shadow .15s, border-color .15s;
+    .reg-table {
+      width: 100%; border-collapse: collapse;
     }
-    .reg-card:hover { border-color: #93c5fd; box-shadow: 0 4px 16px rgba(37,99,235,.10); }
-    .reg-card-head {
-      display: flex; align-items: center; gap: 12px;
-      padding: 16px 18px 12px;
-      border-bottom: 1px solid #f1f5f9;
+    .reg-table th {
+      background: #f8fafc; padding: 11px 16px;
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-align: left; border-bottom: 1.5px solid var(--border-soft);
+      white-space: nowrap;
     }
-    .reg-card-icon { font-size: 22px; flex-shrink: 0; }
-    .reg-card-title { font-size: 15px; font-weight: 800; color: var(--text-primary); }
-    .reg-card-desc  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .reg-card-meta {
-      display: grid; grid-template-columns: 1fr 1fr;
-      padding: 12px 18px 14px; gap: 8px 4px;
+    .reg-table td {
+      padding: 14px 16px; font-size: 13px;
+      color: var(--text-primary); border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
     }
-    .reg-meta-item { display: flex; flex-direction: column; gap: 3px; }
-    .reg-meta-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
-    .reg-meta-value { font-size: 12px; font-weight: 600; color: var(--text-primary); }
-    .reg-meta-value--muted { color: var(--text-muted); font-weight: 400; }
+    .reg-table tr:last-child td { border-bottom: none; }
+    .reg-table tr:hover td { background: #f8fafc; cursor: pointer; }
+    .reg-table a { text-decoration: none; color: inherit; display: contents; }
+
+    .reg-row-title {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .reg-row-icon { font-size: 18px; flex-shrink: 0; }
+    .reg-row-name { font-size: 14px; font-weight: 800; color: var(--text-primary); }
+    .reg-row-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
     .reg-meta-badge {
-      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      display: inline-block; padding: 2px 9px; border-radius: 20px;
       font-size: 11px; font-weight: 800;
       background: #dcfce7; color: #15803d; border: 1px solid #86efac;
     }
-    .reg-skeleton-card {
-      height: 160px; border-radius: var(--radius-xl);
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-      background-size: 200% 100%; animation: shimmer 1.4s infinite;
+    .reg-meta-muted { color: var(--text-muted); font-size: 12px; }
+
+    /* 스피너 오버레이 */
+    .reg-spinner-wrap {
+      display: flex; align-items: center; justify-content: center;
+      padding: 60px 20px; gap: 12px; color: var(--text-muted); font-size: 14px;
     }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .reg-spinner {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 3px solid #e2e8f0; border-top-color: #2563eb;
+      animation: spin .7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     .reg-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
     .reg-section-label {
       font-size: 12px; font-weight: 700; color: var(--text-muted);
       letter-spacing: .06em; text-transform: uppercase; margin-bottom: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .reg-table th:nth-child(3),
+      .reg-table td:nth-child(3),
+      .reg-table th:nth-child(4),
+      .reg-table td:nth-child(4) { display: none; }
     }
 
     /* ── 편집 권한 관리 모달 ── */
@@ -171,8 +185,6 @@
     .perm-result-grant-btn:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
 
     @media (max-width: 600px) {
-      .reg-grid { grid-template-columns: 1fr; }
-      .reg-card-meta { grid-template-columns: 1fr; }
       .perm-modal { max-width: 100%; }
     }
   </style>
@@ -196,9 +208,24 @@
 
     <div style="padding: 24px 0 60px;">
       <div class="reg-section-label">규정 목록</div>
-      <div class="reg-grid" id="regGrid">
-        <div class="reg-skeleton-card"></div>
-        <div class="reg-skeleton-card"></div>
+      <div class="reg-table-wrap" id="regTableWrap">
+        <!-- 스피너 -->
+        <div class="reg-spinner-wrap" id="regSpinner">
+          <div class="reg-spinner"></div>
+          <span>불러오는 중...</span>
+        </div>
+        <table class="reg-table" id="regTable" style="display:none;">
+          <thead>
+            <tr>
+              <th>규정명</th>
+              <th style="width:90px;text-align:center;">버전</th>
+              <th style="width:110px;">시행일</th>
+              <th style="width:150px;">배포일시</th>
+              <th style="width:120px;">배포자</th>
+            </tr>
+          </thead>
+          <tbody id="regTableBody"></tbody>
+        </table>
       </div>
       <div class="reg-empty" id="regEmpty" style="display:none;">
         열람 권한이 있는 규정 및 가이드라인이 없습니다.
@@ -275,7 +302,7 @@
     const grid = document.getElementById('regGrid');
 
     try {
-      showGlobalLoading('불러오는 중...');
+      // 스피너는 자체 처리
 
       const isGlobalAdmin = String(user.role || '').toLowerCase() === 'admin';
       const regPerm = await window.appPermission?.getPermission?.('regulation');
@@ -307,49 +334,41 @@
         return { reg, ...meta };
       }));
 
+      document.getElementById('regSpinner').style.display = 'none';
+
       if (cards.length === 0) {
-        grid.innerHTML = '';
+        document.getElementById('regTableWrap').style.display = 'none';
         document.getElementById('regEmpty').style.display = '';
       } else {
-        grid.innerHTML = cards.map(({ reg, versionLabel, effectiveDate, deployedAt, deployedBy }) => `
-          <a class="reg-card" href="${escapeHtml(reg.url)}">
-            <div class="reg-card-head">
-              <span class="reg-card-icon">${escapeHtml(reg.icon)}</span>
-              <div>
-                <div class="reg-card-title">${escapeHtml(reg.title)}</div>
-                <div class="reg-card-desc">${escapeHtml(reg.desc)}</div>
+        document.getElementById('regTable').style.display = '';
+        document.getElementById('regTableBody').innerHTML = cards.map(({ reg, versionLabel, effectiveDate, deployedAt, deployedBy }) => `
+          <tr onclick="location.href='${escapeHtml(reg.url)}'">
+            <td>
+              <div class="reg-row-title">
+                <span class="reg-row-icon">${escapeHtml(reg.icon)}</span>
+                <div>
+                  <div class="reg-row-name">${escapeHtml(reg.title)}</div>
+                  <div class="reg-row-desc">${escapeHtml(reg.desc)}</div>
+                </div>
               </div>
-            </div>
-            <div class="reg-card-meta">
-              <div class="reg-meta-item">
-                <span class="reg-meta-label">버전</span>
-                <span class="reg-meta-value">
-                  ${versionLabel !== '-'
-                    ? `<span class="reg-meta-badge">${escapeHtml(versionLabel)}</span>`
-                    : '<span class="reg-meta-value--muted">미배포</span>'}
-                </span>
-              </div>
-              <div class="reg-meta-item">
-                <span class="reg-meta-label">시행일</span>
-                <span class="reg-meta-value ${effectiveDate === '-' ? 'reg-meta-value--muted' : ''}">${escapeHtml(effectiveDate)}</span>
-              </div>
-              <div class="reg-meta-item">
-                <span class="reg-meta-label">배포일시</span>
-                <span class="reg-meta-value ${deployedAt === '-' ? 'reg-meta-value--muted' : ''}">${escapeHtml(deployedAt)}</span>
-              </div>
-              <div class="reg-meta-item">
-                <span class="reg-meta-label">배포자</span>
-                <span class="reg-meta-value ${deployedBy === '-' ? 'reg-meta-value--muted' : ''}">${escapeHtml(deployedBy)}</span>
-              </div>
-            </div>
-          </a>
-        `).join('');
+            </td>
+            <td style="text-align:center;">
+              ${versionLabel !== '-'
+                ? `<span class="reg-meta-badge">${escapeHtml(versionLabel)}</span>`
+                : '<span class="reg-meta-muted">미배포</span>'}
+            </td>
+            <td>${effectiveDate !== '-' ? escapeHtml(effectiveDate) : '<span class="reg-meta-muted">-</span>'}</td>
+            <td>${deployedAt !== '-' ? escapeHtml(deployedAt) : '<span class="reg-meta-muted">-</span>'}</td>
+            <td>${deployedBy !== '-' ? escapeHtml(deployedBy) : '<span class="reg-meta-muted">-</span>'}</td>
+          </tr>`).join('');
       }
 
     } catch(e) {
-      grid.innerHTML = `<div style="color:#dc2626;font-size:14px;padding:20px;">${escapeHtml(e.message || '오류가 발생했습니다.')}</div>`;
-    } finally {
-      hideGlobalLoading();
+      document.getElementById('regSpinner').style.display = 'none';
+      document.getElementById('regTableBody').innerHTML = `<tr><td colspan="5" style="color:#dc2626;text-align:center;padding:20px;">${escapeHtml(e.message || '오류가 발생했습니다.')}</td></tr>`;
+      document.getElementById('regTable').style.display = '';
+    } catch(e) {
+      document.getElementById('regSpinner').style.display = 'none';
     }
   })();
 
