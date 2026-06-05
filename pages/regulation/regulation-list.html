@@ -403,8 +403,7 @@
 
   // ── 편집 권한 관리 모달 ───────────────────────────────────────
   async function openPermModal() {
-    showGlobalLoading('권한 목록 불러오는 중...');
-    document.getElementById('permModal').style.display = 'none';
+    document.getElementById('permModal').style.display = 'flex';
     document.getElementById('permSearchResults').style.display = 'none';
     document.getElementById('permSearchInput').value = '';
 
@@ -437,6 +436,7 @@
   async function loadEditorList() {
     const listEl = document.getElementById('permEditorList');
     listEl.innerHTML = '<div class="perm-editor-empty">불러오는 중...</div>';
+    showGlobalLoading('권한 목록 불러오는 중...');
     try {
       const result = await apiGet('getRegulationEditors', {
         request_user_email: currentUser.email,
