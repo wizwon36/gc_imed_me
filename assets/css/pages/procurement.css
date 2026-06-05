@@ -1853,6 +1853,7 @@ p:empty + .pr-table-wrap {
   white-space: nowrap;
 }
 .pr-vtd--center { text-align: center; }
+.pr-vtd--sm { font-size: 11px; color: #64748b; }
 .pr-version-table tbody tr:last-child .pr-vtd { border-bottom: none; }
 .pr-version-table tbody tr:hover .pr-vtd { background: #f8fafc; }
 
