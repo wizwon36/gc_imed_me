@@ -1439,9 +1439,7 @@ function initVersionManagement() {
             ${escHtml(v.created_by_name || v.created_by || '-')}
           </div>
           <div class="pr-version-item-cell pr-version-item-right">
-            <div style="display:flex;align-items:center;justify-content:center;height:100%;">
-              <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
-            </div>
+            <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
           </div>
         </div>`;
     }).join('');
