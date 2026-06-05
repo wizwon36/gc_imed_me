@@ -1822,6 +1822,7 @@ p:empty + .pr-table-wrap {
 .pr-version-list-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0;
 }
 
