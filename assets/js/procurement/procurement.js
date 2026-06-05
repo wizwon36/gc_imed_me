@@ -280,6 +280,14 @@ function hideSkeleton() {
 }
 
 // ── 섹션 로드 및 렌더링 ──────────────────────────────────────
+function parseToDate(str) {
+  if (!str) return null;
+  const m1 = str.match(/^(\d{4})[-.](\d{2})[-.](\d{2})/);
+  if (m1) return new Date(parseInt(m1[1]), parseInt(m1[2]) - 1, parseInt(m1[3]));
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 async function loadLatestVersionBadge() {
   try {
     const user = window.auth?.getSession?.();
@@ -1627,15 +1635,7 @@ function initVersionManagement() {
 
 
   // 다양한 형식 → Date 객체 변환
-  function parseToDate(str) {
-    if (!str) return null;
-    // "2026-07-01" 또는 "2026.07.01" 형식
-    const m1 = str.match(/^(\d{4})[-.](\d{2})[-.](\d{2})/);
-    if (m1) return new Date(parseInt(m1[1]), parseInt(m1[2]) - 1, parseInt(m1[3]));
-    // "Wed Jul 01 2026 ..." 등 자연어 형식은 Date 파싱에 맡김
-    const d = new Date(str);
-    return isNaN(d.getTime()) ? null : d;
-  }
+  // parseToDate — 전역으로 이동
 
   // 날짜 → "2026년 7월 1일"
   function formatDateKo(dateStr) {
