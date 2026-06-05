@@ -97,19 +97,16 @@
       background: #f8fafc; flex-shrink: 0;
     }
 
-    /* 규정 탭 */
-    .perm-reg-tabs {
-      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px;
+    /* 규정 선택 드롭다운 */
+    .perm-reg-select-wrap { margin-bottom: 18px; }
+    .perm-reg-select-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    .perm-reg-select {
+      width: 100%; height: 38px; padding: 0 12px;
+      border: 1.5px solid var(--border-input); border-radius: 10px;
+      font-size: 13px; font-weight: 700; font-family: inherit;
+      color: var(--text-primary); background: #fff; cursor: pointer;
     }
-    .perm-reg-tab {
-      height: 32px; padding: 0 14px; border-radius: 8px;
-      border: 1.5px solid var(--border-soft); background: #fff;
-      font-size: 12px; font-weight: 700; color: var(--text-secondary);
-      cursor: pointer; transition: all .12s; font-family: inherit;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .perm-reg-tab:hover { border-color: #93c5fd; color: #2563eb; background: #eff6ff; }
-    .perm-reg-tab.is-active { border-color: #2563eb; background: #2563eb; color: #fff; }
+    .perm-reg-select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
 
     /* 현재 편집자 목록 */
     .perm-editor-section { margin-bottom: 20px; }
@@ -244,8 +241,11 @@
         <button class="perm-modal-close" onclick="closePermModal()">✕</button>
       </div>
       <div class="perm-modal-body">
-        <!-- 규정 탭 -->
-        <div class="perm-reg-tabs" id="permRegTabs"></div>
+        <!-- 규정 선택 -->
+        <div class="perm-reg-select-wrap">
+          <div class="perm-reg-select-label">규정 선택</div>
+          <select class="perm-reg-select" id="permRegSelect" onchange="onRegSelectChange(this)"></select>
+        </div>
 
         <!-- 현재 편집자 -->
         <div class="perm-editor-section">
@@ -403,21 +403,23 @@
 
   // ── 편집 권한 관리 모달 ───────────────────────────────────────
   async function openPermModal() {
-    document.getElementById('permModal').style.display = 'flex';
     document.getElementById('permSearchResults').style.display = 'none';
     document.getElementById('permSearchInput').value = '';
+    showGlobalLoading('불러오는 중...');
 
-    // 탭 렌더링 — 항상 표시
-    const tabsEl = document.getElementById('permRegTabs');
-    tabsEl.style.display = '';
-    tabsEl.innerHTML = REGULATION_LIST.map(function(reg) {
-      const isActive = reg.edit_perm === activeEditPerm ? ' is-active' : '';
-      const ep = escapeHtml(reg.edit_perm);
-      return '<button class="perm-reg-tab' + isActive + '" onclick="switchPermTab(\'' + ep + '\', this)">'
-        + escapeHtml(reg.icon) + ' ' + escapeHtml(reg.title) + '</button>';
+    // 드롭다운 렌더링
+    const sel = document.getElementById('permRegSelect');
+    sel.innerHTML = REGULATION_LIST.map(function(reg) {
+      return '<option value="' + escapeHtml(reg.edit_perm) + '">' + escapeHtml(reg.icon) + ' ' + escapeHtml(reg.title) + '</option>';
     }).join('');
+    sel.value = activeEditPerm;
 
-    await loadEditorList();
+    try {
+      await loadEditorList();
+    } finally {
+      hideGlobalLoading();
+      document.getElementById('permModal').style.display = 'flex';
+    }
   }
 
   function closePermModal() {
@@ -426,17 +428,19 @@
     document.getElementById('permSearchInput').value = '';
   }
 
-  async function switchPermTab(editPerm, btn) {
-    activeEditPerm = editPerm;
-    document.querySelectorAll('.perm-reg-tab').forEach(b => b.classList.remove('is-active'));
-    btn.classList.add('is-active');
-    await loadEditorList();
+  async function onRegSelectChange(sel) {
+    activeEditPerm = sel.value;
+    showGlobalLoading('불러오는 중...');
+    try {
+      await loadEditorList();
+    } finally {
+      hideGlobalLoading();
+    }
   }
 
   async function loadEditorList() {
     const listEl = document.getElementById('permEditorList');
     listEl.innerHTML = '<div class="perm-editor-empty">불러오는 중...</div>';
-    showGlobalLoading('권한 목록 불러오는 중...');
     try {
       const result = await apiGet('getRegulationEditors', {
         request_user_email: currentUser.email,
@@ -458,8 +462,6 @@
       }
     } catch(e) {
       listEl.innerHTML = `<div class="perm-editor-empty" style="color:#dc2626;">${escapeHtml(e.message)}</div>`;
-    } finally {
-      hideGlobalLoading();
     }
   }
 
