@@ -1339,9 +1339,11 @@ function initVersionManagement() {
             <span class="pr-version-item-memo">${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">메모 없음</span>'}</span>
           </div>
           <div class="pr-version-item-right">
-            <span class="pr-version-item-date">${v.effective_date ? '시행: ' + escHtml(v.effective_date) : ''}</span>
-            <span class="pr-version-item-date">${escHtml((v.snapshot_at || '').substring(0, 16))} 배포</span>
-            <span class="pr-version-item-by">${escHtml(v.created_by || '')}</span>
+            <div class="pr-version-item-meta">
+              ${v.effective_date ? `<span class="pr-version-item-date">시행: ${escHtml(v.effective_date)}</span>` : ''}
+              <span class="pr-version-item-date">${escHtml((v.snapshot_at || '').substring(0, 16))} 배포</span>
+              <span class="pr-version-item-by">${escHtml(v.created_by || '')}</span>
+            </div>
             <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
           </div>
         </div>
@@ -1411,38 +1413,38 @@ function initVersionManagement() {
       const isAutoBackup = v.version_label.startsWith('[복원 전 자동백업]');
       versionRestoreBtn.style.display = isAutoBackup ? 'none' : '';
 
-      versionDetailContent.innerHTML = sections.map((s, idx) => `
+      versionDetailContent.innerHTML = sections.map((s) => `
         <div class="pr-version-acc-item">
-          <div class="pr-version-acc-header" data-idx="${idx}" role="button" tabindex="0">
+          <div class="pr-version-acc-header" role="button" tabindex="0">
             <span class="pr-version-acc-title">${escHtml(s.title || s.sec_id)}</span>
             <span class="pr-version-acc-icon">▾</span>
           </div>
-          <div class="pr-version-acc-body" id="prVerAccBody_${idx}" style="display:none;">
+          <div class="pr-version-acc-body" style="display:none;">
             <div class="pr-version-acc-content pr-content">${s.content_html || '<em style="color:#94a3b8;">내용 없음</em>'}</div>
           </div>
         </div>
       `).join('');
 
-      // 아코디언 토글
-      versionDetailContent.querySelectorAll('.pr-version-acc-header').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const body = document.getElementById('prVerAccBody_' + btn.dataset.idx);
-          const icon = btn.querySelector('.pr-version-acc-icon');
+      // 아코디언 토글 — nextElementSibling으로 body 참조 (id 불필요)
+      versionDetailContent.querySelectorAll('.pr-version-acc-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const body   = header.nextElementSibling;
+          const icon   = header.querySelector('.pr-version-acc-icon');
           const isOpen = body.style.display !== 'none';
           body.style.display = isOpen ? 'none' : '';
-          icon.textContent = isOpen ? '▾' : '▴';
-          btn.classList.toggle('is-open', !isOpen);
+          icon.textContent   = isOpen ? '▾' : '▴';
+          header.classList.toggle('is-open', !isOpen);
         });
       });
 
       // 첫 섹션 기본 열기
-      if (sections.length > 0) {
-        const firstBody = document.getElementById('prVerAccBody_0');
-        const firstIcon = versionDetailContent.querySelector('.pr-version-acc-icon');
-        const firstBtn  = versionDetailContent.querySelector('.pr-version-acc-header');
+      const firstHeader = versionDetailContent.querySelector('.pr-version-acc-header');
+      if (firstHeader) {
+        const firstBody = firstHeader.nextElementSibling;
+        const firstIcon = firstHeader.querySelector('.pr-version-acc-icon');
         if (firstBody) firstBody.style.display = '';
         if (firstIcon) firstIcon.textContent = '▴';
-        if (firstBtn)  firstBtn.classList.add('is-open');
+        firstHeader.classList.add('is-open');
       }
 
     } catch (err) {
