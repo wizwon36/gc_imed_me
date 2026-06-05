@@ -15,18 +15,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     // ── 권한 체크 ───────────────────────────────────────────
+    // 진입: regulation(view 이상) 또는 global admin
     const ok = await window.appPermission?.requirePermission?.(
-      'procurement', ['admin', 'view']
+      'regulation', ['admin', 'view']
     );
     if (ok === false) return;
 
     const user = window.auth?.getSession?.();
 
-    // role=admin 이면 app 권한 테이블과 무관하게 편집 가능
-    // 그 외에는 procurement 앱의 permission 값이 'admin'인 경우만 편집 가능
-    const isGlobalAdmin = String(user?.role || '').trim().toLowerCase() === 'admin';
-    const permission    = await window.appPermission?.getPermission?.('procurement');
-    const isAdmin       = isGlobalAdmin || permission === 'admin';
+    // 편집: global admin 또는 procurement_edit 권한 보유자
+    const isGlobalAdmin   = String(user?.role || '').trim().toLowerCase() === 'admin';
+    const editPermission  = await window.appPermission?.getPermission?.('procurement_edit');
+    const isAdmin         = isGlobalAdmin || editPermission === 'admin';
 
     // ── 섹션 데이터 로드 및 렌더링 ─────────────────────────
     await loadSections();
