@@ -58,7 +58,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '📋',
       url: `${CONFIG.SITE_BASE_URL}/pages/task-manager/task-manager.html`
     },
-    // ── 수정요청: 권한 없어도 모든 사용자에게 노출 ──────────────────
+    // ── 규정 및 가이드라인: 권한 있는 규정 목록 표시 ──────────────
+    regulation: {
+      title: '규정 및 가이드라인',
+      desc: '사내 규정, 지침, 가이드라인 조회',
+      icon: '📚',
+      url: `${CONFIG.SITE_BASE_URL}/pages/regulation/regulation-list.html`
+    },
     procurement: {
       title: '구매규정',
       desc: 'GC녹십자아이메드 구매규정 조회',
