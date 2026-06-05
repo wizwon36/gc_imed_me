@@ -1164,10 +1164,21 @@ function initVersionManagement() {
   let currentVersionLabel= null;
 
   // ── 배포 모달 열기 ─────────────────────────────────────────
-  deployBtn?.addEventListener('click', () => {
-    // 버전명 자동 제안
+  deployBtn?.addEventListener('click', async () => {
     const curVer = document.querySelector('.pr-badge--green')?.textContent?.trim() || '';
-    deployLabel.value = suggestNextVersion(curVer);
+
+    // 배포 이력이 있으면 다음 버전 제안, 없으면 현재 버전 그대로
+    let suggestedLabel = curVer;
+    try {
+      const user = window.auth?.getSession?.();
+      const listResult = await apiGet('getProcurementVersionList', {
+        request_user_email: user?.email || ''
+      });
+      const hasHistory = listResult?.success && (listResult.data || []).length > 0;
+      if (hasHistory) suggestedLabel = suggestNextVersion(curVer) || curVer;
+    } catch (e) { /* 실패 시 현재 버전 유지 */ }
+
+    deployLabel.value = suggestedLabel;
     // 시행일 기본값 — 현재 배지 날짜 파싱, 없으면 오늘
     const curDateText = document.querySelector('.pr-badge--blue')?.textContent?.trim() || '';
     deployEffDate.value = parseBadgeDateToInput(curDateText) || new Date().toISOString().slice(0, 10);
@@ -1204,14 +1215,19 @@ function initVersionManagement() {
       return;
     }
 
-    // 현재 배포된 버전과 동일한 버전명 차단
-    const currentLabel = document.querySelector('.pr-badge--green')?.textContent?.trim() || '';
-    if (label === currentLabel) {
-      showMsg(deployMsg, `이미 배포된 버전명입니다. 다른 버전명을 입력해 주세요. (현재: ${currentLabel})`, 'error');
-      deployLabel.focus();
-      deployLabel.select();
-      return;
-    }
+    // 이미 배포된 버전명과 중복 체크 (이력이 있을 때만)
+    try {
+      const listResult = await apiGet('getProcurementVersionList', {
+        request_user_email: user.email
+      });
+      const deployed = (listResult?.data || []).map(v => v.version_label);
+      if (deployed.includes(label)) {
+        showMsg(deployMsg, `이미 배포된 버전명입니다. 다른 버전명을 입력해 주세요. (${label})`, 'error');
+        deployLabel.focus();
+        deployLabel.select();
+        return;
+      }
+    } catch (e) { /* 중복 체크 실패 시 통과 */ }
 
     const user = window.auth?.getSession?.();
     if (!user?.email) { showMsg(deployMsg, '로그인 세션이 만료되었습니다.', 'error'); return; }
