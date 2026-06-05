@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>규정 및 가이드라인</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+  <style>
+    .reg-shell {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* 헤더 */
+    .reg-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0 16px;
+      border-bottom: 1px solid var(--border-soft);
+      margin-bottom: 36px;
+    }
+    .reg-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .reg-topbar-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .reg-topbar-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .reg-topbar-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .reg-home-btn {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-card);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: all .12s;
+    }
+    .reg-home-btn:hover {
+      border-color: #93c5fd;
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    /* 섹션 타이틀 */
+    .reg-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    /* 카드 그리드 — common.css portal-app-card 재사용 */
+    .reg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    /* 스켈레톤 */
+    .reg-skeleton-card {
+      height: 100px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* 빈 상태 */
+    .reg-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .reg-grid { grid-template-columns: 1fr; }
+      .reg-topbar-title { font-size: 16px; }
+    }
+  </style>
+</head>
+<body class="portal-page">
+  <div class="container">
+    <div class="reg-shell">
+
+      <!-- 헤더 -->
+      <div class="reg-topbar">
+        <div class="reg-topbar-left">
+          <div class="reg-topbar-logo">📚</div>
+          <div>
+            <div class="reg-topbar-title">규정집</div>
+            <div class="reg-topbar-sub">열람 권한이 있는 규정을 확인하세요</div>
+          </div>
+        </div>
+        <a href="../../portal.html" class="reg-home-btn">HOME</a>
+      </div>
+
+      <!-- 카드 그리드 -->
+      <div class="reg-section-title">규정 목록</div>
+      <div class="reg-grid" id="regGrid">
+        <!-- 스켈레톤 -->
+        <div class="reg-skeleton-card"></div>
+        <div class="reg-skeleton-card"></div>
+        <div class="reg-skeleton-card"></div>
+      </div>
+      <div class="reg-empty" id="regEmpty" style="display:none;">
+        열람 권한이 있는 규정 및 가이드라인이 없습니다.
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
+  <script>
+  (async function () {
+    const user = window.auth?.requireAuth?.();
+    if (!user) return;
+
+    // ── 규정 목록 정의 ──────────────────────────────────────────────
+    // 새 규정 추가 시 여기에만 추가하면 됩니다
+    const REGULATION_LIST = [
+      {
+        app_id: 'procurement',
+        title:  '구매규정',
+        desc:   'GC녹십자아이메드 구매규정 조회',
+        icon:   '📋',
+        url:    '../../pages/procurement/procurement.html'
+      }
+      // 예시:
+      // {
+      //   app_id: 'hr_regulation',
+      //   title:  '인사규정',
+      //   desc:   'GC녹십자아이메드 인사규정 조회',
+      //   icon:   '👥',
+      //   url:    '../../pages/hr-regulation/hr-regulation.html'
+      // }
+    ];
+
+    const grid    = document.getElementById('regGrid');
+    const emptyEl = document.getElementById('regEmpty');
+
+    try {
+      showGlobalLoading('권한 확인 중...');
+
+      // 권한 있는 규정만 필터링
+      const accessible = [];
+      for (const reg of REGULATION_LIST) {
+        const isAdmin = String(user.role || '').toLowerCase() === 'admin';
+        if (isAdmin) {
+          accessible.push(reg);
+          continue;
+        }
+        try {
+          const perm = await window.appPermission?.getPermission?.(reg.app_id);
+          if (perm) accessible.push(reg);
+        } catch (e) {
+          // 권한 없음 — 목록에서 제외
+        }
+      }
+
+      // 카드 렌더링
+      if (accessible.length === 0) {
+        grid.innerHTML = '';
+        emptyEl.style.display = '';
+      } else {
+        grid.innerHTML = accessible.map(reg => `
+          <a class="portal-app-card" href="${reg.url}">
+            <div class="portal-app-icon">${escapeHtml(reg.icon)}</div>
+            <div class="portal-app-body">
+              <div class="portal-app-title-row">
+                <strong class="portal-app-title">${escapeHtml(reg.title)}</strong>
+              </div>
+              <div class="portal-app-desc">${escapeHtml(reg.desc)}</div>
+            </div>
+          </a>
+        `).join('');
+      }
+
+    } catch (e) {
+      grid.innerHTML = `<div style="color:#dc2626;font-size:14px;">${escapeHtml(e.message || '오류가 발생했습니다.')}</div>`;
+    } finally {
+      hideGlobalLoading();
+    }
+  })();
+  </script>
+</body>
+</html>
