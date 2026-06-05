@@ -1435,12 +1435,12 @@ function initVersionManagement() {
     versionListWrap.innerHTML = `
       <table class="pr-version-table">
         <colgroup>
-          <col style="width:65px">
-          <col>
-          <col style="width:80px">
-          <col style="width:105px">
-          <col style="width:55px">
-          <col style="width:68px">
+          <col style="width:70px">
+          <col style="width:auto">
+          <col style="width:90px">
+          <col style="width:140px">
+          <col style="width:60px">
+          <col style="width:70px">
         </colgroup>
         <thead>
           <tr>
