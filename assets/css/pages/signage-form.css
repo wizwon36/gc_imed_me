@@ -66,8 +66,29 @@
 .signage-upload-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
+  padding: 12px 16px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  width: 100%;
+  box-sizing: border-box;
+}
+.signage-upload-row .photo-file-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.signage-upload-row .photo-file-name {
+  flex: 1;
+  font-size: 14px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .signage-file-list { display: flex; flex-direction: column; gap: 6px; }
