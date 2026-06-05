@@ -1314,7 +1314,8 @@ function initVersionManagement() {
             <span class="pr-version-item-memo">${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">메모 없음</span>'}</span>
           </div>
           <div class="pr-version-item-right">
-            <span class="pr-version-item-date">${escHtml((v.snapshot_at || '').substring(0, 16))}</span>
+            <span class="pr-version-item-date">${v.effective_date ? '시행: ' + escHtml(v.effective_date) : ''}</span>
+            <span class="pr-version-item-date">${escHtml((v.snapshot_at || '').substring(0, 16))} 배포</span>
             <span class="pr-version-item-by">${escHtml(v.created_by || '')}</span>
             <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
           </div>
@@ -1363,6 +1364,7 @@ function initVersionManagement() {
       versionDetailMeta.innerHTML = `
         <div class="pr-version-detail-info">
           <span class="pr-version-badge pr-version-badge--detail">${escHtml(v.version_label)}</span>
+          ${v.effective_date ? `<span class="pr-version-detail-effdate">시행일: ${escHtml(v.effective_date)}</span>` : ''}
           <span class="pr-version-detail-date">배포일: ${escHtml((v.snapshot_at || '').substring(0, 16))}</span>
           <span class="pr-version-detail-by">배포자: ${escHtml(v.created_by || '')}</span>
           ${v.memo ? `<span class="pr-version-detail-memo">${escHtml(v.memo)}</span>` : ''}
