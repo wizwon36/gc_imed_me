@@ -1842,7 +1842,7 @@ p:empty + .pr-table-wrap {
 }
 .pr-version-table-head-row > span {
   display: table-cell;
-  padding: 8px 14px;
+  padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
   color: #64748b;
@@ -1862,7 +1862,7 @@ p:empty + .pr-table-wrap {
 .pr-version-item > td,
 .pr-version-item-cell {
   display: table-cell;
-  padding: 8px 14px;
+  padding: 6px 14px;
   vertical-align: middle !important;
   font-size: 13px;
   color: #374151;
@@ -1949,7 +1949,7 @@ p:empty + .pr-table-wrap {
 .pr-version-view-btn {
   display: inline-block;
   font-size: 12px;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 6px;
   background: #2563eb;
   border: none;
@@ -1957,9 +1957,9 @@ p:empty + .pr-table-wrap {
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
-  line-height: 1.6;
+  line-height: 1.4;
   vertical-align: middle;
-  height: 28px;
+  height: 26px;
   box-sizing: border-box;
 }
 .pr-version-view-btn:hover { background: #1d4ed8; }
