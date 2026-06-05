@@ -39,7 +39,8 @@ let state = {
   chart: null,
   orgData: null,
   dateFrom: '',
-  dateTo: ''
+  dateTo: '',
+  canEdit: false       // edit 이상 권한 여부
 };
 
 // ─────────────────────────────────────────────
@@ -83,6 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       : Promise.resolve(null);
 
     const [hasAccess, groupsResult, itemsResult, orgResult] = await Promise.all([permissionPromise, groupsPromise, itemsPromise, orgPromise]);
+
+    // edit / admin 권한이면 편집 가능
+    if (isAdmin) {
+      state.canEdit = true;
+    } else {
+      const perm = await window.appPermission?.getPermission?.(APP_ID).catch(() => null);
+      state.canEdit = (perm === 'edit' || perm === 'admin');
+    }
 
     state.groups = groupsResult;
     renderGroupTabs();
@@ -661,10 +670,10 @@ function selectItem(itemId) {
       // 렌더링
       $('itemEmptyState').style.display = 'none';
       $('settingsSection').style.display = '';
-      $('dataEntrySection').style.display = '';
+      $('dataEntrySection').style.display = state.canEdit ? '' : 'none';
       $('dateFilterSection').style.display = '';
-      $('editItemBtn').style.display = '';
-      $('deleteItemBtn').style.display = '';
+      $('editItemBtn').style.display   = state.canEdit ? '' : 'none';
+      $('deleteItemBtn').style.display = state.canEdit ? '' : 'none';
       $('settingsSectionTitle').textContent = item.item_name;
       $('chartSectionTitle').textContent = `L-J 차트 — ${item.item_name}`;
 
@@ -1404,8 +1413,9 @@ function renderDataTable() {
           <td style="text-align:center;">${badge}</td>
           <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
           <td class="lj-action-cell">
-            <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
-            <button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">삭제</button>
+            ${state.canEdit ? `
+              <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
+              <button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">삭제</button>` : ''}
           </td>
         </tr>`;
     }).join('');
@@ -1432,8 +1442,9 @@ function renderDataTable() {
         <td>${badges}</td>
         <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
         <td class="lj-action-cell">
-          <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
-          <button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">삭제</button>
+          ${state.canEdit ? `
+            <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
+            <button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">삭제</button>` : ''}
         </td>
       </tr>`;
   }).join('');
