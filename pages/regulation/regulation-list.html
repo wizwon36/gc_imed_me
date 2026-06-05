@@ -222,9 +222,9 @@
               <th>규정명</th>
               <th>설명</th>
               <th style="width:90px;text-align:center;">버전</th>
-              <th style="width:110px;">시행일</th>
-              <th style="width:150px;">배포일시</th>
-              <th style="width:120px;">배포자</th>
+              <th style="width:110px;text-align:center;">시행일</th>
+              <th style="width:150px;text-align:center;">배포일시</th>
+              <th style="width:120px;text-align:center;">배포자</th>
             </tr>
           </thead>
           <tbody id="regTableBody"></tbody>
@@ -371,14 +371,14 @@
               </div>
             </td>
             <td class="reg-meta-muted">${escapeHtml(reg.desc)}</td>
-            <td style="text-align:center;">
+            <td style="text-align:center;white-space:nowrap;">
               ${versionLabel !== '-'
-                ? `<span class="reg-meta-badge">${escapeHtml(versionLabel)}</span>`
+                ? `<span class="reg-meta-badge" style="white-space:nowrap;">${escapeHtml(versionLabel)}</span>`
                 : '<span class="reg-meta-muted">미배포</span>'}
             </td>
-            <td>${effectiveDate !== '-' ? escapeHtml(effectiveDate) : '<span class="reg-meta-muted">-</span>'}</td>
-            <td>${deployedAt !== '-' ? escapeHtml(deployedAt) : '<span class="reg-meta-muted">-</span>'}</td>
-            <td>${deployedBy !== '-' ? escapeHtml(deployedBy) : '<span class="reg-meta-muted">-</span>'}</td>
+            <td style="text-align:center;white-space:nowrap;">${effectiveDate !== '-' ? escapeHtml(effectiveDate) : '<span class="reg-meta-muted">-</span>'}</td>
+            <td style="text-align:center;white-space:nowrap;">${deployedAt !== '-' ? escapeHtml(deployedAt) : '<span class="reg-meta-muted">-</span>'}</td>
+            <td style="text-align:center;white-space:nowrap;">${deployedBy !== '-' ? escapeHtml(deployedBy) : '<span class="reg-meta-muted">-</span>'}</td>
           </tr>`).join('');
       }
 
