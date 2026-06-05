@@ -672,6 +672,12 @@ function selectItem(itemId) {
       const isQual = item.item_type === 'qualitative';
       $('entryValueField').style.display  = isQual ? 'none' : '';
       $('entryResultField').style.display = isQual ? '' : 'none';
+      // 소수점 자리수에 맞게 step 설정
+      if (!isQual) {
+        const dec = getDecimals(item);
+        $('entryValue').step        = dec === 0 ? '1' : '0.' + '0'.repeat(dec - 1) + '1';
+        $('entryValue').placeholder = dec === 0 ? '0' : '0.' + '0'.repeat(dec);
+      }
       if (isQual) {
         const preset = QUALITATIVE_PRESETS[item.preset];
         if (preset) {
@@ -1021,6 +1027,18 @@ async function addEntry() {
   } else {
     value = parseFloat($('entryValue').value);
     if (isNaN(value)) { alert('측정값을 입력하세요.'); $('entryValue').focus(); return; }
+    // 소수점 자리수 초과 검증
+    const dec = getDecimals(item);
+    const valueStr = String($('entryValue').value);
+    const dotIdx = valueStr.indexOf('.');
+    if (dotIdx !== -1 && valueStr.length - dotIdx - 1 > dec) {
+      const msg = dec === 0
+        ? '정수만 입력할 수 있습니다.'
+        : `소수점 ${dec}자리까지만 입력할 수 있습니다. (예: ${Number(value).toFixed(dec)})`;
+      alert(msg);
+      $('entryValue').focus();
+      return;
+    }
   }
 
   const user = window.auth.getSession();
