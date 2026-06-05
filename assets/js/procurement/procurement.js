@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── 섹션 데이터 로드 및 렌더링 ─────────────────────────
     await loadSections();
 
+    // ── 최신 배포 버전 배지 업데이트 ─────────────────────
+    await loadLatestVersionBadge();
+
     // admin이면 편집 버튼 + 버전 관리 버튼 노출
     if (isAdmin) {
       document.querySelectorAll('.pr-edit-btn').forEach(btn => {
@@ -277,6 +280,38 @@ function hideSkeleton() {
 }
 
 // ── 섹션 로드 및 렌더링 ──────────────────────────────────────
+async function loadLatestVersionBadge() {
+  try {
+    const user = window.auth?.getSession?.();
+    if (!user?.email) return;
+
+    const result = await apiGet('getProcurementVersionList', {
+      request_user_email: user.email
+    });
+
+    const list = result?.data || [];
+    if (list.length === 0) return;
+
+    // 최신 버전 (이미 최신순 정렬)
+    const latest = list[0];
+
+    // 버전 배지 업데이트
+    const greenBadge = document.querySelector('.pr-badge--green');
+    if (greenBadge && latest.version_label) {
+      greenBadge.textContent = latest.version_label;
+    }
+
+    // 시행일 배지 업데이트
+    const blueBadge = document.querySelector('.pr-badge--blue');
+    if (blueBadge && latest.effective_date) {
+      const m = latest.effective_date.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (m) blueBadge.textContent = `${m[1]}.${m[2]}.${m[3]} 시행`;
+    }
+  } catch (e) {
+    // 실패 시 하드코딩 값 유지
+  }
+}
+
 async function loadSections() {
   const user = window.auth?.getSession?.();
   if (!user?.email) return;
