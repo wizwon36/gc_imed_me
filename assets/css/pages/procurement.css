@@ -736,26 +736,20 @@ p:empty + .pr-table-wrap {
 
 /* ─── 섹션 헤더 ──────────────────────────── */
 .pr-subsection-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: block;
   margin-bottom: 12px;
-  position: sticky;
-  top: var(--pr-search-h);
-  z-index: 10;
-  background: #fff;
-  padding: 8px 0 8px;
-  border-bottom: 1px solid #f1f5f9;
+  padding-right: 88px;
 }
 
 .pr-subsection-header .pr-h2 {
   margin-bottom: 0;
-  flex: 1;
 }
 
 /* ─── 편집 버튼 ─────────────────────────────────────────────── */
 .pr-edit-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -770,7 +764,7 @@ p:empty + .pr-table-wrap {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
-  flex-shrink: 0;
+  z-index: 1;
 }
 
 .pr-edit-btn:hover {
