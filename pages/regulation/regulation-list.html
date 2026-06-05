@@ -5,40 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>규정 및 가이드라인</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/equipment-form.css" />
   <style>
     /* 규정 게시판 테이블 */
     .reg-table-wrap {
-      border: 1px solid var(--border-soft);
-      border-radius: 12px; overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
       margin-bottom: 40px;
+      box-shadow: 0 1px 4px rgba(15,23,42,.06);
     }
     .reg-table {
       width: 100%; border-collapse: collapse;
     }
+    .reg-table thead tr {
+      background: #f8fafc;
+      border-bottom: 2px solid var(--border-soft);
+    }
     .reg-table th {
-      background: #f8fafc; padding: 11px 16px;
+      padding: 12px 18px;
       font-size: 12px; font-weight: 700; color: var(--text-muted);
-      text-align: left; border-bottom: 1.5px solid var(--border-soft);
-      white-space: nowrap;
+      text-align: left; white-space: nowrap;
+      letter-spacing: .04em; text-transform: uppercase;
     }
     .reg-table td {
-      padding: 14px 16px; font-size: 13px;
+      padding: 16px 18px; font-size: 13px;
       color: var(--text-primary); border-bottom: 1px solid #f1f5f9;
       vertical-align: middle;
     }
-    .reg-table tr:last-child td { border-bottom: none; }
-    .reg-table tr:hover td { background: #f8fafc; cursor: pointer; }
-    .reg-table a { text-decoration: none; color: inherit; display: contents; }
+    .reg-table tbody tr:last-child td { border-bottom: none; }
+    .reg-table tbody tr { transition: background .1s; cursor: pointer; }
+    .reg-table tbody tr:hover td { background: #f0f5ff; }
 
     .reg-row-title {
       display: flex; align-items: center; gap: 10px;
     }
-    .reg-row-icon { font-size: 18px; flex-shrink: 0; }
+    .reg-row-icon { font-size: 20px; flex-shrink: 0; }
     .reg-row-name { font-size: 14px; font-weight: 800; color: var(--text-primary); }
-    .reg-row-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
     .reg-meta-badge {
-      display: inline-block; padding: 2px 9px; border-radius: 20px;
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
       font-size: 11px; font-weight: 800;
       background: #dcfce7; color: #15803d; border: 1px solid #86efac;
     }
@@ -196,8 +203,18 @@
       </div>
     </section>
 
-    <div style="padding: 24px 0 60px;">
-      <div class="reg-section-label">규정 목록</div>
+    <!-- 페이지 타이틀 -->
+    <section class="page-hero-simple equipment-form-hero">
+      <div class="equipment-form-hero-copy">
+        <span class="portal-section-kicker">REGULATION · GUIDELINE</span>
+        <h1 class="page-title">규정 및 가이드라인</h1>
+        <p class="page-desc">열람 권한이 있는 규정을 확인하세요.</p>
+      </div>
+    </section>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <div style="padding: 0 0 60px;">
       <div class="reg-table-wrap" id="regTableWrap">
         <table class="reg-table" id="regTable" style="display:none;">
           <thead>
