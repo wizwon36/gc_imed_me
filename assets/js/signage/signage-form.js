@@ -59,9 +59,9 @@ const MAX_TOTAL_FILE_MB  = 20;
 const MAX_SINGLE_BYTES   = MAX_SINGLE_FILE_MB * 1024 * 1024;
 const MAX_TOTAL_BYTES    = MAX_TOTAL_FILE_MB  * 1024 * 1024;
 
-const uploadedFileIds   = { main: [], location: [], reference: [] };
-const uploadedFileSizes = { main: [], location: [], reference: [] };
-let pendingUploads = 0;
+// 로컬 보관용 (서버 업로드는 제출 시)
+const pendingFiles = { main: [], location: [], reference: [] }; // [{ file, itemId }]
+let pendingUploads = 0; // 미사용, 호환성 유지
 let isSubmitting   = false;
 
 let currentNpType    = '';
@@ -576,9 +576,9 @@ function handleTypeChange(e) {
   // 제작 방식 선택 초기화
   document.querySelectorAll('.signage-method-card').forEach(c => c.classList.remove('is-selected'));
   document.querySelectorAll('input[name="nameplate_method"]').forEach(r => r.checked = false);
-  uploadedFileIds.main      = [];  uploadedFileSizes.main      = [];
-  uploadedFileIds.location  = [];  uploadedFileSizes.location  = [];
-  uploadedFileIds.reference = [];  uploadedFileSizes.reference = [];
+  pendingFiles.main      = [];
+  pendingFiles.location  = [];
+  pendingFiles.reference = [];
   ['fileList_main', 'fileList_location'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
@@ -821,8 +821,8 @@ function bindDrop(inputId, key, listId) {
 }
 
 function getTotalUploadedBytes() {
-  return [...uploadedFileSizes.main, ...uploadedFileSizes.location, ...uploadedFileSizes.reference]
-    .reduce((acc, size) => acc + size, 0);
+  return [...pendingFiles.main, ...pendingFiles.location, ...pendingFiles.reference]
+    .reduce((acc, f) => acc + f.file.size, 0);
 }
 
 function formatFileSize(bytes) {
@@ -831,10 +831,8 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-async function processFiles(files, key, listId) {
-  const user      = window.auth?.getSession?.() || {};
-  const createdBy = user.user_email || user.email || '';
-
+// 파일 선택 시 로컬에만 추가 (서버 업로드는 제출 시)
+function processFiles(files, key, listId) {
   for (const file of files) {
     if (file.size > MAX_SINGLE_BYTES) {
       showMessage(`파일 용량 초과: "${file.name}" (${formatFileSize(file.size)}) — 개별 파일은 ${MAX_SINGLE_FILE_MB}MB 이하만 가능합니다.`, 'error');
@@ -846,65 +844,31 @@ async function processFiles(files, key, listId) {
       continue;
     }
 
-    pendingUploads++;
     const itemId = 'fi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    pendingFiles[key].push({ file, itemId });
+
     const listEl = document.getElementById(listId);
     if (listEl) {
       listEl.insertAdjacentHTML('beforeend',
-        `<div class="signage-file-item is-uploading" id="${itemId}">
+        `<div class="signage-file-item is-done" id="${itemId}">
           <span class="signage-file-item-name">${escapeHtml(file.name)}</span>
-          <span class="signage-file-item-status">업로드 중...</span>
+          <span class="signage-file-item-status">${formatFileSize(file.size)}</span>
+          <button type="button" class="signage-file-item-remove" title="파일 제거">✕</button>
         </div>`
       );
+      document.getElementById(itemId)
+        ?.querySelector('.signage-file-item-remove')
+        ?.addEventListener('click', () => {
+          const idx = pendingFiles[key].findIndex(f => f.itemId === itemId);
+          if (idx !== -1) pendingFiles[key].splice(idx, 1);
+          document.getElementById(itemId)?.remove();
+          const emptyEl = document.getElementById('previewEmpty_' + key);
+          if (emptyEl && pendingFiles[key].length === 0) emptyEl.style.display = '';
+        });
     }
 
-    try {
-      const base64 = await toBase64(file);
-      const res    = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
-      const fileId = res.data.file_id;
-      const fileSize = file.size;
-      uploadedFileIds[key].push(fileId);
-      uploadedFileSizes[key].push(fileSize);
-      const el = document.getElementById(itemId);
-      if (el) {
-        el.classList.replace('is-uploading', 'is-done');
-        el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatFileSize(fileSize)})`;
-        // 삭제 버튼 추가
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'signage-file-item-remove';
-        removeBtn.textContent = '✕';
-        removeBtn.title = '파일 제거';
-        removeBtn.addEventListener('click', () => {
-          const idx = uploadedFileIds[key].indexOf(fileId);
-          if (idx !== -1) {
-            uploadedFileIds[key].splice(idx, 1);
-            uploadedFileSizes[key].splice(idx, 1);
-          }
-          el.remove();
-        });
-        el.appendChild(removeBtn);
-      }
-      const emptyEl = document.getElementById('previewEmpty_' + key);
-      if (emptyEl) emptyEl.style.display = 'none';
-    } catch (err) {
-      const el = document.getElementById(itemId);
-      if (el) {
-        el.classList.replace('is-uploading', 'is-error');
-        el.querySelector('.signage-file-item-status').textContent = '✗ 실패';
-        // 실패한 아이템도 클릭으로 제거 가능하도록
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'signage-file-item-remove';
-        removeBtn.textContent = '✕';
-        removeBtn.title = '제거';
-        removeBtn.addEventListener('click', () => el.remove());
-        el.appendChild(removeBtn);
-      }
-      showMessage('업로드 실패: ' + file.name, 'error');
-    } finally {
-      pendingUploads--;
-    }
+    const emptyEl = document.getElementById('previewEmpty_' + key);
+    if (emptyEl) emptyEl.style.display = 'none';
   }
 }
 
@@ -924,8 +888,6 @@ async function handleSubmit(e) {
   e.preventDefault();
   clearMessage();
   if (isSubmitting) return;
-  if (pendingUploads > 0) { showMessage('파일 업로드가 진행 중입니다. 완료 후 다시 시도해 주세요.', 'error'); return; }
-
   const totalBytes = getTotalUploadedBytes();
   if (totalBytes > MAX_TOTAL_BYTES) { showMessage(`전체 첨부 용량(${formatFileSize(totalBytes)})이 최대 ${MAX_TOTAL_FILE_MB}MB를 초과했습니다.`, 'error'); return; }
 
@@ -934,10 +896,29 @@ async function handleSubmit(e) {
   if (!validatePayload(payload)) return;
 
   const submitBtn = document.getElementById('submitBtn');
+  const createdBy = (window.auth?.getSession?.() || {}).user_email || '';
   try {
     isSubmitting = true;
     setLoading(submitBtn, true, '신청 중...');
     showGlobalLoading('사인물 신청을 처리하는 중...');
+
+    // 파일 업로드 (제출 시점)
+    async function uploadGroup(key) {
+      const ids = [];
+      for (const { file, itemId } of pendingFiles[key]) {
+        const el = document.getElementById(itemId);
+        if (el) { el.classList.replace('is-done', 'is-uploading'); el.querySelector('.signage-file-item-status').textContent = '업로드 중...'; }
+        const base64 = await toBase64(file);
+        const res = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
+        ids.push(res.data.file_id);
+        if (el) { el.classList.replace('is-uploading', 'is-done'); el.querySelector('.signage-file-item-status').textContent = `✓ ${formatFileSize(file.size)}`; }
+      }
+      return ids;
+    }
+    payload.file_ids          = await uploadGroup('main');
+    payload.location_file_ids = await uploadGroup('location');
+    payload.reference_file_ids = await uploadGroup('reference');
+
     const res = await apiPost('createSignageRequest', payload);
     const notifyEmail = res.data?.notify_email || '';
     const alertMsg = notifyEmail
@@ -995,8 +976,8 @@ function buildPayload() {
     is_urgent:          getValue('is_urgent') || 'N',
     urgent_reason:      getValue('urgent_reason'),
     draft_confirm:      draftConfirm,
-    file_ids:           [...uploadedFileIds.main],
-    location_file_ids:  [...uploadedFileIds.location],
+    file_ids:           [], // 제출 시 채워짐
+    location_file_ids:  [], // 제출 시 채워짐
     reference_file_ids: [],
     sign_size:          getValue('sign_size'),
     sign_type:          getValue('sign_type'),
