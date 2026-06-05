@@ -1153,6 +1153,7 @@ function initVersionManagement() {
   const versionDetailView= document.getElementById('prVersionDetailView');
   const versionListWrap  = document.getElementById('prVersionListWrap');
   const versionListMsg   = document.getElementById('prVersionListMsg');
+  const versionPager     = document.getElementById('prVersionPager');
   const versionDetailMeta= document.getElementById('prVersionDetailMeta');
   const versionDetailContent = document.getElementById('prVersionDetailContent');
   const versionDetailMsg = document.getElementById('prVersionDetailMsg');
@@ -1162,6 +1163,9 @@ function initVersionManagement() {
 
   let currentHistoryId   = null;
   let currentVersionLabel= null;
+  let versionList        = [];   // 전체 목록 캐시
+  let versionPage        = 1;    // 현재 페이지
+  const VERSION_PAGE_SIZE = 10;
 
   // ── 배포 모달 열기 ─────────────────────────────────────────
   deployBtn?.addEventListener('click', async () => {
@@ -1310,6 +1314,7 @@ function initVersionManagement() {
         <div class="pr-version-spinner"></div>
         <span>목록 불러오는 중...</span>
       </div>`;
+    versionPager.style.display = 'none';
     showMsg(versionListMsg, '', '');
 
     const user = window.auth?.getSession?.();
@@ -1325,17 +1330,34 @@ function initVersionManagement() {
 
       if (!result?.success) throw new Error(result?.message || '목록을 불러오지 못했습니다.');
 
-      const list = result.data || [];
+      versionList = result.data || [];
+      versionPage = 1;
 
-      if (list.length === 0) {
+      if (versionList.length === 0) {
         versionListWrap.innerHTML = '<div class="pr-version-empty">배포된 버전이 없습니다.</div>';
         return;
       }
 
-      versionListWrap.innerHTML = list.map((v, idx) => `
+      renderVersionPage();
+
+    } catch (err) {
+      showMsg(versionListMsg, err.message || '목록을 불러오지 못했습니다.', 'error');
+      versionListWrap.innerHTML = '';
+    }
+  }
+
+  function renderVersionPage() {
+    const totalPages = Math.ceil(versionList.length / VERSION_PAGE_SIZE);
+    const start      = (versionPage - 1) * VERSION_PAGE_SIZE;
+    const pageItems  = versionList.slice(start, start + VERSION_PAGE_SIZE);
+
+    versionListWrap.innerHTML = pageItems.map((v) => {
+      // 전체 목록 기준 index 0이 최신
+      const isLatest = versionList.indexOf(v) === 0;
+      return `
         <div class="pr-version-item" data-history-id="${escHtml(v.history_id)}">
           <div class="pr-version-item-left">
-            <span class="pr-version-badge ${idx === 0 ? 'pr-version-badge--latest' : ''}">${escHtml(v.version_label)}</span>
+            <span class="pr-version-badge ${isLatest ? 'pr-version-badge--latest' : ''}">${escHtml(v.version_label)}</span>
             <span class="pr-version-item-memo">${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">메모 없음</span>'}</span>
           </div>
           <div class="pr-version-item-right">
@@ -1346,22 +1368,40 @@ function initVersionManagement() {
             </div>
             <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+    }).join('');
 
-      // 상세 보기 버튼 이벤트
-      versionListWrap.querySelectorAll('.pr-version-view-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          currentHistoryId    = btn.dataset.historyId;
-          currentVersionLabel = btn.dataset.versionLabel;
-          await loadVersionDetail(currentHistoryId, currentVersionLabel);
-        });
+    // 상세 보기 버튼 이벤트
+    versionListWrap.querySelectorAll('.pr-version-view-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        currentHistoryId    = btn.dataset.historyId;
+        currentVersionLabel = btn.dataset.versionLabel;
+        await loadVersionDetail(currentHistoryId, currentVersionLabel);
       });
+    });
 
-    } catch (err) {
-      showMsg(versionListMsg, err.message || '목록을 불러오지 못했습니다.', 'error');
-      versionListWrap.innerHTML = '';
+    // 페이저 렌더링
+    if (totalPages <= 1) {
+      versionPager.style.display = 'none';
+      return;
     }
+
+    versionPager.style.display = 'flex';
+    versionPager.innerHTML = `
+      <button class="pr-pager-btn" data-page="${versionPage - 1}" ${versionPage === 1 ? 'disabled' : ''}>‹</button>
+      ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
+        <button class="pr-pager-btn ${p === versionPage ? 'is-active' : ''}" data-page="${p}">${p}</button>
+      `).join('')}
+      <button class="pr-pager-btn" data-page="${versionPage + 1}" ${versionPage === totalPages ? 'disabled' : ''}>›</button>
+    `;
+
+    versionPager.querySelectorAll('.pr-pager-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', () => {
+        versionPage = Number(btn.dataset.page);
+        renderVersionPage();
+        versionListWrap.scrollTop = 0;
+      });
+    });
   }
 
   // ── 버전 상세 로드 ─────────────────────────────────────────
