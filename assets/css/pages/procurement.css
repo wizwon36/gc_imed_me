@@ -1754,3 +1754,212 @@ p:empty + .pr-table-wrap {
   color: #0b1f44;
   letter-spacing: 0.02em;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   버전관리 UI
+═══════════════════════════════════════════════════════════════ */
+
+/* ── 상단 버튼 ─────────────────────────────────────────────── */
+.portal-header-btn--deploy {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+}
+.portal-header-btn--deploy:hover { background: #15803d; }
+
+.portal-header-btn--history {
+  background: #f8fafc;
+  color: #334155;
+  border: 1.5px solid #e2e8f0;
+}
+.portal-header-btn--history:hover { background: #f1f5f9; }
+
+/* ── 모달 사이즈 변형 ──────────────────────────────────────── */
+.pr-modal--sm  { max-width: 480px; }
+.pr-modal--wide { max-width: 860px; width: 95vw; }
+
+/* ── 배포 모달 폼 ──────────────────────────────────────────── */
+.pr-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.pr-form-row:last-child { margin-bottom: 0; }
+
+.pr-form-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+.pr-required { color: #dc2626; margin-left: 2px; }
+
+.pr-form-input,
+.pr-form-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color .15s;
+  resize: vertical;
+}
+.pr-form-input:focus,
+.pr-form-textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+/* ── 버전 목록 ─────────────────────────────────────────────── */
+.pr-version-list-body {
+  max-height: 460px;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.pr-version-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background .12s;
+}
+.pr-version-item:hover { background: #f8fafc; }
+.pr-version-item:last-child { border-bottom: none; }
+
+.pr-version-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.pr-version-item-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.pr-version-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1.5px solid #bfdbfe;
+  white-space: nowrap;
+}
+.pr-version-badge--latest {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+.pr-version-badge--detail {
+  font-size: 14px;
+  padding: 4px 14px;
+}
+
+.pr-version-item-memo {
+  font-size: 13px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 340px;
+}
+.pr-version-no-memo { color: #94a3b8; font-style: italic; }
+
+.pr-version-item-date {
+  font-size: 12px;
+  color: #64748b;
+  font-family: monospace;
+}
+.pr-version-item-by {
+  font-size: 12px;
+  color: #94a3b8;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pr-version-view-btn {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pr-version-view-btn:hover { background: #e2e8f0; }
+
+.pr-version-loading,
+.pr-version-empty {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+/* ── 버전 상세 ─────────────────────────────────────────────── */
+.pr-version-detail-body {
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.pr-version-detail-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13px;
+}
+.pr-version-detail-date { color: #475569; }
+.pr-version-detail-by   { color: #64748b; }
+.pr-version-detail-memo {
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 12px;
+}
+
+.pr-version-section-block {
+  padding: 20px 24px;
+}
+.pr-version-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1d4ed8;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 3px solid #2563eb;
+}
+.pr-version-section-body {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.7;
+}
+.pr-version-section-divider {
+  border: none;
+  border-top: 1px solid #f1f5f9;
+  margin: 0;
+}
