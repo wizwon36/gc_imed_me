@@ -1874,9 +1874,9 @@ p:empty + .pr-table-wrap {
 }
 .pr-version-item-right {
   text-align: center;
-  width: 80px;
-  padding: 0 10px !important;
-  line-height: 0;
+  width: 75px;
+  padding: 6px 10px !important;
+  vertical-align: middle !important;
 }
 
 /* 테이블 컬럼 너비 고정 */
@@ -1885,17 +1885,17 @@ p:empty + .pr-table-wrap {
   box-sizing: border-box;
 }
 .pr-version-table-head-row > span:nth-child(1),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(1) { width: 70px; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(1) { width: 65px; }
 .pr-version-table-head-row > span:nth-child(2),
 .pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(2) { }
 .pr-version-table-head-row > span:nth-child(3),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(3) { width: 85px; text-align: center; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(3) { width: 78px; text-align: center; }
 .pr-version-table-head-row > span:nth-child(4),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(4) { width: 110px; text-align: center; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(4) { width: 100px; text-align: center; }
 .pr-version-table-head-row > span:nth-child(5),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(5) { width: 75px; text-align: center; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(5) { width: 58px; text-align: center; }
 .pr-version-table-head-row > span:nth-child(6),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(6) { width: 75px; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(6) { width: 70px; }
 
 .pr-version-badge {
   display: inline-block;
@@ -1950,7 +1950,7 @@ p:empty + .pr-table-wrap {
 .pr-version-view-btn {
   display: inline-block;
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 5px;
   background: #2563eb;
   border: none;
@@ -1958,10 +1958,10 @@ p:empty + .pr-table-wrap {
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
-  line-height: 1.4;
+  line-height: 1.5;
   vertical-align: middle;
-  height: 22px;
-  box-sizing: border-box;
+  width: auto;
+  height: auto;
 }
 .pr-version-view-btn:hover { background: #1d4ed8; }
 
