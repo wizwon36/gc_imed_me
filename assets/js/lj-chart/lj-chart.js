@@ -1111,18 +1111,19 @@ function startEditEntry(entryId) {
   const entry = entries.find(e => e.entry_id === entryId);
   if (!entry) return;
 
-  const tr = document.querySelector(`button[onclick="startEditEntry('${entryId}')"]`)?.closest('tr');
+  // data-entry-id 속성으로 tr 탐색 (querySelector 특수문자 이슈 방지)
+  const tbody = $('dataTableBody');
+  let tr = null;
+  for (const row of tbody.querySelectorAll('tr')) {
+    if (row.dataset.entryId === entryId) { tr = row; break; }
+  }
   if (!tr) return;
 
   const isQual = item.item_type === 'qualitative';
   const dec    = getDecimals(item);
 
-  // 현재 행 내용을 편집 가능 상태로 교체
   const qualOptions = isQual
-    ? Object.values({ pos_neg: ['Negative','Positive'], reactive: ['Non-Reactive','Reactive'],
-        detected: ['Not Detected','Detected'], neg_plus: ['Negative','Trace','1+','2+','3+','4+'],
-        weak_reactive: ['Non-Reactive','Weakly Reactive','Reactive'],
-        weak_pos: ['Negative','Weak Positive','Positive','Strong Positive'] }[item.preset] || [])
+    ? (QUALITATIVE_PRESETS[item.preset]?.values || [])
     : [];
 
   const valueCell = isQual
@@ -1133,15 +1134,26 @@ function startEditEntry(entryId) {
          step="${dec === 0 ? '1' : '0.' + '0'.repeat(dec - 1) + '1'}"
          value="${escHtml(String(entry.value))}" />`;
 
-  // 열 수에 맞게 colspan 계산 (정량: 6열, 정성: 5열)
-  tr.innerHTML = `
-    <td><input type="date" class="lj-edit-input" id="editDate_${entryId}" value="${escHtml(entry.date)}" /></td>
-    <td colspan="${isQual ? 2 : 3}">${valueCell}</td>
-    <td><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
-    <td class="lj-action-cell">
-      <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
-      <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
-    </td>`;
+  // 정량: 측정일/측정값/SDI/Westgard/메모/버튼 = 6열
+  // 정성: 측정일/결과값/판정/메모/버튼 = 5열
+  tr.innerHTML = isQual
+    ? `<td><input type="date" class="lj-edit-input" id="editDate_${entryId}" value="${escHtml(entry.date)}" /></td>
+       <td colspan="2">${valueCell}</td>
+       <td><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
+       <td class="lj-action-cell">
+         <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
+         <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
+       </td>`
+    : `<td><input type="date" class="lj-edit-input" id="editDate_${entryId}" value="${escHtml(entry.date)}" /></td>
+       <td><input type="number" class="lj-edit-input" id="editVal_${entryId}"
+           step="${dec === 0 ? '1' : '0.' + '0'.repeat(dec - 1) + '1'}"
+           value="${escHtml(String(entry.value))}" /></td>
+       <td colspan="2" style="color:#94a3b8;font-size:12px;">저장 후 재계산</td>
+       <td><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
+       <td class="lj-action-cell">
+         <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
+         <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
+       </td>`;
 
   document.getElementById(`editVal_${entryId}`)?.focus();
 }
@@ -1407,7 +1419,7 @@ function renderDataTable() {
         ? `<span style="display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#f0fdf4;color:#15803d;border:1px solid #86efac;">Pass</span>`
         : `<span style="display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#fef2f2;color:#b42318;border:1px solid #fca5a5;">Fail</span>`;
       return `
-        <tr class="${rowClass}">
+        <tr class="${rowClass}" data-entry-id="${escHtml(row.entry_id)}">
           <td>${escHtml(row.date)}</td>
           <td style="font-weight:700;text-align:center;">${escHtml(String(row.value))}</td>
           <td style="text-align:center;">${badge}</td>
@@ -1435,7 +1447,7 @@ function renderDataTable() {
       `<span class="lj-rule-badge lj-rule-badge--${v.type}">${escHtml(v.code)}</span>`
     ).join('') || '<span style="color:#94a3b8;font-size:12px;">정상</span>';
     return `
-      <tr class="${rowClass}">
+      <tr class="${rowClass}" data-entry-id="${escHtml(row.entry_id)}">
         <td>${escHtml(row.date)}</td>
         <td style="font-weight:700;">${fmt(row.value, item)}</td>
         <td><span class="lj-sdi-badge ${sdiClass}">${row.sdi.toFixed(4)}</span></td>
