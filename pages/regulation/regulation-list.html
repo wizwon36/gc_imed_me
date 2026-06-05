@@ -403,22 +403,19 @@
 
   // ── 편집 권한 관리 모달 ───────────────────────────────────────
   async function openPermModal() {
-    document.getElementById('permModal').style.display = 'flex';
+    showGlobalLoading('권한 목록 불러오는 중...');
+    document.getElementById('permModal').style.display = 'none';
     document.getElementById('permSearchResults').style.display = 'none';
     document.getElementById('permSearchInput').value = '';
 
-    // 탭 렌더링
+    // 탭 렌더링 — 항상 표시
     const tabsEl = document.getElementById('permRegTabs');
-    if (REGULATION_LIST.length > 1) {
-      tabsEl.style.display = '';
-      tabsEl.innerHTML = REGULATION_LIST.map(reg => `
-        <button class="perm-reg-tab ${reg.edit_perm === activeEditPerm ? 'is-active' : ''}"
-          onclick="switchPermTab('${escapeHtml(reg.edit_perm)}', this)">
-          ${escapeHtml(reg.icon)} ${escapeHtml(reg.title)}
-        </button>`).join('');
-    } else {
-      tabsEl.style.display = 'none';
-    }
+    tabsEl.style.display = '';
+    tabsEl.innerHTML = REGULATION_LIST.map(function(reg) {
+      const isActive = reg.edit_perm === activeEditPerm ? ' is-active' : '';
+      return '<button class="perm-reg-tab' + isActive + '" onclick="switchPermTab('' + escapeHtml(reg.edit_perm) + '', this)">'
+        + escapeHtml(reg.icon) + ' ' + escapeHtml(reg.title) + '</button>';
+    }).join('');
 
     await loadEditorList();
   }
@@ -460,6 +457,8 @@
       }
     } catch(e) {
       listEl.innerHTML = `<div class="perm-editor-empty" style="color:#dc2626;">${escapeHtml(e.message)}</div>`;
+    } finally {
+      hideGlobalLoading();
     }
   }
 
