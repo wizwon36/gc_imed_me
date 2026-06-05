@@ -1414,6 +1414,8 @@ function initVersionManagement() {
         <span>내용 불러오는 중...</span>
       </div>`;
     showMsg(versionDetailMsg, '', '');
+    // DOM이 실제로 보이는 상태에서 렌더링되도록 한 프레임 대기
+    await new Promise(r => requestAnimationFrame(r));
 
     const user = window.auth?.getSession?.();
     if (!user?.email) {
