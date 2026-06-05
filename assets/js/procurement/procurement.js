@@ -1305,7 +1305,11 @@ function initVersionManagement() {
 
   // ── 버전 목록 로드 ─────────────────────────────────────────
   async function loadVersionList() {
-    versionListWrap.innerHTML = '<div class="pr-version-loading">목록 불러오는 중...</div>';
+    versionListWrap.innerHTML = `
+      <div class="pr-version-loading">
+        <div class="pr-version-spinner"></div>
+        <span>목록 불러오는 중...</span>
+      </div>`;
     showMsg(versionListMsg, '', '');
 
     const user = window.auth?.getSession?.();
@@ -1362,7 +1366,11 @@ function initVersionManagement() {
   async function loadVersionDetail(historyId, versionLabel) {
     showDetailView();
     versionDetailMeta.innerHTML    = '';
-    versionDetailContent.innerHTML = '<div class="pr-version-loading">내용 불러오는 중...</div>';
+    versionDetailContent.innerHTML = `
+      <div class="pr-version-loading">
+        <div class="pr-version-spinner"></div>
+        <span>내용 불러오는 중...</span>
+      </div>`;
     showMsg(versionDetailMsg, '', '');
 
     const user = window.auth?.getSession?.();
@@ -1403,12 +1411,39 @@ function initVersionManagement() {
       const isAutoBackup = v.version_label.startsWith('[복원 전 자동백업]');
       versionRestoreBtn.style.display = isAutoBackup ? 'none' : '';
 
-      versionDetailContent.innerHTML = sections.map(s => `
-        <div class="pr-version-section-block">
-          <div class="pr-version-section-title">${escHtml(s.title || s.sec_id)}</div>
-          <div class="pr-version-section-body pr-content">${s.content_html || '<em style="color:#94a3b8;">내용 없음</em>'}</div>
+      versionDetailContent.innerHTML = sections.map((s, idx) => `
+        <div class="pr-version-acc-item">
+          <button class="pr-version-acc-header" data-idx="${idx}" type="button">
+            <span class="pr-version-acc-title">${escHtml(s.title || s.sec_id)}</span>
+            <span class="pr-version-acc-icon">▾</span>
+          </button>
+          <div class="pr-version-acc-body" id="prVerAccBody_${idx}" style="display:none;">
+            <div class="pr-version-acc-content pr-content">${s.content_html || '<em style="color:#94a3b8;">내용 없음</em>'}</div>
+          </div>
         </div>
-      `).join('<hr class="pr-version-section-divider" />');
+      `).join('');
+
+      // 아코디언 토글
+      versionDetailContent.querySelectorAll('.pr-version-acc-header').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const body = document.getElementById('prVerAccBody_' + btn.dataset.idx);
+          const icon = btn.querySelector('.pr-version-acc-icon');
+          const isOpen = body.style.display !== 'none';
+          body.style.display = isOpen ? 'none' : '';
+          icon.textContent = isOpen ? '▾' : '▴';
+          btn.classList.toggle('is-open', !isOpen);
+        });
+      });
+
+      // 첫 섹션 기본 열기
+      if (sections.length > 0) {
+        const firstBody = document.getElementById('prVerAccBody_0');
+        const firstIcon = versionDetailContent.querySelector('.pr-version-acc-icon');
+        const firstBtn  = versionDetailContent.querySelector('.pr-version-acc-header');
+        if (firstBody) firstBody.style.display = '';
+        if (firstIcon) firstIcon.textContent = '▴';
+        if (firstBtn)  firstBtn.classList.add('is-open');
+      }
 
     } catch (err) {
       showMsg(versionDetailMsg, err.message || '내용을 불러오지 못했습니다.', 'error');
