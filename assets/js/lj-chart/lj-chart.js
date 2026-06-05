@@ -761,10 +761,10 @@ function renderSettingsDisplay(item) {
   const mean = Number(item.mean);
   const sd   = Number(item.sd);
   const tiles = [
-    { label: '목표 평균 (Mean)', value: mean.toFixed(2), unit: item.unit },
-    { label: '표준편차 (SD)',    value: sd.toFixed(2),   unit: item.unit },
-    { label: '+2SD 상한',        value: (mean + 2*sd).toFixed(2), unit: item.unit },
-    { label: '-2SD 하한',        value: (mean - 2*sd).toFixed(2), unit: item.unit }
+    { label: '목표 평균 (Mean)', value: mean.toFixed(4), unit: item.unit },
+    { label: '표준편차 (SD)',    value: sd.toFixed(4),   unit: item.unit },
+    { label: '+2SD 상한',        value: (mean + 2*sd).toFixed(4), unit: item.unit },
+    { label: '-2SD 하한',        value: (mean - 2*sd).toFixed(4), unit: item.unit }
   ];
 
   let html = tiles.map(t => `
@@ -1262,8 +1262,8 @@ function renderDataTable() {
     return `
       <tr class="${rowClass}">
         <td>${escHtml(row.date)}</td>
-        <td style="font-weight:700;">${Number(row.value).toFixed(2)}</td>
-        <td><span class="lj-sdi-badge ${sdiClass}">${row.sdi.toFixed(2)}</span></td>
+        <td style="font-weight:700;">${Number(row.value).toFixed(4)}</td>
+        <td><span class="lj-sdi-badge ${sdiClass}">${row.sdi.toFixed(4)}</span></td>
         <td>${badges}</td>
         <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
         <td><button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">✕</button></td>
@@ -1330,8 +1330,8 @@ function renderStats() {
 
   const cards = [
     { label: '데이터 수',  value: n,                       unit: '건' },
-    { label: '실측 평균',  value: actualMean.toFixed(2),    unit: item.unit },
-    { label: '실측 SD',    value: actualSD.toFixed(2),      unit: item.unit },
+    { label: '실측 평균',  value: actualMean.toFixed(4),    unit: item.unit },
+    { label: '실측 SD',    value: actualSD.toFixed(4),      unit: item.unit },
     { label: '%CV',        value: cv.toFixed(1),             unit: '%' },
     { label: '경고 건수',  value: warnCount,    unit: '건', warn: warnCount > 0 },
     { label: '거부 건수',  value: rejectCount,  unit: '건', danger: rejectCount > 0 }
@@ -1475,7 +1475,7 @@ async function loadSampleData() {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().slice(0, 10);
-      const value = parseFloat((mean + randomNormal() * sd).toFixed(2));
+      const value = parseFloat((mean + randomNormal() * sd).toFixed(4));
       const result = await apiPost('ljCreateEntry', {
         item_id: state.activeItemId, date: dateStr, value, memo: '샘플',
         item_type: item.item_type || 'quantitative',
@@ -1509,7 +1509,7 @@ function exportCsv() {
   const rows = analyzed.map(e => [
     e.date,
     e.value,
-    e.sdi.toFixed(3),
+    e.sdi.toFixed(4),
     e.violations.length ? e.violations.map(v => v.code).join(' / ') : '정상',
     e.memo || ''
   ]);
@@ -1562,8 +1562,8 @@ function exportExcel() {
     ['-2SD 하한',  mean - 2 * sd],
     [],
     ['데이터 수',  n],
-    ['실측 평균',  parseFloat(actualMean.toFixed(2))],
-    ['실측 SD',    parseFloat(actualSD.toFixed(2))],
+    ['실측 평균',  parseFloat(actualMean.toFixed(4))],
+    ['실측 SD',    parseFloat(actualSD.toFixed(4))],
     ['%CV',        parseFloat(cv.toFixed(1))],
     ['경고 건수',  warnCount],
     ['거부 건수',  rejectCount],
@@ -1576,7 +1576,7 @@ function exportExcel() {
       e.date,
       Number(e.value),
       item.unit,
-      parseFloat(e.sdi.toFixed(3)),
+      parseFloat(e.sdi.toFixed(4)),
       e.violations.length ? e.violations.map(v => v.code).join(' / ') : '정상',
       e.memo || ''
     ])
@@ -1639,13 +1639,13 @@ async function exportPdf() {
     ].join(';');
 
     const statRows = [
-      { label: '목표 평균 (Mean)', value: `${mean.toFixed(2)} ${item.unit}` },
-      { label: '표준편차 (SD)',    value: `${sd.toFixed(2)} ${item.unit}` },
-      { label: '+2SD 상한',        value: `${(mean + 2*sd).toFixed(2)} ${item.unit}` },
-      { label: '-2SD 하한',        value: `${(mean - 2*sd).toFixed(2)} ${item.unit}` },
+      { label: '목표 평균 (Mean)', value: `${mean.toFixed(4)} ${item.unit}` },
+      { label: '표준편차 (SD)',    value: `${sd.toFixed(4)} ${item.unit}` },
+      { label: '+2SD 상한',        value: `${(mean + 2*sd).toFixed(4)} ${item.unit}` },
+      { label: '-2SD 하한',        value: `${(mean - 2*sd).toFixed(4)} ${item.unit}` },
       { label: '데이터 수',        value: `${n}건` },
-      { label: '실측 평균',        value: `${actualMean.toFixed(2)} ${item.unit}` },
-      { label: '실측 SD',          value: `${actualSD.toFixed(2)} ${item.unit}` },
+      { label: '실측 평균',        value: `${actualMean.toFixed(4)} ${item.unit}` },
+      { label: '실측 SD',          value: `${actualSD.toFixed(4)} ${item.unit}` },
       { label: '%CV',              value: `${cv.toFixed(1)}%` },
       { label: '경고 건수',        value: `${warnCount}건`, warn: warnCount > 0 },
       { label: '거부 건수',        value: `${rejectCount}건`, danger: rejectCount > 0 },
@@ -1661,8 +1661,8 @@ async function exportPdf() {
         : '<span style="color:#94a3b8;">정상</span>';
       return `<tr style="background:${bg};">
         <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-family:monospace;font-size:12px;color:#475569;">${escHtml(e.date)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:700;">${Number(e.value).toFixed(2)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-family:monospace;font-weight:700;color:${sdiColor};">${e.sdi.toFixed(2)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:700;">${Number(e.value).toFixed(4)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;font-family:monospace;font-weight:700;color:${sdiColor};">${e.sdi.toFixed(4)}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:center;">${judgment}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#64748b;">${escHtml(e.memo || '')}</td>
       </tr>`;
