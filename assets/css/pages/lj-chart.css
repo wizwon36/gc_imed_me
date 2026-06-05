@@ -229,26 +229,53 @@
 
 /* ── 데이터 입력 행 ── */
 .lj-data-entry-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
   gap: 10px;
   align-items: flex-end;
   padding: 14px 22px;
   border-bottom: 1.5px solid #e0e7f2;
   background: #f7f9fd;
-  flex-wrap: wrap;
 }
 .lj-data-entry-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
-  min-width: 130px;
+  min-width: 0;
 }
 .lj-data-entry-actions {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
   align-self: flex-end;
+}
+
+@media (max-width: 600px) {
+  .lj-data-entry-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  /* 측정일: 1행 1열 */
+  .lj-data-entry-row > .lj-data-entry-field:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  /* 측정값/결과값: 1행 2열 */
+  #entryValueField, #entryResultField {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  /* 메모: 2행 1~2열 */
+  .lj-data-entry-row > .lj-data-entry-field:last-of-type {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  /* 추가버튼: 2행 끝 */
+  .lj-data-entry-actions {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: flex-end;
+  }
 }
 
 /* ── 차트 래퍼 ── */
@@ -401,6 +428,14 @@ select.lj-edit-input { min-width: 120px; }
   .lj-data-table th:first-child, .lj-data-table td:first-child { padding-left: 12px; }
   .lj-chart-wrap { padding: 14px 16px 20px; }
   .empty-state { margin: 20px 16px; }
+
+  /* 모바일 — 메모 컬럼 숨김 */
+  .lj-data-table th.col-memo,
+  .lj-data-table td.col-memo { display: none; }
+
+  /* 모바일 — 편집 행 날짜 input 축소 */
+  input[type="date"].lj-edit-input { width: 110px; min-width: 110px; font-size: 12px; }
+  input[type="number"].lj-edit-input { min-width: 60px; font-size: 12px; }
 }
 
 /* ── 그룹 탭 ── */
@@ -562,4 +597,10 @@ select.lj-edit-input { min-width: 120px; }
   .lj-modal-backdrop .lj-modal {
     max-width: 100%;
   }
+}
+
+/* 편집 행 메모 td — 모바일에서 숨김 */
+@media (max-width: 600px) {
+  .lj-edit-memo-cell { display: none; }
+  /* 편집 행 저장 후 재계산 셀 colspan 조정은 JS에서 처리 */
 }
