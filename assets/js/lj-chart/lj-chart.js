@@ -701,7 +701,7 @@ function selectItem(itemId) {
             <th style="width:130px;">결과값</th>
             <th style="width:100px;">판정</th>
             <th>메모</th>
-            <th style="width:50px;"></th>
+            <th style="width:120px;"></th>
            </tr>`
         : `<tr>
             <th style="width:120px;">측정일</th>
@@ -709,7 +709,7 @@ function selectItem(itemId) {
             <th style="width:80px;">SDI</th>
             <th style="width:190px;">Westgard 판정</th>
             <th>메모</th>
-            <th style="width:50px;"></th>
+            <th style="width:120px;"></th>
            </tr>`;
       // 정성적이면 차트 섹션 숨김
       $('chartSection').style.display = isQual ? 'none' : '';
