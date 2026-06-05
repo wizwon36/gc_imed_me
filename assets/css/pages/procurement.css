@@ -2038,3 +2038,43 @@ p:empty + .pr-table-wrap {
   font-size: 12px;
   font-weight: 700;
 }
+
+/* ── 버전 페이저 ────────────────────────────────────────────── */
+.pr-version-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 20px;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.pr-pager-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .12s;
+  font-family: inherit;
+}
+.pr-pager-btn:hover:not([disabled]) {
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+.pr-pager-btn.is-active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.pr-pager-btn[disabled] {
+  opacity: .35;
+  cursor: default;
+}
