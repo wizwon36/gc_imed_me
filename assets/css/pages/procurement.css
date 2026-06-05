@@ -1,6 +1,8 @@
 /* ===== PROCUREMENT CSS ===== */
 
 /* ─── 레이아웃 ─────────────────────────────────── */
+:root { --pr-search-h: 104px; }
+
 .pr-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -734,20 +736,26 @@ p:empty + .pr-table-wrap {
 
 /* ─── 섹션 헤더 ──────────────────────────── */
 .pr-subsection-header {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
-  padding-right: 88px;
+  position: sticky;
+  top: var(--pr-search-h);
+  z-index: 10;
+  background: #fff;
+  padding: 8px 0 8px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .pr-subsection-header .pr-h2 {
   margin-bottom: 0;
+  flex: 1;
 }
 
 /* ─── 편집 버튼 ─────────────────────────────────────────────── */
 .pr-edit-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -762,7 +770,7 @@ p:empty + .pr-table-wrap {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
-  z-index: 1;
+  flex-shrink: 0;
 }
 
 .pr-edit-btn:hover {
