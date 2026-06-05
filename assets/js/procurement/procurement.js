@@ -1406,45 +1406,54 @@ function initVersionManagement() {
     const start      = (versionPage - 1) * VERSION_PAGE_SIZE;
     const pageItems  = versionList.slice(start, start + VERSION_PAGE_SIZE);
 
-    // 테이블 헤더 + 행 렌더링
-    const tableHead = `
-      <div class="pr-version-table-head">
-        <div class="pr-version-table-head-row">
-          <span style="width:90px; text-align:center;">버전</span>
-          <span style="width:130px;">변경 사유</span>
-          <span style="width:150px;">시행일</span>
-          <span style="width:170px;">배포일시</span>
-          <span style="width:180px;">배포자</span>
-          <span style="width:90px;"></span>
-        </div>
-      </div>`;
-
+    // 진짜 <table>로 렌더링
     const tableRows = pageItems.map((v) => {
       const isLatest = versionList.indexOf(v) === 0;
       return `
-        <div class="pr-version-item" data-history-id="${escHtml(v.history_id)}">
-          <div class="pr-version-item-cell pr-version-item-left">
+        <tr class="pr-version-item" data-history-id="${escHtml(v.history_id)}">
+          <td class="pr-vtd pr-vtd--center">
             <span class="pr-version-badge ${isLatest ? 'pr-version-badge--latest' : ''}">${escHtml(v.version_label)}</span>
-          </div>
-          <div class="pr-version-item-cell">
+          </td>
+          <td class="pr-vtd">
             ${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">-</span>'}
-          </div>
-          <div class="pr-version-item-cell pr-version-item-date">
+          </td>
+          <td class="pr-vtd pr-vtd--center">
             ${v.effective_date ? escHtml(formatDateKo(v.effective_date)) : '<span class="pr-version-no-memo">-</span>'}
-          </div>
-          <div class="pr-version-item-cell pr-version-item-date">
+          </td>
+          <td class="pr-vtd pr-vtd--center">
             ${escHtml(formatDateTimeKo(v.snapshot_at || ''))}
-          </div>
-          <div class="pr-version-item-cell pr-version-item-by">
+          </td>
+          <td class="pr-vtd pr-vtd--center">
             ${escHtml(v.created_by_name || v.created_by || '-')}
-          </div>
-          <div class="pr-version-item-cell pr-version-item-right">
+          </td>
+          <td class="pr-vtd pr-vtd--center">
             <button class="pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
-          </div>
-        </div>`;
+          </td>
+        </tr>`;
     }).join('');
 
-    versionListWrap.innerHTML = tableHead + tableRows;
+    versionListWrap.innerHTML = `
+      <table class="pr-version-table">
+        <colgroup>
+          <col style="width:65px">
+          <col>
+          <col style="width:80px">
+          <col style="width:105px">
+          <col style="width:55px">
+          <col style="width:68px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="pr-vth pr-vth--center">버전</th>
+            <th class="pr-vth">변경 사유</th>
+            <th class="pr-vth pr-vth--center">시행일</th>
+            <th class="pr-vth pr-vth--center">배포일시</th>
+            <th class="pr-vth pr-vth--center">배포자</th>
+            <th class="pr-vth"></th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>`;
 
     // 상세 보기 버튼 이벤트
     versionListWrap.querySelectorAll('.pr-version-view-btn').forEach(btn => {
