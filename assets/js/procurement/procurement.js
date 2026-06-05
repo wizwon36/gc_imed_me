@@ -1586,20 +1586,35 @@ function initVersionManagement() {
   }
 
 
-  // "2026-07-01" → "2026년 7월 1일"
-  function formatDateKo(dateStr) {
-    if (!dateStr) return '-';
-    const m = dateStr.match(/(\d{4})[-.]?(\d{2})[-.]?(\d{2})/);
-    if (!m) return dateStr;
-    return `${m[1]}년 ${parseInt(m[2])}월 ${parseInt(m[3])}일`;
+  // 다양한 형식 → Date 객체 변환
+  function parseToDate(str) {
+    if (!str) return null;
+    // "2026-07-01" 또는 "2026.07.01" 형식
+    const m1 = str.match(/^(\d{4})[-.](\d{2})[-.](\d{2})/);
+    if (m1) return new Date(parseInt(m1[1]), parseInt(m1[2]) - 1, parseInt(m1[3]));
+    // "Wed Jul 01 2026 ..." 등 자연어 형식은 Date 파싱에 맡김
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
   }
 
-  // "2026-06-05 10:50:24" → "2026년 6월 5일 10:50"
+  // 날짜 → "2026년 7월 1일"
+  function formatDateKo(dateStr) {
+    if (!dateStr) return '-';
+    const d = parseToDate(dateStr);
+    if (!d) return dateStr;
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  }
+
+  // 날짜시간 → "2026년 6월 5일 10:50"
   function formatDateTimeKo(dtStr) {
     if (!dtStr) return '-';
-    const m = dtStr.match(/(\d{4})[-.]?(\d{2})[-.]?(\d{2})[ T](\d{2}):(\d{2})/);
-    if (!m) return dtStr;
-    return `${m[1]}년 ${parseInt(m[2])}월 ${parseInt(m[3])}일 ${m[4]}:${m[5]}`;
+    // "2026-06-05 10:50:24" 형식 우선 처리
+    const m = dtStr.match(/(\d{4})[-.](\d{2})[-.](\d{2})[ T](\d{2}):(\d{2})/);
+    if (m) return `${m[1]}년 ${parseInt(m[2])}월 ${parseInt(m[3])}일 ${m[4]}:${m[5]}`;
+    // 그 외 형식
+    const d = new Date(dtStr);
+    if (isNaN(d.getTime())) return dtStr;
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
 
   // 버전명에서 다음 버전 자동 제안 (Ver 6.0 → Ver 6.1)
