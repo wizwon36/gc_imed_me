@@ -1194,6 +1194,15 @@ function initVersionManagement() {
       return;
     }
 
+    // 현재 배포된 버전과 동일한 버전명 차단
+    const currentLabel = document.querySelector('.pr-badge--green')?.textContent?.trim() || '';
+    if (label === currentLabel) {
+      showMsg(deployMsg, `이미 배포된 버전명입니다. 다른 버전명을 입력해 주세요. (현재: ${currentLabel})`, 'error');
+      deployLabel.focus();
+      deployLabel.select();
+      return;
+    }
+
     const user = window.auth?.getSession?.();
     if (!user?.email) { showMsg(deployMsg, '로그인 세션이 만료되었습니다.', 'error'); return; }
 
