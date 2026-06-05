@@ -6,279 +6,221 @@
   <title>규정 및 가이드라인</title>
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <style>
-    .reg-shell {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 20px 60px;
-    }
-
-    /* 헤더 */
-    .reg-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 0 16px;
-      border-bottom: 1px solid var(--border-soft);
-      margin-bottom: 36px;
-      gap: 12px;
-    }
-    .reg-topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .reg-topbar-logo {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, #2563eb, #60a5fa);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
-    }
-    .reg-topbar-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--text-primary);
-    }
-    .reg-topbar-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 1px;
-    }
-    .reg-topbar-actions { display: flex; gap: 8px; align-items: center; }
-    .reg-btn {
-      height: 36px;
-      padding: 0 16px;
-      border-radius: 10px;
-      border: 1.5px solid var(--border-card);
-      background: #fff;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all .12s;
-      white-space: nowrap;
-    }
-    .reg-btn:hover { border-color: #93c5fd; color: #2563eb; background: #eff6ff; }
-    .reg-btn--primary {
-      background: #2563eb; color: #fff; border-color: #2563eb;
-    }
-    .reg-btn--primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
-
-    /* 섹션 타이틀 */
-    .reg-section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-muted);
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-
-    /* 카드 그리드 */
+    /* 규정 카드 그리드 */
     .reg-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 16px;
       margin-bottom: 40px;
     }
 
-    /* 스켈레톤 */
-    .reg-skeleton-card {
-      height: 100px;
-      border-radius: var(--radius-lg);
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
+    .reg-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-radius: var(--radius-xl);
+      border: 1.5px solid var(--border-card);
+      background: #fff;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow .15s, border-color .15s;
+      cursor: pointer;
     }
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    .reg-empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
-      font-size: 14px;
+    .reg-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 4px 16px rgba(37,99,235,.10);
     }
 
-    /* ── 권한 관리 섹션 ── */
-    .reg-perm-section {
-      margin-top: 40px;
-      padding-top: 32px;
-      border-top: 2px solid #f1f5f9;
-    }
-    .reg-perm-header {
+    /* 카드 상단 — 이름 + 아이콘 */
+    .reg-card-head {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
       gap: 12px;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #f1f5f9;
     }
-    .reg-perm-title {
-      font-size: 16px;
+    .reg-card-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .reg-card-title {
+      font-size: 15px;
       font-weight: 800;
       color: var(--text-primary);
     }
-    .reg-perm-desc {
-      font-size: 13px;
+    .reg-card-desc {
+      font-size: 12px;
       color: var(--text-muted);
       margin-top: 2px;
     }
 
-    /* 규정별 권한 관리 테이블 */
+    /* 카드 하단 — 메타 정보 */
+    .reg-card-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      padding: 12px 18px 14px;
+    }
+    .reg-meta-item { display: flex; flex-direction: column; gap: 3px; padding: 4px 0; }
+    .reg-meta-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .reg-meta-value {
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .reg-meta-value--badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+    .reg-meta-value--muted { color: var(--text-muted); font-weight: 400; }
+
+    /* 스켈레톤 */
+    .reg-skeleton-card {
+      height: 160px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .reg-empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--text-muted); font-size: 14px;
+    }
+
+    /* 섹션 타이틀 */
+    .reg-section-label {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted); letter-spacing: .06em;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+
+    /* ── 권한 관리 섹션 ── */
+    .reg-perm-section {
+      margin-top: 40px; padding-top: 32px;
+      border-top: 2px solid #f1f5f9;
+    }
+    .reg-perm-header { margin-bottom: 20px; }
+    .reg-perm-title { font-size: 15px; font-weight: 800; color: var(--text-primary); }
+    .reg-perm-desc  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
     .reg-perm-table {
-      width: 100%;
-      border-collapse: collapse;
-      border-radius: 12px;
-      overflow: hidden;
+      width: 100%; border-collapse: collapse;
+      border-radius: 12px; overflow: hidden;
       border: 1px solid var(--border-soft);
     }
     .reg-perm-table th {
-      background: #f8fafc;
-      padding: 11px 16px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-align: left;
-      border-bottom: 1.5px solid var(--border-soft);
+      background: #f8fafc; padding: 10px 16px;
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-align: left; border-bottom: 1.5px solid var(--border-soft);
     }
     .reg-perm-table td {
-      padding: 12px 16px;
-      font-size: 13px;
-      color: var(--text-primary);
-      border-bottom: 1px solid #f1f5f9;
-      vertical-align: middle;
+      padding: 12px 16px; font-size: 13px;
+      color: var(--text-primary); border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
     }
     .reg-perm-table tr:last-child td { border-bottom: none; }
-    .reg-perm-table tr:hover td { background: #f8fafc; }
 
-    .reg-perm-app-name {
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .reg-perm-app-row { display: flex; align-items: center; gap: 8px; }
     .reg-perm-app-icon { font-size: 18px; }
-    .reg-perm-app-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-    /* 사용자 권한 목록 */
-    .reg-perm-user-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .reg-perm-user-list { display: flex; flex-direction: column; gap: 6px; }
     .reg-perm-user-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 6px 10px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 10px; background: #f8fafc;
+      border-radius: 8px; border: 1px solid #e2e8f0;
     }
-    .reg-perm-user-email { font-size: 12px; color: var(--text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .reg-perm-user-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
-      background: #dbeafe;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      white-space: nowrap;
+    .reg-perm-user-email { font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .reg-perm-badge {
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; background: #dcfce7; color: #15803d;
+      border: 1px solid #86efac; white-space: nowrap;
     }
-    .reg-perm-user-badge--admin { background: #dcfce7; color: #15803d; border-color: #86efac; }
-    .reg-perm-remove-btn {
+    .reg-perm-remove {
       background: none; border: none; cursor: pointer;
-      color: #94a3b8; font-size: 14px; padding: 2px 4px;
-      border-radius: 4px; transition: color .12s;
-      flex-shrink: 0;
+      color: #94a3b8; font-size: 13px; padding: 2px 4px;
+      border-radius: 4px; flex-shrink: 0; font-family: inherit;
     }
-    .reg-perm-remove-btn:hover { color: #dc2626; }
-
-    /* 권한 추가 버튼 */
-    .reg-perm-add-btn {
-      font-size: 12px;
-      padding: 5px 10px;
-      border-radius: 7px;
-      border: 1.5px dashed #cbd5e1;
-      background: #fff;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all .12s;
-      margin-top: 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-family: inherit;
+    .reg-perm-remove:hover { color: #dc2626; }
+    .reg-perm-add {
+      font-size: 12px; padding: 4px 10px; border-radius: 7px;
+      border: 1.5px dashed #cbd5e1; background: #fff;
+      color: var(--text-muted); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 6px; font-family: inherit; transition: all .12s;
     }
-    .reg-perm-add-btn:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+    .reg-perm-add:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
 
     /* 권한 부여 모달 */
-    .reg-grant-modal-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(15,23,42,.45);
-      z-index: 1000;
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px;
+    .grant-backdrop {
+      position: fixed; inset: 0; background: rgba(15,23,42,.45);
+      z-index: 1000; display: flex; align-items: center;
+      justify-content: center; padding: 16px;
     }
-    .reg-grant-modal {
-      background: #fff;
-      border-radius: 16px;
+    .grant-modal {
+      background: #fff; border-radius: 16px;
       box-shadow: 0 20px 60px rgba(15,23,42,.18);
-      width: 100%; max-width: 440px;
-      overflow: hidden;
+      width: 100%; max-width: 420px; overflow: hidden;
     }
-    .reg-grant-modal-head {
+    .grant-modal-head {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 22px 16px;
-      border-bottom: 1px solid var(--border-soft);
+      padding: 18px 22px 16px; border-bottom: 1px solid var(--border-soft);
     }
-    .reg-grant-modal-title { font-size: 15px; font-weight: 800; color: var(--text-primary); }
-    .reg-grant-modal-close {
+    .grant-modal-title { font-size: 15px; font-weight: 800; color: var(--text-primary); }
+    .grant-modal-close {
       background: none; border: none; cursor: pointer;
       font-size: 20px; color: var(--text-muted); padding: 4px 8px;
-      border-radius: 8px; line-height: 1;
+      border-radius: 8px; line-height: 1; font-family: inherit;
     }
-    .reg-grant-modal-close:hover { background: #f1f5f9; }
-    .reg-grant-modal-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
-    .reg-grant-label { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .reg-grant-modal-footer { display: flex; justify-content: center; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--border-soft); background: #f8fafc; }
+    .grant-modal-close:hover { background: #f1f5f9; }
+    .grant-modal-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+    .grant-label { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+    .grant-modal-footer {
+      display: flex; justify-content: center; gap: 10px;
+      padding: 14px 22px; border-top: 1px solid var(--border-soft); background: #f8fafc;
+    }
 
     @media (max-width: 600px) {
       .reg-grid { grid-template-columns: 1fr; }
-      .reg-topbar { flex-wrap: wrap; }
-      .reg-perm-table th:nth-child(2),
-      .reg-perm-table td:nth-child(2) { display: none; }
+      .reg-card-meta { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body class="portal-page">
-  <div class="container">
-    <div class="reg-shell">
+  <div class="container page-shell">
 
-      <!-- 헤더 -->
-      <div class="reg-topbar">
-        <div class="reg-topbar-left">
-          <div class="reg-topbar-logo">📚</div>
-          <div>
-            <div class="reg-topbar-title">규정 및 가이드라인</div>
-            <div class="reg-topbar-sub">열람 권한이 있는 규정을 확인하세요</div>
-          </div>
-        </div>
-        <div class="reg-topbar-actions">
-          <a href="../../portal.html" class="reg-btn">HOME</a>
+    <!-- 공통 topbar -->
+    <section class="top-brand-bar portal-hero-card">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">📚</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">규정 및 가이드라인</strong>
+          <span class="top-brand-sub">열람 권한이 있는 규정을 확인하세요</span>
         </div>
       </div>
+      <div class="top-brand-actions">
+        <a href="../../portal.html" class="portal-header-btn portal-header-btn--secondary">HOME</a>
+      </div>
+    </section>
 
-      <!-- 규정 카드 목록 -->
-      <div class="reg-section-title">규정 목록</div>
+    <div style="padding: 24px 0 60px;">
+
+      <!-- 규정 목록 -->
+      <div class="reg-section-label">규정 목록</div>
       <div class="reg-grid" id="regGrid">
         <div class="reg-skeleton-card"></div>
         <div class="reg-skeleton-card"></div>
@@ -287,22 +229,21 @@
         열람 권한이 있는 규정 및 가이드라인이 없습니다.
       </div>
 
-      <!-- 권한 관리 섹션 (admin만) -->
+      <!-- 편집 권한 관리 (regulation admin만) -->
       <div class="reg-perm-section" id="permSection" style="display:none;">
         <div class="reg-perm-header">
-          <div>
-            <div class="reg-perm-title">🔐 규정별 편집 권한 관리</div>
-            <div class="reg-perm-desc">규정별로 편집 권한을 부여할 사용자를 지정합니다.</div>
-          </div>
+          <div class="reg-perm-title">🔐 규정별 편집 권한 관리</div>
+          <div class="reg-perm-desc">규정별로 편집·배포 권한을 부여할 사용자를 지정합니다.</div>
         </div>
         <table class="reg-perm-table">
           <thead>
             <tr>
-              <th style="width:220px;">규정명</th>
+              <th style="width:200px;">규정명</th>
               <th>편집 권한 사용자</th>
             </tr>
           </thead>
           <tbody id="permTableBody">
+            <tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:20px;">불러오는 중...</td></tr>
           </tbody>
         </table>
       </div>
@@ -311,28 +252,20 @@
   </div>
 
   <!-- 권한 부여 모달 -->
-  <div class="reg-grant-modal-backdrop" id="grantModal" style="display:none;">
-    <div class="reg-grant-modal">
-      <div class="reg-grant-modal-head">
-        <span class="reg-grant-modal-title" id="grantModalTitle">편집 권한 부여</span>
-        <button class="reg-grant-modal-close" onclick="closeGrantModal()">✕</button>
+  <div class="grant-backdrop" id="grantModal" style="display:none;">
+    <div class="grant-modal">
+      <div class="grant-modal-head">
+        <span class="grant-modal-title" id="grantModalTitle">편집 권한 부여</span>
+        <button class="grant-modal-close" onclick="closeGrantModal()">✕</button>
       </div>
-      <div class="reg-grant-modal-body">
+      <div class="grant-modal-body">
         <div>
-          <div class="reg-grant-label">사용자 선택</div>
-          <select id="grantUserSelect" class="input" style="width:100%;">
-            <option value="">사용자를 선택하세요</option>
-          </select>
-        </div>
-        <div>
-          <div class="reg-grant-label">권한</div>
-          <select id="grantPermSelect" class="input" style="width:100%;">
-            <option value="admin">admin — 편집 및 배포 가능</option>
-          </select>
+          <div class="grant-label">사용자 선택</div>
+          <select id="grantUserSelect" class="input" style="width:100%;"></select>
         </div>
       </div>
-      <div class="reg-grant-modal-footer">
-        <button class="btn btn-primary" onclick="submitGrantPermission()" style="min-width:100px;">권한 부여</button>
+      <div class="grant-modal-footer">
+        <button class="btn btn-primary" onclick="submitGrant()" style="min-width:100px;">권한 부여</button>
         <button class="btn" onclick="closeGrantModal()" style="min-width:100px;">취소</button>
       </div>
     </div>
@@ -344,142 +277,199 @@
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/app-permission.js"></script>
   <script>
-  // ── 규정 목록 정의 ────────────────────────────────────────────────
-  // 새 규정 추가 시 여기에만 추가
+  // ── 규정 목록 정의 (새 규정 추가 시 여기만 수정) ─────────────────
   const REGULATION_LIST = [
     {
       app_id:    'procurement',
-      edit_perm: 'procurement_edit',  // 편집 권한 app_id
+      edit_perm: 'procurement_edit',
       title:     '구매규정',
       desc:      'GC녹십자아이메드 구매규정 조회',
       icon:      '📋',
       url:       '../../pages/procurement/procurement.html'
     }
-    // 예시:
-    // {
-    //   app_id:    'hr_regulation',
-    //   edit_perm: 'hr_regulation_edit',
-    //   title:     '인사규정',
-    //   desc:      'GC녹십자아이메드 인사규정 조회',
-    //   icon:      '👥',
-    //   url:       '../../pages/hr-regulation/hr-regulation.html'
-    // }
   ];
 
-  let currentEditPermAppId = '';  // 현재 권한 부여 중인 app_id
-  let allUsers = [];
+  let currentEditPerm = '';
+  let allUsers        = [];
+  let currentUser     = null;
+  let isRegAdmin      = false;
 
   (async function () {
     const user = window.auth?.requireAuth?.();
     if (!user) return;
+    currentUser = user;
 
     const grid    = document.getElementById('regGrid');
     const emptyEl = document.getElementById('regEmpty');
 
     try {
-      showGlobalLoading('권한 확인 중...');
+      showGlobalLoading('불러오는 중...');
 
       const isGlobalAdmin = String(user.role || '').toLowerCase() === 'admin';
       const regPerm = await window.appPermission?.getPermission?.('regulation');
-      const isRegAdmin = isGlobalAdmin || regPerm === 'admin';
+      isRegAdmin = isGlobalAdmin || regPerm === 'admin';
 
-      // ── 열람 가능한 규정 카드 렌더링 ──────────────────────
-      grid.innerHTML = REGULATION_LIST.map(reg => `
-        <a class="portal-app-card" href="${reg.url}">
-          <div class="portal-app-icon">${escapeHtml(reg.icon)}</div>
-          <div class="portal-app-body">
-            <div class="portal-app-title-row">
-              <strong class="portal-app-title">${escapeHtml(reg.title)}</strong>
-            </div>
-            <div class="portal-app-desc">${escapeHtml(reg.desc)}</div>
-          </div>
-        </a>
-      `).join('');
+      // ── 규정별 최신 배포 정보 조회 (procurement API 활용) ──────
+      const cards = await Promise.all(REGULATION_LIST.map(async reg => {
+        let versionLabel = '-';
+        let effectiveDate = '-';
+        let deployedAt = '-';
+        let deployedBy = '-';
 
-      if (REGULATION_LIST.length === 0) {
+        try {
+          const vResult = await apiGet('getProcurementVersionList', {
+            request_user_email: user.email
+          });
+          const latest = (vResult?.data || [])[0];
+          if (latest) {
+            versionLabel  = latest.version_label || '-';
+            effectiveDate = latest.effective_date ? formatDateSimple(latest.effective_date) : '-';
+            deployedAt    = latest.snapshot_at   ? formatDateSimple(latest.snapshot_at)    : '-';
+            deployedBy    = latest.created_by    ? latest.created_by.split('@')[0]         : '-';
+          }
+        } catch(e) {}
+
+        return { reg, versionLabel, effectiveDate, deployedAt, deployedBy };
+      }));
+
+      // ── 카드 렌더링 ────────────────────────────────────────────
+      if (cards.length === 0) {
         grid.innerHTML = '';
         emptyEl.style.display = '';
+      } else {
+        grid.innerHTML = cards.map(({ reg, versionLabel, effectiveDate, deployedAt, deployedBy }) => `
+          <a class="reg-card" href="${escapeHtml(reg.url)}">
+            <div class="reg-card-head">
+              <span class="reg-card-icon">${escapeHtml(reg.icon)}</span>
+              <div>
+                <div class="reg-card-title">${escapeHtml(reg.title)}</div>
+                <div class="reg-card-desc">${escapeHtml(reg.desc)}</div>
+              </div>
+            </div>
+            <div class="reg-card-meta">
+              <div class="reg-meta-item">
+                <span class="reg-meta-label">버전</span>
+                <span class="reg-meta-value">
+                  ${versionLabel !== '-'
+                    ? `<span class="reg-meta-value--badge">${escapeHtml(versionLabel)}</span>`
+                    : '<span class="reg-meta-value--muted">미배포</span>'}
+                </span>
+              </div>
+              <div class="reg-meta-item">
+                <span class="reg-meta-label">시행일</span>
+                <span class="reg-meta-value ${effectiveDate === '-' ? 'reg-meta-value--muted' : ''}">${escapeHtml(effectiveDate)}</span>
+              </div>
+              <div class="reg-meta-item">
+                <span class="reg-meta-label">배포일시</span>
+                <span class="reg-meta-value ${deployedAt === '-' ? 'reg-meta-value--muted' : ''}">${escapeHtml(deployedAt)}</span>
+              </div>
+              <div class="reg-meta-item">
+                <span class="reg-meta-label">배포자</span>
+                <span class="reg-meta-value ${deployedBy === '-' ? 'reg-meta-value--muted' : ''}">${escapeHtml(deployedBy)}</span>
+              </div>
+            </div>
+          </a>
+        `).join('');
       }
 
-      // ── admin이면 권한 관리 섹션 표시 ─────────────────────
+      // ── 편집 권한 관리 섹션 (admin만) ─────────────────────────
       if (isRegAdmin) {
         document.getElementById('permSection').style.display = '';
-        await loadPermSection(user);
+        await loadPermSection();
       }
 
     } catch (e) {
-      grid.innerHTML = `<div style="color:#dc2626;font-size:14px;">${escapeHtml(e.message || '오류가 발생했습니다.')}</div>`;
+      grid.innerHTML = `<div style="color:#dc2626;font-size:14px;padding:20px;">${escapeHtml(e.message || '오류가 발생했습니다.')}</div>`;
     } finally {
       hideGlobalLoading();
     }
   })();
 
-  // ── 권한 관리 섹션 로드 ────────────────────────────────────────
-  async function loadPermSection(user) {
+  // 날짜 포맷 헬퍼
+  function formatDateSimple(str) {
+    if (!str) return '-';
+    const m = str.match(/(\d{4})[.\-](\d{2})[.\-](\d{2})/);
+    if (m) return `${m[1]}.${m[2]}.${m[3]}`;
+    try {
+      const d = new Date(str);
+      if (!isNaN(d)) return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    } catch(e) {}
+    return str;
+  }
+
+  // ── 편집 권한 관리 ─────────────────────────────────────────────
+  async function loadPermSection() {
     const tbody = document.getElementById('permTableBody');
     try {
-      // 전체 사용자 목록 로드
-      const userResult = await apiGet('listUsers', { request_user_email: user.email });
-      allUsers = (userResult?.data || []).filter(u =>
-        String(u.active || 'Y').toUpperCase() === 'Y'
-      );
-
-      // 각 사용자의 권한을 모아서 편집 권한 보유자 목록 구성
-      const allPerms = [];
-      for (const u of allUsers) {
-        const pResult = await apiGet('getUserPermissions', {
-          user_email: u.user_email,
-          request_user_email: user.email
-        });
-        const perms = pResult?.data || [];
-        perms.forEach(p => allPerms.push({ ...p, user_email: u.user_email }));
+      // global admin만 listUsers 가능 — 아니면 빈 배열로 폴백
+      try {
+        const uResult = await apiGet('listUsers', { request_user_email: currentUser.email });
+        allUsers = (uResult?.data || []).filter(u => String(u.active || 'Y').toUpperCase() === 'Y');
+      } catch(e) {
+        allUsers = [];
       }
 
-      tbody.innerHTML = REGULATION_LIST.map(reg => {
-        // 해당 규정 편집 권한 보유자 목록
-        const editors = allPerms.filter(p =>
-          p.app_id === reg.edit_perm && p.permission === 'admin'
-        );
+      // 각 규정의 편집 권한 보유자 조회
+      // setUserPermission_ 에서 regulation admin도 허용했으므로
+      // 각 사용자 권한 조회는 global admin만 가능 → 편집자 목록은 직접 API 추가 필요
+      // 현재는 global admin일 때만 보여주는 방식으로 우선 처리
+      const isGlobalAdmin = String(currentUser.role || '').toLowerCase() === 'admin';
 
-        const editorHtml = editors.length > 0
-          ? editors.map(p => `
+      const rowsHtml = await Promise.all(REGULATION_LIST.map(async reg => {
+        let editorHtml = '<span style="font-size:12px;color:#94a3b8;">편집 권한자 없음</span>';
+
+        if (isGlobalAdmin && allUsers.length > 0) {
+          const editors = [];
+          for (const u of allUsers) {
+            try {
+              const pResult = await apiGet('getUserPermissions', {
+                user_email: u.user_email,
+                request_user_email: currentUser.email
+              });
+              const hasEdit = (pResult?.data || []).some(p => p.app_id === reg.edit_perm && p.permission === 'admin');
+              if (hasEdit) editors.push(u);
+            } catch(e) {}
+          }
+
+          if (editors.length > 0) {
+            editorHtml = editors.map(u => `
               <div class="reg-perm-user-item">
-                <span class="reg-perm-user-email">${escapeHtml(p.user_email || '')}</span>
-                <span class="reg-perm-user-badge reg-perm-user-badge--admin">admin</span>
-                <button class="reg-perm-remove-btn" onclick="removeEditPermission('${escapeHtml(reg.edit_perm)}', '${escapeHtml(p.user_email)}', '${escapeHtml(user.email)}')" title="권한 제거">✕</button>
-              </div>`).join('')
-          : '<span style="font-size:12px;color:#94a3b8;">편집 권한자 없음</span>';
+                <span class="reg-perm-user-email">${escapeHtml(u.user_name || '')} (${escapeHtml(u.user_email)})</span>
+                <span class="reg-perm-badge">편집</span>
+                <button class="reg-perm-remove" onclick="removeEditPerm('${escapeHtml(reg.edit_perm)}','${escapeHtml(u.user_email)}')" title="권한 제거">✕</button>
+              </div>`).join('');
+          }
+        } else if (!isGlobalAdmin) {
+          editorHtml = '<span style="font-size:12px;color:#94a3b8;">전체 관리자만 조회 가능</span>';
+        }
 
         return `
           <tr>
             <td>
-              <div class="reg-perm-app-name">
+              <div class="reg-perm-app-row">
                 <span class="reg-perm-app-icon">${escapeHtml(reg.icon)}</span>
                 <div>
-                  <div>${escapeHtml(reg.title)}</div>
-                  <div class="reg-perm-app-desc">${escapeHtml(reg.desc)}</div>
+                  <div style="font-weight:700;">${escapeHtml(reg.title)}</div>
+                  <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${escapeHtml(reg.edit_perm)}</div>
                 </div>
               </div>
             </td>
             <td>
-              <div class="reg-perm-user-list" id="editorList_${escapeHtml(reg.edit_perm)}">
-                ${editorHtml}
-              </div>
-              <button class="reg-perm-add-btn" onclick="openGrantModal('${escapeHtml(reg.edit_perm)}', '${escapeHtml(reg.title)}')">
-                + 권한 부여
-              </button>
+              <div class="reg-perm-user-list" id="editorList_${escapeHtml(reg.edit_perm)}">${editorHtml}</div>
+              <button class="reg-perm-add" onclick="openGrantModal('${escapeHtml(reg.edit_perm)}','${escapeHtml(reg.title)}')">+ 권한 부여</button>
             </td>
           </tr>`;
-      }).join('');
+      }));
 
-    } catch (e) {
+      tbody.innerHTML = rowsHtml.join('');
+    } catch(e) {
       tbody.innerHTML = `<tr><td colspan="2" style="color:#dc2626;padding:16px;">${escapeHtml(e.message)}</td></tr>`;
     }
   }
 
   // ── 권한 부여 모달 ─────────────────────────────────────────────
-  function openGrantModal(editPermAppId, regTitle) {
-    currentEditPermAppId = editPermAppId;
+  function openGrantModal(editPerm, regTitle) {
+    currentEditPerm = editPerm;
     document.getElementById('grantModalTitle').textContent = `${regTitle} — 편집 권한 부여`;
     const sel = document.getElementById('grantUserSelect');
     sel.innerHTML = '<option value="">사용자를 선택하세요</option>' +
@@ -491,47 +481,43 @@
 
   function closeGrantModal() {
     document.getElementById('grantModal').style.display = 'none';
-    currentEditPermAppId = '';
+    currentEditPerm = '';
   }
 
-  async function submitGrantPermission() {
-    const userEmail = document.getElementById('grantUserSelect').value;
-    const perm      = document.getElementById('grantPermSelect').value;
-    if (!userEmail) { alert('사용자를 선택하세요.'); return; }
-
-    const me = window.auth?.getSession?.();
+  async function submitGrant() {
+    const targetEmail = document.getElementById('grantUserSelect').value;
+    if (!targetEmail) { alert('사용자를 선택하세요.'); return; }
     try {
       showGlobalLoading('권한 부여 중...');
       await apiPost('setUserPermission', {
-        request_user_email: me.email,
-        target_user_email:  userEmail,
-        app_id:             currentEditPermAppId,
-        permission:         perm
+        request_user_email: currentUser.email,
+        target_user_email:  targetEmail,
+        app_id:             currentEditPerm,
+        permission:         'admin'
       });
       closeGrantModal();
-      await loadPermSection(me);
+      await loadPermSection();
       showMessage('권한이 부여되었습니다.', 'success');
-    } catch (e) {
+    } catch(e) {
       showMessage(e.message || '권한 부여에 실패했습니다.', 'error');
     } finally {
       hideGlobalLoading();
     }
   }
 
-  async function removeEditPermission(editPermAppId, targetEmail, myEmail) {
+  async function removeEditPerm(editPerm, targetEmail) {
     if (!confirm(`${targetEmail}의 편집 권한을 제거하시겠습니까?`)) return;
     try {
       showGlobalLoading('권한 제거 중...');
       await apiPost('setUserPermission', {
-        request_user_email: myEmail,
+        request_user_email: currentUser.email,
         target_user_email:  targetEmail,
-        app_id:             editPermAppId,
+        app_id:             editPerm,
         permission:         ''
       });
-      const me = window.auth?.getSession?.();
-      await loadPermSection(me);
+      await loadPermSection();
       showMessage('권한이 제거되었습니다.', 'success');
-    } catch (e) {
+    } catch(e) {
       showMessage(e.message || '권한 제거에 실패했습니다.', 'error');
     } finally {
       hideGlobalLoading();
