@@ -323,9 +323,9 @@
         </div>
         <div id="modalFeedback" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:8px;"></div>
         <div class="support-process-actions">
-          <button type="button" id="processSubmitBtn" class="btn btn-primary" style="flex:1;min-width:80px;">저장</button>
-          <button type="button" id="resendEmailBtn" class="btn btn-secondary" style="flex:1;min-width:80px;">📧 재발송</button>
-          <button type="button" id="processCancelBtn" class="btn" style="flex:1;min-width:60px;">닫기</button>
+          <button type="button" id="processSubmitBtn" class="btn btn-primary" style="min-width:100px;">저장</button>
+          <button type="button" id="resendEmailBtn" class="btn btn-secondary" style="min-width:100px;">📧 재발송</button>
+          <button type="button" id="processCancelBtn" class="btn" style="min-width:100px;">닫기</button>
         </div>
       </div>
     `;
