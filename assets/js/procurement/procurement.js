@@ -1167,6 +1167,9 @@ function initVersionManagement() {
   deployBtn?.addEventListener('click', async () => {
     const curVer = document.querySelector('.pr-badge--green')?.textContent?.trim() || '';
 
+    // 스피너 먼저 표시
+    showGlobalLoading('배포 준비 중...');
+
     // 배포 이력이 있으면 다음 버전 제안, 없으면 현재 버전 그대로
     let suggestedLabel = curVer;
     try {
@@ -1176,7 +1179,9 @@ function initVersionManagement() {
       });
       const hasHistory = listResult?.success && (listResult.data || []).length > 0;
       if (hasHistory) suggestedLabel = suggestNextVersion(curVer) || curVer;
-    } catch (e) { /* 실패 시 현재 버전 유지 */ }
+    } catch (e) { /* 실패 시 현재 버전 유지 */ } finally {
+      hideGlobalLoading();
+    }
 
     deployLabel.value = suggestedLabel;
     // 시행일 기본값 — 현재 배지 날짜 파싱, 없으면 오늘
