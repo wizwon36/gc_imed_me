@@ -332,11 +332,11 @@
   z-index: 1000;
   display: flex; align-items: center; justify-content: center; padding: 16px;
 }
-.lj-modal {
+.lj-modal-backdrop .lj-modal {
   background: #fff;
   border: 1.5px solid var(--border-card);
   border-radius: var(--radius-xl);
-  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto;
   box-shadow: var(--shadow-modal);
 }
 
@@ -508,4 +508,11 @@
   border-color: #2563eb;
   background: #eff6ff;
   color: #1d4ed8;
+}
+
+/* ── 검사항목 모달 반응형 ── */
+@media (max-width: 600px) {
+  .lj-modal-backdrop .lj-modal {
+    max-width: 100%;
+  }
 }
