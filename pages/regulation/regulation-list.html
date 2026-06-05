@@ -44,18 +44,6 @@
     }
     .reg-meta-muted { color: var(--text-muted); font-size: 12px; }
 
-    /* 스피너 오버레이 */
-    .reg-spinner-wrap {
-      display: flex; align-items: center; justify-content: center;
-      padding: 60px 20px; gap: 12px; color: var(--text-muted); font-size: 14px;
-    }
-    .reg-spinner {
-      width: 22px; height: 22px; border-radius: 50%;
-      border: 3px solid #e2e8f0; border-top-color: #2563eb;
-      animation: spin .7s linear infinite; flex-shrink: 0;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
     .reg-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
     .reg-section-label {
       font-size: 12px; font-weight: 700; color: var(--text-muted);
@@ -209,11 +197,6 @@
     <div style="padding: 24px 0 60px;">
       <div class="reg-section-label">규정 목록</div>
       <div class="reg-table-wrap" id="regTableWrap">
-        <!-- 스피너 -->
-        <div class="reg-spinner-wrap" id="regSpinner">
-          <div class="reg-spinner"></div>
-          <span>불러오는 중...</span>
-        </div>
         <table class="reg-table" id="regTable" style="display:none;">
           <thead>
             <tr>
@@ -302,7 +285,7 @@
     const grid = document.getElementById('regGrid');
 
     try {
-      // 스피너는 자체 처리
+      showGlobalLoading('불러오는 중...');
 
       const isGlobalAdmin = String(user.role || '').toLowerCase() === 'admin';
       const regPerm = await window.appPermission?.getPermission?.('regulation');
@@ -334,8 +317,6 @@
         return { reg, ...meta };
       }));
 
-      document.getElementById('regSpinner').style.display = 'none';
-
       if (cards.length === 0) {
         document.getElementById('regTableWrap').style.display = 'none';
         document.getElementById('regEmpty').style.display = '';
@@ -364,11 +345,10 @@
       }
 
     } catch(e) {
-      document.getElementById('regSpinner').style.display = 'none';
-      document.getElementById('regTableBody').innerHTML = `<tr><td colspan="5" style="color:#dc2626;text-align:center;padding:20px;">${escapeHtml(e.message || '오류가 발생했습니다.')}</td></tr>`;
       document.getElementById('regTable').style.display = '';
-    } catch(e) {
-      document.getElementById('regSpinner').style.display = 'none';
+      document.getElementById('regTableBody').innerHTML = `<tr><td colspan="5" style="color:#dc2626;text-align:center;padding:20px;">${escapeHtml(e.message || '오류가 발생했습니다.')}</td></tr>`;
+    } finally {
+      hideGlobalLoading();
     }
   })();
 
