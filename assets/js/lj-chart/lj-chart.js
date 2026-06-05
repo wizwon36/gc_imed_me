@@ -1027,17 +1027,35 @@ async function addEntry() {
   } else {
     value = parseFloat($('entryValue').value);
     if (isNaN(value)) { alert('측정값을 입력하세요.'); $('entryValue').focus(); return; }
-    // 소수점 자리수 초과 검증
+
     const dec = getDecimals(item);
     const valueStr = String($('entryValue').value);
-    const dotIdx = valueStr.indexOf('.');
-    if (dotIdx !== -1 && valueStr.length - dotIdx - 1 > dec) {
+    const dotIdx   = valueStr.indexOf('.');
+    const actualDec = dotIdx === -1 ? 0 : valueStr.length - dotIdx - 1;
+
+    // 소수점 자리수 초과 — 차단
+    if (actualDec > dec) {
       const msg = dec === 0
         ? '정수만 입력할 수 있습니다.'
         : `소수점 ${dec}자리까지만 입력할 수 있습니다. (예: ${Number(value).toFixed(dec)})`;
       alert(msg);
       $('entryValue').focus();
       return;
+    }
+
+    // 소수점 자리수 부족 — 경고 후 자동 패딩
+    if (dec > 0 && actualDec < dec) {
+      const paddedStr = Number(value).toFixed(dec);
+      const confirmed = confirm(
+        `소수점 ${dec}자리보다 적게 입력되었습니다.
+` +
+        `입력값: ${valueStr}  →  ${paddedStr} 으로 저장됩니다.
+
+` +
+        `계속 저장하시겠습니까?`
+      );
+      if (!confirmed) { $('entryValue').focus(); return; }
+      value = parseFloat(paddedStr);
     }
   }
 
