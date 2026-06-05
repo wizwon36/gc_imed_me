@@ -1144,13 +1144,13 @@ function startEditEntry(entryId) {
          <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
          <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
        </td>`
-    : `<td><input type="date" class="lj-edit-input" id="editDate_${entryId}" value="${escHtml(entry.date)}" /></td>
-       <td><input type="number" class="lj-edit-input" id="editVal_${entryId}"
+    : `<td style="width:120px;"><input type="date" class="lj-edit-input" id="editDate_${entryId}" value="${escHtml(entry.date)}" /></td>
+       <td style="width:90px;"><input type="number" class="lj-edit-input" id="editVal_${entryId}"
            step="${dec === 0 ? '1' : '0.' + '0'.repeat(dec - 1) + '1'}"
            value="${escHtml(String(entry.value))}" /></td>
-       <td colspan="2" style="color:#94a3b8;font-size:12px;">저장 후 재계산</td>
+       <td colspan="2" style="width:270px;color:#94a3b8;font-size:12px;padding-left:12px;">저장 후 재계산</td>
        <td><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
-       <td class="lj-action-cell">
+       <td class="lj-action-cell" style="width:120px;">
          <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
          <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
        </td>`;
