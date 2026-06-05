@@ -697,18 +697,18 @@ function selectItem(itemId) {
       }
       $('dataTableHead').innerHTML = isQual
         ? `<tr>
-            <th style="width:120px;">측정일</th>
-            <th style="width:130px;">결과값</th>
+            <th style="width:140px;">측정일</th>
+            <th style="width:140px;">결과값</th>
             <th style="width:100px;">판정</th>
-            <th>메모</th>
+            <th class="col-memo">메모</th>
             <th style="width:120px;"></th>
            </tr>`
         : `<tr>
-            <th style="width:120px;">측정일</th>
-            <th style="width:90px;">측정값</th>
+            <th style="width:140px;">측정일</th>
+            <th style="width:110px;">측정값</th>
             <th style="width:80px;">SDI</th>
             <th style="width:190px;">Westgard 판정</th>
-            <th>메모</th>
+            <th class="col-memo">메모</th>
             <th style="width:120px;"></th>
            </tr>`;
       // 정성적이면 차트 섹션 숨김
@@ -1139,7 +1139,7 @@ function startEditEntry(entryId) {
   tr.innerHTML = isQual
     ? `<td><input type="date" class="lj-edit-input" id="editDate_${entryId}" value="${escHtml(entry.date)}" /></td>
        <td colspan="2">${valueCell}</td>
-       <td><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
+       <td class="lj-edit-memo-cell col-memo"><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
        <td class="lj-action-cell">
          <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
          <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
@@ -1149,7 +1149,7 @@ function startEditEntry(entryId) {
            step="${dec === 0 ? '1' : '0.' + '0'.repeat(dec - 1) + '1'}"
            value="${escHtml(String(entry.value))}" /></td>
        <td colspan="2" style="width:270px;color:#94a3b8;font-size:12px;padding-left:12px;">저장 후 재계산</td>
-       <td><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
+       <td class="lj-edit-memo-cell col-memo"><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
        <td class="lj-action-cell" style="width:120px;">
          <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
          <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
@@ -1168,7 +1168,7 @@ async function confirmEditEntry(entryId) {
   const dec    = getDecimals(item);
 
   const newDate = document.getElementById(`editDate_${entryId}`)?.value?.trim();
-  const newMemo = document.getElementById(`editMemo_${entryId}`)?.value?.trim() || '';
+  const newMemo = document.getElementById(`editMemo_${entryId}`)?.value?.trim() ?? '';
   let   newValue;
 
   if (!newDate) { alert('측정일을 입력하세요.'); return; }
@@ -1423,7 +1423,7 @@ function renderDataTable() {
           <td>${escHtml(row.date)}</td>
           <td style="font-weight:700;text-align:center;">${escHtml(String(row.value))}</td>
           <td style="text-align:center;">${badge}</td>
-          <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
+          <td class="col-memo" style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
           <td class="lj-action-cell">
             ${state.canEdit ? `
               <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
@@ -1452,7 +1452,7 @@ function renderDataTable() {
         <td style="font-weight:700;">${fmt(row.value, item)}</td>
         <td><span class="lj-sdi-badge ${sdiClass}">${row.sdi.toFixed(4)}</span></td>
         <td>${badges}</td>
-        <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
+        <td class="col-memo" style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
         <td class="lj-action-cell">
           ${state.canEdit ? `
             <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
