@@ -697,14 +697,14 @@ function selectItem(itemId) {
       }
       $('dataTableHead').innerHTML = isQual
         ? `<tr>
-            <th style="width:140px;">측정일</th>
+            <th style="width:140px;text-align:center;">측정일</th>
             <th style="width:140px;">결과값</th>
             <th style="width:100px;">판정</th>
             <th class="col-memo">메모</th>
             <th style="width:120px;"></th>
            </tr>`
         : `<tr>
-            <th style="width:140px;">측정일</th>
+            <th style="width:140px;text-align:center;">측정일</th>
             <th style="width:110px;">측정값</th>
             <th style="width:80px;">SDI</th>
             <th style="width:190px;">Westgard 판정</th>
