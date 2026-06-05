@@ -1970,11 +1970,10 @@ p:empty + .pr-table-wrap {
   justify-content: space-between;
   padding: 14px 20px;
   background: none;
-  border: none;
   cursor: pointer;
-  text-align: left;
   gap: 10px;
   transition: background .12s;
+  user-select: none;
 }
 .pr-version-acc-header:hover { background: #f8fafc; }
 .pr-version-acc-header.is-open { background: #eff6ff; }
