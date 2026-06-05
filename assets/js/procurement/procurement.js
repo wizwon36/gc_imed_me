@@ -1413,10 +1413,10 @@ function initVersionManagement() {
 
       versionDetailContent.innerHTML = sections.map((s, idx) => `
         <div class="pr-version-acc-item">
-          <button class="pr-version-acc-header" data-idx="${idx}" type="button">
+          <div class="pr-version-acc-header" data-idx="${idx}" role="button" tabindex="0">
             <span class="pr-version-acc-title">${escHtml(s.title || s.sec_id)}</span>
             <span class="pr-version-acc-icon">▾</span>
-          </button>
+          </div>
           <div class="pr-version-acc-body" id="prVerAccBody_${idx}" style="display:none;">
             <div class="pr-version-acc-content pr-content">${s.content_html || '<em style="color:#94a3b8;">내용 없음</em>'}</div>
           </div>
