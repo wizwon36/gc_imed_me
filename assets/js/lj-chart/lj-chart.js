@@ -1093,6 +1093,120 @@ async function addEntry() {
   }
 }
 
+// ─────────────────────────────────────────────
+// QC 데이터 인라인 수정
+// ─────────────────────────────────────────────
+function startEditEntry(entryId) {
+  const item = getActiveItem();
+  const entries = state.entries[state.activeItemId] || [];
+  const entry = entries.find(e => e.entry_id === entryId);
+  if (!entry) return;
+
+  const tr = document.querySelector(`button[onclick="startEditEntry('${entryId}')"]`)?.closest('tr');
+  if (!tr) return;
+
+  const isQual = item.item_type === 'qualitative';
+  const dec    = getDecimals(item);
+
+  // 현재 행 내용을 편집 가능 상태로 교체
+  const qualOptions = isQual
+    ? Object.values({ pos_neg: ['Negative','Positive'], reactive: ['Non-Reactive','Reactive'],
+        detected: ['Not Detected','Detected'], neg_plus: ['Negative','Trace','1+','2+','3+','4+'],
+        weak_reactive: ['Non-Reactive','Weakly Reactive','Reactive'],
+        weak_pos: ['Negative','Weak Positive','Positive','Strong Positive'] }[item.preset] || [])
+    : [];
+
+  const valueCell = isQual
+    ? `<select class="lj-edit-input" id="editVal_${entryId}">
+        ${qualOptions.map(v => `<option value="${escHtml(v)}" ${v === entry.value ? 'selected' : ''}>${escHtml(v)}</option>`).join('')}
+       </select>`
+    : `<input type="number" class="lj-edit-input" id="editVal_${entryId}"
+         step="${dec === 0 ? '1' : '0.' + '0'.repeat(dec - 1) + '1'}"
+         value="${escHtml(String(entry.value))}" />`;
+
+  // 열 수에 맞게 colspan 계산 (정량: 6열, 정성: 5열)
+  tr.innerHTML = `
+    <td><input type="date" class="lj-edit-input" id="editDate_${entryId}" value="${escHtml(entry.date)}" /></td>
+    <td colspan="${isQual ? 2 : 3}">${valueCell}</td>
+    <td><input type="text" class="lj-edit-input" id="editMemo_${entryId}" value="${escHtml(entry.memo || '')}" placeholder="메모" /></td>
+    <td class="lj-action-cell">
+      <button type="button" class="lj-save-btn" onclick="confirmEditEntry('${entryId}')">완료</button>
+      <button type="button" class="lj-cancel-btn" onclick="renderDataTable()">취소</button>
+    </td>`;
+
+  document.getElementById(`editVal_${entryId}`)?.focus();
+}
+
+async function confirmEditEntry(entryId) {
+  const item    = getActiveItem();
+  const entries = state.entries[state.activeItemId] || [];
+  const entry   = entries.find(e => e.entry_id === entryId);
+  if (!entry) return;
+
+  const isQual = item.item_type === 'qualitative';
+  const dec    = getDecimals(item);
+
+  const newDate = document.getElementById(`editDate_${entryId}`)?.value?.trim();
+  const newMemo = document.getElementById(`editMemo_${entryId}`)?.value?.trim() || '';
+  let   newValue;
+
+  if (!newDate) { alert('측정일을 입력하세요.'); return; }
+
+  if (isQual) {
+    newValue = document.getElementById(`editVal_${entryId}`)?.value;
+    if (!newValue) { alert('결과값을 선택하세요.'); return; }
+  } else {
+    newValue = parseFloat(document.getElementById(`editVal_${entryId}`)?.value);
+    if (isNaN(newValue)) { alert('측정값을 입력하세요.'); return; }
+
+    const valStr    = String(document.getElementById(`editVal_${entryId}`).value);
+    const dotIdx    = valStr.indexOf('.');
+    const actualDec = dotIdx === -1 ? 0 : valStr.length - dotIdx - 1;
+
+    if (actualDec > dec) {
+      alert(dec === 0 ? '정수만 입력할 수 있습니다.' : `소수점 ${dec}자리까지만 입력할 수 있습니다.`);
+      return;
+    }
+    if (dec > 0 && actualDec < dec) {
+      const paddedStr = newValue.toFixed(dec);
+      if (!confirm(`소수점 ${dec}자리보다 적게 입력되었습니다.\n${valStr} → ${paddedStr} 으로 저장됩니다.\n\n계속 저장하시겠습니까?`)) return;
+      newValue = parseFloat(paddedStr);
+    }
+  }
+
+  const user = window.auth.getSession();
+  try {
+    showGlobalLoading('수정 중...');
+    await apiPost('ljUpdateEntry', {
+      entry_id:           entryId,
+      item_id:            state.activeItemId,
+      date:               newDate,
+      value:              String(newValue),
+      memo:               newMemo,
+      request_user_email: user.email
+    });
+
+    // 로컬 state 업데이트
+    const idx = entries.findIndex(e => e.entry_id === entryId);
+    if (idx !== -1) {
+      state.entries[state.activeItemId][idx] = {
+        ...entry, date: newDate, value: String(newValue), memo: newMemo
+      };
+      state.entries[state.activeItemId].sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    renderDataTable();
+    renderStats();
+    if (!isQual) renderChart();
+    showMessage('수정되었습니다.', 'success');
+  } catch (e) {
+    showMessage(e.message || '수정에 실패했습니다.', 'error');
+    renderDataTable();
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
 async function deleteEntry(entryId) {
   if (!confirm('이 데이터를 삭제하시겠습니까?')) return;
   const user = window.auth.getSession();
@@ -1289,7 +1403,10 @@ function renderDataTable() {
           <td style="font-weight:700;text-align:center;">${escHtml(String(row.value))}</td>
           <td style="text-align:center;">${badge}</td>
           <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
-          <td><button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">✕</button></td>
+          <td class="lj-action-cell">
+            <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
+            <button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">삭제</button>
+          </td>
         </tr>`;
     }).join('');
     return;
@@ -1314,7 +1431,10 @@ function renderDataTable() {
         <td><span class="lj-sdi-badge ${sdiClass}">${row.sdi.toFixed(4)}</span></td>
         <td>${badges}</td>
         <td style="font-size:12px;color:#64748b;">${escHtml(row.memo || '')}</td>
-        <td><button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">✕</button></td>
+        <td class="lj-action-cell">
+          <button type="button" class="lj-edit-btn" onclick="startEditEntry('${escHtml(row.entry_id)}')">수정</button>
+          <button type="button" class="lj-del-btn" onclick="deleteEntry('${escHtml(row.entry_id)}')">삭제</button>
+        </td>
       </tr>`;
   }).join('');
 }
@@ -1862,3 +1982,5 @@ function normalizeDate(val) {
 }
 
 window.deleteEntry = deleteEntry;
+window.startEditEntry = startEditEntry;
+window.confirmEditEntry = confirmEditEntry;
