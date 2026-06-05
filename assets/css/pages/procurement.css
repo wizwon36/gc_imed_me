@@ -1963,13 +1963,20 @@ p:empty + .pr-table-wrap {
 .pr-version-detail-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   flex-wrap: wrap;
-  padding: 14px 20px;
+  padding: 12px 20px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   font-size: 13px;
 }
+.pr-version-detail-info > span {
+  padding: 0 12px;
+  border-right: 1px solid #e2e8f0;
+  line-height: 1.6;
+}
+.pr-version-detail-info > span:first-child { padding-left: 0; }
+.pr-version-detail-info > span:last-child  { border-right: none; }
 .pr-version-detail-date { color: #475569; }
 .pr-version-detail-by   { color: #64748b; }
 .pr-version-detail-memo {
