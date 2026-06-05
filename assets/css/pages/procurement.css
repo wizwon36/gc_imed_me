@@ -1779,7 +1779,7 @@ p:empty + .pr-table-wrap {
 
 /* ── 모달 사이즈 변형 ──────────────────────────────────────── */
 .pr-modal--sm  { max-width: 480px; }
-.pr-modal--wide { max-width: 1080px; width: 96vw; max-height: 90vh; display: flex; flex-direction: column; }
+.pr-modal--wide { max-width: 760px; width: 92vw; max-height: 90vh; display: flex; flex-direction: column; }
 
 /* ── 배포 모달 폼 ──────────────────────────────────────────── */
 .pr-form-row {
@@ -1873,9 +1873,10 @@ p:empty + .pr-table-wrap {
   text-align: center;
 }
 .pr-version-item-right {
-  text-align: right;
-  width: 90px;
-  padding: 0 12px !important;
+  text-align: center;
+  width: 80px;
+  padding: 0 10px !important;
+  line-height: 0;
 }
 
 /* 테이블 컬럼 너비 고정 */
@@ -1884,17 +1885,17 @@ p:empty + .pr-table-wrap {
   box-sizing: border-box;
 }
 .pr-version-table-head-row > span:nth-child(1),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(1) { width: 75px; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(1) { width: 70px; }
 .pr-version-table-head-row > span:nth-child(2),
 .pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(2) { }
 .pr-version-table-head-row > span:nth-child(3),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(3) { width: 95px; text-align: center; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(3) { width: 85px; text-align: center; }
 .pr-version-table-head-row > span:nth-child(4),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(4) { width: 125px; text-align: center; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(4) { width: 110px; text-align: center; }
 .pr-version-table-head-row > span:nth-child(5),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(5) { width: 90px; text-align: center; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(5) { width: 75px; text-align: center; }
 .pr-version-table-head-row > span:nth-child(6),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(6) { width: 80px; }
+.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(6) { width: 75px; }
 
 .pr-version-badge {
   display: inline-block;
