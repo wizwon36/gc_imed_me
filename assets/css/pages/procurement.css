@@ -1906,10 +1906,27 @@ p:empty + .pr-table-wrap {
 
 .pr-version-loading,
 .pr-version-empty {
-  padding: 40px 20px;
+  padding: 48px 20px;
   text-align: center;
   font-size: 14px;
   color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pr-version-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: prVersionSpin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes prVersionSpin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── 버전 상세 ─────────────────────────────────────────────── */
@@ -1940,28 +1957,51 @@ p:empty + .pr-table-wrap {
   font-size: 12px;
 }
 
-.pr-version-section-block {
-  padding: 20px 24px;
+/* ── 아코디언 ────────────────────────────────────────────── */
+.pr-version-acc-item {
+  border-bottom: 1px solid #f1f5f9;
 }
-.pr-version-section-title {
+.pr-version-acc-item:last-child { border-bottom: none; }
+
+.pr-version-acc-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 10px;
+  transition: background .12s;
+}
+.pr-version-acc-header:hover { background: #f8fafc; }
+.pr-version-acc-header.is-open { background: #eff6ff; }
+
+.pr-version-acc-title {
   font-size: 13px;
-  font-weight: 800;
-  color: #1d4ed8;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-  padding-left: 10px;
-  border-left: 3px solid #2563eb;
+  font-weight: 700;
+  color: #1e3a5f;
 }
-.pr-version-section-body {
+.pr-version-acc-header.is-open .pr-version-acc-title { color: #1d4ed8; }
+
+.pr-version-acc-icon {
+  font-size: 14px;
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: color .12s;
+}
+.pr-version-acc-header.is-open .pr-version-acc-icon { color: #2563eb; }
+
+.pr-version-acc-body { }
+
+.pr-version-acc-content {
+  padding: 4px 20px 20px 20px;
   font-size: 13px;
   color: #334155;
   line-height: 1.7;
-}
-.pr-version-section-divider {
-  border: none;
-  border-top: 1px solid #f1f5f9;
-  margin: 0;
+  border-top: 1px solid #e2e8f0;
 }
 
 /* 시행일 표시 */
