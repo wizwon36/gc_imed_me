@@ -2649,3 +2649,101 @@ body.admin-body {
   color: var(--danger-text);
   border: 1px solid #fca5a5;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   공통 모달 컴포넌트
+   사용법:
+     <div class="modal-backdrop"> ... </div>        ← 딤드 배경
+     <div class="modal-container"> ... </div>       ← 모달 박스
+     <div class="modal-header"> ... </div>          ← 타이틀 영역
+     <div class="modal-body"> ... </div>            ← 본문 영역
+     <div class="modal-footer"> ... </div>          ← 버튼 영역 (가운데 정렬)
+
+   새 페이지 모달 작업 시 반드시 이 클래스를 사용하세요.
+   페이지별 커스텀이 필요한 경우 이 클래스를 기반으로 확장하세요.
+═══════════════════════════════════════════════════════════════ */
+
+/* 딤드 배경 */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* 모달 박스 */
+.modal-container {
+  background: #fff;
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: var(--shadow-modal, 0 20px 60px rgba(15,23,42,0.18));
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 헤더 */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid var(--border-soft, #e2e8f0);
+  flex-shrink: 0;
+}
+.modal-header .modal-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+}
+.modal-header .modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--text-muted, #94a3b8);
+  padding: 4px 8px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: background .12s, color .12s;
+}
+.modal-header .modal-close:hover {
+  background: #f1f5f9;
+  color: var(--text-primary, #0f172a);
+}
+
+/* 본문 */
+.modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* 버튼 영역 — 가운데 정렬 */
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border-soft, #e2e8f0);
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+.modal-footer .btn {
+  min-width: 100px;
+}
+
+@media (max-width: 600px) {
+  .modal-container {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: var(--radius-xl, 16px);
+  }
+}
