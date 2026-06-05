@@ -65,12 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '📚',
       url: `${CONFIG.SITE_BASE_URL}/pages/regulation/regulation-list.html`
     },
-    procurement: {
-      title: '구매규정',
-      desc: 'GC녹십자아이메드 구매규정 조회',
-      icon: '📋',
-      url: `${CONFIG.SITE_BASE_URL}/pages/procurement/procurement.html`
-    },
+
     support: {
       title: '프로그램 수정요청',
       desc: '불편사항·기능 개선 요청',
