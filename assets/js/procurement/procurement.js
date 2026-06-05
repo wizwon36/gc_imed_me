@@ -31,12 +31,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── 섹션 데이터 로드 및 렌더링 ─────────────────────────
     await loadSections();
 
-    // admin이면 편집 버튼 노출
+    // admin이면 편집 버튼 + 버전 관리 버튼 노출
     if (isAdmin) {
       document.querySelectorAll('.pr-edit-btn').forEach(btn => {
         btn.style.display = 'inline-flex';
       });
+      document.getElementById('prDeployBtn').style.display = '';
+      document.getElementById('prVersionHistoryBtn').style.display = '';
       initEditModal();
+      initVersionManagement();
     }
 
   } finally {
@@ -1126,3 +1129,314 @@ function buildPrintHeader() {
 window.addEventListener('pageshow', e => {
   if (e.persisted) { try { hideGlobalLoading(); } catch(e) {} }
 });
+
+// ── 버전관리 (배포 / 히스토리 / 복원) ────────────────────────
+function initVersionManagement() {
+  const deployBtn        = document.getElementById('prDeployBtn');
+  const historyBtn       = document.getElementById('prVersionHistoryBtn');
+
+  // ── 배포 모달 요소 ──────────────────────────────────────────
+  const deployModal      = document.getElementById('prDeployModal');
+  const deployClose      = document.getElementById('prDeployModalClose');
+  const deployCancel     = document.getElementById('prDeployCancelBtn');
+  const deployConfirm    = document.getElementById('prDeployConfirmBtn');
+  const deployMsg        = document.getElementById('prDeployModalMsg');
+  const deployLabel      = document.getElementById('prDeployVersionLabel');
+  const deployMemo       = document.getElementById('prDeployMemo');
+
+  // ── 버전 히스토리 모달 요소 ────────────────────────────────
+  const versionModal     = document.getElementById('prVersionModal');
+  const versionClose     = document.getElementById('prVersionModalClose');
+  const versionCloseBtn  = document.getElementById('prVersionModalCloseBtn');
+  const versionListView  = document.getElementById('prVersionListView');
+  const versionDetailView= document.getElementById('prVersionDetailView');
+  const versionListWrap  = document.getElementById('prVersionListWrap');
+  const versionListMsg   = document.getElementById('prVersionListMsg');
+  const versionDetailMeta= document.getElementById('prVersionDetailMeta');
+  const versionDetailContent = document.getElementById('prVersionDetailContent');
+  const versionDetailMsg = document.getElementById('prVersionDetailMsg');
+  const versionRestoreBtn= document.getElementById('prVersionRestoreBtn');
+  const versionBackBtn   = document.getElementById('prVersionBackBtn');
+  const versionDetailClose = document.getElementById('prVersionDetailCloseBtn');
+
+  let currentHistoryId   = null;
+  let currentVersionLabel= null;
+
+  // ── 배포 모달 열기 ─────────────────────────────────────────
+  deployBtn?.addEventListener('click', () => {
+    // 현재 버전 배지에서 다음 버전 자동 제안
+    const curVer = document.querySelector('.pr-badge--green')?.textContent?.trim() || '';
+    const suggested = suggestNextVersion(curVer);
+    deployLabel.value = suggested;
+    deployMemo.value  = '';
+    showMsg(deployMsg, '', '');
+    deployModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => deployLabel.focus(), 50);
+  });
+
+  // ── 배포 모달 닫기 ─────────────────────────────────────────
+  function closeDeployModal() {
+    deployModal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  deployClose?.addEventListener('click', closeDeployModal);
+  deployCancel?.addEventListener('click', closeDeployModal);
+  deployModal?.addEventListener('click', e => { if (e.target === deployModal) closeDeployModal(); });
+
+  // ── 배포 확정 ──────────────────────────────────────────────
+  deployConfirm?.addEventListener('click', async () => {
+    const label = deployLabel.value.trim();
+    const memo  = deployMemo.value.trim();
+    if (!label) {
+      showMsg(deployMsg, '버전명을 입력해 주세요.', 'error');
+      deployLabel.focus();
+      return;
+    }
+
+    const user = window.auth?.getSession?.();
+    if (!user?.email) { showMsg(deployMsg, '로그인 세션이 만료되었습니다.', 'error'); return; }
+
+    deployConfirm.disabled    = true;
+    deployConfirm.textContent = '배포 중...';
+    showMsg(deployMsg, '', '');
+
+    try {
+      showGlobalLoading('배포 중...');
+      const result = await apiPost('deployProcurementVersion', {
+        request_user_email: user.email,
+        version_label:      label,
+        memo:               memo
+      });
+
+      if (!result?.success) throw new Error(result?.message || '배포에 실패했습니다.');
+
+      // 버전 배지 업데이트
+      const badge = document.querySelector('.pr-badge--green');
+      if (badge) badge.textContent = label;
+
+      showMsg(deployMsg, `"${label}" 버전으로 배포되었습니다.`, 'success');
+      setTimeout(closeDeployModal, 1000);
+
+    } catch (err) {
+      showMsg(deployMsg, err.message || '배포에 실패했습니다.', 'error');
+    } finally {
+      deployConfirm.disabled    = false;
+      deployConfirm.textContent = '🚀 배포 확정';
+      hideGlobalLoading();
+    }
+  });
+
+  // ── 버전 히스토리 모달 열기 ────────────────────────────────
+  historyBtn?.addEventListener('click', async () => {
+    showListView();
+    versionModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    await loadVersionList();
+  });
+
+  // ── 버전 히스토리 모달 닫기 ────────────────────────────────
+  function closeVersionModal() {
+    versionModal.style.display = 'none';
+    document.body.style.overflow = '';
+    currentHistoryId    = null;
+    currentVersionLabel = null;
+  }
+  versionClose?.addEventListener('click', closeVersionModal);
+  versionCloseBtn?.addEventListener('click', closeVersionModal);
+  versionDetailClose?.addEventListener('click', closeVersionModal);
+  versionModal?.addEventListener('click', e => { if (e.target === versionModal) closeVersionModal(); });
+
+  // ── 목록 뷰 / 상세 뷰 전환 ────────────────────────────────
+  function showListView() {
+    versionListView.style.display   = '';
+    versionDetailView.style.display = 'none';
+  }
+  function showDetailView() {
+    versionListView.style.display   = 'none';
+    versionDetailView.style.display = '';
+  }
+
+  versionBackBtn?.addEventListener('click', showListView);
+
+  // ── 버전 목록 로드 ─────────────────────────────────────────
+  async function loadVersionList() {
+    versionListWrap.innerHTML = '<div class="pr-version-loading">목록 불러오는 중...</div>';
+    showMsg(versionListMsg, '', '');
+
+    const user = window.auth?.getSession?.();
+    if (!user?.email) {
+      showMsg(versionListMsg, '로그인 세션이 만료되었습니다.', 'error');
+      return;
+    }
+
+    try {
+      const result = await apiGet('getProcurementVersionList', {
+        request_user_email: user.email
+      });
+
+      if (!result?.success) throw new Error(result?.message || '목록을 불러오지 못했습니다.');
+
+      const list = result.data || [];
+
+      if (list.length === 0) {
+        versionListWrap.innerHTML = '<div class="pr-version-empty">배포된 버전이 없습니다.</div>';
+        return;
+      }
+
+      versionListWrap.innerHTML = list.map((v, idx) => `
+        <div class="pr-version-item" data-history-id="${escHtml(v.history_id)}">
+          <div class="pr-version-item-left">
+            <span class="pr-version-badge ${idx === 0 ? 'pr-version-badge--latest' : ''}">${escHtml(v.version_label)}</span>
+            <span class="pr-version-item-memo">${v.memo ? escHtml(v.memo) : '<span class="pr-version-no-memo">메모 없음</span>'}</span>
+          </div>
+          <div class="pr-version-item-right">
+            <span class="pr-version-item-date">${escHtml((v.snapshot_at || '').substring(0, 16))}</span>
+            <span class="pr-version-item-by">${escHtml(v.created_by || '')}</span>
+            <button class="btn pr-version-view-btn" data-history-id="${escHtml(v.history_id)}" data-version-label="${escHtml(v.version_label)}">상세 보기</button>
+          </div>
+        </div>
+      `).join('');
+
+      // 상세 보기 버튼 이벤트
+      versionListWrap.querySelectorAll('.pr-version-view-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          currentHistoryId    = btn.dataset.historyId;
+          currentVersionLabel = btn.dataset.versionLabel;
+          await loadVersionDetail(currentHistoryId, currentVersionLabel);
+        });
+      });
+
+    } catch (err) {
+      showMsg(versionListMsg, err.message || '목록을 불러오지 못했습니다.', 'error');
+      versionListWrap.innerHTML = '';
+    }
+  }
+
+  // ── 버전 상세 로드 ─────────────────────────────────────────
+  async function loadVersionDetail(historyId, versionLabel) {
+    showDetailView();
+    versionDetailMeta.innerHTML    = '';
+    versionDetailContent.innerHTML = '<div class="pr-version-loading">내용 불러오는 중...</div>';
+    showMsg(versionDetailMsg, '', '');
+
+    const user = window.auth?.getSession?.();
+    if (!user?.email) {
+      showMsg(versionDetailMsg, '로그인 세션이 만료되었습니다.', 'error');
+      return;
+    }
+
+    try {
+      const result = await apiGet('getProcurementVersion', {
+        request_user_email: user.email,
+        history_id:         historyId
+      });
+
+      if (!result?.success) throw new Error(result?.message || '버전 내용을 불러오지 못했습니다.');
+
+      const v = result.data;
+
+      // 메타 정보
+      versionDetailMeta.innerHTML = `
+        <div class="pr-version-detail-info">
+          <span class="pr-version-badge pr-version-badge--detail">${escHtml(v.version_label)}</span>
+          <span class="pr-version-detail-date">배포일: ${escHtml((v.snapshot_at || '').substring(0, 16))}</span>
+          <span class="pr-version-detail-by">배포자: ${escHtml(v.created_by || '')}</span>
+          ${v.memo ? `<span class="pr-version-detail-memo">${escHtml(v.memo)}</span>` : ''}
+        </div>
+      `;
+
+      // 섹션 내용 렌더링
+      const sections = v.sections || [];
+      if (sections.length === 0) {
+        versionDetailContent.innerHTML = '<div class="pr-version-empty">섹션 내용이 없습니다.</div>';
+        return;
+      }
+
+      // 자동백업 버전이면 복원 버튼 숨기기
+      const isAutoBackup = v.version_label.startsWith('[복원 전 자동백업]');
+      versionRestoreBtn.style.display = isAutoBackup ? 'none' : '';
+
+      versionDetailContent.innerHTML = sections.map(s => `
+        <div class="pr-version-section-block">
+          <div class="pr-version-section-title">${escHtml(s.title || s.sec_id)}</div>
+          <div class="pr-version-section-body pr-content">${s.content_html || '<em style="color:#94a3b8;">내용 없음</em>'}</div>
+        </div>
+      `).join('<hr class="pr-version-section-divider" />');
+
+    } catch (err) {
+      showMsg(versionDetailMsg, err.message || '내용을 불러오지 못했습니다.', 'error');
+      versionDetailContent.innerHTML = '';
+    }
+  }
+
+  // ── 버전 복원 ──────────────────────────────────────────────
+  versionRestoreBtn?.addEventListener('click', async () => {
+    if (!currentHistoryId) return;
+    if (!confirm(`"${currentVersionLabel}" 버전으로 전체 규정을 복원하시겠습니까?\n현재 상태는 자동으로 백업됩니다.`)) return;
+
+    const user = window.auth?.getSession?.();
+    if (!user?.email) { showMsg(versionDetailMsg, '로그인 세션이 만료되었습니다.', 'error'); return; }
+
+    versionRestoreBtn.disabled    = true;
+    versionRestoreBtn.textContent = '복원 중...';
+    showMsg(versionDetailMsg, '', '');
+
+    try {
+      showGlobalLoading('복원 중...');
+      const result = await apiPost('restoreProcurementVersion', {
+        request_user_email: user.email,
+        history_id:         currentHistoryId
+      });
+
+      if (!result?.success) throw new Error(result?.message || '복원에 실패했습니다.');
+
+      // 버전 배지 업데이트
+      const badge = document.querySelector('.pr-badge--green');
+      if (badge) badge.textContent = currentVersionLabel;
+
+      // 섹션 DOM 재로드
+      showGlobalLoading('규정 다시 불러오는 중...');
+      await loadSections();
+
+      showMsg(versionDetailMsg, `"${currentVersionLabel}" 버전으로 복원되었습니다.`, 'success');
+      setTimeout(closeVersionModal, 1200);
+
+    } catch (err) {
+      showMsg(versionDetailMsg, err.message || '복원에 실패했습니다.', 'error');
+    } finally {
+      versionRestoreBtn.disabled    = false;
+      versionRestoreBtn.textContent = '↩ 이 버전으로 복원';
+      hideGlobalLoading();
+    }
+  });
+
+  // ── ESC 닫기 ───────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (deployModal?.style.display  !== 'none') closeDeployModal();
+    if (versionModal?.style.display !== 'none') closeVersionModal();
+  });
+
+  // ── 헬퍼 ──────────────────────────────────────────────────
+  function showMsg(el, text, type) {
+    if (!el) return;
+    if (!text) { el.style.display = 'none'; return; }
+    el.textContent   = text;
+    el.className     = 'pr-modal-msg pr-modal-msg--' + type;
+    el.style.display = 'block';
+  }
+
+  function escHtml(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // 버전명에서 다음 버전 자동 제안 (Ver 6.0 → Ver 6.1)
+  function suggestNextVersion(current) {
+    const m = current.match(/Ver\s+(\d+)\.(\d+)/i);
+    if (!m) return '';
+    return `Ver ${m[1]}.${parseInt(m[2]) + 1}`;
+  }
+}
