@@ -1183,6 +1183,13 @@ window.addEventListener('pageshow', e => {
 });
 
 // ── 버전관리 (배포 / 히스토리 / 복원) ────────────────────────
+// ── 버전 히스토리 배포자 이름 매핑 ──────────────────────────────
+const versionUserMap = {};
+function resolveVersionUserName(email) {
+  if (!email) return '-';
+  return versionUserMap[email] || email.split('@')[0];
+}
+
 function initVersionManagement() {
   const deployBtn        = document.getElementById('prDeployBtn');
   const historyBtn       = document.getElementById('prVersionHistoryBtn');
