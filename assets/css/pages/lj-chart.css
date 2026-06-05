@@ -306,7 +306,7 @@
   text-align: center; white-space: nowrap;
   z-index: 2; letter-spacing: .04em; text-transform: uppercase;
 }
-.lj-data-table th:first-child { text-align: left; padding-left: 18px; }
+.lj-data-table th:first-child { text-align: center; padding-left: 18px; }
 .lj-data-table td {
   padding: 11px 10px;
   border-bottom: 1px solid #edf1f7;
