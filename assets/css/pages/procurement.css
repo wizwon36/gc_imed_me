@@ -1871,33 +1871,14 @@ p:empty + .pr-table-wrap {
   line-height: 1.3;
 }
 
-.pr-version-item-left {
-  text-align: center;
-}
-.pr-version-item-right {
-  text-align: center;
-  width: 62px;
-  padding: 4px 8px !important;
-  vertical-align: middle !important;
-}
+.pr-version-item-right { text-align: center; }
 
 /* 테이블 컬럼 너비 고정 */
 .pr-version-table-head-row > span,
 .pr-version-item-cell {
   box-sizing: border-box;
 }
-.pr-version-table-head-row > span:nth-child(1),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(1) { width: 60px; }
-.pr-version-table-head-row > span:nth-child(2),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(2) { width: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pr-version-table-head-row > span:nth-child(3),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(3) { width: 76px; text-align: center; }
-.pr-version-table-head-row > span:nth-child(4),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(4) { width: 96px; text-align: center; }
-.pr-version-table-head-row > span:nth-child(5),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(5) { width: 50px; text-align: center; }
-.pr-version-table-head-row > span:nth-child(6),
-.pr-version-item:nth-child(n) .pr-version-item-cell:nth-child(6) { width: 62px; }
+/* 컬럼 너비는 colgroup에서 관리 */
 
 .pr-version-badge {
   display: inline-block;
