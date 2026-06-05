@@ -1970,13 +1970,13 @@ p:empty + .pr-table-wrap {
   border-bottom: 1px solid #e2e8f0;
   font-size: 13px;
 }
-.pr-version-detail-info > span {
+.pr-version-detail-info > span:not(.pr-version-badge):not(.pr-version-detail-memo) {
   padding: 0 12px;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid #cbd5e1;
   line-height: 1.6;
 }
-.pr-version-detail-info > span:first-child { padding-left: 0; }
-.pr-version-detail-info > span:last-child  { border-right: none; }
+.pr-version-detail-info > span:not(.pr-version-badge):not(.pr-version-detail-memo):last-of-type { border-right: none; }
+.pr-version-detail-info .pr-version-badge { margin-right: 4px; }
 .pr-version-detail-date { color: #475569; }
 .pr-version-detail-by   { color: #64748b; }
 .pr-version-detail-memo {
