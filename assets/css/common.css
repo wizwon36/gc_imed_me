@@ -2746,4 +2746,11 @@ body.admin-body {
     max-height: 95vh;
     border-radius: var(--radius-xl, 16px);
   }
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .modal-footer .btn {
+    width: 100%;
+  }
 }
