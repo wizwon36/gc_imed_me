@@ -90,6 +90,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       desc: '접수된 수정요청 처리',
       icon: '⚙️',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/support-admin.html`
+    },
+    // ── 월마감 자동화 ──────────────────────────────────────────────
+    closing: {
+      title: '월마감 자동화',
+      desc: 'Raw 데이터 → 산출물 엑셀 자동 생성',
+      icon: '📊',
+      url: `${CONFIG.SITE_BASE_URL}/pages/closing/closing.html`
     }
   };
 
