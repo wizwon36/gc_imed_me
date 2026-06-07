@@ -58,6 +58,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '📋',
       url: `${CONFIG.SITE_BASE_URL}/pages/task-manager/task-manager.html`
     },
+    // ── 월마감 자동화 ──────────────────────────────────────────────
+    closing: {
+      title: '월마감 자동화',
+      desc: 'Raw 데이터 → 산출물 엑셀 자동 생성',
+      icon: '📊',
+      url: `${CONFIG.SITE_BASE_URL}/pages/closing/closing.html`
+    },
     // ── 규정 및 가이드라인: 권한 있는 규정 목록 표시 ──────────────
     regulation: {
       title: '규정 및 가이드라인',
@@ -90,13 +97,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       desc: '접수된 수정요청 처리',
       icon: '⚙️',
       url: `${CONFIG.SITE_BASE_URL}/pages/admin/support-admin.html`
-    },
-    // ── 월마감 자동화 ──────────────────────────────────────────────
-    closing: {
-      title: '월마감 자동화',
-      desc: 'Raw 데이터 → 산출물 엑셀 자동 생성',
-      icon: '📊',
-      url: `${CONFIG.SITE_BASE_URL}/pages/closing/closing.html`
     }
   };
 
