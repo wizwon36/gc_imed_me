@@ -800,46 +800,56 @@ async function saveWb(wb, filename) {
 }
 
 async function dlIpgo() {
-  const R = App.R; const wb = newWb();
-  const ic = ['공급업체', '구매번호', '자재구분', '자재코드', '자재명', '상태', '입고일자', '수량', '단가', '공급가액', '부가세', '합계금액', '규격', '산출단위', '입고단위', '의뢰부서', '구분'];
-  const iw = [16, 14, 8, 12, 40, 8, 12, 8, 12, 14, 12, 14, 10, 8, 8, 14, 10];
-  const in_ = [8, 9, 10, 11, 12];
-  writePivotVendor(wb.addWorksheet('거래처 피벗'), R.gcVendors, R.imedVendors);
-  writeDataSheet(wb.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
-  writeDataSheet(wb.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-  writePivotItem(wb.addWorksheet('원가집계표 피벗'), R.itemIpgoPivot, false);
-  writePivotDept(wb.addWorksheet('GC케어 마감피벗'), R.gcDepts);
-  writeDataSheet(wb.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-  writePivotDept(wb.addWorksheet('아이메드 마감피벗'), R.imedDepts);
-  await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
+  try {
+    showGlobalLoading('입고 편집본 생성 중...');
+    const R = App.R; const wb = newWb();
+    const ic = ['공급업체', '구매번호', '자재구분', '자재코드', '자재명', '상태', '입고일자', '수량', '단가', '공급가액', '부가세', '합계금액', '규격', '산출단위', '입고단위', '의뢰부서', '구분'];
+    const iw = [16, 14, 8, 12, 40, 8, 12, 8, 12, 14, 12, 14, 10, 8, 8, 14, 10];
+    const in_ = [8, 9, 10, 11, 12];
+    writePivotVendor(wb.addWorksheet('거래처 피벗'), R.gcVendors, R.imedVendors);
+    writeDataSheet(wb.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
+    writeDataSheet(wb.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
+    writePivotItem(wb.addWorksheet('원가집계표 피벗'), R.itemIpgoPivot, false);
+    writePivotDept(wb.addWorksheet('GC케어 마감피벗'), R.gcDepts);
+    writeDataSheet(wb.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
+    writePivotDept(wb.addWorksheet('아이메드 마감피벗'), R.imedDepts);
+    await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
+  } finally {
+    await hideGlobalLoading();
+  }
 }
 
 async function dlUsage() {
-  const R = App.R; const wb = newWb();
-  const uc  = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '사용부가세', '사용합계', '공급업체', '규격'];
-  const uw  = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 14, 16, 10];
-  const un  = [7, 8, 9, 10, 11];
-  const uc5 = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '공5%', '사용부가세', '부5%', '사용합계', '계5%', '공급업체', '규격'];
-  const uw5 = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 12, 10, 14, 12, 16, 10];
-  const un5 = [7, 8, 9, 10, 11, 12, 13, 14];
-  const make5 = d => {
-    const sup = toN(d['사용공급가']), vat = toN(d['사용부가세']), tot = toN(d['사용합계']);
-    return [d['부서명'], d['자재구분'], d['자재코드'], d['자재명'], d['구매번호'], d['사용일자'],
-      toN(d['사용수량(입)']), toN(d['사용수량(산)']),
-      sup, Math.round(sup * 1.05), vat, Math.round(vat * 1.05), tot, Math.round(tot * 1.05),
-      d['공급업체'], d['규격']];
-  };
-  writeDataSheet(wb.addWorksheet('사용원본'), uc, App.usageData.map(d => uc.map(c => d[c] || '')), un, uw);
-  writeUsageWith5pct(wb.addWorksheet('시약, 소모품'), uc5, R.usageGC.map(make5), un5, uw5);
-  writePivotItem(wb.addWorksheet('원가집계표 피벗'), R.itemUsagePivot, true);
-  writeUsageWith5pct(wb.addWorksheet('소모품'), uc5, R.usageSomoum.map(make5), un5, uw5);
-  writeUsageWith5pct(wb.addWorksheet('시약'), uc5, R.usageSiyak.map(make5), un5, uw5);
-  writePivotUsageDept(wb.addWorksheet('시약 마감피벗'), R.siyakPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
-  writePivotUsageDept(wb.addWorksheet('시약5%'), R.siyakPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
-  writeDataSheet(wb.addWorksheet('의약품'), uc, R.usageImed.map(d => uc.map(c => d[c] || '')), un, uw);
-  writePivotUsageDept(wb.addWorksheet('아이메드 마감피벗(시, 소)'), R.imedSiSoPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
-  writePivotUsageDept(wb.addWorksheet('아이메드 마감피벗(의약품)'), R.imedDrugPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
-  await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 사용현황 - ${R.branch}.xlsx`);
+  try {
+    showGlobalLoading('사용현황 편집본 생성 중...');
+    const R = App.R; const wb = newWb();
+    const uc  = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '사용부가세', '사용합계', '공급업체', '규격'];
+    const uw  = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 14, 16, 10];
+    const un  = [7, 8, 9, 10, 11];
+    const uc5 = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '공5%', '사용부가세', '부5%', '사용합계', '계5%', '공급업체', '규격'];
+    const uw5 = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 12, 10, 14, 12, 16, 10];
+    const un5 = [7, 8, 9, 10, 11, 12, 13, 14];
+    const make5 = d => {
+      const sup = toN(d['사용공급가']), vat = toN(d['사용부가세']), tot = toN(d['사용합계']);
+      return [d['부서명'], d['자재구분'], d['자재코드'], d['자재명'], d['구매번호'], d['사용일자'],
+        toN(d['사용수량(입)']), toN(d['사용수량(산)']),
+        sup, Math.round(sup * 1.05), vat, Math.round(vat * 1.05), tot, Math.round(tot * 1.05),
+        d['공급업체'], d['규격']];
+    };
+    writeDataSheet(wb.addWorksheet('사용원본'), uc, App.usageData.map(d => uc.map(c => d[c] || '')), un, uw);
+    writeUsageWith5pct(wb.addWorksheet('시약, 소모품'), uc5, R.usageGC.map(make5), un5, uw5);
+    writePivotItem(wb.addWorksheet('원가집계표 피벗'), R.itemUsagePivot, true);
+    writeUsageWith5pct(wb.addWorksheet('소모품'), uc5, R.usageSomoum.map(make5), un5, uw5);
+    writeUsageWith5pct(wb.addWorksheet('시약'), uc5, R.usageSiyak.map(make5), un5, uw5);
+    writePivotUsageDept(wb.addWorksheet('시약 마감피벗'), R.siyakPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
+    writePivotUsageDept(wb.addWorksheet('시약5%'), R.siyakPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
+    writeDataSheet(wb.addWorksheet('의약품'), uc, R.usageImed.map(d => uc.map(c => d[c] || '')), un, uw);
+    writePivotUsageDept(wb.addWorksheet('아이메드 마감피벗(시, 소)'), R.imedSiSoPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
+    writePivotUsageDept(wb.addWorksheet('아이메드 마감피벗(의약품)'), R.imedDrugPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
+    await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 사용현황 - ${R.branch}.xlsx`);
+  } finally {
+    await hideGlobalLoading();
+  }
 }
 
 async function dlReport(label, vendors, depts, filename) {
@@ -856,32 +866,81 @@ async function dlReport(label, vendors, depts, filename) {
     .forEach((v, i) => hdrCell(ws4, 2, i + 1, v));
   await saveWb(wb, filename);
 }
-async function dlGCReport()   { const R = App.R; await dlReport('시약 및 소모품', R.gcVendors, R.gcDepts, `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - GC케어 - ${R.branch}.xlsx`); }
-async function dlImedReport() { const R = App.R; await dlReport('원재료 및 소모품', R.imedVendors, R.imedDepts, `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - 아이메드 - ${R.branch}.xlsx`); }
+async function dlGCReport() {
+  try {
+    showGlobalLoading('GC케어 보고서 생성 중...');
+    const R = App.R;
+    await dlReport('시약 및 소모품', R.gcVendors, R.gcDepts, `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - GC케어 - ${R.branch}.xlsx`);
+  } finally {
+    await hideGlobalLoading();
+  }
+}
+async function dlImedReport() {
+  try {
+    showGlobalLoading('아이메드 보고서 생성 중...');
+    const R = App.R;
+    await dlReport('원재료 및 소모품', R.imedVendors, R.imedDepts, `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - 아이메드 - ${R.branch}.xlsx`);
+  } finally {
+    await hideGlobalLoading();
+  }
+}
 
 async function dlSAP() {
-  const R = App.R; const wb = newWb();
-  const totalSup = R.gcIpgo.reduce((s, r) => s + toN(r['공급가액']), 0);
-  writeSAP(wb.addWorksheet(`GC케어 SAP 입고 - ${R.y.slice(2)}년 ${R.m}월 - ${R.branch}`),
-    R.y, R.m, R.branch, R.sapRows, totalSup, R.cc, R.account, R.vendorMap);
-  writeVendorMasterSheet(wb.addWorksheet('거래처 관리'), App.vendors);
-  await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 GC케어 입고분 SAP 입력 양식 - ${R.branch}.xlsx`);
+  try {
+    showGlobalLoading('SAP 입력 양식 생성 중...');
+    const R = App.R; const wb = newWb();
+    const totalSup = R.gcIpgo.reduce((s, r) => s + toN(r['공급가액']), 0);
+    writeSAP(wb.addWorksheet(`GC케어 SAP 입고 - ${R.y.slice(2)}년 ${R.m}월 - ${R.branch}`),
+      R.y, R.m, R.branch, R.sapRows, totalSup, R.cc, R.account, R.vendorMap);
+    writeVendorMasterSheet(wb.addWorksheet('거래처 관리'), App.vendors);
+    await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 GC케어 입고분 SAP 입력 양식 - ${R.branch}.xlsx`);
+  } finally {
+    await hideGlobalLoading();
+  }
 }
 
 async function dlSubul() {
-  const R = App.R; const wb = newWb();
-  writeSubul(wb.addWorksheet(`원가집계표-${R.y.slice(2)}년 ${R.m}월 ${R.branch}`),
-    R.y, R.m, R.branch, Object.values(R.subulMap));
-  await saveWb(wb, `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`);
+  try {
+    showGlobalLoading('수불 집계표 생성 중...');
+    const R = App.R; const wb = newWb();
+    writeSubul(wb.addWorksheet(`원가집계표-${R.y.slice(2)}년 ${R.m}월 ${R.branch}`),
+      R.y, R.m, R.branch, Object.values(R.subulMap));
+    await saveWb(wb, `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`);
+  } finally {
+    await hideGlobalLoading();
+  }
 }
 
 async function downloadAll() {
-  await dlIpgo();   await sleep(300);
-  await dlUsage();  await sleep(300);
-  await dlGCReport(); await sleep(300);
-  await dlImedReport(); await sleep(300);
-  await dlSAP();    await sleep(300);
-  await dlSubul();
+  try {
+    showGlobalLoading('전체 산출물 생성 중...');
+    const R = App.R; 
+    // 스피너는 유지한 채 순차 생성
+    const wb1 = newWb();
+    const ic = ['공급업체', '구매번호', '자재구분', '자재코드', '자재명', '상태', '입고일자', '수량', '단가', '공급가액', '부가세', '합계금액', '규격', '산출단위', '입고단위', '의뢰부서', '구분'];
+    const iw = [16, 14, 8, 12, 40, 8, 12, 8, 12, 14, 12, 14, 10, 8, 8, 14, 10];
+    const in_ = [8, 9, 10, 11, 12];
+    writePivotVendor(wb1.addWorksheet('거래처 피벗'), R.gcVendors, R.imedVendors);
+    writeDataSheet(wb1.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
+    writeDataSheet(wb1.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
+    writePivotItem(wb1.addWorksheet('원가집계표 피벗'), R.itemIpgoPivot, false);
+    writePivotDept(wb1.addWorksheet('GC케어 마감피벗'), R.gcDepts);
+    writeDataSheet(wb1.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
+    writePivotDept(wb1.addWorksheet('아이메드 마감피벗'), R.imedDepts);
+    await saveWb(wb1, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
+    await sleep(200);
+
+    // 나머지는 개별 함수 재사용 (각 함수 내부 스피너는 hideGlobalLoading 하지 않도록 플래그 없이 직접 호출)
+    await hideGlobalLoading();
+    await dlUsage();   await sleep(200);
+    await dlGCReport(); await sleep(200);
+    await dlImedReport(); await sleep(200);
+    await dlSAP();     await sleep(200);
+    await dlSubul();
+  } catch(e) {
+    await hideGlobalLoading();
+    showMessage('전체 다운로드 중 오류: ' + e.message, 'error');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -960,6 +1019,7 @@ async function saveVendors() {
   btn.textContent = '저장 중...';
 
   try {
+    showGlobalLoading('거래처 정보 저장 중...');
     const user = window.auth?.getSession?.();
     await apiPost('closingSaveVendors', {
       request_user_email: user?.email,
@@ -973,5 +1033,7 @@ async function saveVendors() {
     showMessage('저장 중 오류: ' + e.message, 'error');
     btn.textContent = '💾 저장';
     btn.disabled = false;
+  } finally {
+    await hideGlobalLoading();
   }
 }
