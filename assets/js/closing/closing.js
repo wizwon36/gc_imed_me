@@ -1487,7 +1487,7 @@ async function loadItemsFromServer() {
 }
 
 // ── 자재코드 테이블 (검색 + 페이지네이션) ─────────────────
-const ITEM_PAGE_SIZE = 50;
+const ITEM_PAGE_SIZE = 20;
 let _itemCurrentPage = 1;
 let _itemFiltered    = [];
 
@@ -1562,6 +1562,7 @@ function _renderItemPage(page) {
     const typeBg    = it.item_type === '시약' ? '#e6f4ec' : it.item_type === '의약품' ? '#fef3e2' : '#e8effd';
     const isDisused = (it.item_status || '사용') === '폐기';
     const rowFill   = (start + i) % 2 === 0 ? '' : 'background:#f8fafc;';
+    const fmtPrice  = v => v ? Number(v).toLocaleString() : '-';
     return `<tr style="${isDisused ? 'opacity:.45;' : rowFill}">
       <td style="font-family:monospace;font-size:12px;">${escHtml(it.item_code)}</td>
       <td>${escHtml(it.item_name)}</td>
@@ -1570,6 +1571,8 @@ function _renderItemPage(page) {
           ${escHtml(it.item_type)}
         </span>
       </td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;font-size:12px;">${fmtPrice(it.purchase_price)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;font-size:12px;">${fmtPrice(it.calc_price)}</td>
       <td style="text-align:center;">
         <select data-code="${escHtml(it.item_code)}" onchange="itemStatusEdit(this)"
           style="border:1px solid var(--border-input);border-radius:5px;padding:3px 6px;font-size:12px;">
@@ -1710,12 +1713,18 @@ function parseItemExcel(file) {
           if (!code) errors.push('자재코드 누락');
           if (!name) errors.push('자재명 누락');
           if (!['시약','소모품','의약품'].includes(type)) errors.push(`구분 오류(${type||'없음'})`);
+          const toPrice = v => {
+            const n = parseFloat(String(v || '').replace(/,/g, ''));
+            return isNaN(n) ? 0 : n;
+          };
           return {
             _row: idx + 2, _errors: errors,
-            item_code:   code,
-            item_name:   name,
-            item_type:   type,
-            item_status: String(r['상태'] || '사용').trim(),
+            item_code:      code,
+            item_name:      name,
+            item_type:      type,
+            item_status:    String(r['상태'] || '사용').trim(),
+            purchase_price: toPrice(r['입고단가']),
+            calc_price:     toPrice(r['산출단가']),
           };
         });
         resolve(rows);
@@ -1786,12 +1795,12 @@ function applyItemUpload() {
   App.items.forEach(it => { existingMap[it.item_code] = it; });
 
   let updated = 0, added = 0;
-  validRows.forEach(({ item_code, item_name, item_type, item_status }) => {
+  validRows.forEach(({ item_code, item_name, item_type, item_status, purchase_price, calc_price }) => {
     if (existingMap[item_code]) {
-      existingMap[item_code] = { ...existingMap[item_code], item_name, item_type, item_status };
+      existingMap[item_code] = { ...existingMap[item_code], item_name, item_type, item_status, purchase_price, calc_price };
       updated++;
     } else {
-      existingMap[item_code] = { item_code, item_name, item_type, item_status };
+      existingMap[item_code] = { item_code, item_name, item_type, item_status, purchase_price, calc_price };
       added++;
     }
   });
