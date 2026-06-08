@@ -803,7 +803,9 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
 
   const sorted = [...data].sort((a, b) => a.부서명.localeCompare(b.부서명, 'ko'));
 
+  // 행 데이터 쓰면서 합계 누적 (반올림 후 합산)
   let r = 2, prev = null, groupStartRow = 2;
+  const totals = { sup: 0, vat: 0, tot: 0 };
   sorted.forEach((d, ri) => {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     const isNewGroup = d.부서명 !== prev;
@@ -817,10 +819,15 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
 
     txtCell(ws, r, 1, isNewGroup ? d.부서명 : null, fill, true);
     txtCell(ws, r, 2, d.자재구분, fill);
-    const f = hasFivePct ? 1.05 : 1;
-    numCell(ws, r, 3, d.사용공급가 * f, fill);
-    numCell(ws, r, 4, d.사용부가세 * f, fill);
-    numCell(ws, r, 5, d.사용합계 * f, fill);
+    const supV = hasFivePct ? d.사용공급가 * 1.05 : d.사용공급가;
+    const vatV = hasFivePct ? d.사용부가세 * 1.05 : d.사용부가세;
+    const totV = supV + vatV;  // 계5% = 공5% + 부5%
+    totals.sup += Math.round(supV);
+    totals.vat += Math.round(vatV);
+    totals.tot += Math.round(totV);
+    numCell(ws, r, 3, supV, fill);
+    numCell(ws, r, 4, vatV, fill);
+    numCell(ws, r, 5, totV, fill);
     ws.getRow(r).height = 16; r++; prev = d.부서명;
   });
 
@@ -828,10 +835,8 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
   if (r - 1 > groupStartRow) ws.mergeCells(groupStartRow, 1, r - 1, 1);
   ws.getCell(groupStartRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
-  const f = hasFivePct ? 1.05 : 1;
-  totalRow(ws, r, [3, 4, 5],
-    [sumF(sorted, '사용공급가') * f, sumF(sorted, '사용부가세') * f, sumF(sorted, '사용합계') * f],
-    [1, 2], ['총합계', null]);
+  // 합계행: 반올림된 셀값의 합산
+  totalRow(ws, r, [3, 4, 5], [totals.sup, totals.vat, totals.tot], [1, 2], ['총합계', null]);
   cw(ws, [[1, 16], [2, 10], [3, 18], [4, 16], [5, 18]]);
   ws.views = [{ state: 'frozen', ySplit: 1 }];
 }
@@ -1081,9 +1086,12 @@ async function dlUsage() {
     const un5 = [7, 8, 9, 10, 11, 12, 13, 14];
     const make5 = d => {
       const sup = toN(d['사용공급가']), vat = toN(d['사용부가세']), tot = toN(d['사용합계']);
+      const sup5 = sup * 1.05;
+      const vat5 = vat * 1.05;
+      const tot5 = sup5 + vat5;  // 계5% = 공5% + 부5% (표시값 합산과 일치)
       return [d['부서명'], d['자재구분'], d['자재코드'], d['자재명'], d['구매번호'], d['사용일자'],
         toN(d['사용수량(입)']), toN(d['사용수량(산)']),
-        sup, sup * 1.05, vat, vat * 1.05, tot, tot * 1.05,  // 소수점 그대로
+        sup, sup5, vat, vat5, tot, tot5,
         d['공급업체'], d['규격']];
     };
 
