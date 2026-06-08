@@ -339,11 +339,17 @@ async function runProcessing() {
     });
 
     // 입고 파일에 자재 마스터 미등록 품목 경고
+    let unregItems = [];
     if (activeItems.length) {
       const itemCodeSet = new Set(activeItems.map(it => it.item_code));
-      const unregItems = [...new Set(ipgoData.map(r => String(r['자재코드'] || '').trim())
-        .filter(c => c && !itemCodeSet.has(c)))];
-      if (unregItems.length) clog(`⚠ 자재 마스터 미등록 품목코드: ${unregItems.join(', ')}`, 'warn');
+      unregItems = [...new Set(ipgoData.map(r => ({
+        code: String(r['자재코드'] || '').trim(),
+        name: String(r['자재명']   || '').trim(),
+        type: String(r['자재구분'] || '').trim(),
+      })).filter(r => r.code && !itemCodeSet.has(r.code))
+        .map(r => JSON.stringify(r)))
+      ].map(s => JSON.parse(s));
+      if (unregItems.length) clog(`⚠ 자재 마스터 미등록 품목 ${unregItems.length}건`, 'warn');
     }
 
     // 전월 기말 → 기초값 세팅
@@ -371,7 +377,7 @@ async function runProcessing() {
     App.R = { gcIpgo, imedIpgo, gcVendors, imedVendors, gcDepts, imedDepts,
               itemIpgoPivot, itemUsagePivot, usageGC, usageImed, usageSiyak, usageSomoum,
               siyakPivot, imedSiSoPivot, imedDrugPivot, sapRows, subulMap,
-              vendorMap, y, m: mi, branch, cc, account };
+              vendorMap, unregItems, y, m: mi, branch, cc, account };
 
     clog('모든 처리 완료!', 'ok');
     await sleep(300); prog(100, '완료!');
@@ -419,7 +425,32 @@ function renderResults() {
 
   renderPreview();
 
-  // 마감 확정 버튼 초기화
+  // 미등록 품목 에러 카드
+  const errCard = document.getElementById('unregItemsCard');
+  if (errCard) {
+    if (R.unregItems && R.unregItems.length > 0) {
+      errCard.style.display = '';
+      document.getElementById('unregItemsBody').innerHTML = `
+        <p style="font-size:12px;color:#92400e;margin-bottom:10px;">
+          아래 품목은 자재코드 마스터에 등록되지 않았습니다.
+          수불 집계표에 포함되어 있으나 <strong>자재코드 관리 탭에서 등록</strong> 후 재처리를 권장합니다.
+        </p>
+        <div class="cl-preview-wrap">
+          <table class="cl-preview">
+            <thead><tr><th>자재코드</th><th>자재명</th><th>구분</th></tr></thead>
+            <tbody>${R.unregItems.map(it => `
+              <tr>
+                <td style="font-family:monospace;font-size:12px;">${escHtml(it.code)}</td>
+                <td>${escHtml(it.name)}</td>
+                <td>${escHtml(it.type)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } else {
+      errCard.style.display = 'none';
+    }
+  }
   const btn = document.getElementById('btnClosingConfirm');
   const statusEl = document.getElementById('closingConfirmStatus');
   if (btn) {
