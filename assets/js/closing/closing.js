@@ -668,27 +668,27 @@ const F = {
   redb:  { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFC00000' } },
 };
 const FILL = {
-  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDE8C8' } },  // 아주 연한 살구
-  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAD4A0' } },  // 연한 살구
-  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8EE' } },  // 거의 흰 베이지
+  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8DB4E2' } },  // 중간 파란 (엑셀 기본 테마)
+  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F81BD' } },  // 진한 파란
+  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCE6F1' } },  // 아주 연한 파란
   odd:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
-  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9F2' } },  // 아주연한 크림
-  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8EE' } },  // 연한 크림
-  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } },  // 연한 핑크
-  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD4956A' } },  // 연한 갈색
+  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF5FB' } },  // 아주 연한 파란
+  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2EFDA' } },  // 연한 초록 (GC케어)
+  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } },  // 연한 노랑 (아이메드)
+  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF17375E' } },  // 진한 네이비
   warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },  // 노란 경고
 };
 const BORDER_THIN = {
-  top: { style: 'thin', color: { argb: 'FFFDE8C8' } },
-  left: { style: 'thin', color: { argb: 'FFFDE8C8' } },
-  bottom: { style: 'thin', color: { argb: 'FFFDE8C8' } },
-  right: { style: 'thin', color: { argb: 'FFFDE8C8' } },
+  top: { style: 'thin', color: { argb: 'FFB8CCE4' } },
+  left: { style: 'thin', color: { argb: 'FFB8CCE4' } },
+  bottom: { style: 'thin', color: { argb: 'FFB8CCE4' } },
+  right: { style: 'thin', color: { argb: 'FFB8CCE4' } },
 };
 const BORDER_TOTAL = {
-  top: { style: 'medium', color: { argb: 'FFFAD4A0' } },
-  left: { style: 'medium', color: { argb: 'FFFAD4A0' } },
-  bottom: { style: 'medium', color: { argb: 'FFFAD4A0' } },
-  right: { style: 'medium', color: { argb: 'FFFAD4A0' } },
+  top: { style: 'medium', color: { argb: 'FF4F81BD' } },
+  left: { style: 'medium', color: { argb: 'FF4F81BD' } },
+  bottom: { style: 'medium', color: { argb: 'FF4F81BD' } },
+  right: { style: 'medium', color: { argb: 'FF4F81BD' } },
 };
 const NUM_FMT = '#,##0';
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'center', wrapText: false });
@@ -935,12 +935,12 @@ function writePivotUsageDept(ws, data, cols3) {
 function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
   const ym = `${year}/${String(month).padStart(2, '0')}/01 ~ ${year}/${String(month).padStart(2, '0')}/31`;
 
-  // 1행: 제목 (B1~H3 병합, 가운데 정렬)
-  const titleCell = ws.getCell(1, 2);
+  // 1행: 제목 (A1~I3 병합, 가운데 정렬)
+  const titleCell = ws.getCell(1, 1);
   titleCell.value = `${year}년 ${month}월 ${label} 마감내역`;
   titleCell.font      = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF000000' } };
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.mergeCells(1, 2, 3, 8);
+  ws.mergeCells(1, 1, 3, 9);
   ws.getRow(1).height = 28;
   ws.getRow(2).height = 14;
   ws.getRow(3).height = 14;
