@@ -240,6 +240,34 @@ function byDeptIpgo(data) {
   });
   return Object.values(m);
 }
+
+// 입고 + 사용 데이터의 부서 합집합으로 구성 (입고 없는 부서도 포함)
+function byDeptIpgoFull(ipgoData, usageData) {
+  const m = {};
+
+  // 사용 데이터에서 부서+자재구분 목록 확보 (금액 0으로 초기화)
+  usageData.forEach(r => {
+    const dept = String(r['부서명'] || '').trim();
+    const type = String(r['자재구분'] || '').trim();
+    if (!dept) return;
+    const k = dept + '||' + type;
+    if (!m[k]) m[k] = { 의뢰부서: dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
+  });
+
+  // 입고 데이터로 금액 채우기
+  ipgoData.forEach(r => {
+    const dept = String(r['의뢰부서'] || '').trim();
+    const type = String(r['자재구분'] || '').trim();
+    if (!dept) return;
+    const k = dept + '||' + type;
+    if (!m[k]) m[k] = { 의뢰부서: dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
+    m[k].공급가액 += toN(r['공급가액']);
+    m[k].부가세   += toN(r['부가세']);
+    m[k].합계금액 += toN(r['합계금액']);
+  });
+
+  return Object.values(m);
+}
 function byDeptUsage(data) {
   const m = {};
   data.forEach(r => {
@@ -310,8 +338,8 @@ async function runProcessing() {
     await sleep(150); prog(55, '집계 중...');
     const gcVendors        = byVendor(gcIpgo);
     const imedVendors      = byVendor(imedIpgo);
-    const gcDepts          = byDeptIpgo(gcIpgo);
-    const imedDepts        = byDeptIpgo(imedIpgo);
+    const gcDepts          = byDeptIpgoFull(gcIpgo, usageGC);
+    const imedDepts        = byDeptIpgoFull(imedIpgo, usageImed);
     const itemIpgoPivot    = byItem(ipgoData, '자재코드', '자재명', '수량', '공급가액')
                               .filter(it => !String(it.코드).startsWith('6'));  // 의약품 제외
     const itemUsagePivot   = byItem(usageGC, '자재코드', '자재명', '사용수량(입)', '사용공급가');
@@ -935,20 +963,108 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
 
 // ── 부서별 금액 시트 ─────────────────────────────────────
 function writeDeptAmount(ws, month, depts) {
-  titleRow(ws, 1, 1, `${month}월 부서별 구매 내역`, 5, 24);
-  ws.getCell(2, 5).value = '(단위 : 원)'; ws.getCell(2, 5).font = F.base; ws.getCell(2, 5).alignment = AL('right');
+  // 제목 (B1~E2 병합)
+  const titleCell = ws.getCell(1, 2);
+  titleCell.value = `${month}월 부서별 구매 내역`;
+  titleCell.font      = { name: 'Calibri', size: 14, bold: true };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.mergeCells(1, 2, 2, 5);
+  ws.getRow(1).height = 28; ws.getRow(2).height = 14;
+
+  // (단위 : 원)
+  const unitCell = ws.getCell(2, 5);
+  unitCell.value = '(단위 : 원)'; unitCell.font = F.base; unitCell.alignment = AL('right');
+
+  // 헤더 (3행)
   [[1, '의뢰부서'], [2, '자재구분'], [3, '합계: 공급가액'], [4, '합계: 부가세'], [5, '합계: 합계금액']]
     .forEach(([c, v]) => hdrCell(ws, 3, c, v));
-  let r = 4, prev = null;
-  depts.forEach((d, ri) => {
-    const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-    txtCell(ws, r, 1, d.의뢰부서 !== prev ? d.의뢰부서 : null, fill, d.의뢰부서 !== prev);
-    txtCell(ws, r, 2, d.자재구분, fill);
-    [3, 4, 5].forEach((c, i) => numCell(ws, r, c, [d.공급가액, d.부가세, d.합계금액][i], fill));
-    ws.getRow(r).height = 16; r++; prev = d.의뢰부서;
+  ws.getRow(3).height = 18;
+
+  // 가나다 오름차순 정렬
+  const sorted = [...depts].sort((a, b) => {
+    const dc = a.의뢰부서.localeCompare(b.의뢰부서, 'ko');
+    return dc !== 0 ? dc : a.자재구분.localeCompare(b.자재구분, 'ko');
   });
-  totalRow(ws, r, [3, 4, 5], [sumF(depts, '공급가액'), sumF(depts, '부가세'), sumF(depts, '합계금액')], [1, 2], ['총합계', null]);
-  cw(ws, [[1, 16], [2, 10], [3, 18], [4, 16], [5, 18]]);
+
+  // 부서별 그룹핑
+  const groups = [];
+  sorted.forEach(d => {
+    const last = groups[groups.length - 1];
+    if (last && last.name === d.의뢰부서) {
+      last.items.push(d);
+    } else {
+      groups.push({ name: d.의뢰부서, items: [d] });
+    }
+  });
+
+  let r = 4;
+  groups.forEach((g, gi) => {
+    const groupStart = r;
+    // 부서 데이터 행
+    g.items.forEach((d, di) => {
+      const fill = gi % 2 === 0 ? FILL.odd : FILL.even;
+      txtCell(ws, r, 1, di === 0 ? d.의뢰부서 : null, fill, di === 0);
+      txtCell(ws, r, 2, d.자재구분, fill);
+      numCell(ws, r, 3, d.공급가액, fill);
+      numCell(ws, r, 4, d.부가세,   fill);
+      numCell(ws, r, 5, d.합계금액, fill);
+      ws.getRow(r).height = 16; r++;
+    });
+    // 의뢰부서 셀 병합 + 가운데 정렬
+    if (r - 1 > groupStart) {
+      ws.mergeCells(groupStart, 1, r - 1, 1);
+    }
+    ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // 부서 요약 행 (자재구분 수에 무관하게 항상 표기)
+    ws.mergeCells(r, 1, r, 2);
+    subtotRow(ws, r,
+      [1, 2], [g.name + ' 요약', null],
+      [3, 4, 5],
+      [sumF(g.items, '공급가액'), sumF(g.items, '부가세'), sumF(g.items, '합계금액')]
+    );
+    ws.getRow(r).height = 16; r++;
+  });
+
+  // 총합계: 원재료(시약+의약품)와 소모품 구분
+  const 원재료 = sorted.filter(d => d.자재구분 === '시약' || d.자재구분 === '의약품');
+  const 소모품 = sorted.filter(d => d.자재구분 === '소모품');
+
+  // 전체 소계
+  ws.mergeCells(r, 1, r, 2);
+  subtotRow(ws, r, [1, 2], ['', null],
+    [3, 4, 5], [sumF(sorted, '공급가액'), sumF(sorted, '부가세'), sumF(sorted, '합계금액')]);
+  ws.getRow(r).height = 16; r++;
+
+  // 총합계 - 원재료
+  ws.mergeCells(r, 1, r, 2);
+  const totalCell1 = ws.getCell(r, 1);
+  totalCell1.value = '총합계';
+  totalCell1.font = F.total; totalCell1.fill = FILL.total;
+  totalCell1.alignment = { horizontal: 'center', vertical: 'middle' };
+  totalCell1.border = BORDER_TOTAL;
+  txtCell(ws, r, 2, '원재료', FILL.total, true, true);
+  [3, 4, 5].forEach((c, i) => {
+    const cell = ws.getCell(r, c);
+    sc(cell, { value: Math.round([sumF(원재료, '공급가액'), sumF(원재료, '부가세'), sumF(원재료, '합계금액')][i]), font: F.total, fill: FILL.total, alignment: AL('right'), border: BORDER_TOTAL, numFmt: NUM_FMT });
+  });
+  ws.getRow(r).height = 16; r++;
+
+  // 총합계 - 소모품
+  ws.mergeCells(r, 1, r, 2);
+  const totalCell2 = ws.getCell(r, 1);
+  totalCell2.value = '총합계';
+  totalCell2.font = F.total; totalCell2.fill = FILL.total;
+  totalCell2.alignment = { horizontal: 'center', vertical: 'middle' };
+  totalCell2.border = BORDER_TOTAL;
+  txtCell(ws, r, 2, '소모품', FILL.total, true, true);
+  [3, 4, 5].forEach((c, i) => {
+    const cell = ws.getCell(r, c);
+    sc(cell, { value: Math.round([sumF(소모품, '공급가액'), sumF(소모품, '부가세'), sumF(소모품, '합계금액')][i]), font: F.total, fill: FILL.total, alignment: AL('right'), border: BORDER_TOTAL, numFmt: NUM_FMT });
+  });
+  ws.getRow(r).height = 16;
+
+  cw(ws, [[1, 20], [2, 10], [3, 18], [4, 16], [5, 18]]);
   ws.views = [{ state: 'frozen', ySplit: 3 }];
 }
 
