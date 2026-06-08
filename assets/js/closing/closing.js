@@ -632,10 +632,26 @@ function restart() {
   ['ipgo', 'usage'].forEach(t => {
     document.getElementById('status-' + t).textContent = '';
     document.getElementById('zone-' + t).classList.remove('uploaded');
+    // file input 초기화 (같은 파일 재선택 시 onchange 재발동)
+    const inp = document.querySelector(`input[onchange*="${t}"]`);
+    if (inp) inp.value = '';
   });
   document.getElementById('btnNext1').disabled = true;
   document.getElementById('logBox').innerHTML = '';
   document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressPct').textContent = '0%';
+  document.getElementById('progressLabel').textContent = '';
+  // 4단계 카드 초기화
+  const confirmCard = document.getElementById('unregItemsCard');
+  if (confirmCard) confirmCard.style.display = 'none';
+  const vendorCard = document.getElementById('unregVendorsCard');
+  if (vendorCard) vendorCard.style.display = 'none';
+  const confirmBtn = document.getElementById('btnClosingConfirm');
+  if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = '✅ 마감 확정';
+    confirmBtn.style.background = '#1d4ed8';
+  }
   goStep(1);
 }
 
