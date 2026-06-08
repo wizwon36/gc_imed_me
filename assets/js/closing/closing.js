@@ -1579,8 +1579,12 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     ...Object.keys(prevDeptStock),
   ])].sort((a, b) => a.localeCompare(b, 'ko'));
 
+  // 납품처 구분 텍스트 (GC케어=납품처\n아이메드 서울숲의원 형식)
+  const vendorLabel = `납품처\n${R.branch}`;
+
   let r = 4;
   let totBase = 0, totBuy = 0, totUse = 0, totEnd = 0;
+  const groupStart = r;
 
   deptKeys.forEach((k, ri) => {
     const fill  = ri % 2 === 0 ? FILL.odd : FILL.even;
@@ -1596,7 +1600,19 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     totUse  += Math.round(use);
     totEnd  += Math.round(end);
 
-    txtCell(ws, r, 1, dept, fill);
+    // A열: 첫 행만 납품처 텍스트 (병합 예정)
+    if (ri === 0) {
+      const ac = ws.getCell(r, 1);
+      ac.value     = vendorLabel;
+      ac.font      = F.base;
+      ac.fill      = fill;
+      ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      ac.border    = BORDER_THIN;
+    } else {
+      const ac = ws.getCell(r, 1);
+      ac.fill   = fill;
+      ac.border = BORDER_THIN;
+    }
     numCell(ws, r, 2, base, fill);
     numCell(ws, r, 3, buy,  fill);
     numCell(ws, r, 4, use,  fill);
@@ -1604,6 +1620,10 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     txtCell(ws, r, 6, `${dept} - ${type}`, fill);
     ws.getRow(r).height = 18; r++;
   });
+
+  // A열 병합 (전체 데이터 행)
+  if (r - 1 > groupStart) ws.mergeCells(groupStart, 1, r - 1, 1);
+  ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
   // 계 행
   subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
@@ -1700,13 +1720,26 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
 
     const colTotals = { base: 0, end: 0 };
     months.forEach((_, i) => { colTotals[i + 3] = 0; });
+    const deptGroupStart = r;
 
     deptKeys.forEach((dept, ri) => {
       const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
       const d    = data[dept];
       colTotals.base += d.base || 0;
       colTotals.end  += d.end  || 0;
-      txtCell(ws, r, 1, dept, fill);
+
+      // A열: 첫 행만 납품처 텍스트 (병합 예정)
+      if (ri === 0) {
+        const ac = ws.getCell(r, 1);
+        ac.value     = `납품처\n${R.branch}`;
+        ac.font      = F.base;
+        ac.fill      = fill;
+        ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        ac.border    = BORDER_THIN;
+      } else {
+        const ac = ws.getCell(r, 1);
+        ac.fill = fill; ac.border = BORDER_THIN;
+      }
       numCell(ws, r, 2, d.base || 0, fill);
       months.forEach((mon, mi) => {
         const v = d['m' + mon] || 0;
@@ -1717,6 +1750,10 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       txtCell(ws, r, 16, `${dept} - ${targetType}`, fill);
       ws.getRow(r).height = 18; r++;
     });
+
+    // A열 병합
+    if (r - 1 > deptGroupStart) ws.mergeCells(deptGroupStart, 1, r - 1, 1);
+    ws.getCell(deptGroupStart, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
     // 소계
     subtotRow(ws, r, [1], ['소  계'],
