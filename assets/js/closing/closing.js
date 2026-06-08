@@ -877,19 +877,35 @@ function writeSubul(ws, year, month, branch, items) {
     .forEach((v, i) => { const cell = ws.getCell(4, i + 1); cell.font = F.hdr; cell.fill = FILL.hdr; cell.alignment = AL('center'); cell.border = BORDER_THIN; if (v) cell.value = v; });
   [1, 2, 3].forEach(c => ws.mergeCells(3, c, 4, c));
   ws.getRow(3).height = 18; ws.getRow(4).height = 18;
+
+  // 1. 자재코드 오름차순 → 구분 오름차순 정렬
+  // 2. 기초·증가·감소 모두 0이면 제외
+  const sorted = [...items]
+    .filter(it => (it.기초 || 0) !== 0 || it.증가 !== 0 || it.감소 !== 0)
+    .sort((a, b) => {
+      const codeA = String(a.code || ''), codeB = String(b.code || '');
+      if (codeA !== codeB) return codeA.localeCompare(codeB, 'ko');
+      return String(a.type || '').localeCompare(String(b.type || ''), 'ko');
+    });
+
   let r = 5;
-  items.forEach((it, ri) => {
+  sorted.forEach((it, ri) => {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-    txtCell(ws, r, 1, it.code, fill); txtCell(ws, r, 2, it.name, fill); txtCell(ws, r, 3, it.type, fill, false, true);
-    numCell(ws, r, 6, it.기초 || 0, fill);            // 기초 금액
-    numCell(ws, r, 8, it.증가, fill);                  // 증가 금액
-    numCell(ws, r, 10, it.감소, fill);                 // 감소 금액
-    numCell(ws, r, 13, (it.기초 || 0) + it.증가 - it.감소, fill);  // 기말 = 기초+증가-감소
+    const 기초 = it.기초 || 0;
+    const 기말 = 기초 + it.증가 - it.감소;
+    txtCell(ws, r, 1, it.code, fill);
+    txtCell(ws, r, 2, it.name, fill);
+    txtCell(ws, r, 3, it.type, fill, false, true);
+    if (기초  !== 0) numCell(ws, r, 6,  기초,     fill);
+    if (it.증가 !== 0) numCell(ws, r, 8,  it.증가,  fill);
+    if (it.감소 !== 0) numCell(ws, r, 10, it.감소,  fill);
+    numCell(ws, r, 13, 기말, fill);   // 기말은 항상 표기
     ws.getRow(r).height = 16; r++;
   });
-  const t기초 = items.reduce((s, it) => s + (it.기초 || 0), 0);
-  const tI    = items.reduce((s, it) => s + it.증가, 0);
-  const tD    = items.reduce((s, it) => s + it.감소, 0);
+
+  const t기초 = sorted.reduce((s, it) => s + (it.기초 || 0), 0);
+  const tI    = sorted.reduce((s, it) => s + it.증가, 0);
+  const tD    = sorted.reduce((s, it) => s + it.감소, 0);
   ws.mergeCells(r, 1, r, 3);
   totalRow(ws, r, [6, 8, 10, 13], [t기초, tI, tD, t기초 + tI - tD], [1], ['총합계']);
   cw(ws, [[1, 14], [2, 42], [3, 8], [4, 8], [5, 8], [6, 12], [7, 8], [8, 14], [9, 8], [10, 14], [11, 8], [12, 8], [13, 14]]);
