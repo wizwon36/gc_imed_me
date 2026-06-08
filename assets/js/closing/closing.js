@@ -484,6 +484,9 @@ function renderResults() {
       vendorErrCard.style.display = 'none';
     }
   }
+
+  // 미등록 품목 에러 카드
+  const errCard = document.getElementById('unregItemsCard');
   if (errCard) {
     if (R.unregItems && R.unregItems.length > 0) {
       errCard.style.display = '';
