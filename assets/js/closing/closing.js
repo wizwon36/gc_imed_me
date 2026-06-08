@@ -260,7 +260,7 @@ async function runProcessing() {
     clog(`입고 GC케어:${gcIpgo.length}건 / 아이메드:${imedIpgo.length}건`, 'ok');
     clog(`사용 GC케어(시약+소모품):${usageGC.length}건 / 아이메드(의약품):${usageImed.length}건`, 'ok');
 
-    await sleep(150); prog(55, '피벗 집계 중...');
+    await sleep(150); prog(55, '집계 중...');
     const gcVendors        = byVendor(gcIpgo);
     const imedVendors      = byVendor(imedIpgo);
     const gcDepts          = byDeptIpgo(gcIpgo);
@@ -271,7 +271,7 @@ async function runProcessing() {
     const siyakPivot       = byDeptUsage(usageSiyak);
     const imedSiSoPivot    = byDeptUsage(usageGC);
     const imedDrugPivot    = byDeptUsage(usageImed);
-    clog('피벗 집계 완료', 'ok');
+    clog('집계 완료', 'ok');
 
     await sleep(150); prog(70, 'SAP 양식 생성 중...');
     // 거래처 맵 (서버 데이터 우선)
@@ -366,13 +366,13 @@ function renderResults() {
     <div class="cl-dl-card both" onclick="dlIpgo()">
       <span class="cl-dl-tag both">공통</span>
       <div class="cl-dl-name">입고 (편집본)</div>
-      <div class="cl-dl-sheets">거래처 피벗 · 입고원본 · GC케어 입고분 · 원가집계표 피벗 · GC케어 마감피벗 · 아이메드 입고분 · 아이메드 마감피벗</div>
+      <div class="cl-dl-sheets">거래처 요약 · 입고원본 · GC케어 입고분 · 원가집계표 요약 · GC케어 마감요약 · 아이메드 입고분 · 아이메드 마감요약</div>
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
     <div class="cl-dl-card both" onclick="dlUsage()">
       <span class="cl-dl-tag both">공통</span>
       <div class="cl-dl-name">사용현황 (편집본)</div>
-      <div class="cl-dl-sheets">사용원본 · 시약,소모품 · 원가집계표 피벗 · 소모품 · 시약 · 시약 마감피벗 · 시약5% · 의약품 · 아이메드 마감피벗(시,소) · 아이메드 마감피벗(의약품)</div>
+      <div class="cl-dl-sheets">사용원본 · 시약,소모품 · 원가집계표 요약 · 소모품 · 시약 · 시약 마감요약 · 시약5% · 의약품 · 아이메드 마감요약(시,소) · 아이메드 마감요약(의약품)</div>
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
     <div class="cl-dl-card gc" onclick="dlGCReport()">
@@ -805,13 +805,13 @@ async function dlIpgo() {
     const ic = ['공급업체', '구매번호', '자재구분', '자재코드', '자재명', '상태', '입고일자', '수량', '단가', '공급가액', '부가세', '합계금액', '규격', '산출단위', '입고단위', '의뢰부서', '구분'];
     const iw = [16, 14, 8, 12, 40, 8, 12, 8, 12, 14, 12, 14, 10, 8, 8, 14, 10];
     const in_ = [8, 9, 10, 11, 12];
-    writePivotVendor(wb.addWorksheet('거래처 피벗'), R.gcVendors, R.imedVendors);
+    writePivotVendor(wb.addWorksheet('거래처 요약'), R.gcVendors, R.imedVendors);
     writeDataSheet(wb.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
     writeDataSheet(wb.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotItem(wb.addWorksheet('원가집계표 피벗'), R.itemIpgoPivot, false);
-    writePivotDept(wb.addWorksheet('GC케어 마감피벗'), R.gcDepts);
+    writePivotItem(wb.addWorksheet('원가집계표 요약'), R.itemIpgoPivot, false);
+    writePivotDept(wb.addWorksheet('GC케어 마감요약'), R.gcDepts);
     writeDataSheet(wb.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotDept(wb.addWorksheet('아이메드 마감피벗'), R.imedDepts);
+    writePivotDept(wb.addWorksheet('아이메드 마감요약'), R.imedDepts);
     await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
   } finally {
     await hideGlobalLoading();
@@ -837,14 +837,14 @@ async function dlUsage() {
     };
     writeDataSheet(wb.addWorksheet('사용원본'), uc, App.usageData.map(d => uc.map(c => d[c] || '')), un, uw);
     writeUsageWith5pct(wb.addWorksheet('시약, 소모품'), uc5, R.usageGC.map(make5), un5, uw5);
-    writePivotItem(wb.addWorksheet('원가집계표 피벗'), R.itemUsagePivot, true);
+    writePivotItem(wb.addWorksheet('원가집계표 요약'), R.itemUsagePivot, true);
     writeUsageWith5pct(wb.addWorksheet('소모품'), uc5, R.usageSomoum.map(make5), un5, uw5);
     writeUsageWith5pct(wb.addWorksheet('시약'), uc5, R.usageSiyak.map(make5), un5, uw5);
-    writePivotUsageDept(wb.addWorksheet('시약 마감피벗'), R.siyakPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
+    writePivotUsageDept(wb.addWorksheet('시약 마감요약'), R.siyakPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
     writePivotUsageDept(wb.addWorksheet('시약5%'), R.siyakPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
     writeDataSheet(wb.addWorksheet('의약품'), uc, R.usageImed.map(d => uc.map(c => d[c] || '')), un, uw);
-    writePivotUsageDept(wb.addWorksheet('아이메드 마감피벗(시, 소)'), R.imedSiSoPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
-    writePivotUsageDept(wb.addWorksheet('아이메드 마감피벗(의약품)'), R.imedDrugPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
+    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(시, 소)'), R.imedSiSoPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
+    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(의약품)'), R.imedDrugPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
     await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 사용현황 - ${R.branch}.xlsx`);
   } finally {
     await hideGlobalLoading();
@@ -919,13 +919,13 @@ async function downloadAll() {
     const ic = ['공급업체', '구매번호', '자재구분', '자재코드', '자재명', '상태', '입고일자', '수량', '단가', '공급가액', '부가세', '합계금액', '규격', '산출단위', '입고단위', '의뢰부서', '구분'];
     const iw = [16, 14, 8, 12, 40, 8, 12, 8, 12, 14, 12, 14, 10, 8, 8, 14, 10];
     const in_ = [8, 9, 10, 11, 12];
-    writePivotVendor(wb1.addWorksheet('거래처 피벗'), R.gcVendors, R.imedVendors);
+    writePivotVendor(wb1.addWorksheet('거래처 요약'), R.gcVendors, R.imedVendors);
     writeDataSheet(wb1.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
     writeDataSheet(wb1.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotItem(wb1.addWorksheet('원가집계표 피벗'), R.itemIpgoPivot, false);
-    writePivotDept(wb1.addWorksheet('GC케어 마감피벗'), R.gcDepts);
+    writePivotItem(wb1.addWorksheet('원가집계표 요약'), R.itemIpgoPivot, false);
+    writePivotDept(wb1.addWorksheet('GC케어 마감요약'), R.gcDepts);
     writeDataSheet(wb1.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotDept(wb1.addWorksheet('아이메드 마감피벗'), R.imedDepts);
+    writePivotDept(wb1.addWorksheet('아이메드 마감요약'), R.imedDepts);
     await saveWb(wb1, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
     await sleep(200);
 
