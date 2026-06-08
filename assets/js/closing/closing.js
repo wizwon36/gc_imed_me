@@ -1086,39 +1086,71 @@ function renderVendorUploadPreview(rows) {
   const applyBtn = document.getElementById('btnApplyUpload');
   if (!preview || !table) return;
 
-  const errRows = rows.filter(r => r._errors.length > 0);
-  countEl.textContent = `총 ${rows.length}건`;
+  // 기존 거래처 맵 (신규/업데이트 구분용)
+  const existingMap = {};
+  App.vendors.forEach(v => { existingMap[v.vendor_name] = true; });
+
+  const errRows  = rows.filter(r => r._errors.length > 0);
+  const newCount = rows.filter(r => !r._errors.length && !existingMap[r.vendor_name]).length;
+  const updCount = rows.filter(r => !r._errors.length &&  existingMap[r.vendor_name]).length;
+
+  countEl.textContent = `총 ${rows.length}건 (신규 ${newCount} / 업데이트 ${updCount})`;
   errorEl.textContent = errRows.length ? `오류 ${errRows.length}건 — 수정 후 다시 업로드해 주세요.` : '';
   if (applyBtn) applyBtn.style.display = errRows.length ? 'none' : '';
 
   const cols = ['거래처명', '사업자등록번호', '여신기간(일)', '결제방법'];
-  const thead = `<thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}<th>검증</th></tr></thead>`;
+  const thead = `<thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}<th>구분</th><th>검증</th></tr></thead>`;
   const tbody = `<tbody>${rows.map(r => {
     const hasErr = r._errors.length > 0;
+    const isNew  = !existingMap[r.vendor_name];
+    const badge  = hasErr ? '' : isNew
+      ? `<span style="background:#e8effd;color:#1a56db;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">신규</span>`
+      : `<span style="background:#f0fdf4;color:#0e7c3a;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">업데이트</span>`;
     return `<tr style="${hasErr ? 'background:#fff5f5;' : ''}">
       <td>${escHtml(r.vendor_name)}</td>
       <td>${escHtml(r.biz_no)}</td>
       <td class="num">${r.credit_days}</td>
       <td>${escHtml(r.pay_method)}</td>
+      <td style="text-align:center;">${badge}</td>
       <td>${hasErr ? `<span style="color:#c0392b;font-size:11px;">${escHtml(r._errors.join(', '))}</span>` : '✓'}</td>
     </tr>`;
   }).join('')}</tbody>`;
 
   table.innerHTML = thead + tbody;
   preview.style.display = '';
-  // 테이블 아래로 스크롤
   preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function applyVendorUpload() {
   const validRows = _uploadedVendorRows.filter(r => r._errors.length === 0);
-  App.vendors = validRows.map(({ vendor_name, biz_no, credit_days, pay_method }) =>
-    ({ vendor_name, biz_no, credit_days, pay_method })
-  );
+
+  // 기존 데이터를 거래처명 기준 맵으로 변환
+  const existingMap = {};
+  App.vendors.forEach(v => { existingMap[v.vendor_name] = v; });
+
+  let updated = 0, added = 0;
+
+  validRows.forEach(({ vendor_name, biz_no, credit_days, pay_method }) => {
+    if (existingMap[vendor_name]) {
+      // 기존 거래처 → 업데이트
+      existingMap[vendor_name] = { ...existingMap[vendor_name], biz_no, credit_days, pay_method };
+      updated++;
+    } else {
+      // 신규 거래처 → 추가
+      existingMap[vendor_name] = { vendor_name, biz_no, credit_days, pay_method };
+      added++;
+    }
+  });
+
+  App.vendors = Object.values(existingMap);
   App.vendorsDirty = true;
   cancelVendorUpload();
   renderVendorTable();
-  showMessage(`${App.vendors.length}건이 적용됐습니다. 저장 버튼을 눌러 반영하세요.`, 'success');
+
+  const msg = [];
+  if (updated) msg.push(`${updated}건 업데이트`);
+  if (added)   msg.push(`${added}건 신규 추가`);
+  showMessage(msg.join(', ') + ' 됐습니다. 저장 버튼을 눌러 반영하세요.', 'success');
 }
 
 function cancelVendorUpload() {
