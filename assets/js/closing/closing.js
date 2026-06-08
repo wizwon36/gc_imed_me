@@ -668,27 +668,27 @@ const F = {
   redb:  { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFC00000' } },
 };
 const FILL = {
-  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCD5A1' } },  // 연한 살구
-  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5B969' } },  // 중간 살구
-  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3E0' } },  // 아주 연한 베이지
+  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDE8C8' } },  // 아주 연한 살구
+  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAD4A0' } },  // 연한 살구
+  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8EE' } },  // 거의 흰 베이지
   odd:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
-  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8F0' } },  // 아주연한 베이지
-  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3E0' } },  // 연한 베이지
-  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCE4EC' } },  // 연한 핑크
-  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC07820' } },  // 중간 갈색
+  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9F2' } },  // 아주연한 크림
+  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8EE' } },  // 연한 크림
+  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } },  // 연한 핑크
+  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD4956A' } },  // 연한 갈색
   warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },  // 노란 경고
 };
 const BORDER_THIN = {
-  top: { style: 'thin', color: { argb: 'FFFCD5A1' } },
-  left: { style: 'thin', color: { argb: 'FFFCD5A1' } },
-  bottom: { style: 'thin', color: { argb: 'FFFCD5A1' } },
-  right: { style: 'thin', color: { argb: 'FFFCD5A1' } },
+  top: { style: 'thin', color: { argb: 'FFFDE8C8' } },
+  left: { style: 'thin', color: { argb: 'FFFDE8C8' } },
+  bottom: { style: 'thin', color: { argb: 'FFFDE8C8' } },
+  right: { style: 'thin', color: { argb: 'FFFDE8C8' } },
 };
 const BORDER_TOTAL = {
-  top: { style: 'medium', color: { argb: 'FFF5B969' } },
-  left: { style: 'medium', color: { argb: 'FFF5B969' } },
-  bottom: { style: 'medium', color: { argb: 'FFF5B969' } },
-  right: { style: 'medium', color: { argb: 'FFF5B969' } },
+  top: { style: 'medium', color: { argb: 'FFFAD4A0' } },
+  left: { style: 'medium', color: { argb: 'FFFAD4A0' } },
+  bottom: { style: 'medium', color: { argb: 'FFFAD4A0' } },
+  right: { style: 'medium', color: { argb: 'FFFAD4A0' } },
 };
 const NUM_FMT = '#,##0';
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'center', wrapText: false });
@@ -786,7 +786,7 @@ function writeDataSheet(ws, headers, rows, numCols, colWidths, sumCols) {
         txtCell(ws, r, c, v, fill);
       }
     });
-    ws.getRow(r).height = 16;
+    ws.getRow(r).height = 18;
   });
 
   // 1행: 반올림된 셀값의 합산
@@ -800,7 +800,7 @@ function writeDataSheet(ws, headers, rows, numCols, colWidths, sumCols) {
       cell.numFmt = NUM_FMT;
       cell.alignment = AL('right');
     });
-    ws.getRow(1).height = 16;
+    ws.getRow(1).height = 18;
   }
 
   colWidths.forEach((w, i) => ws.getColumn(i + 1).width = w);
@@ -818,7 +818,7 @@ function writePivotVendor(ws, gcVendors, imedVendors) {
     txtCell(ws, r, 1, firstGC ? 'GC케어' : null, fill, firstGC);
     txtCell(ws, r, 2, v.공급업체, fill);
     [3, 4, 5].forEach((c, i) => numCell(ws, r, c, [v.공급가액, v.부가세, v.합계금액][i], fill));
-    ws.getRow(r).height = 16; r++; firstGC = false;
+    ws.getRow(r).height = 18; r++; firstGC = false;
   });
   const gcS = [sumF(gcVendors, '공급가액'), sumF(gcVendors, '부가세'), sumF(gcVendors, '합계금액')];
   subtotRow(ws, r, [1, 2], ['GC케어 요약', null], [3, 4, 5], gcS); r++;
@@ -828,7 +828,7 @@ function writePivotVendor(ws, gcVendors, imedVendors) {
     txtCell(ws, r, 1, firstIM ? '아이메드' : null, fill, firstIM);
     txtCell(ws, r, 2, v.공급업체, fill);
     [3, 4, 5].forEach((c, i) => numCell(ws, r, c, [v.공급가액, v.부가세, v.합계금액][i], fill));
-    ws.getRow(r).height = 16; r++; firstIM = false;
+    ws.getRow(r).height = 18; r++; firstIM = false;
   });
   const imS = [sumF(imedVendors, '공급가액'), sumF(imedVendors, '부가세'), sumF(imedVendors, '합계금액')];
   subtotRow(ws, r, [1, 2], ['아이메드 요약', null], [3, 4, 5], imS); r++;
@@ -859,7 +859,7 @@ function writePivotDept(ws, data) {
     txtCell(ws, r, 1, isNewGroup ? d.의뢰부서 : null, fill, true);
     txtCell(ws, r, 2, d.자재구분, fill);
     [3, 4, 5].forEach((c, i) => numCell(ws, r, c, [d.공급가액, d.부가세, d.합계금액][i], fill));
-    ws.getRow(r).height = 16; r++; prev = d.의뢰부서;
+    ws.getRow(r).height = 18; r++; prev = d.의뢰부서;
   });
 
   // 마지막 그룹 병합 + 정렬
@@ -881,7 +881,7 @@ function writePivotItem(ws, data, isUsage = false) {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     txtCell(ws, r, 1, d.코드, fill); txtCell(ws, r, 2, d.명, fill);
     numCell(ws, r, 3, d.수량, fill); numCell(ws, r, 4, d.금액, fill);
-    ws.getRow(r).height = 16; r++;
+    ws.getRow(r).height = 18; r++;
   });
   totalRow(ws, r, [3, 4], [sumF(data, '수량'), sumF(data, '금액')], [1, 2], ['총합계', null]);
   cw(ws, [[1, 14], [2, 45], [3, 16], [4, 16]]);
@@ -920,7 +920,7 @@ function writePivotUsageDept(ws, data, cols3) {
     numCell(ws, r, 3, supV, fill);
     numCell(ws, r, 4, vatV, fill);
     numCell(ws, r, 5, totV, fill);
-    ws.getRow(r).height = 16; r++; prev = d.부서명;
+    ws.getRow(r).height = 18; r++; prev = d.부서명;
   });
 
   if (r - 1 > groupStartRow) ws.mergeCells(groupStartRow, 1, r - 1, 1);
@@ -948,7 +948,7 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
   // 4행: 기준일
   const c4 = ws.getCell(4, 6); c4.value = `기준: ${ym}`; c4.font = F.base; c4.alignment = AL('right');
   ws.mergeCells(4, 6, 4, 9);
-  ws.getRow(4).height = 16;
+  ws.getRow(4).height = 18;
   [['순번', 1], ['공급업체', 2], ['사업자등록번호', 3], ['구매총액', 4], ['결제방법', 7], ['결제기일', 8], ['비고', 9]]
     .forEach(([v, c]) => hdrCell(ws, 5, c, v));
   ['', '', '', '공급가액', '부가세액', '합계금액', '', '', ''].forEach((v, i) => {
@@ -979,7 +979,7 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
     txtCell(ws, r, 7, payMethod, rowFill, false, true);
     txtCell(ws, r, 8, credit,    rowFill, false, true);
     txtCell(ws, r, 9, '',        rowFill);
-    ws.getRow(r).height = 16; r++;
+    ws.getRow(r).height = 18; r++;
   });
   ws.mergeCells(r, 1, r, 3);
   totalRow(ws, r, [4, 5, 6], [sumF(vendors, '공급가액'), sumF(vendors, '부가세'), sumF(vendors, '합계금액')],
@@ -990,18 +990,19 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
 
 // ── 부서별 금액 시트 ─────────────────────────────────────
 function writeDeptAmount(ws, month, depts) {
-  // 1~2행: 제목 (B~E 병합)
-  ws.mergeCells(1, 1, 2, 5);
+  // 1행: 제목 (A~E 병합)
+  ws.mergeCells(1, 1, 1, 5);
   const tc = ws.getCell(1, 1);
   tc.value = `${month}월 부서별 구매 내역`;
   tc.font      = { name: 'Calibri', size: 14, bold: true };
   tc.alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.getRow(1).height = 28; ws.getRow(2).height = 14;
+  ws.getRow(1).height = 28;
 
-  // (단위 : 원)
+  // 2행: (단위 : 원) 우측
   ws.getCell(2, 5).value = '(단위 : 원)';
   ws.getCell(2, 5).font = F.base;
   ws.getCell(2, 5).alignment = AL('right');
+  ws.getRow(2).height = 16;
 
   // 3행: 헤더
   [[1,'의뢰부서'],[2,'상태'],[3,'합계: 공급가액'],[4,'합계: 부가세'],[5,'합계: 합계금액']]
@@ -1032,7 +1033,7 @@ function writeDeptAmount(ws, month, depts) {
       numCell(ws, r, 3, d.공급가액, fill);
       numCell(ws, r, 4, d.부가세,   fill);
       numCell(ws, r, 5, d.합계금액, fill);
-      ws.getRow(r).height = 16; r++;
+      ws.getRow(r).height = 18; r++;
     });
     // 의뢰부서 셀 병합
     if (r - 1 > groupStart) ws.mergeCells(groupStart, 1, r - 1, 1);
@@ -1050,7 +1051,7 @@ function writeDeptAmount(ws, month, depts) {
       cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.subtot;
       cell.alignment = AL('right'); cell.border = BORDER_THIN; cell.numFmt = NUM_FMT;
     });
-    ws.getRow(r).height = 16; r++;
+    ws.getRow(r).height = 18; r++;
   });
 
   // 전체 합계 행
@@ -1065,7 +1066,7 @@ function writeDeptAmount(ws, month, depts) {
     cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.subtot;
     cell.alignment = AL('right'); cell.border = BORDER_THIN; cell.numFmt = NUM_FMT;
   });
-  ws.getRow(r).height = 16; r++;
+  ws.getRow(r).height = 18; r++;
 
   // 총합계 - 원재료 / 소모품
   const 원재료 = sorted.filter(d => d.자재구분 === '시약' || d.자재구분 === '의약품');
@@ -1082,7 +1083,7 @@ function writeDeptAmount(ws, month, depts) {
       cell.value = Math.round(vals[i]); cell.font = F.total; cell.fill = FILL.total;
       cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
     });
-    ws.getRow(r).height = 16; r++;
+    ws.getRow(r).height = 18; r++;
   });
 
   cw(ws, [[1,20],[2,10],[3,18],[4,16],[5,18]]);
@@ -1118,7 +1119,7 @@ function writeUsageWith5pct(ws, headers, rows, numCols, colWidths) {
         txtCell(ws, r, c, v, fill);
       }
     });
-    ws.getRow(r).height = 16;
+    ws.getRow(r).height = 18;
   });
 
   // 1행: 반올림된 셀값의 합산 (엑셀 표시값과 일치)
@@ -1131,7 +1132,7 @@ function writeUsageWith5pct(ws, headers, rows, numCols, colWidths) {
     cell.numFmt = NUM_FMT;
     cell.alignment = AL('right');
   });
-  ws.getRow(1).height = 16;
+  ws.getRow(1).height = 18;
 
   colWidths.forEach((w, i) => ws.getColumn(i + 1).width = w);
   ws.views = [{ state: 'frozen', ySplit: 2 }];
@@ -1143,7 +1144,7 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
   ws.getCell(2, 7).value = totalSup; ws.getCell(2, 7).font = F.bold; ws.getCell(2, 7).numFmt = NUM_FMT;
   ws.getCell(2, 10).value = '양식 기준'; ws.getCell(2, 10).font = F.base;
   ws.getCell(2, 12).value = cc; ws.getCell(2, 12).font = F.base;
-  ws.getRow(2).height = 16;
+  ws.getRow(2).height = 18;
   ['', '거래처', '사업자 번호', '계정', '', '', '공급가액', '', '기준일', '적요', '', 'CC', '지급일', '전표번호']
     .forEach((v, i) => { if (v) hdrCell(ws, 3, i + 1, v); });
   ws.getRow(3).height = 18;
@@ -1160,7 +1161,7 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
     txtCell(ws, row, 12, cc, fill, false, true);
     txtCell(ws, row, 13, r.지급일, fill, false, true);
     txtCell(ws, row, 14, r.전표번호 || '', fill);
-    ws.getRow(row).height = 16;
+    ws.getRow(row).height = 18;
   });
   cw(ws, [[1, 4], [2, 18], [3, 14], [4, 12], [5, 4], [6, 4], [7, 16], [8, 4], [9, 12], [10, 52], [11, 4], [12, 12], [13, 8], [14, 14]]);
   ws.views = [{ state: 'frozen', ySplit: 3 }];
@@ -1177,7 +1178,7 @@ function writeVendorMasterSheet(ws, vendors) {
     txtCell(ws, r, 2, v.biz_no, fill);
     numCell(ws, r, 3, v.credit_days, fill);
     txtCell(ws, r, 4, v.pay_method, fill, false, true);
-    ws.getRow(r).height = 16;
+    ws.getRow(r).height = 18;
   });
   cw(ws, [[1, 24], [2, 16], [3, 12], [4, 12]]);
   ws.views = [{ state: 'frozen', ySplit: 1 }];
@@ -1224,7 +1225,7 @@ function writeSubul(ws, year, month, branch, items) {
     if (it.감소 !== 0) numCell(ws, r, 10, it.감소,  fill);
     numCell(ws, r, 13, 기말, fill);
     if (기말수량 !== 0) numCell(ws, r, 11, 기말수량, fill);
-    ws.getRow(r).height = 16; r++;
+    ws.getRow(r).height = 18; r++;
   });
 
   const t기초 = sorted.reduce((s, it) => s + (it.기초 || 0), 0);
@@ -1600,7 +1601,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     numCell(ws, r, 4, use,  fill);
     numCell(ws, r, 5, end,  fill);
     txtCell(ws, r, 6, `${dept} - ${type}`, fill);
-    ws.getRow(r).height = 16; r++;
+    ws.getRow(r).height = 18; r++;
   });
 
   // 계 행
@@ -1673,7 +1674,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     });
     numCell(ws, r, 15, 0, fill);  // 기말 (추후 확장)
     txtCell(ws, r, 16, `${d.dept} - ${d.type}`, fill);
-    ws.getRow(r).height = 16; r++;
+    ws.getRow(r).height = 18; r++;
   });
 
   // 소계
