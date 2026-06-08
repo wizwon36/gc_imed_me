@@ -157,6 +157,17 @@
           <!-- 요약 -->
           <div class="cl-summary-grid" id="summaryGrid"></div>
 
+          <!-- 미등록 거래처 에러 카드 -->
+          <div id="unregVendorsCard" class="card" style="display:none;margin-bottom:14px;border:1px solid #fde68a;background:#fffbeb;">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:18px;">⚠️</span>
+                <strong style="font-size:14px;color:#92400e;">거래처 관리 미등록 거래처</strong>
+              </div>
+              <div id="unregVendorsBody"></div>
+            </div>
+          </div>
+
           <!-- 미등록 품목 에러 카드 -->
           <div id="unregItemsCard" class="card" style="display:none;margin-bottom:14px;border:1px solid #fde68a;background:#fffbeb;">
             <div class="card-body">
