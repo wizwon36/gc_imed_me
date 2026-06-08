@@ -333,10 +333,11 @@
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
               <div style="position:relative;flex:1;min-width:200px;">
                 <input type="text" id="itemSearchInput" placeholder="자재코드 또는 자재명 검색..."
-                  oninput="onItemSearch()"
+                  onkeydown="if(event.key==='Enter')onItemSearch()"
                   style="width:100%;border:1px solid var(--border-input);border-radius:6px;padding:7px 12px 7px 32px;font-size:13px;">
                 <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">🔍</span>
               </div>
+              <button class="btn btn-primary" onclick="onItemSearch()" style="padding:7px 14px;font-size:13px;">검색</button>
               <select id="itemFilterType" onchange="onItemSearch()" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 10px;font-size:13px;">
                 <option value="all">전체 구분</option>
                 <option value="시약">시약</option>
@@ -356,11 +357,13 @@
               <table class="cl-vendor-table">
                 <thead>
                   <tr>
-                    <th style="width:14%;">자재코드</th>
-                    <th style="width:48%;">자재명</th>
-                    <th style="width:10%;text-align:center;">구분</th>
-                    <th style="width:10%;text-align:center;">상태</th>
-                    <th style="width:8%;text-align:center;"></th>
+                    <th style="width:12%;">자재코드</th>
+                    <th style="width:36%;">자재명</th>
+                    <th style="width:8%;text-align:center;">구분</th>
+                    <th style="width:10%;text-align:right;">입고단가</th>
+                    <th style="width:10%;text-align:right;">산출단가</th>
+                    <th style="width:8%;text-align:center;">상태</th>
+                    <th style="width:6%;text-align:center;"></th>
                   </tr>
                 </thead>
                 <tbody id="itemTbody">
