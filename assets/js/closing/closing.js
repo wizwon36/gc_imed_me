@@ -610,7 +610,7 @@ function hdrCell(ws, r, c, v, span = 1) {
   ws.getRow(r).height = 18;
 }
 function numCell(ws, r, c, v, fill, bold = false) {
-  const nv = toN(v);
+  const nv = Math.round(toN(v));  // 표기 시 반올림 (소수점 데이터 → 정수 표기)
   const cell = ws.getCell(r, c);
   sc(cell, {
     value: nv || null,
@@ -797,9 +797,9 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
     txtCell(ws, r, 1, isNewGroup ? d.부서명 : null, fill, true);
     txtCell(ws, r, 2, d.자재구분, fill);
     const f = hasFivePct ? 1.05 : 1;
-    numCell(ws, r, 3, Math.round(d.사용공급가 * f), fill);
-    numCell(ws, r, 4, Math.round(d.사용부가세 * f), fill);
-    numCell(ws, r, 5, Math.round(d.사용합계 * f), fill);
+    numCell(ws, r, 3, d.사용공급가 * f, fill);
+    numCell(ws, r, 4, d.사용부가세 * f, fill);
+    numCell(ws, r, 5, d.사용합계 * f, fill);
     ws.getRow(r).height = 16; r++; prev = d.부서명;
   });
 
@@ -809,7 +809,7 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
 
   const f = hasFivePct ? 1.05 : 1;
   totalRow(ws, r, [3, 4, 5],
-    [Math.round(sumF(sorted, '사용공급가') * f), Math.round(sumF(sorted, '사용부가세') * f), Math.round(sumF(sorted, '사용합계') * f)],
+    [sumF(sorted, '사용공급가') * f, sumF(sorted, '사용부가세') * f, sumF(sorted, '사용합계') * f],
     [1, 2], ['총합계', null]);
   cw(ws, [[1, 16], [2, 10], [3, 18], [4, 16], [5, 18]]);
   ws.views = [{ state: 'frozen', ySplit: 1 }];
@@ -1050,7 +1050,7 @@ async function dlUsage() {
       const sup = toN(d['사용공급가']), vat = toN(d['사용부가세']), tot = toN(d['사용합계']);
       return [d['부서명'], d['자재구분'], d['자재코드'], d['자재명'], d['구매번호'], d['사용일자'],
         toN(d['사용수량(입)']), toN(d['사용수량(산)']),
-        sup, Math.round(sup * 1.05), vat, Math.round(vat * 1.05), tot, Math.round(tot * 1.05),
+        sup, sup * 1.05, vat, vat * 1.05, tot, tot * 1.05,  // 소수점 그대로
         d['공급업체'], d['규격']];
     };
 
