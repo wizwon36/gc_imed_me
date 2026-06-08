@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('appBody').style.display = '';
 
     // 거래처·자재 데이터 로드 (처리 시작 전 반드시 완료되어야 함)
-    showGlobalLoading('거래처 및 자재 정보 로드 중...');
     await Promise.all([
       loadVendorsFromServer().catch(() => {}),
       loadItemsFromServer().catch(() => {}),
