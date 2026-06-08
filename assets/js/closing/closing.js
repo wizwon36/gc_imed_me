@@ -879,9 +879,21 @@ function writePivotUsageDept(ws, data, cols3) {
 // ── 결재 시트 ─────────────────────────────────────────────
 function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
   const ym = `${year}/${String(month).padStart(2, '0')}/01 ~ ${year}/${String(month).padStart(2, '0')}/31`;
-  titleRow(ws, 1, 1, `${year}년 ${month}월 ${label} 마감내역`, 9, 24);
+
+  // 1행: 제목 (B1~H3 병합, 가운데 정렬)
+  const titleCell = ws.getCell(1, 2);
+  titleCell.value = `${year}년 ${month}월 ${label} 마감내역`;
+  titleCell.font      = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF000000' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.mergeCells(1, 2, 3, 8);
+  ws.getRow(1).height = 28;
+  ws.getRow(2).height = 14;
+  ws.getRow(3).height = 14;
+
+  // 4행: 기준일
   const c4 = ws.getCell(4, 6); c4.value = `기준: ${ym}`; c4.font = F.base; c4.alignment = AL('right');
   ws.mergeCells(4, 6, 4, 9);
+  ws.getRow(4).height = 16;
   [['순번', 1], ['공급업체', 2], ['사업자등록번호', 3], ['구매총액', 4], ['결제방법', 7], ['결제기일', 8], ['비고', 9]]
     .forEach(([v, c]) => hdrCell(ws, 5, c, v));
   ['', '', '', '공급가액', '부가세액', '합계금액', '', '', ''].forEach((v, i) => {
