@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('inputMonth').value = `${yy}-${mm}`;
 
     // 지점명 드롭다운: ORG_CLINIC 로드 후 소속 의원 기본 선택
-    const user = window.auth?.getSession?.();
     await loadBranchOptions(user);
 
     // 권한 체크 (closing: view 이상)
