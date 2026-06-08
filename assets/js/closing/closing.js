@@ -2587,10 +2587,7 @@ function parseUsageInitFile(file) {
           // 연도 블록 없으면 스킵
           if (!currentYear) return;
 
-          // 헤더/소계/빈행 스킵
-          if (!col0 || col0.includes('구') || col0.includes('소') || col0 === '') return;
-
-          // 비고(15열)에서 부서명 - 자재구분 파싱
+          // 비고(15열)에서 부서명 - 자재구분 파싱 (이게 핵심 판별 기준)
           const bigo = String(row[15] || '').trim();
           if (!bigo || !bigo.includes('-')) return;
 
@@ -2664,11 +2661,6 @@ function renderUsageInitPreview(rows) {
       ${deptKeys.map(k => `<td class="num">${((byYm[ym][k] || 0) / 1000).toLocaleString()}</td>`).join('')}
     </tr>`).join('')}
   </tbody>`;
-
-  const tfoot = `<tfoot><tr style="background:#f1f5f9;font-weight:600;">
-    <td>합계(천원)</td>
-    ${deptKeys.map(k => `<td class="num">${(rows.filter(r => r.dept + ' - ' + r.item_type === k).reduce((s, r) => s + r.usage_amount, 0) / 1000).toLocaleString()}</td>`).join('')}
-  </tr></tfoot>`;
 
   table.innerHTML = thead + tbody + tfoot;
   preview.style.display = '';
