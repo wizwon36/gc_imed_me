@@ -2606,7 +2606,7 @@ function parseUsageInitFile(file) {
               ym:           `${currentYear}-${mon}`,
               dept,
               item_type:    itype,
-              usage_amount: Math.round(val * 1000),  // 천원 → 원
+              usage_amount: Math.round(val),  // 파일 값이 이미 원 단위
             });
           });
         });
