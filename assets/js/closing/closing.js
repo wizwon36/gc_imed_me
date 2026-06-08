@@ -1685,23 +1685,30 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         yearMap[R.y][dept]['m' + curMon] = Math.round(u.usage_amount / 1000);
     });
 
-  // 현재 연도 기말: 3번째 시트 기말재고 계산값 (기초+매입-사용)
-  const targetType2 = targetType;
+  // 현재 연도 기말: 3번째 시트 기말재고 (기초+매입-사용)
+  // 기초: DB base_amount 우선, 없으면 prevStockData 합산
   Object.keys(yearMap[R.y] || {}).forEach(dept => {
-    // prevStockData에서 해당 부서 기초 합산
-    const base = (R.prevStockData || [])
-      .filter(s => (s.dept || '') === dept && s.item_type === targetType2)
+    const d = yearMap[R.y][dept];
+
+    // 기초: DB에 없으면 prevStockData에서 계산
+    if (!d.base) {
+      const base = (R.prevStockData || [])
+        .filter(s => (s.dept || '') === dept && s.item_type === targetType)
+        .reduce((s, v) => s + toN(v.closing_amount), 0);
+      if (base) d.base = Math.round(base / 1000);
+    }
+
+    // 기말: 기초 + 당기매입 - 당기사용
+    const baseAmt = (R.prevStockData || [])
+      .filter(s => (s.dept || '') === dept && s.item_type === targetType)
       .reduce((s, v) => s + toN(v.closing_amount), 0);
     const buy = R.gcIpgo
-      .filter(r => String(r['의뢰부서']||'').trim() === dept && String(r['자재구분']||'').trim() === targetType2)
+      .filter(r => String(r['의뢰부서']||'').trim() === dept && String(r['자재구분']||'').trim() === targetType)
       .reduce((s, r) => s + toN(r['공급가액']), 0);
     const use = R.usageSiyak
       .filter(r => String(r['부서명']||'').trim() === dept)
       .reduce((s, r) => s + toN(r['사용공급가']), 0);
-    yearMap[R.y][dept].end = Math.round((base + buy - use) / 1000);
-    // 현재 연도 기초: prevStockData 부서별 합산
-    if (!yearMap[R.y][dept].base && base)
-      yearMap[R.y][dept].base = Math.round(base / 1000);
+    d.end = Math.round((baseAmt + buy - use) / 1000);
   });
 
   const years  = Object.keys(yearMap).sort((a, b) => b.localeCompare(a));
