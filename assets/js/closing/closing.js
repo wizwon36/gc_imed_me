@@ -51,9 +51,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('appBody').style.display = '';
 
-    // 거래처/자재 데이터 미리 로드
-    loadVendorsFromServer().catch(() => {});
-    loadItemsFromServer().catch(() => {});
+    // 거래처·자재 데이터 로드 (처리 시작 전 반드시 완료되어야 함)
+    showGlobalLoading('거래처 및 자재 정보 로드 중...');
+    await Promise.all([
+      loadVendorsFromServer().catch(() => {}),
+      loadItemsFromServer().catch(() => {}),
+    ]);
 
   } catch (e) {
     showMessage('앱 초기화 중 오류가 발생했습니다: ' + e.message, 'error');
@@ -89,16 +92,24 @@ function switchTab(tab) {
       ?.classList.toggle('active', t === tab);
   });
   if (tab === 'vendor') {
-    showGlobalLoading('거래처 정보 로드 중...');
-    loadVendorsFromServer()
-      .then(() => renderVendorTable())
-      .finally(() => hideGlobalLoading());
+    if (App.vendors.length) {
+      renderVendorTable();
+    } else {
+      showGlobalLoading('거래처 정보 로드 중...');
+      loadVendorsFromServer()
+        .then(() => renderVendorTable())
+        .finally(() => hideGlobalLoading());
+    }
   }
   if (tab === 'item') {
-    showGlobalLoading('자재코드 로드 중...');
-    loadItemsFromServer()
-      .then(() => renderItemTable())
-      .finally(() => hideGlobalLoading());
+    if (App.items.length) {
+      renderItemTable();
+    } else {
+      showGlobalLoading('자재코드 로드 중...');
+      loadItemsFromServer()
+        .then(() => renderItemTable())
+        .finally(() => hideGlobalLoading());
+    }
     initStockInitUI();
   }
 }
