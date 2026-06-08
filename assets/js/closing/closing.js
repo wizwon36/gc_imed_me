@@ -236,7 +236,7 @@ async function runProcessing() {
   const [y, m]  = ym.split('-');
   const mi      = parseInt(m);
   const cc      = document.getElementById('inputCC').value.trim();
-  const account = document.getElementById('inputAccount').value.trim();
+  const account = '11301101'; // 계정코드 고정값
 
   try {
     clog('처리를 시작합니다...', 'info'); await sleep(150);
@@ -288,7 +288,7 @@ async function runProcessing() {
         적요:     `(${branch})${r['의뢰부서']}${r['자재명']}${r['수량']}`,
         지급일:   vm.credit_days   != null ? vm.credit_days : 90,
         결제방법:  vm.pay_method   || '현금결제',
-        계정:     vm.account_code  || account,
+        계정:     '11301101',   // 계정코드 고정값
         전표번호:  '',
       };
     });
@@ -747,7 +747,7 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
 
 // ── 거래처 관리 시트 ─────────────────────────────────────
 function writeVendorMasterSheet(ws, vendors) {
-  [['거래처명', 1], ['사업자등록번호', 2], ['여신기간(일)', 3], ['결제방법', 4], ['계정코드', 5]]
+  [['거래처명', 1], ['사업자등록번호', 2], ['여신기간(일)', 3], ['결제방법', 4]]
     .forEach(([v, c]) => hdrCell(ws, 1, c, v));
   vendors.forEach((v, ri) => {
     const r = ri + 2;
@@ -756,10 +756,9 @@ function writeVendorMasterSheet(ws, vendors) {
     txtCell(ws, r, 2, v.biz_no, fill);
     numCell(ws, r, 3, v.credit_days, fill);
     txtCell(ws, r, 4, v.pay_method, fill, false, true);
-    txtCell(ws, r, 5, v.account_code, fill, false, true);
     ws.getRow(r).height = 16;
   });
-  cw(ws, [[1, 24], [2, 16], [3, 12], [4, 12], [5, 12]]);
+  cw(ws, [[1, 24], [2, 16], [3, 12], [4, 12]]);
   ws.views = [{ state: 'frozen', ySplit: 1 }];
 }
 
@@ -962,7 +961,7 @@ function renderVendorTable() {
   if (!tbody) return;
 
   if (!App.vendors.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">등록된 거래처가 없습니다. [+ 거래처 추가]를 눌러 추가하세요.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">등록된 거래처가 없습니다. [+ 행 추가] 또는 [엑셀 업로드]를 이용하세요.</td></tr>`;
     return;
   }
 
@@ -978,7 +977,6 @@ function renderVendorTable() {
           <option ${v.pay_method === '카드결제' ? 'selected' : ''}>카드결제</option>
         </select>
       </td>
-      <td style="text-align:center;"><input type="text" value="${escHtml(v.account_code || '')}" data-idx="${i}" data-field="account_code" style="width:100px;text-align:center;" onchange="vendorEdit(this)"></td>
       <td style="text-align:center;"><button onclick="deleteVendor(${i})" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;" title="삭제">🗑</button></td>
     </tr>
   `).join('');
@@ -997,12 +995,136 @@ function vendorEdit(el) {
 }
 
 function addVendorRow() {
-  App.vendors.push({ vendor_name: '', biz_no: '', credit_days: 90, pay_method: '현금결제', account_code: '' });
+  App.vendors.push({ vendor_name: '', biz_no: '', credit_days: 90, pay_method: '현금결제' });
   App.vendorsDirty = true;
   renderVendorTable();
-  // 새 행 첫 번째 입력칸 포커스
   const lastRow = document.getElementById('vendorTbody').lastElementChild;
   lastRow?.querySelector('input')?.focus();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 13. 거래처 엑셀 업로드
+// ═══════════════════════════════════════════════════════════
+
+// 템플릿 다운로드
+function downloadVendorTemplate() {
+  const wb = XLSX.utils.book_new();
+  const headers = ['거래처명 *', '사업자등록번호 *', '여신기간(일)', '결제방법'];
+  const sample  = [
+    ['GC메디아이', '2018155688', 90, '현금결제'],
+    ['녹십자MS(주)', '1358167475', 90, '현금결제'],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...sample]);
+  // 컬럼 너비
+  ws['!cols'] = [{ wch: 28 }, { wch: 18 }, { wch: 14 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws, '거래처마스터');
+  XLSX.writeFile(wb, '거래처마스터_템플릿.xlsx');
+}
+
+// 엑셀 파일 선택 시 파싱 → 미리보기
+let _uploadedVendorRows = [];
+
+async function handleVendorExcel(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = ''; // 같은 파일 재선택 허용
+
+  try {
+    showGlobalLoading('파일을 분석하는 중...');
+    _uploadedVendorRows = await parseVendorExcel(file);
+    renderVendorUploadPreview(_uploadedVendorRows);
+  } catch (err) {
+    showMessage('파일 읽기 오류: ' + err.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+  }
+}
+
+function parseVendorExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb   = XLSX.read(e.target.result, { type: 'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const raw  = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        if (!raw.length) { reject(new Error('데이터가 없습니다.')); return; }
+
+        // 헤더 정규화 (* 제거, 공백 trim)
+        const rows = raw.map((rawRow, idx) => {
+          const norm = {};
+          Object.entries(rawRow).forEach(([k, v]) => {
+            norm[k.replace(/\s*\*$/, '').trim()] = String(v || '').trim();
+          });
+          const errors = [];
+          if (!norm['거래처명'])       errors.push('거래처명 누락');
+          if (!norm['사업자등록번호']) errors.push('사업자등록번호 누락');
+          return {
+            _row:       idx + 2,
+            _errors:    errors,
+            vendor_name:  norm['거래처명']       || '',
+            biz_no:       norm['사업자등록번호'] || '',
+            credit_days:  parseInt(norm['여신기간(일)']) || 90,
+            pay_method:   norm['결제방법']       || '현금결제',
+          };
+        });
+        resolve(rows);
+      } catch (err) {
+        reject(new Error('엑셀 파일을 읽지 못했습니다: ' + err.message));
+      }
+    };
+    reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function renderVendorUploadPreview(rows) {
+  const preview  = document.getElementById('vendorUploadPreview');
+  const table    = document.getElementById('vendorUploadTable');
+  const countEl  = document.getElementById('vendorUploadCount');
+  const errorEl  = document.getElementById('vendorUploadError');
+  const applyBtn = document.getElementById('btnApplyUpload');
+  if (!preview || !table) return;
+
+  const errRows = rows.filter(r => r._errors.length > 0);
+  countEl.textContent = `총 ${rows.length}건`;
+  errorEl.textContent = errRows.length ? `오류 ${errRows.length}건 — 수정 후 다시 업로드해 주세요.` : '';
+  if (applyBtn) applyBtn.style.display = errRows.length ? 'none' : '';
+
+  const cols = ['거래처명', '사업자등록번호', '여신기간(일)', '결제방법'];
+  const thead = `<thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}<th>검증</th></tr></thead>`;
+  const tbody = `<tbody>${rows.map(r => {
+    const hasErr = r._errors.length > 0;
+    return `<tr style="${hasErr ? 'background:#fff5f5;' : ''}">
+      <td>${escHtml(r.vendor_name)}</td>
+      <td>${escHtml(r.biz_no)}</td>
+      <td class="num">${r.credit_days}</td>
+      <td>${escHtml(r.pay_method)}</td>
+      <td>${hasErr ? `<span style="color:#c0392b;font-size:11px;">${escHtml(r._errors.join(', '))}</span>` : '✓'}</td>
+    </tr>`;
+  }).join('')}</tbody>`;
+
+  table.innerHTML = thead + tbody;
+  preview.style.display = '';
+  // 테이블 아래로 스크롤
+  preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function applyVendorUpload() {
+  const validRows = _uploadedVendorRows.filter(r => r._errors.length === 0);
+  App.vendors = validRows.map(({ vendor_name, biz_no, credit_days, pay_method }) =>
+    ({ vendor_name, biz_no, credit_days, pay_method })
+  );
+  App.vendorsDirty = true;
+  cancelVendorUpload();
+  renderVendorTable();
+  showMessage(`${App.vendors.length}건이 적용됐습니다. 저장 버튼을 눌러 반영하세요.`, 'success');
+}
+
+function cancelVendorUpload() {
+  _uploadedVendorRows = [];
+  const preview = document.getElementById('vendorUploadPreview');
+  if (preview) preview.style.display = 'none';
 }
 
 function deleteVendor(i) {
