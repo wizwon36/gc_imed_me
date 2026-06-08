@@ -1535,7 +1535,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     .forEach(([v, c]) => {
       hdrCell(ws, 3, c, v);
       if (c === 4) {  // 당기사용 강조
-        ws.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+        ws.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
       }
     });
   ws.getRow(3).height = 18;
@@ -1618,7 +1618,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       ac.fill   = fill;
       ac.border = BORDER_THIN;
     }
-    const useFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCE4B0' } };
+    const useFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC5D9F1' } };
     numCell(ws, r, 2, base, fill);
     numCell(ws, r, 3, buy,  fill);
     numCell(ws, r, 4, use,  useFill);  // 당기사용 강조
@@ -1634,7 +1634,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   // 계 행
   subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
   // 당기사용(4열) 소계 강조
-  ws.getCell(r, 4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+  ws.getCell(r, 4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
   // 비고 셀 소계 색상
   const bigoCell = ws.getCell(r, 6);
   bigoCell.fill   = FILL.subtot;
@@ -1736,7 +1736,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         if (yr === R.y && i >= 2 && i <= 13) {
           const mon = String(i - 1).padStart(2, '0');
           if (mon === curMon) {
-            ws.getCell(r, i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+            ws.getCell(r, i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
           }
         }
       });
@@ -1769,7 +1769,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         const v       = d['m' + mon] || 0;
         const isCurMon = yr === R.y && mon === curMon;
         const cellFill = isCurMon
-          ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCE4B0' } }  // 연한 황색 강조
+          ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC5D9F1' } }  // 연한 황색 강조
           : fill;
         colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
         numCell(ws, r, mi + 3, v, cellFill);
@@ -1792,7 +1792,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     if (yr === R.y) {
       const curCol = months.indexOf(curMon) + 3;
       const cc = ws.getCell(r, curCol);
-      cc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+      cc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
     }
     ws.getCell(r, 16).fill   = FILL.subtot;
     ws.getCell(r, 16).border = BORDER_THIN;
@@ -2738,6 +2738,7 @@ function parseUsageInitFile(file) {
           // 기초(1열), 기말(14열) — 연도 내 해당 부서의 기초/기말 (원 단위)
           const baseVal = parseFloat(String(row[1] || '').replace(/,/g, '')) || 0;
           const endVal  = parseFloat(String(row[14] || '').replace(/,/g, '')) || 0;
+          console.log(`[parseUsage] yr=${currentYear} dept=${dept} base=${baseVal} end=${endVal} row1=${row[1]} row14=${row[14]}`);
 
           months.forEach((mon, mi) => {
             const raw = String(row[mi + 2] || '').replace(/,/g, '').trim();
