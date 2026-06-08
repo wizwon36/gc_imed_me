@@ -99,6 +99,7 @@ function switchTab(tab) {
     loadItemsFromServer()
       .then(() => renderItemTable())
       .finally(() => hideGlobalLoading());
+    initStockInitUI();
   }
 }
 
@@ -1820,4 +1821,183 @@ function cancelItemUpload() {
   _uploadedItemRows = [];
   const preview = document.getElementById('itemUploadPreview');
   if (preview) preview.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// 16. 초기 재고 업로드 (수불부 파일 → closing_stock 저장)
+// ═══════════════════════════════════════════════════════════
+let _stockInitWb     = null;  // 업로드된 워크북
+let _stockInitParsed = [];    // 파싱된 기말 재고
+
+// 탭 진입 시 지점 드롭다운 동기화
+function initStockInitUI() {
+  // 지점 드롭다운 → inputBranch와 동일 옵션
+  const src = document.getElementById('inputBranch');
+  const tgt = document.getElementById('stockInitBranch');
+  if (src && tgt) {
+    tgt.innerHTML = src.innerHTML;
+    tgt.value     = src.value;
+  }
+  // 저장 연월 기본값: 전월
+  const el = document.getElementById('stockInitYm');
+  if (el && !el.value) {
+    const now = new Date();
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    el.value = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+  }
+}
+
+// 수불부 파일 업로드 → 시트 목록 팝업
+async function handleStockInitFile(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+
+  try {
+    showGlobalLoading('수불부 파일 읽는 중...');
+    const buf = await file.arrayBuffer();
+    _stockInitWb = XLSX.read(buf, { type: 'array' });
+
+    // 시트 목록 드롭다운 업데이트
+    const sel = document.getElementById('stockInitSheet');
+    sel.innerHTML = _stockInitWb.SheetNames.map((s, i) =>
+      `<option value="${i}">${s}</option>`
+    ).join('');
+
+    // 첫 번째 시트 자동 파싱
+    parseStockInitSheet(0);
+  } catch (e) {
+    showMessage('파일 읽기 오류: ' + e.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+  }
+
+  // 시트 선택 변경 시 재파싱
+  document.getElementById('stockInitSheet').onchange = function() {
+    parseStockInitSheet(parseInt(this.value));
+  };
+}
+
+// 특정 시트 파싱 → 기말 수량·금액 추출
+function parseStockInitSheet(sheetIdx) {
+  if (!_stockInitWb) return;
+  const ws  = _stockInitWb.Sheets[_stockInitWb.SheetNames[sheetIdx]];
+  const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+  // 4행(index 4)부터 데이터, 0=품목코드, 1=품목명, 2=구분
+  // 기말: 10=수량, 12=금액
+  const rows = [];
+  for (let i = 4; i < all.length; i++) {
+    const row  = all[i];
+    const code = String(row[0] || '').trim();
+    if (!code || code === '총합계' || code === '누계') continue;
+
+    const qty = parseFloat(String(row[10] || '0').replace(/,/g, '')) || 0;
+    const amt = parseFloat(String(row[12] || '0').replace(/,/g, '')) || 0;
+
+    // 기말 수량 또는 금액이 있는 품목만
+    if (qty === 0 && amt === 0) continue;
+
+    rows.push({
+      item_code:      code,
+      item_name:      String(row[1] || '').trim(),
+      item_type:      String(row[2] || '').trim(),
+      closing_qty:    qty,
+      closing_amount: amt,
+    });
+  }
+
+  _stockInitParsed = rows;
+  renderStockInitPreview(rows);
+}
+
+function renderStockInitPreview(rows) {
+  const preview = document.getElementById('stockInitPreview');
+  const table   = document.getElementById('stockInitTable');
+  const countEl = document.getElementById('stockInitCount');
+  if (!preview || !table) return;
+
+  countEl.textContent = `${rows.length}건`;
+
+  if (!rows.length) {
+    table.innerHTML = `<thead><tr><th colspan="5">기말 재고가 있는 품목이 없습니다.</th></tr></thead>`;
+    preview.style.display = '';
+    return;
+  }
+
+  const thead = `<thead><tr>
+    <th>자재코드</th><th>자재명</th><th>구분</th>
+    <th style="text-align:right;">기말 수량</th>
+    <th style="text-align:right;">기말 금액</th>
+  </tr></thead>`;
+  const tbody = `<tbody>${rows.map((r, i) => `
+    <tr style="${i % 2 ? 'background:#f8fafc;' : ''}">
+      <td style="font-family:monospace;font-size:12px;">${escHtml(r.item_code)}</td>
+      <td>${escHtml(r.item_name)}</td>
+      <td style="text-align:center;">${escHtml(r.item_type)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${r.closing_qty.toLocaleString()}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${r.closing_amount.toLocaleString()}</td>
+    </tr>`).join('')}
+  </tbody>`;
+
+  table.innerHTML = thead + tbody;
+  preview.style.display = '';
+  preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function saveStockInit() {
+  if (!_stockInitParsed.length) { showMessage('저장할 데이터가 없습니다.', 'error'); return; }
+
+  const ym     = document.getElementById('stockInitYm')?.value;
+  const branch = document.getElementById('stockInitBranch')?.value;
+  if (!ym)     { showMessage('저장 연월을 선택해 주세요.', 'error'); return; }
+  if (!branch) { showMessage('지점명을 선택해 주세요.', 'error'); return; }
+
+  const btn = document.getElementById('btnSaveStockInit');
+
+  try {
+    showGlobalLoading(`${branch} ${ym} 초기 재고 저장 중...`);
+    btn.disabled = true;
+
+    // 기존 데이터 있는지 확인
+    const user = window.auth?.getSession?.();
+    const existing = await apiGet('closingGetStock', {
+      request_user_email: user?.email,
+      ym, branch,
+    });
+    await hideGlobalLoading();
+
+    if (Array.isArray(existing.data) && existing.data.length > 0) {
+      const ok = confirm(
+        `${branch} ${ym} 확정 데이터가 이미 존재합니다.\n덮어쓰시겠습니까?`
+      );
+      if (!ok) { btn.disabled = false; return; }
+    }
+
+    showGlobalLoading('저장 중...');
+    await apiPost('closingSaveStock', {
+      request_user_email: user?.email,
+      branch, ym,
+      items: _stockInitParsed,
+    });
+
+    showMessage(`${branch} ${ym} 초기 재고 ${_stockInitParsed.length}건이 저장됐습니다.`, 'success');
+    cancelStockInit();
+  } catch (e) {
+    showMessage('저장 중 오류: ' + e.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+    btn.disabled = false;
+  }
+}
+
+function cancelStockInit() {
+  _stockInitWb     = null;
+  _stockInitParsed = [];
+  const preview = document.getElementById('stockInitPreview');
+  if (preview) preview.style.display = 'none';
+  const sel = document.getElementById('stockInitSheet');
+  if (sel) sel.innerHTML = '<option value="">파일 업로드 후 선택</option>';
+  const fi = document.getElementById('stockInitFileInput');
+  if (fi) fi.value = '';
 }
