@@ -34,6 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mm = String(prevMonth.getMonth() + 1).padStart(2, '0');
     document.getElementById('inputMonth').value = `${yy}-${mm}`;
 
+    // 지점명 드롭다운: ORG_CLINIC 로드 후 소속 의원 기본 선택
+    const user = window.auth?.getSession?.();
+    await loadBranchOptions(user);
+
     // 권한 체크 (closing: view 이상)
     const ok = await window.appPermission?.requirePermission?.('closing', ['admin', 'edit', 'view']);
     if (ok === false) {
@@ -950,7 +954,44 @@ async function downloadAll() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// 12. 거래처 관리 (API 연동)
+// 12. 지점명 드롭다운 (ORG_CLINIC)
+// ═══════════════════════════════════════════════════════════
+async function loadBranchOptions(user) {
+  const sel = document.getElementById('inputBranch');
+  if (!sel) return;
+
+  let clinics = [];
+  try {
+    const res = await apiGet('getCodes', {
+      request_user_email: user?.email,
+      code_group: 'ORG_CLINIC',
+    });
+    const data = res.data || res || [];
+    clinics = Array.isArray(data)
+      ? data
+          .filter(c => String(c.use_yn || 'Y').toUpperCase() === 'Y')
+          .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+          .map(c => ({ value: c.code_name, label: c.code_name }))
+      : [];
+  } catch (e) {
+    clinics = [];
+  }
+
+  // API 실패 또는 목록 없으면 소속 의원만 표시
+  if (!clinics.length) {
+    const fallback = user?.clinic_name || '서울숲';
+    clinics = [{ value: fallback, label: fallback }];
+  }
+
+  // 소속 의원 기본 선택
+  const defaultBranch = user?.clinic_name || clinics[0]?.value || '';
+  sel.innerHTML = clinics.map(c =>
+    `<option value="${c.value}"${c.value === defaultBranch ? ' selected' : ''}>${c.label}</option>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// 13. 거래처 관리 (API 연동)
 // ═══════════════════════════════════════════════════════════
 async function loadVendorsFromServer() {
   try {
