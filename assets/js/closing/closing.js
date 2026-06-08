@@ -1546,6 +1546,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       if (!prevDeptStock[dept + '||' + type]) prevDeptStock[dept + '||' + type] = 0;
       prevDeptStock[dept + '||' + type] += toN(s.closing_amount);
     });
+  clog(`기초재고 집계: ${JSON.stringify(Object.keys(prevDeptStock))}`, 'info');
 
   // 당기매입: 입고 데이터 부서별 집계 — 시약만
   const ipgoData  = isGC ? R.gcIpgo.filter(r => String(r['자재구분']||'').trim() === '시약')
