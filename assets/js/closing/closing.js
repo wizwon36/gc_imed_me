@@ -1486,37 +1486,90 @@ async function loadItemsFromServer() {
   }
 }
 
-// ── 테이블 렌더링 ─────────────────────────────────────────
+// ── 자재코드 테이블 (검색 + 페이지네이션) ─────────────────
+const ITEM_PAGE_SIZE = 50;
+let _itemCurrentPage = 1;
+let _itemFiltered    = [];
+
+// 탭 진입 / 데이터 로드 완료 시 호출 → 요약 통계 + 첫 페이지 렌더
 function renderItemTable() {
-  const tbody    = document.getElementById('itemTbody');
-  const badge    = document.getElementById('itemCountBadge');
+  _updateItemSummary();
+  _itemCurrentPage = 1;
+  _applyItemFilter();
+}
+
+// 검색/필터 변경 시
+function onItemSearch() {
+  _itemCurrentPage = 1;
+  _applyItemFilter();
+}
+
+// 통계 카드 업데이트
+function _updateItemSummary() {
+  const all = App.items;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('itemCntTotal',   all.length);
+  set('itemCntSiyak',   all.filter(i => i.item_type === '시약').length);
+  set('itemCntSomoum',  all.filter(i => i.item_type === '소모품').length);
+  set('itemCntUiyak',   all.filter(i => i.item_type === '의약품').length);
+  set('itemCntDisused', all.filter(i => (i.item_status || '사용') === '폐기').length);
+}
+
+// 필터 적용 → _itemFiltered 갱신 → 현재 페이지 렌더
+function _applyItemFilter() {
+  const keyword      = (document.getElementById('itemSearchInput')?.value || '').trim().toLowerCase();
   const typeFilter   = document.getElementById('itemFilterType')?.value   || 'all';
   const statusFilter = document.getElementById('itemFilterStatus')?.value || 'all';
+
+  _itemFiltered = App.items.filter(it => {
+    if (typeFilter   !== 'all' && it.item_type !== typeFilter) return false;
+    if (statusFilter !== 'all' && (it.item_status || '사용') !== statusFilter) return false;
+    if (keyword) {
+      const codeMatch = it.item_code.toLowerCase().includes(keyword);
+      const nameMatch = it.item_name.toLowerCase().includes(keyword);
+      if (!codeMatch && !nameMatch) return false;
+    }
+    return true;
+  });
+
+  const resultEl = document.getElementById('itemSearchResult');
+  if (resultEl) resultEl.textContent = keyword || typeFilter !== 'all' || statusFilter !== 'all'
+    ? `검색 결과 ${_itemFiltered.length}건`
+    : '';
+
+  _renderItemPage(_itemCurrentPage);
+  _renderItemPagination();
+}
+
+// 현재 페이지 테이블 렌더
+function _renderItemPage(page) {
+  _itemCurrentPage = page;
+  const tbody = document.getElementById('itemTbody');
   if (!tbody) return;
 
-  let data = App.items;
-  if (typeFilter   !== 'all') data = data.filter(it => it.item_type   === typeFilter);
-  if (statusFilter !== 'all') data = data.filter(it => (it.item_status || '사용') === statusFilter);
-
-  if (badge) badge.textContent =
-    `전체 ${App.items.length}건 / 표시 ${data.length}건` +
-    ` (시약 ${App.items.filter(i=>i.item_type==='시약').length} ·` +
-    ` 소모품 ${App.items.filter(i=>i.item_type==='소모품').length} ·` +
-    ` 의약품 ${App.items.filter(i=>i.item_type==='의약품').length})`;
-
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">등록된 자재가 없습니다. 자재관리 파일을 업로드해 주세요.</td></tr>`;
+  if (!_itemFiltered.length) {
+    tbody.innerHTML = App.items.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">등록된 자재가 없습니다. 자재관리 파일을 업로드해 주세요.</td></tr>`
+      : `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted);">검색 결과가 없습니다.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = data.map((it, i) => {
+  const start = (page - 1) * ITEM_PAGE_SIZE;
+  const pageData = _itemFiltered.slice(start, start + ITEM_PAGE_SIZE);
+
+  tbody.innerHTML = pageData.map((it, i) => {
     const typeColor = it.item_type === '시약' ? '#0e7c3a' : it.item_type === '의약품' ? '#b45309' : '#1a56db';
     const typeBg    = it.item_type === '시약' ? '#e6f4ec' : it.item_type === '의약품' ? '#fef3e2' : '#e8effd';
     const isDisused = (it.item_status || '사용') === '폐기';
-    return `<tr style="${isDisused ? 'opacity:.5;' : ''}">
+    const rowFill   = (start + i) % 2 === 0 ? '' : 'background:#f8fafc;';
+    return `<tr style="${isDisused ? 'opacity:.45;' : rowFill}">
       <td style="font-family:monospace;font-size:12px;">${escHtml(it.item_code)}</td>
-      <td style="max-width:300px;">${escHtml(it.item_name)}</td>
-      <td style="text-align:center;"><span style="background:${typeBg};color:${typeColor};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">${escHtml(it.item_type)}</span></td>
+      <td>${escHtml(it.item_name)}</td>
+      <td style="text-align:center;">
+        <span style="background:${typeBg};color:${typeColor};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">
+          ${escHtml(it.item_type)}
+        </span>
+      </td>
       <td style="text-align:center;">
         <select data-code="${escHtml(it.item_code)}" onchange="itemStatusEdit(this)"
           style="border:1px solid var(--border-input);border-radius:5px;padding:3px 6px;font-size:12px;">
@@ -1524,9 +1577,66 @@ function renderItemTable() {
           <option ${(it.item_status||'사용')==='폐기'?'selected':''}>폐기</option>
         </select>
       </td>
-      <td style="text-align:center;"><button onclick="deleteItem('${escHtml(it.item_code)}')" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;" title="삭제">🗑</button></td>
+      <td style="text-align:center;">
+        <button onclick="deleteItem('${escHtml(it.item_code)}')"
+          style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;" title="삭제">🗑</button>
+      </td>
     </tr>`;
   }).join('');
+}
+
+// 페이지네이션 버튼 렌더
+function _renderItemPagination() {
+  const wrap = document.getElementById('itemPagination');
+  if (!wrap) return;
+
+  const total     = _itemFiltered.length;
+  const totalPages = Math.ceil(total / ITEM_PAGE_SIZE);
+
+  if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+  const cur = _itemCurrentPage;
+  const btnStyle = (active) =>
+    `style="padding:5px 11px;border-radius:5px;border:1px solid ${active ? '#1a56db' : 'var(--border)'};
+     background:${active ? '#1a56db' : '#fff'};color:${active ? '#fff' : 'var(--text-primary)'};
+     font-size:12px;font-weight:${active ? '700' : '400'};cursor:pointer;"`;
+
+  // 표시할 페이지 범위 계산 (현재 페이지 기준 최대 10개)
+  const half = 5;
+  let rangeStart = Math.max(1, cur - half);
+  let rangeEnd   = Math.min(totalPages, rangeStart + 9);
+  if (rangeEnd - rangeStart < 9) rangeStart = Math.max(1, rangeEnd - 9);
+  const pages = [];
+  for (let p = rangeStart; p <= rangeEnd; p++) pages.push(p);
+
+  let html = '';
+  // 이전
+  html += `<button onclick="_renderItemPage(${cur - 1});_renderItemPagination()"
+    ${cur === 1 ? 'disabled' : ''} ${btnStyle(false)}>‹</button>`;
+  // 첫 페이지
+  if (pages[0] > 1) {
+    html += `<button onclick="_renderItemPage(1);_renderItemPagination()" ${btnStyle(false)}>1</button>`;
+    if (pages[0] > 2) html += `<span style="padding:0 4px;color:var(--text-muted);">…</span>`;
+  }
+  // 페이지 번호 (최대 10개)
+  pages.forEach(p => {
+    html += `<button onclick="_renderItemPage(${p});_renderItemPagination()" ${btnStyle(p === cur)}>${p}</button>`;
+  });
+  // 마지막 페이지
+  if (pages[pages.length - 1] < totalPages) {
+    if (pages[pages.length - 1] < totalPages - 1) html += `<span style="padding:0 4px;color:var(--text-muted);">…</span>`;
+    html += `<button onclick="_renderItemPage(${totalPages});_renderItemPagination()" ${btnStyle(false)}>${totalPages}</button>`;
+  }
+  // 다음
+  html += `<button onclick="_renderItemPage(${cur + 1});_renderItemPagination()"
+    ${cur === totalPages ? 'disabled' : ''} ${btnStyle(false)}>›</button>`;
+
+  // 페이지 정보
+  const start = (cur - 1) * ITEM_PAGE_SIZE + 1;
+  const end   = Math.min(cur * ITEM_PAGE_SIZE, total);
+  html += `<span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${start}–${end} / ${total}건</span>`;
+
+  wrap.innerHTML = html;
 }
 
 function itemStatusEdit(sel) {
