@@ -1418,7 +1418,7 @@ async function loadBranchOptions(user) {
 
   // API 실패 또는 목록 없으면 소속 의원만 표시
   if (!clinics.length) {
-    const fallback = user?.clinic_name || '서울숲';
+    const fallback = user?.clinic_name || user?.org_name || '서울숲의원';
     clinics = [{ value: fallback, label: fallback }];
   }
 
@@ -1442,8 +1442,12 @@ async function loadPrevStock(ym, branch) {
       ym,
       branch,
     });
-    return Array.isArray(res.data) ? res.data : [];
+    const data = Array.isArray(res.data) ? res.data : [];
+    clog(`전월 재고 API 응답: ym=${ym}, branch=${branch}, 결과=${data.length}건`, data.length ? 'ok' : 'warn');
+    if (!data.length) clog(`전월 재고 없음 — 요청 파라미터 확인: ym="${ym}" branch="${branch}"`, 'warn');
+    return data;
   } catch (e) {
+    clog(`전월 재고 로드 오류: ${e.message}`, 'error');
     return [];
   }
 }
