@@ -110,6 +110,7 @@ function switchTab(tab) {
         .finally(() => hideGlobalLoading());
     }
     initStockInitUI();
+    initUsageInitUI();
   }
 }
 
@@ -1302,16 +1303,15 @@ async function dlReport(label, vendors, depts, filename) {
   writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap);
   writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, depts);
 
-  // 3번째 시트: 원재료비 월별 (부서별 기초/당기매입/당기사용/기말)
   const user = window.auth?.getSession?.();
   const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
   const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
   const prevStockData = await loadPrevStock(prevYm, R.branch);
   writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
 
-  // 4번째 시트: 연간 원재료비
-  const yearStock = await loadYearStock(R.y, R.branch, user);
-  writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearStock, label);
+  // 연간 사용 데이터 로드 (DB) + 당월 추가
+  const yearUsage = await loadYearUsage(R.y, R.branch, user);
+  writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
 
   await saveWb(wb, filename);
 }
@@ -1448,8 +1448,44 @@ async function loadPrevStock(ym, branch) {
   }
 }
 
-// 연도 전체 closing_stock 조회
-async function loadYearStock(year, branch, user) {
+// 당월 부서별 사용 집계 (마감 확정 시 저장용)
+function buildDeptUsageForMonthly(R) {
+  const m = {};
+  // GC케어: 시약 + 소모품
+  [...R.usageSiyak, ...R.usageSomoum].forEach(r => {
+    const dept = String(r['부서명'] || '').trim(); if (!dept) return;
+    const type = String(r['자재구분'] || '').trim();
+    const k = dept + '||' + type;
+    if (!m[k]) m[k] = { dept, item_type: type, usage_amount: 0 };
+    m[k].usage_amount += toN(r['사용공급가']);
+  });
+  // 아이메드: 의약품
+  R.usageImed.forEach(r => {
+    const dept = String(r['부서명'] || '').trim(); if (!dept) return;
+    const type = String(r['자재구분'] || '').trim();
+    const k = dept + '||' + type;
+    if (!m[k]) m[k] = { dept, item_type: type, usage_amount: 0 };
+    m[k].usage_amount += toN(r['사용공급가']);
+  });
+  return Object.values(m).map(v => ({
+    ...v,
+    usage_amount: Math.round(v.usage_amount),
+  }));
+}
+
+// 연도별 사용 데이터 조회
+async function loadYearUsage(year, branch, user) {
+  try {
+    const res = await apiGet('closingGetUsageMonthly', {
+      request_user_email: user?.email,
+      year,
+      branch,
+    });
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (e) {
+    return [];
+  }
+}
   try {
     const res = await apiGet('closingGetStock', {
       request_user_email: user?.email,
@@ -1556,82 +1592,80 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
 }
 
 // ── 4번째 시트: 연간 원재료비 ────────────────────────────
-function writeWonjaeryoYear(ws, R, yearStock, label) {
+function writeWonjaeryoYear(ws, R, yearUsage, label) {
   const isGC = label.includes('시약');
+  const targetTypes = isGC ? ['시약', '소모품'] : ['의약품'];
 
   // 제목
-  const titleCell = ws.getCell(1, 1);
-  titleCell.value = `■ ${R.y}년도 원재료비`;
-  titleCell.font = { name: 'Calibri', size: 12, bold: true };
-  titleCell.alignment = AL('left');
-  ws.mergeCells(1, 1, 1, 17); ws.getRow(1).height = 22;
-
-  // (단위 : 천원)
-  ws.getCell(1, 17).value = '(단위 : 천원)';
-  ws.getCell(1, 17).font = F.base;
-  ws.getCell(1, 17).alignment = AL('right');
+  ws.getCell(1, 1).value = `■ ${R.y}년도 원재료비`;
+  ws.getCell(1, 1).font = { name: 'Calibri', size: 12, bold: true };
+  ws.getCell(1, 16).value = '(단위 : 천원)';
+  ws.getCell(1, 16).font = F.base;
+  ws.getCell(1, 16).alignment = AL('right');
+  ws.mergeCells(1, 1, 1, 16); ws.getRow(1).height = 22;
 
   // 헤더
   ['구   분', '기초', '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월', '기말', '비고']
     .forEach((v, i) => hdrCell(ws, 2, i + 1, v));
   ws.getRow(2).height = 18;
 
-  // yearStock을 월별·부서별로 집계
-  // closing_stock에서 각 월의 기말을 부서별로 가져옴
-  const monthlyMap = {};  // key: dept||type, value: { m01..m12, base, end }
-  yearStock.forEach(s => {
-    const dept = s.dept || '';
-    const type = s.item_type || '';
-    const k    = dept + '||' + type;
-    const mon  = String(s.ym || '').split('-')[1];  // '05'
-    if (!mon) return;
-    if (!monthlyMap[k]) monthlyMap[k] = { dept, type, base: 0, end: 0 };
-    monthlyMap[k]['m' + mon] = (monthlyMap[k]['m' + mon] || 0) + Math.round(toN(s.closing_amount) / 1000);
-  });
+  // DB 데이터를 dept||type → 월별 맵으로 변환
+  const usageMap = {};  // key: dept||type, value: { m01..m12 }
+  yearUsage
+    .filter(u => targetTypes.includes(u.item_type))
+    .forEach(u => {
+      const k   = (u.dept || '') + '||' + u.item_type;
+      const mon = String(u.ym || '').split('-')[1];
+      if (!mon) return;
+      if (!usageMap[k]) usageMap[k] = { dept: u.dept, type: u.item_type };
+      usageMap[k]['m' + mon] = (usageMap[k]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
+    });
 
-  // 현재 당월 기말도 계산해서 추가
+  // 당월 데이터도 포함 (아직 확정 안된 경우 대비)
   const curMon = String(R.m).padStart(2, '0');
-  const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
-  const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  buildDeptUsageForMonthly(R)
+    .filter(u => targetTypes.includes(u.item_type))
+    .forEach(u => {
+      const k = (u.dept || '') + '||' + u.item_type;
+      if (!usageMap[k]) usageMap[k] = { dept: u.dept, type: u.item_type };
+      // 이미 DB에 있으면 덮어쓰지 않음 (마감 확정 후 재다운로드 시 중복 방지)
+      if (!usageMap[k]['m' + curMon]) {
+        usageMap[k]['m' + curMon] = Math.round(u.usage_amount / 1000);
+      }
+    });
 
-  // 부서 목록 (가나다순)
-  const deptKeys = [...new Set([
-    ...(isGC ? R.gcIpgo.map(r => String(r['의뢰부서'] || '').trim() + '||' + String(r['자재구분'] || '').trim())
-             : R.imedIpgo.map(r => String(r['의뢰부서'] || '').trim() + '||' + String(r['자재구분'] || '').trim())),
-    ...Object.keys(monthlyMap),
-  ])].filter(k => k !== '||').sort((a, b) => a.localeCompare(b, 'ko'));
+  // 부서 목록 가나다순
+  const deptKeys = Object.keys(usageMap).sort((a, b) => a.localeCompare(b, 'ko'));
+  const months   = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 
-  const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
   let r = 3;
+  const colTotals = {};
 
   deptKeys.forEach((k, ri) => {
-    const fill  = ri % 2 === 0 ? FILL.odd : FILL.even;
-    const parts = k.split('||');
-    const dept  = parts[0], type = parts[1];
-    const d     = monthlyMap[k] || {};
-
-    txtCell(ws, r, 1, dept, fill);
-    numCell(ws, r, 2, d.base || 0, fill);
-    months.forEach((mon, mi) => numCell(ws, r, mi + 3, d['m' + mon] || 0, fill));
-    numCell(ws, r, 15, d.end || 0, fill);
-    txtCell(ws, r, 16, `${dept} - ${type}`, fill);
+    const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
+    const d    = usageMap[k];
+    txtCell(ws, r, 1, d.dept || '', fill);
+    numCell(ws, r, 2, 0, fill);  // 기초 (추후 확장)
+    months.forEach((mon, mi) => {
+      const v = d['m' + mon] || 0;
+      colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
+      numCell(ws, r, mi + 3, v, fill);
+    });
+    numCell(ws, r, 15, 0, fill);  // 기말 (추후 확장)
+    txtCell(ws, r, 16, `${d.dept} - ${d.type}`, fill);
     ws.getRow(r).height = 16; r++;
   });
 
   // 소계
-  const totRow = {};
-  months.forEach(mon => {
-    totRow[mon] = deptKeys.reduce((s, k) => s + (monthlyMap[k]?.['m' + mon] || 0), 0);
-  });
   subtotRow(ws, r, [1], ['소  계'],
     [2, ...months.map((_, i) => i + 3), 15],
-    [0, ...months.map(mon => totRow[mon]), 0]
+    [0, ...months.map((_, i) => colTotals[i + 3] || 0), 0]
   );
   ws.getRow(r).height = 18;
 
-  const colWidths = [[1, 20], [2, 10]];
+  const colWidths = [[1, 22], [2, 10]];
   months.forEach((_, i) => colWidths.push([i + 3, 9]));
-  colWidths.push([15, 10], [16, 20]);
+  colWidths.push([15, 10], [16, 22]);
   cw(ws, colWidths);
   ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 2 }];
 }
@@ -1686,6 +1720,15 @@ async function confirmClosing() {
       branch: R.branch,
       ym,
       items,
+    });
+
+    // 당월 부서별 사용 데이터 저장 (4번째 시트용)
+    const usageItems = buildDeptUsageForMonthly(R);
+    await apiPost('closingSaveUsageMonthly', {
+      request_user_email: user?.email,
+      branch: R.branch,
+      ym,
+      items: usageItems,
     });
 
     btn.disabled    = true;
@@ -2477,5 +2520,177 @@ function cancelStockInit() {
   const sel = document.getElementById('stockInitSheet');
   if (sel) sel.innerHTML = '<option value="">파일 업로드 후 선택</option>';
   const fi = document.getElementById('stockInitFileInput');
+  if (fi) fi.value = '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// 연간 원재료비 초기 데이터 업로드
+// ═══════════════════════════════════════════════════════════
+let _usageInitParsed = [];
+
+function initUsageInitUI() {
+  // 지점 드롭다운 동기화
+  const src = document.getElementById('inputBranch');
+  const tgt = document.getElementById('usageInitBranch');
+  if (src && tgt) { tgt.innerHTML = src.innerHTML; tgt.value = src.value; }
+  // 연도 기본값
+  const el = document.getElementById('usageInitYear');
+  if (el && !el.value) el.value = new Date().getFullYear().toString();
+}
+
+async function handleUsageInitFile(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+
+  const year   = document.getElementById('usageInitYear')?.value?.trim();
+  const branch = document.getElementById('usageInitBranch')?.value?.trim();
+  if (!year)   { showMessage('연도를 입력해 주세요.', 'error'); return; }
+  if (!branch) { showMessage('지점명을 선택해 주세요.', 'error'); return; }
+
+  try {
+    showGlobalLoading('파일 분석 중...');
+    _usageInitParsed = await parseUsageInitFile(file, year);
+    renderUsageInitPreview(_usageInitParsed);
+  } catch (e) {
+    showMessage('파일 읽기 오류: ' + e.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+  }
+}
+
+// 기존 보고 파일의 4번째 시트(연간 원재료비) 파싱
+function parseUsageInitFile(file, year) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        // 연간 원재료비 시트 찾기
+        const sheetName = wb.SheetNames.find(s =>
+          s.includes('원재료비') && (s.includes(year) || s.includes('연간') || s.includes('년도'))
+        ) || wb.SheetNames[wb.SheetNames.length - 1];
+        const ws  = wb.Sheets[sheetName];
+        const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+        const rows = [];
+        const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+        all.forEach((row, ri) => {
+          // 헤더 행 건너뛰기 (구   분, 기초, 1월...)
+          const col0 = String(row[0] || '').trim();
+          if (!col0 || col0.includes('원재료비') || col0.includes('구') || col0.includes('소') || col0 === '') return;
+
+          // 비고(마지막 컬럼)에서 부서명-자재구분 파싱
+          const bigo = String(row[15] || row[row.length - 1] || '').trim();
+          if (!bigo || !bigo.includes('-')) return;
+
+          const parts  = bigo.split('-').map(s => s.trim());
+          const dept   = parts[0];
+          const itype  = parts[1];
+          if (!dept || !itype) return;
+
+          // 월별 값 파싱 (2~13열: 1월~12월, 천원 단위)
+          months.forEach((mon, mi) => {
+            const val = parseFloat(String(row[mi + 2] || '0').replace(/,/g, '')) || 0;
+            if (!val) return;
+            rows.push({
+              ym:           `${year}-${mon}`,
+              dept,
+              item_type:    itype,
+              usage_amount: Math.round(val * 1000),  // 천원 → 원
+            });
+          });
+        });
+
+        if (!rows.length) { reject(new Error('데이터를 찾을 수 없습니다. 4번째 시트(연간 원재료비)가 맞는지 확인해 주세요.')); return; }
+        resolve(rows);
+      } catch (err) {
+        reject(new Error('파일 읽기 실패: ' + err.message));
+      }
+    };
+    reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function renderUsageInitPreview(rows) {
+  const preview  = document.getElementById('usageInitPreview');
+  const table    = document.getElementById('usageInitTable');
+  const countEl  = document.getElementById('usageInitCount');
+  if (!preview || !table) return;
+
+  // 월별 요약
+  const byYm = {};
+  rows.forEach(r => {
+    if (!byYm[r.ym]) byYm[r.ym] = {};
+    const k = r.dept + ' - ' + r.item_type;
+    byYm[r.ym][k] = (byYm[r.ym][k] || 0) + r.usage_amount;
+  });
+
+  const yms = Object.keys(byYm).sort();
+  const deptKeys = [...new Set(rows.map(r => r.dept + ' - ' + r.item_type))].sort();
+
+  countEl.textContent = `${yms.length}개월 / ${deptKeys.length}개 부서·구분`;
+
+  const thead = `<thead><tr><th>연월</th>${deptKeys.map(k => `<th>${escHtml(k)}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${yms.map((ym, i) => `
+    <tr style="${i % 2 ? 'background:#f8fafc;' : ''}">
+      <td style="font-weight:600;">${ym}</td>
+      ${deptKeys.map(k => `<td class="num">${((byYm[ym][k] || 0) / 1000).toLocaleString()}</td>`).join('')}
+    </tr>`).join('')}
+  </tbody>`;
+
+  const tfoot = `<tfoot><tr style="background:#f1f5f9;font-weight:600;">
+    <td>합계(천원)</td>
+    ${deptKeys.map(k => `<td class="num">${(rows.filter(r => r.dept + ' - ' + r.item_type === k).reduce((s, r) => s + r.usage_amount, 0) / 1000).toLocaleString()}</td>`).join('')}
+  </tr></tfoot>`;
+
+  table.innerHTML = thead + tbody + tfoot;
+  preview.style.display = '';
+  preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function saveUsageInit() {
+  if (!_usageInitParsed.length) { showMessage('저장할 데이터가 없습니다.', 'error'); return; }
+
+  const year   = document.getElementById('usageInitYear')?.value?.trim();
+  const branch = document.getElementById('usageInitBranch')?.value?.trim();
+  const btn    = document.getElementById('btnSaveUsageInit');
+
+  // 연월별로 그룹핑해서 저장
+  const byYm = {};
+  _usageInitParsed.forEach(r => {
+    if (!byYm[r.ym]) byYm[r.ym] = [];
+    byYm[r.ym].push({ dept: r.dept, item_type: r.item_type, usage_amount: r.usage_amount });
+  });
+
+  btn.disabled = true;
+  try {
+    showGlobalLoading('데이터 저장 중...');
+    const user = window.auth?.getSession?.();
+    for (const ym of Object.keys(byYm).sort()) {
+      await apiPost('closingSaveUsageMonthly', {
+        request_user_email: user?.email,
+        branch,
+        ym,
+        items: byYm[ym],
+      });
+    }
+    showMessage(`${Object.keys(byYm).length}개월 데이터가 저장됐습니다.`, 'success');
+    cancelUsageInit();
+  } catch (e) {
+    showMessage('저장 중 오류: ' + e.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+    btn.disabled = false;
+  }
+}
+
+function cancelUsageInit() {
+  _usageInitParsed = [];
+  const preview = document.getElementById('usageInitPreview');
+  if (preview) preview.style.display = 'none';
+  const fi = document.getElementById('usageInitFileInput');
   if (fi) fi.value = '';
 }
