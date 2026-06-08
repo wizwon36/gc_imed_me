@@ -1318,9 +1318,10 @@ async function dlReport(label, vendors, depts, filename) {
   const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
   const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
   const prevStockData = await loadPrevStock(prevYm, R.branch);
+  R.prevStockData = prevStockData;  // writeWonjaeryoYear에서 기말 계산에 사용
   writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
 
-  // 연간 사용 데이터 로드 (DB 전체) + 당월 추가
+  // 연간 사용 데이터 로드 (DB 전체)
   const yearUsage = await loadYearUsage(null, R.branch, user);
   writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
 
@@ -1504,11 +1505,9 @@ async function loadYearUsage(year, branch, user) {
 // 연도 전체 closing_stock 조회
 async function loadYearStock(year, branch, user) {
   try {
-    const res = await apiGet('closingGetStock', {
-      request_user_email: user?.email,
-      year,
-      branch,
-    });
+    const params = { request_user_email: user?.email, branch };
+    if (year) params.year = year;
+    const res = await apiGet('closingGetStock', params);
     return Array.isArray(res.data) ? res.data : [];
   } catch (e) {
     return [];
@@ -1621,86 +1620,113 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
 // ── 4번째 시트: 연간 원재료비 ────────────────────────────
 function writeWonjaeryoYear(ws, R, yearUsage, label) {
   const isGC       = label.includes('시약');
-  const targetType = isGC ? '시약' : '의약품';  // 시약만 / 의약품만
+  const targetType = isGC ? '시약' : '의약품';
 
-  // DB 데이터를 연도별 → dept||type → 월별 맵으로 변환
-  const yearMap = {};  // key: year, value: { dept||type: { m01..m12 } }
+  // DB 데이터를 연도별 → dept → 월별 맵으로 변환
+  const yearMap = {};  // yr → dept → { m01..m12, base, end }
   yearUsage
     .filter(u => u.item_type === targetType)
     .forEach(u => {
       const parts = (u.ym || '').split('-');
-      const yr  = parts[0];
-      const mon = parts[1];
+      const yr = parts[0]; const mon = parts[1];
       if (!yr || !mon) return;
-      const k = (u.dept || '') + '||' + u.item_type;
+      const dept = u.dept || '';
       if (!yearMap[yr]) yearMap[yr] = {};
-      if (!yearMap[yr][k]) yearMap[yr][k] = { dept: u.dept, type: u.item_type };
-      yearMap[yr][k]['m' + mon] = (yearMap[yr][k]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
-    });
-
-  // 당월 데이터도 추가 (미확정 시 대비)
-  const curMon = String(R.m).padStart(2, '0');
-  const curYr  = R.y;
-  buildDeptUsageForMonthly(R)
-    .filter(u => u.item_type === targetType)
-    .forEach(u => {
-      const k = (u.dept || '') + '||' + u.item_type;
-      if (!yearMap[curYr]) yearMap[curYr] = {};
-      if (!yearMap[curYr][k]) yearMap[curYr][k] = { dept: u.dept, type: u.item_type };
-      if (!yearMap[curYr][k]['m' + curMon]) {
-        yearMap[curYr][k]['m' + curMon] = Math.round(u.usage_amount / 1000);
+      if (!yearMap[yr][dept]) yearMap[yr][dept] = { dept, base: 0, end: 0 };
+      yearMap[yr][dept]['m' + mon] =
+        (yearMap[yr][dept]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
+      // 기초: 1월에 저장된 base_amount
+      if (mon === '01' && u.base_amount) {
+        yearMap[yr][dept].base = Math.round(u.base_amount / 1000);
+      }
+      // 기말: 12월에 저장된 end_amount
+      if (mon === '12' && u.end_amount) {
+        yearMap[yr][dept].end = Math.round(u.end_amount / 1000);
       }
     });
 
-  const years  = Object.keys(yearMap).sort((a, b) => b.localeCompare(a));  // 최신연도 먼저
+  // 당월 추가 (미확정 시 대비)
+  const curMon = String(R.m).padStart(2, '0');
+  buildDeptUsageForMonthly(R)
+    .filter(u => u.item_type === targetType)
+    .forEach(u => {
+      const dept = u.dept || '';
+      if (!yearMap[R.y]) yearMap[R.y] = {};
+      if (!yearMap[R.y][dept]) yearMap[R.y][dept] = { dept, base: 0, end: 0 };
+      if (!yearMap[R.y][dept]['m' + curMon])
+        yearMap[R.y][dept]['m' + curMon] = Math.round(u.usage_amount / 1000);
+    });
+
+  // 현재 연도 기말: 3번째 시트 기말재고 계산값 (기초+매입-사용)
+  const targetType2 = targetType;
+  Object.keys(yearMap[R.y] || {}).forEach(dept => {
+    // prevStockData에서 해당 부서 기초 합산
+    const base = (R.prevStockData || [])
+      .filter(s => (s.dept || '') === dept && s.item_type === targetType2)
+      .reduce((s, v) => s + toN(v.closing_amount), 0);
+    const buy = R.gcIpgo
+      .filter(r => String(r['의뢰부서']||'').trim() === dept && String(r['자재구분']||'').trim() === targetType2)
+      .reduce((s, r) => s + toN(r['공급가액']), 0);
+    const use = R.usageSiyak
+      .filter(r => String(r['부서명']||'').trim() === dept)
+      .reduce((s, r) => s + toN(r['사용공급가']), 0);
+    yearMap[R.y][dept].end = Math.round((base + buy - use) / 1000);
+    // 현재 연도 기초: prevStockData 부서별 합산
+    if (!yearMap[R.y][dept].base && base)
+      yearMap[R.y][dept].base = Math.round(base / 1000);
+  });
+
+  const years  = Object.keys(yearMap).sort((a, b) => b.localeCompare(a));
   const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 
   let r = 1;
   years.forEach(yr => {
-    const data = yearMap[yr];
+    const data     = yearMap[yr];
     const deptKeys = Object.keys(data).sort((a, b) => a.localeCompare(b, 'ko'));
 
-    // 연도 제목 행
-    ws.getCell(r, 1).value = `■ ${yr}년도 원재료비`;
-    ws.getCell(r, 1).font  = { name: 'Calibri', size: 12, bold: true };
-    ws.mergeCells(r, 1, r, 16);
-    ws.getCell(r, 16).value = '(단위 : 천원)';
-    ws.getCell(r, 16).font  = F.base;
+    // 연도 제목 (A~O 병합, P열 단위 별도)
+    ws.mergeCells(r, 1, r, 15);
+    ws.getCell(r, 1).value     = `■ ${yr}년도 원재료비`;
+    ws.getCell(r, 1).font      = { name: 'Calibri', size: 12, bold: true };
+    ws.getCell(r, 16).value    = '(단위 : 천원)';
+    ws.getCell(r, 16).font     = F.base;
     ws.getCell(r, 16).alignment = AL('right');
     ws.getRow(r).height = 22; r++;
 
     // 헤더
-    ['구   분', '기초', '1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말','비고']
+    ['구   분','기초','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말','비고']
       .forEach((v, i) => hdrCell(ws, r, i + 1, v));
     ws.getRow(r).height = 18; r++;
 
-    const colTotals = {};
-    deptKeys.forEach((k, ri) => {
+    const colTotals = { base: 0, end: 0 };
+    months.forEach((_, i) => { colTotals[i + 3] = 0; });
+
+    deptKeys.forEach((dept, ri) => {
       const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-      const d    = data[k];
-      txtCell(ws, r, 1, d.dept || '', fill);
-      numCell(ws, r, 2, 0, fill);  // 기초
+      const d    = data[dept];
+      colTotals.base += d.base || 0;
+      colTotals.end  += d.end  || 0;
+      txtCell(ws, r, 1, dept, fill);
+      numCell(ws, r, 2, d.base || 0, fill);
       months.forEach((mon, mi) => {
         const v = d['m' + mon] || 0;
         colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
         numCell(ws, r, mi + 3, v, fill);
       });
-      numCell(ws, r, 15, 0, fill);  // 기말
-      txtCell(ws, r, 16, `${d.dept} - ${d.type}`, fill);
+      numCell(ws, r, 15, d.end || 0, fill);
+      txtCell(ws, r, 16, `${dept} - ${targetType}`, fill);
       ws.getRow(r).height = 18; r++;
     });
 
     // 소계
     subtotRow(ws, r, [1], ['소  계'],
       [2, ...months.map((_, i) => i + 3), 15],
-      [0, ...months.map((_, i) => colTotals[i + 3] || 0), 0]
+      [colTotals.base, ...months.map((_, i) => colTotals[i + 3] || 0), colTotals.end]
     );
-    // 소계 비고 셀 색상
-    const sc = ws.getCell(r, 16);
-    sc.fill = FILL.subtot; sc.border = BORDER_THIN;
+    ws.getCell(r, 16).fill   = FILL.subtot;
+    ws.getCell(r, 16).border = BORDER_THIN;
     ws.getRow(r).height = 18; r++;
-
-    r++;  // 연도 블록 사이 빈 행
+    r++;  // 빈 행
   });
 
   const colWidths = [[1, 22], [2, 10]];
@@ -1710,13 +1736,6 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
   ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 0 }];
 }
 
-  // 제목
-  ws.getCell(1, 1).value = `■ ${R.y}년도 원재료비`;
-  ws.getCell(1, 1).font = { name: 'Calibri', size: 12, bold: true };
-  ws.getCell(1, 16).value = '(단위 : 천원)';
-  ws.getCell(1, 16).font = F.base;
-  ws.getCell(1, 16).alignment = AL('right');
-  ws.mergeCells(1, 1, 1, 16); ws.getRow(1).height = 22;
 
 // 마감 확정: 현재 subulMap 기말값 → DB 저장
 async function confirmClosing() {
@@ -2644,15 +2663,21 @@ function parseUsageInitFile(file) {
 
           // 월별 값 파싱 (2~13열: 1월~12월, 천원 단위)
           const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+          // 기초(1열), 기말(14열) — 연도 내 해당 부서의 기초/기말 (원 단위)
+          const baseVal = parseFloat(String(row[1] || '').replace(/,/g, '')) || 0;
+          const endVal  = parseFloat(String(row[14] || '').replace(/,/g, '')) || 0;
+
           months.forEach((mon, mi) => {
             const raw = String(row[mi + 2] || '').replace(/,/g, '').trim();
             const val = parseFloat(raw) || 0;
-            if (!val) return;
             rows.push({
               ym:           `${currentYear}-${mon}`,
               dept,
               item_type:    itype,
-              usage_amount: Math.round(val),  // 파일 값이 이미 원 단위
+              usage_amount: Math.round(val),
+              base_amount:  mon === '01' ? Math.round(baseVal) : 0,   // 기초는 1월에만 저장
+              end_amount:   mon === '12' ? Math.round(endVal)  : 0,   // 기말은 12월에만 저장
             });
           });
         });
