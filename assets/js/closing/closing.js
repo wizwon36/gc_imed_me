@@ -2662,7 +2662,7 @@ function renderUsageInitPreview(rows) {
     </tr>`).join('')}
   </tbody>`;
 
-  table.innerHTML = thead + tbody + tfoot;
+  table.innerHTML = thead + tbody;
   preview.style.display = '';
   preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
