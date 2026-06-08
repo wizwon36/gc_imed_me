@@ -115,12 +115,10 @@
                 </div>
                 <div class="cl-field">
                   <label>지점명</label>
-                  <input type="text" id="inputBranch" value="서울숲" placeholder="지점명">
+                  <select id="inputBranch" class="cl-field input"></select>
                 </div>
-                <div class="cl-field">
-                  <label>GC케어 CC</label>
-                  <input type="text" id="inputCC" value="32073000" placeholder="코스트센터">
-                </div>
+                <!-- GC케어 CC: 고정값(32073000) — UI 노출 불필요 -->
+                <input type="hidden" id="inputCC" value="32073000">
               </div>
               <div class="cl-divider"></div>
               <div class="cl-info-box">
