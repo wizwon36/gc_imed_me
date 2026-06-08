@@ -2535,9 +2535,6 @@ function initUsageInitUI() {
   const src = document.getElementById('inputBranch');
   const tgt = document.getElementById('usageInitBranch');
   if (src && tgt) { tgt.innerHTML = src.innerHTML; tgt.value = src.value; }
-  // 연도 기본값
-  const el = document.getElementById('usageInitYear');
-  if (el && !el.value) el.value = new Date().getFullYear().toString();
 }
 
 async function handleUsageInitFile(input) {
@@ -2545,14 +2542,12 @@ async function handleUsageInitFile(input) {
   if (!file) return;
   input.value = '';
 
-  const year   = document.getElementById('usageInitYear')?.value?.trim();
   const branch = document.getElementById('usageInitBranch')?.value?.trim();
-  if (!year)   { showMessage('연도를 입력해 주세요.', 'error'); return; }
   if (!branch) { showMessage('지점명을 선택해 주세요.', 'error'); return; }
 
   try {
     showGlobalLoading('파일 분석 중...');
-    _usageInitParsed = await parseUsageInitFile(file, year);
+    _usageInitParsed = await parseUsageInitFile(file);
     renderUsageInitPreview(_usageInitParsed);
   } catch (e) {
     showMessage('파일 읽기 오류: ' + e.message, 'error');
@@ -2561,43 +2556,57 @@ async function handleUsageInitFile(input) {
   }
 }
 
-// 기존 보고 파일의 4번째 시트(연간 원재료비) 파싱
-function parseUsageInitFile(file, year) {
+// 기존 보고 파일의 4번째 시트(연간 원재료비) 파싱 - 모든 연도 블록 자동 인식
+function parseUsageInitFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
       try {
         const wb = XLSX.read(e.target.result, { type: 'array' });
-        // 연간 원재료비 시트 찾기
+        // 연간 원재료비 시트 찾기 (마지막 시트 또는 연도 포함 시트)
         const sheetName = wb.SheetNames.find(s =>
-          s.includes('원재료비') && (s.includes(year) || s.includes('연간') || s.includes('년도'))
+          s.includes('원재료비') && (s.includes('년도') || s.includes('연간'))
         ) || wb.SheetNames[wb.SheetNames.length - 1];
+
         const ws  = wb.Sheets[sheetName];
         const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
         const rows = [];
-        const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+        let currentYear = null;
 
-        all.forEach((row, ri) => {
-          // 헤더 행 건너뛰기 (구   분, 기초, 1월...)
+        all.forEach(row => {
           const col0 = String(row[0] || '').trim();
-          if (!col0 || col0.includes('원재료비') || col0.includes('구') || col0.includes('소') || col0 === '') return;
 
-          // 비고(마지막 컬럼)에서 부서명-자재구분 파싱
-          const bigo = String(row[15] || row[row.length - 1] || '').trim();
+          // 연도 블록 감지 (■ 2026년도 원재료비)
+          const yearMatch = col0.match(/(\d{4})년도\s*원재료비/);
+          if (yearMatch) {
+            currentYear = yearMatch[1];
+            return;
+          }
+
+          // 연도 블록 없으면 스킵
+          if (!currentYear) return;
+
+          // 헤더/소계/빈행 스킵
+          if (!col0 || col0.includes('구') || col0.includes('소') || col0 === '') return;
+
+          // 비고(15열)에서 부서명 - 자재구분 파싱
+          const bigo = String(row[15] || '').trim();
           if (!bigo || !bigo.includes('-')) return;
 
-          const parts  = bigo.split('-').map(s => s.trim());
-          const dept   = parts[0];
-          const itype  = parts[1];
+          const parts = bigo.split('-').map(s => s.trim());
+          const dept  = parts[0];
+          const itype = parts[1];
           if (!dept || !itype) return;
 
           // 월별 값 파싱 (2~13열: 1월~12월, 천원 단위)
+          const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
           months.forEach((mon, mi) => {
-            const val = parseFloat(String(row[mi + 2] || '0').replace(/,/g, '')) || 0;
+            const raw = String(row[mi + 2] || '').replace(/,/g, '').trim();
+            const val = parseFloat(raw) || 0;
             if (!val) return;
             rows.push({
-              ym:           `${year}-${mon}`,
+              ym:           `${currentYear}-${mon}`,
               dept,
               item_type:    itype,
               usage_amount: Math.round(val * 1000),  // 천원 → 원
@@ -2605,7 +2614,10 @@ function parseUsageInitFile(file, year) {
           });
         });
 
-        if (!rows.length) { reject(new Error('데이터를 찾을 수 없습니다. 4번째 시트(연간 원재료비)가 맞는지 확인해 주세요.')); return; }
+        if (!rows.length) {
+          reject(new Error('데이터를 찾을 수 없습니다. 연간 원재료비 시트가 있는 파일인지 확인해 주세요.'));
+          return;
+        }
         resolve(rows);
       } catch (err) {
         reject(new Error('파일 읽기 실패: ' + err.message));
