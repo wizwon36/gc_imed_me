@@ -356,17 +356,17 @@ function renderResults() {
     </div>
     <div class="cl-stat">
       <div class="cl-stat-label">전체 입고금액</div>
-      <div class="cl-stat-val">${Math.round((gcT + imT) / 1000).toLocaleString()}천원</div>
+      <div class="cl-stat-val">${Math.round(gcT + imT).toLocaleString()}원</div>
       <div class="cl-stat-sub">합계금액 기준</div>
     </div>
     <div class="cl-stat" style="border-left:3px solid #0e7c3a;">
       <div class="cl-stat-label" style="color:#0e7c3a;">GC케어 입고</div>
-      <div class="cl-stat-val" style="color:#0e7c3a;">${Math.round(gcT / 1000).toLocaleString()}천원</div>
+      <div class="cl-stat-val" style="color:#0e7c3a;">${Math.round(gcT).toLocaleString()}원</div>
       <div class="cl-stat-sub">소모품·시약 ${R.gcVendors.length}개 거래처</div>
     </div>
     <div class="cl-stat" style="border-left:3px solid #b45309;">
       <div class="cl-stat-label" style="color:#b45309;">아이메드 입고</div>
-      <div class="cl-stat-val" style="color:#b45309;">${Math.round(imT / 1000).toLocaleString()}천원</div>
+      <div class="cl-stat-val" style="color:#b45309;">${Math.round(imT).toLocaleString()}원</div>
       <div class="cl-stat-sub">의약품 ${R.imedVendors.length}개 거래처</div>
     </div>
   `;
