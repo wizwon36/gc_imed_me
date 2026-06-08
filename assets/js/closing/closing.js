@@ -1302,14 +1302,18 @@ async function dlReport(label, vendors, depts, filename) {
   const R = App.R; const wb = newWb();
   writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap);
   writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, depts);
-  const ws3 = wb.addWorksheet('원재료비 ' + R.y.slice(2) + '년 ' + R.m + '월');
-  titleRow(ws3, 1, 1, `${R.m}월 원재료비 계산`, 6, 22);
-  [['부서', 1], ['기초재고', 2], ['당기매입', 3], ['당기사용', 4], ['기말재고', 5], ['비고', 6]]
-    .forEach(([v, c]) => hdrCell(ws3, 2, c, v));
-  const ws4 = wb.addWorksheet(R.y + '년도 원재료비 ');
-  titleRow(ws4, 1, 1, '■ ' + R.y + '년도 원재료비', 15, 22);
-  ['구   분', '기초', '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월', '기말']
-    .forEach((v, i) => hdrCell(ws4, 2, i + 1, v));
+
+  // 3번째 시트: 원재료비 월별 (부서별 기초/당기매입/당기사용/기말)
+  const user = window.auth?.getSession?.();
+  const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
+  const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  const prevStockData = await loadPrevStock(prevYm, R.branch);
+  writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
+
+  // 4번째 시트: 연간 원재료비
+  const yearStock = await loadYearStock(R.y, R.branch, user);
+  writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearStock, label);
+
   await saveWb(wb, filename);
 }
 async function dlGCReport() {
@@ -1445,12 +1449,202 @@ async function loadPrevStock(ym, branch) {
   }
 }
 
+// 연도 전체 closing_stock 조회
+async function loadYearStock(year, branch, user) {
+  try {
+    const res = await apiGet('closingGetStock', {
+      request_user_email: user?.email,
+      year,
+      branch,
+    });
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// ── 3번째 시트: 원재료비 월별 ─────────────────────────────
+function writeWonjaeryo(ws, R, prevStockData, label) {
+  const isGC = label.includes('시약');  // GC케어=시약, 아이메드=원재료
+
+  // 제목
+  const titleCell = ws.getCell(1, 2);
+  titleCell.value = `${R.m}월 원재료비 - ${R.branch} 납품`;
+  titleCell.font = { name: 'Calibri', size: 13, bold: true };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.mergeCells(1, 2, 1, 7); ws.getRow(1).height = 24;
+
+  // (단위:원/ -VAT)
+  const unitCell = ws.getCell(2, 7);
+  unitCell.value = '(단위:원/ -VAT)'; unitCell.font = F.base; unitCell.alignment = AL('right');
+
+  // 헤더
+  [['구분', 1], ['기초재고', 2], ['당기매입', 3], ['당기사용', 4], ['기말재고', 5], ['비고', 6]]
+    .forEach(([v, c]) => hdrCell(ws, 3, c, v));
+  ws.getRow(3).height = 18;
+
+  // 기초재고: 부서별 (dept 있는 경우), 없으면 전체 합계
+  const prevDeptStock = {};
+  prevStockData.forEach(s => {
+    const dept = s.dept || '';
+    const type = s.item_type || '';
+    if (!prevDeptStock[dept + '||' + type]) prevDeptStock[dept + '||' + type] = 0;
+    prevDeptStock[dept + '||' + type] += toN(s.closing_amount);
+  });
+
+  // 당기매입: 입고 데이터 부서별 집계 (GC케어=시약, 아이메드=의약품)
+  const ipgoData = isGC ? R.gcIpgo : R.imedIpgo;
+  const usageData = isGC ? R.usageSiyak : R.usageImed;
+
+  const deptIpgo = {};
+  ipgoData.forEach(r => {
+    const dept = String(r['의뢰부서'] || '').trim(); if (!dept) return;
+    const type = String(r['자재구분'] || '').trim();
+    const k = dept + '||' + type;
+    if (!deptIpgo[k]) deptIpgo[k] = { dept, type, amt: 0 };
+    deptIpgo[k].amt += toN(r['공급가액']);
+  });
+
+  // 당기사용: 사용현황 부서별 집계
+  const deptUsage = {};
+  usageData.forEach(r => {
+    const dept = String(r['부서명'] || '').trim(); if (!dept) return;
+    const type = String(r['자재구분'] || '').trim();
+    const k = dept + '||' + type;
+    if (!deptUsage[k]) deptUsage[k] = { dept, type, amt: 0 };
+    deptUsage[k].amt += toN(r['사용공급가']);
+  });
+
+  // 부서 목록 (입고+사용 합집합, 가나다순)
+  const deptKeys = [...new Set([
+    ...Object.keys(deptIpgo),
+    ...Object.keys(deptUsage),
+    ...Object.keys(prevDeptStock),
+  ])].sort((a, b) => a.localeCompare(b, 'ko'));
+
+  let r = 4;
+  let totBase = 0, totBuy = 0, totUse = 0, totEnd = 0;
+
+  deptKeys.forEach((k, ri) => {
+    const fill  = ri % 2 === 0 ? FILL.odd : FILL.even;
+    const parts = k.split('||');
+    const dept  = parts[0], type = parts[1];
+    const base  = toN(prevDeptStock[k]);
+    const buy   = toN(deptIpgo[k]?.amt);
+    const use   = toN(deptUsage[k]?.amt);
+    const end   = base + buy - use;
+
+    totBase += Math.round(base);
+    totBuy  += Math.round(buy);
+    totUse  += Math.round(use);
+    totEnd  += Math.round(end);
+
+    txtCell(ws, r, 1, dept, fill);
+    numCell(ws, r, 2, base, fill);
+    numCell(ws, r, 3, buy,  fill);
+    numCell(ws, r, 4, use,  fill);
+    numCell(ws, r, 5, end,  fill);
+    txtCell(ws, r, 6, `${dept} - ${type}`, fill);
+    ws.getRow(r).height = 16; r++;
+  });
+
+  // 계 행
+  subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
+  ws.getRow(r).height = 18;
+
+  cw(ws, [[1, 20], [2, 16], [3, 16], [4, 16], [5, 16], [6, 24]]);
+  ws.views = [{ state: 'frozen', ySplit: 3 }];
+}
+
+// ── 4번째 시트: 연간 원재료비 ────────────────────────────
+function writeWonjaeryoYear(ws, R, yearStock, label) {
+  const isGC = label.includes('시약');
+
+  // 제목
+  const titleCell = ws.getCell(1, 1);
+  titleCell.value = `■ ${R.y}년도 원재료비`;
+  titleCell.font = { name: 'Calibri', size: 12, bold: true };
+  titleCell.alignment = AL('left');
+  ws.mergeCells(1, 1, 1, 17); ws.getRow(1).height = 22;
+
+  // (단위 : 천원)
+  ws.getCell(1, 17).value = '(단위 : 천원)';
+  ws.getCell(1, 17).font = F.base;
+  ws.getCell(1, 17).alignment = AL('right');
+
+  // 헤더
+  ['구   분', '기초', '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월', '기말', '비고']
+    .forEach((v, i) => hdrCell(ws, 2, i + 1, v));
+  ws.getRow(2).height = 18;
+
+  // yearStock을 월별·부서별로 집계
+  // closing_stock에서 각 월의 기말을 부서별로 가져옴
+  const monthlyMap = {};  // key: dept||type, value: { m01..m12, base, end }
+  yearStock.forEach(s => {
+    const dept = s.dept || '';
+    const type = s.item_type || '';
+    const k    = dept + '||' + type;
+    const mon  = String(s.ym || '').split('-')[1];  // '05'
+    if (!mon) return;
+    if (!monthlyMap[k]) monthlyMap[k] = { dept, type, base: 0, end: 0 };
+    monthlyMap[k]['m' + mon] = (monthlyMap[k]['m' + mon] || 0) + Math.round(toN(s.closing_amount) / 1000);
+  });
+
+  // 현재 당월 기말도 계산해서 추가
+  const curMon = String(R.m).padStart(2, '0');
+  const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
+  const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+
+  // 부서 목록 (가나다순)
+  const deptKeys = [...new Set([
+    ...(isGC ? R.gcIpgo.map(r => String(r['의뢰부서'] || '').trim() + '||' + String(r['자재구분'] || '').trim())
+             : R.imedIpgo.map(r => String(r['의뢰부서'] || '').trim() + '||' + String(r['자재구분'] || '').trim())),
+    ...Object.keys(monthlyMap),
+  ])].filter(k => k !== '||').sort((a, b) => a.localeCompare(b, 'ko'));
+
+  const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+  let r = 3;
+
+  deptKeys.forEach((k, ri) => {
+    const fill  = ri % 2 === 0 ? FILL.odd : FILL.even;
+    const parts = k.split('||');
+    const dept  = parts[0], type = parts[1];
+    const d     = monthlyMap[k] || {};
+
+    txtCell(ws, r, 1, dept, fill);
+    numCell(ws, r, 2, d.base || 0, fill);
+    months.forEach((mon, mi) => numCell(ws, r, mi + 3, d['m' + mon] || 0, fill));
+    numCell(ws, r, 15, d.end || 0, fill);
+    txtCell(ws, r, 16, `${dept} - ${type}`, fill);
+    ws.getRow(r).height = 16; r++;
+  });
+
+  // 소계
+  const totRow = {};
+  months.forEach(mon => {
+    totRow[mon] = deptKeys.reduce((s, k) => s + (monthlyMap[k]?.['m' + mon] || 0), 0);
+  });
+  subtotRow(ws, r, [1], ['소  계'],
+    [2, ...months.map((_, i) => i + 3), 15],
+    [0, ...months.map(mon => totRow[mon]), 0]
+  );
+  ws.getRow(r).height = 18;
+
+  const colWidths = [[1, 20], [2, 10]];
+  months.forEach((_, i) => colWidths.push([i + 3, 9]));
+  colWidths.push([15, 10], [16, 20]);
+  cw(ws, colWidths);
+  ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 2 }];
+}
+
 // 마감 확정: 현재 subulMap 기말값 → DB 저장
 async function confirmClosing() {
   const R   = App.R;
   const btn = document.getElementById('btnClosingConfirm');
   const statusEl = document.getElementById('closingConfirmStatus');
   const ym  = `${R.y}-${String(R.m).padStart(2, '0')}`;
+  const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
+  const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
   // 이미 확정된 데이터 있는지 체크 (branch 기준)
   try {
@@ -1477,12 +1671,15 @@ async function confirmClosing() {
   try {
     showGlobalLoading('마감 확정 저장 중...');
     const user  = window.auth?.getSession?.();
+
+    // 품목코드 기준으로 기말 저장 (부서별 집계는 시트 생성 시 Raw에서 계산)
     const items = Object.values(R.subulMap).map(it => ({
+      dept:           '',
       item_code:      it.code,
       item_name:      it.name,
       item_type:      it.type,
-      closing_qty:    (it.기초수량 || 0),                               // 수량: 소수점 그대로 DB 저장
-      closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소), // 금액: 반올림
+      closing_qty:    (it.기초수량 || 0),
+      closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소),
     }));
 
     await apiPost('closingSaveStock', {
