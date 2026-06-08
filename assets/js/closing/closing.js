@@ -88,8 +88,18 @@ function switchTab(tab) {
     document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Content`)
       ?.classList.toggle('active', t === tab);
   });
-  if (tab === 'vendor') renderVendorTable();
-  if (tab === 'item')   renderItemTable();
+  if (tab === 'vendor') {
+    showGlobalLoading('거래처 정보 로드 중...');
+    loadVendorsFromServer()
+      .then(() => renderVendorTable())
+      .finally(() => hideGlobalLoading());
+  }
+  if (tab === 'item') {
+    showGlobalLoading('자재코드 로드 중...');
+    loadItemsFromServer()
+      .then(() => renderItemTable())
+      .finally(() => hideGlobalLoading());
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
