@@ -373,8 +373,13 @@ async function runProcessing() {
     if (prevStock.length) {
       prevStock.forEach(s => {
         const code = String(s.item_code || '').trim(); if (!code) return;
-        if (subulMap[code]) subulMap[code].기초 = toN(s.closing_amount);
-        else subulMap[code] = { code, name: s.item_name || '', type: s.item_type || '', 기초: toN(s.closing_amount), 증가: 0, 감소: 0 };
+        if (subulMap[code]) {
+          subulMap[code].기초    = toN(s.closing_amount);
+          subulMap[code].기초수량 = toN(s.closing_qty);   // 소수점 그대로 유지
+        } else {
+          subulMap[code] = { code, name: s.item_name || '', type: s.item_type || '',
+            기초: toN(s.closing_amount), 기초수량: toN(s.closing_qty), 증가: 0, 감소: 0 };
+        }
       });
       clog(`전월 기초 재고 ${prevStock.length}건 반영`, 'ok');
     } else {
@@ -932,16 +937,22 @@ function writeSubul(ws, year, month, branch, items) {
 
   let r = 5;
   sorted.forEach((it, ri) => {
-    const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-    const 기초 = it.기초 || 0;
-    const 기말 = 기초 + it.증가 - it.감소;
+    const fill   = ri % 2 === 0 ? FILL.odd : FILL.even;
+    const 기초   = it.기초 || 0;
+    const 기초수량 = Math.round(it.기초수량 || 0);
+    const 기말   = 기초 + it.증가 - it.감소;
+    // 기말 수량 = 기초수량 + 증가수량 - 감소수량 (수량은 미집계이므로 기초수량 기반만 표기)
+    const 기말수량 = 기초수량; // 당월 입고/사용 수량은 Raw에 없으므로 기초 그대로
+
     txtCell(ws, r, 1, it.code, fill);
     txtCell(ws, r, 2, it.name, fill);
     txtCell(ws, r, 3, it.type, fill, false, true);
-    if (기초  !== 0) numCell(ws, r, 6,  기초,     fill);
+    if (기초   !== 0) numCell(ws, r, 6,  기초,     fill);
+    if (기초수량 !== 0) numCell(ws, r, 4,  기초수량,  fill);
     if (it.증가 !== 0) numCell(ws, r, 8,  it.증가,  fill);
     if (it.감소 !== 0) numCell(ws, r, 10, it.감소,  fill);
-    numCell(ws, r, 13, 기말, fill);   // 기말은 항상 표기
+    numCell(ws, r, 13, 기말, fill);
+    if (기말수량 !== 0) numCell(ws, r, 11, 기말수량, fill);
     ws.getRow(r).height = 16; r++;
   });
 
@@ -1199,8 +1210,8 @@ async function confirmClosing() {
       item_code:      it.code,
       item_name:      it.name,
       item_type:      it.type,
-      closing_qty:    0,
-      closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소), // 기말 = 기초+증가-감소
+      closing_qty:    (it.기초수량 || 0),                               // 수량: 소수점 그대로 DB 저장
+      closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소), // 금액: 반올림
     }));
 
     await apiPost('closingSaveStock', {
@@ -1935,8 +1946,8 @@ function renderStockInitPreview(rows) {
       <td style="font-family:monospace;font-size:12px;">${escHtml(r.item_code)}</td>
       <td>${escHtml(r.item_name)}</td>
       <td style="text-align:center;">${escHtml(r.item_type)}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums;">${r.closing_qty.toLocaleString()}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums;">${r.closing_amount.toLocaleString()}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${Math.round(r.closing_qty).toLocaleString()}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${Math.round(r.closing_amount).toLocaleString()}</td>
     </tr>`).join('')}
   </tbody>`;
 
