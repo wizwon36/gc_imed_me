@@ -400,6 +400,57 @@
 
           </div>
         </div>
+
+        <!-- 초기 재고 업로드 카드 -->
+        <div class="card" style="margin-top:14px;border:1px solid #e2e8f0;">
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <strong style="font-size:14px;">📥 초기 재고 업로드 (수불부)</strong>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+                  기존 수불부 파일의 특정 월 기말 재고를 <code>closing_stock</code>에 저장합니다.
+                  다음 달 마감 시 기초값으로 자동 반영됩니다.
+                </p>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">저장 연월</label>
+                  <input type="month" id="stockInitYm" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">지점명</label>
+                  <select id="stockInitBranch" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;min-width:100px;"></select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">시트 선택</label>
+                  <select id="stockInitSheet" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;min-width:160px;">
+                    <option value="">파일 업로드 후 선택</option>
+                  </select>
+                </div>
+                <div style="margin-top:18px;display:flex;gap:8px;">
+                  <label for="stockInitFileInput" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;">📂 수불부 파일</label>
+                  <input type="file" id="stockInitFileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleStockInitFile(this)">
+                </div>
+              </div>
+            </div>
+
+            <!-- 미리보기 -->
+            <div id="stockInitPreview" style="display:none;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <span id="stockInitCount" style="font-size:13px;font-weight:700;"></span>
+                <span style="font-size:12px;color:var(--text-muted);">기말 수량·금액이 0이 아닌 품목만 표시</span>
+              </div>
+              <div class="cl-preview-wrap">
+                <table class="cl-preview" id="stockInitTable"></table>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button class="btn" onclick="cancelStockInit()">취소</button>
+                <button class="btn btn-primary" id="btnSaveStockInit" onclick="saveStockInit()">💾 초기 재고 저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /tabItemContent -->
   </div><!-- /container -->
 
