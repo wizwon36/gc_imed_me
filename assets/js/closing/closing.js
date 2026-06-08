@@ -411,13 +411,13 @@ async function runProcessing() {
     }
 
     // 미등록 거래처 경고
-    const unreg = [...new Set(gcIpgo.map(r => String(r['공급업체'] || '').trim()).filter(v => v && !vendorMap[v]))];
-    if (unreg.length) clog(`⚠ 거래처 관리 미등록: ${unreg.join(', ')}`, 'warn');
+    const unregVendors = [...new Set(gcIpgo.map(r => String(r['공급업체'] || '').trim()).filter(v => v && !vendorMap[v]))];
+    if (unregVendors.length) clog(`⚠ 거래처 관리 미등록: ${unregVendors.join(', ')}`, 'warn');
 
     App.R = { gcIpgo, imedIpgo, gcVendors, imedVendors, gcDepts, imedDepts,
               itemIpgoPivot, itemUsagePivot, usageGC, usageImed, usageSiyak, usageSomoum,
               siyakPivot, siyakPivot5, imedSiSoPivot, imedSiSoPivot5, imedDrugPivot,
-              sapRows, subulMap, vendorMap, unregItems, y, m: mi, branch, cc, account };
+              sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
 
     clog('모든 처리 완료!', 'ok');
     await sleep(300); prog(100, '완료!');
@@ -465,8 +465,25 @@ function renderResults() {
 
   renderPreview();
 
-  // 미등록 품목 에러 카드
-  const errCard = document.getElementById('unregItemsCard');
+  // 미등록 거래처 에러 카드
+  const vendorErrCard = document.getElementById('unregVendorsCard');
+  if (vendorErrCard) {
+    if (R.unregVendors && R.unregVendors.length > 0) {
+      vendorErrCard.style.display = '';
+      document.getElementById('unregVendorsBody').innerHTML = `
+        <p style="font-size:12px;color:#92400e;margin-bottom:10px;">
+          아래 거래처는 <strong>거래처 관리</strong>에 등록되지 않았습니다.
+          결재 시트에 사업자번호·결제방법·결제기일이 비어있으며 노란색으로 표시됩니다.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${R.unregVendors.map(v =>
+            `<span style="background:#fff;border:1px solid #fde68a;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:600;">${escHtml(v)}</span>`
+          ).join('')}
+        </div>`;
+    } else {
+      vendorErrCard.style.display = 'none';
+    }
+  }
   if (errCard) {
     if (R.unregItems && R.unregItems.length > 0) {
       errCard.style.display = '';
@@ -656,7 +673,7 @@ function txtCell(ws, r, c, v, fill, bold = false, center = false) {
 }
 function titleRow(ws, r, c, v, span, rowH = 22) {
   const cell = ws.getCell(r, c);
-  sc(cell, { value: ' ' + v, font: F.title, fill: FILL.title, alignment: AL('left'), border: BORDER_THIN });
+  sc(cell, { value: v, font: F.title, fill: FILL.title, alignment: AL('center', 'center'), border: BORDER_THIN });
   if (span > 1) ws.mergeCells(r, c, r, c + span - 1);
   ws.getRow(r).height = rowH;
 }
@@ -857,7 +874,7 @@ function writePivotUsageDept(ws, data, cols3) {
 }
 
 // ── 결재 시트 ─────────────────────────────────────────────
-function writeKyuljai(ws, year, month, label, vendors) {
+function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
   const ym = `${year}/${String(month).padStart(2, '0')}/01 ~ ${year}/${String(month).padStart(2, '0')}/31`;
   titleRow(ws, 1, 1, `${year}년 ${month}월 ${label} 마감내역`, 9, 24);
   const c4 = ws.getCell(4, 6); c4.value = `기준: ${ym}`; c4.font = F.base; c4.alignment = AL('right');
@@ -875,18 +892,28 @@ function writeKyuljai(ws, year, month, label, vendors) {
   let r = 7;
   vendors.forEach((v, i) => {
     const fill = i % 2 === 0 ? FILL.odd : FILL.even;
-    txtCell(ws, r, 1, i + 1, fill, false, true);
-    txtCell(ws, r, 2, v.공급업체, fill);
-    txtCell(ws, r, 3, v.사업자번호 || '', fill, false, true);
-    numCell(ws, r, 4, v.공급가액, fill); numCell(ws, r, 5, v.부가세, fill); numCell(ws, r, 6, v.합계금액, fill);
-    txtCell(ws, r, 7, '현금결제', fill, false, true);
-    txtCell(ws, r, 8, 90, fill, false, true);
-    txtCell(ws, r, 9, '', fill);
+    const vm   = (vendorMap && vendorMap[v.공급업체]) || null;
+    const isUnreg = !vm;
+    const rowFill = isUnreg ? FILL.warn : fill;
+
+    const bizNo     = vm ? vm.biz_no      : '';
+    const payMethod = vm ? vm.pay_method  : '';
+    const credit    = vm ? vm.credit_days : '';
+
+    txtCell(ws, r, 1, i + 1, rowFill, false, true);
+    txtCell(ws, r, 2, v.공급업체 + (isUnreg ? ' ⚠ 거래처 미등록' : ''), rowFill, isUnreg);
+    txtCell(ws, r, 3, bizNo,     rowFill, false, true);
+    numCell(ws, r, 4, v.공급가액, rowFill);
+    numCell(ws, r, 5, v.부가세,   rowFill);
+    numCell(ws, r, 6, v.합계금액, rowFill);
+    txtCell(ws, r, 7, payMethod, rowFill, false, true);
+    txtCell(ws, r, 8, credit,    rowFill, false, true);
+    txtCell(ws, r, 9, '',        rowFill);
     ws.getRow(r).height = 16; r++;
   });
   ws.mergeCells(r, 1, r, 3);
   totalRow(ws, r, [4, 5, 6], [sumF(vendors, '공급가액'), sumF(vendors, '부가세'), sumF(vendors, '합계금액')],
-    [1, 7, 8, 9], ['총합계', '현금결제', '', '']);
+    [1, 7, 8, 9], ['총합계', '', '', '']);
   cw(ws, [[1, 8], [2, 22], [3, 16], [4, 16], [5, 14], [6, 16], [7, 10], [8, 10], [9, 12]]);
   ws.views = [{ state: 'frozen', ySplit: 6 }];
 }
@@ -1131,7 +1158,7 @@ async function dlUsage() {
 
 async function dlReport(label, vendors, depts, filename) {
   const R = App.R; const wb = newWb();
-  writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors);
+  writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap);
   writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, depts);
   const ws3 = wb.addWorksheet('원재료비 ' + R.y.slice(2) + '년 ' + R.m + '월');
   titleRow(ws3, 1, 1, `${R.m}월 원재료비 계산`, 6, 22);
