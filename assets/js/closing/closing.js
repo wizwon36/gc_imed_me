@@ -1486,6 +1486,8 @@ async function loadYearUsage(year, branch, user) {
     return [];
   }
 }
+// 연도 전체 closing_stock 조회
+async function loadYearStock(year, branch, user) {
   try {
     const res = await apiGet('closingGetStock', {
       request_user_email: user?.email,
