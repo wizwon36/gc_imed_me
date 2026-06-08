@@ -201,10 +201,17 @@ function parseUsage(wb) {
     if (String(all[i][0]).trim() === '부서명' || String(all[i][1]).trim() === '부서명') { hr = i; break; }
   }
   const hdrs = all[hr].map(h => String(h).trim());
+  // 자재코드 컬럼 인덱스 찾기
+  const codeIdx = hdrs.findIndex(h => h === '자재코드');
   const data = [];
   for (let i = hr + 1; i < all.length; i++) {
     const row = all[i];
-    if (!String(row[0]).trim() && !String(row[1]).trim()) continue;
+    const col0 = String(row[0] || '').trim();
+    const col1 = String(row[1] || '').trim();
+    // 빈 행 스킵
+    if (!col0 && !col1) continue;
+    // 합계 행 스킵: 자재코드가 없으면 합계/소계 행
+    if (codeIdx >= 0 && !String(row[codeIdx] || '').trim()) continue;
     const obj = {};
     hdrs.forEach((h, idx) => { if (h) obj[h] = row[idx]; });
     data.push(obj);
