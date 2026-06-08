@@ -1530,9 +1530,14 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   unitCell.value = '(단위:원/ -VAT)'; unitCell.font = F.base; unitCell.alignment = AL('right');
   ws.getRow(2).height = 16;
 
-  // 헤더
+  // 헤더 (당기사용 강조)
   [['구분', 1], ['기초재고', 2], ['당기매입', 3], ['당기사용', 4], ['기말재고', 5], ['비고', 6]]
-    .forEach(([v, c]) => hdrCell(ws, 3, c, v));
+    .forEach(([v, c]) => {
+      hdrCell(ws, 3, c, v);
+      if (c === 4) {  // 당기사용 강조
+        ws.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+      }
+    });
   ws.getRow(3).height = 18;
 
   // 기초재고: 부서별, 시약(GC케어) 또는 의약품(아이메드)만
@@ -1613,9 +1618,10 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       ac.fill   = fill;
       ac.border = BORDER_THIN;
     }
+    const useFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCE4B0' } };
     numCell(ws, r, 2, base, fill);
     numCell(ws, r, 3, buy,  fill);
-    numCell(ws, r, 4, use,  fill);
+    numCell(ws, r, 4, use,  useFill);  // 당기사용 강조
     numCell(ws, r, 5, end,  fill);
     txtCell(ws, r, 6, `${dept} - ${type}`, fill);
     ws.getRow(r).height = 18; r++;
@@ -1627,7 +1633,9 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
 
   // 계 행
   subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
-  // 비고 셀(F열)도 소계 색으로 채우기
+  // 당기사용(4열) 소계 강조
+  ws.getCell(r, 4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+  // 비고 셀 소계 색상
   const bigoCell = ws.getCell(r, 6);
   bigoCell.fill   = FILL.subtot;
   bigoCell.border = BORDER_THIN;
@@ -1715,7 +1723,16 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
 
     // 헤더
     ['구   분','기초','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말','비고']
-      .forEach((v, i) => hdrCell(ws, r, i + 1, v));
+      .forEach((v, i) => {
+        hdrCell(ws, r, i + 1, v);
+        // 당월 헤더 강조 (현재 연도만)
+        if (yr === R.y && i >= 2 && i <= 13) {
+          const mon = String(i - 1).padStart(2, '0');
+          if (mon === curMon) {
+            ws.getCell(r, i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+          }
+        }
+      });
     ws.getRow(r).height = 18; r++;
 
     const colTotals = { base: 0, end: 0 };
@@ -1742,9 +1759,13 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       }
       numCell(ws, r, 2, d.base || 0, fill);
       months.forEach((mon, mi) => {
-        const v = d['m' + mon] || 0;
+        const v       = d['m' + mon] || 0;
+        const isCurMon = yr === R.y && mon === curMon;
+        const cellFill = isCurMon
+          ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCE4B0' } }  // 연한 황색 강조
+          : fill;
         colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
-        numCell(ws, r, mi + 3, v, fill);
+        numCell(ws, r, mi + 3, v, cellFill);
       });
       numCell(ws, r, 15, d.end || 0, fill);
       txtCell(ws, r, 16, `${dept} - ${targetType}`, fill);
@@ -1760,6 +1781,12 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       [2, ...months.map((_, i) => i + 3), 15],
       [colTotals.base, ...months.map((_, i) => colTotals[i + 3] || 0), colTotals.end]
     );
+    // 당월 소계 셀 강조
+    if (yr === R.y) {
+      const curCol = months.indexOf(curMon) + 3;
+      const cc = ws.getCell(r, curCol);
+      cc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } };
+    }
     ws.getCell(r, 16).fill   = FILL.subtot;
     ws.getCell(r, 16).border = BORDER_THIN;
     ws.getRow(r).height = 18; r++;
