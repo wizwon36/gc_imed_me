@@ -569,27 +569,27 @@ const F = {
   redb:  { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFC00000' } },
 };
 const FILL = {
-  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } },
-  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F5496' } },
-  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9E1F2' } },
+  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6FA8DC' } },
+  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A86C8' } },
+  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF2FB' } },
   odd:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },
-  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF3FB' } },
-  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2EFDA' } },
-  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } },
-  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F3864' } },
+  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4F8FD' } },
+  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9EAD3' } },
+  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8E1' } },
+  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2B5797' } },
   warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },
 };
 const BORDER_THIN = {
-  top: { style: 'thin', color: { argb: 'FFB8CCE4' } },
-  left: { style: 'thin', color: { argb: 'FFB8CCE4' } },
-  bottom: { style: 'thin', color: { argb: 'FFB8CCE4' } },
-  right: { style: 'thin', color: { argb: 'FFB8CCE4' } },
+  top: { style: 'thin', color: { argb: 'FFC8D8E8' } },
+  left: { style: 'thin', color: { argb: 'FFC8D8E8' } },
+  bottom: { style: 'thin', color: { argb: 'FFC8D8E8' } },
+  right: { style: 'thin', color: { argb: 'FFC8D8E8' } },
 };
 const BORDER_TOTAL = {
-  top: { style: 'medium', color: { argb: 'FF2F5496' } },
-  left: { style: 'medium', color: { argb: 'FF2F5496' } },
-  bottom: { style: 'medium', color: { argb: 'FF2F5496' } },
-  right: { style: 'medium', color: { argb: 'FF2F5496' } },
+  top: { style: 'medium', color: { argb: 'FF4A86C8' } },
+  left: { style: 'medium', color: { argb: 'FF4A86C8' } },
+  bottom: { style: 'medium', color: { argb: 'FF4A86C8' } },
+  right: { style: 'medium', color: { argb: 'FF4A86C8' } },
 };
 const NUM_FMT = '#,##0';
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'center', wrapText: false });
@@ -654,11 +654,33 @@ function subtotRow(ws, r, textCols, textVals, numCols, numVals) {
 function cw(ws, arr) { arr.forEach(([c, w]) => ws.getColumn(c).width = w); }
 
 // ── 데이터 시트 공통 ──────────────────────────────────────
-function writeDataSheet(ws, headers, rows, numCols, colWidths) {
-  headers.forEach((h, i) => hdrCell(ws, 1, i + 1, h));
+// sumCols: 합계를 표기할 컬럼 인덱스 배열(1-based), 없으면 생략
+function writeDataSheet(ws, headers, rows, numCols, colWidths, sumCols) {
+  const hasSumRow = sumCols && sumCols.length > 0;
+  const hdrRow    = hasSumRow ? 2 : 1;
+  const dataStart = hdrRow + 1;
+
+  // 1행: 합계
+  if (hasSumRow) {
+    const numSet = new Set(numCols);
+    sumCols.forEach(c => {
+      const total = rows.reduce((s, row) => s + toN(row[c - 1]), 0);
+      const cell  = ws.getCell(1, c);
+      cell.value  = Math.round(total) || null;
+      cell.font   = F.bold;
+      cell.numFmt = NUM_FMT;
+      cell.alignment = AL('right');
+    });
+    ws.getRow(1).height = 16;
+  }
+
+  // 헤더
+  headers.forEach((h, i) => hdrCell(ws, hdrRow, i + 1, h));
+
+  // 데이터
   const numSet = new Set(numCols);
   rows.forEach((row, ri) => {
-    const r = ri + 2;
+    const r    = dataStart + ri;
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     row.forEach((v, ci) => {
       const c = ci + 1;
@@ -667,8 +689,9 @@ function writeDataSheet(ws, headers, rows, numCols, colWidths) {
     });
     ws.getRow(r).height = 16;
   });
+
   colWidths.forEach((w, i) => ws.getColumn(i + 1).width = w);
-  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  ws.views = [{ state: 'frozen', ySplit: hdrRow }];
 }
 
 // ── 피벗: 거래처 ──────────────────────────────────────────
@@ -713,23 +736,22 @@ function writePivotDept(ws, data) {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     const isNewGroup = d.의뢰부서 !== prev;
 
-    // 이전 그룹 병합 처리
-    if (isNewGroup && prev !== null && r - 1 > groupStartRow) {
-      ws.mergeCells(groupStartRow, 1, r - 1, 1);
+    // 이전 그룹 병합 + 정렬
+    if (isNewGroup && prev !== null) {
+      if (r - 1 > groupStartRow) ws.mergeCells(groupStartRow, 1, r - 1, 1);
+      ws.getCell(groupStartRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
     }
     if (isNewGroup) groupStartRow = r;
 
     txtCell(ws, r, 1, isNewGroup ? d.의뢰부서 : null, fill, true);
-    ws.getCell(r, 1).alignment = { horizontal: 'center', vertical: 'center' };
     txtCell(ws, r, 2, d.자재구분, fill);
     [3, 4, 5].forEach((c, i) => numCell(ws, r, c, [d.공급가액, d.부가세, d.합계금액][i], fill));
     ws.getRow(r).height = 16; r++; prev = d.의뢰부서;
   });
 
-  // 마지막 그룹 병합
-  if (r - 1 > groupStartRow) {
-    ws.mergeCells(groupStartRow, 1, r - 1, 1);
-  }
+  // 마지막 그룹 병합 + 정렬
+  if (r - 1 > groupStartRow) ws.mergeCells(groupStartRow, 1, r - 1, 1);
+  ws.getCell(groupStartRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
   totalRow(ws, r, [3, 4, 5], [sumF(sorted, '공급가액'), sumF(sorted, '부가세'), sumF(sorted, '합계금액')], [1, 2], ['총합계', null]);
   cw(ws, [[1, 16], [2, 10], [3, 18], [4, 16], [5, 18]]);
@@ -765,14 +787,14 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     const isNewGroup = d.부서명 !== prev;
 
-    // 이전 그룹 병합 처리
-    if (isNewGroup && prev !== null && r - 1 > groupStartRow) {
-      ws.mergeCells(groupStartRow, 1, r - 1, 1);
+    // 이전 그룹 병합 + 정렬
+    if (isNewGroup && prev !== null) {
+      if (r - 1 > groupStartRow) ws.mergeCells(groupStartRow, 1, r - 1, 1);
+      ws.getCell(groupStartRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
     }
     if (isNewGroup) groupStartRow = r;
 
     txtCell(ws, r, 1, isNewGroup ? d.부서명 : null, fill, true);
-    ws.getCell(r, 1).alignment = { horizontal: 'center', vertical: 'center' };
     txtCell(ws, r, 2, d.자재구분, fill);
     const f = hasFivePct ? 1.05 : 1;
     numCell(ws, r, 3, Math.round(d.사용공급가 * f), fill);
@@ -781,10 +803,9 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
     ws.getRow(r).height = 16; r++; prev = d.부서명;
   });
 
-  // 마지막 그룹 병합
-  if (r - 1 > groupStartRow) {
-    ws.mergeCells(groupStartRow, 1, r - 1, 1);
-  }
+  // 마지막 그룹 병합 + 정렬
+  if (r - 1 > groupStartRow) ws.mergeCells(groupStartRow, 1, r - 1, 1);
+  ws.getCell(groupStartRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
   const f = hasFivePct ? 1.05 : 1;
   totalRow(ws, r, [3, 4, 5],
@@ -850,20 +871,38 @@ function writeDeptAmount(ws, month, depts) {
 
 // ── 사용현황 5% 시트 ─────────────────────────────────────
 function writeUsageWith5pct(ws, headers, rows, numCols, colWidths) {
-  headers.forEach((h, i) => hdrCell(ws, 1, i + 1, h));
-  const numSet = new Set(numCols);
+  // 1행: 합계 (공급가액, 공5%, 부가세, 부5%, 합계, 계5% — 컬럼 9~14)
+  // 헤더 구조: 1=부서명,2=자재구분,3=자재코드,4=자재명,5=구매번호,6=사용일자,
+  //            7=사용수량(입),8=사용수량(산),9=사용공급가,10=공5%,11=사용부가세,12=부5%,13=사용합계,14=계5%,...
+  const sumSet = new Set(numCols);
+  sumSet.forEach(c => {
+    const total = rows.reduce((s, row) => s + toN(row[c - 1]), 0);
+    if (!total) return;
+    const cell  = ws.getCell(1, c);
+    cell.value  = Math.round(total);
+    cell.font   = F.bold;
+    cell.numFmt = NUM_FMT;
+    cell.alignment = AL('right');
+  });
+  ws.getRow(1).height = 16;
+
+  // 2행: 헤더
+  headers.forEach((h, i) => hdrCell(ws, 2, i + 1, h));
+
+  // 3행~: 데이터
   rows.forEach((row, ri) => {
-    const r = ri + 2;
+    const r    = ri + 3;
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     row.forEach((v, ci) => {
       const c = ci + 1;
-      if (numSet.has(c)) numCell(ws, r, c, v, fill);
+      if (sumSet.has(c)) numCell(ws, r, c, v, fill);
       else txtCell(ws, r, c, v, fill);
     });
     ws.getRow(r).height = 16;
   });
+
   colWidths.forEach((w, i) => ws.getColumn(i + 1).width = w);
-  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  ws.views = [{ state: 'frozen', ySplit: 2 }];
 }
 
 // ── SAP 시트 ─────────────────────────────────────────────
@@ -1001,6 +1040,9 @@ async function dlUsage() {
     const uc  = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '사용부가세', '사용합계', '공급업체', '규격'];
     const uw  = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 14, 16, 10];
     const un  = [7, 8, 9, 10, 11];
+    // 사용원본/의약품: 1행 합계 컬럼 = 사용공급가(9), 사용부가세(10), 사용합계(11)
+    const uSumCols = [9, 10, 11];
+
     const uc5 = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '공5%', '사용부가세', '부5%', '사용합계', '계5%', '공급업체', '규격'];
     const uw5 = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 12, 10, 14, 12, 16, 10];
     const un5 = [7, 8, 9, 10, 11, 12, 13, 14];
@@ -1011,14 +1053,18 @@ async function dlUsage() {
         sup, Math.round(sup * 1.05), vat, Math.round(vat * 1.05), tot, Math.round(tot * 1.05),
         d['공급업체'], d['규격']];
     };
-    writeDataSheet(wb.addWorksheet('사용원본'), uc, App.usageData.map(d => uc.map(c => d[c] || '')), un, uw);
+
+    // 사용원본: 1행에 합계
+    writeDataSheet(wb.addWorksheet('사용원본'), uc, App.usageData.map(d => uc.map(c => d[c] || '')), un, uw, uSumCols);
+    // 시약·소모품/소모품/시약: 1행에 합계 (공급가9, 공5%10, 부가세11, 부5%12, 합계13, 계5%14)
     writeUsageWith5pct(wb.addWorksheet('시약, 소모품'), uc5, R.usageGC.map(make5), un5, uw5);
     writePivotItem(wb.addWorksheet('원가집계표 요약'), R.itemUsagePivot, true);
     writeUsageWith5pct(wb.addWorksheet('소모품'), uc5, R.usageSomoum.map(make5), un5, uw5);
     writeUsageWith5pct(wb.addWorksheet('시약'), uc5, R.usageSiyak.map(make5), un5, uw5);
     writePivotUsageDept(wb.addWorksheet('시약 마감요약'), R.siyakPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
     writePivotUsageDept(wb.addWorksheet('시약5%'), R.siyakPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
-    writeDataSheet(wb.addWorksheet('의약품'), uc, R.usageImed.map(d => uc.map(c => d[c] || '')), un, uw);
+    // 의약품: 1행에 합계
+    writeDataSheet(wb.addWorksheet('의약품'), uc, R.usageImed.map(d => uc.map(c => d[c] || '')), un, uw, uSumCols);
     writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(시, 소)'), R.imedSiSoPivot, ['합계 : 공5%', '합계 : 부5%', '합계 : 계5%'], true);
     writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(의약품)'), R.imedDrugPivot, ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
     await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 사용현황 - ${R.branch}.xlsx`);
