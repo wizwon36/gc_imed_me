@@ -156,7 +156,7 @@
   margin-bottom: 5px;
   text-transform: uppercase; letter-spacing: .5px;
 }
-.cl-stat-val  { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+.cl-stat-val  { font-size: 18px; font-weight: 800; color: var(--text-primary); }
 .cl-stat-sub  { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
 /* ── 다운로드 카드 ───────────────────────────────────────── */
