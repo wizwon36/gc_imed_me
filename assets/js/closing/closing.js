@@ -668,27 +668,27 @@ const F = {
   redb:  { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFC00000' } },
 };
 const FILL = {
-  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } },  // 살구/황금
-  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8960A' } },  // 진한 황금
-  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3E0' } },  // 연한 베이지
+  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCD5A1' } },  // 연한 살구
+  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5B969' } },  // 중간 살구
+  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3E0' } },  // 아주 연한 베이지
   odd:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
   even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8F0' } },  // 아주연한 베이지
   gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3E0' } },  // 연한 베이지
   imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCE4EC' } },  // 연한 핑크
-  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8B5E3C' } },  // 진한 갈색
+  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC07820' } },  // 중간 갈색
   warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },  // 노란 경고
 };
 const BORDER_THIN = {
-  top: { style: 'thin', color: { argb: 'FFDDBB88' } },
-  left: { style: 'thin', color: { argb: 'FFDDBB88' } },
-  bottom: { style: 'thin', color: { argb: 'FFDDBB88' } },
-  right: { style: 'thin', color: { argb: 'FFDDBB88' } },
+  top: { style: 'thin', color: { argb: 'FFFCD5A1' } },
+  left: { style: 'thin', color: { argb: 'FFFCD5A1' } },
+  bottom: { style: 'thin', color: { argb: 'FFFCD5A1' } },
+  right: { style: 'thin', color: { argb: 'FFFCD5A1' } },
 };
 const BORDER_TOTAL = {
-  top: { style: 'medium', color: { argb: 'FFE8960A' } },
-  left: { style: 'medium', color: { argb: 'FFE8960A' } },
-  bottom: { style: 'medium', color: { argb: 'FFE8960A' } },
-  right: { style: 'medium', color: { argb: 'FFE8960A' } },
+  top: { style: 'medium', color: { argb: 'FFF5B969' } },
+  left: { style: 'medium', color: { argb: 'FFF5B969' } },
+  bottom: { style: 'medium', color: { argb: 'FFF5B969' } },
+  right: { style: 'medium', color: { argb: 'FFF5B969' } },
 };
 const NUM_FMT = '#,##0';
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'center', wrapText: false });
@@ -990,24 +990,25 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
 
 // ── 부서별 금액 시트 ─────────────────────────────────────
 function writeDeptAmount(ws, month, depts) {
-  // 제목 (B1~E2 병합)
-  const titleCell = ws.getCell(1, 2);
-  titleCell.value = `${month}월 부서별 구매 내역`;
-  titleCell.font      = { name: 'Calibri', size: 14, bold: true };
-  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.mergeCells(1, 2, 2, 5);
+  // 1~2행: 제목 (B~E 병합)
+  ws.mergeCells(1, 1, 2, 5);
+  const tc = ws.getCell(1, 1);
+  tc.value = `${month}월 부서별 구매 내역`;
+  tc.font      = { name: 'Calibri', size: 14, bold: true };
+  tc.alignment = { horizontal: 'center', vertical: 'middle' };
   ws.getRow(1).height = 28; ws.getRow(2).height = 14;
 
   // (단위 : 원)
-  const unitCell = ws.getCell(2, 5);
-  unitCell.value = '(단위 : 원)'; unitCell.font = F.base; unitCell.alignment = AL('right');
+  ws.getCell(2, 5).value = '(단위 : 원)';
+  ws.getCell(2, 5).font = F.base;
+  ws.getCell(2, 5).alignment = AL('right');
 
-  // 헤더 (3행)
-  [[1, '의뢰부서'], [2, '상태'], [3, '합계: 공급가액'], [4, '합계: 부가세'], [5, '합계: 합계금액']]
+  // 3행: 헤더
+  [[1,'의뢰부서'],[2,'상태'],[3,'합계: 공급가액'],[4,'합계: 부가세'],[5,'합계: 합계금액']]
     .forEach(([c, v]) => hdrCell(ws, 3, c, v));
   ws.getRow(3).height = 18;
 
-  // 가나다 오름차순 정렬
+  // 정렬
   const sorted = [...depts].sort((a, b) => {
     const dc = a.의뢰부서.localeCompare(b.의뢰부서, 'ko');
     return dc !== 0 ? dc : a.자재구분.localeCompare(b.자재구분, 'ko');
@@ -1017,17 +1018,13 @@ function writeDeptAmount(ws, month, depts) {
   const groups = [];
   sorted.forEach(d => {
     const last = groups[groups.length - 1];
-    if (last && last.name === d.의뢰부서) {
-      last.items.push(d);
-    } else {
-      groups.push({ name: d.의뢰부서, items: [d] });
-    }
+    if (last && last.name === d.의뢰부서) last.items.push(d);
+    else groups.push({ name: d.의뢰부서, items: [d] });
   });
 
   let r = 4;
   groups.forEach((g, gi) => {
     const groupStart = r;
-    // 부서 데이터 행
     g.items.forEach((d, di) => {
       const fill = gi % 2 === 0 ? FILL.odd : FILL.even;
       txtCell(ws, r, 1, di === 0 ? d.의뢰부서 : null, fill, di === 0);
@@ -1037,61 +1034,58 @@ function writeDeptAmount(ws, month, depts) {
       numCell(ws, r, 5, d.합계금액, fill);
       ws.getRow(r).height = 16; r++;
     });
-    // 의뢰부서 셀 병합 + 가운데 정렬
-    if (r - 1 > groupStart) {
-      ws.mergeCells(groupStart, 1, r - 1, 1);
-    }
+    // 의뢰부서 셀 병합
+    if (r - 1 > groupStart) ws.mergeCells(groupStart, 1, r - 1, 1);
     ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // 부서 요약 행 (항상 표기)
+    // 부서 요약 행 — mergeCells 먼저, 그 다음 값 직접 쓰기
     ws.mergeCells(r, 1, r, 2);
-    subtotRow(ws, r,
-      [1, 2], [g.name, null],
-      [3, 4, 5],
-      [sumF(g.items, '공급가액'), sumF(g.items, '부가세'), sumF(g.items, '합계금액')]
-    );
+    const sc1 = ws.getCell(r, 1);
+    sc1.value = g.name; sc1.font = F.bold; sc1.fill = FILL.subtot;
+    sc1.alignment = { horizontal: 'center', vertical: 'middle' };
+    sc1.border = BORDER_THIN;
+    [3,4,5].forEach((c, i) => {
+      const vals = [sumF(g.items,'공급가액'), sumF(g.items,'부가세'), sumF(g.items,'합계금액')];
+      const cell = ws.getCell(r, c);
+      cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.subtot;
+      cell.alignment = AL('right'); cell.border = BORDER_THIN; cell.numFmt = NUM_FMT;
+    });
     ws.getRow(r).height = 16; r++;
   });
 
-  // 총합계: 원재료(시약+의약품)와 소모품 구분
+  // 전체 합계 행
+  ws.mergeCells(r, 1, r, 2);
+  const totCell = ws.getCell(r, 1);
+  totCell.value = '합  계'; totCell.font = F.bold; totCell.fill = FILL.subtot;
+  totCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  totCell.border = BORDER_THIN;
+  [3,4,5].forEach((c,i) => {
+    const vals = [sumF(sorted,'공급가액'), sumF(sorted,'부가세'), sumF(sorted,'합계금액')];
+    const cell = ws.getCell(r, c);
+    cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.subtot;
+    cell.alignment = AL('right'); cell.border = BORDER_THIN; cell.numFmt = NUM_FMT;
+  });
+  ws.getRow(r).height = 16; r++;
+
+  // 총합계 - 원재료 / 소모품
   const 원재료 = sorted.filter(d => d.자재구분 === '시약' || d.자재구분 === '의약품');
   const 소모품 = sorted.filter(d => d.자재구분 === '소모품');
-
-  // 전체 소계
-  ws.mergeCells(r, 1, r, 2);
-  subtotRow(ws, r, [1, 2], ['', null],
-    [3, 4, 5], [sumF(sorted, '공급가액'), sumF(sorted, '부가세'), sumF(sorted, '합계금액')]);
-  ws.getRow(r).height = 16; r++;
-
-  // 총합계 - 원재료
-  ws.mergeCells(r, 1, r, 2);
-  const totalCell1 = ws.getCell(r, 1);
-  totalCell1.value = '총합계';
-  totalCell1.font = F.total; totalCell1.fill = FILL.total;
-  totalCell1.alignment = { horizontal: 'center', vertical: 'middle' };
-  totalCell1.border = BORDER_TOTAL;
-  txtCell(ws, r, 2, '원재료', FILL.total, true, true);
-  [3, 4, 5].forEach((c, i) => {
-    const cell = ws.getCell(r, c);
-    sc(cell, { value: Math.round([sumF(원재료, '공급가액'), sumF(원재료, '부가세'), sumF(원재료, '합계금액')][i]), font: F.total, fill: FILL.total, alignment: AL('right'), border: BORDER_TOTAL, numFmt: NUM_FMT });
+  [['원재료', 원재료], ['소모품', 소모품]].forEach(([label, data]) => {
+    ws.mergeCells(r, 1, r, 2);
+    const lc = ws.getCell(r, 1);
+    lc.value = label; lc.font = F.total; lc.fill = FILL.total;
+    lc.alignment = { horizontal: 'center', vertical: 'middle' };
+    lc.border = BORDER_TOTAL;
+    [3,4,5].forEach((c,i) => {
+      const vals = [sumF(data,'공급가액'), sumF(data,'부가세'), sumF(data,'합계금액')];
+      const cell = ws.getCell(r, c);
+      cell.value = Math.round(vals[i]); cell.font = F.total; cell.fill = FILL.total;
+      cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
+    });
+    ws.getRow(r).height = 16; r++;
   });
-  ws.getRow(r).height = 16; r++;
 
-  // 총합계 - 소모품
-  ws.mergeCells(r, 1, r, 2);
-  const totalCell2 = ws.getCell(r, 1);
-  totalCell2.value = '총합계';
-  totalCell2.font = F.total; totalCell2.fill = FILL.total;
-  totalCell2.alignment = { horizontal: 'center', vertical: 'middle' };
-  totalCell2.border = BORDER_TOTAL;
-  txtCell(ws, r, 2, '소모품', FILL.total, true, true);
-  [3, 4, 5].forEach((c, i) => {
-    const cell = ws.getCell(r, c);
-    sc(cell, { value: Math.round([sumF(소모품, '공급가액'), sumF(소모품, '부가세'), sumF(소모품, '합계금액')][i]), font: F.total, fill: FILL.total, alignment: AL('right'), border: BORDER_TOTAL, numFmt: NUM_FMT });
-  });
-  ws.getRow(r).height = 16;
-
-  cw(ws, [[1, 20], [2, 10], [3, 18], [4, 16], [5, 18]]);
+  cw(ws, [[1,20],[2,10],[3,18],[4,16],[5,18]]);
   ws.views = [{ state: 'frozen', ySplit: 3 }];
 }
 
