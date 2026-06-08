@@ -309,14 +309,32 @@ async function runProcessing() {
     const subulMap = {};
     usageData.forEach(r => {
       const code = String(r['자재코드'] || '').trim(); if (!code) return;
-      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 증가: 0, 감소: toN(r['사용공급가']) };
+      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 증가: 0, 감소: toN(r['사용공급가']) };
       else subulMap[code].감소 += toN(r['사용공급가']);
     });
     ipgoData.forEach(r => {
       const code = String(r['자재코드'] || '').trim(); if (!code) return;
-      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 증가: toN(r['공급가액']), 감소: 0 };
+      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 증가: toN(r['공급가액']), 감소: 0 };
       else subulMap[code].증가 += toN(r['공급가액']);
     });
+
+    // 전월 기말 → 기초값 세팅
+    const prevYm = (() => {
+      const d = new Date(parseInt(y), mi - 2, 1); // 전월
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    })();
+    clog(`전월(${prevYm}) 기초 재고 로드 중...`, 'info');
+    const prevStock = await loadPrevStock(prevYm);
+    if (prevStock.length) {
+      prevStock.forEach(s => {
+        const code = String(s.item_code || '').trim(); if (!code) return;
+        if (subulMap[code]) subulMap[code].기초 = toN(s.closing_amount);
+        else subulMap[code] = { code, name: s.item_name || '', type: s.item_type || '', 기초: toN(s.closing_amount), 증가: 0, 감소: 0 };
+      });
+      clog(`전월 기초 재고 ${prevStock.length}건 반영`, 'ok');
+    } else {
+      clog('전월 확정 데이터 없음 — 기초값 0으로 처리', 'warn');
+    }
 
     // 미등록 거래처 경고
     const unreg = [...new Set(gcIpgo.map(r => String(r['공급업체'] || '').trim()).filter(v => v && !vendorMap[v]))];
@@ -372,6 +390,16 @@ function renderResults() {
   `;
 
   renderPreview();
+
+  // 마감 확정 버튼 초기화
+  const btn = document.getElementById('btnClosingConfirm');
+  const statusEl = document.getElementById('closingConfirmStatus');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '✅ 마감 확정';
+    btn.style.background = '#1d4ed8';
+  }
+  if (statusEl) statusEl.textContent = '';
 
   document.getElementById('downloadGrid').innerHTML = `
     <div class="cl-dl-card both" onclick="dlIpgo()">
@@ -825,13 +853,17 @@ function writeSubul(ws, year, month, branch, items) {
   items.forEach((it, ri) => {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     txtCell(ws, r, 1, it.code, fill); txtCell(ws, r, 2, it.name, fill); txtCell(ws, r, 3, it.type, fill, false, true);
-    numCell(ws, r, 8, it.증가, fill); numCell(ws, r, 10, it.감소, fill); numCell(ws, r, 13, it.증가 - it.감소, fill);
+    numCell(ws, r, 6, it.기초 || 0, fill);            // 기초 금액
+    numCell(ws, r, 8, it.증가, fill);                  // 증가 금액
+    numCell(ws, r, 10, it.감소, fill);                 // 감소 금액
+    numCell(ws, r, 13, (it.기초 || 0) + it.증가 - it.감소, fill);  // 기말 = 기초+증가-감소
     ws.getRow(r).height = 16; r++;
   });
-  const tI = items.reduce((s, it) => s + it.증가, 0);
-  const tD = items.reduce((s, it) => s + it.감소, 0);
+  const t기초 = items.reduce((s, it) => s + (it.기초 || 0), 0);
+  const tI    = items.reduce((s, it) => s + it.증가, 0);
+  const tD    = items.reduce((s, it) => s + it.감소, 0);
   ws.mergeCells(r, 1, r, 3);
-  totalRow(ws, r, [8, 10, 13], [tI, tD, tI - tD], [1], ['총합계']);
+  totalRow(ws, r, [6, 8, 10, 13], [t기초, tI, tD, t기초 + tI - tD], [1], ['총합계']);
   cw(ws, [[1, 14], [2, 42], [3, 8], [4, 8], [5, 8], [6, 12], [7, 8], [8, 14], [9, 8], [10, 14], [11, 8], [12, 8], [13, 14]]);
   ws.views = [{ state: 'frozen', ySplit: 4 }];
 }
@@ -1027,7 +1059,86 @@ async function loadBranchOptions(user) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// 13. 거래처 관리 (API 연동)
+// 13. 수불 기초 재고 (closing_stock API 연동)
+// ═══════════════════════════════════════════════════════════
+
+// 전월 기말 재고 로드 → subulMap 기초값으로 세팅
+async function loadPrevStock(ym) {
+  try {
+    const user = window.auth?.getSession?.();
+    const res  = await apiGet('closingGetStock', {
+      request_user_email: user?.email,
+      ym,
+    });
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// 마감 확정: 현재 subulMap 기말값 → DB 저장
+async function confirmClosing() {
+  const R   = App.R;
+  const btn = document.getElementById('btnClosingConfirm');
+  const statusEl = document.getElementById('closingConfirmStatus');
+  const ym  = `${R.y}-${String(R.m).padStart(2, '0')}`;
+
+  // 이미 확정된 데이터 있는지 체크
+  try {
+    showGlobalLoading('기존 확정 데이터 확인 중...');
+    const user = window.auth?.getSession?.();
+    const res  = await apiGet('closingGetStock', {
+      request_user_email: user?.email,
+      ym,
+    });
+    await hideGlobalLoading();
+
+    const exists = Array.isArray(res.data) && res.data.length > 0;
+    if (exists) {
+      const confirmed = confirm(
+        `${R.y}년 ${R.m}월 마감 확정 데이터가 이미 존재합니다.\n덮어쓰시겠습니까?`
+      );
+      if (!confirmed) return;
+    }
+  } catch (e) {
+    await hideGlobalLoading();
+  }
+
+  try {
+    showGlobalLoading('마감 확정 저장 중...');
+    const user  = window.auth?.getSession?.();
+    const items = Object.values(R.subulMap).map(it => ({
+      item_code: it.code,
+      item_name: it.name,
+      item_type: it.type,
+      closing_qty:    0,                        // 수량은 현재 미집계 → 추후 확장
+      closing_amount: Math.round(it.증가 - it.감소),
+    }));
+
+    await apiPost('closingSaveStock', {
+      request_user_email: user?.email,
+      branch: R.branch,
+      ym,
+      items,
+    });
+
+    // 버튼 상태 업데이트
+    btn.disabled   = true;
+    btn.textContent = '✓ 확정 완료';
+    btn.style.background = '#0e7c3a';
+    const now = new Date().toLocaleString('ko-KR');
+    statusEl.textContent = `✓ ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
+
+    showMessage(`${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
+  } catch (e) {
+    showMessage('마감 확정 중 오류: ' + e.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 14. 거래처 관리 (API 연동)
 // ═══════════════════════════════════════════════════════════
 async function loadVendorsFromServer() {
   try {
