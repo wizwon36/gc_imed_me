@@ -602,15 +602,33 @@ function writePivotVendor(ws, gcVendors, imedVendors) {
 function writePivotDept(ws, data) {
   [[1, '의뢰부서'], [2, '자재구분'], [3, '합계 : 공급가액'], [4, '합계 : 부가세'], [5, '합계 : 합계금액']]
     .forEach(([c, v]) => hdrCell(ws, 1, c, v));
-  let r = 2, prev = null;
-  data.forEach((d, ri) => {
+
+  const sorted = [...data].sort((a, b) => a.의뢰부서.localeCompare(b.의뢰부서, 'ko'));
+
+  let r = 2, prev = null, groupStartRow = 2;
+  sorted.forEach((d, ri) => {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-    txtCell(ws, r, 1, d.의뢰부서 !== prev ? d.의뢰부서 : null, fill, d.의뢰부서 !== prev);
+    const isNewGroup = d.의뢰부서 !== prev;
+
+    // 이전 그룹 병합 처리
+    if (isNewGroup && prev !== null && r - 1 > groupStartRow) {
+      ws.mergeCells(groupStartRow, 1, r - 1, 1);
+    }
+    if (isNewGroup) groupStartRow = r;
+
+    txtCell(ws, r, 1, isNewGroup ? d.의뢰부서 : null, fill, true);
+    ws.getCell(r, 1).alignment = { horizontal: 'center', vertical: 'center' };
     txtCell(ws, r, 2, d.자재구분, fill);
     [3, 4, 5].forEach((c, i) => numCell(ws, r, c, [d.공급가액, d.부가세, d.합계금액][i], fill));
     ws.getRow(r).height = 16; r++; prev = d.의뢰부서;
   });
-  totalRow(ws, r, [3, 4, 5], [sumF(data, '공급가액'), sumF(data, '부가세'), sumF(data, '합계금액')], [1, 2], ['총합계', null]);
+
+  // 마지막 그룹 병합
+  if (r - 1 > groupStartRow) {
+    ws.mergeCells(groupStartRow, 1, r - 1, 1);
+  }
+
+  totalRow(ws, r, [3, 4, 5], [sumF(sorted, '공급가액'), sumF(sorted, '부가세'), sumF(sorted, '합계금액')], [1, 2], ['총합계', null]);
   cw(ws, [[1, 16], [2, 10], [3, 18], [4, 16], [5, 18]]);
   ws.views = [{ state: 'frozen', ySplit: 1 }];
 }
@@ -636,10 +654,22 @@ function writePivotItem(ws, data, isUsage = false) {
 function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
   [[1, '부서명'], [2, '자재구분'], [3, cols3[0]], [4, cols3[1]], [5, cols3[2]]]
     .forEach(([c, v]) => hdrCell(ws, 1, c, v));
-  let r = 2, prev = null;
-  data.forEach((d, ri) => {
+
+  const sorted = [...data].sort((a, b) => a.부서명.localeCompare(b.부서명, 'ko'));
+
+  let r = 2, prev = null, groupStartRow = 2;
+  sorted.forEach((d, ri) => {
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-    txtCell(ws, r, 1, d.부서명 !== prev ? d.부서명 : null, fill, d.부서명 !== prev);
+    const isNewGroup = d.부서명 !== prev;
+
+    // 이전 그룹 병합 처리
+    if (isNewGroup && prev !== null && r - 1 > groupStartRow) {
+      ws.mergeCells(groupStartRow, 1, r - 1, 1);
+    }
+    if (isNewGroup) groupStartRow = r;
+
+    txtCell(ws, r, 1, isNewGroup ? d.부서명 : null, fill, true);
+    ws.getCell(r, 1).alignment = { horizontal: 'center', vertical: 'center' };
     txtCell(ws, r, 2, d.자재구분, fill);
     const f = hasFivePct ? 1.05 : 1;
     numCell(ws, r, 3, Math.round(d.사용공급가 * f), fill);
@@ -647,9 +677,15 @@ function writePivotUsageDept(ws, data, cols3, hasFivePct = false) {
     numCell(ws, r, 5, Math.round(d.사용합계 * f), fill);
     ws.getRow(r).height = 16; r++; prev = d.부서명;
   });
+
+  // 마지막 그룹 병합
+  if (r - 1 > groupStartRow) {
+    ws.mergeCells(groupStartRow, 1, r - 1, 1);
+  }
+
   const f = hasFivePct ? 1.05 : 1;
   totalRow(ws, r, [3, 4, 5],
-    [Math.round(sumF(data, '사용공급가') * f), Math.round(sumF(data, '사용부가세') * f), Math.round(sumF(data, '사용합계') * f)],
+    [Math.round(sumF(sorted, '사용공급가') * f), Math.round(sumF(sorted, '사용부가세') * f), Math.round(sumF(sorted, '사용합계') * f)],
     [1, 2], ['총합계', null]);
   cw(ws, [[1, 16], [2, 10], [3, 18], [4, 16], [5, 18]]);
   ws.views = [{ state: 'frozen', ySplit: 1 }];
