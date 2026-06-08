@@ -52,8 +52,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('appBody').style.display = '';
 
-    // 거래처 데이터 미리 로드 (탭 전환 시 빠른 표시를 위해)
+    // 거래처/자재 데이터 미리 로드
     loadVendorsFromServer().catch(() => {});
+    loadItemsFromServer().catch(() => {});
 
   } catch (e) {
     showMessage('앱 초기화 중 오류가 발생했습니다: ' + e.message, 'error');
@@ -73,20 +74,23 @@ const App = {
   usageData: [],
   R: {},             // 처리 결과
   vendors: [],       // 거래처 마스터 (서버에서 로드)
+  items: [],         // 자재코드 마스터 (서버에서 로드)
   vendorsDirty: false,
+  itemsDirty: false,
 };
 
 // ═══════════════════════════════════════════════════════════
 // 2. 탭 전환
 // ═══════════════════════════════════════════════════════════
 function switchTab(tab) {
-  ['closing', 'vendor'].forEach(t => {
+  ['closing', 'vendor', 'item'].forEach(t => {
     document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`)
       ?.classList.toggle('active', t === tab);
     document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Content`)
       ?.classList.toggle('active', t === tab);
   });
   if (tab === 'vendor') renderVendorTable();
+  if (tab === 'item')   renderItemTable();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -306,21 +310,46 @@ async function runProcessing() {
     clog(`SAP 양식 ${sapRows.length}건 생성`, 'ok');
 
     await sleep(150); prog(85, '수불 집계 중...');
+
+    // item_master 기반으로 초기 map 구성 (사용 상태만)
     const subulMap = {};
+    const activeItems = App.items.filter(it => String(it.item_status || '사용').trim() === '사용');
+    if (activeItems.length) {
+      activeItems.forEach(it => {
+        subulMap[it.item_code] = {
+          code: it.item_code, name: it.item_name,
+          type: it.item_type, 기초: 0, 증가: 0, 감소: 0
+        };
+      });
+      clog(`자재 마스터 ${activeItems.length}건 기준으로 수불 구성`, 'ok');
+    } else {
+      clog('자재 마스터 미등록 — 입고/사용 데이터 기준으로 수불 구성', 'warn');
+    }
+
+    // 사용 집계
     usageData.forEach(r => {
       const code = String(r['자재코드'] || '').trim(); if (!code) return;
       if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 증가: 0, 감소: toN(r['사용공급가']) };
       else subulMap[code].감소 += toN(r['사용공급가']);
     });
+    // 입고 집계
     ipgoData.forEach(r => {
       const code = String(r['자재코드'] || '').trim(); if (!code) return;
       if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 증가: toN(r['공급가액']), 감소: 0 };
       else subulMap[code].증가 += toN(r['공급가액']);
     });
 
+    // 입고 파일에 자재 마스터 미등록 품목 경고
+    if (activeItems.length) {
+      const itemCodeSet = new Set(activeItems.map(it => it.item_code));
+      const unregItems = [...new Set(ipgoData.map(r => String(r['자재코드'] || '').trim())
+        .filter(c => c && !itemCodeSet.has(c)))];
+      if (unregItems.length) clog(`⚠ 자재 마스터 미등록 품목코드: ${unregItems.join(', ')}`, 'warn');
+    }
+
     // 전월 기말 → 기초값 세팅
     const prevYm = (() => {
-      const d = new Date(parseInt(y), mi - 2, 1); // 전월
+      const d = new Date(parseInt(y), mi - 2, 1);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     })();
     clog(`전월(${prevYm}) 기초 재고 로드 중...`, 'info');
@@ -1385,4 +1414,235 @@ async function saveVendors() {
   } finally {
     await hideGlobalLoading();
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 15. 자재코드 관리 (API 연동)
+// ═══════════════════════════════════════════════════════════
+
+async function loadItemsFromServer() {
+  try {
+    const user = window.auth?.getSession?.();
+    const res  = await apiGet('closingGetItems', { request_user_email: user?.email });
+    App.items = Array.isArray(res.data) ? res.data : [];
+  } catch (e) {
+    App.items = [];
+  }
+}
+
+// ── 테이블 렌더링 ─────────────────────────────────────────
+function renderItemTable() {
+  const tbody    = document.getElementById('itemTbody');
+  const badge    = document.getElementById('itemCountBadge');
+  const typeFilter   = document.getElementById('itemFilterType')?.value   || 'all';
+  const statusFilter = document.getElementById('itemFilterStatus')?.value || 'all';
+  if (!tbody) return;
+
+  let data = App.items;
+  if (typeFilter   !== 'all') data = data.filter(it => it.item_type   === typeFilter);
+  if (statusFilter !== 'all') data = data.filter(it => (it.item_status || '사용') === statusFilter);
+
+  if (badge) badge.textContent =
+    `전체 ${App.items.length}건 / 표시 ${data.length}건` +
+    ` (시약 ${App.items.filter(i=>i.item_type==='시약').length} ·` +
+    ` 소모품 ${App.items.filter(i=>i.item_type==='소모품').length} ·` +
+    ` 의약품 ${App.items.filter(i=>i.item_type==='의약품').length})`;
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">등록된 자재가 없습니다. 자재관리 파일을 업로드해 주세요.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map((it, i) => {
+    const typeColor = it.item_type === '시약' ? '#0e7c3a' : it.item_type === '의약품' ? '#b45309' : '#1a56db';
+    const typeBg    = it.item_type === '시약' ? '#e6f4ec' : it.item_type === '의약품' ? '#fef3e2' : '#e8effd';
+    const isDisused = (it.item_status || '사용') === '폐기';
+    return `<tr style="${isDisused ? 'opacity:.5;' : ''}">
+      <td style="font-family:monospace;font-size:12px;">${escHtml(it.item_code)}</td>
+      <td style="max-width:300px;">${escHtml(it.item_name)}</td>
+      <td style="text-align:center;"><span style="background:${typeBg};color:${typeColor};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">${escHtml(it.item_type)}</span></td>
+      <td style="text-align:center;">
+        <select data-code="${escHtml(it.item_code)}" onchange="itemStatusEdit(this)"
+          style="border:1px solid var(--border-input);border-radius:5px;padding:3px 6px;font-size:12px;">
+          <option ${(it.item_status||'사용')==='사용'?'selected':''}>사용</option>
+          <option ${(it.item_status||'사용')==='폐기'?'selected':''}>폐기</option>
+        </select>
+      </td>
+      <td style="text-align:center;"><button onclick="deleteItem('${escHtml(it.item_code)}')" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;" title="삭제">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function itemStatusEdit(sel) {
+  const code = sel.dataset.code;
+  const it   = App.items.find(i => i.item_code === code);
+  if (it) { it.item_status = sel.value; App.itemsDirty = true; }
+}
+
+function deleteItem(code) {
+  App.items = App.items.filter(i => i.item_code !== code);
+  App.itemsDirty = true;
+  renderItemTable();
+}
+
+async function saveItems() {
+  if (!App.canEdit) { showMessage('저장 권한이 없습니다.', 'error'); return; }
+  const btn = document.getElementById('btnSaveItems');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    showGlobalLoading('자재코드 저장 중...');
+    const user = window.auth?.getSession?.();
+    await apiPost('closingSaveItems', {
+      request_user_email: user?.email,
+      items: App.items,
+    });
+    App.itemsDirty = false;
+    showMessage(`자재코드 ${App.items.length}건이 저장됐습니다.`, 'success');
+    btn.textContent = '✓ 저장됨';
+    setTimeout(() => { btn.textContent = '💾 저장'; btn.disabled = false; }, 2000);
+  } catch (e) {
+    showMessage('저장 중 오류: ' + e.message, 'error');
+    btn.textContent = '💾 저장'; btn.disabled = false;
+  } finally {
+    await hideGlobalLoading();
+  }
+}
+
+// ── 자재관리 파일 업로드 ──────────────────────────────────
+let _uploadedItemRows = [];
+
+async function handleItemExcel(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+  try {
+    showGlobalLoading('자재관리 파일 분석 중...');
+    _uploadedItemRows = await parseItemExcel(file);
+    renderItemUploadPreview(_uploadedItemRows);
+  } catch (err) {
+    showMessage('파일 읽기 오류: ' + err.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+  }
+}
+
+function parseItemExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb  = XLSX.read(e.target.result, { type: 'array' });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        if (!raw.length) { reject(new Error('데이터가 없습니다.')); return; }
+
+        const rows = raw.map((r, idx) => {
+          const errors = [];
+          const code = String(r['자재코드'] || '').trim();
+          const name = String(r['자재명']   || '').trim();
+          const type = String(r['구분']     || '').trim();
+          if (!code) errors.push('자재코드 누락');
+          if (!name) errors.push('자재명 누락');
+          if (!['시약','소모품','의약품'].includes(type)) errors.push(`구분 오류(${type||'없음'})`);
+          return {
+            _row: idx + 2, _errors: errors,
+            item_code:   code,
+            item_name:   name,
+            item_type:   type,
+            item_status: String(r['상태'] || '사용').trim(),
+          };
+        });
+        resolve(rows);
+      } catch (err) {
+        reject(new Error('파일을 읽지 못했습니다: ' + err.message));
+      }
+    };
+    reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function renderItemUploadPreview(rows) {
+  const preview  = document.getElementById('itemUploadPreview');
+  const table    = document.getElementById('itemUploadTable');
+  const countEl  = document.getElementById('itemUploadCount');
+  const errorEl  = document.getElementById('itemUploadError');
+  const statEl   = document.getElementById('itemUploadStat');
+  const applyBtn = document.getElementById('btnApplyItemUpload');
+  if (!preview || !table) return;
+
+  const existingMap = {};
+  App.items.forEach(it => { existingMap[it.item_code] = true; });
+
+  const errRows  = rows.filter(r => r._errors.length > 0);
+  const newCount = rows.filter(r => !r._errors.length && !existingMap[r.item_code]).length;
+  const updCount = rows.filter(r => !r._errors.length &&  existingMap[r.item_code]).length;
+
+  countEl.textContent = `총 ${rows.length}건 (신규 ${newCount} / 업데이트 ${updCount})`;
+  errorEl.textContent = errRows.length ? `오류 ${errRows.length}건` : '';
+  if (statEl) {
+    const valid = rows.filter(r => !r._errors.length);
+    statEl.textContent =
+      `시약 ${valid.filter(r=>r.item_type==='시약').length} · ` +
+      `소모품 ${valid.filter(r=>r.item_type==='소모품').length} · ` +
+      `의약품 ${valid.filter(r=>r.item_type==='의약품').length}`;
+  }
+  if (applyBtn) applyBtn.style.display = errRows.length ? 'none' : '';
+
+  const show = rows.slice(0, 20);
+  const thead = `<thead><tr><th>자재코드</th><th>자재명</th><th>구분</th><th>상태</th><th>구분</th><th>검증</th></tr></thead>`;
+  const tbody = `<tbody>${show.map(r => {
+    const hasErr = r._errors.length > 0;
+    const isNew  = !existingMap[r.item_code];
+    const badge  = hasErr ? '' : isNew
+      ? `<span style="background:#e8effd;color:#1a56db;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">신규</span>`
+      : `<span style="background:#f0fdf4;color:#0e7c3a;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;">업데이트</span>`;
+    return `<tr style="${hasErr?'background:#fff5f5;':''}">
+      <td style="font-family:monospace;font-size:12px;">${escHtml(r.item_code)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.item_name)}</td>
+      <td>${escHtml(r.item_type)}</td>
+      <td>${escHtml(r.item_status)}</td>
+      <td style="text-align:center;">${badge}</td>
+      <td>${hasErr?`<span style="color:#c0392b;font-size:11px;">${escHtml(r._errors.join(', '))}</span>`:'✓'}</td>
+    </tr>`;
+  }).join('')}
+  ${rows.length > 20 ? `<tr><td colspan="6" class="cl-preview more">외 ${rows.length-20}건 더 있음</td></tr>` : ''}
+  </tbody>`;
+
+  table.innerHTML = thead + tbody;
+  preview.style.display = '';
+  preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function applyItemUpload() {
+  const validRows = _uploadedItemRows.filter(r => r._errors.length === 0);
+  const existingMap = {};
+  App.items.forEach(it => { existingMap[it.item_code] = it; });
+
+  let updated = 0, added = 0;
+  validRows.forEach(({ item_code, item_name, item_type, item_status }) => {
+    if (existingMap[item_code]) {
+      existingMap[item_code] = { ...existingMap[item_code], item_name, item_type, item_status };
+      updated++;
+    } else {
+      existingMap[item_code] = { item_code, item_name, item_type, item_status };
+      added++;
+    }
+  });
+
+  App.items = Object.values(existingMap);
+  App.itemsDirty = true;
+  cancelItemUpload();
+  renderItemTable();
+
+  const msg = [];
+  if (updated) msg.push(`${updated}건 업데이트`);
+  if (added)   msg.push(`${added}건 신규 추가`);
+  showMessage(msg.join(', ') + ' 됐습니다. 저장 버튼을 눌러 반영하세요.', 'success');
+}
+
+function cancelItemUpload() {
+  _uploadedItemRows = [];
+  const preview = document.getElementById('itemUploadPreview');
+  if (preview) preview.style.display = 'none';
 }
