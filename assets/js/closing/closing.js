@@ -2647,6 +2647,16 @@ function renderUsageInitPreview(rows) {
 
   countEl.textContent = `${yms.length}개월 / ${deptKeys.length}개 부서·구분`;
 
+  // 파일 구분 표시
+  const typeInfo = document.getElementById('usageInitTypeInfo');
+  if (typeInfo) {
+    const types = [...new Set(_usageInitParsed.map(r => r.item_type))].join(', ');
+    const isGC   = types.includes('시약') || types.includes('소모품');
+    const isImed = types.includes('의약품');
+    const label  = isGC && isImed ? 'GC케어 + 아이메드' : isGC ? 'GC케어 (시약·소모품)' : '아이메드 (의약품)';
+    typeInfo.textContent = `파일 구분: ${label}`;
+  }
+
   const thead = `<thead><tr><th>연월</th>${deptKeys.map(k => `<th>${escHtml(k)}</th>`).join('')}</tr></thead>`;
   const tbody = `<tbody>${yms.map((ym, i) => `
     <tr style="${i % 2 ? 'background:#f8fafc;' : ''}">
