@@ -652,27 +652,27 @@ const F = {
   redb:  { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFC00000' } },
 };
 const FILL = {
-  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6FA8DC' } },
-  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A86C8' } },
-  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF2FB' } },
-  odd:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },
-  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4F8FD' } },
-  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9EAD3' } },
-  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8E1' } },
-  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2B5797' } },
-  warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },
+  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAAD14' } },  // 살구/황금
+  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8960A' } },  // 진한 황금
+  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3E0' } },  // 연한 베이지
+  odd:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
+  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8F0' } },  // 아주연한 베이지
+  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3E0' } },  // 연한 베이지
+  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCE4EC' } },  // 연한 핑크
+  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8B5E3C' } },  // 진한 갈색
+  warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },  // 노란 경고
 };
 const BORDER_THIN = {
-  top: { style: 'thin', color: { argb: 'FFC8D8E8' } },
-  left: { style: 'thin', color: { argb: 'FFC8D8E8' } },
-  bottom: { style: 'thin', color: { argb: 'FFC8D8E8' } },
-  right: { style: 'thin', color: { argb: 'FFC8D8E8' } },
+  top: { style: 'thin', color: { argb: 'FFDDBB88' } },
+  left: { style: 'thin', color: { argb: 'FFDDBB88' } },
+  bottom: { style: 'thin', color: { argb: 'FFDDBB88' } },
+  right: { style: 'thin', color: { argb: 'FFDDBB88' } },
 };
 const BORDER_TOTAL = {
-  top: { style: 'medium', color: { argb: 'FF4A86C8' } },
-  left: { style: 'medium', color: { argb: 'FF4A86C8' } },
-  bottom: { style: 'medium', color: { argb: 'FF4A86C8' } },
-  right: { style: 'medium', color: { argb: 'FF4A86C8' } },
+  top: { style: 'medium', color: { argb: 'FFE8960A' } },
+  left: { style: 'medium', color: { argb: 'FFE8960A' } },
+  bottom: { style: 'medium', color: { argb: 'FFE8960A' } },
+  right: { style: 'medium', color: { argb: 'FFE8960A' } },
 };
 const NUM_FMT = '#,##0';
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'center', wrapText: false });
@@ -987,7 +987,7 @@ function writeDeptAmount(ws, month, depts) {
   unitCell.value = '(단위 : 원)'; unitCell.font = F.base; unitCell.alignment = AL('right');
 
   // 헤더 (3행)
-  [[1, '의뢰부서'], [2, '자재구분'], [3, '합계: 공급가액'], [4, '합계: 부가세'], [5, '합계: 합계금액']]
+  [[1, '의뢰부서'], [2, '상태'], [3, '합계: 공급가액'], [4, '합계: 부가세'], [5, '합계: 합계금액']]
     .forEach(([c, v]) => hdrCell(ws, 3, c, v));
   ws.getRow(3).height = 18;
 
@@ -1027,10 +1027,10 @@ function writeDeptAmount(ws, month, depts) {
     }
     ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // 부서 요약 행 (자재구분 수에 무관하게 항상 표기)
+    // 부서 요약 행 (항상 표기)
     ws.mergeCells(r, 1, r, 2);
     subtotRow(ws, r,
-      [1, 2], [g.name + ' 요약', null],
+      [1, 2], [g.name, null],
       [3, 4, 5],
       [sumF(g.items, '공급가액'), sumF(g.items, '부가세'), sumF(g.items, '합계금액')]
     );
@@ -1524,17 +1524,21 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     .forEach(([v, c]) => hdrCell(ws, 3, c, v));
   ws.getRow(3).height = 18;
 
-  // 기초재고: 부서별 (dept 있는 경우), 없으면 전체 합계
+  // 기초재고: 부서별, 시약(GC케어) 또는 의약품(아이메드)만
+  const targetType = isGC ? '시약' : '의약품';
   const prevDeptStock = {};
-  prevStockData.forEach(s => {
-    const dept = s.dept || '';
-    const type = s.item_type || '';
-    if (!prevDeptStock[dept + '||' + type]) prevDeptStock[dept + '||' + type] = 0;
-    prevDeptStock[dept + '||' + type] += toN(s.closing_amount);
-  });
+  prevStockData
+    .filter(s => !s.item_type || s.item_type === targetType)
+    .forEach(s => {
+      const dept = s.dept || '';
+      const type = s.item_type || targetType;
+      if (!prevDeptStock[dept + '||' + type]) prevDeptStock[dept + '||' + type] = 0;
+      prevDeptStock[dept + '||' + type] += toN(s.closing_amount);
+    });
 
-  // 당기매입: 입고 데이터 부서별 집계 (GC케어=시약, 아이메드=의약품)
-  const ipgoData = isGC ? R.gcIpgo : R.imedIpgo;
+  // 당기매입: 입고 데이터 부서별 집계 — 시약만
+  const ipgoData  = isGC ? R.gcIpgo.filter(r => String(r['자재구분']||'').trim() === '시약')
+                         : R.imedIpgo.filter(r => String(r['자재구분']||'').trim() === '의약품');
   const usageData = isGC ? R.usageSiyak : R.usageImed;
 
   const deptIpgo = {};
