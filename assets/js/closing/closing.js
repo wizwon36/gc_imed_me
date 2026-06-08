@@ -353,7 +353,7 @@ async function runProcessing() {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     })();
     clog(`전월(${prevYm}) 기초 재고 로드 중...`, 'info');
-    const prevStock = await loadPrevStock(prevYm);
+    const prevStock = await loadPrevStock(prevYm, branch);
     if (prevStock.length) {
       prevStock.forEach(s => {
         const code = String(s.item_code || '').trim(); if (!code) return;
@@ -1092,12 +1092,13 @@ async function loadBranchOptions(user) {
 // ═══════════════════════════════════════════════════════════
 
 // 전월 기말 재고 로드 → subulMap 기초값으로 세팅
-async function loadPrevStock(ym) {
+async function loadPrevStock(ym, branch) {
   try {
     const user = window.auth?.getSession?.();
     const res  = await apiGet('closingGetStock', {
       request_user_email: user?.email,
       ym,
+      branch,
     });
     return Array.isArray(res.data) ? res.data : [];
   } catch (e) {
@@ -1112,20 +1113,21 @@ async function confirmClosing() {
   const statusEl = document.getElementById('closingConfirmStatus');
   const ym  = `${R.y}-${String(R.m).padStart(2, '0')}`;
 
-  // 이미 확정된 데이터 있는지 체크
+  // 이미 확정된 데이터 있는지 체크 (branch 기준)
   try {
     showGlobalLoading('기존 확정 데이터 확인 중...');
     const user = window.auth?.getSession?.();
     const res  = await apiGet('closingGetStock', {
       request_user_email: user?.email,
       ym,
+      branch: R.branch,
     });
     await hideGlobalLoading();
 
     const exists = Array.isArray(res.data) && res.data.length > 0;
     if (exists) {
       const confirmed = confirm(
-        `${R.y}년 ${R.m}월 마감 확정 데이터가 이미 존재합니다.\n덮어쓰시겠습니까?`
+        `${R.branch} ${R.y}년 ${R.m}월 마감 확정 데이터가 이미 존재합니다.\n덮어쓰시겠습니까?`
       );
       if (!confirmed) return;
     }
@@ -1137,11 +1139,11 @@ async function confirmClosing() {
     showGlobalLoading('마감 확정 저장 중...');
     const user  = window.auth?.getSession?.();
     const items = Object.values(R.subulMap).map(it => ({
-      item_code: it.code,
-      item_name: it.name,
-      item_type: it.type,
-      closing_qty:    0,                        // 수량은 현재 미집계 → 추후 확장
-      closing_amount: Math.round(it.증가 - it.감소),
+      item_code:      it.code,
+      item_name:      it.name,
+      item_type:      it.type,
+      closing_qty:    0,
+      closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소), // 기말 = 기초+증가-감소
     }));
 
     await apiPost('closingSaveStock', {
@@ -1151,14 +1153,12 @@ async function confirmClosing() {
       items,
     });
 
-    // 버튼 상태 업데이트
-    btn.disabled   = true;
+    btn.disabled    = true;
     btn.textContent = '✓ 확정 완료';
     btn.style.background = '#0e7c3a';
     const now = new Date().toLocaleString('ko-KR');
-    statusEl.textContent = `✓ ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
-
-    showMessage(`${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
+    statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
+    showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
   } catch (e) {
     showMessage('마감 확정 중 오류: ' + e.message, 'error');
   } finally {
