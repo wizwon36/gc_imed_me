@@ -27,6 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
     });
 
+    // 마감월 초기값: 전월 자동 설정
+    const now = new Date();
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const yy = prevMonth.getFullYear();
+    const mm = String(prevMonth.getMonth() + 1).padStart(2, '0');
+    document.getElementById('inputMonth').value = `${yy}-${mm}`;
+
     // 권한 체크 (closing: view 이상)
     const ok = await window.appPermission?.requirePermission?.('closing', ['admin', 'edit', 'view']);
     if (ok === false) {
