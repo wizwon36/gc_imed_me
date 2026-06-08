@@ -182,6 +182,25 @@
             </div>
           </div>
 
+          <!-- 마감 확정 -->
+          <div class="card" id="closingConfirmCard" style="margin-top:14px;border:1px solid #bfdbfe;background:#eff6ff;">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <div>
+                  <strong style="font-size:14px;color:#1e40af;">📌 마감 확정</strong>
+                  <p style="font-size:12px;color:#3b82f6;margin-top:4px;">
+                    산출물 내용이 맞으면 확정하세요. 품목별 기말 재고가 저장되어 다음 달 수불 기초값으로 자동 반영됩니다.
+                  </p>
+                  <p id="closingConfirmStatus" style="font-size:12px;color:#64748b;margin-top:4px;"></p>
+                </div>
+                <button class="btn btn-primary" id="btnClosingConfirm" onclick="confirmClosing()"
+                  style="white-space:nowrap;padding:9px 20px;background:#1d4ed8;flex-shrink:0;">
+                  ✅ 마감 확정
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div style="display:flex;justify-content:flex-end;margin-top:12px;">
             <button class="btn" onclick="restart()">🔄 새 마감 시작</button>
           </div>
