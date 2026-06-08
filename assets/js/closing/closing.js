@@ -1519,16 +1519,17 @@ async function loadYearStock(year, branch, user) {
 function writeWonjaeryo(ws, R, prevStockData, label) {
   const isGC = label.includes('시약');  // GC케어=시약, 아이메드=원재료
 
-  // 제목
-  const titleCell = ws.getCell(1, 2);
+  // 제목 (A1~F1 병합)
+  const titleCell = ws.getCell(1, 1);
   titleCell.value = `${R.m}월 원재료비 - ${R.branch} 납품`;
   titleCell.font = { name: 'Calibri', size: 13, bold: true };
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  ws.mergeCells(1, 2, 1, 7); ws.getRow(1).height = 24;
+  ws.mergeCells(1, 1, 1, 6); ws.getRow(1).height = 24;
 
-  // (단위:원/ -VAT)
-  const unitCell = ws.getCell(2, 7);
+  // (단위:원/ -VAT) — F2
+  const unitCell = ws.getCell(2, 6);
   unitCell.value = '(단위:원/ -VAT)'; unitCell.font = F.base; unitCell.alignment = AL('right');
+  ws.getRow(2).height = 16;
 
   // 헤더
   [['구분', 1], ['기초재고', 2], ['당기매입', 3], ['당기사용', 4], ['기말재고', 5], ['비고', 6]]
@@ -1607,6 +1608,10 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
 
   // 계 행
   subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
+  // 비고 셀(F열)도 소계 색으로 채우기
+  const bigoCell = ws.getCell(r, 6);
+  bigoCell.fill   = FILL.subtot;
+  bigoCell.border = BORDER_THIN;
   ws.getRow(r).height = 18;
 
   cw(ws, [[1, 20], [2, 16], [3, 16], [4, 16], [5, 16], [6, 24]]);
