@@ -617,10 +617,10 @@ function hdrCell(ws, r, c, v, span = 1) {
   ws.getRow(r).height = 18;
 }
 function numCell(ws, r, c, v, fill, bold = false) {
-  const nv = Math.round(toN(v));  // 표기 시 반올림 (소수점 데이터 → 정수 표기)
+  const nv = Math.round(toN(v));
   const cell = ws.getCell(r, c);
   sc(cell, {
-    value: nv || null,
+    value: nv,  // 0도 표기
     font: nv < 0 ? (bold ? F.redb : F.red) : (bold ? F.total : F.base),
     fill: fill || FILL.odd,
     alignment: AL('right'),
@@ -661,41 +661,55 @@ function subtotRow(ws, r, textCols, textVals, numCols, numVals) {
 function cw(ws, arr) { arr.forEach(([c, w]) => ws.getColumn(c).width = w); }
 
 // ── 데이터 시트 공통 ──────────────────────────────────────
-// sumCols: 합계를 표기할 컬럼 인덱스 배열(1-based), 없으면 생략
 function writeDataSheet(ws, headers, rows, numCols, colWidths, sumCols) {
   const hasSumRow = sumCols && sumCols.length > 0;
   const hdrRow    = hasSumRow ? 2 : 1;
   const dataStart = hdrRow + 1;
+  const numSet    = new Set(numCols);
 
-  // 1행: 합계
+  // 헤더
+  headers.forEach((h, i) => hdrCell(ws, hdrRow, i + 1, h));
+
+  // 데이터 (먼저 쓰면서 열합계 누적)
+  const colTotals = {};
+  rows.forEach((row, ri) => {
+    const r    = dataStart + ri;
+    const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
+    row.forEach((v, ci) => {
+      const c = ci + 1;
+      if (numSet.has(c)) {
+        const rounded = Math.round(toN(v));
+        if (hasSumRow && sumCols.includes(c)) {
+          colTotals[c] = (colTotals[c] || 0) + rounded;
+        }
+        // 빈셀도 0 표기
+        const cell = ws.getCell(r, c);
+        cell.value = rounded;
+        cell.font  = F.base;
+        cell.fill  = fill;
+        cell.alignment = AL('right');
+        cell.border = BORDER_THIN;
+        cell.numFmt = NUM_FMT;
+      } else {
+        txtCell(ws, r, c, v, fill);
+      }
+    });
+    ws.getRow(r).height = 16;
+  });
+
+  // 1행: 반올림된 셀값의 합산
   if (hasSumRow) {
-    const numSet = new Set(numCols);
     sumCols.forEach(c => {
-      const total = rows.reduce((s, row) => s + toN(row[c - 1]), 0);
+      const total = colTotals[c] || 0;
+      if (!total) return;
       const cell  = ws.getCell(1, c);
-      cell.value  = Math.round(total) || null;
+      cell.value  = total;
       cell.font   = F.bold;
       cell.numFmt = NUM_FMT;
       cell.alignment = AL('right');
     });
     ws.getRow(1).height = 16;
   }
-
-  // 헤더
-  headers.forEach((h, i) => hdrCell(ws, hdrRow, i + 1, h));
-
-  // 데이터
-  const numSet = new Set(numCols);
-  rows.forEach((row, ri) => {
-    const r    = dataStart + ri;
-    const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-    row.forEach((v, ci) => {
-      const c = ci + 1;
-      if (numSet.has(c)) numCell(ws, r, c, v, fill);
-      else txtCell(ws, r, c, v, fill);
-    });
-    ws.getRow(r).height = 16;
-  });
 
   colWidths.forEach((w, i) => ws.getColumn(i + 1).width = w);
   ws.views = [{ state: 'frozen', ySplit: hdrRow }];
@@ -878,35 +892,47 @@ function writeDeptAmount(ws, month, depts) {
 
 // ── 사용현황 5% 시트 ─────────────────────────────────────
 function writeUsageWith5pct(ws, headers, rows, numCols, colWidths) {
-  // 1행: 합계 (공급가액, 공5%, 부가세, 부5%, 합계, 계5% — 컬럼 9~14)
-  // 헤더 구조: 1=부서명,2=자재구분,3=자재코드,4=자재명,5=구매번호,6=사용일자,
-  //            7=사용수량(입),8=사용수량(산),9=사용공급가,10=공5%,11=사용부가세,12=부5%,13=사용합계,14=계5%,...
   const sumSet = new Set(numCols);
-  sumSet.forEach(c => {
-    const total = rows.reduce((s, row) => s + toN(row[c - 1]), 0);
-    if (!total) return;
-    const cell  = ws.getCell(1, c);
-    cell.value  = Math.round(total);
-    cell.font   = F.bold;
-    cell.numFmt = NUM_FMT;
-    cell.alignment = AL('right');
-  });
-  ws.getRow(1).height = 16;
 
   // 2행: 헤더
   headers.forEach((h, i) => hdrCell(ws, 2, i + 1, h));
 
-  // 3행~: 데이터
+  // 3행~: 데이터 (먼저 쓰고 열합계 계산)
+  const colTotals = {};
   rows.forEach((row, ri) => {
     const r    = ri + 3;
     const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
     row.forEach((v, ci) => {
       const c = ci + 1;
-      if (sumSet.has(c)) numCell(ws, r, c, v, fill);
-      else txtCell(ws, r, c, v, fill);
+      if (sumSet.has(c)) {
+        const rounded = Math.round(toN(v));
+        colTotals[c] = (colTotals[c] || 0) + rounded;
+        // 빈셀도 0 표기
+        const cell = ws.getCell(r, c);
+        cell.value = rounded;
+        cell.font  = F.base;
+        cell.fill  = fill;
+        cell.alignment = AL('right');
+        cell.border = BORDER_THIN;
+        cell.numFmt = NUM_FMT;
+      } else {
+        txtCell(ws, r, c, v, fill);
+      }
     });
     ws.getRow(r).height = 16;
   });
+
+  // 1행: 반올림된 셀값의 합산 (엑셀 표시값과 일치)
+  sumSet.forEach(c => {
+    const total = colTotals[c] || 0;
+    if (!total) return;
+    const cell  = ws.getCell(1, c);
+    cell.value  = total;
+    cell.font   = F.bold;
+    cell.numFmt = NUM_FMT;
+    cell.alignment = AL('right');
+  });
+  ws.getRow(1).height = 16;
 
   colWidths.forEach((w, i) => ws.getColumn(i + 1).width = w);
   ws.views = [{ state: 'frozen', ySplit: 2 }];
