@@ -1243,7 +1243,7 @@ function writeVendorMasterSheet(ws, vendors) {
 }
 
 // ── 수불 집계표 ───────────────────────────────────────────
-function writeSubul(ws, year, month, branch, items) {
+function writeSubul(ws, year, month, branch, items, R) {
   titleRow(ws, 1, 1, '원가집계표', 13, 30);
   ws.getCell(1, 1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
   ws.getCell(1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1587,7 +1587,7 @@ async function dlSubul() {
     showGlobalLoading('수불 집계표 생성 중...');
     const R = App.R; const wb = newWb();
     writeSubul(wb.addWorksheet(`원가집계표-${R.y.slice(2)}년 ${R.m}월 ${R.branch}`),
-      R.y, R.m, R.branch, Object.values(R.subulMap));
+      R.y, R.m, R.branch, Object.values(R.subulMap), R);
     await saveWb(wb, `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`);
   } finally {
     await hideGlobalLoading();
