@@ -33,27 +33,41 @@ async function parseApiResponse(response) {
 
 async function apiGet(action, params = {}) {
   const url = buildApiUrl(action, params);
-
-  const response = await fetch(url, {
-    method: 'GET',
-    cache: 'no-store'
-  });
-
-  return await parseApiResponse(response);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);  // 30초 타임아웃
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: ctrl.signal
+    });
+    return await parseApiResponse(response);
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('요청 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function apiPost(action, payload = {}) {
   const url = buildApiUrl(action);
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  return await parseApiResponse(response);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);  // 30초 타임아웃
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    return await parseApiResponse(response);
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('요청 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 window.buildApiUrl = buildApiUrl;
