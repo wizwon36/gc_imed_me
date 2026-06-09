@@ -685,8 +685,18 @@ function renderPreview() {
 }
 
 function restart() {
-  App.ipgoRaw = null; App.usageRaw = null;
-  App.ipgoData = []; App.usageData = []; App.R = {};
+  // Raw 데이터 완전 해제 (메모리 누수 방지)
+  if (App.ipgoRaw) { App.ipgoRaw.wb = null; App.ipgoRaw = null; }
+  if (App.usageRaw) { App.usageRaw.wb = null; App.usageRaw = null; }
+  App.ipgoData = []; App.usageData = [];
+  // App.R 내 대용량 데이터 완전 해제
+  if (App.R) {
+    App.R.gcIpgo = null; App.R.imedIpgo = null;
+    App.R.usageGC = null; App.R.usageImed = null;
+    App.R.usageSiyak = null; App.R.usageSomoum = null;
+    App.R.subulMap = null; App.R.sapRows = null;
+  }
+  App.R = {};
   ['ipgo', 'usage'].forEach(t => {
     document.getElementById('status-' + t).textContent = '';
     document.getElementById('zone-' + t).classList.remove('uploaded');
@@ -1269,10 +1279,7 @@ function writeSubul(ws, year, month, branch, items, R) {
   // 소모품 → 시약 순, 의약품 제외, 자재코드 오름차순
   const typeOrder = { '소모품': 0, '시약': 1 };
   const sorted = [...items]
-    .filter(it => {
-      const type = String(it.type || '').trim();
-      return type !== '의약품' && ((it.기초 || 0) !== 0 || it.증가 !== 0 || it.감소 !== 0);
-    })
+    .filter(it => String(it.type || '').trim() !== '의약품')
     .sort((a, b) => {
       const ta = typeOrder[String(a.type || '')] ?? 99;
       const tb = typeOrder[String(b.type || '')] ?? 99;
@@ -1334,13 +1341,15 @@ function writeSubul(ws, year, month, branch, items, R) {
     cell.value = 0; cell.font = F.total; cell.fill = FILL.total;
     cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
   });
-  cw(ws, [[1, 14], [2, 36], [3, 8], [4, 12], [5, 12], [6, 16], [7, 12], [8, 16], [9, 12], [10, 16], [11, 12], [12, 12], [13, 16]]);
+  cw(ws, [[1, 12], [2, 57], [3, 12], [4, 15], [5, 12], [6, 15], [7, 12], [8, 15], [9, 12], [10, 15], [11, 12], [12, 12], [13, 15]]);
   ws.views = [{ state: 'frozen', ySplit: 4 }];
 
-  // ── 하단 요약 블록 (원본 레이아웃 재현) ─────────────────
+  // ── 하단 요약 블록 (원본 열 위치 그대로) ──────────────────
+  // 원본 열 매핑: C(3)=구분라벨 F(6)=기초금 H(8)=증가금 J(10)=감소금 M(13)=기말금
+  // 총계/사용현황: G(7)=라벨 H(8)=공급가액 I(9)=부가세 J(10)=계 K(11)=비고
   r += 2;
 
-  // 1. 구분별 소계 — 기존 표 컬럼 위치 그대로
+  // 1. 소모품/시약 소계
   const somoItems = sorted.filter(it => String(it.type||'').trim() === '소모품');
   const siyakItems = sorted.filter(it => String(it.type||'').trim() === '시약');
   const subSum = (arr, key) => arr.reduce((s, it) => {
@@ -1359,95 +1368,91 @@ function writeSubul(ws, year, month, branch, items, R) {
     ws.getRow(r).height = 18; r++;
   });
 
-  r++;
+  r += 2;
 
-  // 2. 총계 박스 — 원본: 총계라벨(4~5열), 공급가액(6), 부가세(8), 계(10), 비고(12)
-  const TBASE = 6;  // 공급가액 시작 열
-
-  const drawTotBox = (supV, vatV, totV, bigoText, dataFill) => {
-    // 헤더행: 총계라벨(4~5병합), 공급가액(6), 부가세(8), 계(10), 비고(12)
-    ws.mergeCells(r, 4, r, 5);
-    const hLbl = ws.getCell(r, 4);
-    hLbl.value='총  계'; hLbl.font=F.bold; hLbl.fill=FILL.subtot;
-    hLbl.alignment={horizontal:'center',vertical:'middle'}; hLbl.border=BORDER_THIN;
-    [[6,'공급가액'],[8,'부가세액'],[10,'계'],[12,'비고']].forEach(([c,v])=>hdrCell(ws,r,c,v));
-    ws.getRow(r).height = 18; r++;
-    // 데이터행
-    ws.mergeCells(r, 4, r, 5);
-    ws.getCell(r, 4).fill = dataFill; ws.getCell(r, 4).border = BORDER_THIN;
-    numCell(ws, r, 6,  supV, dataFill);
-    numCell(ws, r, 8,  vatV, dataFill);
-    numCell(ws, r, 10, totV, dataFill);
-    const bc = ws.getCell(r, 12);
-    bc.value=bigoText; bc.font=F.bold; bc.fill=FILL.warn;
-    bc.alignment=AL('center'); bc.border=BORDER_THIN;
-    ws.getRow(r).height = 18; r++;
-  };
-
+  // 2. 총계 박스 — G~K열 (7~11)
   const gcGrand = R.gcDepts || [];
-  drawTotBox(
+  const gcSiSo5 = [...(R.siyakPivot5||[]), ...(R.imedSiSoPivot5||[])];
+
+  [[
+    '5% 미적용',
     gcGrand.reduce((s,d)=>s+toN(d.공급가액),0),
     gcGrand.reduce((s,d)=>s+toN(d.부가세),0),
     gcGrand.reduce((s,d)=>s+toN(d.합계금액),0),
-    '5% 미적용', FILL.gc
-  );
-
-  const gcSiSo5 = [...(R.siyakPivot5||[]), ...(R.imedSiSoPivot5||[])];
-  drawTotBox(
+    FILL.gc, null
+  ],[
+    '5% 적용',
     gcSiSo5.reduce((s,d)=>s+toN(d.사용공급가||0),0),
     gcSiSo5.reduce((s,d)=>s+toN(d.사용부가세||0),0),
     gcSiSo5.reduce((s,d)=>s+toN(d.사용합계||0),0),
-    '5% 적용', FILL.imed
-  );
-  ws.getCell(r-1, 13).value = '세금계산서 발행금액';
-  ws.getCell(r-1, 13).font = F.base;
-  ws.getCell(r-1, 13).alignment = AL('left');
+    FILL.imed, '세금계산서 발행금액'
+  ]].forEach(([bigoText, supV, vatV, totV, dataFill, memo]) => {
+    // 헤더행
+    ws.mergeCells(r, 7, r, 7); hdrCell(ws, r, 7, '총  계');
+    hdrCell(ws, r, 8, '공급가액');
+    hdrCell(ws, r, 9, '부가세액');
+    hdrCell(ws, r, 10, '계');
+    hdrCell(ws, r, 11, '비고');
+    ws.getRow(r).height = 18; r++;
+    // 데이터행
+    const lc = ws.getCell(r, 7); lc.fill = dataFill; lc.border = BORDER_THIN;
+    numCell(ws, r, 8,  supV, dataFill);
+    numCell(ws, r, 9,  vatV, dataFill);
+    numCell(ws, r, 10, totV, dataFill);
+    const bc = ws.getCell(r, 11);
+    bc.value = bigoText; bc.font = F.bold;
+    bc.fill = FILL.warn; bc.alignment = AL('center'); bc.border = BORDER_THIN;
+    if (memo) {
+      ws.getCell(r, 12).value = memo;
+      ws.getCell(r, 12).font  = F.base;
+      ws.getCell(r, 12).alignment = AL('left');
+    }
+    ws.getRow(r).height = 18; r++;
+  });
 
   r++;
 
-  // 소모품/시약 금액만 표기
+  // 3. 소모품/시약 사용금액 단순표기
   const usageSomo = R.usageSomoum || [];
   const usageSiyk = R.usageSiyak  || [];
   [['소모품', usageSomo], ['시약', usageSiyk]].forEach(([lbl, arr]) => {
-    txtCell(ws, r, 8, lbl, null, false, false);
+    txtCell(ws, r, 9,  lbl, null, false, false);
     numCell(ws, r, 10, arr.reduce((s,d)=>s+toN(d['사용공급가']),0), FILL.odd);
     ws.getRow(r).height = 18; r++;
   });
 
   r++;
 
-  // 3. 사용현황자료 블록 — 라벨(3~4병합), 태그(5), 공급가액(6), 부가세(8), 계(10)
-  const drawUsageBlock = (tagText, tagFill, somoRow, siykRow) => {
-    ws.mergeCells(r, 3, r, 4);
-    const ul = ws.getCell(r, 3);
-    ul.value='사용현황자료'; ul.font=F.bold; ul.fill=FILL.subtot;
-    ul.alignment={horizontal:'center',vertical:'middle'}; ul.border=BORDER_THIN;
-    const tc = ws.getCell(r, 5);
-    tc.value=tagText; tc.font=F.bold; tc.fill=tagFill;
-    tc.alignment=AL('center'); tc.border=BORDER_THIN;
-    [[6,'공급가액'],[8,'부가세액'],[10,'계']].forEach(([c,v])=>hdrCell(ws,r,c,v));
+  // 4. 사용현황자료 블록 — F~J열 (6~10)
+  const somo5 = (R.imedSiSoPivot5||[]).filter(d=>d.자재구분==='소모품');
+  const siyk5 = R.siyakPivot5 || [];
+
+  [[
+    '5% 미적용', FILL.hdr,
+    [usageSomo.reduce((s,d)=>s+toN(d['사용공급가']),0), usageSomo.reduce((s,d)=>s+toN(d['사용부가세']),0), usageSomo.reduce((s,d)=>s+toN(d['사용합계']),0)],
+    [usageSiyk.reduce((s,d)=>s+toN(d['사용공급가']),0), usageSiyk.reduce((s,d)=>s+toN(d['사용부가세']),0), usageSiyk.reduce((s,d)=>s+toN(d['사용합계']),0)]
+  ],[
+    '5% 적용', FILL.warn,
+    [somo5.reduce((s,d)=>s+toN(d.사용공급가||0),0), somo5.reduce((s,d)=>s+toN(d.사용부가세||0),0), somo5.reduce((s,d)=>s+toN(d.사용합계||0),0)],
+    [siyk5.reduce((s,d)=>s+toN(d.사용공급가||0),0), siyk5.reduce((s,d)=>s+toN(d.사용부가세||0),0), siyk5.reduce((s,d)=>s+toN(d.사용합계||0),0)]
+  ]].forEach(([tag, tagFill, somoRow, siykRow]) => {
+    // 헤더
+    txtCell(ws, r, 6, '사용현황자료', FILL.subtot, true, true);
+    const tc = ws.getCell(r, 7); tc.value=tag; tc.font=F.bold; tc.fill=tagFill; tc.alignment=AL('center'); tc.border=BORDER_THIN;
+    hdrCell(ws, r, 8, '공급가액');
+    hdrCell(ws, r, 9, '부가세액');
+    hdrCell(ws, r, 10, '계');
     ws.getRow(r).height = 18; r++;
-    [['소모품', somoRow], ['시약', siykRow]].forEach(([lbl, [sup,vat,tot]]) => {
-      txtCell(ws, r, 5, lbl, FILL.odd, false, true);
-      numCell(ws, r, 6,  sup, FILL.odd);
-      numCell(ws, r, 8,  vat, FILL.odd);
+    // 데이터
+    [['소모품', somoRow], ['시약', siykRow]].forEach(([lbl,[sup,vat,tot]]) => {
+      txtCell(ws, r, 7, lbl, FILL.odd, false, true);
+      numCell(ws, r, 8, sup, FILL.odd);
+      numCell(ws, r, 9, vat, FILL.odd);
       numCell(ws, r, 10, tot, FILL.odd);
       ws.getRow(r).height = 18; r++;
     });
     r++;
-  };
-
-  drawUsageBlock('5% 미적용', FILL.hdr,
-    [usageSomo.reduce((s,d)=>s+toN(d['사용공급가']),0), usageSomo.reduce((s,d)=>s+toN(d['사용부가세']),0), usageSomo.reduce((s,d)=>s+toN(d['사용합계']),0)],
-    [usageSiyk.reduce((s,d)=>s+toN(d['사용공급가']),0), usageSiyk.reduce((s,d)=>s+toN(d['사용부가세']),0), usageSiyk.reduce((s,d)=>s+toN(d['사용합계']),0)]
-  );
-
-  const somo5 = (R.imedSiSoPivot5||[]).filter(d=>d.자재구분==='소모품');
-  const siyk5 = R.siyakPivot5 || [];
-  drawUsageBlock('5% 적용', FILL.warn,
-    [somo5.reduce((s,d)=>s+toN(d.사용공급가||0),0), somo5.reduce((s,d)=>s+toN(d.사용부가세||0),0), somo5.reduce((s,d)=>s+toN(d.사용합계||0),0)],
-    [siyk5.reduce((s,d)=>s+toN(d.사용공급가||0),0), siyk5.reduce((s,d)=>s+toN(d.사용부가세||0),0), siyk5.reduce((s,d)=>s+toN(d.사용합계||0),0)]
-  );
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1457,6 +1462,9 @@ function newWb() { return new ExcelJS.Workbook(); }
 async function saveWb(wb, filename) {
   const buf = await wb.xlsx.writeBuffer();
   saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
+  // 워크북 메모리 해제
+  wb.worksheets.forEach(ws => { ws._rows = []; ws._columns = []; });
+  wb._worksheets = [];
 }
 
 async function dlIpgo() {
