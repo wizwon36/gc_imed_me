@@ -51,10 +51,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('appBody').style.display = '';
 
-    // 거래처·자재 데이터 로드 (처리 시작 전 반드시 완료되어야 함)
+    // 거래처·자재 데이터 로드 (처리 시작 전 반드시 완료되어야 함, 최대 10초)
+    const timeout = ms => new Promise(r => setTimeout(r, ms));
     await Promise.all([
-      loadVendorsFromServer().catch(() => {}),
-      loadItemsFromServer().catch(() => {}),
+      Promise.race([loadVendorsFromServer(), timeout(10000)]).catch(() => {}),
+      Promise.race([loadItemsFromServer(),   timeout(10000)]).catch(() => {}),
     ]);
 
   } catch (e) {
@@ -729,7 +730,7 @@ const BORDER_TOTAL = {
   right: { style: 'medium', color: { argb: 'FF4F81BD' } },
 };
 const NUM_FMT = '#,##0';
-const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'center', wrapText: false });
+const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'middle', wrapText: false });
 
 // ── 셀 스타일 헬퍼 ────────────────────────────────────────
 function sc(cell, { value, font, fill, alignment, border, numFmt } = {}) {
@@ -1080,7 +1081,7 @@ function writeDeptAmount(ws, month, depts) {
     // 부서 요약 행 — mergeCells 먼저, 그 다음 값 직접 쓰기
     ws.mergeCells(r, 1, r, 2);
     const sc1 = ws.getCell(r, 1);
-    sc1.value = g.name; sc1.font = F.bold; sc1.fill = FILL.subtot;
+    sc1.value = g.name + ' 소계'; sc1.font = F.bold; sc1.fill = FILL.subtot;
     sc1.alignment = { horizontal: 'center', vertical: 'middle' };
     sc1.border = BORDER_THIN;
     [3,4,5].forEach((c, i) => {
