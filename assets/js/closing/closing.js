@@ -1109,33 +1109,57 @@ function writeDeptAmount(ws, month, depts) {
     else groups.push({ name: d.의뢰부서, items: [d] });
   });
 
+  const FILL_NONE = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+  const BORDER_DOTTED_BOTTOM = {
+    top: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' },
+    bottom: { style: 'dotted' }
+  };
+  const BORDER_SUBTOT = {
+    top: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' },
+    bottom: { style: 'medium' }
+  };
+
   let r = 4;
   groups.forEach((g, gi) => {
     const groupStart = r;
     g.items.forEach((d, di) => {
-      const fill = gi % 2 === 0 ? FILL.odd : FILL.even;
-      txtCell(ws, r, 1, di === 0 ? d.의뢰부서 : null, fill, di === 0);
-      txtCell(ws, r, 2, d.자재구분, fill);
-      numCell(ws, r, 3, d.공급가액, fill);
-      numCell(ws, r, 4, d.부가세,   fill);
-      numCell(ws, r, 5, d.합계금액, fill);
+      // 데이터 행: 흰 배경, 일반 폰트
+      const setCell = (c, v, isNum) => {
+        const cell = ws.getCell(r, c);
+        if (isNum) {
+          cell.value = Math.round(toN(v));
+          cell.numFmt = NUM_FMT;
+        } else {
+          cell.value = v || null;
+        }
+        cell.font      = di === 0 && c === 1 ? F.bold : F.base;
+        cell.fill      = FILL_NONE;
+        cell.alignment = isNum ? AL('right') : (c === 1 ? AL('center') : AL('left'));
+        cell.border    = BORDER_DOTTED_BOTTOM;
+      };
+      setCell(1, di === 0 ? d.의뢰부서 : null, false);
+      setCell(2, d.자재구분, false);
+      setCell(3, d.공급가액, true);
+      setCell(4, d.부가세,   true);
+      setCell(5, d.합계금액, true);
       ws.getRow(r).height = 18; r++;
     });
-    // 의뢰부서 셀 병합
+
+    // 부서명 셀 병합
     if (r - 1 > groupStart) ws.mergeCells(groupStart, 1, r - 1, 1);
     ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // 부서 요약 행 — mergeCells 먼저, 그 다음 값 직접 쓰기
+    // 소계 행: 굵은 폰트, 하단 medium 테두리
     ws.mergeCells(r, 1, r, 2);
     const sc1 = ws.getCell(r, 1);
-    sc1.value = g.name + ' 소계'; sc1.font = F.bold; sc1.fill = FILL.subtot;
+    sc1.value = g.name + ' 소계'; sc1.font = F.bold; sc1.fill = FILL_NONE;
     sc1.alignment = { horizontal: 'center', vertical: 'middle' };
-    sc1.border = BORDER_THIN;
-    [3,4,5].forEach((c, i) => {
+    sc1.border = BORDER_SUBTOT;
+    [3, 4, 5].forEach((c, i) => {
       const vals = [sumF(g.items,'공급가액'), sumF(g.items,'부가세'), sumF(g.items,'합계금액')];
       const cell = ws.getCell(r, c);
-      cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.subtot;
-      cell.alignment = AL('right'); cell.border = BORDER_THIN; cell.numFmt = NUM_FMT;
+      cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL_NONE;
+      cell.alignment = AL('right'); cell.border = BORDER_SUBTOT; cell.numFmt = NUM_FMT;
     });
     ws.getRow(r).height = 18; r++;
   });
