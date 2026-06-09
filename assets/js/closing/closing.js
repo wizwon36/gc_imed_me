@@ -440,14 +440,14 @@ async function runProcessing() {
     // 사용 집계
     usageData.forEach(r => {
       const code = String(r['자재코드'] || '').trim(); if (!code) return;
-      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 증가: 0, 감소: toN(r['사용공급가']) };
-      else subulMap[code].감소 += toN(r['사용공급가']);
+      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: 0, 증가수량: 0, 감소: toN(r['사용공급가']), 감소수량: toN(r['사용수량(입)']) };
+      else { subulMap[code].감소 += toN(r['사용공급가']); subulMap[code].감소수량 += toN(r['사용수량(입)']); }
     });
     // 입고 집계
     ipgoData.forEach(r => {
       const code = String(r['자재코드'] || '').trim(); if (!code) return;
-      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 증가: toN(r['공급가액']), 감소: 0 };
-      else subulMap[code].증가 += toN(r['공급가액']);
+      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: toN(r['공급가액']), 증가수량: toN(r['수량']), 감소: 0, 감소수량: 0 };
+      else { subulMap[code].증가 += toN(r['공급가액']); subulMap[code].증가수량 += toN(r['수량']); }
     });
 
     // 입고 파일에 자재 마스터 미등록 품목 경고
@@ -630,8 +630,8 @@ function renderResults() {
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
     <div class="cl-dl-card imed" onclick="dlSubul()">
-      <span class="cl-dl-tag imed">아이메드→GC케어 제출</span>
-      <div class="cl-dl-name">★ 아이메드 수불 집계표 ★</div>
+      <span class="cl-dl-tag imed">GC케어 제출</span>
+      <div class="cl-dl-name">★ 수불 집계표 ★</div>
       <div class="cl-dl-sheets">품목별 기초·증가·감소·기말 원가집계표</div>
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
@@ -1238,21 +1238,29 @@ function writeSubul(ws, year, month, branch, items) {
 
   // 회계 표기는 전역 NUM_FMT 사용
 
+  // 소모품 → 시약 순, 의약품 제외, 자재코드 오름차순
+  const typeOrder = { '소모품': 0, '시약': 1 };
   const sorted = [...items]
-    .filter(it => (it.기초 || 0) !== 0 || it.증가 !== 0 || it.감소 !== 0)
+    .filter(it => {
+      const type = String(it.type || '').trim();
+      return type !== '의약품' && ((it.기초 || 0) !== 0 || it.증가 !== 0 || it.감소 !== 0);
+    })
     .sort((a, b) => {
-      const codeA = String(a.code || ''), codeB = String(b.code || '');
-      if (codeA !== codeB) return codeA.localeCompare(codeB, 'ko');
-      return String(a.type || '').localeCompare(String(b.type || ''), 'ko');
+      const ta = typeOrder[String(a.type || '')] ?? 99;
+      const tb = typeOrder[String(b.type || '')] ?? 99;
+      if (ta !== tb) return ta - tb;
+      return String(a.code || '').localeCompare(String(b.code || ''), 'ko');
     });
 
   let r = 5;
   sorted.forEach((it, ri) => {
     const fill    = ri % 2 === 0 ? FILL.odd : FILL.even;
     const 기초    = it.기초 || 0;
-    const 기초수량 = Math.round(it.기초수량 || 0);
-    const 기말    = 기초 + it.증가 - it.감소;
-    const 기말수량 = 기초수량;
+    const 기초수량  = Math.round(it.기초수량 || 0);
+    const 증가수량  = Math.round(it.증가수량 || 0);
+    const 감소수량  = Math.round(it.감소수량 || 0);
+    const 기말     = 기초 + it.증가 - it.감소;
+    const 기말수량  = 기초수량 + 증가수량 - 감소수량;
 
     const accCell = (c, v) => {
       const cell = ws.getCell(r, c);
@@ -1269,9 +1277,9 @@ function writeSubul(ws, year, month, branch, items) {
     txtCell(ws, r, 3, it.type, fill, false, true);
     accCell(4,  기초수량);
     accCell(6,  기초);
-    accCell(7,  0);  // 증가수량 (미집계)
+    accCell(7,  Math.round(it.증가수량 || 0));
     accCell(8,  it.증가);
-    accCell(9,  0);  // 감소수량 (미집계)
+    accCell(9,  Math.round(it.감소수량 || 0));
     accCell(10, it.감소);
     accCell(11, 기말수량);
     accCell(12, 0);  // 기말단가 (미집계)
