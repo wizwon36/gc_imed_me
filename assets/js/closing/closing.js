@@ -429,7 +429,8 @@ async function runProcessing() {
       activeItems.forEach(it => {
         subulMap[it.item_code] = {
           code: it.item_code, name: it.item_name,
-          type: it.item_type, 기초: 0, 증가: 0, 감소: 0
+          type: it.item_type, 기초: 0, 기초수량: 0,
+          증가: 0, 증가수량: 0, 감소: 0, 감소수량: 0
         };
       });
       clog(`자재 마스터 ${activeItems.length}건 기준으로 수불 구성`, 'ok');
@@ -1225,14 +1226,23 @@ function writeVendorMasterSheet(ws, vendors) {
 
 // ── 수불 집계표 ───────────────────────────────────────────
 function writeSubul(ws, year, month, branch, items) {
-  titleRow(ws, 1, 1, '원가집계표', 13, 24);
+  titleRow(ws, 1, 1, '원가집계표', 13, 30);
+  ws.getCell(1, 1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getCell(1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
   txtCell(ws, 2, 1, '회사명 : GC케어', null, true);
   txtCell(ws, 2, 13, '-VAT', null, false, true);  // M열(13)으로 이동
   [['품목코드', 1], ['품목명', 2], ['구분', 3], ['기초', 4], ['증가', 7], ['감소', 9], ['기말', 11]]
     .forEach(([v, c]) => hdrCell(ws, 3, c, v));
   ws.mergeCells(3, 4, 3, 6); ws.mergeCells(3, 7, 3, 8); ws.mergeCells(3, 9, 3, 10); ws.mergeCells(3, 11, 3, 13);
   ['', '', '', '수량', '단가', '금액', '수량', '금액', '수량', '금액', '수량', '단가', '금액']
-    .forEach((v, i) => { const cell = ws.getCell(4, i + 1); cell.font = F.hdr; cell.fill = FILL.hdr; cell.alignment = AL('center'); cell.border = BORDER_THIN; if (v) cell.value = v; });
+    .forEach((v, i) => {
+      const cell = ws.getCell(4, i + 1);
+      cell.font      = F.hdr;
+      cell.fill      = FILL.hdr;
+      cell.alignment = AL('center');
+      cell.border    = BORDER_THIN;
+      if (v) cell.value = v;
+    });
   [1, 2, 3].forEach(c => ws.mergeCells(3, c, 4, c));
   ws.getRow(3).height = 22; ws.getRow(4).height = 22;
 
@@ -1276,22 +1286,30 @@ function writeSubul(ws, year, month, branch, items) {
     txtCell(ws, r, 2, it.name, fill);
     txtCell(ws, r, 3, it.type, fill, false, true);
     accCell(4,  기초수량);
+    accCell(5,  0);  // 기초단가
     accCell(6,  기초);
-    accCell(7,  Math.round(it.증가수량 || 0));
+    accCell(7,  증가수량);
     accCell(8,  it.증가);
-    accCell(9,  Math.round(it.감소수량 || 0));
+    accCell(9,  감소수량);
     accCell(10, it.감소);
     accCell(11, 기말수량);
-    accCell(12, 0);  // 기말단가 (미집계)
+    accCell(12, 0);  // 기말단가
     accCell(13, 기말);
     ws.getRow(r).height = 18; r++;
   });
 
-  const t기초 = sorted.reduce((s, it) => s + (it.기초 || 0), 0);
-  const tI    = sorted.reduce((s, it) => s + it.증가, 0);
-  const tD    = sorted.reduce((s, it) => s + it.감소, 0);
+  const t기초    = sorted.reduce((s, it) => s + (it.기초 || 0), 0);
+  const t기초수량 = sorted.reduce((s, it) => s + Math.round(it.기초수량 || 0), 0);
+  const tI       = sorted.reduce((s, it) => s + it.증가, 0);
+  const tI수량   = sorted.reduce((s, it) => s + Math.round(it.증가수량 || 0), 0);
+  const tD       = sorted.reduce((s, it) => s + it.감소, 0);
+  const tD수량   = sorted.reduce((s, it) => s + Math.round(it.감소수량 || 0), 0);
+  const t기말    = t기초 + tI - tD;
+  const t기말수량 = t기초수량 + tI수량 - tD수량;
   ws.mergeCells(r, 1, r, 3);
-  totalRow(ws, r, [6, 8, 10, 13], [t기초, tI, tD, t기초 + tI - tD], [1], ['총합계']);
+  totalRow(ws, r, [4, 6, 7, 8, 9, 10, 11, 13],
+    [t기초수량, t기초, tI수량, tI, tD수량, tD, t기말수량, t기말],
+    [1], ['총합계']);
   cw(ws, [[1, 14], [2, 42], [3, 8], [4, 8], [5, 8], [6, 12], [7, 8], [8, 14], [9, 8], [10, 14], [11, 8], [12, 8], [13, 14]]);
   ws.views = [{ state: 'frozen', ySplit: 4 }];
 }
