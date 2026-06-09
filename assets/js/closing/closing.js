@@ -349,8 +349,47 @@ async function runProcessing() {
     await sleep(150); prog(55, '집계 중...');
     const gcVendors        = byVendor(gcIpgo);
     const imedVendors      = byVendor(imedIpgo);
-    const gcDepts          = byDeptIpgoFull(gcIpgo, usageGC);
-    const imedDepts        = byDeptIpgoFull(imedIpgo, usageImed);
+    const gcDepts   = byDeptIpgoFull(gcIpgo, usageGC);
+    const imedDepts = byDeptIpgoFull(imedIpgo, usageImed);
+
+    // CLOSING_DEPT 마스터에서 의원별 부서 목록 로드 → 당월 데이터 없는 부서도 0으로 포함
+    try {
+      const user2  = window.auth?.getSession?.();
+      // ORG_CLINIC에서 현재 branch의 clinic_code 확인
+      const clinicRes = await apiGet('getCodes', {
+        request_user_email: user2?.email,
+        code_group: 'ORG_CLINIC',
+      });
+      const clinicCode = (clinicRes.data || [])
+        .find(c => String(c.code_name || '').trim() === branch)
+        ?.code_value || '';
+
+      if (clinicCode) {
+        const deptRes = await apiGet('getCodes', {
+          request_user_email: user2?.email,
+          code_group: 'CLOSING_DEPT',
+        });
+        const depts = (deptRes.data || [])
+          .filter(d => String(d.parent_code || '').trim() === clinicCode);
+
+        depts.forEach(d => {
+          const deptName = String(d.code_name || '').trim();
+          if (!deptName) return;
+          // GC케어: 시약, 소모품
+          ['시약', '소모품'].forEach(type => {
+            if (!gcDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === type)) {
+              gcDepts.push({ 의뢰부서: deptName, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 });
+            }
+          });
+          // 아이메드: 의약품
+          if (!imedDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === '의약품')) {
+            imedDepts.push({ 의뢰부서: deptName, 자재구분: '의약품', 공급가액: 0, 부가세: 0, 합계금액: 0 });
+          }
+        });
+      }
+    } catch (e) {
+      clog('부서 마스터 로드 실패: ' + e.message, 'warn');
+    }
     const itemIpgoPivot    = byItem(ipgoData, '자재코드', '자재명', '수량', '공급가액')
                               .filter(it => !String(it.코드).startsWith('6'));  // 의약품 제외
     const itemUsagePivot   = byItem(usageGC, '자재코드', '자재명', '사용수량(입)', '사용공급가');
