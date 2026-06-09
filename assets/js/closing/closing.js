@@ -1926,6 +1926,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   ws.getRow(3).height = 18;
 
   // 기초재고: 부서별 집계 (아이메드는 그룹핑 적용)
+  const targetType = isGC ? '시약' : '의약품';
   const prevDeptStock = {};
   prevStockData
     .filter(s => !s.item_type || s.item_type === targetType)
