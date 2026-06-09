@@ -1000,7 +1000,7 @@ function writePivotUsageDept(ws, data, cols3) {
 }
 
 // ── 결재 시트 ─────────────────────────────────────────────
-function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
+function writeKyuljai(ws, year, month, label, vendors, vendorMap, gcRow) {
   const ym = `${year}/${String(month).padStart(2, '0')}/01 ~ ${year}/${String(month).padStart(2, '0')}/31`;
 
   // 1행: 제목 (A1~I3 병합, 가운데 정렬)
@@ -1049,8 +1049,26 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap) {
     txtCell(ws, r, 9, '',        rowFill);
     ws.getRow(r).height = 18; r++;
   });
+  // GC케어 행 (아이메드 보고서 마지막에 추가)
+  if (gcRow) {
+    const fill = vendors.length % 2 === 0 ? FILL.odd : FILL.even;
+    txtCell(ws, r, 1, vendors.length + 1, fill, false, true);
+    txtCell(ws, r, 2, 'GC케어',  fill, true);
+    txtCell(ws, r, 3, '',        fill, false, true);
+    numCell(ws, r, 4, gcRow.공급가액, fill);
+    numCell(ws, r, 5, gcRow.부가세,   fill);
+    numCell(ws, r, 6, gcRow.합계금액, fill);
+    txtCell(ws, r, 7, '', fill, false, true);
+    txtCell(ws, r, 8, '', fill, false, true);
+    txtCell(ws, r, 9, '', fill);
+    ws.getRow(r).height = 18; r++;
+  }
+
   ws.mergeCells(r, 1, r, 3);
-  totalRow(ws, r, [4, 5, 6], [sumF(vendors, '공급가액'), sumF(vendors, '부가세'), sumF(vendors, '합계금액')],
+  totalRow(ws, r, [4, 5, 6],
+    [sumF(vendors, '공급가액') + (gcRow?.공급가액||0),
+     sumF(vendors, '부가세')   + (gcRow?.부가세  ||0),
+     sumF(vendors, '합계금액') + (gcRow?.합계금액||0)],
     [1, 7, 8, 9], ['총합계', '', '', '']);
   cw(ws, [[1, 8], [2, 22], [3, 16], [4, 16], [5, 14], [6, 16], [7, 10], [8, 10], [9, 12]]);
   ws.views = [{ state: 'frozen', ySplit: 6 }];
@@ -1612,9 +1630,9 @@ async function dlUsage() {
   }
 }
 
-async function dlReport(label, vendors, depts, filename) {
+async function dlReport(label, vendors, depts, filename, gcRow) {
   const R = App.R; const wb = newWb();
-  writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap);
+  writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap, gcRow);
   writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, depts);
 
   const user = window.auth?.getSession?.();
@@ -1643,7 +1661,16 @@ async function dlImedReport() {
   try {
     showGlobalLoading('아이메드 보고서 생성 중...');
     const R = App.R;
-    await dlReport('원재료 및 소모품', R.imedVendors, R.imedDepts, `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - 아이메드 - ${R.branch}.xlsx`);
+    // GC케어 5% 적용 금액 (시약+소모품 합계)
+    const gcSiSo5 = [...(R.siyakPivot5||[]), ...(R.imedSiSoPivot5||[])];
+    const gcRow = {
+      공급가액: gcSiSo5.reduce((s,d)=>s+toN(d.사용공급가||0),0),
+      부가세:   gcSiSo5.reduce((s,d)=>s+toN(d.사용부가세||0),0),
+      합계금액: gcSiSo5.reduce((s,d)=>s+toN(d.사용합계  ||0),0),
+    };
+    await dlReport('원재료 및 소모품', R.imedVendors, R.imedDepts,
+      `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - 아이메드 - ${R.branch}.xlsx`,
+      gcRow);
   } finally {
     await hideGlobalLoading();
   }
