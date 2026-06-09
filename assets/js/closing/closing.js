@@ -1208,30 +1208,99 @@ function writeUsageWith5pct(ws, headers, rows, numCols, colWidths) {
 
 // ── SAP 시트 ─────────────────────────────────────────────
 function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendorMap) {
-  ws.getCell(2, 4).value = account; ws.getCell(2, 4).font = F.bold;
-  ws.getCell(2, 7).value = totalSup; ws.getCell(2, 7).font = F.bold; ws.getCell(2, 7).numFmt = NUM_FMT;
+  const BORDER_MEDIUM = {
+    top:    { style: 'medium' }, bottom: { style: 'medium' },
+    left:   { style: 'medium' }, right:  { style: 'medium' }
+  };
+  const MEDIUM_BOTTOM = { bottom: { style: 'medium' } };
+
+  // 2행: 요약정보
+  ws.getCell(2, 4).value  = account; ws.getCell(2, 4).font = F.bold;
+  ws.getCell(2, 7).value  = totalSup; ws.getCell(2, 7).font = F.bold; ws.getCell(2, 7).numFmt = NUM_FMT;
   ws.getCell(2, 10).value = '양식 기준'; ws.getCell(2, 10).font = F.base;
   ws.getCell(2, 12).value = cc; ws.getCell(2, 12).font = F.base;
   ws.getRow(2).height = 18;
-  ['', '거래처', '사업자 번호', '계정', '', '', '공급가액', '', '기준일', '적요', '', 'CC', '지급일', '전표번호']
-    .forEach((v, i) => { if (v) hdrCell(ws, 3, i + 1, v); });
+
+  // 3행: 헤더 (빈 컬럼 유지)
+  // A(1)빈, B(2)거래처, C(3)사업자번호, D(4)계정, E(5)빈, F(6)빈, G(7)공급가액, H(8)빈, I(9)기준일, J(10)적요, K(11)빈, L(12)CC, M(13)지급일, N(14)전표번호
+  [
+    [2,'거래처'], [3,'사업자 번호'], [4,'계정'],
+    [7,'공급가액'], [9,'기준일'], [10,'적요'],
+    [12,'CC'], [13,'지급일'], [14,'전표번호']
+  ].forEach(([c,v]) => hdrCell(ws, 3, c, v));
   ws.getRow(3).height = 18;
+
+  // 데이터 행
+  let prevVendor = null;
+  let vendorCount = 0;  // 현재 거래처 내 10줄 카운터 (전체 기준)
+
   sapRows.forEach((r, ri) => {
-    const row = ri + 4;
+    const rowNum = ri + 4;
     const isUnreg = vendorMap && !vendorMap[r.거래처];
-    const fill = isUnreg ? FILL.warn : (ri % 2 === 0 ? FILL.odd : FILL.even);
-    txtCell(ws, row, 2, r.거래처, fill);
-    txtCell(ws, row, 3, r.사업자번호 || '', fill);
-    txtCell(ws, row, 4, r.계정 || account, fill, false, true);
-    numCell(ws, row, 7, r.공급가액, fill);
-    txtCell(ws, row, 9, r.기준일, fill, false, true);
-    txtCell(ws, row, 10, r.적요, fill);
-    txtCell(ws, row, 12, cc, fill, false, true);
-    txtCell(ws, row, 13, r.지급일, fill, false, true);
-    txtCell(ws, row, 14, r.전표번호 || '', fill);
-    ws.getRow(row).height = 18;
+    const fill    = isUnreg ? FILL.warn : (ri % 2 === 0 ? FILL.odd : FILL.even);
+
+    // 거래처 마스터에서 사업자번호/지급일 가져오기
+    const vm      = vendorMap?.[r.거래처];
+    const bizNo   = vm?.biz_no      || r.사업자번호 || '';
+    const payDay  = vm?.credit_days != null ? String(vm.credit_days) : (r.지급일 || '');
+
+    // 빈 셀도 테두리/배경 유지 (복붙 시 열 구조 유지)
+    const blankCell = (c) => {
+      const cell = ws.getCell(rowNum, c);
+      cell.fill   = fill;
+      cell.border = BORDER_THIN;
+    };
+
+    blankCell(1);  // A열 빈
+    txtCell(ws, rowNum, 2,  r.거래처,       fill);
+    txtCell(ws, rowNum, 3,  bizNo,           fill, false, true);
+    txtCell(ws, rowNum, 4,  account,         fill, false, true);
+    blankCell(5);  // E열 빈
+    blankCell(6);  // F열 빈
+    numCell(ws, rowNum, 7,  r.공급가액,     fill);
+    blankCell(8);  // H열 빈
+    txtCell(ws, rowNum, 9,  r.기준일,       fill, false, true);
+    txtCell(ws, rowNum, 10, r.적요,         fill);
+    blankCell(11); // K열 빈
+    txtCell(ws, rowNum, 12, cc,             fill, false, true);
+    txtCell(ws, rowNum, 13, payDay,         fill, false, true);
+    txtCell(ws, rowNum, 14, r.전표번호 || '', fill);
+    ws.getRow(rowNum).height = 18;
+
+    // 굵은선: 거래처 변경 시 OR 10줄마다 (복붙 범위 D~L 기준)
+    const isVendorChange = r.거래처 !== prevVendor;
+    if (isVendorChange) { vendorCount = 0; }
+    vendorCount++;
+    prevVendor = r.거래처;
+
+    const needThickBottom = vendorCount % 10 === 0;  // 10줄마다
+    const needThickVendor = isVendorChange && ri > 0; // 거래처 변경 시 이전 행 하단
+
+    if (needThickVendor) {
+      // 이전 행 하단에 굵은선
+      for (let c = 1; c <= 14; c++) {
+        const cell = ws.getCell(rowNum - 1, c);
+        const existing = cell.border || {};
+        cell.border = { ...existing, bottom: { style: 'medium' } };
+      }
+    }
+    if (needThickBottom) {
+      // 현재 행 하단에 굵은선
+      for (let c = 1; c <= 14; c++) {
+        const cell = ws.getCell(rowNum, c);
+        const existing = cell.border || {};
+        cell.border = { ...existing, bottom: { style: 'medium' } };
+      }
+    }
   });
-  cw(ws, [[1, 4], [2, 18], [3, 14], [4, 12], [5, 4], [6, 4], [7, 16], [8, 4], [9, 12], [10, 52], [11, 4], [12, 12], [13, 8], [14, 14]]);
+
+  // 열 너비 원본과 동일
+  cw(ws, [
+    [1, 6], [2, 18], [3, 14], [4, 12],
+    [5, 4], [6, 4], [7, 16], [8, 4],
+    [9, 12], [10, 52], [11, 4],
+    [12, 12], [13, 8], [14, 14]
+  ]);
   ws.views = [{ state: 'frozen', ySplit: 3 }];
 }
 
