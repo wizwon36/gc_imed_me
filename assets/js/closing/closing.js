@@ -1221,13 +1221,12 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
   ws.getCell(2, 12).value = cc; ws.getCell(2, 12).font = F.base;
   ws.getRow(2).height = 18;
 
-  // 3행: 헤더 (빈 컬럼 유지)
-  // A(1)빈, B(2)거래처, C(3)사업자번호, D(4)계정, E(5)빈, F(6)빈, G(7)공급가액, H(8)빈, I(9)기준일, J(10)적요, K(11)빈, L(12)CC, M(13)지급일, N(14)전표번호
+  // 3행: 헤더 (빈 컬럼 포함 전체 채우기)
   [
-    [2,'거래처'], [3,'사업자 번호'], [4,'계정'],
-    [7,'공급가액'], [9,'기준일'], [10,'적요'],
-    [12,'CC'], [13,'지급일'], [14,'전표번호']
-  ].forEach(([c,v]) => hdrCell(ws, 3, c, v));
+    [1,''], [2,'거래처'], [3,'사업자 번호'], [4,'계정'],
+    [5,''], [6,''], [7,'공급가액'], [8,''],
+    [9,'기준일'], [10,'적요'], [11,''], [12,'CC'], [13,'지급일'], [14,'전표번호']
+  ].forEach(([c,v]) => hdrCell(ws, 3, c, v || ' '));
   ws.getRow(3).height = 18;
 
   // 데이터 행
@@ -1241,7 +1240,7 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
 
     // 거래처 마스터에서 사업자번호/지급일 가져오기
     const vm      = vendorMap?.[r.거래처];
-    const bizNo   = vm?.biz_no      || r.사업자번호 || '';
+    const bizNo   = (vm?.biz_no || r.사업자번호 || '').replace(/-/g, '');
     const payDay  = vm?.credit_days != null ? String(vm.credit_days) : (r.지급일 || '');
 
     // 빈 셀도 테두리/배경 유지 (복붙 시 열 구조 유지)
