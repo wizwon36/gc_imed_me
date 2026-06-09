@@ -630,6 +630,18 @@ function renderResults() {
       <div class="cl-dl-sheets">사용원본 · 시약,소모품 · 원가집계표 요약 · 소모품 · 시약 · 시약 마감요약 · 시약5% · 의약품 · 아이메드 마감요약(시,소) · 아이메드 마감요약(의약품)</div>
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
+    <div class="cl-dl-card imed" onclick="dlSubul()">
+      <span class="cl-dl-tag imed">GC케어 제출</span>
+      <div class="cl-dl-name">★ 수불 집계표 ★</div>
+      <div class="cl-dl-sheets">품목별 기초·증가·감소·기말 원가집계표</div>
+      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
+    </div>
+    <div class="cl-dl-card gc" onclick="dlSAP()">
+      <span class="cl-dl-tag gc">GC케어</span>
+      <div class="cl-dl-name">GC케어 입고분 SAP 입력 양식</div>
+      <div class="cl-dl-sheets">SAP 전표 입력 (거래처 관리 자동 반영) · 거래처 관리 시트</div>
+      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
+    </div>
     <div class="cl-dl-card gc" onclick="dlGCReport()">
       <span class="cl-dl-tag gc">GC케어</span>
       <div class="cl-dl-name">거래처 구매 내역 및 원재료 보고</div>
@@ -640,18 +652,6 @@ function renderResults() {
       <span class="cl-dl-tag imed">아이메드</span>
       <div class="cl-dl-name">거래처 구매 내역 및 원재료 보고</div>
       <div class="cl-dl-sheets">결재 · 부서별 금액 · 원재료비 · 연간 원재료비</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-    <div class="cl-dl-card gc" onclick="dlSAP()">
-      <span class="cl-dl-tag gc">GC케어</span>
-      <div class="cl-dl-name">GC케어 입고분 SAP 입력 양식</div>
-      <div class="cl-dl-sheets">SAP 전표 입력 (거래처 관리 자동 반영) · 거래처 관리 시트</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-    <div class="cl-dl-card imed" onclick="dlSubul()">
-      <span class="cl-dl-tag imed">GC케어 제출</span>
-      <div class="cl-dl-name">★ 수불 집계표 ★</div>
-      <div class="cl-dl-sheets">품목별 기초·증가·감소·기말 원가집계표</div>
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
   `;
