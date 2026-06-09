@@ -729,7 +729,7 @@ const BORDER_TOTAL = {
   bottom: { style: 'medium', color: { argb: 'FF4F81BD' } },
   right: { style: 'medium', color: { argb: 'FF4F81BD' } },
 };
-const NUM_FMT = '#,##0';
+const NUM_FMT = '#,##0;[Red]-#,##0;"-"';
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'middle', wrapText: false });
 
 // ── 셀 스타일 헬퍼 ────────────────────────────────────────
@@ -1225,19 +1225,19 @@ function writeVendorMasterSheet(ws, vendors) {
 
 // ── 수불 집계표 ───────────────────────────────────────────
 function writeSubul(ws, year, month, branch, items) {
-  titleRow(ws, 1, 1, '원가집계표', 13, 22);
+  titleRow(ws, 1, 1, '원가집계표', 13, 24);
   txtCell(ws, 2, 1, '회사명 : GC케어', null, true);
-  txtCell(ws, 2, 14, '-VAT', null, false, true);
+  txtCell(ws, 2, 13, '-VAT', null, false, true);  // M열(13)으로 이동
   [['품목코드', 1], ['품목명', 2], ['구분', 3], ['기초', 4], ['증가', 7], ['감소', 9], ['기말', 11]]
     .forEach(([v, c]) => hdrCell(ws, 3, c, v));
   ws.mergeCells(3, 4, 3, 6); ws.mergeCells(3, 7, 3, 8); ws.mergeCells(3, 9, 3, 10); ws.mergeCells(3, 11, 3, 13);
   ['', '', '', '수량', '단가', '금액', '수량', '금액', '수량', '금액', '수량', '단가', '금액']
     .forEach((v, i) => { const cell = ws.getCell(4, i + 1); cell.font = F.hdr; cell.fill = FILL.hdr; cell.alignment = AL('center'); cell.border = BORDER_THIN; if (v) cell.value = v; });
   [1, 2, 3].forEach(c => ws.mergeCells(3, c, 4, c));
-  ws.getRow(3).height = 18; ws.getRow(4).height = 18;
+  ws.getRow(3).height = 22; ws.getRow(4).height = 22;
 
-  // 1. 자재코드 오름차순 → 구분 오름차순 정렬
-  // 2. 기초·증가·감소 모두 0이면 제외
+  // 회계 표기는 전역 NUM_FMT 사용
+
   const sorted = [...items]
     .filter(it => (it.기초 || 0) !== 0 || it.증가 !== 0 || it.감소 !== 0)
     .sort((a, b) => {
@@ -1248,22 +1248,34 @@ function writeSubul(ws, year, month, branch, items) {
 
   let r = 5;
   sorted.forEach((it, ri) => {
-    const fill   = ri % 2 === 0 ? FILL.odd : FILL.even;
-    const 기초   = it.기초 || 0;
+    const fill    = ri % 2 === 0 ? FILL.odd : FILL.even;
+    const 기초    = it.기초 || 0;
     const 기초수량 = Math.round(it.기초수량 || 0);
-    const 기말   = 기초 + it.증가 - it.감소;
-    // 기말 수량 = 기초수량 + 증가수량 - 감소수량 (수량은 미집계이므로 기초수량 기반만 표기)
-    const 기말수량 = 기초수량; // 당월 입고/사용 수량은 Raw에 없으므로 기초 그대로
+    const 기말    = 기초 + it.증가 - it.감소;
+    const 기말수량 = 기초수량;
+
+    const accCell = (c, v) => {
+      const cell = ws.getCell(r, c);
+      cell.value = Math.round(toN(v));
+      cell.font = cell.value < 0 ? F.red : F.base;
+      cell.fill = fill || FILL.odd;
+      cell.alignment = AL('right');
+      cell.border = BORDER_THIN;
+      cell.numFmt = NUM_FMT;
+    };
 
     txtCell(ws, r, 1, it.code, fill);
     txtCell(ws, r, 2, it.name, fill);
     txtCell(ws, r, 3, it.type, fill, false, true);
-    if (기초   !== 0) numCell(ws, r, 6,  기초,     fill);
-    if (기초수량 !== 0) numCell(ws, r, 4,  기초수량,  fill);
-    if (it.증가 !== 0) numCell(ws, r, 8,  it.증가,  fill);
-    if (it.감소 !== 0) numCell(ws, r, 10, it.감소,  fill);
-    numCell(ws, r, 13, 기말, fill);
-    if (기말수량 !== 0) numCell(ws, r, 11, 기말수량, fill);
+    accCell(4,  기초수량);
+    accCell(6,  기초);
+    accCell(7,  0);  // 증가수량 (미집계)
+    accCell(8,  it.증가);
+    accCell(9,  0);  // 감소수량 (미집계)
+    accCell(10, it.감소);
+    accCell(11, 기말수량);
+    accCell(12, 0);  // 기말단가 (미집계)
+    accCell(13, 기말);
     ws.getRow(r).height = 18; r++;
   });
 
