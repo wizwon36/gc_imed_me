@@ -729,34 +729,34 @@ function restart() {
 const F = {
   base:  { name: 'Calibri', size: 10 },
   bold:  { name: 'Calibri', size: 10, bold: true },
-  hdr:   { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } },
-  total: { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } },
-  title: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } },
+  hdr:   { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } },
+  total: { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } },
+  title: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } },
   red:   { name: 'Calibri', size: 10, color: { argb: 'FFC00000' } },
   redb:  { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFC00000' } },
 };
 const FILL = {
-  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8DB4E2' } },  // 중간 파란 (엑셀 기본 테마)
-  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F81BD' } },  // 진한 파란
-  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCE6F1' } },  // 아주 연한 파란
+  hdr:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } },  // 연한 회색 (헤더)
+  total:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } },  // 연한 회색 (총합계)
+  subtot: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색 (소계)
   odd:    { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
-  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF5FB' } },  // 아주 연한 파란
-  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2EFDA' } },  // 연한 초록 (GC케어)
-  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } },  // 연한 노랑 (아이메드)
-  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF17375E' } },  // 진한 네이비
-  warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },  // 노란 경고
+  even:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
+  gc:     { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
+  imed:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } },  // 흰색
+  title:  { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } },  // 연한 회색 (제목)
+  warn:   { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } },  // 노란 경고 (유지)
 };
 const BORDER_THIN = {
-  top: { style: 'thin', color: { argb: 'FFB8CCE4' } },
-  left: { style: 'thin', color: { argb: 'FFB8CCE4' } },
-  bottom: { style: 'thin', color: { argb: 'FFB8CCE4' } },
-  right: { style: 'thin', color: { argb: 'FFB8CCE4' } },
+  top:    { style: 'thin', color: { argb: 'FF000000' } },
+  left:   { style: 'thin', color: { argb: 'FF000000' } },
+  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+  right:  { style: 'thin', color: { argb: 'FF000000' } },
 };
 const BORDER_TOTAL = {
-  top: { style: 'medium', color: { argb: 'FF4F81BD' } },
-  left: { style: 'medium', color: { argb: 'FF4F81BD' } },
-  bottom: { style: 'medium', color: { argb: 'FF4F81BD' } },
-  right: { style: 'medium', color: { argb: 'FF4F81BD' } },
+  top:    { style: 'medium', color: { argb: 'FF000000' } },
+  left:   { style: 'medium', color: { argb: 'FF000000' } },
+  bottom: { style: 'medium', color: { argb: 'FF000000' } },
+  right:  { style: 'medium', color: { argb: 'FF000000' } },
 };
 const NUM_FMT = '#,##0;[Red]-#,##0;"-"';
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'middle', wrapText: false });
@@ -1889,7 +1889,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     .forEach(([v, c]) => {
       hdrCell(ws, 3, c, v);
       if (c === 4) {  // 당기사용 강조
-        ws.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
+        ws.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
       }
     });
   ws.getRow(3).height = 18;
@@ -1987,7 +1987,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       ac.fill   = fill;
       ac.border = BORDER_THIN;
     }
-    const useFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC5D9F1' } };
+    const useFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
     numCell(ws, r, 2, base, fill);
     numCell(ws, r, 3, buy,  fill);
     numCell(ws, r, 4, use,  useFill);  // 당기사용 강조
@@ -2003,7 +2003,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   // 계 행
   subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
   // 당기사용(4열) 소계 강조
-  ws.getCell(r, 4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
+  ws.getCell(r, 4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
   // 비고 셀 소계 색상
   const bigoCell = ws.getCell(r, 6);
   bigoCell.fill   = FILL.subtot;
@@ -2123,7 +2123,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         if (yr === R.y && i >= 2 && i <= 13) {
           const mon = String(i - 1).padStart(2, '0');
           if (mon === curMon) {
-            ws.getCell(r, i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
+            ws.getCell(r, i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
           }
         }
       });
@@ -2156,7 +2156,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         const v       = d['m' + mon] || 0;
         const isCurMon = yr === R.y && mon === curMon;
         const cellFill = isCurMon
-          ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC5D9F1' } }  // 연한 황색 강조
+          ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } }  // 연한 황색 강조
           : fill;
         colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
         numCell(ws, r, mi + 3, v, cellFill);
@@ -2179,7 +2179,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     if (yr === R.y) {
       const curCol = months.indexOf(curMon) + 3;
       const cc = ws.getCell(r, curCol);
-      cc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6096C8' } };
+      cc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
     }
     ws.getCell(r, 16).fill   = FILL.subtot;
     ws.getCell(r, 16).border = BORDER_THIN;
