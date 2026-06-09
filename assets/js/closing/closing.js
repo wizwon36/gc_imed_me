@@ -1068,7 +1068,7 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap, gcRow) {
     const gcPay  = gcVm?.pay_method  || '';
     const gcCredit = gcVm?.credit_days != null ? String(gcVm.credit_days) : '';
     txtCell(ws, r, 1, vendors.length + 1, fill, false, true);
-    txtCell(ws, r, 2, 'GC케어', fill, true);
+    txtCell(ws, r, 2, 'GC케어', fill, false);
     txtCell(ws, r, 3, gcBiz,    fill, false, true);
     numCell(ws, r, 4, gcRow.공급가액, fill);
     numCell(ws, r, 5, gcRow.부가세,   fill);
