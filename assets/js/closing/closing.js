@@ -1328,6 +1328,12 @@ function writeSubul(ws, year, month, branch, items) {
   totalRow(ws, r, [4, 6, 7, 8, 9, 10, 11, 13],
     [t기초수량, t기초, tI수량, tI, tD수량, tD, t기말수량, t기말],
     [1], ['총합계']);
+  // 단가 컬럼(5, 12) 총합계 색+0 채우기
+  [5, 12].forEach(c => {
+    const cell = ws.getCell(r, c);
+    cell.value = 0; cell.font = F.total; cell.fill = FILL.total;
+    cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
+  });
   cw(ws, [[1, 14], [2, 42], [3, 8], [4, 8], [5, 8], [6, 12], [7, 8], [8, 14], [9, 8], [10, 14], [11, 8], [12, 8], [13, 14]]);
   ws.views = [{ state: 'frozen', ySplit: 4 }];
 }
