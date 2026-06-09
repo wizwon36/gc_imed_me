@@ -1903,25 +1903,28 @@ async function loadYearStock(year, branch, user) {
 function writeWonjaeryo(ws, R, prevStockData, label) {
   const isGC = label.includes('시약');  // GC케어=시약, 아이메드=원재료
 
-  // 제목 (A1~F1 병합)
+  // 제목
   const titleCell = ws.getCell(1, 1);
-  titleCell.value = `${R.m}월 원재료비 - ${R.branch} 납품`;
+  titleCell.value = isGC
+    ? `${R.m}월 원재료비 - ${R.branch} 납품`
+    : `${R.m}월 원재료비 계산`;
   titleCell.font = { name: 'Calibri', size: 13, bold: true };
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
   ws.mergeCells(1, 1, 1, 6); ws.getRow(1).height = 24;
 
-  // (단위:원/ -VAT) — F2
+  // (단위) — F2
   const unitCell = ws.getCell(2, 6);
-  unitCell.value = '(단위:원/ -VAT)'; unitCell.font = F.base; unitCell.alignment = AL('right');
+  unitCell.value = isGC ? '(단위:원/ -VAT)' : '(단위: 원)';
+  unitCell.font = F.base; unitCell.alignment = AL('right');
   ws.getRow(2).height = 16;
 
-  // 헤더 (당기사용 강조)
-  [['구분', 1], ['기초재고', 2], ['당기매입', 3], ['당기사용', 4], ['기말재고', 5], ['비고', 6]]
+  // 헤더
+  const hdrLabel = isGC ? '구분' : '아이메드';
+  [[[hdrLabel, 1], ['기초재고', 2], ['당기매입', 3], ['당기사용', 4], ['기말재고', 5], ['비고', 6]]]
+    .flat()
     .forEach(([v, c]) => {
       hdrCell(ws, 3, c, v);
-      if (c === 4) {  // 당기사용 강조
-        ws.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4E8D8' } };
-      }
+      if (c === 4) ws.getCell(3, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF5EE' } };
     });
   ws.getRow(3).height = 18;
 
@@ -2024,7 +2027,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       })
     : dataDeptKeys.sort((a, b) => a.localeCompare(b, 'ko'));
 
-  // 납품처 구분 텍스트 (GC케어=납품처\n아이메드 서울숲의원 형식)
+  // 납품처 구분 텍스트 (GC케어만)
   const vendorLabel = `납품처\n${R.branch}`;
 
   let r = 4;
@@ -2034,7 +2037,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   deptKeys.forEach((k, ri) => {
     const fill  = ri % 2 === 0 ? FILL.odd : FILL.even;
     const parts = k.split('||');
-    const dept  = parts[0], type = parts[1];
+    const dept  = parts[0];
     const base  = toN(prevDeptStockFinal[k]);
     const buy   = toN(deptIpgo[k]?.amt);
     const use   = toN(deptUsage[k]?.amt);
@@ -2045,41 +2048,105 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     totUse  += Math.round(use);
     totEnd  += Math.round(end);
 
-    // A열: 첫 행만 납품처 텍스트 (병합 예정)
-    if (ri === 0) {
-      const ac = ws.getCell(r, 1);
-      ac.value     = vendorLabel;
-      ac.font      = F.base;
-      ac.fill      = fill;
-      ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-      ac.border    = BORDER_THIN;
-    } else {
-      const ac = ws.getCell(r, 1);
-      ac.fill   = fill;
-      ac.border = BORDER_THIN;
-    }
     const useFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF5EE' } };
-    numCell(ws, r, 2, base, fill);
-    numCell(ws, r, 3, buy,  fill);
-    numCell(ws, r, 4, use,  useFill);  // 당기사용 강조
-    numCell(ws, r, 5, end,  fill);
-    txtCell(ws, r, 6, `${dept} - ${type}`, fill);
+
+    if (isGC) {
+      // GC케어: A열 납품처 병합셀
+      if (ri === 0) {
+        const ac = ws.getCell(r, 1);
+        ac.value = vendorLabel; ac.font = F.base; ac.fill = fill;
+        ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        ac.border = BORDER_THIN;
+      } else {
+        const ac = ws.getCell(r, 1); ac.fill = fill; ac.border = BORDER_THIN;
+      }
+      numCell(ws, r, 2, base, fill);
+      numCell(ws, r, 3, buy,  fill);
+      numCell(ws, r, 4, use,  useFill);
+      numCell(ws, r, 5, end,  fill);
+      txtCell(ws, r, 6, `${dept} - ${targetType}`, fill);
+    } else {
+      // 아이메드: A열에 부서명 직접 표기
+      txtCell(ws, r, 1, dept, fill, false, true);
+      numCell(ws, r, 2, base, fill);
+      numCell(ws, r, 3, buy,  fill);
+      numCell(ws, r, 4, use,  useFill);
+      numCell(ws, r, 5, end,  fill);
+      txtCell(ws, r, 6, '',   fill);  // 비고 (수동 입력용 빈 셀)
+    }
     ws.getRow(r).height = 18; r++;
   });
 
-  // A열 병합 (전체 데이터 행)
-  if (r - 1 > groupStart) ws.mergeCells(groupStart, 1, r - 1, 1);
-  ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  // GC케어만 A열 병합
+  if (isGC) {
+    if (r - 1 > groupStart) ws.mergeCells(groupStart, 1, r - 1, 1);
+    ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  }
 
   // 계 행
   subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
-  // 당기사용(4열) 소계 강조
   ws.getCell(r, 4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4E8D8' } };
-  // 비고 셀 소계 색상
+  if (isGC) {
+    ws.getCell(r, 6).value = '+VAT';
+    ws.getCell(r, 6).font  = F.bold;
+  }
   const bigoCell = ws.getCell(r, 6);
-  bigoCell.fill   = FILL.subtot;
-  bigoCell.border = BORDER_THIN;
-  ws.getRow(r).height = 18;
+  bigoCell.fill = FILL.subtot; bigoCell.border = BORDER_THIN;
+  ws.getRow(r).height = 18; r++;
+
+  // 아이메드 하단 블록
+  if (!isGC) {
+    r++;  // 빈 행
+
+    // 백신 원재료비 블록
+    const hdrFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4E8D8' } };
+    const dataFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF5EE' } };
+
+    ws.mergeCells(r, 3, r, 3);
+    [[3,'기능의학'],[4,'금액'],[5,'비고']].forEach(([c,v]) => {
+      const cell = ws.getCell(r, c); cell.value = v; cell.font = F.bold;
+      cell.fill = hdrFill; cell.alignment = AL('center'); cell.border = BORDER_THIN;
+    });
+    ws.getRow(r).height = 18; r++;
+
+    // 백신 원재료비 행 (의약품 중 진료팀(백신) 당기사용)
+    const vaccineDepts = ['진료팀(백신)'];
+    const vaccineUse = vaccineDepts.reduce((s, dept) => {
+      const k = dept + '||의약품';
+      return s + toN(deptUsage[k]?.amt || 0);
+    }, 0);
+    txtCell(ws, r, 3, '백신 원재료비', dataFill, false, true);
+    numCell(ws, r, 4, vaccineUse, dataFill);
+    txtCell(ws, r, 5, '', dataFill);
+    ws.getRow(r).height = 18; r++;
+
+    // 계 행
+    ws.mergeCells(r, 3, r, 3);
+    txtCell(ws, r, 3, '계', null, true, true);
+    numCell(ws, r, 4, vaccineUse, FILL.subtot);
+    ws.getRow(r).height = 18; r += 2;
+
+    // 기능의학 블록
+    [[3,'기능의학'],[4,'금액'],[5,'비고']].forEach(([c,v]) => {
+      const cell = ws.getCell(r, c); cell.value = v; cell.font = F.bold;
+      cell.fill = hdrFill; cell.alignment = AL('center'); cell.border = BORDER_THIN;
+    });
+    ws.getRow(r).height = 18; r++;
+
+    const funcItems = ['세포치료', '키트루다', '나글라자임', '헌터라제', '애브서틴'];
+    funcItems.forEach(item => {
+      txtCell(ws, r, 3, item, dataFill, false, true);
+      numCell(ws, r, 4, 0, dataFill);  // 직접 입력용
+      txtCell(ws, r, 5, '', dataFill);
+      ws.getRow(r).height = 18; r++;
+    });
+
+    // 기능의학 계
+    ws.mergeCells(r, 3, r, 3);
+    txtCell(ws, r, 3, '계', null, true, true);
+    numCell(ws, r, 4, 0, FILL.subtot);
+    ws.getRow(r).height = 18;
+  }
 
   cw(ws, [[1, 20], [2, 16], [3, 16], [4, 16], [5, 16], [6, 24]]);
   ws.views = [{ state: 'frozen', ySplit: 3 }];
