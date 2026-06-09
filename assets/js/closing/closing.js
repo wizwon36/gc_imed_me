@@ -1334,7 +1334,7 @@ function writeSubul(ws, year, month, branch, items, R) {
     cell.value = 0; cell.font = F.total; cell.fill = FILL.total;
     cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
   });
-  cw(ws, [[1, 14], [2, 38], [3, 8], [4, 8], [5, 6], [6, 16], [7, 8], [8, 16], [9, 8], [10, 16], [11, 14], [12, 8], [13, 16]]);
+  cw(ws, [[1, 14], [2, 36], [3, 8], [4, 12], [5, 12], [6, 16], [7, 12], [8, 16], [9, 12], [10, 16], [11, 12], [12, 12], [13, 16]]);
   ws.views = [{ state: 'frozen', ySplit: 4 }];
 
   // ── 하단 요약 블록 (원본 레이아웃 재현) ─────────────────
@@ -1361,25 +1361,24 @@ function writeSubul(ws, year, month, branch, items, R) {
 
   r++;
 
-  // 2. 총계 박스 2개 (5%미적용 / 5%적용) — E~J열(5~10)에 붙여서 작성
-  // 열: E(5)=총계라벨, F(6)=공급가액, G(7)=부가세액, H(8)=계, I(9)=비고, J(10)=세금계산서메모
-  const TBASE = 5;  // 시작 열
+  // 2. 총계 박스 — 원본: 총계라벨(4~5열), 공급가액(6), 부가세(8), 계(10), 비고(12)
+  const TBASE = 6;  // 공급가액 시작 열
 
   const drawTotBox = (supV, vatV, totV, bigoText, dataFill) => {
-    // 헤더행
-    ws.mergeCells(r, TBASE, r, TBASE+1);
-    const hLbl = ws.getCell(r, TBASE);
+    // 헤더행: 총계라벨(4~5병합), 공급가액(6), 부가세(8), 계(10), 비고(12)
+    ws.mergeCells(r, 4, r, 5);
+    const hLbl = ws.getCell(r, 4);
     hLbl.value='총  계'; hLbl.font=F.bold; hLbl.fill=FILL.subtot;
     hLbl.alignment={horizontal:'center',vertical:'middle'}; hLbl.border=BORDER_THIN;
-    [[TBASE+2,'공급가액'],[TBASE+3,'부가세액'],[TBASE+4,'계'],[TBASE+5,'비고']].forEach(([c,v])=>hdrCell(ws,r,c,v));
+    [[6,'공급가액'],[8,'부가세액'],[10,'계'],[12,'비고']].forEach(([c,v])=>hdrCell(ws,r,c,v));
     ws.getRow(r).height = 18; r++;
     // 데이터행
-    ws.mergeCells(r, TBASE, r, TBASE+1);
-    ws.getCell(r, TBASE).fill = dataFill; ws.getCell(r, TBASE).border = BORDER_THIN;
-    numCell(ws, r, TBASE+2, supV, dataFill);
-    numCell(ws, r, TBASE+3, vatV, dataFill);
-    numCell(ws, r, TBASE+4, totV, dataFill);
-    const bc = ws.getCell(r, TBASE+5);
+    ws.mergeCells(r, 4, r, 5);
+    ws.getCell(r, 4).fill = dataFill; ws.getCell(r, 4).border = BORDER_THIN;
+    numCell(ws, r, 6,  supV, dataFill);
+    numCell(ws, r, 8,  vatV, dataFill);
+    numCell(ws, r, 10, totV, dataFill);
+    const bc = ws.getCell(r, 12);
     bc.value=bigoText; bc.font=F.bold; bc.fill=FILL.warn;
     bc.alignment=AL('center'); bc.border=BORDER_THIN;
     ws.getRow(r).height = 18; r++;
@@ -1400,41 +1399,39 @@ function writeSubul(ws, year, month, branch, items, R) {
     gcSiSo5.reduce((s,d)=>s+toN(d.사용합계||0),0),
     '5% 적용', FILL.imed
   );
-  ws.getCell(r-1, TBASE+6).value = '세금계산서 발행금액';
-  ws.getCell(r-1, TBASE+6).font = F.base;
-  ws.getCell(r-1, TBASE+6).alignment = AL('left');
+  ws.getCell(r-1, 13).value = '세금계산서 발행금액';
+  ws.getCell(r-1, 13).font = F.base;
+  ws.getCell(r-1, 13).alignment = AL('left');
 
   r++;
 
-  // 소모품/시약 금액만 표기 (사용현황자료 위)
+  // 소모품/시약 금액만 표기
   const usageSomo = R.usageSomoum || [];
   const usageSiyk = R.usageSiyak  || [];
   [['소모품', usageSomo], ['시약', usageSiyk]].forEach(([lbl, arr]) => {
-    txtCell(ws, r, TBASE+2, lbl, null, false, false);
-    numCell(ws, r, TBASE+4, arr.reduce((s,d)=>s+toN(d['사용공급가']),0), FILL.odd);
+    txtCell(ws, r, 8, lbl, null, false, false);
+    numCell(ws, r, 10, arr.reduce((s,d)=>s+toN(d['사용공급가']),0), FILL.odd);
     ws.getRow(r).height = 18; r++;
   });
 
   r++;
 
-  // 3. 사용현황자료 블록
+  // 3. 사용현황자료 블록 — 라벨(3~4병합), 태그(5), 공급가액(6), 부가세(8), 계(10)
   const drawUsageBlock = (tagText, tagFill, somoRow, siykRow) => {
-    // 헤더
-    ws.mergeCells(r, TBASE-2, r, TBASE-1);
-    const ul = ws.getCell(r, TBASE-2);
+    ws.mergeCells(r, 3, r, 4);
+    const ul = ws.getCell(r, 3);
     ul.value='사용현황자료'; ul.font=F.bold; ul.fill=FILL.subtot;
     ul.alignment={horizontal:'center',vertical:'middle'}; ul.border=BORDER_THIN;
-    const tc = ws.getCell(r, TBASE);
+    const tc = ws.getCell(r, 5);
     tc.value=tagText; tc.font=F.bold; tc.fill=tagFill;
     tc.alignment=AL('center'); tc.border=BORDER_THIN;
-    [[TBASE+2,'공급가액'],[TBASE+3,'부가세액'],[TBASE+4,'계']].forEach(([c,v])=>hdrCell(ws,r,c,v));
+    [[6,'공급가액'],[8,'부가세액'],[10,'계']].forEach(([c,v])=>hdrCell(ws,r,c,v));
     ws.getRow(r).height = 18; r++;
-    // 데이터
     [['소모품', somoRow], ['시약', siykRow]].forEach(([lbl, [sup,vat,tot]]) => {
-      txtCell(ws, r, TBASE, lbl, FILL.odd, false, true);
-      numCell(ws, r, TBASE+2, sup, FILL.odd);
-      numCell(ws, r, TBASE+3, vat, FILL.odd);
-      numCell(ws, r, TBASE+4, tot, FILL.odd);
+      txtCell(ws, r, 5, lbl, FILL.odd, false, true);
+      numCell(ws, r, 6,  sup, FILL.odd);
+      numCell(ws, r, 8,  vat, FILL.odd);
+      numCell(ws, r, 10, tot, FILL.odd);
       ws.getRow(r).height = 18; r++;
     });
     r++;
