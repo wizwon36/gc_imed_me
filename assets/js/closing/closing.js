@@ -759,6 +759,11 @@ const BORDER_TOTAL = {
   right:  { style: 'medium', color: { argb: 'FF000000' } },
 };
 const NUM_FMT = '#,##0;[Red]-#,##0;"-"';
+const TYPE_ORDER = { '소모품': 0, '시약': 1, '의약품': 2 };
+const typeSort = (a, b) => {
+  const ta = TYPE_ORDER[a] ?? 9; const tb = TYPE_ORDER[b] ?? 9;
+  return ta !== tb ? ta - tb : a.localeCompare(b, 'ko');
+};
 const AL = (h, v) => ({ horizontal: h || 'left', vertical: v || 'middle', wrapText: false });
 
 // ── 셀 스타일 헬퍼 ────────────────────────────────────────
@@ -910,7 +915,10 @@ function writePivotDept(ws, data) {
   [[1, '의뢰부서'], [2, '자재구분'], [3, '합계 : 공급가액'], [4, '합계 : 부가세'], [5, '합계 : 합계금액']]
     .forEach(([c, v]) => hdrCell(ws, 1, c, v));
 
-  const sorted = [...data].sort((a, b) => a.의뢰부서.localeCompare(b.의뢰부서, 'ko'));
+  const sorted = [...data].sort((a, b) => {
+    const dc = a.의뢰부서.localeCompare(b.의뢰부서, 'ko');
+    return dc !== 0 ? dc : typeSort(a.자재구분, b.자재구분);
+  });
 
   let r = 2, prev = null, groupStartRow = 2;
   sorted.forEach((d, ri) => {
@@ -962,7 +970,10 @@ function writePivotUsageDept(ws, data, cols3) {
   [[1, '부서명'], [2, '자재구분'], [3, cols3[0]], [4, cols3[1]], [5, cols3[2]]]
     .forEach(([c, v]) => hdrCell(ws, 1, c, v));
 
-  const sorted = [...data].sort((a, b) => a.부서명.localeCompare(b.부서명, 'ko'));
+  const sorted = [...data].sort((a, b) => {
+    const dc = a.부서명.localeCompare(b.부서명, 'ko');
+    return dc !== 0 ? dc : typeSort(a.자재구분, b.자재구분);
+  });
 
   // 행 데이터 쓰면서 합계 누적 (반올림 후 합산)
   let r = 2, prev = null, groupStartRow = 2;
@@ -1102,7 +1113,7 @@ function writeDeptAmount(ws, month, depts) {
   // 정렬
   const sorted = [...depts].sort((a, b) => {
     const dc = a.의뢰부서.localeCompare(b.의뢰부서, 'ko');
-    return dc !== 0 ? dc : a.자재구분.localeCompare(b.자재구분, 'ko');
+    return dc !== 0 ? dc : typeSort(a.자재구분, b.자재구분);
   });
 
   // 부서별 그룹핑
@@ -1390,13 +1401,11 @@ function writeSubul(ws, year, month, branch, items, R) {
 
   // 회계 표기는 전역 NUM_FMT 사용
 
-  // 소모품 → 시약 순, 의약품 제외, 자재코드 오름차순
-  const typeOrder = { '소모품': 0, '시약': 1 };
   const sorted = [...items]
     .filter(it => String(it.type || '').trim() !== '의약품')
     .sort((a, b) => {
-      const ta = typeOrder[String(a.type || '')] ?? 99;
-      const tb = typeOrder[String(b.type || '')] ?? 99;
+      const ta = TYPE_ORDER[String(a.type||'')] ?? 9;
+      const tb = TYPE_ORDER[String(b.type||'')] ?? 9;
       if (ta !== tb) return ta - tb;
       return String(a.code || '').localeCompare(String(b.code || ''), 'ko');
     });
@@ -1660,8 +1669,23 @@ async function dlUsage() {
 
 async function dlReport(label, vendors, depts, filename, gcRow) {
   const R = App.R; const wb = newWb();
+  const isImed = label.includes('원재료');
+
+  // 아이메드 보고서: 부서별 금액에 시약+소모품(5% 적용) 추가
+  let deptsForAmount = depts;
+  if (isImed && R.imedSiSoPivot5?.length) {
+    const siSoRows = R.imedSiSoPivot5.map(d => ({
+      의뢰부서:  d.부서명 || '',
+      자재구분:  d.자재구분 || '',
+      공급가액:  Math.round(d.사용공급가 || 0),
+      부가세:    Math.round(d.사용부가세 || 0),
+      합계금액:  Math.round(d.사용합계   || 0),
+    })).filter(d => d.공급가액 || d.부가세 || d.합계금액);
+    deptsForAmount = [...depts, ...siSoRows];
+  }
+
   writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap, gcRow);
-  writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, depts);
+  writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, deptsForAmount);
 
   const user = window.auth?.getSession?.();
   const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
