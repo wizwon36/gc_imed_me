@@ -1193,23 +1193,26 @@ function writeDeptAmount(ws, month, depts) {
   });
   ws.getRow(r).height = 18; r++;
 
-  // 총합계 - 원재료 / 소모품
-  const 원재료 = sorted.filter(d => d.자재구분 === '시약' || d.자재구분 === '의약품');
-  const 소모품 = sorted.filter(d => d.자재구분 === '소모품');
-  [['원재료', 원재료], ['소모품', 소모품]].forEach(([label, data]) => {
-    ws.mergeCells(r, 1, r, 2);
-    const lc = ws.getCell(r, 1);
-    lc.value = label; lc.font = F.total; lc.fill = FILL.total;
-    lc.alignment = { horizontal: 'center', vertical: 'middle' };
-    lc.border = BORDER_TOTAL;
-    [3,4,5].forEach((c,i) => {
-      const vals = [sumF(data,'공급가액'), sumF(data,'부가세'), sumF(data,'합계금액')];
-      const cell = ws.getCell(r, c);
-      cell.value = Math.round(vals[i]); cell.font = F.total; cell.fill = FILL.total;
-      cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
+  // 총합계 - 소모품 / 시약 / 의약품 각각 표기
+  const 소모품data = sorted.filter(d => d.자재구분 === '소모품');
+  const 시약data   = sorted.filter(d => d.자재구분 === '시약');
+  const 의약품data = sorted.filter(d => d.자재구분 === '의약품');
+  [['소모품', 소모품data], ['시약', 시약data], ['의약품', 의약품data]]
+    .filter(([, data]) => data.length > 0)
+    .forEach(([label, data]) => {
+      ws.mergeCells(r, 1, r, 2);
+      const lc = ws.getCell(r, 1);
+      lc.value = label; lc.font = F.total; lc.fill = FILL.total;
+      lc.alignment = { horizontal: 'center', vertical: 'middle' };
+      lc.border = BORDER_TOTAL;
+      [3,4,5].forEach((c,i) => {
+        const vals = [sumF(data,'공급가액'), sumF(data,'부가세'), sumF(data,'합계금액')];
+        const cell = ws.getCell(r, c);
+        cell.value = Math.round(vals[i]); cell.font = F.total; cell.fill = FILL.total;
+        cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
+      });
+      ws.getRow(r).height = 18; r++;
     });
-    ws.getRow(r).height = 18; r++;
-  });
 
   cw(ws, [[1,20],[2,10],[3,18],[4,16],[5,18]]);
   ws.views = [{ state: 'frozen', ySplit: 3 }];
@@ -1713,8 +1716,8 @@ async function dlImedReport() {
   try {
     showGlobalLoading('아이메드 보고서 생성 중...');
     const R = App.R;
-    // GC케어 5% 적용 금액 (시약+소모품 합계)
-    const gcSiSo5 = [...(R.siyakPivot5||[]), ...(R.imedSiSoPivot5||[])];
+    // GC케어 금액: 사용현황 아이메드 마감요약(시,소) 합계
+    const gcSiSo5 = R.imedSiSoPivot5 || [];
     const gcRow = {
       공급가액: gcSiSo5.reduce((s,d)=>s+toN(d.사용공급가||0),0),
       부가세:   gcSiSo5.reduce((s,d)=>s+toN(d.사용부가세||0),0),
