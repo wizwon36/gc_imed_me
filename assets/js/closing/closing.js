@@ -1969,7 +1969,8 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     const dept = String(r['의뢰부서'] || '').trim(); if (!dept) return;
     const k = isGC ? dept + '||' + String(r['자재구분']||'').trim() : resolveKey(dept);
     if (!deptIpgo[k]) deptIpgo[k] = { dept: k.split('||')[0], type: targetType, amt: 0 };
-    deptIpgo[k].amt += toN(r['공급가액']);
+    // 아이메드: 부가세 포함(합계금액), GC케어: 부가세 미포함(공급가액)
+    deptIpgo[k].amt += isGC ? toN(r['공급가액']) : toN(r['합계금액']);
   });
 
   // 당기사용: 사용현황 부서별 집계
@@ -1978,7 +1979,8 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     const dept = String(r['부서명'] || '').trim(); if (!dept) return;
     const k = isGC ? dept + '||' + String(r['자재구분']||'').trim() : resolveKey(dept);
     if (!deptUsage[k]) deptUsage[k] = { dept: k.split('||')[0], type: targetType, amt: 0 };
-    deptUsage[k].amt += toN(r['사용공급가']);
+    // 아이메드: 부가세 포함(사용합계), GC케어: 부가세 미포함(사용공급가)
+    deptUsage[k].amt += isGC ? toN(r['사용공급가']) : toN(r['사용합계']);
   });
 
   // 아이메드: 시약 사용 부서는 시약5%(부가세포함) 금액을 당기매입+당기사용에 합산
