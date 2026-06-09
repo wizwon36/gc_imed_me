@@ -1925,20 +1925,37 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     });
   ws.getRow(3).height = 18;
 
-  // 기초재고: 부서별, 시약(GC케어) 또는 의약품(아이메드)만
-  const targetType = isGC ? '시약' : '의약품';
+  // 기초재고: 부서별 집계 (아이메드는 그룹핑 적용)
   const prevDeptStock = {};
   prevStockData
     .filter(s => !s.item_type || s.item_type === targetType)
     .forEach(s => {
       const dept = s.dept || '';
-      const type = s.item_type || targetType;
-      if (!prevDeptStock[dept + '||' + type]) prevDeptStock[dept + '||' + type] = 0;
-      prevDeptStock[dept + '||' + type] += toN(s.closing_amount);
+      if (!prevDeptStock[dept]) prevDeptStock[dept] = 0;
+      prevDeptStock[dept] += toN(s.closing_amount);
     });
-  clog(`기초재고 집계: ${JSON.stringify(Object.keys(prevDeptStock))}`, 'info');
 
-  // 당기매입: 입고 데이터 부서별 집계 — 시약만
+  // 아이메드: extra2 그룹핑 → 그룹명으로 합산
+  const imedGroups = !isGC ? buildImedDeptGroups(R.closingDeptMaster || []) : null;
+  const prevDeptStockGrouped = {};
+  if (imedGroups) {
+    imedGroups.forEach(g => {
+      prevDeptStockGrouped[g.displayName + '||' + targetType] =
+        g.depts.reduce((s, dept) => s + (prevDeptStock[dept] || 0), 0);
+    });
+  }
+
+  // 부서명 → 그룹명 매핑 (아이메드만)
+  const deptToGroup = {};
+  if (imedGroups) {
+    imedGroups.forEach(g => g.depts.forEach(dept => { deptToGroup[dept] = g.displayName; }));
+  }
+  const resolveKey = (dept) => {
+    const groupName = deptToGroup[dept] || dept;
+    return groupName + '||' + targetType;
+  };
+
+  // 당기매입: 입고 데이터 부서별 집계
   const ipgoData  = isGC ? R.gcIpgo.filter(r => String(r['자재구분']||'').trim() === '시약')
                          : R.imedIpgo.filter(r => String(r['자재구분']||'').trim() === '의약품');
   const usageData = isGC ? R.usageSiyak : R.usageImed;
@@ -1946,9 +1963,8 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   const deptIpgo = {};
   ipgoData.forEach(r => {
     const dept = String(r['의뢰부서'] || '').trim(); if (!dept) return;
-    const type = String(r['자재구분'] || '').trim();
-    const k = dept + '||' + type;
-    if (!deptIpgo[k]) deptIpgo[k] = { dept, type, amt: 0 };
+    const k = isGC ? dept + '||' + String(r['자재구분']||'').trim() : resolveKey(dept);
+    if (!deptIpgo[k]) deptIpgo[k] = { dept: k.split('||')[0], type: targetType, amt: 0 };
     deptIpgo[k].amt += toN(r['공급가액']);
   });
 
@@ -1956,27 +1972,50 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   const deptUsage = {};
   usageData.forEach(r => {
     const dept = String(r['부서명'] || '').trim(); if (!dept) return;
-    const type = String(r['자재구분'] || '').trim();
-    const k = dept + '||' + type;
-    if (!deptUsage[k]) deptUsage[k] = { dept, type, amt: 0 };
+    const k = isGC ? dept + '||' + String(r['자재구분']||'').trim() : resolveKey(dept);
+    if (!deptUsage[k]) deptUsage[k] = { dept: k.split('||')[0], type: targetType, amt: 0 };
     deptUsage[k].amt += toN(r['사용공급가']);
   });
 
-  // 부서 목록: CLOSING_DEPT 마스터(extra1=시약)이 있으면 우선 사용, 없으면 데이터 합집합
-  const masterSiyakDepts = (R.closingDeptMaster || [])
-    .filter(d => String(d.extra1 || '').trim() === '시약')
-    .map(d => String(d.code_name || '').trim() + '||' + targetType);
+  // 아이메드: 시약 사용 부서는 시약5%(부가세포함) 금액을 당기매입+당기사용에 합산
+  if (!isGC) {
+    const siyakDepts = new Set(
+      (R.closingDeptMaster || [])
+        .filter(d => String(d.extra1 || '').trim() === '시약')
+        .map(d => String(d.code_name || '').trim())
+    );
+    (R.imedSiSoPivot5 || []).forEach(d => {
+      const dept = String(d.부서명 || '').trim();
+      if (!dept || !siyakDepts.has(dept)) return;
+      const k   = resolveKey(dept);
+      const amt = toN(d.사용합계 || 0);
+      if (!deptIpgo[k])  deptIpgo[k]  = { dept: k.split('||')[0], type: '의약품', amt: 0 };
+      if (!deptUsage[k]) deptUsage[k] = { dept: k.split('||')[0], type: '의약품', amt: 0 };
+      deptIpgo[k].amt  += amt;
+      deptUsage[k].amt += amt;
+    });
+  }
+
+  // 기초재고 최종 (GC케어는 기존, 아이메드는 그룹핑)
+  const prevDeptStockFinal = isGC ? prevDeptStock : prevDeptStockGrouped;
+
+  // 부서 목록: CLOSING_DEPT 마스터 기준
+  const masterDepts = isGC
+    ? (R.closingDeptMaster || [])
+        .filter(d => String(d.extra1 || '').trim() === '시약')
+        .map(d => String(d.code_name || '').trim() + '||' + targetType)
+    : (imedGroups || []).map(g => g.displayName + '||' + targetType);
 
   const dataDeptKeys = [...new Set([
     ...Object.keys(deptIpgo),
     ...Object.keys(deptUsage),
-    ...Object.keys(prevDeptStock),
+    ...Object.keys(prevDeptStockFinal),
   ])];
 
-  const deptKeys = masterSiyakDepts.length
-    ? [...new Set([...masterSiyakDepts, ...dataDeptKeys])].sort((a, b) => {
-        const ai = masterSiyakDepts.indexOf(a);
-        const bi = masterSiyakDepts.indexOf(b);
+  const deptKeys = masterDepts.length
+    ? [...new Set([...masterDepts, ...dataDeptKeys])].sort((a, b) => {
+        const ai = masterDepts.indexOf(a);
+        const bi = masterDepts.indexOf(b);
         if (ai >= 0 && bi >= 0) return ai - bi;
         if (ai >= 0) return -1;
         if (bi >= 0) return 1;
@@ -1995,7 +2034,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     const fill  = ri % 2 === 0 ? FILL.odd : FILL.even;
     const parts = k.split('||');
     const dept  = parts[0], type = parts[1];
-    const base  = toN(prevDeptStock[k]);
+    const base  = toN(prevDeptStockFinal[k]);
     const buy   = toN(deptIpgo[k]?.amt);
     const use   = toN(deptUsage[k]?.amt);
     const end   = base + buy - use;
@@ -2227,25 +2266,51 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
 
 
 // 마감 확정: 현재 subulMap 기말값 → DB 저장
+// CLOSING_DEPT 마스터에서 의약품 부서 그룹 목록 생성
+// extra2가 있으면 그룹명으로 합산, 없으면 code_name 그대로
+function buildImedDeptGroups(deptMaster) {
+  const groups = [];  // [{ displayName, depts: [code_name, ...] }]
+  const seen = new Set();
+  (deptMaster || []).forEach(d => {
+    const name  = String(d.code_name || '').trim();
+    const group = String(d.extra2    || '').trim();
+    const key   = group || name;
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    const members = group
+      ? (deptMaster).filter(x => String(x.extra2||'').trim() === group).map(x => String(x.code_name||'').trim())
+      : [name];
+    groups.push({ displayName: key, depts: members });
+  });
+  return groups;
+}
+
+// 부서 목록에서 그룹 기준으로 금액 합산
+function sumByImedGroup(dataByDept, groups) {
+  return groups.map(g => ({
+    displayName: g.displayName,
+    depts:       g.depts,
+    amt:         g.depts.reduce((s, dept) => s + toN(dataByDept[dept] || 0), 0),
+  }));
+}
+
 async function confirmClosing() {
   const R   = App.R;
   const btn = document.getElementById('btnClosingConfirm');
   const statusEl = document.getElementById('closingConfirmStatus');
-  const ym  = `${R.y}-${String(R.m).padStart(2, '0')}`;
+  const ym  = `${R.y}-${String(R.m).padStart(2, '00')}`;
   const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
   const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
-  // 이미 확정된 데이터 있는지 체크 (branch 기준)
+  // 이미 확정된 데이터 있는지 체크
   try {
     showGlobalLoading('기존 확정 데이터 확인 중...');
     const user = window.auth?.getSession?.();
     const res  = await apiGet('closingGetStock', {
       request_user_email: user?.email,
-      ym,
-      branch: R.branch,
+      ym, branch: R.branch,
     });
     await hideGlobalLoading();
-
     const exists = Array.isArray(res.data) && res.data.length > 0;
     if (exists) {
       const confirmed = confirm(
@@ -2257,11 +2322,71 @@ async function confirmClosing() {
     await hideGlobalLoading();
   }
 
+  // 의약품 기말금액 입력 모달 (extra2 그룹핑 적용)
+  const imedGroups = buildImedDeptGroups(R.closingDeptMaster || []);
+
+  const imedAmounts = await new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:8px;padding:24px;min-width:380px;max-width:480px;box-shadow:0 4px 20px rgba(0,0,0,0.2);';
+
+    box.innerHTML = `
+      <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;">의약품 기말재고 입력</h3>
+      <p style="margin:0 0 16px;font-size:12px;color:#666;">${R.y}년 ${R.m}월 | ${R.branch} — 금액만 입력 (원 단위)</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#f4e8d8;">
+            <th style="padding:6px 8px;text-align:left;border:1px solid #ddd;">부서명</th>
+            <th style="padding:6px 8px;text-align:right;border:1px solid #ddd;width:160px;">기말금액 (원)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${imedGroups.map(g => `
+            <tr>
+              <td style="padding:6px 8px;border:1px solid #ddd;">${g.displayName}</td>
+              <td style="padding:4px 6px;border:1px solid #ddd;">
+                <input type="number" data-group="${g.displayName}" data-depts="${g.depts.join(',')}" value="0"
+                  style="width:100%;text-align:right;border:1px solid #ccc;border-radius:4px;padding:4px 6px;font-size:13px;box-sizing:border-box;" />
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
+        <button id="imedModalCancel" style="padding:8px 16px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">취소</button>
+        <button id="imedModalConfirm" style="padding:8px 16px;border:none;border-radius:4px;background:#e8c9a8;cursor:pointer;font-size:13px;font-weight:700;">확정</button>
+      </div>
+    `;
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    document.getElementById('imedModalCancel').onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(null);
+    };
+    document.getElementById('imedModalConfirm').onclick = () => {
+      // 그룹별 입력값 → 소속 부서들에 균등 분배
+      const result = {};
+      box.querySelectorAll('input[data-group]').forEach(inp => {
+        const amt   = Math.round(parseFloat(inp.value) || 0);
+        const depts = inp.dataset.depts.split(',').filter(Boolean);
+        depts.forEach(dept => { result[dept] = amt; });  // 그룹 전체에 같은 금액 (합산값)
+      });
+      document.body.removeChild(overlay);
+      resolve(result);
+    };
+  });
+
+  if (imedAmounts === null) return;  // 취소
+
   try {
     showGlobalLoading('마감 확정 저장 중...');
     const user  = window.auth?.getSession?.();
 
-    // 품목코드 기준으로 기말 저장 (부서별 집계는 시트 생성 시 Raw에서 계산)
+    // 품목코드 기준 기말 저장 (시약/소모품)
     const items = Object.values(R.subulMap).map(it => ({
       dept:           '',
       item_code:      it.code,
@@ -2271,6 +2396,20 @@ async function confirmClosing() {
       closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소),
     }));
 
+    // 의약품 기말금액 추가 (부서별, 금액만)
+    Object.entries(imedAmounts).forEach(([dept, amt]) => {
+      if (amt !== 0) {
+        items.push({
+          dept,
+          item_code:      '',
+          item_name:      '의약품',
+          item_type:      '의약품',
+          closing_qty:    0,
+          closing_amount: amt,
+        });
+      }
+    });
+
     await apiPost('closingSaveStock', {
       request_user_email: user?.email,
       branch: R.branch,
@@ -2278,7 +2417,7 @@ async function confirmClosing() {
       items,
     });
 
-    // 당월 부서별 사용 데이터 저장 (4번째 시트용)
+    // 당월 부서별 사용 데이터 저장
     const usageItems = buildDeptUsageForMonthly(R);
     await apiPost('closingSaveUsageMonthly', {
       request_user_email: user?.email,
