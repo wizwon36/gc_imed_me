@@ -351,11 +351,11 @@ async function runProcessing() {
     const imedVendors      = byVendor(imedIpgo);
     const gcDepts   = byDeptIpgoFull(gcIpgo, usageGC);
     const imedDepts = byDeptIpgoFull(imedIpgo, usageImed);
+    let closingDeptMaster = [];   // { code_name, extra1, parent_code } — 전체 부서 마스터
 
     // CLOSING_DEPT 마스터에서 의원별 부서 목록 로드 → 당월 데이터 없는 부서도 0으로 포함
     try {
       const user2  = window.auth?.getSession?.();
-      // ORG_CLINIC에서 현재 branch의 clinic_code 확인
       const clinicRes = await apiGet('getCodes', {
         request_user_email: user2?.email,
         code_group: 'ORG_CLINIC',
@@ -372,19 +372,17 @@ async function runProcessing() {
         const depts = (deptRes.data || [])
           .filter(d => String(d.parent_code || '').trim() === clinicCode);
 
+        closingDeptMaster = depts;  // App.R에 저장용
+
         depts.forEach(d => {
           const deptName = String(d.code_name || '').trim();
           if (!deptName) return;
-          // GC케어: 시약, 소모품
           ['시약', '소모품'].forEach(type => {
-            if (!gcDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === type)) {
+            if (!gcDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === type))
               gcDepts.push({ 의뢰부서: deptName, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 });
-            }
           });
-          // 아이메드: 의약품
-          if (!imedDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === '의약품')) {
+          if (!imedDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === '의약품'))
             imedDepts.push({ 의뢰부서: deptName, 자재구분: '의약품', 공급가액: 0, 부가세: 0, 합계금액: 0 });
-          }
         });
       }
     } catch (e) {
@@ -493,6 +491,7 @@ async function runProcessing() {
     if (unregVendors.length) clog(`⚠ 거래처 관리 미등록: ${unregVendors.join(', ')}`, 'warn');
 
     App.R = { gcIpgo, imedIpgo, gcVendors, imedVendors, gcDepts, imedDepts,
+              closingDeptMaster,
               itemIpgoPivot, itemUsagePivot, usageGC, usageImed, usageSiyak, usageSomoum,
               siyakPivot, siyakPivot5, imedSiSoPivot, imedSiSoPivot5, imedDrugPivot,
               sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
@@ -1616,12 +1615,27 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     deptUsage[k].amt += toN(r['사용공급가']);
   });
 
-  // 부서 목록 (입고+사용 합집합, 가나다순)
-  const deptKeys = [...new Set([
+  // 부서 목록: CLOSING_DEPT 마스터(extra1=시약)이 있으면 우선 사용, 없으면 데이터 합집합
+  const masterSiyakDepts = (R.closingDeptMaster || [])
+    .filter(d => String(d.extra1 || '').trim() === '시약')
+    .map(d => String(d.code_name || '').trim() + '||' + targetType);
+
+  const dataDeptKeys = [...new Set([
     ...Object.keys(deptIpgo),
     ...Object.keys(deptUsage),
     ...Object.keys(prevDeptStock),
-  ])].sort((a, b) => a.localeCompare(b, 'ko'));
+  ])];
+
+  const deptKeys = masterSiyakDepts.length
+    ? [...new Set([...masterSiyakDepts, ...dataDeptKeys])].sort((a, b) => {
+        const ai = masterSiyakDepts.indexOf(a);
+        const bi = masterSiyakDepts.indexOf(b);
+        if (ai >= 0 && bi >= 0) return ai - bi;
+        if (ai >= 0) return -1;
+        if (bi >= 0) return 1;
+        return a.localeCompare(b, 'ko');
+      })
+    : dataDeptKeys.sort((a, b) => a.localeCompare(b, 'ko'));
 
   // 납품처 구분 텍스트 (GC케어=납품처\n아이메드 서울숲의원 형식)
   const vendorLabel = `납품처\n${R.branch}`;
@@ -1755,8 +1769,26 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
 
   let r = 1;
   years.forEach(yr => {
-    const data     = yearMap[yr];
-    const deptKeys = Object.keys(data).sort((a, b) => a.localeCompare(b, 'ko'));
+    const data = yearMap[yr];
+
+    // CLOSING_DEPT 마스터(extra1=시약) 우선, 없으면 데이터 순
+    const masterDepts = (R.closingDeptMaster || [])
+      .filter(d => String(d.extra1 || '').trim() === '시약')
+      .map(d => String(d.code_name || '').trim());
+    const dataDepts = Object.keys(data);
+    const deptKeys = masterDepts.length
+      ? [...new Set([...masterDepts, ...dataDepts])].sort((a, b) => {
+          const ai = masterDepts.indexOf(a); const bi = masterDepts.indexOf(b);
+          if (ai >= 0 && bi >= 0) return ai - bi;
+          if (ai >= 0) return -1; if (bi >= 0) return 1;
+          return a.localeCompare(b, 'ko');
+        })
+      : dataDepts.sort((a, b) => a.localeCompare(b, 'ko'));
+
+    // 마스터에 있지만 yearMap에 없는 부서는 빈 데이터로 추가
+    deptKeys.forEach(dept => {
+      if (!data[dept]) data[dept] = { dept, base: 0, end: 0 };
+    });
 
     // 연도 제목 (A~O 병합, P열 단위 별도)
     ws.mergeCells(r, 1, r, 15);
