@@ -1988,16 +1988,18 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
         .filter(d => String(d.extra1 || '').trim() === '시약')
         .map(d => String(d.code_name || '').trim())
     );
-    (R.imedSiSoPivot5 || []).forEach(d => {
-      const dept = String(d.부서명 || '').trim();
-      if (!dept || !siyakDepts.has(dept)) return;
-      const k   = resolveKey(dept);
-      const amt = toN(d.사용합계 || 0);
-      if (!deptIpgo[k])  deptIpgo[k]  = { dept: k.split('||')[0], type: '의약품', amt: 0 };
-      if (!deptUsage[k]) deptUsage[k] = { dept: k.split('||')[0], type: '의약품', amt: 0 };
-      deptIpgo[k].amt  += amt;
-      deptUsage[k].amt += amt;
-    });
+    (R.imedSiSoPivot5 || [])
+      .filter(d => String(d.자재구분 || '').trim() === '시약')  // 시약만
+      .forEach(d => {
+        const dept = String(d.부서명 || '').trim();
+        if (!dept || !siyakDepts.has(dept)) return;
+        const k   = resolveKey(dept);
+        const amt = toN(d.사용합계 || 0);
+        if (!deptIpgo[k])  deptIpgo[k]  = { dept: k.split('||')[0], type: '의약품', amt: 0 };
+        if (!deptUsage[k]) deptUsage[k] = { dept: k.split('||')[0], type: '의약품', amt: 0 };
+        deptIpgo[k].amt  += amt;
+        deptUsage[k].amt += amt;
+      });
   }
 
   // 기초재고 최종 (GC케어는 기존, 아이메드는 그룹핑)
