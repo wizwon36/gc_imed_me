@@ -290,6 +290,24 @@ function byDeptUsage(data) {
   return Object.values(m);
 }
 
+// CLOSING_DEPT 마스터 기반으로 빠진 부서 보완
+function fillMissingDepts(data, deptMaster, types) {
+  const result = [...data];
+  (deptMaster || []).forEach(d => {
+    const deptName = String(d.code_name || '').trim();
+    if (!deptName) return;
+    (types || []).forEach(type => {
+      const exists = result.find(x => x.부서명 === deptName && x.자재구분 === type);
+      if (!exists) result.push({
+        부서명: deptName, 자재구분: type,
+        사용공급가: 0, 사용부가세: 0, 사용합계: 0,
+        공5pct: 0, 부5pct: 0, 계5pct: 0,
+      });
+    });
+  });
+  return result;
+}
+
 // 5% 가산 요약: 행별 ROUNDUP 후 부서별 합산 (합산 후 ROUNDUP과 다름)
 function byDeptUsage5pct(data) {
   const m = {};
@@ -1368,18 +1386,24 @@ async function dlUsage() {
         d['공급업체'], d['규격']];
     };
 
+    const dm = R.closingDeptMaster || [];
+    const siyakPivotFull     = fillMissingDepts(R.siyakPivot,    dm, ['시약']);
+    const siyakPivot5Full    = fillMissingDepts(R.siyakPivot5,   dm, ['시약']);
+    const imedSiSoPivot5Full = fillMissingDepts(R.imedSiSoPivot5, dm, ['시약', '소모품']);
+    const imedDrugPivotFull  = fillMissingDepts(R.imedDrugPivot,  dm, ['의약품']);
+
     // 사용원본: 1행에 합계
     writeDataSheet(wb.addWorksheet('사용원본'), uc, App.usageData.map(d => uc.map(c => d[c] || '')), un, uw, uSumCols);
-    // 시약·소모품/소모품/시약: 1행에 합계 (공급가9, 공5%10, 부가세11, 부5%12, 합계13, 계5%14)
+    // 시약·소모품/소모품/시약: 1행에 합계
     writeUsageWith5pct(wb.addWorksheet('시약, 소모품'), uc5, R.usageGC.map(make5), un5, uw5);
     writePivotItem(wb.addWorksheet('원가집계표 요약'), R.itemUsagePivot, true);
     writeUsageWith5pct(wb.addWorksheet('소모품'), uc5, R.usageSomoum.map(make5), un5, uw5);
     writeUsageWith5pct(wb.addWorksheet('시약'), uc5, R.usageSiyak.map(make5), un5, uw5);
-    writePivotUsageDept(wb.addWorksheet('시약 마감요약'),      R.siyakPivot,     ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
-    writePivotUsageDept(wb.addWorksheet('시약5%'),            R.siyakPivot5,    ['합계 : 공5%',       '합계 : 부5%',       '합계 : 계5%'],    false);
+    writePivotUsageDept(wb.addWorksheet('시약 마감요약'),      siyakPivotFull,     ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계']);
+    writePivotUsageDept(wb.addWorksheet('시약5%'),            siyakPivot5Full,    ['합계 : 공5%',       '합계 : 부5%',       '합계 : 계5%']);
     writeDataSheet(wb.addWorksheet('의약품'), uc, R.usageImed.map(d => uc.map(c => d[c] || '')), un, uw, uSumCols);
-    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(시, 소)'), R.imedSiSoPivot5, ['합계 : 공5%',       '합계 : 부5%',       '합계 : 계5%'],    false);
-    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(의약품)'), R.imedDrugPivot,  ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계'], false);
+    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(시, 소)'), imedSiSoPivot5Full, ['합계 : 공5%',       '합계 : 부5%',       '합계 : 계5%']);
+    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(의약품)'), imedDrugPivotFull,  ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계']);
     await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 사용현황 - ${R.branch}.xlsx`);
   } finally {
     await hideGlobalLoading();
