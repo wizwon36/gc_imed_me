@@ -1437,7 +1437,7 @@ function writeVendorMasterSheet(ws, vendors) {
 // ── 수불 집계표 ───────────────────────────────────────────
 function writeSubul(ws, year, month, branch, items, R) {
   titleRow(ws, 1, 1, '원가집계표', 13, 30);
-  ws.getCell(1, 1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+  ws.getCell(1, 1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FF000000' } };
   ws.getCell(1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
   txtCell(ws, 2, 1, '회사명 : GC케어', null, true);
   txtCell(ws, 2, 13, '-VAT', null, false, true);  // M열(13)으로 이동
@@ -1468,8 +1468,12 @@ function writeSubul(ws, year, month, branch, items, R) {
     });
 
   let r = 5;
+  const FILL_SOMO = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F0F8' } }; // 연한 파란 계열 (소모품)
+  const FILL_SIYK = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E8' } }; // 연한 초록 계열 (시약)
+
   sorted.forEach((it, ri) => {
     const fill    = ri % 2 === 0 ? FILL.odd : FILL.even;
+    const typeFill = String(it.type||'').trim() === '시약' ? FILL_SIYK : FILL_SOMO;
     const 기초    = it.기초 || 0;
     const 기초수량  = Math.round(it.기초수량 || 0);
     const 증가수량  = Math.round(it.증가수량 || 0);
@@ -1487,9 +1491,9 @@ function writeSubul(ws, year, month, branch, items, R) {
       cell.numFmt = NUM_FMT;
     };
 
-    txtCell(ws, r, 1, it.code, fill);
-    txtCell(ws, r, 2, it.name, fill);
-    txtCell(ws, r, 3, it.type, fill, false, true);
+    txtCell(ws, r, 1, it.code, typeFill);
+    txtCell(ws, r, 2, it.name, typeFill);
+    txtCell(ws, r, 3, it.type, typeFill, false, true);
     accCell(4,  기초수량);
     accCell(5,  0);  // 기초단가
     accCell(6,  기초);
