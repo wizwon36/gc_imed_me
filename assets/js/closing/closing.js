@@ -1728,23 +1728,54 @@ function writeSubul(ws, year, month, branch, items, R) {
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
 // ── 수불부 xlsx에 sheet XML 삽입 (JSZip) ─────────────────────
-// styles 완전 병합 헬퍼
+// styles 완전 병합 헬퍼 - 문자열 검색 방식 (정규식 호환성 문제 회피)
 function mergeStylesComplete_(existXml, newXml) {
+  // 섹션 추출: 태그 시작/끝 위치로 직접 자름
   function extractSection(xml, containerTag, itemTag) {
-    const m = xml.match(new RegExp('<' + containerTag + '[^>]*>([\\s\\S]*?)<\\/' + containerTag + '>'));
-    if (!m) return { items: [], offset: 0 };
-    const parts = m[1].split(new RegExp('(?=<' + itemTag + '[ >])'));
-    const items = parts.filter(function(p) { return p.trim().startsWith('<' + itemTag); });
-    return { items: items, offset: items.length };
+    var openTag  = '<' + containerTag;
+    var closeTag = '</' + containerTag + '>';
+    var si = xml.indexOf(openTag);
+    if (si < 0) return { items: [], offset: 0, raw: '' };
+    var ei = xml.indexOf(closeTag, si);
+    if (ei < 0) return { items: [], offset: 0, raw: '' };
+    // containerTag 닫는 > 찾기
+    var ci = xml.indexOf('>', si);
+    var inner = xml.substring(ci + 1, ei);
+    
+    // itemTag 기준으로 분리
+    var itemOpen = '<' + itemTag;
+    var items = [];
+    var pos = 0;
+    while (true) {
+      var idx = inner.indexOf(itemOpen, pos);
+      if (idx < 0) break;
+      // self-closing인지 child 있는지 판단
+      var closeIdx = inner.indexOf('</' + itemTag + '>', idx);
+      var selfIdx  = inner.indexOf('/>', idx);
+      var end;
+      if (selfIdx >= 0 && (closeIdx < 0 || selfIdx < closeIdx)) {
+        end = selfIdx + 2;
+      } else if (closeIdx >= 0) {
+        end = closeIdx + ('</' + itemTag + '>').length;
+      } else {
+        break;
+      }
+      items.push(inner.substring(idx, end));
+      pos = end;
+    }
+    return { items: items, offset: items.length, raw: inner };
   }
+
   function mergeSection(existXml, newXml, containerTag, itemTag) {
     var ex = extractSection(existXml, containerTag, itemTag);
     var nw = extractSection(newXml, containerTag, itemTag);
     if (!nw.items.length) return { xml: existXml, offset: ex.offset, newItems: [] };
+    var closeTag = '</' + containerTag + '>';
+    var countAttr = containerTag + ' count="' + ex.offset + '"';
+    var newCountAttr = containerTag + ' count="' + (ex.offset + nw.items.length) + '"';
     var merged = existXml
-      .replace('</' + containerTag + '>', nw.items.join('') + '</' + containerTag + '>')
-      .replace(new RegExp('<' + containerTag + ' count="' + ex.offset + '">'),
-               '<' + containerTag + ' count="' + (ex.offset + nw.items.length) + '">');
+      .replace(closeTag, nw.items.join('') + closeTag)
+      .replace(countAttr, newCountAttr);
     return { xml: merged, offset: ex.offset, newItems: nw.items };
   }
 
@@ -1761,8 +1792,8 @@ function mergeStylesComplete_(existXml, newXml) {
       .replace(/borderId="(\d+)"/, function(_, n) { return 'borderId="' + (parseInt(n) + r3.offset) + '"'; });
   });
   result = result
-    .replace('</cellXfs>', offsetXfs.join('') + '</cellXfs>')
-    .replace(new RegExp('<cellXfs count="' + xfOff + '">'), '<cellXfs count="' + (xfOff + offsetXfs.length) + '">');
+    .replace('<\/cellXfs>', offsetXfs.join('') + '<\/cellXfs>')
+    .replace('cellXfs count="' + xfOff + '"', 'cellXfs count="' + (xfOff + offsetXfs.length) + '"');
 
   return { mergedStylesXml: result, xfOffset: xfOff };
 }
@@ -1780,14 +1811,14 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
       existingSsXml = existingSsXml
         .replace('count="' + oldCount + '"', 'count="' + (oldCount + newSiTags.length) + '"')
         .replace('uniqueCount="' + ssOffset + '"', 'uniqueCount="' + (ssOffset + newSiTags.length) + '"')
-        .replace('</sst>', newSiTags.join('') + '</sst>');
+        .replace('<\/sst>', newSiTags.join('') + '<\/sst>');
     }
   }
   sheetXml = sheetXml.replace(/(<c[^>]*t="s"[^>]*><v>)(\d+)(<\/v>)/g, function(_, pre, n, post) {
     return pre + (parseInt(n) + ssOffset) + post;
   });
 
-  // 2. styles 완전 병합 (fonts/fills/borders/xf 모두)
+  // 2. styles 완전 병합
   const existingStylesXml = await existingZip.file('xl/styles.xml').async('string');
   const { mergedStylesXml, xfOffset } = mergeStylesComplete_(existingStylesXml, stylesXml || '');
   sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + xfOffset) + '"'; });
@@ -1804,12 +1835,12 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
   wbXml = wbXml.replace('<sheets>', '<sheets><sheet name="' + sheetName + '" sheetId="' + newSheetId + '" r:id="' + newRId + '"/>');
 
   let relsXml = await existingZip.file('xl/_rels/workbook.xml.rels').async('string');
-  relsXml = relsXml.replace('</Relationships>',
-    '<Relationship Id="' + newRId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/' + newFile + '"/></Relationships>');
+  relsXml = relsXml.replace('<\/Relationships>',
+    '<Relationship Id="' + newRId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/' + newFile + '"/><\/Relationships>');
 
   let ctXml = await existingZip.file('[Content_Types].xml').async('string');
-  ctXml = ctXml.replace('</Types>',
-    '<Override PartName="/xl/worksheets/' + newFile + '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+  ctXml = ctXml.replace('<\/Types>',
+    '<Override PartName="/xl/worksheets/' + newFile + '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><\/Types>');
   ctXml = ctXml.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
 
   existingZip.file('xl/workbook.xml', wbXml);
