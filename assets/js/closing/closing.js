@@ -585,6 +585,60 @@ async function runProcessing() {
       clog('수불부 처리 실패: ' + e.message, 'warn');
     }
 
+    // Drive 수불부 파일에 당월 시트 삽입 후 완성 파일 보관 (GC케어만)
+    await sleep(150); prog(88, '수불부 당월 시트 생성 중...');
+    const user = window.auth?.getSession?.();
+    try {
+      const fidRes = await apiGet('closingGetSubulFileId', {
+        request_user_email: user?.email,
+        branch,
+        report_type: 'GC케어',
+      });
+      if (!fidRes.success || !fidRes.data?.file_id) {
+        clog('수불부 file_id 없음 — 당월 시트만 다운로드됩니다.', 'warn');
+      } else {
+        prog(90, '수불부 파일 로드 중...');
+        const fileRes = await apiGet('closingGetSubulFile', {
+          request_user_email: user?.email,
+          file_id: fidRes.data.file_id,
+        });
+        if (!fileRes.success || !fileRes.data?.base64) {
+          clog('수불부 파일 로드 실패', 'warn');
+        } else {
+          prog(93, '수불부 당월 시트 삽입 중...');
+
+          // 당월 시트 단일 xlsx 생성
+          const sheetName  = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
+          const singleWb   = new ExcelJS.Workbook();
+          const singleWs   = singleWb.addWorksheet(sheetName);
+          writeSubul(singleWs, y, mi, branch,
+            Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
+          const newSheetBuf = await singleWb.xlsx.writeBuffer();
+
+          // 프론트에서 직접 zip 조작
+          const resultBase64 = await insertSheetIntoXlsx_(
+            fileRes.data.base64,
+            newSheetBuf,
+            sheetName
+          );
+
+          prog(97, '수불부 Drive 저장 중...');
+          // Drive에 저장
+          await apiPost('closingUpdateSubulFile', {
+            request_user_email: user?.email,
+            file_id: fidRes.data.file_id,
+            base64:  resultBase64,
+          });
+
+          App.R.subulBase64  = resultBase64;
+          App.R.subulFileId  = fidRes.data.file_id;
+          clog('수불부 업데이트 완료 — 다운로드 준비됨', 'ok');
+        }
+      }
+    } catch (e) {
+      clog('수불부 처리 실패: ' + e.message, 'warn');
+    }
+
     clog('모든 처리 완료!', 'ok');
     await sleep(300); prog(100, '완료!');
 
@@ -1720,6 +1774,58 @@ function writeSubul(ws, year, month, branch, items, R) {
 // 11. 다운로드 함수
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
+// ── 수불부 xlsx에 새 시트 삽입 (JSZip으로 zip 직접 조작) ──
+async function insertSheetIntoXlsx_(existingBase64, newSheetBuffer, sheetName) {
+  // 기존 파일 zip 로드
+  const existingBytes = Uint8Array.from(atob(existingBase64), c => c.charCodeAt(0));
+  const existingZip   = await JSZip.loadAsync(existingBytes);
+
+  // 새 시트 xlsx zip 로드
+  const newSheetZip = await JSZip.loadAsync(newSheetBuffer);
+  const newSheetXml = await newSheetZip.file('xl/worksheets/sheet1.xml').async('string');
+
+  // workbook.xml 읽기
+  let wbXml = await existingZip.file('xl/workbook.xml').async('string');
+
+  // sheetId, rId 최대값 파악
+  const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(m => parseInt(m[1]));
+  const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(m => parseInt(m[1]));
+  const maxSheetId = sheetIds.length ? Math.max(...sheetIds) : 0;
+  const maxRId     = rIds.length     ? Math.max(...rIds)     : 0;
+
+  const newSheetId   = maxSheetId + 1;
+  const newRId       = `rId${maxRId + 1}`;
+  const newSheetFile = `sheet${newSheetId}.xml`;
+
+  // 동일 이름 시트 제거
+  const escapedName = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  wbXml = wbXml.replace(new RegExp(`<sheet[^>]*name="${escapedName}"[^/]*/>`), '');
+
+  // workbook.xml - 맨 앞에 삽입
+  const newSheetTag = `<sheet name="${sheetName}" sheetId="${newSheetId}" r:id="${newRId}"/>`;
+  wbXml = wbXml.replace('<sheets>', '<sheets>' + newSheetTag);
+
+  // workbook.xml.rels 수정
+  let relsXml = await existingZip.file('xl/_rels/workbook.xml.rels').async('string');
+  const newRel = `<Relationship Id="${newRId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/${newSheetFile}"/>`;
+  relsXml = relsXml.replace('</Relationships>', newRel + '</Relationships>');
+
+  // [Content_Types].xml 수정
+  let ctXml = await existingZip.file('[Content_Types].xml').async('string');
+  const newCt = `<Override PartName="/xl/worksheets/${newSheetFile}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
+  ctXml = ctXml.replace('</Types>', newCt + '</Types>');
+
+  // zip 업데이트
+  existingZip.file('xl/workbook.xml', wbXml);
+  existingZip.file('xl/_rels/workbook.xml.rels', relsXml);
+  existingZip.file('[Content_Types].xml', ctXml);
+  existingZip.file(`xl/worksheets/${newSheetFile}`, newSheetXml);
+
+  // 결과 base64 반환
+  const outBuf = await existingZip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+  return btoa(outBuf.reduce((d, b) => d + String.fromCharCode(b), ''));
+}
+
 // ── 수불부 시트 복사 헬퍼 ────────────────────────────────────
 function copyWorksheet_(src, dst) {
   // 열 너비 복사
