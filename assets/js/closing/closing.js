@@ -771,6 +771,13 @@ const BORDER_THIN = {
   bottom: { style: 'thin', color: { argb: 'FF000000' } },
   right:  { style: 'thin', color: { argb: 'FF000000' } },
 };
+// 데이터 행용: 상하는 hair(매우 얇음), 좌우는 thin 유지
+const BORDER_DATA = {
+  top:    { style: 'hair',  color: { argb: 'FF000000' } },
+  left:   { style: 'thin',  color: { argb: 'FF000000' } },
+  bottom: { style: 'hair',  color: { argb: 'FF000000' } },
+  right:  { style: 'thin',  color: { argb: 'FF000000' } },
+};
 const BORDER_TOTAL = {
   top:    { style: 'medium', color: { argb: 'FF000000' } },
   left:   { style: 'medium', color: { argb: 'FF000000' } },
@@ -804,11 +811,11 @@ function numCell(ws, r, c, v, fill, bold = false) {
   const nv = Math.round(toN(v));
   const cell = ws.getCell(r, c);
   sc(cell, {
-    value: nv,  // 0도 표기
+    value: nv,
     font: nv < 0 ? (bold ? F.redb : F.red) : (bold ? F.total : F.base),
     fill: fill || FILL.odd,
     alignment: AL('right'),
-    border: BORDER_THIN,
+    border: BORDER_DATA,
     numFmt: NUM_FMT,
   });
 }
@@ -818,7 +825,7 @@ function txtCell(ws, r, c, v, fill, bold = false, center = false) {
     font: bold ? F.bold : F.base,
     fill: fill || FILL.odd,
     alignment: AL(center ? 'center' : 'left'),
-    border: BORDER_THIN,
+    border: BORDER_DATA,
   });
 }
 function titleRow(ws, r, c, v, span, rowH = 22) {
@@ -872,7 +879,7 @@ function writeDataSheet(ws, headers, rows, numCols, colWidths, sumCols) {
         cell.font  = F.base;
         cell.fill  = fill;
         cell.alignment = AL('right');
-        cell.border = BORDER_THIN;
+        cell.border = BORDER_DATA;
         cell.numFmt = NUM_FMT;
       } else {
         txtCell(ws, r, c, v, fill);
@@ -1288,7 +1295,7 @@ function writeUsageWith5pct(ws, headers, rows, numCols, colWidths) {
         cell.font  = F.base;
         cell.fill  = fill;
         cell.alignment = AL('right');
-        cell.border = BORDER_THIN;
+        cell.border = BORDER_DATA;
         cell.numFmt = NUM_FMT;
       } else {
         txtCell(ws, r, c, v, fill);
@@ -1354,7 +1361,7 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
     const blankCell = (c) => {
       const cell = ws.getCell(rowNum, c);
       cell.fill   = fill;
-      cell.border = BORDER_THIN;
+      cell.border = BORDER_DATA;
     };
 
     blankCell(1);  // A열 빈
@@ -1443,7 +1450,7 @@ function writeSubul(ws, year, month, branch, items, R) {
       cell.font      = F.hdr;
       cell.fill      = FILL.hdr;
       cell.alignment = AL('center');
-      cell.border    = BORDER_THIN;
+      cell.border    = BORDER_DATA;
       if (v) cell.value = v;
     });
   [1, 2, 3].forEach(c => ws.mergeCells(3, c, 4, c));
@@ -1476,7 +1483,7 @@ function writeSubul(ws, year, month, branch, items, R) {
       cell.font = cell.value < 0 ? F.red : F.base;
       cell.fill = fill || FILL.odd;
       cell.alignment = AL('right');
-      cell.border = BORDER_THIN;
+      cell.border = BORDER_DATA;
       cell.numFmt = NUM_FMT;
     };
 
@@ -1608,7 +1615,7 @@ function writeSubul(ws, year, month, branch, items, R) {
       ? { name:'Calibri', size:10, color:{argb:'FFFF0000'}, bold:true }
       : F.base;
     dc.fill = FILL.odd; dc.alignment = AL('right');
-    dc.border = BORDER_THIN; dc.numFmt = NUM_FMT;
+    dc.border = BORDER_DATA; dc.numFmt = NUM_FMT;
     ws.getRow(r).height = 18; r++;
   });
 
@@ -2147,9 +2154,9 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
         const ac = ws.getCell(r, 1);
         ac.value = vendorLabel; ac.font = F.base; ac.fill = fill;
         ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        ac.border = BORDER_THIN;
+        ac.border = BORDER_DATA;
       } else {
-        const ac = ws.getCell(r, 1); ac.fill = fill; ac.border = BORDER_THIN;
+        const ac = ws.getCell(r, 1); ac.fill = fill; ac.border = BORDER_DATA;
       }
       numCell(ws, r, 2, base, fill);
       numCell(ws, r, 3, buy,  fill);
@@ -2352,9 +2359,9 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
           const ac = ws.getCell(r, 1);
           ac.value = `납품처\n${R.branch}`; ac.font = F.base; ac.fill = fill;
           ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-          ac.border = BORDER_THIN;
+          ac.border = BORDER_DATA;
         } else {
-          const ac = ws.getCell(r, 1); ac.fill = fill; ac.border = BORDER_THIN;
+          const ac = ws.getCell(r, 1); ac.fill = fill; ac.border = BORDER_DATA;
         }
         numCell(ws, r, 2, d.base || 0, fill);
         months.forEach((mon, mi) => {
@@ -2547,7 +2554,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     // ── 매 출 행 (빈칸)
     txtCell(ws, r, 1, '매  출', FILL.odd, false, true);
     [2,3,4,5,6,7,8,9,10,11,12,13,14,15].forEach(c => {
-      const cell = ws.getCell(r, c); cell.fill = FILL.odd; cell.border = BORDER_THIN;
+      const cell = ws.getCell(r, c); cell.fill = FILL.odd; cell.border = BORDER_DATA;
     });
     ws.getRow(r).height = 18; r++;
 
@@ -2588,10 +2595,10 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     // ── 세포치료 / 특수의약품 (빈칸, B열부터)
     ['세포치료', '특수의약품'].forEach(lbl => {
       const lFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
-      const ac = ws.getCell(r, 1); ac.fill = lFill; ac.border = BORDER_THIN;  // A열 빈칸
+      const ac = ws.getCell(r, 1); ac.fill = lFill; ac.border = BORDER_DATA;  // A열 빈칸
       txtCell(ws, r, 2, lbl, lFill, false, true);  // B열에 라벨
       [3,4,5,6,7,8,9,10,11,12,13,14,15].forEach(c => {
-        const cell = ws.getCell(r, c); cell.fill = lFill; cell.border = BORDER_THIN;
+        const cell = ws.getCell(r, c); cell.fill = lFill; cell.border = BORDER_DATA;
       });
       ws.getRow(r).height = 18; r++;
     });
@@ -2624,7 +2631,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       [TC, TC + 1].forEach(c => {
         const cell = ws.getCell(tr, c);
         if (c === TC) cell.value = '매  출';
-        cell.font = F.base; cell.fill = FILL.odd; cell.border = BORDER_THIN;
+        cell.font = F.base; cell.fill = FILL.odd; cell.border = BORDER_DATA;
         cell.alignment = AL(c === TC ? 'center' : 'right');
       });
       ws.getRow(tr).height = 18; tr++;
