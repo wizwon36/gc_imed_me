@@ -1656,6 +1656,39 @@ function writeSubul(ws, year, month, branch, items, R) {
 // 11. 다운로드 함수
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
+// ── 수불부 시트 복사 헬퍼 ────────────────────────────────────
+function copyWorksheet_(src, dst) {
+  // 열 너비 복사
+  src.columns.forEach((col, i) => {
+    if (col.width) dst.getColumn(i + 1).width = col.width;
+  });
+
+  // 행 복사 (값, 서식, 병합)
+  src.eachRow({ includeEmpty: true }, (row, rn) => {
+    const dstRow = dst.getRow(rn);
+    if (row.height) dstRow.height = row.height;
+    row.eachCell({ includeEmpty: true }, (cell, cn) => {
+      const dstCell = dstRow.getCell(cn);
+      // 값
+      dstCell.value = cell.value;
+      // 서식
+      if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
+      if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
+      if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
+      if (cell.alignment) dstCell.alignment = Object.assign({}, cell.alignment);
+      if (cell.border)    dstCell.border    = Object.assign({}, cell.border);
+    });
+    dstRow.commit();
+  });
+
+  // 병합 셀 복사
+  if (src.mergeCells) {
+    Object.keys(src._merges || {}).forEach(key => {
+      try { dst.mergeCells(key); } catch (_) {}
+    });
+  }
+}
+
 async function saveWb(wb, filename) {
   const buf = await wb.xlsx.writeBuffer();
   saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
@@ -1796,6 +1829,34 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
   const reportType  = isImed ? '아이메드' : 'GC케어';
   const yearUsage   = await loadYearUsage(null, R.branch, user, reportType);
   writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
+
+  // 수불부 시트 복사 (Drive에서 로드)
+  try {
+    const subulRes = await apiGet('closingGetSubulFileId', {
+      request_user_email: user?.email,
+      branch: R.branch,
+      report_type: reportType,
+    });
+    if (subulRes.success && subulRes.data?.file_id) {
+      showGlobalLoading('수불부 파일 로드 중...');
+      const fileRes = await apiGet('closingGetSubulFile', {
+        request_user_email: user?.email,
+        file_id: subulRes.data.file_id,
+      });
+      if (fileRes.success && fileRes.data?.base64) {
+        const binary = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
+        const subulWb = new ExcelJS.Workbook();
+        await subulWb.xlsx.load(binary.buffer);
+        // 모든 시트 복사
+        for (const srcWs of subulWb.worksheets) {
+          const dstWs = wb.addWorksheet(srcWs.name);
+          copyWorksheet_(srcWs, dstWs);
+        }
+      }
+    }
+  } catch (e) {
+    clog('수불부 로드 실패 (무시): ' + e.message, 'warn');
+  }
 
   await saveWb(wb, filename);
 }
@@ -2845,9 +2906,73 @@ async function confirmClosing() {
     const now = new Date().toLocaleString('ko-KR');
     statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
     showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
+
+    // 수불부 Drive 파일 업데이트 (GC케어 / 아이메드 각각)
+    for (const rt of ['GC케어', '아이메드']) {
+      try {
+        const fidRes = await apiGet('closingGetSubulFileId', {
+          request_user_email: user?.email,
+          branch: R.branch,
+          report_type: rt,
+        });
+        if (!fidRes.success || !fidRes.data?.file_id) continue;
+        const fileId = fidRes.data.file_id;
+
+        // 기존 파일 로드
+        showGlobalLoading(`수불부 업데이트 중 (${rt})...`);
+        const fileRes = await apiGet('closingGetSubulFile', {
+          request_user_email: user?.email,
+          file_id: fileId,
+        });
+        if (!fileRes.success || !fileRes.data?.base64) continue;
+
+        // 기존 파일 파싱
+        const binary = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
+        const subulWb = new ExcelJS.Workbook();
+        await subulWb.xlsx.load(binary.buffer);
+
+        // 당월 시트 생성 후 맨 앞에 삽입
+        const sheetName = `원가집계표-${R.y.slice(2)}년 ${R.m}월 ${R.branch}`;
+        // 이미 같은 이름 시트 있으면 제거
+        const existing = subulWb.getWorksheet(sheetName);
+        if (existing) subulWb.removeWorksheet(existing.id);
+
+        // 새 시트를 맨 앞에 추가
+        const newWs = subulWb.addWorksheet(sheetName, { properties: { tabColor: { argb: 'FF4A86C8' } } });
+        // 시트 순서를 맨 앞으로 이동
+        const wsId = newWs.id;
+        subulWb._worksheets = [
+          undefined,
+          subulWb.getWorksheet(wsId),
+          ...subulWb.worksheets.filter(ws => ws.id !== wsId),
+        ];
+
+        // 원가집계표 데이터 작성 (GC케어/아이메드 구분)
+        const subulItems = rt === 'GC케어'
+          ? (R.subulMap ? Object.values(R.subulMap).filter(it => it.type !== '의약품') : [])
+          : (R.subulMap ? Object.values(R.subulMap).filter(it => it.type === '의약품') : []);
+        writeSubul(newWs, R.y, R.m, R.branch, subulItems, R);
+
+        // 수정된 파일 base64로 변환
+        const updatedBuffer = await subulWb.xlsx.writeBuffer();
+        const updatedBase64 = btoa(
+          new Uint8Array(updatedBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+
+        // Drive 파일 덮어쓰기
+        await apiPost('closingUpdateSubulFile', {
+          request_user_email: user?.email,
+          file_id: fileId,
+          base64: updatedBase64,
+        });
+        clog(`수불부 업데이트 완료 (${rt})`, 'ok');
+      } catch (e) {
+        clog(`수불부 업데이트 실패 (${rt}): ` + e.message, 'warn');
+      }
+    }
+    await hideGlobalLoading();
   } catch (e) {
     showMessage('마감 확정 중 오류: ' + e.message, 'error');
-  } finally {
     await hideGlobalLoading();
   }
 }
