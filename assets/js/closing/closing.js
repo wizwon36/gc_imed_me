@@ -391,7 +391,7 @@ async function runProcessing() {
         const depts = (deptRes.data || [])
           .filter(d => String(d.parent_code || '').trim() === clinicCode);
 
-        closingDeptMaster = depts;  // App.R에 저장용
+        closingDeptMaster = depts;
 
         depts.forEach(d => {
           const deptName = String(d.code_name || '').trim();
@@ -403,6 +403,22 @@ async function runProcessing() {
           if (!imedDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === '의약품'))
             imedDepts.push({ 의뢰부서: deptName, 자재구분: '의약품', 공급가액: 0, 부가세: 0, 합계금액: 0 });
         });
+
+        // imedDepts 그룹핑: extra2 기준으로 합산
+        const imedGroupList = buildImedDeptGroups(depts);
+        if (imedGroupList.length) {
+          const grouped = {};
+          imedDepts.forEach(d => {
+            const group = imedGroupList.find(g => g.depts.includes(d.의뢰부서));
+            const key   = (group ? group.displayName : d.의뢰부서) + '||' + d.자재구분;
+            if (!grouped[key]) grouped[key] = { 의뢰부서: group?.displayName || d.의뢰부서, 자재구분: d.자재구분, 공급가액: 0, 부가세: 0, 합계금액: 0 };
+            grouped[key].공급가액  += toN(d.공급가액);
+            grouped[key].부가세    += toN(d.부가세);
+            grouped[key].합계금액  += toN(d.합계금액);
+          });
+          imedDepts.length = 0;
+          Object.values(grouped).forEach(d => imedDepts.push(d));
+        }
       }
     } catch (e) {
       clog('부서 마스터 로드 실패: ' + e.message, 'warn');
@@ -1674,16 +1690,24 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
   const R = App.R; const wb = newWb();
   const isImed = label.includes('원재료');
 
-  // 아이메드 보고서: 부서별 금액에 시약+소모품(5% 적용) 추가
+  // 아이메드 보고서: 부서별 금액에 시약+소모품(5% 적용) 그룹핑 합산
   let deptsForAmount = depts;
   if (isImed && R.imedSiSoPivot5?.length) {
-    const siSoRows = R.imedSiSoPivot5.map(d => ({
-      의뢰부서:  d.부서명 || '',
-      자재구분:  d.자재구분 || '',
-      공급가액:  Math.round(d.사용공급가 || 0),
-      부가세:    Math.round(d.사용부가세 || 0),
-      합계금액:  Math.round(d.사용합계   || 0),
-    })).filter(d => d.공급가액 || d.부가세 || d.합계금액);
+    const imedGroups = buildImedDeptGroups(R.closingDeptMaster || []);
+    // 그룹별로 합산
+    const groupedMap = {};
+    R.imedSiSoPivot5.forEach(d => {
+      const dept  = String(d.부서명  || '').trim();
+      const type  = String(d.자재구분 || '').trim();
+      // 그룹명 찾기
+      const group = imedGroups.find(g => g.depts.includes(dept));
+      const key   = (group ? group.displayName : dept) + '||' + type;
+      if (!groupedMap[key]) groupedMap[key] = { 의뢰부서: group?.displayName || dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
+      groupedMap[key].공급가액  += Math.round(d.사용공급가 || 0);
+      groupedMap[key].부가세    += Math.round(d.사용부가세 || 0);
+      groupedMap[key].합계금액  += Math.round(d.사용합계   || 0);
+    });
+    const siSoRows = Object.values(groupedMap).filter(d => d.공급가액 || d.부가세 || d.합계금액);
     deptsForAmount = [...depts, ...siSoRows];
   }
 
