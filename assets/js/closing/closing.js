@@ -574,11 +574,12 @@ async function runProcessing() {
           const singleBuf = await singleWb.xlsx.writeBuffer();
           const singleZip = await JSZip.loadAsync(singleBuf);
           const sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
-          const stylesXml = await (singleZip.file('xl/styles.xml')?.async('string') ?? Promise.resolve(null));
+          const ssFile    = singleZip.file('xl/sharedStrings.xml');
+          const sharedStringsXml = ssFile ? await ssFile.async('string') : null;
 
           // JSZip으로 기존 파일에 시트 삽입 → 메모리에 보관
           const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-          const resultBuf = await insertSheetXmlIntoXlsx_(existingBytes, sheetXml, stylesXml, sheetName);
+          const resultBuf = await insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml, sheetName);
 
           App.R.subulBuffer = resultBuf;
           App.R.subulFileId = fidRes.data.file_id;
@@ -1725,34 +1726,32 @@ function writeSubul(ws, year, month, branch, items, R) {
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
 // ── 수불부 xlsx에 sheet XML 삽입 (JSZip) ─────────────────────
-async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, stylesXml, sheetName) {
-  const zip = await JSZip.loadAsync(existingBytes);
+async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml, sheetName) {
+  const existingZip = await JSZip.loadAsync(existingBytes);
 
-  // styles 병합: 기존 cellXfs offset 계산 후 새 xf 추가
-  let existingStylesXml = await zip.file('xl/styles.xml').async('string');
-  const existingCellXfsMatch = existingStylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
-  const offset = existingCellXfsMatch
-    ? (existingCellXfsMatch[1].match(/<xf /g) || []).length : 0;
+  // sharedStrings 병합: 기존 uniqueCount = offset
+  let existingSsXml = await existingZip.file('xl/sharedStrings.xml').async('string');
+  const existingUniqueCount = parseInt(existingSsXml.match(/uniqueCount="(\d+)"/)[1]);
 
-  if (stylesXml && offset > 0) {
-    const newCellXfsMatch = stylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
-    if (newCellXfsMatch) {
-      const newXfTags = newCellXfsMatch[1].match(/<xf [^/]*\/>/g) || [];
-      if (newXfTags.length) {
-        existingStylesXml = existingStylesXml.replace('</cellXfs>', newXfTags.join('') + '</cellXfs>');
-        const oldCount = parseInt(existingStylesXml.match(/<cellXfs count="(\d+)"/)[1]);
-        const newCount = oldCount + newXfTags.length;
-        existingStylesXml = existingStylesXml.replace(
-          '<cellXfs count="' + oldCount + '">',
-          '<cellXfs count="' + newCount + '">'
-        );
-      }
+  if (sharedStringsXml) {
+    const newSiTags = [...sharedStringsXml.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(function(m) { return '<si>' + m[1] + '</si>'; });
+    if (newSiTags.length > 0) {
+      const newUniqueCount = existingUniqueCount + newSiTags.length;
+      const oldCount = parseInt(existingSsXml.match(/count="(\d+)"/)[1]);
+      existingSsXml = existingSsXml
+        .replace('count="' + oldCount + '"', 'count="' + (oldCount + newSiTags.length) + '"')
+        .replace('uniqueCount="' + existingUniqueCount + '"', 'uniqueCount="' + newUniqueCount + '"')
+        .replace('</sst>', newSiTags.join('') + '</sst>');
     }
-    sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + offset) + '"'; });
   }
 
+  // sheet XML의 t="s" 인덱스에 offset 추가
+  sheetXml = sheetXml.replace(/(<c[^>]*t="s"[^>]*><v>)(\d+)(<\/v>)/g, function(_, pre, n, post) {
+    return pre + (parseInt(n) + existingUniqueCount) + post;
+  });
+
   // workbook.xml 분석
-  let wbXml = await zip.file('xl/workbook.xml').async('string');
+  let wbXml = await existingZip.file('xl/workbook.xml').async('string');
   const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(function(m) { return parseInt(m[1]); });
   const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(function(m) { return parseInt(m[1]); });
   const newSheetId = (sheetIds.length ? Math.max.apply(null, sheetIds) : 0) + 1;
@@ -1763,23 +1762,23 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, stylesXml, sheet
   wbXml = wbXml.replace(new RegExp('<sheet[^>]*name="' + escaped + '"[^/]*/>'), '');
   wbXml = wbXml.replace('<sheets>', '<sheets><sheet name="' + sheetName + '" sheetId="' + newSheetId + '" r:id="' + newRId + '"/>');
 
-  let relsXml = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+  let relsXml = await existingZip.file('xl/_rels/workbook.xml.rels').async('string');
   relsXml = relsXml.replace('</Relationships>',
     '<Relationship Id="' + newRId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/' + newFile + '"/></Relationships>');
 
-  let ctXml = await zip.file('[Content_Types].xml').async('string');
+  let ctXml = await existingZip.file('[Content_Types].xml').async('string');
   ctXml = ctXml.replace('</Types>',
     '<Override PartName="/xl/worksheets/' + newFile + '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
   ctXml = ctXml.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
 
-  zip.file('xl/workbook.xml', wbXml);
-  zip.file('xl/_rels/workbook.xml.rels', relsXml);
-  zip.file('[Content_Types].xml', ctXml);
-  zip.file('xl/styles.xml', existingStylesXml);
-  zip.file('xl/worksheets/' + newFile, sheetXml);
-  zip.remove('xl/calcChain.xml');
+  existingZip.file('xl/workbook.xml', wbXml);
+  existingZip.file('xl/_rels/workbook.xml.rels', relsXml);
+  existingZip.file('[Content_Types].xml', ctXml);
+  existingZip.file('xl/sharedStrings.xml', existingSsXml);
+  existingZip.file('xl/worksheets/' + newFile, sheetXml);
+  existingZip.remove('xl/calcChain.xml');
 
-  return await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
+  return await existingZip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
 }
 
 // ── 수불부 시트 복사 헬퍼 ────────────────────────────────────
