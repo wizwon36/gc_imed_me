@@ -575,18 +575,25 @@ async function runProcessing() {
           const existing  = subulWb.getWorksheet(sheetName);
           if (existing) subulWb.removeWorksheet(existing.id);
 
-          const newWs = subulWb.addWorksheet(sheetName);
+          // 기존 시트 데이터 백업
+          const oldSheets = subulWb.worksheets.map(ws => ws.name);
+          clog(`기존 시트 ${oldSheets.length}개: ${oldSheets.slice(0,3).join(', ')}...`, 'info');
+
+          // 새 워크북에 당월 시트 먼저, 기존 시트 복사
+          const newWb2 = new ExcelJS.Workbook();
+          const newWs = newWb2.addWorksheet(sheetName);
           const subulItems = Object.values(subulMap).filter(it => it.type !== '의약품');
           writeSubul(newWs, y, mi, branch, subulItems, App.R);
 
-          subulWb._worksheets = [
-            undefined,
-            subulWb.getWorksheet(newWs.id),
-            ...subulWb.worksheets.filter(ws => ws.id !== newWs.id),
-          ];
+          // 기존 시트들 복사
+          for (const srcWs of subulWb.worksheets) {
+            const dstWs = newWb2.addWorksheet(srcWs.name);
+            copyWorksheet_(srcWs, dstWs);
+          }
 
+          clog(`수불부 총 ${newWb2.worksheets.length}개 시트 (당월 포함)`, 'ok');
           if (!App.R.subulWb) App.R.subulWb = {};
-          App.R.subulWb['GC케어'] = { wb: subulWb, fileId: fidRes.data.file_id };
+          App.R.subulWb['GC케어'] = { wb: newWb2, fileId: fidRes.data.file_id };
           clog('수불부 로드+당월 시트 추가 완료 (GC케어)', 'ok');
         }
       }
