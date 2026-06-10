@@ -3661,7 +3661,7 @@ function parseUsageInitFile(file) {
     reader.onload = e => {
       try {
         const wb = XLSX.read(e.target.result, { type: 'array' });
-        // 연간 원재료비 시트 찾기 (마지막 시트 또는 연도 포함 시트)
+        // 연간 원재료비 시트 찾기
         const sheetName = wb.SheetNames.find(s =>
           s.includes('원재료비') && (s.includes('년도') || s.includes('연간'))
         ) || wb.SheetNames[wb.SheetNames.length - 1];
@@ -3671,6 +3671,10 @@ function parseUsageInitFile(file) {
 
         const rows = [];
         let currentYear = null;
+        // GC케어: 비고(P열, idx15)에 "부서명 - 자재구분" 형태
+        // 아이메드: A열(idx0)에 부서명, 비고 없음
+        // → 첫 데이터 행 보고 자동 감지
+        let isImed = null;
 
         all.forEach(row => {
           const col0 = String(row[0] || '').trim();
@@ -3681,39 +3685,53 @@ function parseUsageInitFile(file) {
             currentYear = yearMatch[1];
             return;
           }
-
-          // 연도 블록 없으면 스킵
           if (!currentYear) return;
 
-          // 비고(15열)에서 부서명 - 자재구분 파싱 (이게 핵심 판별 기준)
-          const bigo = String(row[15] || '').trim();
-          if (!bigo || !bigo.includes('-')) return;
+          // 헤더/합계/빈 행 스킵
+          if (!col0 || col0 === '구   분' || col0 === '구분' ||
+              col0 === '총  계' || col0 === '소  계' ||
+              col0 === '매  출' || col0 === '세포치료' || col0 === '특수의약품') return;
 
-          const parts = bigo.split('-').map(s => s.trim());
-          const dept  = parts[0];
-          const itype = parts[1];
-          if (!dept || !itype) return;
+          // 방식 자동 감지: 비고(idx15)에 ' - ' 있으면 GC케어, 없으면 아이메드
+          if (isImed === null) {
+            const bigo = String(row[15] || '').trim();
+            isImed = !(bigo && bigo.includes(' - '));
+          }
 
-          // 월별 값 파싱 (2~13열: 1월~12월, 천원 단위)
           const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-
-          // 기초(1열), 기말(14열) — 연도 내 해당 부서의 기초/기말 (원 단위)
           const baseVal = parseFloat(String(row[1] || '').replace(/,/g, '')) || 0;
           const endVal  = parseFloat(String(row[14] || '').replace(/,/g, '')) || 0;
-          console.log(`[parseUsage] yr=${currentYear} dept=${dept} base=${baseVal} end=${endVal} row1=${row[1]} row14=${row[14]}`);
 
-          months.forEach((mon, mi) => {
-            const raw = String(row[mi + 2] || '').replace(/,/g, '').trim();
-            const val = parseFloat(raw) || 0;
-            rows.push({
-              ym:           `${currentYear}-${mon}`,
-              dept,
-              item_type:    itype,
-              usage_amount: Math.round(val),
-              base_amount:  mon === '01' ? Math.round(baseVal) : 0,   // 기초는 1월에만 저장
-              end_amount:   mon === '12' ? Math.round(endVal)  : 0,   // 기말은 12월에만 저장
+          if (!isImed) {
+            // ── GC케어: 비고(idx15)에서 "부서명 - 자재구분" 파싱
+            const bigo  = String(row[15] || '').trim();
+            if (!bigo || !bigo.includes('-')) return;
+            const parts = bigo.split('-').map(s => s.trim());
+            const dept  = parts[0]; const itype = parts[1];
+            if (!dept || !itype) return;
+            months.forEach((mon, mi) => {
+              const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
+              rows.push({
+                ym: `${currentYear}-${mon}`, dept, item_type: itype,
+                usage_amount: Math.round(val),
+                base_amount:  mon === '01' ? Math.round(baseVal) : 0,
+                end_amount:   mon === '12' ? Math.round(endVal)  : 0,
+              });
             });
-          });
+          } else {
+            // ── 아이메드: A열(idx0)이 부서명, item_type은 '의약품'(시약5% 합산)
+            const dept = col0;
+            if (!dept) return;
+            months.forEach((mon, mi) => {
+              const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
+              rows.push({
+                ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
+                usage_amount: Math.round(val),
+                base_amount:  mon === '01' ? Math.round(baseVal) : 0,
+                end_amount:   mon === '12' ? Math.round(endVal)  : 0,
+              });
+            });
+          }
         });
 
         if (!rows.length) {
