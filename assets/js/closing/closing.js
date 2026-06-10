@@ -1220,16 +1220,23 @@ function writeDeptAmount(ws, month, depts) {
     });
     ws.getRow(r).height = 18; r++;
 
-    // 나머지 행: B열 라벨 + 금액
-    typeRows.forEach(([label, data]) => {
+    // 나머지 행: B열 라벨 + 금액 (색 없음, 내부 가로선 thin)
+    typeRows.forEach(([label, data], ti) => {
+      const isLast = ti === typeRows.length - 1;
+      const rowBorder = {
+        top:    { style: 'thin' },
+        left:   { style: 'medium' },
+        right:  { style: 'medium' },
+        bottom: isLast ? { style: 'medium' } : { style: 'thin' },
+      };
       const lc2 = ws.getCell(r, 2);
-      lc2.value = label; lc2.font = F.total; lc2.fill = FILL.total;
-      lc2.alignment = AL('center'); lc2.border = BORDER_TOTAL;
+      lc2.value = label; lc2.font = F.bold; lc2.fill = FILL.odd;
+      lc2.alignment = AL('center'); lc2.border = rowBorder;
       [3, 4, 5].forEach((c, i) => {
         const vals = [sumF(data, '공급가액'), sumF(data, '부가세'), sumF(data, '합계금액')];
         const cell = ws.getCell(r, c);
-        cell.value = Math.round(vals[i]); cell.font = F.total; cell.fill = FILL.total;
-        cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
+        cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.odd;
+        cell.alignment = AL('right'); cell.border = rowBorder; cell.numFmt = NUM_FMT;
       });
       ws.getRow(r).height = 18; r++;
     });
@@ -1721,11 +1728,27 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
       groupedMap[key].합계금액  += Math.round(d.사용합계   || 0);
     });
     // 값 없어도 CLOSING_DEPT 마스터에 있는 부서는 0행으로 포함
+    // 시약은 extra1='시약'인 부서만, 소모품은 전체 부서
+    const siyakDeptNames = new Set(
+      (R.closingDeptMaster || [])
+        .filter(d => String(d.extra1 || '').trim() === '시약')
+        .map(d => String(d.code_name || '').trim())
+    );
     const masterKeys = imedGroups.length
-      ? imedGroups.flatMap(g => ['소모품', '시약'].map(t => g.displayName + '||' + t))
+      ? imedGroups.flatMap(g => {
+          const keys = [g.displayName + '||소모품'];
+          // 그룹 내 시약 부서가 하나라도 있으면 시약 행 추가
+          if (g.depts.some(dept => siyakDeptNames.has(dept))) {
+            keys.push(g.displayName + '||시약');
+          }
+          return keys;
+        })
       : (R.closingDeptMaster || []).flatMap(d => {
           const n = String(d.code_name || '').trim();
-          return n ? ['소모품', '시약'].map(t => n + '||' + t) : [];
+          if (!n) return [];
+          const keys = [n + '||소모품'];
+          if (siyakDeptNames.has(n)) keys.push(n + '||시약');
+          return keys;
         });
     masterKeys.forEach(key => {
       if (!groupedMap[key]) {
