@@ -1727,6 +1727,45 @@ function writeSubul(ws, year, month, branch, items, R) {
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
 // ── 수불부 xlsx에 sheet XML 삽입 (JSZip) ─────────────────────
+// styles 완전 병합 헬퍼
+function mergeStylesComplete_(existXml, newXml) {
+  function extractSection(xml, containerTag, itemTag) {
+    const m = xml.match(new RegExp('<' + containerTag + '[^>]*>([\\s\\S]*?)<\\/' + containerTag + '>'));
+    if (!m) return { items: [], offset: 0 };
+    const parts = m[1].split(new RegExp('(?=<' + itemTag + '[ >])'));
+    const items = parts.filter(function(p) { return p.trim().startsWith('<' + itemTag); });
+    return { items: items, offset: items.length };
+  }
+  function mergeSection(existXml, newXml, containerTag, itemTag) {
+    var ex = extractSection(existXml, containerTag, itemTag);
+    var nw = extractSection(newXml, containerTag, itemTag);
+    if (!nw.items.length) return { xml: existXml, offset: ex.offset, newItems: [] };
+    var merged = existXml
+      .replace('</' + containerTag + '>', nw.items.join('') + '</' + containerTag + '>')
+      .replace(new RegExp('<' + containerTag + ' count="' + ex.offset + '">'),
+               '<' + containerTag + ' count="' + (ex.offset + nw.items.length) + '">');
+    return { xml: merged, offset: ex.offset, newItems: nw.items };
+  }
+
+  var r1 = mergeSection(existXml, newXml, 'fonts', 'font');   var result = r1.xml;
+  var r2 = mergeSection(result,  newXml, 'fills', 'fill');   result = r2.xml;
+  var r3 = mergeSection(result,  newXml, 'borders', 'border'); result = r3.xml;
+
+  var xfOff = extractSection(existXml, 'cellXfs', 'xf').offset;
+  var newXfs = extractSection(newXml, 'cellXfs', 'xf').items;
+  var offsetXfs = newXfs.map(function(xf) {
+    return xf
+      .replace(/fontId="(\d+)"/,   function(_, n) { return 'fontId="'   + (parseInt(n) + r1.offset) + '"'; })
+      .replace(/fillId="(\d+)"/,   function(_, n) { return 'fillId="'   + (parseInt(n) + r2.offset) + '"'; })
+      .replace(/borderId="(\d+)"/, function(_, n) { return 'borderId="' + (parseInt(n) + r3.offset) + '"'; });
+  });
+  result = result
+    .replace('</cellXfs>', offsetXfs.join('') + '</cellXfs>')
+    .replace(new RegExp('<cellXfs count="' + xfOff + '">'), '<cellXfs count="' + (xfOff + offsetXfs.length) + '">');
+
+  return { mergedStylesXml: result, xfOffset: xfOff };
+}
+
 async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml, stylesXml, sheetName) {
   const existingZip = await JSZip.loadAsync(existingBytes);
 
@@ -1747,28 +1786,10 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
     return pre + (parseInt(n) + ssOffset) + post;
   });
 
-  // 2. styles 병합 (self-closing + child element 있는 xf 모두 처리)
-  let existingStylesXml = await existingZip.file('xl/styles.xml').async('string');
-  const existingCellXfsMatch = existingStylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
-  const stylesOffset = existingCellXfsMatch ? (existingCellXfsMatch[1].match(/<xf /g) || []).length : 0;
-  console.log('[DEBUG] stylesOffset:', stylesOffset, 'stylesXml 있음:', !!stylesXml);
-  if (stylesXml && stylesOffset > 0) {
-    const newCellXfsMatch = stylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
-    if (newCellXfsMatch) {
-      // self-closing: <xf .../> 와 child 있는: <xf ...>...</xf> 모두 추출
-      const allXfPattern = /<xf (?:[^<]|<(?!\/xf>))*(?:\/>|>[\s\S]*?<\/xf>)/g;
-      const newXfTags = newCellXfsMatch[1].match(allXfPattern) || [];
-      if (newXfTags.length > 0) {
-        const oldCount = parseInt(existingStylesXml.match(/<cellXfs count="(\d+)"/)[1]);
-        existingStylesXml = existingStylesXml
-          .replace('</cellXfs>', newXfTags.join('') + '</cellXfs>')
-          .replace('<cellXfs count="' + oldCount + '">', '<cellXfs count="' + (oldCount + newXfTags.length) + '">');
-      }
-    }
-    sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + stylesOffset) + '"'; });
-    const sAfter = [...sheetXml.matchAll(/ s="(\d+)"/g)].map(m=>m[1]).slice(0,5);
-    console.log('[DEBUG] s= 적용 후 (앞 5개):', sAfter);
-  }
+  // 2. styles 완전 병합 (fonts/fills/borders/xf 모두)
+  const existingStylesXml = await existingZip.file('xl/styles.xml').async('string');
+  const { mergedStylesXml, xfOffset } = mergeStylesComplete_(existingStylesXml, stylesXml || '');
+  sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + xfOffset) + '"'; });
 
   // 3. workbook.xml 수정
   let wbXml = await existingZip.file('xl/workbook.xml').async('string');
@@ -1777,8 +1798,7 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
   const newSheetId = (sheetIds.length ? Math.max.apply(null, sheetIds) : 0) + 1;
   const newRId     = 'rId' + ((rIds.length ? Math.max.apply(null, rIds) : 0) + 1);
   const newFile    = 'sheet' + newSheetId + '.xml';
-
-  const escaped = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escaped    = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   wbXml = wbXml.replace(new RegExp('<sheet[^>]*name="' + escaped + '"[^/]*/>'), '');
   wbXml = wbXml.replace('<sheets>', '<sheets><sheet name="' + sheetName + '" sheetId="' + newSheetId + '" r:id="' + newRId + '"/>');
 
@@ -1795,7 +1815,7 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
   existingZip.file('xl/_rels/workbook.xml.rels', relsXml);
   existingZip.file('[Content_Types].xml', ctXml);
   existingZip.file('xl/sharedStrings.xml', existingSsXml);
-  existingZip.file('xl/styles.xml', existingStylesXml);
+  existingZip.file('xl/styles.xml', mergedStylesXml);
   existingZip.file('xl/worksheets/' + newFile, sheetXml);
   existingZip.remove('xl/calcChain.xml');
 
