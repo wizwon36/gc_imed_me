@@ -2233,180 +2233,410 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
 
 // ── 4번째 시트: 연간 원재료비 ────────────────────────────
 function writeWonjaeryoYear(ws, R, yearUsage, label) {
-  const isGC       = label.includes('시약');
-  const targetType = isGC ? '시약' : '의약품';
+  const isGC   = label.includes('시약');
+  const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+  const curMon = String(R.m).padStart(2, '0');
+  const CUR_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF5EE' } };
 
-  // DB 데이터를 연도별 → dept → 월별 맵으로 변환
-  const yearMap = {};  // yr → dept → { m01..m12, base, end }
+  if (isGC) {
+    // ── GC케어: 시약 당기사용 ───────────────────────────
+    const targetType = '시약';
+    const yearMap = {};
+    yearUsage
+      .filter(u => u.item_type === targetType)
+      .forEach(u => {
+        const parts = (u.ym || '').split('-');
+        const yr = parts[0]; const mon = parts[1];
+        if (!yr || !mon) return;
+        const dept = u.dept || '';
+        if (!yearMap[yr]) yearMap[yr] = {};
+        if (!yearMap[yr][dept]) yearMap[yr][dept] = { dept, base: 0, end: 0 };
+        yearMap[yr][dept]['m' + mon] =
+          (yearMap[yr][dept]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
+        if (mon === '01' && u.base_amount)
+          yearMap[yr][dept].base = Math.round(u.base_amount / 1000);
+        if (mon === '12' && u.end_amount)
+          yearMap[yr][dept].end  = Math.round(u.end_amount  / 1000);
+      });
+
+    // 당월 추가
+    buildDeptUsageForMonthly(R)
+      .filter(u => u.item_type === targetType)
+      .forEach(u => {
+        const dept = u.dept || '';
+        if (!yearMap[R.y]) yearMap[R.y] = {};
+        if (!yearMap[R.y][dept]) yearMap[R.y][dept] = { dept, base: 0, end: 0 };
+        if (!yearMap[R.y][dept]['m' + curMon])
+          yearMap[R.y][dept]['m' + curMon] = Math.round(u.usage_amount / 1000);
+      });
+
+    // 당해 연도 기말: 3번째 시트 기말재고 (기초+매입-사용)
+    Object.keys(yearMap[R.y] || {}).forEach(dept => {
+      const d = yearMap[R.y][dept];
+      if (!d.base) {
+        const base = (R.prevStockData || [])
+          .filter(s => (s.dept||'') === dept && s.item_type === targetType)
+          .reduce((s, v) => s + toN(v.closing_amount), 0);
+        if (base) d.base = Math.round(base / 1000);
+      }
+      const baseAmt = (R.prevStockData || [])
+        .filter(s => (s.dept||'') === dept && s.item_type === targetType)
+        .reduce((s, v) => s + toN(v.closing_amount), 0);
+      const buy = R.gcIpgo
+        .filter(r => String(r['의뢰부서']||'').trim() === dept && String(r['자재구분']||'').trim() === targetType)
+        .reduce((s, r) => s + toN(r['공급가액']), 0);
+      const use = R.usageSiyak
+        .filter(r => String(r['부서명']||'').trim() === dept)
+        .reduce((s, r) => s + toN(r['사용공급가']), 0);
+      d.end = Math.round((baseAmt + buy - use) / 1000);
+    });
+
+    const years = Object.keys(yearMap).sort((a, b) => b.localeCompare(a));
+    let r = 1;
+    years.forEach(yr => {
+      const data = yearMap[yr];
+      const masterDepts = (R.closingDeptMaster || [])
+        .filter(d => String(d.extra1||'').trim() === '시약')
+        .map(d => String(d.code_name||'').trim());
+      const dataDepts = Object.keys(data);
+      const deptKeys = masterDepts.length
+        ? [...new Set([...masterDepts, ...dataDepts])].sort((a, b) => {
+            const ai = masterDepts.indexOf(a); const bi = masterDepts.indexOf(b);
+            if (ai >= 0 && bi >= 0) return ai - bi;
+            if (ai >= 0) return -1; if (bi >= 0) return 1;
+            return a.localeCompare(b, 'ko');
+          })
+        : dataDepts.sort((a, b) => a.localeCompare(b, 'ko'));
+      deptKeys.forEach(dept => { if (!data[dept]) data[dept] = { dept, base: 0, end: 0 }; });
+
+      ws.mergeCells(r, 1, r, 15);
+      ws.getCell(r, 1).value = `■ ${yr}년도 원재료비`;
+      ws.getCell(r, 1).font  = { name: 'Calibri', size: 12, bold: true };
+      ws.getCell(r, 16).value = '(단위 : 천원)';
+      ws.getCell(r, 16).font  = F.base;
+      ws.getCell(r, 16).alignment = AL('right');
+      ws.getRow(r).height = 22; r++;
+
+      ['구   분','기초','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말','비고']
+        .forEach((v, i) => {
+          hdrCell(ws, r, i + 1, v);
+          if (yr === R.y && i >= 2 && i <= 13 && String(i - 1).padStart(2,'0') === curMon)
+            ws.getCell(r, i + 1).fill = CUR_FILL;
+        });
+      ws.getRow(r).height = 18; r++;
+
+      const colTotals = { base: 0, end: 0 };
+      months.forEach((_, i) => { colTotals[i + 3] = 0; });
+      const groupStart = r;
+
+      deptKeys.forEach((dept, ri) => {
+        const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
+        const d    = data[dept];
+        colTotals.base += d.base || 0;
+        colTotals.end  += d.end  || 0;
+        if (ri === 0) {
+          const ac = ws.getCell(r, 1);
+          ac.value = `납품처\n${R.branch}`; ac.font = F.base; ac.fill = fill;
+          ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          ac.border = BORDER_THIN;
+        } else {
+          const ac = ws.getCell(r, 1); ac.fill = fill; ac.border = BORDER_THIN;
+        }
+        numCell(ws, r, 2, d.base || 0, fill);
+        months.forEach((mon, mi) => {
+          const v = d['m' + mon] || 0;
+          colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
+          numCell(ws, r, mi + 3, v, yr === R.y && mon === curMon ? CUR_FILL : fill);
+        });
+        numCell(ws, r, 15, d.end || 0, fill);
+        txtCell(ws, r, 16, `${dept} - 시약`, fill);
+        ws.getRow(r).height = 18; r++;
+      });
+
+      if (r - 1 > groupStart) ws.mergeCells(groupStart, 1, r - 1, 1);
+      ws.getCell(groupStart, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+      subtotRow(ws, r, [1], ['소  계'],
+        [2, ...months.map((_, i) => i + 3), 15],
+        [colTotals.base, ...months.map((_, i) => colTotals[i + 3] || 0), colTotals.end]
+      );
+      if (yr === R.y) {
+        const cc = ws.getCell(r, months.indexOf(curMon) + 3);
+        cc.fill = CUR_FILL;
+      }
+      ws.getCell(r, 16).fill = FILL.subtot; ws.getCell(r, 16).border = BORDER_THIN;
+      ws.getRow(r).height = 18; r += 2;
+    });
+
+    const colWidths = [[1, 22], [2, 10]];
+    months.forEach((_, i) => colWidths.push([i + 3, 9]));
+    colWidths.push([15, 10], [16, 22]);
+    cw(ws, colWidths);
+    ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 0 }];
+    return;
+  }
+
+  // ── 아이메드: 의약품 사용합계 + 시약5% 사용합계 ─────────
+  const imedGroups = buildImedDeptGroups(R.closingDeptMaster || []);
+  const siyakDeptNames = new Set(
+    (R.closingDeptMaster || [])
+      .filter(d => String(d.extra1||'').trim() === '시약')
+      .map(d => String(d.code_name||'').trim())
+  );
+
+  // 그룹명 해석 헬퍼
+  const deptToGroup = {};
+  imedGroups.forEach(g => g.depts.forEach(dept => { deptToGroup[dept] = g.displayName; }));
+  const resolveGroup = dept => deptToGroup[dept] || dept;
+
+  // DB 데이터 → yearMap: yr → groupName → { m01..m12, base, end }
+  // 의약품 + 시약 합산
+  const yearMap = {};
+  const addToMap = (yr, mon, groupName, amt) => {
+    if (!yearMap[yr]) yearMap[yr] = {};
+    if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
+    yearMap[yr][groupName]['m' + mon] =
+      (yearMap[yr][groupName]['m' + mon] || 0) + Math.round(amt / 1000);
+  };
+
   yearUsage
-    .filter(u => u.item_type === targetType)
+    .filter(u => u.item_type === '의약품' || u.item_type === '시약')
     .forEach(u => {
       const parts = (u.ym || '').split('-');
       const yr = parts[0]; const mon = parts[1];
       if (!yr || !mon) return;
-      const dept = u.dept || '';
-      if (!yearMap[yr]) yearMap[yr] = {};
-      if (!yearMap[yr][dept]) yearMap[yr][dept] = { dept, base: 0, end: 0 };
-      yearMap[yr][dept]['m' + mon] =
-        (yearMap[yr][dept]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
-      // 기초: 1월에 저장된 base_amount
+      const groupName = resolveGroup(u.dept || '');
+      // 시약은 extra1='시약' 부서만
+      if (u.item_type === '시약' && !siyakDeptNames.has(u.dept || '')) return;
+      addToMap(yr, mon, groupName, u.usage_amount || 0);
       if (mon === '01' && u.base_amount) {
-        yearMap[yr][dept].base = Math.round(u.base_amount / 1000);
+        if (!yearMap[yr]) yearMap[yr] = {};
+        if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
+        yearMap[yr][groupName].base += Math.round(u.base_amount / 1000);
       }
-      // 기말: 12월에 저장된 end_amount
       if (mon === '12' && u.end_amount) {
-        yearMap[yr][dept].end = Math.round(u.end_amount / 1000);
+        if (!yearMap[yr]) yearMap[yr] = {};
+        if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
+        yearMap[yr][groupName].end += Math.round(u.end_amount / 1000);
       }
     });
 
-  // 당월 추가 (미확정 시 대비)
-  const curMon = String(R.m).padStart(2, '0');
-  buildDeptUsageForMonthly(R)
-    .filter(u => u.item_type === targetType)
-    .forEach(u => {
-      const dept = u.dept || '';
-      if (!yearMap[R.y]) yearMap[R.y] = {};
-      if (!yearMap[R.y][dept]) yearMap[R.y][dept] = { dept, base: 0, end: 0 };
-      if (!yearMap[R.y][dept]['m' + curMon])
-        yearMap[R.y][dept]['m' + curMon] = Math.round(u.usage_amount / 1000);
+  // 당월 추가 (의약품 + 시약5%)
+  if (!yearMap[R.y]) yearMap[R.y] = {};
+
+  // 의약품 당월
+  R.usageImed.forEach(r => {
+    const dept = String(r['부서명']||'').trim(); if (!dept) return;
+    const groupName = resolveGroup(dept);
+    if (!yearMap[R.y][groupName]) yearMap[R.y][groupName] = { base: 0, end: 0 };
+    yearMap[R.y][groupName]['m' + curMon] =
+      (yearMap[R.y][groupName]['m' + curMon] || 0) + Math.round(toN(r['사용합계']) / 1000);
+  });
+
+  // 시약5% 당월 (extra1='시약' 부서만)
+  (R.imedSiSoPivot5 || [])
+    .filter(d => String(d.자재구분||'').trim() === '시약' && siyakDeptNames.has(String(d.부서명||'').trim()))
+    .forEach(d => {
+      const groupName = resolveGroup(String(d.부서명||'').trim());
+      if (!yearMap[R.y][groupName]) yearMap[R.y][groupName] = { base: 0, end: 0 };
+      yearMap[R.y][groupName]['m' + curMon] =
+        (yearMap[R.y][groupName]['m' + curMon] || 0) + Math.round(toN(d.사용합계||0) / 1000);
     });
 
-  // 현재 연도 기말: 3번째 시트 기말재고 (기초+매입-사용)
-  // 기초: DB base_amount 우선, 없으면 prevStockData 합산
-  Object.keys(yearMap[R.y] || {}).forEach(dept => {
-    const d = yearMap[R.y][dept];
+  // 당해 연도 기말: 3번째 시트 기말재고 (writeWonjaeryo의 end 값과 동일 계산)
+  // prevStockData 기준 그룹별 기초 합산 후 매입-사용
+  imedGroups.forEach(g => {
+    const gName = g.displayName;
+    if (!yearMap[R.y]) yearMap[R.y] = {};
+    if (!yearMap[R.y][gName]) yearMap[R.y][gName] = { base: 0, end: 0 };
+    const d = yearMap[R.y][gName];
 
-    // 기초: DB에 없으면 prevStockData에서 계산
+    // 기초 (prevStockData 그룹 합산, 의약품 기준)
     if (!d.base) {
-      const base = (R.prevStockData || [])
-        .filter(s => (s.dept || '') === dept && s.item_type === targetType)
-        .reduce((s, v) => s + toN(v.closing_amount), 0);
+      const base = g.depts.reduce((s, dept) => {
+        return s + (R.prevStockData || [])
+          .filter(s2 => (s2.dept||'') === dept && s2.item_type === '의약품')
+          .reduce((ss, v) => ss + toN(v.closing_amount), 0);
+      }, 0);
       if (base) d.base = Math.round(base / 1000);
     }
 
-    // 기말: 기초 + 당기매입 - 당기사용
-    const baseAmt = (R.prevStockData || [])
-      .filter(s => (s.dept || '') === dept && s.item_type === targetType)
-      .reduce((s, v) => s + toN(v.closing_amount), 0);
-    const buy = R.gcIpgo
-      .filter(r => String(r['의뢰부서']||'').trim() === dept && String(r['자재구분']||'').trim() === targetType)
-      .reduce((s, r) => s + toN(r['공급가액']), 0);
-    const use = R.usageSiyak
-      .filter(r => String(r['부서명']||'').trim() === dept)
-      .reduce((s, r) => s + toN(r['사용공급가']), 0);
-    d.end = Math.round((baseAmt + buy - use) / 1000);
+    // 기말: 기초 + 매입 - 사용 (의약품+시약5%)
+    const baseAmt = g.depts.reduce((s, dept) => {
+      return s + (R.prevStockData || [])
+        .filter(s2 => (s2.dept||'') === dept && s2.item_type === '의약품')
+        .reduce((ss, v) => ss + toN(v.closing_amount), 0);
+    }, 0);
+    const buy = g.depts.reduce((s, dept) => {
+      return s + R.imedIpgo
+        .filter(r2 => String(r2['의뢰부서']||'').trim() === dept)
+        .reduce((ss, r2) => ss + toN(r2['합계금액']), 0);
+    }, 0);
+    const useImed = g.depts.reduce((s, dept) => {
+      return s + R.usageImed
+        .filter(r2 => String(r2['부서명']||'').trim() === dept)
+        .reduce((ss, r2) => ss + toN(r2['사용합계']), 0);
+    }, 0);
+    const useSiyak = g.depts.filter(dept => siyakDeptNames.has(dept)).reduce((s, dept) => {
+      return s + (R.imedSiSoPivot5||[])
+        .filter(d2 => String(d2.부서명||'').trim() === dept && String(d2.자재구분||'').trim() === '시약')
+        .reduce((ss, d2) => ss + toN(d2.사용합계||0), 0);
+    }, 0);
+    d.end = Math.round((baseAmt + buy - useImed - useSiyak) / 1000);
   });
 
-  const years  = Object.keys(yearMap).sort((a, b) => b.localeCompare(a));
-  const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+  // 연도 목록: 내림차순
+  const years = Object.keys(yearMap).sort((a, b) => b.localeCompare(a));
+
+  // 그룹 순서: CLOSING_DEPT extra2 마스터 순
+  const masterGroups = imedGroups.map(g => g.displayName);
+
+  // 우측 비교 테이블용 소계 저장 (yr → mon → 소계)
+  const yearMonTotals = {};  // yr → { m01..m12 }
 
   let r = 1;
   years.forEach(yr => {
     const data = yearMap[yr];
-
-    // CLOSING_DEPT 마스터(extra1=시약) 우선, 없으면 데이터 순
-    const masterDepts = (R.closingDeptMaster || [])
-      .filter(d => String(d.extra1 || '').trim() === '시약')
-      .map(d => String(d.code_name || '').trim());
-    const dataDepts = Object.keys(data);
-    const deptKeys = masterDepts.length
-      ? [...new Set([...masterDepts, ...dataDepts])].sort((a, b) => {
-          const ai = masterDepts.indexOf(a); const bi = masterDepts.indexOf(b);
+    const dataGroups = Object.keys(data);
+    const groupKeys = masterGroups.length
+      ? [...new Set([...masterGroups, ...dataGroups])].sort((a, b) => {
+          const ai = masterGroups.indexOf(a); const bi = masterGroups.indexOf(b);
           if (ai >= 0 && bi >= 0) return ai - bi;
           if (ai >= 0) return -1; if (bi >= 0) return 1;
           return a.localeCompare(b, 'ko');
         })
-      : dataDepts.sort((a, b) => a.localeCompare(b, 'ko'));
+      : dataGroups.sort((a, b) => a.localeCompare(b, 'ko'));
+    groupKeys.forEach(g => { if (!data[g]) data[g] = { base: 0, end: 0 }; });
 
-    // 마스터에 있지만 yearMap에 없는 부서는 빈 데이터로 추가
-    deptKeys.forEach(dept => {
-      if (!data[dept]) data[dept] = { dept, base: 0, end: 0 };
-    });
-
-    // 연도 제목 (A~O 병합, P열 단위 별도)
+    // ── 연도 제목
     ws.mergeCells(r, 1, r, 15);
-    ws.getCell(r, 1).value     = `■ ${yr}년도 원재료비`;
-    ws.getCell(r, 1).font      = { name: 'Calibri', size: 12, bold: true };
-    ws.getCell(r, 16).value    = '(단위 : 천원)';
-    ws.getCell(r, 16).font     = F.base;
+    ws.getCell(r, 1).value = `■ ${yr}년도 원재료비`;
+    ws.getCell(r, 1).font  = { name: 'Calibri', size: 12, bold: true };
+    ws.getCell(r, 16).value = '(단위 : 천원)';
+    ws.getCell(r, 16).font  = F.base;
     ws.getCell(r, 16).alignment = AL('right');
     ws.getRow(r).height = 22; r++;
 
-    // 헤더
-    ['구   분','기초','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말','비고']
+    // ── 헤더
+    ['구   분','기초','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말']
       .forEach((v, i) => {
         hdrCell(ws, r, i + 1, v);
-        // 당월 헤더 강조 (현재 연도만)
-        if (yr === R.y && i >= 2 && i <= 13) {
-          const mon = String(i - 1).padStart(2, '0');
-          if (mon === curMon) {
-            ws.getCell(r, i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4E8D8' } };
-          }
-        }
+        if (yr === R.y && i >= 2 && i <= 13 && String(i - 1).padStart(2,'0') === curMon)
+          ws.getCell(r, i + 1).fill = CUR_FILL;
       });
+    ws.getRow(r).height = 18; r++;
+
+    // ── 매 출 행 (빈칸)
+    txtCell(ws, r, 1, '매  출', FILL.odd, false, true);
+    [2,3,4,5,6,7,8,9,10,11,12,13,14,15].forEach(c => {
+      const cell = ws.getCell(r, c); cell.fill = FILL.odd; cell.border = BORDER_THIN;
+    });
     ws.getRow(r).height = 18; r++;
 
     const colTotals = { base: 0, end: 0 };
     months.forEach((_, i) => { colTotals[i + 3] = 0; });
-    const deptGroupStart = r;
 
-    deptKeys.forEach((dept, ri) => {
+    groupKeys.forEach((gName, ri) => {
       const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
-      const d    = data[dept];
+      const d    = data[gName];
       colTotals.base += d.base || 0;
       colTotals.end  += d.end  || 0;
-
-      // A열: 첫 행만 납품처 텍스트 (병합 예정)
-      if (ri === 0) {
-        const ac = ws.getCell(r, 1);
-        ac.value     = `납품처\n${R.branch}`;
-        ac.font      = F.base;
-        ac.fill      = fill;
-        ac.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        ac.border    = BORDER_THIN;
-      } else {
-        const ac = ws.getCell(r, 1);
-        ac.fill = fill; ac.border = BORDER_THIN;
-      }
+      txtCell(ws, r, 1, gName, fill, false, false);
       numCell(ws, r, 2, d.base || 0, fill);
       months.forEach((mon, mi) => {
-        const v       = d['m' + mon] || 0;
-        const isCurMon = yr === R.y && mon === curMon;
-        const cellFill = isCurMon
-          ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF5EE' } }  // 연한 황색 강조
-          : fill;
+        const v = d['m' + mon] || 0;
         colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
-        numCell(ws, r, mi + 3, v, cellFill);
+        numCell(ws, r, mi + 3, v, yr === R.y && mon === curMon ? CUR_FILL : fill);
       });
       numCell(ws, r, 15, d.end || 0, fill);
-      txtCell(ws, r, 16, `${dept} - ${targetType}`, fill);
       ws.getRow(r).height = 18; r++;
     });
 
-    // A열 병합
-    if (r - 1 > deptGroupStart) ws.mergeCells(deptGroupStart, 1, r - 1, 1);
-    ws.getCell(deptGroupStart, 1).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    // 소계 저장 (우측 비교 테이블용)
+    yearMonTotals[yr] = { base: colTotals.base, end: colTotals.end };
+    months.forEach((mon, mi) => { yearMonTotals[yr]['m' + mon] = colTotals[mi + 3] || 0; });
 
-    // 소계
-    subtotRow(ws, r, [1], ['소  계'],
+    // ── 총 계
+    subtotRow(ws, r, [1], ['총  계'],
       [2, ...months.map((_, i) => i + 3), 15],
       [colTotals.base, ...months.map((_, i) => colTotals[i + 3] || 0), colTotals.end]
     );
-    // 당월 소계 셀 강조
     if (yr === R.y) {
-      const curCol = months.indexOf(curMon) + 3;
-      const cc = ws.getCell(r, curCol);
-      cc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4E8D8' } };
+      const cc = ws.getCell(r, months.indexOf(curMon) + 3);
+      cc.fill = CUR_FILL;
     }
-    ws.getCell(r, 16).fill   = FILL.subtot;
-    ws.getCell(r, 16).border = BORDER_THIN;
     ws.getRow(r).height = 18; r++;
+
+    // ── 세포치료 / 특수의약품 (빈칸)
+    ['세포치료', '특수의약품'].forEach(lbl => {
+      const lFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
+      txtCell(ws, r, 1, lbl, lFill, false, true);
+      [2,3,4,5,6,7,8,9,10,11,12,13,14,15].forEach(c => {
+        const cell = ws.getCell(r, c); cell.fill = lFill; cell.border = BORDER_THIN;
+      });
+      ws.getRow(r).height = 18; r++;
+    });
+
     r++;  // 빈 행
+
+    // ── 우측 비교 테이블: 금년 당월 vs 전년 당월
+    const prevYr = String(parseInt(yr) - 1);
+    const hasPrev = !!yearMonTotals[prevYr];
+    const tableStartRow = r - (groupKeys.length + 5);  // 연도 블록 시작에 맞춤
+    // 우측은 R열(18)부터: 구분(R), 당해년(S), 전년(T), 증감(U) — 현재 연도 블록에만 작성
+    if (yr === R.y) {
+      const TC = 18;  // R열
+      const blockTop = r - groupKeys.length - 5;  // 이 연도 블록 헤더 위치 재계산
+      let tr = blockTop;
+
+      // 헤더
+      ws.mergeCells(tr, TC, tr, TC + 3);
+      const thc = ws.getCell(tr, TC);
+      thc.value = '(단위 : 천원)'; thc.font = F.base; thc.alignment = AL('right');
+      tr++;
+
+      hdrCell(ws, tr, TC,     '구분');
+      hdrCell(ws, tr, TC + 1, `${yr}년 ${R.m}월`);
+      hdrCell(ws, tr, TC + 2, `${prevYr}년 ${R.m}월`);
+      hdrCell(ws, tr, TC + 3, '증감');
+      ws.getRow(tr).height = 18; tr++;
+
+      // 매 출 행 (빈)
+      [TC, TC+1, TC+2, TC+3].forEach(c => {
+        const cell = ws.getCell(tr, c);
+        if (c === TC) cell.value = '매  출';
+        cell.font = F.base; cell.fill = FILL.odd; cell.border = BORDER_THIN;
+        cell.alignment = AL(c === TC ? 'center' : 'right');
+      });
+      ws.getRow(tr).height = 18; tr++;
+
+      // 부서별 비교
+      groupKeys.forEach((gName, ri) => {
+        const fill = ri % 2 === 0 ? FILL.odd : FILL.even;
+        const curAmt  = (yearMap[R.y]?.[gName]?.['m' + curMon] || 0);
+        const prevAmt = (yearMap[prevYr]?.[gName]?.['m' + curMon] || 0);
+        const diff    = curAmt - prevAmt;
+        txtCell(ws, tr, TC,     gName,   fill, false, false);
+        numCell(ws, tr, TC + 1, curAmt,  fill);
+        numCell(ws, tr, TC + 2, prevAmt, fill);
+        numCell(ws, tr, TC + 3, diff,    fill);
+        ws.getRow(tr).height = 18; tr++;
+      });
+
+      // 총 계 비교
+      const curTotal  = yearMonTotals[R.y]?.['m' + curMon]  || 0;
+      const prevTotal = yearMonTotals[prevYr]?.['m' + curMon] || 0;
+      subtotRow(ws, tr, [TC], ['총  계'],
+        [TC+1, TC+2, TC+3],
+        [curTotal, prevTotal, curTotal - prevTotal]
+      );
+      ws.getRow(tr).height = 18;
+    }
   });
 
-  const colWidths = [[1, 22], [2, 10]];
+  const colWidths = [[1, 20], [2, 10]];
   months.forEach((_, i) => colWidths.push([i + 3, 9]));
-  colWidths.push([15, 10], [16, 22]);
+  colWidths.push([15, 10], [16, 4], [17, 4], [18, 18], [19, 12], [20, 12], [21, 12]);
   cw(ws, colWidths);
   ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 0 }];
 }
