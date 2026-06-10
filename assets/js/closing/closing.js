@@ -1776,8 +1776,9 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
   R.prevStockData = prevStockData;  // writeWonjaeryoYear에서 기말 계산에 사용
   writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
 
-  // 연간 사용 데이터 로드 (DB 전체)
-  const yearUsage = await loadYearUsage(null, R.branch, user);
+  // 연간 사용 데이터 로드 (GC케어/아이메드 분리)
+  const reportType  = isImed ? '아이메드' : 'GC케어';
+  const yearUsage   = await loadYearUsage(null, R.branch, user, reportType);
   writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
 
   await saveWb(wb, filename);
@@ -1930,37 +1931,35 @@ async function loadPrevStock(ym, branch) {
 
 // 당월 부서별 사용 집계 (마감 확정 시 저장용)
 function buildDeptUsageForMonthly(R) {
-  const m = {};
+  const gcMap = {}, imedMap = {};
   // GC케어: 시약 + 소모품
   [...R.usageSiyak, ...R.usageSomoum].forEach(r => {
     const dept = String(r['부서명'] || '').trim(); if (!dept) return;
     const type = String(r['자재구분'] || '').trim();
     const k = dept + '||' + type;
-    if (!m[k]) m[k] = { dept, item_type: type, usage_amount: 0 };
-    m[k].usage_amount += toN(r['사용공급가']);
+    if (!gcMap[k]) gcMap[k] = { dept, item_type: type, report_type: 'GC케어', usage_amount: 0 };
+    gcMap[k].usage_amount += toN(r['사용공급가']);
   });
   // 아이메드: 의약품
   R.usageImed.forEach(r => {
     const dept = String(r['부서명'] || '').trim(); if (!dept) return;
     const type = String(r['자재구분'] || '').trim();
     const k = dept + '||' + type;
-    if (!m[k]) m[k] = { dept, item_type: type, usage_amount: 0 };
-    m[k].usage_amount += toN(r['사용공급가']);
+    if (!imedMap[k]) imedMap[k] = { dept, item_type: type, report_type: '아이메드', usage_amount: 0 };
+    imedMap[k].usage_amount += toN(r['사용공급가']);
   });
-  return Object.values(m).map(v => ({
-    ...v,
-    usage_amount: Math.round(v.usage_amount),
-  }));
+  return [
+    ...Object.values(gcMap),
+    ...Object.values(imedMap),
+  ].map(v => ({ ...v, usage_amount: Math.round(v.usage_amount) }));
 }
 
 // 연도별 사용 데이터 조회
-async function loadYearUsage(year, branch, user) {
+async function loadYearUsage(year, branch, user, reportType) {
   try {
-    const res = await apiGet('closingGetUsageMonthly', {
-      request_user_email: user?.email,
-      year,
-      branch,
-    });
+    const params = { request_user_email: user?.email, year, branch };
+    if (reportType) params.report_type = reportType;
+    const res = await apiGet('closingGetUsageMonthly', params);
     return Array.isArray(res.data) ? res.data : [];
   } catch (e) {
     return [];
@@ -2811,14 +2810,26 @@ async function confirmClosing() {
       items,
     });
 
-    // 당월 부서별 사용 데이터 저장
+    // 당월 부서별 사용 데이터 저장 (GC케어/아이메드 분리)
     const usageItems = buildDeptUsageForMonthly(R);
-    await apiPost('closingSaveUsageMonthly', {
-      request_user_email: user?.email,
-      branch: R.branch,
-      ym,
-      items: usageItems,
-    });
+    const gcUsageItems   = usageItems.filter(it => it.report_type === 'GC케어');
+    const imedUsageItems = usageItems.filter(it => it.report_type === '아이메드');
+    if (gcUsageItems.length > 0) {
+      await apiPost('closingSaveUsageMonthly', {
+        request_user_email: user?.email,
+        branch: R.branch, ym,
+        report_type: 'GC케어',
+        items: gcUsageItems,
+      });
+    }
+    if (imedUsageItems.length > 0) {
+      await apiPost('closingSaveUsageMonthly', {
+        request_user_email: user?.email,
+        branch: R.branch, ym,
+        report_type: '아이메드',
+        items: imedUsageItems,
+      });
+    }
 
     btn.disabled    = true;
     btn.textContent = '✓ 확정 완료';
@@ -3768,11 +3779,13 @@ async function saveUsageInit() {
   const branch = document.getElementById('usageInitBranch')?.value?.trim();
   const btn    = document.getElementById('btnSaveUsageInit');
 
-  // 연월별로 그룹핑해서 저장
+  // 연월별로 그룹핑해서 저장 (GC케어/아이메드 분리)
   const byYm = {};
   _usageInitParsed.forEach(r => {
-    if (!byYm[r.ym]) byYm[r.ym] = [];
-    byYm[r.ym].push({ dept: r.dept, item_type: r.item_type, usage_amount: r.usage_amount });
+    if (!byYm[r.ym]) byYm[r.ym] = { GC케어: [], 아이메드: [] };
+    const rt = (r.item_type === '의약품') ? '아이메드' : 'GC케어';
+    byYm[r.ym][rt].push({ dept: r.dept, item_type: r.item_type, usage_amount: r.usage_amount,
+                           base_amount: r.base_amount || 0, end_amount: r.end_amount || 0 });
   });
 
   btn.disabled = true;
@@ -3780,12 +3793,16 @@ async function saveUsageInit() {
     showGlobalLoading('데이터 저장 중...');
     const user = window.auth?.getSession?.();
     for (const ym of Object.keys(byYm).sort()) {
-      await apiPost('closingSaveUsageMonthly', {
-        request_user_email: user?.email,
-        branch,
-        ym,
-        items: byYm[ym],
-      });
+      for (const rt of ['GC케어', '아이메드']) {
+        if (byYm[ym][rt].length === 0) continue;
+        await apiPost('closingSaveUsageMonthly', {
+          request_user_email: user?.email,
+          branch,
+          ym,
+          report_type: rt,
+          items: byYm[ym][rt],
+        });
+      }
     }
     showMessage(`${Object.keys(byYm).length}개월 데이터가 저장됐습니다.`, 'success');
     cancelUsageInit();
