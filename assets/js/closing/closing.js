@@ -544,7 +544,8 @@ async function runProcessing() {
               siyakPivot, siyakPivot5, imedSiSoPivot, imedSiSoPivot5, imedDrugPivot,
               sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
 
-    // Drive 수불부 파일에 당월 시트 삽입 후 완성 파일 보관 (GC케어만)
+    // Drive 수불부 파일에 당월 시트 삽입 (GC케어만)
+    // sheet XML만 GAS에 전송 → GAS에서 zip 조작 완결
     await sleep(150); prog(88, '수불부 당월 시트 생성 중...');
     const user = window.auth?.getSession?.();
     try {
@@ -556,44 +557,36 @@ async function runProcessing() {
       if (!fidRes.success || !fidRes.data?.file_id) {
         clog('수불부 file_id 없음 — 당월 시트만 다운로드됩니다.', 'warn');
       } else {
-        prog(90, '수불부 파일 로드 중...');
-        const fileRes = await apiGet('closingGetSubulFile', {
+        prog(92, '수불부 시트 XML 생성 중...');
+
+        // 당월 시트 단일 xlsx 생성 → sheet XML 추출
+        const sheetName  = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
+        const singleWb   = new ExcelJS.Workbook();
+        const singleWs   = singleWb.addWorksheet(sheetName);
+        writeSubul(singleWs, y, mi, branch,
+          Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
+        const singleBuf  = await singleWb.xlsx.writeBuffer();
+
+        // JSZip으로 sheet XML만 추출 (수KB)
+        const singleZip  = await JSZip.loadAsync(singleBuf);
+        const sheetXml   = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
+        clog(`시트 XML 크기: ${(sheetXml.length/1024).toFixed(1)}KB`, 'info');
+
+        // GAS: 기존 Drive 파일에 시트 삽입 (GAS 내부에서 완결, 파일 반환 없음)
+        prog(96, '수불부 Drive 업데이트 중...');
+        const insRes = await apiPost('closingInsertSubulSheet', {
           request_user_email: user?.email,
-          file_id: fidRes.data.file_id,
+          file_id:    fidRes.data.file_id,
+          sheet_name: sheetName,
+          sheet_xml:  sheetXml,
         });
-        if (!fileRes.success || !fileRes.data?.base64) {
-          clog('수불부 파일 로드 실패', 'warn');
-        } else {
-          const b64len = fileRes.data.base64.length;
-          clog(`수불부 파일 수신: ${(b64len/1024).toFixed(0)}KB (base64)`, 'info');
-          prog(93, '수불부 당월 시트 삽입 중...');
 
-          // 당월 시트 단일 xlsx 생성
-          const sheetName  = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
-          const singleWb   = new ExcelJS.Workbook();
-          const singleWs   = singleWb.addWorksheet(sheetName);
-          writeSubul(singleWs, y, mi, branch,
-            Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
-          const newSheetBuf = await singleWb.xlsx.writeBuffer();
-
-          // 프론트에서 직접 zip 조작
-          const resultBase64 = await insertSheetIntoXlsx_(
-            fileRes.data.base64,
-            newSheetBuf,
-            sheetName
-          );
-
-          prog(97, '수불부 Drive 저장 중...');
-          // Drive에 저장
-          await apiPost('closingUpdateSubulFile', {
-            request_user_email: user?.email,
-            file_id: fidRes.data.file_id,
-            base64:  resultBase64,
-          });
-
-          App.R.subulBase64  = resultBase64;
+        if (insRes.success) {
           App.R.subulFileId  = fidRes.data.file_id;
-          clog('수불부 업데이트 완료 — 다운로드 준비됨', 'ok');
+          App.R.subulSheetWb = singleWb;
+          clog('수불부 Drive 업데이트 완료', 'ok');
+        } else {
+          clog('수불부 시트 삽입 실패: ' + (insRes.message || ''), 'warn');
         }
       }
     } catch (e) {
@@ -2008,15 +2001,24 @@ async function dlSAP() {
 async function dlSubul() {
   try {
     showGlobalLoading('수불 집계표 다운로드 중...');
-    const R        = App.R;
+    const R    = App.R;
+    const user = window.auth?.getSession?.();
     const filename = `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`;
 
-    if (R.subulBase64) {
-      // 파싱 시점에 준비된 완성 파일 (이전 월 누적 + 당월)
-      const outBuf = Uint8Array.from(atob(R.subulBase64), c => c.charCodeAt(0));
-      saveAs(new Blob([outBuf], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      }), filename);
+    if (R.subulFileId) {
+      // Drive에서 완성 파일(당월 시트 포함) 다운로드
+      const fileRes = await apiGet('closingGetSubulFile', {
+        request_user_email: user?.email,
+        file_id: R.subulFileId,
+      });
+      if (fileRes.success && fileRes.data?.base64) {
+        const outBuf = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
+        saveAs(new Blob([outBuf], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }), filename);
+      } else {
+        throw new Error('파일 다운로드 실패');
+      }
     } else {
       // Drive 파일 없는 경우 당월 시트만 생성
       const wb = newWb();
