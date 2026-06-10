@@ -3627,6 +3627,7 @@ function cancelStockInit() {
 // 연간 원재료비 초기 데이터 업로드
 // ═══════════════════════════════════════════════════════════
 let _usageInitParsed = [];
+let _usageInitReportType = '';
 
 function initUsageInitUI() {
   // 지점 드롭다운 동기화
@@ -3635,7 +3636,7 @@ function initUsageInitUI() {
   if (src && tgt) { tgt.innerHTML = src.innerHTML; tgt.value = src.value; }
 }
 
-async function handleUsageInitFile(input) {
+async function handleUsageInitFile(input, reportType) {
   const file = input.files?.[0];
   if (!file) return;
   input.value = '';
@@ -3645,7 +3646,8 @@ async function handleUsageInitFile(input) {
 
   try {
     showGlobalLoading('파일 분석 중...');
-    _usageInitParsed = await parseUsageInitFile(file);
+    _usageInitReportType = reportType;
+    _usageInitParsed = await parseUsageInitFile(file, reportType);
     renderUsageInitPreview(_usageInitParsed);
   } catch (e) {
     showMessage('파일 읽기 오류: ' + e.message, 'error');
@@ -3654,14 +3656,14 @@ async function handleUsageInitFile(input) {
   }
 }
 
-// 기존 보고 파일의 4번째 시트(연간 원재료비) 파싱 - 모든 연도 블록 자동 인식
-function parseUsageInitFile(file) {
+// GC케어: A열 납품처 병합 / 비고(P열,idx15)에 "부서명 - 자재구분"
+// 아이메드: B열(idx1)=부서명, C열(idx2)=기초, D~O열(idx3~14)=1~12월, P열(idx15)=기말
+function parseUsageInitFile(file, reportType) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
       try {
         const wb = XLSX.read(e.target.result, { type: 'array' });
-        // 연간 원재료비 시트 찾기
         const sheetName = wb.SheetNames.find(s =>
           s.includes('원재료비') && (s.includes('년도') || s.includes('연간'))
         ) || wb.SheetNames[wb.SheetNames.length - 1];
@@ -3671,71 +3673,42 @@ function parseUsageInitFile(file) {
 
         const rows = [];
         let currentYear = null;
-        // GC케어: 비고(P열, idx15)에 "부서명 - 자재구분" 형태
-        // 아이메드: A열(idx0)에 부서명, 비고 없음
-        // → 첫 데이터 행 보고 자동 감지
-        let isImed = null;
+        const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+        const SKIP = new Set(['구   분','구분','총  계','소  계','매  출','세포치료','특수의약품']);
 
         all.forEach(row => {
           const col0 = String(row[0] || '').trim();
-
-          // 연도 블록 감지 (■ 2026년도 원재료비)
           const yearMatch = col0.match(/(\d{4})년도\s*원재료비/);
-          if (yearMatch) {
-            currentYear = yearMatch[1];
-            return;
-          }
+          if (yearMatch) { currentYear = yearMatch[1]; return; }
           if (!currentYear) return;
 
-          // 헤더/합계/빈 행 스킵 (GC케어: A열, 아이메드: B열 기준)
-          const checkCol = (isImed === false) ? col0 : String(row[1] || '').trim();
-          if (!checkCol || checkCol === '구   분' || checkCol === '구분' ||
-              checkCol === '총  계' || checkCol === '소  계' ||
-              checkCol === '매  출' || checkCol === '세포치료' || checkCol === '특수의약품') return;
-
-          // 방식 자동 감지: GC케어는 비고(P열, idx15)에 '부서명 - 자재구분' 형태
-          // 아이메드는 비고 없고 B열에 부서명
-          if (isImed === null) {
+          if (reportType === 'GC케어') {
             const bigo = String(row[15] || '').trim();
-            // GC케어: A열에 납품처 병합셀(납품처\n지점명), B열에 부서명 없음
-            // 아이메드: A열 비어있음, B열에 부서명
-            isImed = !(bigo && bigo.includes(' - '));
-          }
-
-          const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-          const baseVal = parseFloat(String(row[1] || '').replace(/,/g, '')) || 0;
-          const endVal  = parseFloat(String(row[14] || '').replace(/,/g, '')) || 0;
-
-          if (!isImed) {
-            // ── GC케어: 비고(idx15)에서 "부서명 - 자재구분" 파싱
-            const bigo  = String(row[15] || '').trim();
-            if (!bigo || !bigo.includes('-')) return;
-            const parts = bigo.split('-').map(s => s.trim());
-            const dept  = parts[0]; const itype = parts[1];
+            if (!bigo || !bigo.includes(' - ')) return;
+            const parts = bigo.split(' - ').map(s => s.trim());
+            const dept = parts[0]; const itype = parts[1];
             if (!dept || !itype) return;
+            const baseVal = parseFloat(String(row[1]  || '').replace(/,/g, '')) || 0;
+            const endVal  = parseFloat(String(row[14] || '').replace(/,/g, '')) || 0;
             months.forEach((mon, mi) => {
               const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
-              rows.push({
-                ym: `${currentYear}-${mon}`, dept, item_type: itype,
+              rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: itype,
                 usage_amount: Math.round(val),
-                base_amount:  mon === '01' ? Math.round(baseVal) : 0,
-                end_amount:   mon === '12' ? Math.round(endVal)  : 0,
-              });
+                base_amount: mon === '01' ? Math.round(baseVal) : 0,
+                end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
             });
           } else {
-            // ── 아이메드: B열(idx1)=부서명, C열(idx2)=기초, D~O열(idx3~14)=1~12월, P열(idx15)=기말
+            // 아이메드
             const dept = String(row[1] || '').trim();
-            if (!dept) return;
-            const baseVal2 = parseFloat(String(row[2]  || '').replace(/,/g, '')) || 0;
-            const endVal2  = parseFloat(String(row[15] || '').replace(/,/g, '')) || 0;
+            if (!dept || SKIP.has(dept)) return;
+            const baseVal = parseFloat(String(row[2]  || '').replace(/,/g, '')) || 0;
+            const endVal  = parseFloat(String(row[15] || '').replace(/,/g, '')) || 0;
             months.forEach((mon, mi) => {
               const val = parseFloat(String(row[mi + 3] || '').replace(/,/g, '')) || 0;
-              rows.push({
-                ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
+              rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
                 usage_amount: Math.round(val),
-                base_amount:  mon === '01' ? Math.round(baseVal2) : 0,
-                end_amount:   mon === '12' ? Math.round(endVal2)  : 0,
-              });
+                base_amount: mon === '01' ? Math.round(baseVal) : 0,
+                end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
             });
           }
         });
@@ -3803,13 +3776,12 @@ async function saveUsageInit() {
   const branch = document.getElementById('usageInitBranch')?.value?.trim();
   const btn    = document.getElementById('btnSaveUsageInit');
 
-  // 연월별로 그룹핑해서 저장 (GC케어/아이메드 분리)
+  // 연월별로 그룹핑해서 저장
   const byYm = {};
   _usageInitParsed.forEach(r => {
-    if (!byYm[r.ym]) byYm[r.ym] = { GC케어: [], 아이메드: [] };
-    const rt = (r.item_type === '의약품') ? '아이메드' : 'GC케어';
-    byYm[r.ym][rt].push({ dept: r.dept, item_type: r.item_type, usage_amount: r.usage_amount,
-                           base_amount: r.base_amount || 0, end_amount: r.end_amount || 0 });
+    if (!byYm[r.ym]) byYm[r.ym] = [];
+    byYm[r.ym].push({ dept: r.dept, item_type: r.item_type, usage_amount: r.usage_amount,
+                      base_amount: r.base_amount || 0, end_amount: r.end_amount || 0 });
   });
 
   btn.disabled = true;
@@ -3817,16 +3789,13 @@ async function saveUsageInit() {
     showGlobalLoading('데이터 저장 중...');
     const user = window.auth?.getSession?.();
     for (const ym of Object.keys(byYm).sort()) {
-      for (const rt of ['GC케어', '아이메드']) {
-        if (byYm[ym][rt].length === 0) continue;
-        await apiPost('closingSaveUsageMonthly', {
-          request_user_email: user?.email,
-          branch,
-          ym,
-          report_type: rt,
-          items: byYm[ym][rt],
-        });
-      }
+      await apiPost('closingSaveUsageMonthly', {
+        request_user_email: user?.email,
+        branch,
+        ym,
+        report_type: _usageInitReportType,
+        items: byYm[ym],
+      });
     }
     showMessage(`${Object.keys(byYm).length}개월 데이터가 저장됐습니다.`, 'success');
     cancelUsageInit();
@@ -3840,8 +3809,11 @@ async function saveUsageInit() {
 
 function cancelUsageInit() {
   _usageInitParsed = [];
+  _usageInitReportType = '';
   const preview = document.getElementById('usageInitPreview');
   if (preview) preview.style.display = 'none';
-  const fi = document.getElementById('usageInitFileInput');
-  if (fi) fi.value = '';
+  ['usageInitFileInputGC','usageInitFileInputImed'].forEach(id => {
+    const fi = document.getElementById(id);
+    if (fi) fi.value = '';
+  });
 }
