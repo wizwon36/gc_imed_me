@@ -1152,6 +1152,9 @@ function writeDeptAmount(ws, month, depts) {
 
   let r = 4;
   groups.forEach((g, gi) => {
+    // GC케어(의약품 없음)에서 값이 모두 0인 그룹 생략
+    const groupTotal = sumF(g.items, '합계금액');
+    if (!groupTotal) return;
     const groupStart = r;
     g.items.forEach((d, di) => {
       // 데이터 행: 흰 배경, 일반 폰트
@@ -2008,8 +2011,10 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     .filter(s => !s.item_type || s.item_type === targetType)
     .forEach(s => {
       const dept = s.dept || '';
-      if (!prevDeptStock[dept]) prevDeptStock[dept] = 0;
-      prevDeptStock[dept] += toN(s.closing_amount);
+      // GC케어: dept||시약 키로 통일, 아이메드: 그룹핑 전 순수 부서명 키
+      const k = isGC ? dept + '||' + targetType : dept;
+      if (!prevDeptStock[k]) prevDeptStock[k] = 0;
+      prevDeptStock[k] += toN(s.closing_amount);
     });
 
   // 아이메드: extra2 그룹핑 → 그룹명으로 합산
