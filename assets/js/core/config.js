@@ -1,6 +1,6 @@
 const CONFIG = {
   APP_NAME: 'MSO관리팀 업무지원 시스템',
-  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbzGXyF9ONiGYeP9_LQusJi4fyE9bwAx4jbVJImQHRZvWsBmCcP7IDryF9DApyqlUdCs/exec',
+  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbwf2HOcJb-7pnDBuYwBtNiEEYLUHZOioCpcx3Lq9xkFfjGQgtGsM4N_cHX7SMGKk3cJ/exec',
   SITE_BASE_URL: 'https://wizwon36.github.io/gc_imed_me',
 
   // 의료장비 앱 오픈 허용 의원 목록 — 신규 의원 추가 시 여기만 수정
