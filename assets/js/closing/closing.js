@@ -3674,7 +3674,7 @@ function parseUsageInitFile(file, reportType) {
         const rows = [];
         let currentYear = null;
         const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-        const SKIP = new Set(['구   분','구분','총  계','소  계','매  출','세포치료','특수의약품']);
+        const SKIP = new Set(['구   분','구분','총  계','총    계','소  계','소 계','매  출','매   출','세포치료','특수의약품','납품처']);
 
         all.forEach(row => {
           const col0 = String(row[0] || '').trim();
@@ -3688,6 +3688,7 @@ function parseUsageInitFile(file, reportType) {
           if (!currentYear) return;
 
           if (reportType === 'GC케어') {
+            if (SKIP.has(col0)) return;
             const bigo = String(row[15] || '').trim();
             if (!bigo || !bigo.includes(' - ')) return;
             const parts = bigo.split(' - ').map(s => s.trim());
@@ -3697,6 +3698,7 @@ function parseUsageInitFile(file, reportType) {
             const endVal  = parseFloat(String(row[14] || '').replace(/,/g, '')) || 0;
             months.forEach((mon, mi) => {
               const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
+              if (!val && mon !== '01' && mon !== '12') return;  // 기초/기말 저장월 제외하고 0이면 스킵
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: itype,
                 usage_amount: Math.round(val),
                 base_amount: mon === '01' ? Math.round(baseVal) : 0,
@@ -3713,10 +3715,11 @@ function parseUsageInitFile(file, reportType) {
             const endVal  = parseFloat(String(row[15] || '').replace(/,/g, '')) || 0;
             months.forEach((mon, mi) => {
               const val = parseFloat(String(row[mi + 3] || '').replace(/,/g, '')) || 0;
+              if (!val && mon !== '01' && mon !== '12') return;
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
-                usage_amount: Math.round(val / 1000),
-                base_amount: mon === '01' ? Math.round(baseVal / 1000) : 0,
-                end_amount:  mon === '12' ? Math.round(endVal  / 1000) : 0 });
+                usage_amount: Math.round(val),
+                base_amount: mon === '01' ? Math.round(baseVal) : 0,
+                end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
             });
           }
         });
