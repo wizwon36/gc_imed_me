@@ -1821,7 +1821,11 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
   // 2. styles 완전 병합
   const existingStylesXml = await existingZip.file('xl/styles.xml').async('string');
   const { mergedStylesXml, xfOffset } = mergeStylesComplete_(existingStylesXml, stylesXml || '');
+  console.log('[STYLES] xfOffset:', xfOffset, 'existingXf:', (existingStylesXml.match(/cellXfs count="(\d+)"/) || [])[1]);
+  const sBeforeCount = [...sheetXml.matchAll(/ s="(\d+)"/g)].length;
   sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + xfOffset) + '"'; });
+  const sAfterSample = [...sheetXml.matchAll(/ s="(\d+)"/g)].slice(0,3).map(m=>m[1]);
+  console.log('[STYLES] s= 변환 수:', sBeforeCount, '샘플:', sAfterSample);
 
   // 3. workbook.xml 수정
   let wbXml = await existingZip.file('xl/workbook.xml').async('string');
