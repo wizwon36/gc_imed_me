@@ -600,7 +600,7 @@ async function runProcessing() {
       btnGo.disabled = false;
       btnGo.style.opacity = '1';
       btnGo.style.cursor = 'pointer';
-      btnGo.textContent = '✓ 처리 완료 — 산출물 확인 →';
+      btnGo.textContent = '산출물 확인 →';
     }
 
   } catch (err) {
@@ -612,7 +612,7 @@ async function runProcessing() {
       btnGo.disabled = false;
       btnGo.style.opacity = '1';
       btnGo.style.cursor = 'pointer';
-      btnGo.textContent = '⚠️ 오류 발생 — 로그 확인 후 이동 →';
+      btnGo.textContent = '⚠ 오류 — 로그 확인';
       btnGo.style.background = '#dc2626';
     }
   }
