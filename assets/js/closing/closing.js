@@ -568,6 +568,8 @@ async function runProcessing() {
           const binary  = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
           const subulWb = new ExcelJS.Workbook();
           await subulWb.xlsx.load(binary.buffer);
+          // 조건부 서식 제거 (재저장 시 Excel 오류 방지)
+          subulWb.worksheets.forEach(ws => { ws.conditionalFormattings = []; });
 
           const sheetName = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
           const existing  = subulWb.getWorksheet(sheetName);
