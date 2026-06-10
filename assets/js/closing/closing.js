@@ -3687,14 +3687,18 @@ function parseUsageInitFile(file) {
           }
           if (!currentYear) return;
 
-          // 헤더/합계/빈 행 스킵
-          if (!col0 || col0 === '구   분' || col0 === '구분' ||
-              col0 === '총  계' || col0 === '소  계' ||
-              col0 === '매  출' || col0 === '세포치료' || col0 === '특수의약품') return;
+          // 헤더/합계/빈 행 스킵 (GC케어: A열, 아이메드: B열 기준)
+          const checkCol = (isImed === false) ? col0 : String(row[1] || '').trim();
+          if (!checkCol || checkCol === '구   분' || checkCol === '구분' ||
+              checkCol === '총  계' || checkCol === '소  계' ||
+              checkCol === '매  출' || checkCol === '세포치료' || checkCol === '특수의약품') return;
 
-          // 방식 자동 감지: 비고(idx15)에 ' - ' 있으면 GC케어, 없으면 아이메드
+          // 방식 자동 감지: GC케어는 비고(P열, idx15)에 '부서명 - 자재구분' 형태
+          // 아이메드는 비고 없고 B열에 부서명
           if (isImed === null) {
             const bigo = String(row[15] || '').trim();
+            // GC케어: A열에 납품처 병합셀(납품처\n지점명), B열에 부서명 없음
+            // 아이메드: A열 비어있음, B열에 부서명
             isImed = !(bigo && bigo.includes(' - '));
           }
 
@@ -3719,16 +3723,18 @@ function parseUsageInitFile(file) {
               });
             });
           } else {
-            // ── 아이메드: A열(idx0)이 부서명, item_type은 '의약품'(시약5% 합산)
-            const dept = col0;
+            // ── 아이메드: B열(idx1)=부서명, C열(idx2)=기초, D~O열(idx3~14)=1~12월, P열(idx15)=기말
+            const dept = String(row[1] || '').trim();
             if (!dept) return;
+            const baseVal2 = parseFloat(String(row[2]  || '').replace(/,/g, '')) || 0;
+            const endVal2  = parseFloat(String(row[15] || '').replace(/,/g, '')) || 0;
             months.forEach((mon, mi) => {
-              const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
+              const val = parseFloat(String(row[mi + 3] || '').replace(/,/g, '')) || 0;
               rows.push({
                 ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
                 usage_amount: Math.round(val),
-                base_amount:  mon === '01' ? Math.round(baseVal) : 0,
-                end_amount:   mon === '12' ? Math.round(endVal)  : 0,
+                base_amount:  mon === '01' ? Math.round(baseVal2) : 0,
+                end_amount:   mon === '12' ? Math.round(endVal2)  : 0,
               });
             });
           }
