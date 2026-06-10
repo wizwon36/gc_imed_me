@@ -3678,8 +3678,13 @@ function parseUsageInitFile(file, reportType) {
 
         all.forEach(row => {
           const col0 = String(row[0] || '').trim();
-          const yearMatch = col0.match(/(\d{4})년도\s*원재료비/);
-          if (yearMatch) { currentYear = yearMatch[1]; return; }
+          const col1 = String(row[1] || '').trim();
+
+          // 연도 블록 감지 — GC케어는 A열(idx0), 아이메드는 B열(idx1)
+          const yearMatchA = col0.match(/(\d{4})년도\s*원재료비/);
+          const yearMatchB = col1.match(/(\d{4})년도\s*원재료비/);
+          if (yearMatchA) { currentYear = yearMatchA[1]; return; }
+          if (yearMatchB) { currentYear = yearMatchB[1]; return; }
           if (!currentYear) return;
 
           if (reportType === 'GC케어') {
@@ -3698,17 +3703,20 @@ function parseUsageInitFile(file, reportType) {
                 end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
             });
           } else {
-            // 아이메드
-            const dept = String(row[1] || '').trim();
+            // 아이메드: B열(idx1)에 부서명
+            const dept = col1;
             if (!dept || SKIP.has(dept)) return;
+            // C열(idx2)에 세포치료/특수의약품 텍스트가 오는 경우도 스킵
+            const col2 = String(row[2] || '').trim();
+            if (SKIP.has(col2)) return;
             const baseVal = parseFloat(String(row[2]  || '').replace(/,/g, '')) || 0;
             const endVal  = parseFloat(String(row[15] || '').replace(/,/g, '')) || 0;
             months.forEach((mon, mi) => {
               const val = parseFloat(String(row[mi + 3] || '').replace(/,/g, '')) || 0;
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
-                usage_amount: Math.round(val),
-                base_amount: mon === '01' ? Math.round(baseVal) : 0,
-                end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
+                usage_amount: Math.round(val / 1000),
+                base_amount: mon === '01' ? Math.round(baseVal / 1000) : 0,
+                end_amount:  mon === '12' ? Math.round(endVal  / 1000) : 0 });
             });
           }
         });
