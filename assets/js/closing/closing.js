@@ -2520,26 +2520,22 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     groupKeys.forEach(g => { if (!data[g]) data[g] = { base: 0, end: 0 }; });
 
     // ── 연도 제목
-    const blockTitleRow = r;  // 이 연도 블록의 제목 행 저장
+    const blockTitleRow = r;
     ws.mergeCells(r, 1, r, 15);
     ws.getCell(r, 1).value = `■ ${yr}년도 원재료비`;
     ws.getCell(r, 1).font  = { name: 'Calibri', size: 12, bold: true };
+    ws.getCell(r, 16).value = '(단위 : 천원)';
+    ws.getCell(r, 16).font  = F.base;
+    ws.getCell(r, 16).alignment = AL('right');
     ws.getRow(r).height = 22; r++;
 
-    // ── 헤더 (2행: 단위를 O열 우측에)
+    // ── 헤더
     ['구   분','기초','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말']
       .forEach((v, i) => {
         hdrCell(ws, r, i + 1, v);
         if (yr === R.y && i >= 2 && i <= 13 && String(i - 1).padStart(2,'0') === curMon)
           ws.getCell(r, i + 1).fill = CUR_FILL;
       });
-    ws.getCell(r, 16).value = '천원)';
-    ws.getCell(r, 16).font  = F.base;
-    ws.getCell(r, 16).alignment = AL('right');
-    // 단위는 헤더 바로 위(blockTitleRow)의 O열에
-    ws.getCell(blockTitleRow, 15).value = '(단위 : 천원)';
-    ws.getCell(blockTitleRow, 15).font  = F.base;
-    ws.getCell(blockTitleRow, 15).alignment = AL('right');
     ws.getRow(r).height = 18; r++;
 
     // ── 매 출 행 (빈칸)
