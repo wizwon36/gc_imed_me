@@ -479,9 +479,11 @@
                   <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">지점명</label>
                   <select id="usageInitBranch" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;min-width:100px;"></select>
                 </div>
-                <div style="margin-top:18px;">
-                  <label for="usageInitFileInput" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;">📂 보고 파일 업로드</label>
-                  <input type="file" id="usageInitFileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleUsageInitFile(this)">
+                <div style="margin-top:18px;display:flex;gap:6px;">
+                  <label for="usageInitFileInputGC" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;background:var(--gc-color,#4A86C8);color:#fff;">📂 GC케어 업로드</label>
+                  <input type="file" id="usageInitFileInputGC" accept=".xlsx,.xls" style="display:none;" onchange="handleUsageInitFile(this,'GC케어')">
+                  <label for="usageInitFileInputImed" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;background:var(--imed-color,#C8774A);color:#fff;">📂 아이메드 업로드</label>
+                  <input type="file" id="usageInitFileInputImed" accept=".xlsx,.xls" style="display:none;" onchange="handleUsageInitFile(this,'아이메드')">
                 </div>
               </div>
             </div>
