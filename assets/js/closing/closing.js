@@ -573,7 +573,9 @@ async function runProcessing() {
             Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
           const singleBuf = await singleWb.xlsx.writeBuffer();
           const singleZip = await JSZip.loadAsync(singleBuf);
-          const sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
+          let sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
+          // style 인덱스 제거 (기존 파일 styles.xml과 충돌 방지 → 기본 서식으로 표시)
+          sheetXml = sheetXml.replace(/ s="\d+"/g, '');
 
           // JSZip으로 기존 파일에 시트 삽입 → 메모리에 보관
           const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
@@ -1757,6 +1759,9 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sheetName) {
   zip.file('xl/_rels/workbook.xml.rels', relsXml);
   zip.file('[Content_Types].xml', ctXml);
   zip.file(`xl/worksheets/${newFile}`, sheetXml);
+
+  // calcChain.xml 제거 (새 시트 추가 시 수식 체인 충돌 방지)
+  zip.remove('xl/calcChain.xml');
 
   return await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
 }
