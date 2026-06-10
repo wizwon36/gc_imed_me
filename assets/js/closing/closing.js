@@ -545,8 +545,7 @@ async function runProcessing() {
               sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
 
     // Drive 수불부 파일 로드 → 당월 시트 추가 → App.R.subulWb에 보관 (GC케어만)
-    clog('수불부 파일 로드 중...', 'ok');
-    prog(100, '수불부 로드 중...');
+    await sleep(150); prog(88, '수불부 파일 로드 중...');
     const user = window.auth?.getSession?.();
     try {
       const fidRes = await apiGet('closingGetSubulFileId', {
@@ -557,6 +556,7 @@ async function runProcessing() {
       if (!fidRes.success || !fidRes.data?.file_id) {
         clog('수불부 file_id 없음 (GC케어)', 'warn');
       } else {
+        prog(92, '수불부 파일 다운로드 중...');
         const fileRes = await apiGet('closingGetSubulFile', {
           request_user_email: user?.email,
           file_id: fidRes.data.file_id,
@@ -564,6 +564,7 @@ async function runProcessing() {
         if (!fileRes.success || !fileRes.data?.base64) {
           clog('수불부 파일 로드 실패 (GC케어)', 'warn');
         } else {
+          prog(96, '수불부 당월 시트 생성 중...');
           const binary  = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
           const subulWb = new ExcelJS.Workbook();
           await subulWb.xlsx.load(binary.buffer);
