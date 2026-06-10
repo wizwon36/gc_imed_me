@@ -576,6 +576,8 @@ async function runProcessing() {
           let sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
           // style 인덱스 제거 (기존 파일 styles.xml과 충돌 방지 → 기본 서식으로 표시)
           sheetXml = sheetXml.replace(/ s="\d+"/g, '');
+          console.log('[DEBUG] sheet XML 앞 500자:', sheetXml.slice(0, 500));
+          console.log('[DEBUG] sheet XML 길이:', sheetXml.length);
 
           // JSZip으로 기존 파일에 시트 삽입 → 메모리에 보관
           const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
