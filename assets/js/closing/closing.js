@@ -544,9 +544,8 @@ async function runProcessing() {
               siyakPivot, siyakPivot5, imedSiSoPivot, imedSiSoPivot5, imedDrugPivot,
               sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
 
-    // Drive 수불부 파일에 당월 시트 삽입 (GC케어만)
-    // sheet XML만 GAS에 전송 → GAS에서 zip 조작 완결
-    await sleep(150); prog(88, '수불부 당월 시트 생성 중...');
+    // 수불부: Drive 파일 로드 + JSZip으로 당월 시트 삽입 → 메모리 보관
+    await sleep(150); prog(88, '수불부 준비 중...');
     const user = window.auth?.getSession?.();
     try {
       const fidRes = await apiGet('closingGetSubulFileId', {
@@ -557,36 +556,32 @@ async function runProcessing() {
       if (!fidRes.success || !fidRes.data?.file_id) {
         clog('수불부 file_id 없음 — 당월 시트만 다운로드됩니다.', 'warn');
       } else {
-        prog(92, '수불부 시트 XML 생성 중...');
-
-        // 당월 시트 단일 xlsx 생성 → sheet XML 추출
-        const sheetName  = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
-        const singleWb   = new ExcelJS.Workbook();
-        const singleWs   = singleWb.addWorksheet(sheetName);
-        writeSubul(singleWs, y, mi, branch,
-          Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
-        const singleBuf  = await singleWb.xlsx.writeBuffer();
-
-        // JSZip으로 sheet XML만 추출 (수KB)
-        const singleZip  = await JSZip.loadAsync(singleBuf);
-        const sheetXml   = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
-        clog(`시트 XML 크기: ${(sheetXml.length/1024).toFixed(1)}KB`, 'info');
-
-        // GAS: 기존 Drive 파일에 시트 삽입 (GAS 내부에서 완결, 파일 반환 없음)
-        prog(96, '수불부 Drive 업데이트 중...');
-        const insRes = await apiPost('closingInsertSubulSheet', {
+        prog(91, '수불부 파일 로드 중...');
+        const fileRes = await apiGet('closingGetSubulFile', {
           request_user_email: user?.email,
-          file_id:    fidRes.data.file_id,
-          sheet_name: sheetName,
-          sheet_xml:  sheetXml,
+          file_id: fidRes.data.file_id,
         });
-
-        if (insRes.success) {
-          App.R.subulFileId  = fidRes.data.file_id;
-          App.R.subulSheetWb = singleWb;
-          clog('수불부 Drive 업데이트 완료', 'ok');
+        if (!fileRes.success || !fileRes.data?.base64) {
+          clog('수불부 파일 로드 실패', 'warn');
         } else {
-          clog('수불부 시트 삽입 실패: ' + (insRes.message || ''), 'warn');
+          prog(94, '수불부 당월 시트 삽입 중...');
+
+          // 당월 시트 xlsx 생성 → sheet XML 추출
+          const sheetName = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
+          const singleWb  = new ExcelJS.Workbook();
+          writeSubul(singleWb.addWorksheet(sheetName), y, mi, branch,
+            Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
+          const singleBuf = await singleWb.xlsx.writeBuffer();
+          const singleZip = await JSZip.loadAsync(singleBuf);
+          const sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
+
+          // JSZip으로 기존 파일에 시트 삽입 → 메모리에 보관
+          const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
+          const resultBuf = await insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sheetName);
+
+          App.R.subulBuffer = resultBuf;
+          App.R.subulFileId = fidRes.data.file_id;
+          clog(`수불부 준비 완료 (${(resultBuf.byteLength/1024).toFixed(0)}KB)`, 'ok');
         }
       }
     } catch (e) {
@@ -1728,56 +1723,42 @@ function writeSubul(ws, year, month, branch, items, R) {
 // 11. 다운로드 함수
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
-// ── 수불부 xlsx에 새 시트 삽입 (JSZip으로 zip 직접 조작) ──
-async function insertSheetIntoXlsx_(existingBase64, newSheetBuffer, sheetName) {
-  // 기존 파일 zip 로드
-  const existingBytes = Uint8Array.from(atob(existingBase64), c => c.charCodeAt(0));
-  const existingZip   = await JSZip.loadAsync(existingBytes);
+// ── 수불부 xlsx에 sheet XML 삽입 (JSZip) ─────────────────────
+async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sheetName) {
+  const zip = await JSZip.loadAsync(existingBytes);
 
-  // 새 시트 xlsx zip 로드
-  const newSheetZip = await JSZip.loadAsync(newSheetBuffer);
-  const newSheetXml = await newSheetZip.file('xl/worksheets/sheet1.xml').async('string');
-
-  // workbook.xml 읽기
-  let wbXml = await existingZip.file('xl/workbook.xml').async('string');
-
-  // sheetId, rId 최대값 파악
+  // workbook.xml 분석
+  let wbXml = await zip.file('xl/workbook.xml').async('string');
   const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(m => parseInt(m[1]));
   const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(m => parseInt(m[1]));
-  const maxSheetId = sheetIds.length ? Math.max(...sheetIds) : 0;
-  const maxRId     = rIds.length     ? Math.max(...rIds)     : 0;
-
-  const newSheetId   = maxSheetId + 1;
-  const newRId       = `rId${maxRId + 1}`;
-  const newSheetFile = `sheet${newSheetId}.xml`;
+  const newSheetId = (sheetIds.length ? Math.max(...sheetIds) : 0) + 1;
+  const newRId     = `rId${(rIds.length ? Math.max(...rIds) : 0) + 1}`;
+  const newFile    = `sheet${newSheetId}.xml`;
 
   // 동일 이름 시트 제거
-  const escapedName = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  wbXml = wbXml.replace(new RegExp(`<sheet[^>]*name="${escapedName}"[^/]*/>`), '');
+  const escaped = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  wbXml = wbXml.replace(new RegExp(`<sheet[^>]*name="${escaped}"[^/]*/>`), '');
 
   // workbook.xml - 맨 앞에 삽입
-  const newSheetTag = `<sheet name="${sheetName}" sheetId="${newSheetId}" r:id="${newRId}"/>`;
-  wbXml = wbXml.replace('<sheets>', '<sheets>' + newSheetTag);
+  wbXml = wbXml.replace('<sheets>', `<sheets><sheet name="${sheetName}" sheetId="${newSheetId}" r:id="${newRId}"/>`);
 
   // workbook.xml.rels 수정
-  let relsXml = await existingZip.file('xl/_rels/workbook.xml.rels').async('string');
-  const newRel = `<Relationship Id="${newRId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/${newSheetFile}"/>`;
-  relsXml = relsXml.replace('</Relationships>', newRel + '</Relationships>');
+  let relsXml = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+  relsXml = relsXml.replace('</Relationships>',
+    `<Relationship Id="${newRId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/${newFile}"/></Relationships>`);
 
   // [Content_Types].xml 수정
-  let ctXml = await existingZip.file('[Content_Types].xml').async('string');
-  const newCt = `<Override PartName="/xl/worksheets/${newSheetFile}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
-  ctXml = ctXml.replace('</Types>', newCt + '</Types>');
+  let ctXml = await zip.file('[Content_Types].xml').async('string');
+  ctXml = ctXml.replace('</Types>',
+    `<Override PartName="/xl/worksheets/${newFile}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`);
 
   // zip 업데이트
-  existingZip.file('xl/workbook.xml', wbXml);
-  existingZip.file('xl/_rels/workbook.xml.rels', relsXml);
-  existingZip.file('[Content_Types].xml', ctXml);
-  existingZip.file(`xl/worksheets/${newSheetFile}`, newSheetXml);
+  zip.file('xl/workbook.xml', wbXml);
+  zip.file('xl/_rels/workbook.xml.rels', relsXml);
+  zip.file('[Content_Types].xml', ctXml);
+  zip.file(`xl/worksheets/${newFile}`, sheetXml);
 
-  // 결과 base64 반환
-  const outBuf = await existingZip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
-  return btoa(outBuf.reduce((d, b) => d + String.fromCharCode(b), ''));
+  return await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
 }
 
 // ── 수불부 시트 복사 헬퍼 ────────────────────────────────────
@@ -2002,23 +1983,13 @@ async function dlSubul() {
   try {
     showGlobalLoading('수불 집계표 다운로드 중...');
     const R    = App.R;
-    const user = window.auth?.getSession?.();
     const filename = `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`;
 
-    if (R.subulFileId) {
-      // Drive에서 완성 파일(당월 시트 포함) 다운로드
-      const fileRes = await apiGet('closingGetSubulFile', {
-        request_user_email: user?.email,
-        file_id: R.subulFileId,
-      });
-      if (fileRes.success && fileRes.data?.base64) {
-        const outBuf = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-        saveAs(new Blob([outBuf], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        }), filename);
-      } else {
-        throw new Error('파일 다운로드 실패');
-      }
+    if (R.subulBuffer) {
+      // 파싱 시점에 준비된 완성 파일 (이전 월 누적 + 당월)
+      saveAs(new Blob([R.subulBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }), filename);
     } else {
       // Drive 파일 없는 경우 당월 시트만 생성
       const wb = newWb();
@@ -2028,7 +1999,7 @@ async function dlSubul() {
       await saveWb(wb, filename);
     }
   } catch (e) {
-    showMessage('수불 집계표 다운로드 오류: ' + e.message, 'error');
+    showMessage('수불 집계표 오류: ' + e.message, 'error');
   } finally {
     await hideGlobalLoading();
   }
@@ -3026,6 +2997,24 @@ async function confirmClosing() {
     const now = new Date().toLocaleString('ko-KR');
     statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
     showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
+
+    // 수불부 Drive 저장 (마감 확정 시점에만)
+    if (R.subulBuffer && R.subulFileId) {
+      try {
+        showGlobalLoading('수불부 저장 중...');
+        const base64 = btoa(
+          new Uint8Array(R.subulBuffer).reduce((d, b) => d + String.fromCharCode(b), '')
+        );
+        await apiPost('closingUpdateSubulFile', {
+          request_user_email: user?.email,
+          file_id: R.subulFileId,
+          base64,
+        });
+        clog('수불부 Drive 저장 완료', 'ok');
+      } catch (e) {
+        clog('수불부 Drive 저장 실패: ' + e.message, 'warn');
+      }
+    }
     await hideGlobalLoading();
   } catch (e) {
     showMessage('마감 확정 중 오류: ' + e.message, 'error');
