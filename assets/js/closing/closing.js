@@ -1739,43 +1739,44 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, stylesXml, sheet
     if (newCellXfsMatch) {
       const newXfTags = newCellXfsMatch[1].match(/<xf [^/]*\/>/g) || [];
       if (newXfTags.length) {
-        existingStylesXml = existingStylesXml.replace('<\/cellXfs>', newXfTags.join('') + '<\/cellXfs>');
+        existingStylesXml = existingStylesXml.replace('</cellXfs>', newXfTags.join('') + '</cellXfs>');
         const oldCount = parseInt(existingStylesXml.match(/<cellXfs count="(\d+)"/)[1]);
+        const newCount = oldCount + newXfTags.length;
         existingStylesXml = existingStylesXml.replace(
-          \`<cellXfs count="${oldCount}">\`,
-          \`<cellXfs count="${oldCount + newXfTags.length}">\`
+          '<cellXfs count="' + oldCount + '">',
+          '<cellXfs count="' + newCount + '">'
         );
       }
     }
-    sheetXml = sheetXml.replace(/ s="(\d+)"/g, (_, n) => \` s="${parseInt(n) + offset}"\`);
+    sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + offset) + '"'; });
   }
 
   // workbook.xml 분석
   let wbXml = await zip.file('xl/workbook.xml').async('string');
-  const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(m => parseInt(m[1]));
-  const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(m => parseInt(m[1]));
-  const newSheetId = (sheetIds.length ? Math.max(...sheetIds) : 0) + 1;
-  const newRId     = \`rId\${(rIds.length ? Math.max(...rIds) : 0) + 1}\`;
-  const newFile    = \`sheet\${newSheetId}.xml\`;
+  const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(function(m) { return parseInt(m[1]); });
+  const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(function(m) { return parseInt(m[1]); });
+  const newSheetId = (sheetIds.length ? Math.max.apply(null, sheetIds) : 0) + 1;
+  const newRId     = 'rId' + ((rIds.length ? Math.max.apply(null, rIds) : 0) + 1);
+  const newFile    = 'sheet' + newSheetId + '.xml';
 
   const escaped = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  wbXml = wbXml.replace(new RegExp(\`<sheet[^>]*name="\${escaped}"[^/]*/>\`), '');
-  wbXml = wbXml.replace('<sheets>', \`<sheets><sheet name="\${sheetName}" sheetId="\${newSheetId}" r:id="\${newRId}"/>\`);
+  wbXml = wbXml.replace(new RegExp('<sheet[^>]*name="' + escaped + '"[^/]*/>'), '');
+  wbXml = wbXml.replace('<sheets>', '<sheets><sheet name="' + sheetName + '" sheetId="' + newSheetId + '" r:id="' + newRId + '"/>');
 
   let relsXml = await zip.file('xl/_rels/workbook.xml.rels').async('string');
-  relsXml = relsXml.replace('<\/Relationships>',
-    \`<Relationship Id="\${newRId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/\${newFile}"/><\/Relationships>\`);
+  relsXml = relsXml.replace('</Relationships>',
+    '<Relationship Id="' + newRId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/' + newFile + '"/></Relationships>');
 
   let ctXml = await zip.file('[Content_Types].xml').async('string');
-  ctXml = ctXml.replace('<\/Types>',
-    \`<Override PartName="/xl/worksheets/\${newFile}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><\/Types>\`);
+  ctXml = ctXml.replace('</Types>',
+    '<Override PartName="/xl/worksheets/' + newFile + '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
   ctXml = ctXml.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
 
   zip.file('xl/workbook.xml', wbXml);
   zip.file('xl/_rels/workbook.xml.rels', relsXml);
   zip.file('[Content_Types].xml', ctXml);
   zip.file('xl/styles.xml', existingStylesXml);
-  zip.file(\`xl/worksheets/\${newFile}\`, sheetXml);
+  zip.file('xl/worksheets/' + newFile, sheetXml);
   zip.remove('xl/calcChain.xml');
 
   return await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
