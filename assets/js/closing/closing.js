@@ -1954,7 +1954,9 @@ async function dlSubul() {
     // 파싱 시점에 Drive 수불부 로드됐으면 그걸 사용 (이전 월 누적 포함)
     const subulWbEntry = R.subulWb?.['GC케어'];
     if (subulWbEntry) {
-      await saveWb(subulWbEntry.wb, filename);
+      // saveWb는 메모리 해제를 하므로 직접 저장 (마감 확정 시 Drive 저장 위해 wb 유지)
+      const buf = await subulWbEntry.wb.xlsx.writeBuffer();
+      saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
     } else {
       // Drive 파일 없는 경우 당월 시트만 생성
       const wb = newWb();
