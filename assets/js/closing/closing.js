@@ -544,56 +544,51 @@ async function runProcessing() {
               siyakPivot, siyakPivot5, imedSiSoPivot, imedSiSoPivot5, imedDrugPivot,
               sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
 
-    // Drive 수불부 파일 로드 → 당월 시트 추가 → App.R.subulWb에 보관
+    // Drive 수불부 파일 로드 → 당월 시트 추가 → App.R.subulWb에 보관 (GC케어만)
     clog('수불부 파일 로드 중...', 'ok');
     prog(100, '수불부 로드 중...');
-    for (const rt of ['GC케어', '아이메드']) {
-      try {
-        const fidRes = await apiGet('closingGetSubulFileId', {
-          request_user_email: user?.email,
-          branch,
-          report_type: rt,
-        });
-        if (!fidRes.success || !fidRes.data?.file_id) {
-          clog(`수불부 file_id 없음 (${rt})`, 'warn'); continue;
-        }
+    const user = window.auth?.getSession?.();
+    try {
+      const fidRes = await apiGet('closingGetSubulFileId', {
+        request_user_email: user?.email,
+        branch,
+        report_type: 'GC케어',
+      });
+      if (!fidRes.success || !fidRes.data?.file_id) {
+        clog('수불부 file_id 없음 (GC케어)', 'warn');
+      } else {
         const fileRes = await apiGet('closingGetSubulFile', {
           request_user_email: user?.email,
           file_id: fidRes.data.file_id,
         });
         if (!fileRes.success || !fileRes.data?.base64) {
-          clog(`수불부 파일 로드 실패 (${rt})`, 'warn'); continue;
+          clog('수불부 파일 로드 실패 (GC케어)', 'warn');
+        } else {
+          const binary  = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
+          const subulWb = new ExcelJS.Workbook();
+          await subulWb.xlsx.load(binary.buffer);
+
+          const sheetName = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
+          const existing  = subulWb.getWorksheet(sheetName);
+          if (existing) subulWb.removeWorksheet(existing.id);
+
+          const newWs = subulWb.addWorksheet(sheetName);
+          const subulItems = Object.values(subulMap).filter(it => it.type !== '의약품');
+          writeSubul(newWs, y, mi, branch, subulItems, App.R);
+
+          subulWb._worksheets = [
+            undefined,
+            subulWb.getWorksheet(newWs.id),
+            ...subulWb.worksheets.filter(ws => ws.id !== newWs.id),
+          ];
+
+          if (!App.R.subulWb) App.R.subulWb = {};
+          App.R.subulWb['GC케어'] = { wb: subulWb, fileId: fidRes.data.file_id };
+          clog('수불부 로드+당월 시트 추가 완료 (GC케어)', 'ok');
         }
-
-        const binary  = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-        const subulWb = new ExcelJS.Workbook();
-        await subulWb.xlsx.load(binary.buffer);
-
-        // 당월 시트 이름
-        const sheetName = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
-        const existing  = subulWb.getWorksheet(sheetName);
-        if (existing) subulWb.removeWorksheet(existing.id);
-
-        // 당월 시트 생성 후 맨 앞으로
-        const newWs = subulWb.addWorksheet(sheetName);
-        const subulItems = rt === 'GC케어'
-          ? Object.values(subulMap).filter(it => it.type !== '의약품')
-          : Object.values(subulMap).filter(it => it.type === '의약품');
-        writeSubul(newWs, y, mi, branch, subulItems, App.R);
-
-        // 맨 앞으로 순서 이동
-        subulWb._worksheets = [
-          undefined,
-          subulWb.getWorksheet(newWs.id),
-          ...subulWb.worksheets.filter(ws => ws.id !== newWs.id),
-        ];
-
-        if (!App.R.subulWb) App.R.subulWb = {};
-        App.R.subulWb[rt] = { wb: subulWb, fileId: fidRes.data.file_id };
-        clog(`수불부 로드+당월 시트 추가 완료 (${rt})`, 'ok');
-      } catch (e) {
-        clog(`수불부 처리 실패 (${rt}): ` + e.message, 'warn');
       }
+    } catch (e) {
+      clog('수불부 처리 실패 (GC케어): ' + e.message, 'warn');
     }
 
     clog('모든 처리 완료!', 'ok');
@@ -1956,7 +1951,7 @@ async function dlSubul() {
     const filename = `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`;
 
     // 파싱 시점에 Drive 수불부 로드됐으면 그걸 사용 (이전 월 누적 포함)
-    const subulWbEntry = R.subulWb?.['GC케어'] || R.subulWb?.['아이메드'];
+    const subulWbEntry = R.subulWb?.['GC케어'];
     if (subulWbEntry) {
       await saveWb(subulWbEntry.wb, filename);
     } else {
@@ -2964,25 +2959,23 @@ async function confirmClosing() {
     statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
     showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
 
-    // 수불부 Drive 파일 업데이트
-    if (R.subulWb) {
-      for (const rt of Object.keys(R.subulWb)) {
-        try {
-          showGlobalLoading(`수불부 저장 중 (${rt})...`);
-          const { wb: subulWb, fileId } = R.subulWb[rt];
-          const buffer  = await subulWb.xlsx.writeBuffer();
-          const base64  = btoa(
-            new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), '')
-          );
-          await apiPost('closingUpdateSubulFile', {
-            request_user_email: user?.email,
-            file_id: fileId,
-            base64,
-          });
-          clog(`수불부 Drive 저장 완료 (${rt})`, 'ok');
-        } catch (e) {
-          clog(`수불부 Drive 저장 실패 (${rt}): ` + e.message, 'warn');
-        }
+    // 수불부 Drive 파일 업데이트 (GC케어만)
+    if (R.subulWb?.['GC케어']) {
+      try {
+        showGlobalLoading('수불부 저장 중...');
+        const { wb: subulWb, fileId } = R.subulWb['GC케어'];
+        const buffer = await subulWb.xlsx.writeBuffer();
+        const base64 = btoa(
+          new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), '')
+        );
+        await apiPost('closingUpdateSubulFile', {
+          request_user_email: user?.email,
+          file_id: fileId,
+          base64,
+        });
+        clog('수불부 Drive 저장 완료 (GC케어)', 'ok');
+      } catch (e) {
+        clog('수불부 Drive 저장 실패 (GC케어): ' + e.message, 'warn');
       }
     }
     await hideGlobalLoading();
