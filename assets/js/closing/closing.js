@@ -571,17 +571,14 @@ async function runProcessing() {
           const singleWb  = new ExcelJS.Workbook();
           writeSubul(singleWb.addWorksheet(sheetName), y, mi, branch,
             Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
-          const singleBuf = await singleWb.xlsx.writeBuffer({ useSharedStrings: false });
+          const singleBuf = await singleWb.xlsx.writeBuffer();
           const singleZip = await JSZip.loadAsync(singleBuf);
-          let sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
-          // style 인덱스 제거 (기존 파일 styles.xml과 충돌 방지 → 기본 서식으로 표시)
-          sheetXml = sheetXml.replace(/ s="\d+"/g, '');
-          console.log('[DEBUG] sheet XML 앞 500자:', sheetXml.slice(0, 500));
-          console.log('[DEBUG] sheet XML 길이:', sheetXml.length);
+          const sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
+          const stylesXml = await (singleZip.file('xl/styles.xml')?.async('string') ?? Promise.resolve(null));
 
           // JSZip으로 기존 파일에 시트 삽입 → 메모리에 보관
           const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-          const resultBuf = await insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sheetName);
+          const resultBuf = await insertSheetXmlIntoXlsx_(existingBytes, sheetXml, stylesXml, sheetName);
 
           App.R.subulBuffer = resultBuf;
           App.R.subulFileId = fidRes.data.file_id;
@@ -1728,45 +1725,58 @@ function writeSubul(ws, year, month, branch, items, R) {
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
 // ── 수불부 xlsx에 sheet XML 삽입 (JSZip) ─────────────────────
-async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sheetName) {
+async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, stylesXml, sheetName) {
   const zip = await JSZip.loadAsync(existingBytes);
+
+  // styles 병합: 기존 cellXfs offset 계산 후 새 xf 추가
+  let existingStylesXml = await zip.file('xl/styles.xml').async('string');
+  const existingCellXfsMatch = existingStylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
+  const offset = existingCellXfsMatch
+    ? (existingCellXfsMatch[1].match(/<xf /g) || []).length : 0;
+
+  if (stylesXml && offset > 0) {
+    const newCellXfsMatch = stylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
+    if (newCellXfsMatch) {
+      const newXfTags = newCellXfsMatch[1].match(/<xf [^/]*\/>/g) || [];
+      if (newXfTags.length) {
+        existingStylesXml = existingStylesXml.replace('<\/cellXfs>', newXfTags.join('') + '<\/cellXfs>');
+        const oldCount = parseInt(existingStylesXml.match(/<cellXfs count="(\d+)"/)[1]);
+        existingStylesXml = existingStylesXml.replace(
+          \`<cellXfs count="${oldCount}">\`,
+          \`<cellXfs count="${oldCount + newXfTags.length}">\`
+        );
+      }
+    }
+    sheetXml = sheetXml.replace(/ s="(\d+)"/g, (_, n) => \` s="${parseInt(n) + offset}"\`);
+  }
 
   // workbook.xml 분석
   let wbXml = await zip.file('xl/workbook.xml').async('string');
   const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(m => parseInt(m[1]));
   const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(m => parseInt(m[1]));
   const newSheetId = (sheetIds.length ? Math.max(...sheetIds) : 0) + 1;
-  const newRId     = `rId${(rIds.length ? Math.max(...rIds) : 0) + 1}`;
-  const newFile    = `sheet${newSheetId}.xml`;
+  const newRId     = \`rId\${(rIds.length ? Math.max(...rIds) : 0) + 1}\`;
+  const newFile    = \`sheet\${newSheetId}.xml\`;
 
-  // 동일 이름 시트 제거
   const escaped = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  wbXml = wbXml.replace(new RegExp(`<sheet[^>]*name="${escaped}"[^/]*/>`), '');
+  wbXml = wbXml.replace(new RegExp(\`<sheet[^>]*name="\${escaped}"[^/]*/>\`), '');
+  wbXml = wbXml.replace('<sheets>', \`<sheets><sheet name="\${sheetName}" sheetId="\${newSheetId}" r:id="\${newRId}"/>\`);
 
-  // workbook.xml - 맨 앞에 삽입
-  wbXml = wbXml.replace('<sheets>', `<sheets><sheet name="${sheetName}" sheetId="${newSheetId}" r:id="${newRId}"/>`);
-
-  // workbook.xml.rels 수정
   let relsXml = await zip.file('xl/_rels/workbook.xml.rels').async('string');
-  relsXml = relsXml.replace('</Relationships>',
-    `<Relationship Id="${newRId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/${newFile}"/></Relationships>`);
+  relsXml = relsXml.replace('<\/Relationships>',
+    \`<Relationship Id="\${newRId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/\${newFile}"/><\/Relationships>\`);
 
-  // [Content_Types].xml 수정
   let ctXml = await zip.file('[Content_Types].xml').async('string');
-  ctXml = ctXml.replace('</Types>',
-    `<Override PartName="/xl/worksheets/${newFile}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`);
+  ctXml = ctXml.replace('<\/Types>',
+    \`<Override PartName="/xl/worksheets/\${newFile}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><\/Types>\`);
+  ctXml = ctXml.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
 
-  // zip 업데이트
   zip.file('xl/workbook.xml', wbXml);
   zip.file('xl/_rels/workbook.xml.rels', relsXml);
   zip.file('[Content_Types].xml', ctXml);
-  zip.file(`xl/worksheets/${newFile}`, sheetXml);
-
-  // calcChain.xml, sharedStrings 관련 참조 제거 (충돌 방지)
+  zip.file('xl/styles.xml', existingStylesXml);
+  zip.file(\`xl/worksheets/\${newFile}\`, sheetXml);
   zip.remove('xl/calcChain.xml');
-  // Content_Types에서 calcChain 참조 제거
-  ctXml = ctXml.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
-  zip.file('[Content_Types].xml', ctXml);
 
   return await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
 }
