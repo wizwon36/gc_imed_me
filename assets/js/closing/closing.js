@@ -1195,40 +1195,53 @@ function writeDeptAmount(ws, month, depts) {
     ws.getRow(r).height = 18; r++;
   });
 
-  // 전체 합계 행
-  ws.mergeCells(r, 1, r, 2);
-  const totCell = ws.getCell(r, 1);
-  totCell.value = '합  계'; totCell.font = F.bold; totCell.fill = FILL.subtot;
-  totCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  totCell.border = BORDER_THIN;
-  [3,4,5].forEach((c,i) => {
-    const vals = [sumF(sorted,'공급가액'), sumF(sorted,'부가세'), sumF(sorted,'합계금액')];
-    const cell = ws.getCell(r, c);
-    cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.subtot;
-    cell.alignment = AL('right'); cell.border = BORDER_THIN; cell.numFmt = NUM_FMT;
-  });
-  ws.getRow(r).height = 18; r++;
-
-  // 총합계 - 소모품 / 시약 / 의약품 각각 표기
+  // 총합계 블록: 27~30행 구조
+  //  27행: A열(총합계 4행 병합) + B비어있음 + C~E 전체합계
+  //  28행: B=의약품 + 금액
+  //  29행: B=시약   + 금액
+  //  30행: B=소모품 + 금액
   const 소모품data = sorted.filter(d => d.자재구분 === '소모품');
   const 시약data   = sorted.filter(d => d.자재구분 === '시약');
   const 의약품data = sorted.filter(d => d.자재구분 === '의약품');
-  [['소모품', 소모품data], ['시약', 시약data], ['의약품', 의약품data]]
-    .filter(([, data]) => data.length > 0)
-    .forEach(([label, data]) => {
-      ws.mergeCells(r, 1, r, 2);
-      const lc = ws.getCell(r, 1);
-      lc.value = label; lc.font = F.total; lc.fill = FILL.total;
-      lc.alignment = { horizontal: 'center', vertical: 'middle' };
-      lc.border = BORDER_TOTAL;
-      [3,4,5].forEach((c,i) => {
-        const vals = [sumF(data,'공급가액'), sumF(data,'부가세'), sumF(data,'합계금액')];
+  const typeRows = [['의약품', 의약품data], ['시약', 시약data], ['소모품', 소모품data]]
+    .filter(([, data]) => data.length > 0);
+
+  if (typeRows.length > 0) {
+    const totStart = r;
+
+    // 첫 행: B열 비어있음 + C~E 전체합계 금액
+    const bc = ws.getCell(r, 2);
+    bc.fill = FILL.total; bc.border = BORDER_TOTAL;
+    [3, 4, 5].forEach((c, i) => {
+      const vals = [sumF(sorted, '공급가액'), sumF(sorted, '부가세'), sumF(sorted, '합계금액')];
+      const cell = ws.getCell(r, c);
+      cell.value = Math.round(vals[i]); cell.font = F.total; cell.fill = FILL.total;
+      cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
+    });
+    ws.getRow(r).height = 18; r++;
+
+    // 나머지 행: B열 라벨 + 금액
+    typeRows.forEach(([label, data]) => {
+      const lc2 = ws.getCell(r, 2);
+      lc2.value = label; lc2.font = F.total; lc2.fill = FILL.total;
+      lc2.alignment = AL('center'); lc2.border = BORDER_TOTAL;
+      [3, 4, 5].forEach((c, i) => {
+        const vals = [sumF(data, '공급가액'), sumF(data, '부가세'), sumF(data, '합계금액')];
         const cell = ws.getCell(r, c);
         cell.value = Math.round(vals[i]); cell.font = F.total; cell.fill = FILL.total;
         cell.alignment = AL('right'); cell.border = BORDER_TOTAL; cell.numFmt = NUM_FMT;
       });
       ws.getRow(r).height = 18; r++;
     });
+
+    // A열: 총합계 4행 세로 병합
+    const totEnd = r - 1;
+    ws.mergeCells(totStart, 1, totEnd, 1);
+    const tc = ws.getCell(totStart, 1);
+    tc.value = '총합계'; tc.font = F.total; tc.fill = FILL.total;
+    tc.alignment = { horizontal: 'center', vertical: 'middle' };
+    tc.border = BORDER_TOTAL;
+  }
 
   cw(ws, [[1,20],[2,10],[3,18],[4,16],[5,18]]);
   ws.views = [{ state: 'frozen', ySplit: 3 }];
@@ -1707,7 +1720,20 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
       groupedMap[key].부가세    += Math.round(d.사용부가세 || 0);
       groupedMap[key].합계금액  += Math.round(d.사용합계   || 0);
     });
-    const siSoRows = Object.values(groupedMap).filter(d => d.공급가액 || d.부가세 || d.합계금액);
+    // 값 없어도 CLOSING_DEPT 마스터에 있는 부서는 0행으로 포함
+    const masterKeys = imedGroups.length
+      ? imedGroups.flatMap(g => ['소모품', '시약'].map(t => g.displayName + '||' + t))
+      : (R.closingDeptMaster || []).flatMap(d => {
+          const n = String(d.code_name || '').trim();
+          return n ? ['소모품', '시약'].map(t => n + '||' + t) : [];
+        });
+    masterKeys.forEach(key => {
+      if (!groupedMap[key]) {
+        const [dept, type] = key.split('||');
+        groupedMap[key] = { 의뢰부서: dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
+      }
+    });
+    const siSoRows = Object.values(groupedMap);
     deptsForAmount = [...depts, ...siSoRows];
   }
 
@@ -2152,6 +2178,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     ws.mergeCells(r, 3, r, 3);
     txtCell(ws, r, 3, '계', null, true, true);
     numCell(ws, r, 4, vaccineUse, FILL.subtot);
+    txtCell(ws, r, 5, '', FILL.subtot);
     ws.getRow(r).height = 18; r += 2;
 
     // 기능의학 블록
@@ -2173,6 +2200,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     ws.mergeCells(r, 3, r, 3);
     txtCell(ws, r, 3, '계', null, true, true);
     numCell(ws, r, 4, 0, FILL.subtot);
+    txtCell(ws, r, 5, '', FILL.subtot);
     ws.getRow(r).height = 18;
   }
 
