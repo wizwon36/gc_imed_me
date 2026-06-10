@@ -1830,34 +1830,6 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
   const yearUsage   = await loadYearUsage(null, R.branch, user, reportType);
   writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
 
-  // 수불부 시트 복사 (Drive에서 로드)
-  try {
-    const subulRes = await apiGet('closingGetSubulFileId', {
-      request_user_email: user?.email,
-      branch: R.branch,
-      report_type: reportType,
-    });
-    if (subulRes.success && subulRes.data?.file_id) {
-      showGlobalLoading('수불부 파일 로드 중...');
-      const fileRes = await apiGet('closingGetSubulFile', {
-        request_user_email: user?.email,
-        file_id: subulRes.data.file_id,
-      });
-      if (fileRes.success && fileRes.data?.base64) {
-        const binary = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-        const subulWb = new ExcelJS.Workbook();
-        await subulWb.xlsx.load(binary.buffer);
-        // 모든 시트 복사
-        for (const srcWs of subulWb.worksheets) {
-          const dstWs = wb.addWorksheet(srcWs.name);
-          copyWorksheet_(srcWs, dstWs);
-        }
-      }
-    }
-  } catch (e) {
-    clog('수불부 로드 실패 (무시): ' + e.message, 'warn');
-  }
-
   await saveWb(wb, filename);
 }
 async function dlGCReport() {
