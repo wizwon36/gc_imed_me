@@ -2521,12 +2521,13 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
 
     // ── 연도 제목
     const blockTitleRow = r;
-    ws.mergeCells(r, 1, r, 15);
+    ws.mergeCells(r, 1, r, 13);
     ws.getCell(r, 1).value = `■ ${yr}년도 원재료비`;
     ws.getCell(r, 1).font  = { name: 'Calibri', size: 12, bold: true };
-    ws.getCell(r, 16).value = '(단위 : 천원)';
-    ws.getCell(r, 16).font  = F.base;
-    ws.getCell(r, 16).alignment = AL('right');
+    ws.mergeCells(r, 14, r, 15);
+    ws.getCell(r, 14).value = '(단위 : 천원)';
+    ws.getCell(r, 14).font  = F.base;
+    ws.getCell(r, 14).alignment = AL('right');
     ws.getRow(r).height = 22; r++;
 
     // ── 헤더
