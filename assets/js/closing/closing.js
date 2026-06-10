@@ -158,6 +158,15 @@ function goStep(n) {
 }
 function startProcessing() {
   goStep(3);
+  // 버튼 초기화
+  const btnGo = document.getElementById('btnGoResult');
+  if (btnGo) {
+    btnGo.disabled = true;
+    btnGo.style.opacity = '0.4';
+    btnGo.style.cursor = 'not-allowed';
+    btnGo.style.background = '';
+    btnGo.textContent = '산출물 확인 →';
+  }
   setTimeout(runProcessing, 200);
 }
 
@@ -589,14 +598,28 @@ async function runProcessing() {
 
     clog('모든 처리 완료!', 'ok');
     await sleep(300); prog(100, '완료!');
-    await sleep(400);
 
-    goStep(4);
-    renderResults();
+    // 자동 이동 대신 버튼 활성화
+    const btnGo = document.getElementById('btnGoResult');
+    if (btnGo) {
+      btnGo.disabled = false;
+      btnGo.style.opacity = '1';
+      btnGo.style.cursor = 'pointer';
+      btnGo.textContent = '✓ 처리 완료 — 산출물 확인 →';
+    }
 
   } catch (err) {
     clog('처리 중 오류: ' + err.message, 'err');
     showMessage('처리 중 오류가 발생했습니다: ' + err.message, 'error');
+    // 오류 시에도 버튼 활성화 (확인 가능하도록)
+    const btnGo = document.getElementById('btnGoResult');
+    if (btnGo) {
+      btnGo.disabled = false;
+      btnGo.style.opacity = '1';
+      btnGo.style.cursor = 'pointer';
+      btnGo.textContent = '⚠️ 오류 발생 — 로그 확인 후 이동 →';
+      btnGo.style.background = '#dc2626';
+    }
   }
 }
 
