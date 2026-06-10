@@ -2476,15 +2476,15 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       if (base) d.base = Math.round(base / 1000);
     }
 
-    // 기말: 기초 + 매입 - 사용 (의약품+시약5%)
+    // 기말 = 기초 + 의약품매입 - 의약품사용 (시약5%는 매입=사용으로 상쇄)
     const baseAmt = g.depts.reduce((s, dept) => {
       return s + (R.prevStockData || [])
         .filter(s2 => (s2.dept||'') === dept && s2.item_type === '의약품')
         .reduce((ss, v) => ss + toN(v.closing_amount), 0);
     }, 0);
-    const buy = g.depts.reduce((s, dept) => {
+    const buyImed = g.depts.reduce((s, dept) => {
       return s + R.imedIpgo
-        .filter(r2 => String(r2['의뢰부서']||'').trim() === dept)
+        .filter(r2 => String(r2['의뢰부서']||'').trim() === dept && String(r2['자재구분']||'').trim() === '의약품')
         .reduce((ss, r2) => ss + toN(r2['합계금액']), 0);
     }, 0);
     const useImed = g.depts.reduce((s, dept) => {
@@ -2492,12 +2492,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         .filter(r2 => String(r2['부서명']||'').trim() === dept)
         .reduce((ss, r2) => ss + toN(r2['사용합계']), 0);
     }, 0);
-    const useSiyak = g.depts.filter(dept => siyakDeptNames.has(dept)).reduce((s, dept) => {
-      return s + (R.imedSiSoPivot5||[])
-        .filter(d2 => String(d2.부서명||'').trim() === dept && String(d2.자재구분||'').trim() === '시약')
-        .reduce((ss, d2) => ss + toN(d2.사용합계||0), 0);
-    }, 0);
-    d.end = Math.round((baseAmt + buy - useImed - useSiyak) / 1000);
+    d.end = Math.round((baseAmt + buyImed - useImed) / 1000);
   });
 
   // 연도 목록: 내림차순
@@ -2652,7 +2647,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
 
   const colWidths = [[1, 20], [2, 10]];
   months.forEach((_, i) => colWidths.push([i + 3, 9]));
-  colWidths.push([15, 10], [16, 4], [17, 4], [18, 18], [19, 12], [20, 12], [21, 12]);
+  colWidths.push([15, 10], [16, 4], [17, 4], [18, 18], [19, 20], [20, 12], [21, 12]);
   cw(ws, colWidths);
   ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 0 }];
 }
