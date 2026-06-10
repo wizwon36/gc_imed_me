@@ -556,47 +556,6 @@ async function runProcessing() {
       if (!fidRes.success || !fidRes.data?.file_id) {
         clog('수불부 file_id 없음 — 당월 시트만 다운로드됩니다.', 'warn');
       } else {
-        prog(92, '수불부 파일 업데이트 중...');
-        const sheetName  = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
-        const singleWb   = new ExcelJS.Workbook();
-        const singleWs   = singleWb.addWorksheet(sheetName);
-        const subulItems = Object.values(subulMap).filter(it => it.type !== '의약품');
-        writeSubul(singleWs, y, mi, branch, subulItems, App.R);
-
-        const buf    = await singleWb.xlsx.writeBuffer();
-        const base64 = btoa(new Uint8Array(buf).reduce((d, b) => d + String.fromCharCode(b), ''));
-
-        prog(96, '수불부 Drive 저장 중...');
-        const insRes = await apiPost('closingInsertSubulSheet', {
-          request_user_email: user?.email,
-          file_id:      fidRes.data.file_id,
-          sheet_name:   sheetName,
-          sheet_base64: base64,
-        });
-
-        if (insRes.success && insRes.data?.base64) {
-          App.R.subulBase64 = insRes.data.base64;
-          clog('수불부 업데이트 완료 — 다운로드 준비됨', 'ok');
-        } else {
-          clog('수불부 시트 삽입 실패: ' + (insRes.message || ''), 'warn');
-        }
-      }
-    } catch (e) {
-      clog('수불부 처리 실패: ' + e.message, 'warn');
-    }
-
-    // Drive 수불부 파일에 당월 시트 삽입 후 완성 파일 보관 (GC케어만)
-    await sleep(150); prog(88, '수불부 당월 시트 생성 중...');
-    const user = window.auth?.getSession?.();
-    try {
-      const fidRes = await apiGet('closingGetSubulFileId', {
-        request_user_email: user?.email,
-        branch,
-        report_type: 'GC케어',
-      });
-      if (!fidRes.success || !fidRes.data?.file_id) {
-        clog('수불부 file_id 없음 — 당월 시트만 다운로드됩니다.', 'warn');
-      } else {
         prog(90, '수불부 파일 로드 중...');
         const fileRes = await apiGet('closingGetSubulFile', {
           request_user_email: user?.email,
