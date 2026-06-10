@@ -1751,6 +1751,7 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
   let existingStylesXml = await existingZip.file('xl/styles.xml').async('string');
   const existingCellXfsMatch = existingStylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
   const stylesOffset = existingCellXfsMatch ? (existingCellXfsMatch[1].match(/<xf /g) || []).length : 0;
+  console.log('[DEBUG] stylesOffset:', stylesOffset, 'stylesXml 있음:', !!stylesXml);
   if (stylesXml && stylesOffset > 0) {
     const newCellXfsMatch = stylesXml.match(/<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/);
     if (newCellXfsMatch) {
@@ -1765,6 +1766,8 @@ async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml
       }
     }
     sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + stylesOffset) + '"'; });
+    const sAfter = [...sheetXml.matchAll(/ s="(\d+)"/g)].map(m=>m[1]).slice(0,5);
+    console.log('[DEBUG] s= 적용 후 (앞 5개):', sAfter);
   }
 
   // 3. workbook.xml 수정
