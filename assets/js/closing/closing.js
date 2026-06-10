@@ -564,6 +564,7 @@ async function runProcessing() {
         if (!fileRes.success || !fileRes.data?.base64) {
           clog('수불부 파일 로드 실패', 'warn');
         } else {
+          clog(`Drive 파일 수신: ${(fileRes.data.base64.length/1024).toFixed(0)}KB`, 'info');
           prog(94, '수불부 당월 시트 삽입 중...');
 
           // 당월 시트 xlsx 생성 → sheet XML 추출
