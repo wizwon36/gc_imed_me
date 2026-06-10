@@ -1126,8 +1126,11 @@ function writeDeptAmount(ws, month, depts) {
     .forEach(([c, v]) => hdrCell(ws, 3, c, v));
   ws.getRow(3).height = 18;
 
-  // 정렬
+  // 정렬 (의료공통 계열은 맨 아래)
+  const isLast = name => /의료공통|의료 공통/i.test(name);
   const sorted = [...depts].sort((a, b) => {
+    const aLast = isLast(a.의뢰부서), bLast = isLast(b.의뢰부서);
+    if (aLast !== bLast) return aLast ? 1 : -1;
     const dc = a.의뢰부서.localeCompare(b.의뢰부서, 'ko');
     return dc !== 0 ? dc : typeSort(a.자재구분, b.자재구분);
   });
@@ -1233,12 +1236,12 @@ function writeDeptAmount(ws, month, depts) {
         bottom: isLast ? { style: 'medium' } : { style: 'thin' },
       };
       const lc2 = ws.getCell(r, 2);
-      lc2.value = label; lc2.font = F.bold; lc2.fill = FILL.odd;
+      lc2.value = label; lc2.font = F.base; lc2.fill = FILL.odd;
       lc2.alignment = AL('center'); lc2.border = rowBorder;
       [3, 4, 5].forEach((c, i) => {
         const vals = [sumF(data, '공급가액'), sumF(data, '부가세'), sumF(data, '합계금액')];
         const cell = ws.getCell(r, c);
-        cell.value = Math.round(vals[i]); cell.font = F.bold; cell.fill = FILL.odd;
+        cell.value = Math.round(vals[i]); cell.font = F.base; cell.fill = FILL.odd;
         cell.alignment = AL('right'); cell.border = rowBorder; cell.numFmt = NUM_FMT;
       });
       ws.getRow(r).height = 18; r++;
@@ -2098,7 +2101,8 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     ...Object.keys(prevDeptStockFinal),
   ])];
 
-  const deptKeys = masterDepts.length
+  const isImedOnlyDept = k => /의료공통|의료 공통/i.test(k.split('||')[0]);
+  const deptKeys = (masterDepts.length
     ? [...new Set([...masterDepts, ...dataDeptKeys])].sort((a, b) => {
         const ai = masterDepts.indexOf(a);
         const bi = masterDepts.indexOf(b);
@@ -2107,7 +2111,8 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
         if (bi >= 0) return 1;
         return a.localeCompare(b, 'ko');
       })
-    : dataDeptKeys.sort((a, b) => a.localeCompare(b, 'ko'));
+    : dataDeptKeys.sort((a, b) => a.localeCompare(b, 'ko'))
+  ).filter(k => isGC || !isImedOnlyDept(k));
 
   // 납품처 구분 텍스트 (GC케어만)
   const vendorLabel = `납품처\n${R.branch}`;
@@ -2509,7 +2514,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
   years.forEach(yr => {
     const data = yearMap[yr];
     const dataGroups = Object.keys(data);
-    const groupKeys = masterGroups.length
+    const rawGroupKeys = masterGroups.length
       ? [...new Set([...masterGroups, ...dataGroups])].sort((a, b) => {
           const ai = masterGroups.indexOf(a); const bi = masterGroups.indexOf(b);
           if (ai >= 0 && bi >= 0) return ai - bi;
@@ -2517,6 +2522,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
           return a.localeCompare(b, 'ko');
         })
       : dataGroups.sort((a, b) => a.localeCompare(b, 'ko'));
+    const groupKeys = rawGroupKeys.filter(g => !/의료공통|의료 공통/i.test(g));
     groupKeys.forEach(g => { if (!data[g]) data[g] = { base: 0, end: 0 }; });
 
     // ── 연도 제목
@@ -2524,18 +2530,22 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     ws.mergeCells(r, 1, r, 15);
     ws.getCell(r, 1).value = `■ ${yr}년도 원재료비`;
     ws.getCell(r, 1).font  = { name: 'Calibri', size: 12, bold: true };
-    ws.getCell(r, 16).value = '(단위 : 천원)';
-    ws.getCell(r, 16).font  = F.base;
-    ws.getCell(r, 16).alignment = AL('right');
     ws.getRow(r).height = 22; r++;
 
-    // ── 헤더
+    // ── 헤더 (2행: 단위를 O열 우측에)
     ['구   분','기초','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월','기말']
       .forEach((v, i) => {
         hdrCell(ws, r, i + 1, v);
         if (yr === R.y && i >= 2 && i <= 13 && String(i - 1).padStart(2,'0') === curMon)
           ws.getCell(r, i + 1).fill = CUR_FILL;
       });
+    ws.getCell(r, 16).value = '천원)';
+    ws.getCell(r, 16).font  = F.base;
+    ws.getCell(r, 16).alignment = AL('right');
+    // 단위는 헤더 바로 위(blockTitleRow)의 O열에
+    ws.getCell(blockTitleRow, 15).value = '(단위 : 천원)';
+    ws.getCell(blockTitleRow, 15).font  = F.base;
+    ws.getCell(blockTitleRow, 15).alignment = AL('right');
     ws.getRow(r).height = 18; r++;
 
     // ── 매 출 행 (빈칸)
@@ -2579,11 +2589,12 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     }
     ws.getRow(r).height = 18; r++;
 
-    // ── 세포치료 / 특수의약품 (빈칸)
+    // ── 세포치료 / 특수의약품 (빈칸, B열부터)
     ['세포치료', '특수의약품'].forEach(lbl => {
       const lFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
-      txtCell(ws, r, 1, lbl, lFill, false, true);
-      [2,3,4,5,6,7,8,9,10,11,12,13,14,15].forEach(c => {
+      const ac = ws.getCell(r, 1); ac.fill = lFill; ac.border = BORDER_THIN;  // A열 빈칸
+      txtCell(ws, r, 2, lbl, lFill, false, true);  // B열에 라벨
+      [3,4,5,6,7,8,9,10,11,12,13,14,15].forEach(c => {
         const cell = ws.getCell(r, c); cell.fill = lFill; cell.border = BORDER_THIN;
       });
       ws.getRow(r).height = 18; r++;
@@ -2591,29 +2602,30 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
 
     r++;  // 빈 행
 
-    // ── 우측 비교 테이블: 당해 연도 당월 vs 전년 당월 (매 연도 블록마다)
+    // ── 우측 비교 테이블: 증가분만 표기 (구분 + 증가분 2열)
+    //    blockTitleRow+0: (단위:천원) 우측 정렬
+    //    blockTitleRow+1: 구분 | 증가분 헤더 (= 헤더행)
+    //    blockTitleRow+2: 매 출
+    //    blockTitleRow+3~: 부서별
     {
       const prevYr = String(parseInt(yr) - 1);
       const TC = 18;  // R열
-      // 단위 행: blockTitleRow, 헤더: blockTitleRow+1, 매출: blockTitleRow+2, 부서: blockTitleRow+3~
       let tr = blockTitleRow;
 
-      // 단위
-      ws.mergeCells(tr, TC, tr, TC + 3);
+      // 단위 (제목 행, R~S 병합)
+      ws.mergeCells(tr, TC, tr, TC + 1);
       const thUnit = ws.getCell(tr, TC);
       thUnit.value = '(단위 : 천원)'; thUnit.font = F.base; thUnit.alignment = AL('right');
-      tr++;
+      tr++;  // → 헤더 행 (blockTitleRow+1 = 구 분 헤더 행)
 
-      // 헤더
+      // 헤더: 구분 | 증가분
       const prevLabel = `${prevYr.slice(2)}년 대비 증가분`;
       hdrCell(ws, tr, TC,     '구분');
-      hdrCell(ws, tr, TC + 1, `${yr}년 ${R.m}월`);
-      hdrCell(ws, tr, TC + 2, `${prevYr}년 ${R.m}월`);
-      hdrCell(ws, tr, TC + 3, prevLabel);
+      hdrCell(ws, tr, TC + 1, prevLabel);
       ws.getRow(tr).height = 18; tr++;
 
       // 매 출 행 (빈)
-      [TC, TC+1, TC+2, TC+3].forEach(c => {
+      [TC, TC + 1].forEach(c => {
         const cell = ws.getCell(tr, c);
         if (c === TC) cell.value = '매  출';
         cell.font = F.base; cell.fill = FILL.odd; cell.border = BORDER_THIN;
@@ -2621,25 +2633,20 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       });
       ws.getRow(tr).height = 18; tr++;
 
-      // 부서별 비교
+      // 부서별
       groupKeys.forEach((gName, ri) => {
         const fill    = ri % 2 === 0 ? FILL.odd : FILL.even;
         const curAmt  = yearMap[yr]?.[gName]?.['m' + curMon]     || 0;
         const prevAmt = yearMap[prevYr]?.[gName]?.['m' + curMon] || 0;
-        txtCell(ws, tr, TC,     gName,          fill, false, false);
-        numCell(ws, tr, TC + 1, curAmt,          fill);
-        numCell(ws, tr, TC + 2, prevAmt,         fill);
-        numCell(ws, tr, TC + 3, curAmt - prevAmt, fill);
+        txtCell(ws, tr, TC,     gName,           fill, false, false);
+        numCell(ws, tr, TC + 1, curAmt - prevAmt, fill);
         ws.getRow(tr).height = 18; tr++;
       });
 
       // 총 계
       const curTotal  = yearMonTotals[yr]?.['m' + curMon]     || 0;
       const prevTotal = yearMonTotals[prevYr]?.['m' + curMon] || 0;
-      subtotRow(ws, tr, [TC], ['총  계'],
-        [TC+1, TC+2, TC+3],
-        [curTotal, prevTotal, curTotal - prevTotal]
-      );
+      subtotRow(ws, tr, [TC], ['총  계'], [TC + 1], [curTotal - prevTotal]);
       ws.getRow(tr).height = 18;
     }
   });
