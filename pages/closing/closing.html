@@ -109,7 +109,7 @@
         <div id="sec2" class="cl-section">
           <div class="card">
             <div class="card-body">
-              <div class="cl-settings-row">
+              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
                 <div class="cl-field">
                   <label>마감 연월</label>
                   <input type="month" id="inputMonth">
@@ -120,12 +120,11 @@
                 </div>
                 <!-- GC케어 CC: 고정값(32073000) — UI 노출 불필요 -->
                 <input type="hidden" id="inputCC" value="32073000">
+                <div class="cl-info-box" style="flex:1;margin:0;">
+                  <strong>분류 기준:</strong> 자재구분이 <strong>소모품·시약 → GC케어</strong>, <strong>의약품 → 아이메드</strong>로 자동 분류됩니다.
+                </div>
               </div>
-              <div class="cl-divider"></div>
-              <div class="cl-info-box">
-                <strong>분류 기준:</strong> 자재구분이 <strong>소모품·시약 → GC케어</strong>, <strong>의약품 → 아이메드</strong>로 자동 분류됩니다.
-              </div>
-              <div style="display:flex;gap:10px;justify-content:flex-end;">
+              <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
                 <button class="btn" onclick="goStep(1)">← 이전</button>
                 <button class="btn btn-primary" onclick="startProcessing()">처리 시작 →</button>
               </div>
