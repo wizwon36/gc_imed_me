@@ -1741,9 +1741,11 @@ async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
     srcWs.eachRow({ includeEmpty: false }, function(row, rn) {
       const dstRow = dstWs.getRow(rn);
       if (row.height) dstRow.height = row.height;
-      row.eachCell({ includeEmpty: true }, function(cell, cn) {
-        dstRow.getCell(cn).value = cell.value;
-      });
+      try {
+        row.eachCell({ includeEmpty: true }, function(cell, cn) {
+          dstRow.getCell(cn).value = cell.value;
+        });
+      } catch (_) {}
       dstRow.commit();
     });
   }
