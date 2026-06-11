@@ -1733,21 +1733,7 @@ async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
   // newSheetWb의 첫 번째 시트를 그대로 유지하고 기존 시트들을 뒤에 추가
   for (const srcWs of existingWb.worksheets) {
     const dstWs = newSheetWb.addWorksheet(srcWs.name);
-    // 열 너비 복사
-    srcWs.columns.forEach(function(col, i) {
-      if (col.width) dstWs.getColumn(i + 1).width = col.width;
-    });
-    // 값만 복사
-    srcWs.eachRow({ includeEmpty: false }, function(row, rn) {
-      const dstRow = dstWs.getRow(rn);
-      if (row.height) dstRow.height = row.height;
-      try {
-        row.eachCell({ includeEmpty: true }, function(cell, cn) {
-          dstRow.getCell(cn).value = cell.value;
-        });
-      } catch (_) {}
-      dstRow.commit();
-    });
+    copyWorksheet_(srcWs, dstWs);
   }
 
   return await newSheetWb.xlsx.writeBuffer();
@@ -1764,26 +1750,29 @@ function copyWorksheet_(src, dst) {
   src.eachRow({ includeEmpty: true }, (row, rn) => {
     const dstRow = dst.getRow(rn);
     if (row.height) dstRow.height = row.height;
-    row.eachCell({ includeEmpty: true }, (cell, cn) => {
-      const dstCell = dstRow.getCell(cn);
-      // 값
-      dstCell.value = cell.value;
-      // 서식
-      if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
-      if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
-      if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
-      if (cell.alignment) dstCell.alignment = Object.assign({}, cell.alignment);
-      if (cell.border)    dstCell.border    = Object.assign({}, cell.border);
-    });
+    try {
+      row.eachCell({ includeEmpty: true }, (cell, cn) => {
+        const dstCell = dstRow.getCell(cn);
+        dstCell.value = cell.value;
+        if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
+        if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
+        if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
+        if (cell.alignment) dstCell.alignment = Object.assign({}, cell.alignment);
+        if (cell.border)    dstCell.border    = Object.assign({}, cell.border);
+      });
+    } catch (_) {}
     dstRow.commit();
   });
 
   // 병합 셀 복사
-  if (src.mergeCells) {
-    Object.keys(src._merges || {}).forEach(key => {
-      try { dst.mergeCells(key); } catch (_) {}
-    });
-  }
+  const merges = (src.model && src.model.merges) ? src.model.merges : Object.keys(src._merges || {});
+  merges.forEach(range => {
+    try {
+      if (typeof range === 'string' && /^[A-Z]+\d+:[A-Z]+\d+$/.test(range)) {
+        dst.mergeCells(range);
+      }
+    } catch (_) {}
+  });
 }
 
 async function saveWb(wb, filename) {
