@@ -703,20 +703,18 @@
    *   [05/20 화]
    *     🟢 [시설] 제목 (예정)
    */
-  // description 여러 줄 처리: 첫 줄은 └ 뒤, 나머지 줄은 └ 너비만큼 공백 들여쓰기
+  // description 여러 줄 처리: 모든 줄을 동일한 들여쓰기(8공백)로 추가
   function pushDescription(lines, description) {
-    const prefix       = '      └ ';  // 6공백 + └ + 1공백
-    const continuation = '           ';  // 11자 (8 + 3칸 추가)
+    const indent = '        ';  // 8공백
     const descLines = description.trim().split('\n');
-    descLines.forEach(function(line, i) {
-      lines.push((i === 0 ? prefix : continuation) + line);
+    descLines.forEach(function(line) {
+      lines.push(indent + line);
     });
   }
 
-  // 엑셀 출력용 — └ 줄의 들여쓰기를 웹과 동일하게 정규화
-  // [수정] 엑셀 들여쓰기 정규화
+  // 엑셀 출력용 — 서브라인(들여쓰기 줄) 정규화
   // 맑은 고딕은 가변폭 폰트라 공백 수로 정렬이 어긋남.
-  // • 줄: "  • ..."  └ 줄: "    └ ..."  continuation: "       ..."
+  // • 줄: "  • ..."  서브줄: "        ..."
   /**
    * 엑셀 셀 자동 줄바꿈 시 들여쓰기 유지 함수
    *
@@ -754,7 +752,7 @@
 
     const indentWidth    = strWidth(indent);
     const firstLineMax   = maxChars - indentWidth;
-    // continuation 줄 들여쓰기: indent + 추가 2칸(└ 등 이후 정렬)
+    // continuation 줄 들여쓰기: indent + 추가 2칸
     const contIndent     = indent + '  ';
     const contWidth      = strWidth(contIndent);
     const contMax        = maxChars - contWidth;
@@ -799,21 +797,17 @@
 
   function normalizeSubLinesForExcel(line) {
     const trimmed = line.trim();
-    if (trimmed.startsWith('└')) {
-      return '    └ ' + trimmed.slice(1).replace(/^\s+/, '');
-    }
-    // continuation 줄: 공백 4자 이상으로 시작하며 bullet/섹션헤더가 아닌 줄
+    // 들여쓰기 4자 이상으로 시작하며 bullet/섹션헤더가 아닌 줄
     if (/^ {4,}/.test(line) && !trimmed.startsWith('•') && !trimmed.startsWith('[') && trimmed !== '') {
-      return '       ' + trimmed;
+      return '        ' + trimmed;
     }
     return line;
   }
 
-  // └ 줄 또는 continuation 줄 판별 (extractCategorySection의 while 조건용)
+  // 서브라인(description 들여쓰기 줄) 판별 (extractCategorySection의 while 조건용)
   function isSubLine(line) {
     if (!line) return false;
     const trimmed = line.trim();
-    if (trimmed.startsWith('└')) return true;
     if (/^ {4,}/.test(line) && !trimmed.startsWith('•') && !trimmed.startsWith('[') && trimmed !== '') return true;
     return false;
   }
@@ -2026,7 +2020,7 @@
           lines.push('  • ' + (t.title||'') + pri + '  [' + st + ']' + (end ? '  '+mm+'/'+dd+' ~ '+end.trim() : ''));
           if (t.description && t.description.trim()) {
             t.description.trim().split('\n').forEach(dl => {
-              if (dl.trim()) lines.push('      └ ' + dl.trim());
+              if (dl.trim()) lines.push('        ' + dl.trim());
             });
           }
         });
@@ -2307,7 +2301,7 @@
             lines.push('  • ' + (t.title||'') + pri + '  [' + st + ']');
             if (t.description && t.description.trim()) {
               t.description.trim().split('\n').forEach(dl => {
-                if (dl.trim()) lines.push('      └ ' + dl.trim());
+                if (dl.trim()) lines.push('        ' + dl.trim());
               });
             }
           });
