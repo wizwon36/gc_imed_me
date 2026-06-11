@@ -572,16 +572,10 @@ async function runProcessing() {
           const singleWb  = new ExcelJS.Workbook();
           writeSubul(singleWb.addWorksheet(sheetName), y, mi, branch,
             Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
-          const singleBuf = await singleWb.xlsx.writeBuffer();
-          const singleZip = await JSZip.loadAsync(singleBuf);
-          const sheetXml  = await singleZip.file('xl/worksheets/sheet1.xml').async('string');
-          const ssFile     = singleZip.file('xl/sharedStrings.xml');
-          const sharedStringsXml = ssFile ? await ssFile.async('string') : null;
-          const stylesFile = singleZip.file('xl/styles.xml');
-          const stylesXml  = stylesFile ? await stylesFile.async('string') : null;
 
+          // 기존 파일에 새 시트 추가 (새 wb 기준, 기존 시트는 값만 복사)
           const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-          const resultBuf = await insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml, stylesXml, sheetName);
+          const resultBuf = await insertSheetIntoXlsx_(existingBytes, singleWb, sheetName);
 
           App.R.subulBuffer = resultBuf;
           App.R.subulFileId = fidRes.data.file_id;
@@ -1728,134 +1722,33 @@ function writeSubul(ws, year, month, branch, items, R) {
 // ═══════════════════════════════════════════════════════════
 function newWb() { return new ExcelJS.Workbook(); }
 // ── 수불부 xlsx에 sheet XML 삽입 (JSZip) ─────────────────────
-// styles 완전 병합 헬퍼 - 문자열 검색 방식 (정규식 호환성 문제 회피)
-function mergeStylesComplete_(existXml, newXml) {
-  // 섹션 추출: 태그 시작/끝 위치로 직접 자름
-  function extractSection(xml, containerTag, itemTag) {
-    var openTag  = '<' + containerTag;
-    var closeTag = '</' + containerTag + '>';
-    var si = xml.indexOf(openTag);
-    if (si < 0) return { items: [], offset: 0, raw: '' };
-    var ei = xml.indexOf(closeTag, si);
-    if (ei < 0) return { items: [], offset: 0, raw: '' };
-    // containerTag 닫는 > 찾기
-    var ci = xml.indexOf('>', si);
-    var inner = xml.substring(ci + 1, ei);
-    
-    // itemTag 기준으로 분리
-    var itemOpen = '<' + itemTag;
-    var items = [];
-    var pos = 0;
-    while (true) {
-      var idx = inner.indexOf(itemOpen, pos);
-      if (idx < 0) break;
-      // self-closing인지 child 있는지 판단
-      var closeIdx = inner.indexOf('</' + itemTag + '>', idx);
-      var selfIdx  = inner.indexOf('/>', idx);
-      var end;
-      if (selfIdx >= 0 && (closeIdx < 0 || selfIdx < closeIdx)) {
-        end = selfIdx + 2;
-      } else if (closeIdx >= 0) {
-        end = closeIdx + ('</' + itemTag + '>').length;
-      } else {
-        break;
-      }
-      items.push(inner.substring(idx, end));
-      pos = end;
-    }
-    return { items: items, offset: items.length, raw: inner };
+// 수불부 xlsx에 새 시트 추가
+// 새 ExcelJS wb 기준으로 생성: 새 시트(서식 완전) 맨 앞 + 기존 시트들 값만 복사
+async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
+  // 기존 파일 파싱 (값만 읽기)
+  const existingWb = new ExcelJS.Workbook();
+  await existingWb.xlsx.load(existingBytes.buffer || existingBytes);
+
+  // 새 시트의 데이터/서식을 기존 시트들 앞에 배치
+  // newSheetWb의 첫 번째 시트를 그대로 유지하고 기존 시트들을 뒤에 추가
+  for (const srcWs of existingWb.worksheets) {
+    const dstWs = newSheetWb.addWorksheet(srcWs.name);
+    // 열 너비 복사
+    srcWs.columns.forEach(function(col, i) {
+      if (col.width) dstWs.getColumn(i + 1).width = col.width;
+    });
+    // 값만 복사
+    srcWs.eachRow({ includeEmpty: false }, function(row, rn) {
+      const dstRow = dstWs.getRow(rn);
+      if (row.height) dstRow.height = row.height;
+      row.eachCell({ includeEmpty: true }, function(cell, cn) {
+        dstRow.getCell(cn).value = cell.value;
+      });
+      dstRow.commit();
+    });
   }
 
-  function mergeSection(existXml, newXml, containerTag, itemTag) {
-    var ex = extractSection(existXml, containerTag, itemTag);
-    var nw = extractSection(newXml, containerTag, itemTag);
-    if (!nw.items.length) return { xml: existXml, offset: ex.offset, newItems: [] };
-    var closeTag = '</' + containerTag + '>';
-    var countAttr = containerTag + ' count="' + ex.offset + '"';
-    var newCountAttr = containerTag + ' count="' + (ex.offset + nw.items.length) + '"';
-    var merged = existXml
-      .replace(closeTag, nw.items.join('') + closeTag)
-      .replace(countAttr, newCountAttr);
-    return { xml: merged, offset: ex.offset, newItems: nw.items };
-  }
-
-  var r1 = mergeSection(existXml, newXml, 'fonts', 'font');   var result = r1.xml;
-  var r2 = mergeSection(result,  newXml, 'fills', 'fill');   result = r2.xml;
-  var r3 = mergeSection(result,  newXml, 'borders', 'border'); result = r3.xml;
-
-  var xfOff = extractSection(existXml, 'cellXfs', 'xf').offset;
-  var newXfs = extractSection(newXml, 'cellXfs', 'xf').items;
-  var offsetXfs = newXfs.map(function(xf) {
-    return xf
-      .replace(/fontId="(\d+)"/,   function(_, n) { return 'fontId="'   + (parseInt(n) + r1.offset) + '"'; })
-      .replace(/fillId="(\d+)"/,   function(_, n) { return 'fillId="'   + (parseInt(n) + r2.offset) + '"'; })
-      .replace(/borderId="(\d+)"/, function(_, n) { return 'borderId="' + (parseInt(n) + r3.offset) + '"'; });
-  });
-  result = result
-    .replace('<\/cellXfs>', offsetXfs.join('') + '<\/cellXfs>')
-    .replace('cellXfs count="' + xfOff + '"', 'cellXfs count="' + (xfOff + offsetXfs.length) + '"');
-
-  return { mergedStylesXml: result, xfOffset: xfOff };
-}
-
-async function insertSheetXmlIntoXlsx_(existingBytes, sheetXml, sharedStringsXml, stylesXml, sheetName) {
-  const existingZip = await JSZip.loadAsync(existingBytes);
-
-  // 1. sharedStrings 병합
-  let existingSsXml = await existingZip.file('xl/sharedStrings.xml').async('string');
-  const ssOffset = parseInt(existingSsXml.match(/uniqueCount="(\d+)"/)[1]);
-  if (sharedStringsXml) {
-    const newSiTags = [...sharedStringsXml.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(function(m) { return '<si>' + m[1] + '</si>'; });
-    if (newSiTags.length > 0) {
-      const oldCount = parseInt(existingSsXml.match(/count="(\d+)"/)[1]);
-      existingSsXml = existingSsXml
-        .replace('count="' + oldCount + '"', 'count="' + (oldCount + newSiTags.length) + '"')
-        .replace('uniqueCount="' + ssOffset + '"', 'uniqueCount="' + (ssOffset + newSiTags.length) + '"')
-        .replace('<\/sst>', newSiTags.join('') + '<\/sst>');
-    }
-  }
-  sheetXml = sheetXml.replace(/(<c[^>]*t="s"[^>]*><v>)(\d+)(<\/v>)/g, function(_, pre, n, post) {
-    return pre + (parseInt(n) + ssOffset) + post;
-  });
-
-  // 2. styles 완전 병합
-  const existingStylesXml = await existingZip.file('xl/styles.xml').async('string');
-  const { mergedStylesXml, xfOffset } = mergeStylesComplete_(existingStylesXml, stylesXml || '');
-  console.log('[STYLES] xfOffset:', xfOffset, 'existingXf:', (existingStylesXml.match(/cellXfs count="(\d+)"/) || [])[1]);
-  const sBeforeCount = [...sheetXml.matchAll(/ s="(\d+)"/g)].length;
-  sheetXml = sheetXml.replace(/ s="(\d+)"/g, function(_, n) { return ' s="' + (parseInt(n) + xfOffset) + '"'; });
-  const sAfterSample = [...sheetXml.matchAll(/ s="(\d+)"/g)].slice(0,3).map(m=>m[1]);
-  console.log('[STYLES] s= 변환 수:', sBeforeCount, '샘플:', sAfterSample);
-
-  // 3. workbook.xml 수정
-  let wbXml = await existingZip.file('xl/workbook.xml').async('string');
-  const sheetIds = [...wbXml.matchAll(/sheetId="(\d+)"/g)].map(function(m) { return parseInt(m[1]); });
-  const rIds     = [...wbXml.matchAll(/r:id="rId(\d+)"/g)].map(function(m) { return parseInt(m[1]); });
-  const newSheetId = (sheetIds.length ? Math.max.apply(null, sheetIds) : 0) + 1;
-  const newRId     = 'rId' + ((rIds.length ? Math.max.apply(null, rIds) : 0) + 1);
-  const newFile    = 'sheet' + newSheetId + '.xml';
-  const escaped    = sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  wbXml = wbXml.replace(new RegExp('<sheet[^>]*name="' + escaped + '"[^/]*/>'), '');
-  wbXml = wbXml.replace('<sheets>', '<sheets><sheet name="' + sheetName + '" sheetId="' + newSheetId + '" r:id="' + newRId + '"/>');
-
-  let relsXml = await existingZip.file('xl/_rels/workbook.xml.rels').async('string');
-  relsXml = relsXml.replace('<\/Relationships>',
-    '<Relationship Id="' + newRId + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/' + newFile + '"/><\/Relationships>');
-
-  let ctXml = await existingZip.file('[Content_Types].xml').async('string');
-  ctXml = ctXml.replace('<\/Types>',
-    '<Override PartName="/xl/worksheets/' + newFile + '" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><\/Types>');
-  ctXml = ctXml.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
-
-  existingZip.file('xl/workbook.xml', wbXml);
-  existingZip.file('xl/_rels/workbook.xml.rels', relsXml);
-  existingZip.file('[Content_Types].xml', ctXml);
-  existingZip.file('xl/sharedStrings.xml', existingSsXml);
-  existingZip.file('xl/styles.xml', mergedStylesXml);
-  existingZip.file('xl/worksheets/' + newFile, sheetXml);
-  existingZip.remove('xl/calcChain.xml');
-
-  return await existingZip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
+  return await newSheetWb.xlsx.writeBuffer();
 }
 
 // ── 수불부 시트 복사 헬퍼 ────────────────────────────────────
