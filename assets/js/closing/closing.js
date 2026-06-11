@@ -1556,7 +1556,7 @@ function writeSubul(ws, year, month, branch, items, R) {
       cell.numFmt = NUM_FMT;
     };
 
-    txtCell(ws, r, 1, it.code, typeFill);
+    txtCell(ws, r, 1, it.code, FILL.odd);
     txtCell(ws, r, 2, it.name, typeFill);
     txtCell(ws, r, 3, it.type, typeFill, false, true);
     accCell(4,  기초수량);
