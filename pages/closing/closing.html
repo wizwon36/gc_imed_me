@@ -7,63 +7,6 @@
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="../../assets/css/pages/closing.css" />
 </head>
-<style>
-@media (max-width: 768px) {
-  /* 자재코드 탭만 표시 */
-  #tabClosing, #tabVendor { display: none !important; }
-  #tabItem { border-bottom: 2px solid var(--primary, #2563eb); color: var(--primary, #2563eb); }
-
-  /* 자재코드 탭 - 추가 기능 숨김 */
-  #itemFileInput,
-  label[for="itemFileInput"],
-  #btnSaveItems,
-  #itemUploadPreview,
-  #itemSummaryRow { display: none !important; }
-
-  /* 헤더 버튼 영역 숨김 */
-  #tabItemContent .card-body > div:first-child > div:last-child { display: none !important; }
-
-  /* 초기 재고 업로드 카드 숨김 */
-  #tabItemContent .card + .card { display: none !important; }
-
-  /* 월마감/거래처 탭 콘텐츠 숨김 */
-  #tabClosingContent, #tabVendorContent { display: none !important; }
-
-  /* 검색/필터 영역 - flex-wrap */
-  #tabItemContent .card-body > div:nth-child(2) {
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-  }
-  #tabItemContent .card-body > div:nth-child(2) > div { min-width: 0 !important; }
-  #itemFilterStatus { display: none !important; }
-
-  /* 페이지네이션 버튼 축소 */
-  #itemPagination button {
-    padding: 4px 7px !important;
-    font-size: 11px !important;
-    min-width: 28px !important;
-  }
-  #itemPagination { flex-wrap: wrap !important; }
-  .cl-vendor-table th:nth-child(3),
-  .cl-vendor-table td:nth-child(3) { width: 42px !important; min-width: 42px !important; }
-
-  /* 테이블 - 상태/수정 컬럼 숨김 */
-  .cl-vendor-table thead tr th:nth-child(6),
-  .cl-vendor-table thead tr th:last-child,
-  #itemTbody tr td:nth-child(6),
-  #itemTbody tr td:last-child { display: none !important; }
-
-  /* 테이블 폰트/패딩 축소 */
-  .cl-vendor-table th, .cl-vendor-table td {
-    font-size: 12px !important;
-    padding: 6px 6px !important;
-  }
-
-  /* 단가 우측 정렬 유지 */
-  .cl-vendor-table td:nth-child(4),
-  .cl-vendor-table td:nth-child(5) { text-align: right !important; }
-}
-</style>
 <body class="portal-page">
   <div class="container page-shell">
 
