@@ -1801,14 +1801,17 @@ function copyWorksheet_(src, dst) {
     } catch (_) {}
   });
 
-  // 행 복사 (값, 서식)
+  // 행 복사 (값, 서식) - _cells 직접 순회로 validateAddress 오류 우회
   src.eachRow({ includeEmpty: true }, (row, rn) => {
     const dstRow = dst.getRow(rn);
     if (row.height) dstRow.height = row.height;
-    row.eachCell({ includeEmpty: true }, (cell, cn) => {
+    const cells = row._cells || [];
+    cells.forEach((cell, idx) => {
+      if (!cell) return;
       try {
+        const cn = idx + 1;
         const dstCell = dstRow.getCell(cn);
-        dstCell.value = cell.value;
+        dstCell.value = cell._value?.model?.value ?? cell.value;
         if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
         if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
         if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
