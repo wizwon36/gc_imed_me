@@ -1746,6 +1746,11 @@ function copyWorksheet_(src, dst) {
     if (col.width) dst.getColumn(i + 1).width = col.width;
   });
 
+  // 확대율 복사
+  if (src.views && src.views.length > 0) {
+    dst.views = src.views.map(v => Object.assign({}, v));
+  }
+
   // 행 복사 (값, 서식, 병합)
   src.eachRow({ includeEmpty: true }, (row, rn) => {
     const dstRow = dst.getRow(rn);
