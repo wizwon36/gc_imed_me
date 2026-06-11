@@ -29,13 +29,22 @@
   /* 월마감/거래처 탭 콘텐츠 숨김 */
   #tabClosingContent, #tabVendorContent { display: none !important; }
 
-  /* 검색/필터 영역 정리 */
+  /* 검색/필터 영역 - 구분 콤보 앞, 검색 버튼 뒤 */
   #tabItemContent .card-body > div:nth-child(2) {
-    flex-direction: column !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
     gap: 6px !important;
+    align-items: center !important;
   }
-  #tabItemContent .card-body > div:nth-child(2) > div { min-width: unset !important; }
+  #itemFilterType { order: 1; flex-shrink: 0; }
+  #tabItemContent .card-body > div:nth-child(2) > div { order: 2; flex: 1; min-width: 0 !important; }
+  #tabItemContent .card-body > div:nth-child(2) > button { order: 3; flex-shrink: 0; }
+  #itemSearchResult { order: 4; width: 100%; }
   #itemFilterStatus { display: none !important; }
+
+  /* 구분 컬럼 너비 확보 */
+  .cl-vendor-table th:nth-child(3),
+  .cl-vendor-table td:nth-child(3) { width: 42px !important; min-width: 42px !important; }
 
   /* 테이블 - 상태/수정 컬럼 숨김 */
   .cl-vendor-table thead tr th:nth-child(6),
