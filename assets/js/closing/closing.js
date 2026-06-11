@@ -1733,19 +1733,7 @@ async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
   // newSheetWb의 첫 번째 시트를 그대로 유지하고 기존 시트들을 뒤에 추가
   for (const srcWs of existingWb.worksheets) {
     const dstWs = newSheetWb.addWorksheet(srcWs.name);
-    // 열 너비 복사
-    srcWs.columns.forEach(function(col, i) {
-      if (col.width) dstWs.getColumn(i + 1).width = col.width;
-    });
-    // 값만 복사
-    srcWs.eachRow({ includeEmpty: false }, function(row, rn) {
-      const dstRow = dstWs.getRow(rn);
-      if (row.height) dstRow.height = row.height;
-      row.eachCell({ includeEmpty: true }, function(cell, cn) {
-        dstRow.getCell(cn).value = cell.value;
-      });
-      dstRow.commit();
-    });
+    copyWorksheet_(srcWs, dstWs);
   }
 
   return await newSheetWb.xlsx.writeBuffer();
