@@ -1760,15 +1760,22 @@ function newWb() { return new ExcelJS.Workbook(); }
 // 수불부 xlsx에 새 시트 추가
 // 새 ExcelJS wb 기준으로 생성: 새 시트(서식 완전) 맨 앞 + 기존 시트들 값만 복사
 async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
-  // 기존 파일 파싱 (값만 읽기)
+  // 기존 파일 파싱
   const existingWb = new ExcelJS.Workbook();
-  await existingWb.xlsx.load(existingBytes.buffer || existingBytes);
+  try {
+    await existingWb.xlsx.load(existingBytes.buffer || existingBytes);
+  } catch (e) {
+    throw new Error('기존 파일 로드 실패: ' + e.message);
+  }
 
-  // 새 시트의 데이터/서식을 기존 시트들 앞에 배치
-  // newSheetWb의 첫 번째 시트를 그대로 유지하고 기존 시트들을 뒤에 추가
+  // 기존 시트들 복사
   for (const srcWs of existingWb.worksheets) {
-    const dstWs = newSheetWb.addWorksheet(srcWs.name);
-    copyWorksheet_(srcWs, dstWs);
+    try {
+      const dstWs = newSheetWb.addWorksheet(srcWs.name);
+      copyWorksheet_(srcWs, dstWs);
+    } catch (e) {
+      throw new Error('시트 복사 실패 [' + srcWs.name + ']: ' + e.message);
+    }
   }
 
   return await newSheetWb.xlsx.writeBuffer();
@@ -1781,12 +1788,11 @@ function copyWorksheet_(src, dst) {
     if (col.width) dst.getColumn(i + 1).width = col.width;
   });
 
-  // 병합셀 먼저 적용 (model.merges 사용)
-  const merges = src.model?.merges || Object.keys(src._merges || {});
+  // 병합셀 먼저 적용
+  const merges = (src.model && src.model.merges) ? src.model.merges : [];
   merges.forEach(range => {
     try {
-      // A1:B2 형식인지 확인 (단일 셀 주소는 스킵)
-      if (typeof range === 'string' && range.includes(':')) {
+      if (typeof range === 'string' && /^[A-Z]+\d+:[A-Z]+\d+$/.test(range)) {
         dst.mergeCells(range);
       }
     } catch (_) {}
