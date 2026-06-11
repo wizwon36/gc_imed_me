@@ -1501,6 +1501,14 @@ function writeVendorMasterSheet(ws, vendors) {
 
 // ── 수불 집계표 ───────────────────────────────────────────
 function writeSubul(ws, year, month, branch, items, R) {
+  // 열 너비 설정
+  ws.getColumn(1).width = 11.875;
+  ws.getColumn(2).width = 57.25;
+  ws.getColumn(3).width = 11.5;
+  for (let c = 4; c <= 13; c++) ws.getColumn(c).width = 20;
+  ws.getColumn(14).width = 12.625;
+  // 확대율 85%
+  ws.views = [{ zoomScale: 85 }];
   titleRow(ws, 1, 1, '원가집계표', 13, 30);
   ws.getCell(1, 1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FF000000' } };
   ws.getCell(1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
