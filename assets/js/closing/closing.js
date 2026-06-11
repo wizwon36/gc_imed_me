@@ -56,6 +56,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       switchTab('item');
     }
 
+    // 해상도 변화 감지
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+    mobileQuery.addEventListener('change', e => {
+      if (e.matches) switchTab('item');
+    });
+
     // 거래처·자재 데이터 로드 (처리 시작 전 반드시 완료되어야 함, 최대 10초)
     const timeout = ms => new Promise(r => setTimeout(r, ms));
     await Promise.all([
