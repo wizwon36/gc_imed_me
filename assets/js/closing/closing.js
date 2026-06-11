@@ -1556,7 +1556,7 @@ function writeSubul(ws, year, month, branch, items, R) {
       cell.numFmt = NUM_FMT;
     };
 
-    txtCell(ws, r, 1, it.code, typeFill);
+    txtCell(ws, r, 1, it.code, FILL.odd);
     txtCell(ws, r, 2, it.name, typeFill);
     txtCell(ws, r, 3, it.type, typeFill, false, true);
     accCell(4,  기초수량);
@@ -1746,15 +1746,18 @@ function copyWorksheet_(src, dst) {
     if (col.width) dst.getColumn(i + 1).width = col.width;
   });
 
-  // 행 복사 (값, 서식, 병합)
+  // 병합셀 먼저 적용 (값 쓰기 전에)
+  Object.keys(src._merges || {}).forEach(key => {
+    try { dst.mergeCells(key); } catch (_) {}
+  });
+
+  // 행 복사 (값, 서식)
   src.eachRow({ includeEmpty: true }, (row, rn) => {
     const dstRow = dst.getRow(rn);
     if (row.height) dstRow.height = row.height;
     row.eachCell({ includeEmpty: true }, (cell, cn) => {
       const dstCell = dstRow.getCell(cn);
-      // 값
       dstCell.value = cell.value;
-      // 서식
       if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
       if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
       if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
@@ -1763,13 +1766,6 @@ function copyWorksheet_(src, dst) {
     });
     dstRow.commit();
   });
-
-  // 병합 셀 복사
-  if (src.mergeCells) {
-    Object.keys(src._merges || {}).forEach(key => {
-      try { dst.mergeCells(key); } catch (_) {}
-    });
-  }
 }
 
 async function saveWb(wb, filename) {
