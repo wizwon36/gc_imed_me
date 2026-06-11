@@ -51,6 +51,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('appBody').style.display = '';
 
+    // 모바일에서 자재코드 탭 자동 활성화
+    if (window.innerWidth <= 768) {
+      switchTab('item');
+    }
+
     // 거래처·자재 데이터 로드 (처리 시작 전 반드시 완료되어야 함, 최대 10초)
     const timeout = ms => new Promise(r => setTimeout(r, ms));
     await Promise.all([
