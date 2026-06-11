@@ -1502,18 +1502,44 @@ function writeVendorMasterSheet(ws, vendors) {
 // ── 수불 집계표 ───────────────────────────────────────────
 function writeSubul(ws, year, month, branch, items, R) {
   // 열 너비 설정
-  ws.getColumn(1).width = 11.875;   // A: 품목코드
-  ws.getColumn(2).width = 57.25;    // B: 품목명
-  ws.getColumn(3).width = 11.5;     // C: 구분
-  for (let c = 4; c <= 13; c++) ws.getColumn(c).width = 20; // D~M
-  ws.getColumn(14).width = 12.625;  // N
+  ws.getColumn(1).width = 11.875;
+  ws.getColumn(2).width = 57.25;
+  ws.getColumn(3).width = 11.5;
+  for (let c = 4; c <= 13; c++) ws.getColumn(c).width = 20;
+  ws.getColumn(14).width = 12.625;
   // 확대율 85%
   ws.views = [{ zoomScale: 85 }];
+
+  // 수불부 전용 폰트 (타이틀/헤더 제외 9pt)
+  const FS = {
+    base:  { name: 'Calibri', size: 9 },
+    bold:  { name: 'Calibri', size: 9, bold: true },
+    total: { name: 'Calibri', size: 9, bold: true, color: { argb: 'FF000000' } },
+    red:   { name: 'Calibri', size: 9, color: { argb: 'FFC00000' } },
+    redb:  { name: 'Calibri', size: 9, bold: true, color: { argb: 'FFC00000' } },
+    hdr:   { name: 'Calibri', size: 9, bold: true, color: { argb: 'FF000000' } },
+  };
+
+  // 수불부 전용 numCell/txtCell (FS 사용)
+  const sNumCell = (r, c, v, fill, bold=false) => {
+    const nv = Math.round(toN(v));
+    const cell = ws.getCell(r, c);
+    sc(cell, {
+      value: nv, font: nv < 0 ? (bold ? FS.redb : FS.red) : (bold ? FS.total : FS.base),
+      fill: fill || FILL.odd, alignment: AL('right'), border: BORDER_DATA, numFmt: NUM_FMT,
+    });
+  };
+  const sTxtCell = (r, c, v, fill, bold=false, center=false) => {
+    sc(ws.getCell(r, c), {
+      value: v || null, font: bold ? FS.bold : FS.base,
+      fill: fill || FILL.odd, alignment: AL(center ? 'center' : 'left'), border: BORDER_DATA,
+    });
+  };
   titleRow(ws, 1, 1, '원가집계표', 13, 30);
   ws.getCell(1, 1).font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FF000000' } };
   ws.getCell(1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
-  txtCell(ws, 2, 1, '회사명 : GC케어', null, true);
-  txtCell(ws, 2, 13, '-VAT', null, false, true);  // M열(13)으로 이동
+  sTxtCell(ws, 2, 1, '회사명 : GC케어', null, true);
+  sTxtCell(ws, 2, 13, '-VAT', null, false, true);  // M열(13)으로 이동
   [['품목코드', 1], ['품목명', 2], ['구분', 3], ['기초', 4], ['증가', 7], ['감소', 9], ['기말', 11]]
     .forEach(([v, c]) => hdrCell(ws, 3, c, v));
   ws.mergeCells(3, 4, 3, 6); ws.mergeCells(3, 7, 3, 8); ws.mergeCells(3, 9, 3, 10); ws.mergeCells(3, 11, 3, 13);
@@ -1557,16 +1583,16 @@ function writeSubul(ws, year, month, branch, items, R) {
     const accCell = (c, v) => {
       const cell = ws.getCell(r, c);
       cell.value = Math.round(toN(v));
-      cell.font = cell.value < 0 ? F.red : F.base;
+      cell.font = cell.value < 0 ? FS.red : FS.base;
       cell.fill = fill || FILL.odd;
       cell.alignment = AL('right');
       cell.border = BORDER_DATA;
       cell.numFmt = NUM_FMT;
     };
 
-    txtCell(ws, r, 1, it.code, FILL.odd);
-    txtCell(ws, r, 2, it.name, typeFill);
-    txtCell(ws, r, 3, it.type, typeFill, false, true);
+    sTxtCell(ws, r, 1, it.code, FILL.odd);
+    sTxtCell(ws, r, 2, it.name, typeFill);
+    sTxtCell(ws, r, 3, it.type, typeFill, false, true);
     accCell(4,  기초수량);
     accCell(5,  0);  // 기초단가
     accCell(6,  기초);
@@ -1615,11 +1641,11 @@ function writeSubul(ws, year, month, branch, items, R) {
     return s;
   }, 0);
   [['소모품', somoItems, FILL.gc], ['시약', siyakItems, FILL.imed]].forEach(([lbl, arr, fill]) => {
-    txtCell(ws, r, 3, lbl, fill, true, true);
-    numCell(ws, r, 6,  subSum(arr,'기초'), fill);
-    numCell(ws, r, 8,  subSum(arr,'증가'), fill);
-    numCell(ws, r, 10, subSum(arr,'감소'), fill);
-    numCell(ws, r, 13, subSum(arr,'기말'), fill);
+    sTxtCell(ws, r, 3, lbl, fill, true, true);
+    sNumCell(ws, r, 6,  subSum(arr,'기초'), fill);
+    sNumCell(ws, r, 8,  subSum(arr,'증가'), fill);
+    sNumCell(ws, r, 10, subSum(arr,'감소'), fill);
+    sNumCell(ws, r, 13, subSum(arr,'기말'), fill);
     ws.getRow(r).height = 18; r++;
   });
 
@@ -1660,9 +1686,9 @@ function writeSubul(ws, year, month, branch, items, R) {
     hdrCell(ws, r, 11, '비고');
     ws.getRow(r).height = 18; r++;
     // 데이터행
-    numCell(ws, r, 8,  supV, dataFill);
-    numCell(ws, r, 9,  vatV, dataFill);
-    numCell(ws, r, 10, totV, dataFill);
+    sNumCell(ws, r, 8,  supV, dataFill);
+    sNumCell(ws, r, 9,  vatV, dataFill);
+    sNumCell(ws, r, 10, totV, dataFill);
     const bc = ws.getCell(r, 11);
     bc.value=bigoText; bc.font=F.bold; bc.fill=FILL.warn; bc.alignment=AL('center'); bc.border=BORDER_THIN;
     if (memo) {
@@ -1685,7 +1711,7 @@ function writeSubul(ws, year, month, branch, items, R) {
   const subulSiyk = subSum(siyakItems,'감소');
   [['소모품', subulSomo, uSup(usageSomo)], ['시약', subulSiyk, uSup(usageSiyk)]].forEach(([lbl, subulVal, usageVal]) => {
     const diffVal = Math.round(subulVal - usageVal);
-    txtCell(ws, r, 9, lbl, null, false, false);
+    sTxtCell(ws, r, 9, lbl, null, false, false);
     const dc = ws.getCell(r, 10);
     dc.value = diffVal;
     dc.font = diffVal !== 0
@@ -1708,17 +1734,17 @@ function writeSubul(ws, year, month, branch, items, R) {
     [u5Sup(somo5), u5Vat(somo5), u5Tot(somo5)],
     [u5Sup(siyk5), u5Vat(siyk5), u5Tot(siyk5)]
   ]].forEach(([tag, tagFill, somoRow, siykRow]) => {
-    txtCell(ws, r, 6, '사용현황자료', FILL.subtot, true, true);
+    sTxtCell(ws, r, 6, '사용현황자료', FILL.subtot, true, true);
     const tc=ws.getCell(r,7); tc.value=tag; tc.font=F.bold; tc.fill=tagFill; tc.alignment=AL('center'); tc.border=BORDER_THIN;
     hdrCell(ws, r, 8, '공급가액');
     hdrCell(ws, r, 9, '부가세액');
     hdrCell(ws, r, 10, '계');
     ws.getRow(r).height = 18; r++;
     [['소모품', somoRow], ['시약', siykRow]].forEach(([lbl,[sup,vat,tot]]) => {
-      txtCell(ws, r, 7, lbl, FILL.odd, false, true);
-      numCell(ws, r, 8, sup, FILL.odd);
-      numCell(ws, r, 9, vat, FILL.odd);
-      numCell(ws, r, 10, tot, FILL.odd);
+      sTxtCell(ws, r, 7, lbl, FILL.odd, false, true);
+      sNumCell(ws, r, 8, sup, FILL.odd);
+      sNumCell(ws, r, 9, vat, FILL.odd);
+      sNumCell(ws, r, 10, tot, FILL.odd);
       ws.getRow(r).height = 18; r++;
     });
     r++;
