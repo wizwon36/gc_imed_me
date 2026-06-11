@@ -42,7 +42,13 @@
   #itemSearchResult { order: 4; width: 100%; }
   #itemFilterStatus { display: none !important; }
 
-  /* 구분 컬럼 너비 확보 */
+  /* 페이지네이션 버튼 축소 */
+  #itemPagination button {
+    padding: 4px 7px !important;
+    font-size: 11px !important;
+    min-width: 28px !important;
+  }
+  #itemPagination { flex-wrap: wrap !important; }
   .cl-vendor-table th:nth-child(3),
   .cl-vendor-table td:nth-child(3) { width: 42px !important; min-width: 42px !important; }
 
@@ -419,13 +425,6 @@
 
             <!-- 검색 / 필터 -->
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-              <div style="position:relative;flex:1;min-width:200px;">
-                <input type="text" id="itemSearchInput" placeholder="자재코드 또는 자재명 검색..."
-                  onkeydown="if(event.key==='Enter')onItemSearch()"
-                  style="width:100%;border:1px solid var(--border-input);border-radius:6px;padding:7px 12px 7px 32px;font-size:13px;">
-                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">🔍</span>
-              </div>
-              <button class="btn btn-primary" onclick="onItemSearch()" style="padding:7px 14px;font-size:13px;">검색</button>
               <select id="itemFilterType" onchange="onItemSearch()" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 10px;font-size:13px;">
                 <option value="all">전체 구분</option>
                 <option value="시약">시약</option>
@@ -437,6 +436,13 @@
                 <option value="사용">사용</option>
                 <option value="폐기">폐기</option>
               </select>
+              <div style="position:relative;flex:1;min-width:200px;">
+                <input type="text" id="itemSearchInput" placeholder="자재코드 또는 자재명 검색..."
+                  onkeydown="if(event.key==='Enter')onItemSearch()"
+                  style="width:100%;border:1px solid var(--border-input);border-radius:6px;padding:7px 12px 7px 32px;font-size:13px;">
+                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">🔍</span>
+              </div>
+              <button class="btn btn-primary" onclick="onItemSearch()" style="padding:7px 14px;font-size:13px;">검색</button>
               <span id="itemSearchResult" style="font-size:12px;color:var(--text-muted);white-space:nowrap;"></span>
             </div>
 
