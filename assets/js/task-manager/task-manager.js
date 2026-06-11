@@ -703,9 +703,9 @@
    *   [05/20 화]
    *     🟢 [시설] 제목 (예정)
    */
-  // description 여러 줄 처리: 모든 줄을 동일한 들여쓰기(8공백)로 추가
+  // description 여러 줄 처리: 모든 줄을 동일한 들여쓰기(4공백)로 추가
   function pushDescription(lines, description) {
-    const indent = '        ';  // 8공백
+    const indent = '    ';  // 4공백
     const descLines = description.trim().split('\n');
     descLines.forEach(function(line) {
       lines.push(indent + line);
@@ -799,7 +799,7 @@
     const trimmed = line.trim();
     // 들여쓰기 4자 이상으로 시작하며 bullet/섹션헤더가 아닌 줄
     if (/^ {4,}/.test(line) && !trimmed.startsWith('•') && !trimmed.startsWith('[') && trimmed !== '') {
-      return '        ' + trimmed;
+      return '    ' + trimmed;
     }
     return line;
   }
@@ -2020,7 +2020,7 @@
           lines.push('  • ' + (t.title||'') + pri + '  [' + st + ']' + (end ? '  '+mm+'/'+dd+' ~ '+end.trim() : ''));
           if (t.description && t.description.trim()) {
             t.description.trim().split('\n').forEach(dl => {
-              if (dl.trim()) lines.push('        ' + dl.trim());
+              if (dl.trim()) lines.push('    ' + dl.trim());
             });
           }
         });
@@ -2301,7 +2301,7 @@
             lines.push('  • ' + (t.title||'') + pri + '  [' + st + ']');
             if (t.description && t.description.trim()) {
               t.description.trim().split('\n').forEach(dl => {
-                if (dl.trim()) lines.push('        ' + dl.trim());
+                if (dl.trim()) lines.push('    ' + dl.trim());
               });
             }
           });
