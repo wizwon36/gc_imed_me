@@ -3439,10 +3439,11 @@ function _renderItemPagination() {
   html += `<button onclick="_renderItemPage(${cur + 1});_renderItemPagination()"
     ${cur === totalPages ? 'disabled' : ''} ${btnStyle(false)}>›</button>`;
 
-  // 페이지 정보
+  // 페이지 정보 (별도 줄)
   const start = (cur - 1) * ITEM_PAGE_SIZE + 1;
   const end   = Math.min(cur * ITEM_PAGE_SIZE, total);
-  html += `<span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${start}–${end} / ${total}건</span>`;
+  html = `<div style="display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:nowrap;">${html}</div>`
+       + `<div style="width:100%;text-align:center;font-size:12px;color:var(--text-muted);margin-top:4px;">${start}–${end} / ${total}건</div>`;
 
   wrap.innerHTML = html;
 }
