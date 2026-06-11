@@ -1764,7 +1764,9 @@ async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
   // 기존 파일 파싱
   const existingWb = new ExcelJS.Workbook();
   try {
-    await existingWb.xlsx.load(existingBytes.buffer || existingBytes);
+    await existingWb.xlsx.load(existingBytes.buffer || existingBytes, {
+      ignoreNodes: ['dataValidations', 'conditionalFormattings', 'extLst']
+    });
   } catch (e) {
     throw new Error('기존 파일 로드 실패: ' + e.message);
   }
@@ -1804,13 +1806,15 @@ function copyWorksheet_(src, dst) {
     const dstRow = dst.getRow(rn);
     if (row.height) dstRow.height = row.height;
     row.eachCell({ includeEmpty: true }, (cell, cn) => {
-      const dstCell = dstRow.getCell(cn);
-      dstCell.value = cell.value;
-      if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
-      if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
-      if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
-      if (cell.alignment) dstCell.alignment = Object.assign({}, cell.alignment);
-      if (cell.border)    dstCell.border    = Object.assign({}, cell.border);
+      try {
+        const dstCell = dstRow.getCell(cn);
+        dstCell.value = cell.value;
+        if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
+        if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
+        if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
+        if (cell.alignment) dstCell.alignment = Object.assign({}, cell.alignment);
+        if (cell.border)    dstCell.border    = Object.assign({}, cell.border);
+      } catch (_) {}
     });
     dstRow.commit();
   });
