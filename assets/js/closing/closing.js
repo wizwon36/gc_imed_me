@@ -1783,7 +1783,12 @@ function copyWorksheet_(src, dst) {
   // 병합셀 먼저 적용 (model.merges 사용)
   const merges = src.model?.merges || Object.keys(src._merges || {});
   merges.forEach(range => {
-    try { dst.mergeCells(range); } catch (_) {}
+    try {
+      // A1:B2 형식인지 확인 (단일 셀 주소는 스킵)
+      if (typeof range === 'string' && range.includes(':')) {
+        dst.mergeCells(range);
+      }
+    } catch (_) {}
   });
 
   // 행 복사 (값, 서식)
