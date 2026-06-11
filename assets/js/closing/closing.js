@@ -601,14 +601,15 @@ async function runProcessing() {
   } catch (err) {
     clog('처리 중 오류: ' + err.message, 'err');
     showMessage('처리 중 오류가 발생했습니다: ' + err.message, 'error');
-    // 오류 시에도 버튼 활성화 (확인 가능하도록)
+    // 오류 시 버튼 비활성 유지하고 Step 1로 복귀 버튼 표시
     const btnGo = document.getElementById('btnGoResult');
     if (btnGo) {
       btnGo.disabled = false;
       btnGo.style.opacity = '1';
       btnGo.style.cursor = 'pointer';
-      btnGo.textContent = '⚠ 오류 — 로그 확인';
+      btnGo.textContent = '↩ 파일 다시 업로드';
       btnGo.style.background = '#dc2626';
+      btnGo.onclick = () => { App.R = {}; App.ipgoRaw = null; App.usageRaw = null; goStep(1); };
     }
   }
 }
