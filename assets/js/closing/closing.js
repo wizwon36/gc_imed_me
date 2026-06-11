@@ -584,6 +584,7 @@ async function runProcessing() {
       }
     } catch (e) {
       clog('수불부 처리 실패: ' + e.message, 'warn');
+      clog('수불부 실패 상세: ' + (e.stack || '').split('\n')[1], 'warn');
     }
 
     clog('모든 처리 완료!', 'ok');
