@@ -7,6 +7,34 @@
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="../../assets/css/pages/closing.css" />
 </head>
+<style>
+@media (max-width: 768px) {
+  /* 자재코드 탭만 표시 */
+  #tabClosing, #tabVendor { display: none !important; }
+  #tabItem { border-bottom: 2px solid var(--primary, #2563eb); color: var(--primary, #2563eb); }
+
+  /* 자재코드 탭 - 추가 기능 숨김 */
+  #itemFileInput,
+  label[for="itemFileInput"],
+  #btnSaveItems,
+  #itemUploadPreview,
+  .card:has(#btnGCKare),
+  #itemSummaryRow { display: none !important; }
+
+  /* 테이블 수정 컬럼 숨김 */
+  #itemTbody tr td:last-child,
+  .cl-vendor-table thead tr th:last-child { display: none !important; }
+
+  /* 헤더 버튼 영역 숨김 */
+  #tabItemContent .card-body > div:first-child > div:last-child { display: none !important; }
+
+  /* 초기 재고 업로드 카드 숨김 */
+  #tabItemContent .card + .card { display: none !important; }
+
+  /* 월마감/거래처 탭 콘텐츠 숨김 */
+  #tabClosingContent, #tabVendorContent { display: none !important; }
+}
+</style>
 <body class="portal-page">
   <div class="container page-shell">
 
