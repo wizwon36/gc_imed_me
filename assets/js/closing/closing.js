@@ -1417,6 +1417,13 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
     [5,''], [6,''], [7,'공급가액'], [8,''],
     [9,'기준일'], [10,'적요'], [11,''], [12,'CC'], [13,'지급일'], [14,'전표번호']
   ].forEach(([c,v]) => hdrCell(ws, 3, c, v || ' '));
+
+  // D~L열(4~12) 헤더 노란색으로 덮어씌우기
+  const FILL_YELLOW = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+  for (let c = 4; c <= 12; c++) {
+    ws.getCell(3, c).fill = FILL_YELLOW;
+  }
+
   ws.getRow(3).height = 18;
 
   // 데이터 행
