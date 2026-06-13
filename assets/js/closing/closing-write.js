@@ -1902,15 +1902,19 @@ async function confirmClosing() {
     const gcUsageItems   = usageItems.filter(it => it.report_type === 'GC케어');
     const imedUsageItems = usageItems.filter(it => it.report_type === '아이메드');
 
-    // end_amount를 해당 부서/그룹 행에 추가
-    gcUsageItems.forEach(it => {
-      const g = gcDeptToGroupEnd[it.dept] || it.dept;
-      if (gcEndMap[g] !== undefined) it.end_amount = Math.round(gcEndMap[g]);
-    });
-    imedUsageItems.forEach(it => {
-      const g = resolveGroup(it.dept);
-      if (imedEndMap[g] !== undefined) it.end_amount = Math.round(imedEndMap[g]);
-    });
+    // end_amount: GC케어는 시약에만, 아이메드는 의약품에만 붙임
+    gcUsageItems
+      .filter(it => it.item_type === '시약')
+      .forEach(it => {
+        const g = gcDeptToGroupEnd[it.dept] || it.dept;
+        if (gcEndMap[g] !== undefined) it.end_amount = Math.round(gcEndMap[g]);
+      });
+    imedUsageItems
+      .filter(it => it.item_type === '의약품')
+      .forEach(it => {
+        const g = resolveGroup(it.dept);
+        if (imedEndMap[g] !== undefined) it.end_amount = Math.round(imedEndMap[g]);
+      });
 
     if (gcUsageItems.length > 0) {
       await apiPost('closingSaveUsageMonthly', {
@@ -1938,31 +1942,9 @@ async function confirmClosing() {
     statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
     showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
 
-    // ── 수불부 Drive 저장: 백그라운드 처리 (완료 표시에 영향 없음)
-    if (R.subulSheetBuf && R.subulFileId && R.subulSheetName) {
-      try {
-        showGlobalLoading('수불부 저장 중...');
-        // btoa+reduce는 대용량에서 stack overflow → 청크 방식으로 변환
-        const bytes = new Uint8Array(R.subulSheetBuf);
-        const chunkSize = 8192;
-        let binary = '';
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-        }
-        const base64 = btoa(binary);
-        await apiPost('closingInsertSubulSheet', {
-          request_user_email: user?.email,
-          file_id:    R.subulFileId,
-          sheet_name: R.subulSheetName,
-          sheet_xlsx: base64,
-        });
-        clog('수불부 Drive 저장 완료', 'ok');
-      } catch (e) {
-        clog('수불부 Drive 저장 실패: ' + e.message, 'warn');
-      } finally {
-        await hideGlobalLoading();
-      }
-    }
+    // ── 수불부 Drive 자동 저장: 현재 비활성화 (수동 다운로드 이용)
+    // zip 재조립 방식 안정화 후 재개 예정
+    clog('수불부 Drive 자동 저장 생략', 'info');
   } catch (e) {
     await hideGlobalLoading();
     showMessage('마감 확정 중 오류: ' + e.message, 'error');
