@@ -1036,6 +1036,18 @@ async function loadClosingHistory() {
 
   try {
     showGlobalLoading('마감 현황 로드 중...');
+
+    // 카드 영역 스켈레톤 표시
+    const wrap = document.getElementById('historyTableWrap');
+    if (wrap) {
+      wrap.innerHTML = `<div class="hist-grid">${Array(12).fill(0).map(() => `
+        <div class="hist-card hist-card--skeleton">
+          <div class="skel skel--title"></div>
+          <div class="skel skel--badge"></div>
+          <div class="skel skel--text"></div>
+        </div>`).join('')}</div>`;
+    }
+
     const user = window.auth?.getSession?.();
 
     const [stockRes, usageRes] = await Promise.all([
