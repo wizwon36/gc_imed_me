@@ -1307,8 +1307,14 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
           (yearMap[yr][groupName]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
         if (mon === '01' && u.base_amount)
           yearMap[yr][groupName].base = (yearMap[yr][groupName].base || 0) + Math.round(u.base_amount / 1000);
-        if (mon === '12' && u.end_amount)
-          yearMap[yr][groupName].end  = (yearMap[yr][groupName].end  || 0) + Math.round(u.end_amount  / 1000);
+        // end_amount: 연도별 가장 마지막 달 기준으로 덮어씀 (B안)
+        if (u.end_amount) {
+          const prev = yearMap[yr][groupName]._endMon || '00';
+          if (mon >= prev) {
+            yearMap[yr][groupName].end    = Math.round(u.end_amount / 1000);
+            yearMap[yr][groupName]._endMon = mon;
+          }
+        }
       });
 
     // 당월 추가 (그룹별 원단위 합산 후 /1000)
@@ -1473,10 +1479,15 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
         yearMap[yr][groupName].base += Math.round(u.base_amount / 1000);
       }
-      if (mon === '12' && u.end_amount) {
+      // end_amount: 연도별 가장 마지막 달 기준으로 덮어씀 (B안)
+      if (u.end_amount) {
         if (!yearMap[yr]) yearMap[yr] = {};
         if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
-        yearMap[yr][groupName].end += Math.round(u.end_amount / 1000);
+        const prev = yearMap[yr][groupName]._endMon || '00';
+        if (mon >= prev) {
+          yearMap[yr][groupName].end    = Math.round(u.end_amount / 1000);
+          yearMap[yr][groupName]._endMon = mon;
+        }
       }
     });
 
@@ -1835,7 +1846,7 @@ async function confirmClosing() {
         items.push({
           dept:           g,
           item_code:      '',
-          item_name:      '의약품',
+          item_name:      '',
           item_type:      '의약품',
           closing_qty:    0,
           closing_amount: end,
