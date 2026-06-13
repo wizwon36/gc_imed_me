@@ -18,36 +18,38 @@
   color: #2563eb;
 }
 
-/* ── 제작 종류 선택 카드 ── */
+/* ── 제작 종류 선택 (pill 탭 형태) ── */
 .signage-type-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  width: fit-content;
 }
 
 .signage-type-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 28px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: var(--radius-lg);
-  background: #f9fafb;
+  gap: 8px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 7px;
+  background: none;
   cursor: pointer;
-  text-align: center;
-  transition: border-color .15s, background .15s, box-shadow .15s;
+  text-align: left;
+  transition: color .15s, background .15s, box-shadow .15s;
   position: relative;
 }
-.signage-type-card:hover { border-color: #93c5fd; background: #eff6ff; }
+.signage-type-card:hover { background: #e2e8f0; }
 .signage-type-card.is-selected {
-  border-color: #2563eb;
-  background: #eff6ff;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
 }
-.signage-type-icon { font-size: 34px; line-height: 1; }
-.signage-type-title { font-size: 17px; font-weight: 800; color: #0b1f44; }
-.signage-type-desc { font-size: 13px; color: #6b7280; line-height: 1.5; }
+.signage-type-icon { font-size: 18px; line-height: 1; }
+.signage-type-title { font-size: 13px; font-weight: 700; color: #0b1f44; white-space: nowrap; }
+.signage-type-desc { display: none; }
 
 /* ── 파일 업로드 목록 (equipment-form.css의 photo-upload-box 안에서 사용) ── */
 .signage-file-preview {
