@@ -1055,22 +1055,14 @@ async function loadClosingHistory() {
 
 function renderHistoryTable(year, branch, stockData, usageData) {
   const wrap = document.getElementById('historyTableWrap');
-
-  // 월별 집계
   const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-  const monthMap = {};
-  months.forEach(m => {
-    monthMap[m] = {
-      confirmed_at: null, confirmed_by: null,
-      gcSiyak: 0, gcSomoum: 0,
-      imedDrug: 0,
-    };
-  });
+  const DELETABLE_FROM = '2026-05';
 
-  // 마감 확정 정보 (closing_stock에서 confirmed_at/by 추출)
+  const monthMap = {};
+  months.forEach(m => { monthMap[m] = { confirmed_at: null, confirmed_by: null }; });
+
   stockData.forEach(s => {
-    const ym = String(s.ym || '');
-    const mon = ym.split('-')[1];
+    const mon = String(s.ym || '').split('-')[1];
     if (!mon || !monthMap[mon]) return;
     if (!monthMap[mon].confirmed_at && s.confirmed_at) {
       monthMap[mon].confirmed_at = s.confirmed_at;
@@ -1078,20 +1070,6 @@ function renderHistoryTable(year, branch, stockData, usageData) {
     }
   });
 
-  // 사용 금액 집계
-  usageData.forEach(u => {
-    const ym = String(u.ym || '');
-    const mon = ym.split('-')[1];
-    if (!mon || !monthMap[mon]) return;
-    const type = String(u.item_type || '');
-    const rt   = String(u.report_type || '');
-    const amt  = Number(u.usage_amount) || 0;
-    if (rt === 'GC케어' && type === '시약')   monthMap[mon].gcSiyak  += amt;
-    if (rt === 'GC케어' && type === '소모품') monthMap[mon].gcSomoum += amt;
-    if (rt === '아이메드' && type === '의약품') monthMap[mon].imedDrug += amt;
-  });
-
-  const fmt = v => v ? v.toLocaleString() : '-';
   const fmtDate = v => {
     if (!v) return '-';
     const s = String(v);
@@ -1099,27 +1077,26 @@ function renderHistoryTable(year, branch, stockData, usageData) {
   };
 
   const rows = months.map(m => {
-    const d = monthMap[m];
-    const done    = !!d.confirmed_at;
-    const hasData = d.gcSiyak || d.gcSomoum || d.imedDrug;
+    const d   = monthMap[m];
+    const done = !!d.confirmed_at;
+    const ym   = `${year}-${m}`;
+    const canDelete = done && ym >= DELETABLE_FROM && App.canEdit;
+
     const statusBadge = done
       ? '<span class="hist-badge hist-badge--done">✓ 확정</span>'
-      : hasData
-        ? '<span class="hist-badge hist-badge--wip">진행중</span>'
-        : '<span class="hist-badge hist-badge--none">-</span>';
+      : '<span class="hist-badge hist-badge--none">미완료</span>';
 
-    const rowCls = done ? 'hist-row--done' : hasData ? 'hist-row--wip' : 'hist-row--none';
+    const deleteBtn = canDelete
+      ? `<button class="hist-btn-del" onclick="deleteClosing('${year}','${m}','${branch}')">🗑 삭제</button>`
+      : '';
 
     return `
-      <tr class="hist-row ${rowCls}">
+      <tr class="hist-row ${done ? 'hist-row--done' : 'hist-row--none'}">
         <td class="hist-td hist-td--month">${year.slice(2)}년 ${parseInt(m)}월</td>
         <td class="hist-td hist-td--center">${statusBadge}</td>
-        <td class="hist-td hist-td--num hist-td--gc">${done ? fmt(d.gcSiyak) : '-'}</td>
-        <td class="hist-td hist-td--num hist-td--gc">${done ? fmt(d.gcSomoum) : '-'}</td>
-        <td class="hist-td hist-td--num hist-td--imed">${done ? fmt(d.imedDrug) : '-'}</td>
         <td class="hist-td hist-td--meta">${fmtDate(d.confirmed_at)}</td>
         <td class="hist-td hist-td--meta">${d.confirmed_by ? d.confirmed_by.split('@')[0] : '-'}</td>
-        <td class="hist-td hist-td--center"></td>
+        <td class="hist-td hist-td--center">${deleteBtn}</td>
       </tr>`;
   }).join('');
 
@@ -1128,24 +1105,33 @@ function renderHistoryTable(year, branch, stockData, usageData) {
       <table class="hist-table">
         <thead>
           <tr>
-            <th class="hist-th">월</th>
-            <th class="hist-th hist-th--center">상태</th>
-            <th class="hist-th hist-th--num hist-th--gc" colspan="2">GC케어 사용금액</th>
-            <th class="hist-th hist-th--num hist-th--imed">아이메드 의약품</th>
+            <th class="hist-th" style="width:120px;">월</th>
+            <th class="hist-th hist-th--center" style="width:100px;">상태</th>
             <th class="hist-th">확정 일시</th>
             <th class="hist-th">담당자</th>
-
+            <th class="hist-th hist-th--center" style="width:100px;">관리</th>
           </tr>
-          <tr class="hist-sub-header">
-            <th class="hist-th-sub"></th>
-            <th class="hist-th-sub"></th>
-            <th class="hist-th-sub hist-th--num hist-th--gc">시약</th>
-            <th class="hist-th-sub hist-th--num hist-th--gc">소모품</th>
-            <th class="hist-th-sub hist-th--num hist-th--imed">의약품</th>
-            <th class="hist-th-sub"></th>
-            <th class="hist-th-sub"></th>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+}
+
+async function deleteClosing(year, mon, branch) {
+  const ym = `${year}-${mon}`;
+  if (!confirm(`${year}년 ${parseInt(mon)}월 ${branch} 마감 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+  try {
+    showGlobalLoading('마감 데이터 삭제 중...');
+    const user = window.auth?.getSession?.();
+    await apiPost('closingDeleteData', {
+      request_user_email: user?.email,
+      ym, branch,
+    });
+    showMessage(`${year}년 ${parseInt(mon)}월 마감 데이터가 삭제됐습니다.`, 'success');
+    await loadClosingHistory();
+  } catch (e) {
+    showMessage('삭제 실패: ' + e.message, 'error');
+  } finally {
+    await hideGlobalLoading();
+  }
 }
