@@ -364,6 +364,9 @@
   background: #f8fafc;
   opacity: .7;
 }
+.hist-card__top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
 .hist-card__month {
   font-size: 20px; font-weight: 800;
   color: var(--text-primary);
@@ -384,13 +387,12 @@
 .hist-card__date { font-size: 11px; color: #64748b; }
 .hist-card__by   { font-size: 11px; color: #94a3b8; }
 .hist-card__del {
-  margin-top: 4px;
-  padding: 4px 10px;
+  padding: 3px 7px;
   border: 1px solid #fecaca; border-radius: 6px;
-  background: #fff; font-size: 11px; cursor: pointer;
-  color: #dc2626; font-weight: 600;
-  width: fit-content;
+  background: #fff; font-size: 13px; cursor: pointer;
+  color: #dc2626; line-height: 1;
   transition: border-color .15s, background .15s;
+  flex-shrink: 0;
 }
 .hist-card__del:hover { border-color: #dc2626; background: #fef2f2; }
 
