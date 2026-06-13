@@ -956,8 +956,8 @@ function buildDeptUsageForMonthly(R) {
 
   const gcMap = {}, imedMap = {};
 
-  // GC케어: 시약 + 소모품 → 그룹명으로 합산
-  [...R.usageSiyak, ...R.usageSomoum].forEach(r => {
+  // GC케어: 시약만 저장 (소모품은 closing_usage_monthly 저장 대상 아님)
+  R.usageSiyak.forEach(r => {
     const rawDept = String(r['부서명'] || '').trim(); if (!rawDept) return;
     const dept = resolveGroup(rawDept);
     const type = String(r['자재구분'] || '').trim();
