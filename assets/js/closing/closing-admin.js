@@ -1073,48 +1073,40 @@ function renderHistoryTable(year, branch, stockData, usageData) {
   const fmtDate = v => {
     if (!v) return '-';
     const s = String(v);
-    return s.length > 16 ? s.slice(0, 16) : s;
+    // "Mon Jun 08 2026" → "2026-06-08" 형태로 변환 시도
+    const d = new Date(s);
+    if (!isNaN(d)) return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    return s.length > 10 ? s.slice(0, 10) : s;
   };
 
-  const rows = months.map(m => {
-    const d   = monthMap[m];
+  const cards = months.map(m => {
+    const d    = monthMap[m];
     const done = !!d.confirmed_at;
     const ym   = `${year}-${m}`;
     const canDelete = done && ym >= DELETABLE_FROM && App.canEdit;
+    const mon  = parseInt(m);
 
-    const statusBadge = done
-      ? '<span class="hist-badge hist-badge--done">✓ 확정</span>'
-      : '<span class="hist-badge hist-badge--none">미완료</span>';
-
-    const deleteBtn = canDelete
-      ? `<button class="hist-btn-del" onclick="deleteClosing('${year}','${m}','${branch}')">🗑 삭제</button>`
-      : '';
-
-    return `
-      <tr class="hist-row ${done ? 'hist-row--done' : 'hist-row--none'}">
-        <td class="hist-td hist-td--month">${year.slice(2)}년 ${parseInt(m)}월</td>
-        <td class="hist-td hist-td--center">${statusBadge}</td>
-        <td class="hist-td hist-td--meta">${fmtDate(d.confirmed_at)}</td>
-        <td class="hist-td hist-td--meta">${d.confirmed_by ? d.confirmed_by.split('@')[0] : '-'}</td>
-        <td class="hist-td hist-td--center">${deleteBtn}</td>
-      </tr>`;
+    if (done) {
+      return `
+        <div class="hist-card hist-card--done">
+          <div class="hist-card__month">${mon}월</div>
+          <div class="hist-card__badge hist-card__badge--done">✓ 확정</div>
+          <div class="hist-card__meta">
+            <span class="hist-card__date">${fmtDate(d.confirmed_at)}</span>
+            <span class="hist-card__by">${d.confirmed_by ? d.confirmed_by.split('@')[0] : ''}</span>
+          </div>
+          ${canDelete ? `<button class="hist-card__del" onclick="deleteClosing('${year}','${m}','${branch}')">🗑 삭제</button>` : ''}
+        </div>`;
+    } else {
+      return `
+        <div class="hist-card hist-card--none">
+          <div class="hist-card__month">${mon}월</div>
+          <div class="hist-card__badge hist-card__badge--none">미완료</div>
+        </div>`;
+    }
   }).join('');
 
-  wrap.innerHTML = `
-    <div class="hist-wrap">
-      <table class="hist-table">
-        <thead>
-          <tr>
-            <th class="hist-th" style="width:120px;">월</th>
-            <th class="hist-th hist-th--center" style="width:100px;">상태</th>
-            <th class="hist-th">확정 일시</th>
-            <th class="hist-th">담당자</th>
-            <th class="hist-th hist-th--center" style="width:100px;">관리</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+  wrap.innerHTML = `<div class="hist-grid">${cards}</div>`;
 }
 
 async function deleteClosing(year, mon, branch) {
