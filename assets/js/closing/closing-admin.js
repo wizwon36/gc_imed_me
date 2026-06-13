@@ -988,3 +988,168 @@ function cancelUsageInit() {
     if (fi) fi.value = '';
   });
 }
+
+// ═══════════════════════════════════════════════════════════
+// 마감 현황 탭
+// ═══════════════════════════════════════════════════════════
+
+let _historyInited = false;
+
+async function initHistoryTab() {
+  // 연도 셀렉트 초기화
+  const yearSel = document.getElementById('historyYearSelect');
+  if (yearSel && !yearSel.options.length) {
+    const curYear = new Date().getFullYear();
+    for (let y = curYear; y >= curYear - 3; y--) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y + '년';
+      yearSel.appendChild(opt);
+    }
+  }
+
+  // 지점 셀렉트 초기화 (입고 설정의 inputBranch와 동기)
+  const branchSel = document.getElementById('historyBranchSelect');
+  if (branchSel && !branchSel.options.length) {
+    const srcSel = document.getElementById('inputBranch');
+    if (srcSel) {
+      Array.from(srcSel.options).forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.value; opt.textContent = o.textContent;
+        branchSel.appendChild(opt);
+      });
+      branchSel.value = srcSel.value;
+    }
+  }
+
+  await loadClosingHistory();
+}
+
+async function loadClosingHistory() {
+  const yearSel   = document.getElementById('historyYearSelect');
+  const branchSel = document.getElementById('historyBranchSelect');
+  const wrap      = document.getElementById('historyTableWrap');
+  if (!yearSel || !branchSel || !wrap) return;
+
+  const year   = yearSel.value;
+  const branch = branchSel.value;
+  if (!year || !branch) return;
+
+  wrap.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">로드 중...</div>';
+
+  try {
+    const user = window.auth?.getSession?.();
+
+    // closing_stock: 마감 확정 여부 (confirmed_at, confirmed_by)
+    const stockRes = await apiGet('closingGetStock', {
+      request_user_email: user?.email,
+      year, branch,
+    });
+    const stockData = Array.isArray(stockRes.data) ? stockRes.data : [];
+
+    // closing_usage_monthly: 사용 데이터 (GC케어/아이메드)
+    const usageRes = await apiGet('closingGetUsageMonthly', {
+      request_user_email: user?.email,
+      year, branch,
+    });
+    const usageData = Array.isArray(usageRes.data) ? usageRes.data : [];
+
+    renderHistoryTable(year, branch, stockData, usageData);
+  } catch (e) {
+    wrap.innerHTML = `<div style="text-align:center;color:#e74c3c;padding:40px;">로드 실패: ${e.message}</div>`;
+  }
+}
+
+function renderHistoryTable(year, branch, stockData, usageData) {
+  const wrap = document.getElementById('historyTableWrap');
+
+  // 월별 집계
+  const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+  const monthMap = {};
+  months.forEach(m => {
+    monthMap[m] = {
+      confirmed_at: null, confirmed_by: null,
+      gcSiyak: 0, gcSomoum: 0,
+      imedDrug: 0,
+    };
+  });
+
+  // 마감 확정 정보 (closing_stock에서 confirmed_at/by 추출)
+  stockData.forEach(s => {
+    const ym = String(s.ym || '');
+    const mon = ym.split('-')[1];
+    if (!mon || !monthMap[mon]) return;
+    if (!monthMap[mon].confirmed_at && s.confirmed_at) {
+      monthMap[mon].confirmed_at = s.confirmed_at;
+      monthMap[mon].confirmed_by = s.confirmed_by;
+    }
+  });
+
+  // 사용 금액 집계
+  usageData.forEach(u => {
+    const ym = String(u.ym || '');
+    const mon = ym.split('-')[1];
+    if (!mon || !monthMap[mon]) return;
+    const type = String(u.item_type || '');
+    const rt   = String(u.report_type || '');
+    const amt  = Number(u.usage_amount) || 0;
+    if (rt === 'GC케어' && type === '시약')   monthMap[mon].gcSiyak  += amt;
+    if (rt === 'GC케어' && type === '소모품') monthMap[mon].gcSomoum += amt;
+    if (rt === '아이메드' && type === '의약품') monthMap[mon].imedDrug += amt;
+  });
+
+  const fmt = v => v ? v.toLocaleString() : '-';
+  const fmtDate = v => {
+    if (!v) return '-';
+    const s = String(v);
+    return s.length > 16 ? s.slice(0, 16) : s;
+  };
+
+  const rows = months.map(m => {
+    const d = monthMap[m];
+    const done = !!d.confirmed_at;
+    const hasData = d.gcSiyak || d.gcSomoum || d.imedDrug;
+    const statusBadge = done
+      ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">✓ 확정</span>'
+      : hasData
+        ? '<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:10px;font-size:11px;">진행중</span>'
+        : '<span style="background:#f1f5f9;color:#94a3b8;padding:2px 8px;border-radius:10px;font-size:11px;">-</span>';
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;${done ? '' : 'color:#94a3b8;'}">
+        <td style="padding:10px 14px;font-weight:600;">${year.slice(2)}년 ${parseInt(m)}월</td>
+        <td style="padding:10px 14px;text-align:center;">${statusBadge}</td>
+        <td style="padding:10px 14px;text-align:right;">${done ? fmt(d.gcSiyak) : '-'}</td>
+        <td style="padding:10px 14px;text-align:right;">${done ? fmt(d.gcSomoum) : '-'}</td>
+        <td style="padding:10px 14px;text-align:right;">${done ? fmt(d.imedDrug) : '-'}</td>
+        <td style="padding:10px 14px;font-size:12px;color:#64748b;">${fmtDate(d.confirmed_at)}</td>
+        <td style="padding:10px 14px;font-size:12px;color:#64748b;">${d.confirmed_by ? d.confirmed_by.split('@')[0] : '-'}</td>
+        <td style="padding:10px 14px;text-align:center;">
+          ${done ? `<button onclick="dlHistoryReport('${year}','${m}','${branch}')"
+            style="padding:4px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;">
+            ⬇ 보고서
+          </button>` : ''}
+        </td>
+      </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+          <th style="padding:10px 14px;text-align:left;font-weight:600;">월</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:600;">상태</th>
+          <th style="padding:10px 14px;text-align:right;font-weight:600;">GC케어 시약</th>
+          <th style="padding:10px 14px;text-align:right;font-weight:600;">GC케어 소모품</th>
+          <th style="padding:10px 14px;text-align:right;font-weight:600;">아이메드 의약품</th>
+          <th style="padding:10px 14px;font-weight:600;">확정 일시</th>
+          <th style="padding:10px 14px;font-weight:600;">담당자</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:600;">산출물</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function dlHistoryReport(year, mon, branch) {
+  showMessage('보고서 다운로드는 월마감 자동화 탭에서 해당 월 데이터를 불러온 후 이용해주세요.', 'info');
+}
