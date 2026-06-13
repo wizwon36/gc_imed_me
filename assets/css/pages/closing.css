@@ -285,7 +285,7 @@
 /* ── 모바일 자재코드 전용 ────────────────────────────────── */
 @media (max-width: 768px) {
   /* 자재코드 탭만 표시 */
-  #tabClosing, #tabVendor { display: none !important; }
+  #tabClosing, #tabVendor, #tabHistory { display: none !important; }
   #tabItem { border-bottom: 2px solid #1a56db; color: #1a56db; }
 
   /* 자재코드 탭 - 추가 기능 숨김 */
@@ -301,8 +301,8 @@
   /* 초기 재고 업로드 카드 숨김 */
   #tabItemContent .card + .card { display: none !important; }
 
-  /* 월마감/거래처 탭 콘텐츠 숨김 */
-  #tabClosingContent, #tabVendorContent { display: none !important; }
+  /* 월마감/거래처/마감현황 탭 콘텐츠 숨김 */
+  #tabClosingContent, #tabVendorContent, #tabHistoryContent { display: none !important; }
 
   /* 검색/필터 영역 */
   #tabItemContent .card-body > div:nth-child(2) {
