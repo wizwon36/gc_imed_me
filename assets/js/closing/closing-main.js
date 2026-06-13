@@ -499,30 +499,36 @@ async function runProcessing() {
     const subulMap = {};
     const activeItems = App.items.filter(it => String(it.item_status || '사용').trim() === '사용');
     if (activeItems.length) {
-      activeItems.forEach(it => {
-        subulMap[it.item_code] = {
-          code: it.item_code, name: it.item_name,
-          type: it.item_type, 기초: 0, 기초수량: 0,
-          증가: 0, 증가수량: 0, 감소: 0, 감소수량: 0
-        };
-      });
+      activeItems
+        .filter(it => String(it.item_type || '').trim() !== '의약품')  // 의약품은 수불 대상 제외
+        .forEach(it => {
+          subulMap[it.item_code] = {
+            code: it.item_code, name: it.item_name,
+            type: it.item_type, 기초: 0, 기초수량: 0,
+            증가: 0, 증가수량: 0, 감소: 0, 감소수량: 0
+          };
+        });
       clog(`자재 마스터 ${activeItems.length}건 기준으로 수불 구성`, 'ok');
     } else {
       clog('자재 마스터 미등록 — 입고/사용 데이터 기준으로 수불 구성', 'warn');
     }
 
-    // 사용 집계
-    usageData.forEach(r => {
-      const code = String(r['자재코드'] || '').trim(); if (!code) return;
-      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: 0, 증가수량: 0, 감소: toN(r['사용공급가']), 감소수량: toN(r['사용수량(입)']) };
-      else { subulMap[code].감소 += toN(r['사용공급가']); subulMap[code].감소수량 += toN(r['사용수량(입)']); }
-    });
-    // 입고 집계
-    ipgoData.forEach(r => {
-      const code = String(r['자재코드'] || '').trim(); if (!code) return;
-      if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: toN(r['공급가액']), 증가수량: toN(r['수량']), 감소: 0, 감소수량: 0 };
-      else { subulMap[code].증가 += toN(r['공급가액']); subulMap[code].증가수량 += toN(r['수량']); }
-    });
+    // 사용 집계 (의약품 제외 — 의약품은 부서별 금액으로 별도 관리)
+    usageData
+      .filter(r => String(r['자재구분'] || '').trim() !== '의약품')
+      .forEach(r => {
+        const code = String(r['자재코드'] || '').trim(); if (!code) return;
+        if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: 0, 증가수량: 0, 감소: toN(r['사용공급가']), 감소수량: toN(r['사용수량(입)']) };
+        else { subulMap[code].감소 += toN(r['사용공급가']); subulMap[code].감소수량 += toN(r['사용수량(입)']); }
+      });
+    // 입고 집계 (의약품 제외)
+    ipgoData
+      .filter(r => String(r['자재구분'] || '').trim() !== '의약품')
+      .forEach(r => {
+        const code = String(r['자재코드'] || '').trim(); if (!code) return;
+        if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: toN(r['공급가액']), 증가수량: toN(r['수량']), 감소: 0, 감소수량: 0 };
+        else { subulMap[code].증가 += toN(r['공급가액']); subulMap[code].증가수량 += toN(r['수량']); }
+      });
 
     // 입고 파일에 자재 마스터 미등록 품목 경고
     let unregItems = [];
@@ -732,13 +738,13 @@ function renderResults() {
     <div class="cl-dl-card both" onclick="dlIpgo()">
       <span class="cl-dl-tag both">공통</span>
       <div class="cl-dl-name">입고 (편집본)</div>
-      <div class="cl-dl-sheets">거래처 요약 · 입고원본 · GC케어 입고분 · 원가집계표 요약 · GC케어 마감요약 · 아이메드 입고분 · 아이메드 마감요약</div>
+      <div class="cl-dl-sheets">거래처 요약 · 입고원본 · GC케어 입고분 · 원가집계표 요약 · GC/아이메드 마감요약</div>
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
     <div class="cl-dl-card both" onclick="dlUsage()">
       <span class="cl-dl-tag both">공통</span>
       <div class="cl-dl-name">사용현황 (편집본)</div>
-      <div class="cl-dl-sheets">사용원본 · 시약,소모품 · 원가집계표 요약 · 소모품 · 시약 · 시약 마감요약 · 시약5% · 의약품 · 아이메드 마감요약(시,소) · 아이메드 마감요약(의약품)</div>
+      <div class="cl-dl-sheets">사용원본 · 시약 · 소모품 · 원가집계표 요약 · 시약 마감요약 · 시약5% · 의약품 · 아이메드 마감요약</div>
       <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
     </div>
     <div class="cl-dl-card imed" onclick="dlSubul()">
@@ -1180,4 +1186,3 @@ async function loadBranchOptions(user) {
     `<option value="${c.value}"${c.value === defaultBranch ? ' selected' : ''}>${c.label}</option>`
   ).join('');
 }
-
