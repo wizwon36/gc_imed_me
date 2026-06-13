@@ -1101,18 +1101,22 @@ function renderHistoryTable(year, branch, stockData, usageData) {
     if (done) {
       return `
         <div class="hist-card hist-card--done">
-          <div class="hist-card__month">${mon}월</div>
+          <div class="hist-card__top">
+            <div class="hist-card__month">${mon}월</div>
+            ${canDelete ? `<button class="hist-card__del" onclick="deleteClosing('${year}','${m}','${branch}')">🗑</button>` : ''}
+          </div>
           <div class="hist-card__badge hist-card__badge--done">✓ 확정</div>
           <div class="hist-card__meta">
             <span class="hist-card__date">${fmtDate(d.confirmed_at)}</span>
-            <span class="hist-card__by">${d.confirmed_by ? d.confirmed_by.split('@')[0] : ''}</span>
+            <span class="hist-card__by">${d.confirmed_by || ''}</span>
           </div>
-          ${canDelete ? `<button class="hist-card__del" onclick="deleteClosing('${year}','${m}','${branch}')">🗑 삭제</button>` : ''}
         </div>`;
     } else {
       return `
         <div class="hist-card hist-card--none">
-          <div class="hist-card__month">${mon}월</div>
+          <div class="hist-card__top">
+            <div class="hist-card__month">${mon}월</div>
+          </div>
           <div class="hist-card__badge hist-card__badge--none">미완료</div>
         </div>`;
     }
