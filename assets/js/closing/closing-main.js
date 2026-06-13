@@ -96,7 +96,7 @@ const App = {
 // 2. 탭 전환
 // ═══════════════════════════════════════════════════════════
 function switchTab(tab) {
-  ['closing', 'vendor', 'item'].forEach(t => {
+  ['closing', 'vendor', 'item', 'history'].forEach(t => {
     document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`)
       ?.classList.toggle('active', t === tab);
     document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Content`)
@@ -111,6 +111,9 @@ function switchTab(tab) {
         .then(() => renderVendorTable())
         .finally(() => hideGlobalLoading());
     }
+  }
+  if (tab === 'history') {
+    initHistoryTab();
   }
   if (tab === 'item') {
     if (App.items.length) {
@@ -365,6 +368,17 @@ async function runProcessing() {
 
   try {
     clog('처리를 시작합니다...', 'info'); await sleep(150);
+
+    // 거래처/자재 로드가 안 된 경우 재시도 (초기화 타임아웃 대비)
+    if (!App.vendors.length) {
+      clog('거래처 정보 재로드 중...', 'info');
+      await loadVendorsFromServer().catch(() => {});
+    }
+    if (!App.items.length) {
+      clog('자재코드 정보 재로드 중...', 'info');
+      await loadItemsFromServer().catch(() => {});
+    }
+
     prog(10, '입고 데이터 파싱 중...');
     const ipgoData  = parseIpgo(App.ipgoRaw.wb);
     App.ipgoData    = ipgoData;
@@ -858,9 +872,9 @@ async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
   const existingWb = new ExcelJS.Workbook();
   await existingWb.xlsx.load(existingBytes.buffer || existingBytes);
 
-  // 새 시트의 데이터/서식을 기존 시트들 앞에 배치
-  // newSheetWb의 첫 번째 시트를 그대로 유지하고 기존 시트들을 뒤에 추가
+  // 새 시트(당월)를 맨 앞에 두고, 기존 시트 중 동일 이름은 제외하고 복사
   for (const srcWs of existingWb.worksheets) {
+    if (srcWs.name === sheetName) continue;  // 동일 이름 시트 제외 (재마감 시 중복 방지)
     const dstWs = newSheetWb.addWorksheet(srcWs.name);
     copyWorksheet_(srcWs, dstWs);
   }
