@@ -1838,9 +1838,56 @@ async function confirmClosing() {
     });
 
     // 당월 부서별 사용 데이터 저장 (GC케어/아이메드 분리)
+    // end_amount: 현재 월의 기말재고 → 4시트 연간 원재료비의 기말 컬럼에 표시됨
+
+    // ── GC케어 기말: 시약 부서별 (기초+매입-사용, 부가세 미포함, 천원 단위)
+    const gcSiyakMasterForEnd = (R.closingDeptMaster || [])
+      .filter(d => String(d.extra1 || '').trim() === '시약');
+    const gcGroupsForEnd = buildImedDeptGroups(gcSiyakMasterForEnd);
+    const gcDeptToGroupEnd = {};
+    gcGroupsForEnd.forEach(g => g.depts.forEach(dept => { gcDeptToGroupEnd[dept] = g.displayName; }));
+
+    const gcEndMap = {};  // groupName → end_amount (원 단위)
+    // 기초
+    prevStockData
+      .filter(s => s.item_type === '시약')
+      .forEach(s => {
+        const g = gcDeptToGroupEnd[s.dept || ''] || s.dept || '';
+        gcEndMap[g] = (gcEndMap[g] || 0) + toN(s.closing_amount);
+      });
+    // 매입 (공급가액, 부가세 미포함)
+    (R.gcIpgo || [])
+      .filter(r => String(r['자재구분'] || '').trim() === '시약')
+      .forEach(r => {
+        const g = gcDeptToGroupEnd[String(r['의뢰부서'] || '').trim()] || String(r['의뢰부서'] || '').trim();
+        gcEndMap[g] = (gcEndMap[g] || 0) + toN(r['공급가액']);
+      });
+    // 사용 (사용공급가, 부가세 미포함) — 차감
+    (R.usageSiyak || []).forEach(r => {
+      const g = gcDeptToGroupEnd[String(r['부서명'] || '').trim()] || String(r['부서명'] || '').trim();
+      gcEndMap[g] = (gcEndMap[g] || 0) - toN(r['사용공급가']);
+    });
+
+    // ── 아이메드 기말: items 배열에서 이미 계산된 그룹별 end 재사용
+    const imedEndMap = {};  // groupName → end_amount (원 단위)
+    items
+      .filter(it => it.item_type === '의약품' && it.dept)
+      .forEach(it => { imedEndMap[it.dept] = toN(it.closing_amount); });
+
     const usageItems = buildDeptUsageForMonthly(R);
     const gcUsageItems   = usageItems.filter(it => it.report_type === 'GC케어');
     const imedUsageItems = usageItems.filter(it => it.report_type === '아이메드');
+
+    // end_amount를 해당 부서/그룹 행에 추가
+    gcUsageItems.forEach(it => {
+      const g = gcDeptToGroupEnd[it.dept] || it.dept;
+      if (gcEndMap[g] !== undefined) it.end_amount = Math.round(gcEndMap[g]);
+    });
+    imedUsageItems.forEach(it => {
+      const g = resolveGroup(it.dept);
+      if (imedEndMap[g] !== undefined) it.end_amount = Math.round(imedEndMap[g]);
+    });
+
     if (gcUsageItems.length > 0) {
       await apiPost('closingSaveUsageMonthly', {
         request_user_email: user?.email,
