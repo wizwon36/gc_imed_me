@@ -5,24 +5,31 @@
 /* ── 탭 ─────────────────────────────────────────────────── */
 .cl-tabs {
   display: flex;
-  border-bottom: 2px solid var(--border-soft);
-  margin-bottom: 20px;
-  gap: 0;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  width: fit-content;
 }
 .cl-tab {
-  padding: 10px 22px;
-  font-size: 14px;
+  padding: 8px 20px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: color .15s, border-color .15s;
+  border-radius: 7px;
+  transition: color .15s, background .15s, box-shadow .15s;
+  white-space: nowrap;
 }
-.cl-tab:hover { color: #1a56db; }
-.cl-tab.active { color: #1a56db; border-bottom-color: #1a56db; }
+.cl-tab:hover { color: #1a56db; background: #e2e8f0; }
+.cl-tab.active {
+  color: #1a56db;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
 
 /* ── 스텝 바 ─────────────────────────────────────────────── */
 .cl-steps {
