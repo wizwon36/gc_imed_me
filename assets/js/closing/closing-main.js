@@ -606,13 +606,12 @@ async function runProcessing() {
           writeSubul(singleWb.addWorksheet(sheetName), y, mi, branch,
             Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
 
-          // 기존 파일에 새 시트 추가 (새 wb 기준, 기존 시트는 값만 복사)
-          const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-          const resultBuf = await insertSheetIntoXlsx_(existingBytes, singleWb, sheetName);
-
-          App.R.subulBuffer = resultBuf;
-          App.R.subulFileId = fidRes.data.file_id;
-          clog(`수불부 준비 완료 (${(resultBuf.byteLength/1024).toFixed(0)}KB)`, 'ok');
+          // 당월 시트 버퍼만 저장 (확정 시 서버에서 기존 파일에 삽입)
+          const sheetBuf = await singleWb.xlsx.writeBuffer();
+          App.R.subulSheetBuf  = sheetBuf;
+          App.R.subulSheetName = sheetName;
+          App.R.subulFileId    = fidRes.data.file_id;
+          clog(`수불부 준비 완료 (${(sheetBuf.byteLength/1024).toFixed(0)}KB)`, 'ok');
         }
       }
     } catch (e) {
@@ -812,6 +811,7 @@ function restart() {
     App.R.usageGC = null; App.R.usageImed = null;
     App.R.usageSiyak = null; App.R.usageSomoum = null;
     App.R.subulMap = null; App.R.sapRows = null;
+    App.R.subulSheetBuf = null; App.R.subulSheetName = null;
   }
   App.R = {};
   ['ipgo', 'usage'].forEach(t => {
@@ -1098,9 +1098,9 @@ async function dlSubul() {
     const R    = App.R;
     const filename = `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`;
 
-    if (R.subulBuffer) {
-      // 파싱 시점에 준비된 완성 파일 (이전 월 누적 + 당월)
-      saveAs(new Blob([R.subulBuffer], {
+    if (R.subulSheetBuf) {
+      // 파싱 시점에 준비된 당월 시트
+      saveAs(new Blob([R.subulSheetBuf], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       }), filename);
     } else {
