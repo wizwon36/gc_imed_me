@@ -393,3 +393,23 @@
   transition: border-color .15s, background .15s;
 }
 .hist-card__del:hover { border-color: #dc2626; background: #fef2f2; }
+
+/* ── 스켈레톤 ────────────────────────────────────────────── */
+.hist-card--skeleton {
+  border-color: var(--border);
+  background: #f8fafc;
+  pointer-events: none;
+}
+.skel {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+.skel--title  { height: 24px; width: 48px; }
+.skel--badge  { height: 18px; width: 56px; border-radius: 20px; }
+.skel--text   { height: 12px; width: 80%; margin-top: auto; }
+@keyframes skel-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
