@@ -442,6 +442,22 @@ async function runProcessing() {
           imedDepts.length = 0;
           Object.values(grouped).forEach(d => imedDepts.push(d));
         }
+
+        // gcDepts 그룹핑: extra2 기준으로 합산 (아이메드와 동일 방식)
+        const gcGroupList = buildImedDeptGroups(depts);
+        if (gcGroupList.length) {
+          const gcGrouped = {};
+          gcDepts.forEach(d => {
+            const group = gcGroupList.find(g => g.depts.includes(d.의뢰부서));
+            const key   = (group ? group.displayName : d.의뢰부서) + '||' + d.자재구분;
+            if (!gcGrouped[key]) gcGrouped[key] = { 의뢰부서: group?.displayName || d.의뢰부서, 자재구분: d.자재구분, 공급가액: 0, 부가세: 0, 합계금액: 0 };
+            gcGrouped[key].공급가액 += toN(d.공급가액);
+            gcGrouped[key].부가세   += toN(d.부가세);
+            gcGrouped[key].합계금액 += toN(d.합계금액);
+          });
+          gcDepts.length = 0;
+          Object.values(gcGrouped).forEach(d => gcDepts.push(d));
+        }
       }
     } catch (e) {
       clog('부서 마스터 로드 실패: ' + e.message, 'warn');
@@ -1417,13 +1433,6 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
     [5,''], [6,''], [7,'공급가액'], [8,''],
     [9,'기준일'], [10,'적요'], [11,''], [12,'CC'], [13,'지급일'], [14,'전표번호']
   ].forEach(([c,v]) => hdrCell(ws, 3, c, v || ' '));
-
-  // D~L열(4~12) 헤더 노란색으로 덮어씌우기
-  const FILL_YELLOW = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
-  for (let c = 4; c <= 12; c++) {
-    ws.getCell(3, c).fill = FILL_YELLOW;
-  }
-
   ws.getRow(3).height = 18;
 
   // 데이터 행
@@ -1932,6 +1941,9 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
     deptsForAmount = [...depts, ...siSoRows];
   }
 
+  // GC케어 보고서: gcDepts는 runProcessing에서 이미 extra2 그룹핑 완료
+  // writeDeptAmount는 depts(=gcDepts)를 그대로 사용 — 별도 처리 불필요
+
   writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap, gcRow);
   writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, deptsForAmount);
 
@@ -2199,9 +2211,18 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       prevDeptStock[k] += toN(s.closing_amount);
     });
 
+  // GC케어: extra2 그룹핑 → 그룹명으로 기초재고 합산
+  const gcGroups = isGC ? buildImedDeptGroups(R.closingDeptMaster || []) : null;
   // 아이메드: extra2 그룹핑 → 그룹명으로 합산
   const imedGroups = !isGC ? buildImedDeptGroups(R.closingDeptMaster || []) : null;
+
   const prevDeptStockGrouped = {};
+  if (gcGroups) {
+    gcGroups.forEach(g => {
+      prevDeptStockGrouped[g.displayName + '||' + targetType] =
+        g.depts.reduce((s, dept) => s + (prevDeptStock[dept + '||' + targetType] || 0), 0);
+    });
+  }
   if (imedGroups) {
     imedGroups.forEach(g => {
       prevDeptStockGrouped[g.displayName + '||' + targetType] =
@@ -2209,11 +2230,10 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     });
   }
 
-  // 부서명 → 그룹명 매핑 (아이메드만)
+  // 부서명 → 그룹명 매핑 (GC케어 + 아이메드 공용)
   const deptToGroup = {};
-  if (imedGroups) {
-    imedGroups.forEach(g => g.depts.forEach(dept => { deptToGroup[dept] = g.displayName; }));
-  }
+  if (gcGroups)   gcGroups.forEach(g   => g.depts.forEach(dept => { deptToGroup[dept] = g.displayName; }));
+  if (imedGroups) imedGroups.forEach(g => g.depts.forEach(dept => { deptToGroup[dept] = g.displayName; }));
   const resolveKey = (dept) => {
     const groupName = deptToGroup[dept] || dept;
     return groupName + '||' + targetType;
@@ -2227,7 +2247,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   const deptIpgo = {};
   ipgoData.forEach(r => {
     const dept = String(r['의뢰부서'] || '').trim(); if (!dept) return;
-    const k = isGC ? dept + '||' + String(r['자재구분']||'').trim() : resolveKey(dept);
+    const k = isGC ? resolveKey(dept) : resolveKey(dept);
     if (!deptIpgo[k]) deptIpgo[k] = { dept: k.split('||')[0], type: targetType, amt: 0 };
     // 아이메드: 부가세 포함(합계금액), GC케어: 부가세 미포함(공급가액)
     deptIpgo[k].amt += isGC ? toN(r['공급가액']) : toN(r['합계금액']);
@@ -2237,7 +2257,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   const deptUsage = {};
   usageData.forEach(r => {
     const dept = String(r['부서명'] || '').trim(); if (!dept) return;
-    const k = isGC ? dept + '||' + String(r['자재구분']||'').trim() : resolveKey(dept);
+    const k = isGC ? resolveKey(dept) : resolveKey(dept);
     if (!deptUsage[k]) deptUsage[k] = { dept: k.split('||')[0], type: targetType, amt: 0 };
     // 아이메드: 부가세 포함(사용합계), GC케어: 부가세 미포함(사용공급가)
     deptUsage[k].amt += isGC ? toN(r['사용공급가']) : toN(r['사용합계']);
@@ -2264,14 +2284,12 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       });
   }
 
-  // 기초재고 최종 (GC케어는 기존, 아이메드는 그룹핑)
-  const prevDeptStockFinal = isGC ? prevDeptStock : prevDeptStockGrouped;
+  // 기초재고 최종 (GC케어/아이메드 모두 그룹핑 적용)
+  const prevDeptStockFinal = (isGC || imedGroups) ? prevDeptStockGrouped : prevDeptStock;
 
   // 부서 목록: CLOSING_DEPT 마스터 기준
   const masterDepts = isGC
-    ? (R.closingDeptMaster || [])
-        .filter(d => String(d.extra1 || '').trim() === '시약')
-        .map(d => String(d.code_name || '').trim() + '||' + targetType)
+    ? (gcGroups || []).map(g => g.displayName + '||' + targetType)
     : (imedGroups || []).map(g => g.displayName + '||' + targetType);
 
   const dataDeptKeys = [...new Set([
@@ -2428,8 +2446,13 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
   const CUR_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDF5EE' } };
 
   if (isGC) {
-    // ── GC케어: 시약 당기사용 ───────────────────────────
+    // ── GC케어: 시약 당기사용 (extra2 그룹핑 적용) ──────────
     const targetType = '시약';
+    const gcGroups   = buildImedDeptGroups(R.closingDeptMaster || []);
+    const gcDeptToGroup = {};
+    gcGroups.forEach(g => g.depts.forEach(dept => { gcDeptToGroup[dept] = g.displayName; }));
+    const resolveGcGroup = dept => gcDeptToGroup[dept] || dept;
+
     const yearMap = {};
     yearUsage
       .filter(u => u.item_type === targetType)
@@ -2437,46 +2460,54 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         const parts = (u.ym || '').split('-');
         const yr = parts[0]; const mon = parts[1];
         if (!yr || !mon) return;
-        const dept = u.dept || '';
+        const groupName = resolveGcGroup(u.dept || '');
         if (!yearMap[yr]) yearMap[yr] = {};
-        if (!yearMap[yr][dept]) yearMap[yr][dept] = { dept, base: 0, end: 0 };
-        yearMap[yr][dept]['m' + mon] =
-          (yearMap[yr][dept]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
+        if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { dept: groupName, base: 0, end: 0 };
+        yearMap[yr][groupName]['m' + mon] =
+          (yearMap[yr][groupName]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
         if (mon === '01' && u.base_amount)
-          yearMap[yr][dept].base = Math.round(u.base_amount / 1000);
+          yearMap[yr][groupName].base = (yearMap[yr][groupName].base || 0) + Math.round(u.base_amount / 1000);
         if (mon === '12' && u.end_amount)
-          yearMap[yr][dept].end  = Math.round(u.end_amount  / 1000);
+          yearMap[yr][groupName].end  = (yearMap[yr][groupName].end  || 0) + Math.round(u.end_amount  / 1000);
       });
 
-    // 당월 추가
+    // 당월 추가 (그룹별 원단위 합산 후 /1000)
+    const gcCurRaw = {};
     buildDeptUsageForMonthly(R)
       .filter(u => u.item_type === targetType)
       .forEach(u => {
-        const dept = u.dept || '';
-        if (!yearMap[R.y]) yearMap[R.y] = {};
-        if (!yearMap[R.y][dept]) yearMap[R.y][dept] = { dept, base: 0, end: 0 };
-        if (!yearMap[R.y][dept]['m' + curMon])
-          yearMap[R.y][dept]['m' + curMon] = Math.round(u.usage_amount / 1000);
+        const groupName = resolveGcGroup(u.dept || '');
+        gcCurRaw[groupName] = (gcCurRaw[groupName] || 0) + (u.usage_amount || 0);
       });
+    if (!yearMap[R.y]) yearMap[R.y] = {};
+    Object.entries(gcCurRaw).forEach(([groupName, raw]) => {
+      if (!yearMap[R.y][groupName]) yearMap[R.y][groupName] = { dept: groupName, base: 0, end: 0 };
+      yearMap[R.y][groupName]['m' + curMon] = Math.round(raw / 1000);
+    });
 
-    // 당해 연도 기말: 3번째 시트 기말재고 (기초+매입-사용)
-    Object.keys(yearMap[R.y] || {}).forEach(dept => {
-      const d = yearMap[R.y][dept];
-      if (!d.base) {
-        const base = (R.prevStockData || [])
+    // 당해 연도 기말: 그룹별 기초+매입-사용 집계
+    const curGroupNames = new Set(Object.keys(yearMap[R.y] || {}));
+    gcGroups.forEach(g => curGroupNames.add(g.displayName));
+    curGroupNames.forEach(groupName => {
+      if (!yearMap[R.y]) yearMap[R.y] = {};
+      if (!yearMap[R.y][groupName]) yearMap[R.y][groupName] = { dept: groupName, base: 0, end: 0 };
+      const d = yearMap[R.y][groupName];
+      const memberDepts = gcGroups.find(g => g.displayName === groupName)?.depts || [groupName];
+
+      const baseAmt = memberDepts.reduce((s, dept) =>
+        s + (R.prevStockData || [])
           .filter(s => (s.dept||'') === dept && s.item_type === targetType)
-          .reduce((s, v) => s + toN(v.closing_amount), 0);
-        if (base) d.base = Math.round(base / 1000);
-      }
-      const baseAmt = (R.prevStockData || [])
-        .filter(s => (s.dept||'') === dept && s.item_type === targetType)
-        .reduce((s, v) => s + toN(v.closing_amount), 0);
-      const buy = R.gcIpgo
-        .filter(r => String(r['의뢰부서']||'').trim() === dept && String(r['자재구분']||'').trim() === targetType)
-        .reduce((s, r) => s + toN(r['공급가액']), 0);
-      const use = R.usageSiyak
-        .filter(r => String(r['부서명']||'').trim() === dept)
-        .reduce((s, r) => s + toN(r['사용공급가']), 0);
+          .reduce((acc, v) => acc + toN(v.closing_amount), 0), 0);
+      if (!d.base && baseAmt) d.base = Math.round(baseAmt / 1000);
+
+      const buy = memberDepts.reduce((s, dept) =>
+        s + R.gcIpgo
+          .filter(r => String(r['의뢰부서']||'').trim() === dept && String(r['자재구분']||'').trim() === targetType)
+          .reduce((acc, r) => acc + toN(r['공급가액']), 0), 0);
+      const use = memberDepts.reduce((s, dept) =>
+        s + R.usageSiyak
+          .filter(r => String(r['부서명']||'').trim() === dept)
+          .reduce((acc, r) => acc + toN(r['사용공급가']), 0), 0);
       d.end = Math.round((baseAmt + buy - use) / 1000);
     });
 
@@ -2484,10 +2515,9 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     let r = 1;
     years.forEach(yr => {
       const data = yearMap[yr];
-      const masterDepts = (R.closingDeptMaster || [])
-        .filter(d => String(d.extra1||'').trim() === '시약')
-        .map(d => String(d.code_name||'').trim());
-      const dataDepts = Object.keys(data);
+      // 마스터 순서: gcGroups 기준, 데이터에만 있는 그룹은 뒤에 추가
+      const masterDepts = gcGroups.map(g => g.displayName);
+      const dataDepts   = Object.keys(data);
       const deptKeys = masterDepts.length
         ? [...new Set([...masterDepts, ...dataDepts])].sort((a, b) => {
             const ai = masterDepts.indexOf(a); const bi = masterDepts.indexOf(b);
