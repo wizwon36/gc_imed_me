@@ -1745,71 +1745,14 @@ async function confirmClosing() {
     await hideGlobalLoading();
   }
 
-  // 의약품 기말금액 입력 모달 (extra2 그룹핑 적용)
-  const imedGroups = buildImedDeptGroups(R.closingDeptMaster || []);
-
-  const imedAmounts = await new Promise(resolve => {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;';
-
-    const box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:8px;padding:24px;min-width:380px;max-width:480px;box-shadow:0 4px 20px rgba(0,0,0,0.2);';
-
-    box.innerHTML = `
-      <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;">의약품 기말재고 입력</h3>
-      <p style="margin:0 0 16px;font-size:12px;color:#666;">${R.y}년 ${R.m}월 | ${R.branch} — 금액만 입력 (원 단위)</p>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead>
-          <tr style="background:#f4e8d8;">
-            <th style="padding:6px 8px;text-align:left;border:1px solid #ddd;">부서명</th>
-            <th style="padding:6px 8px;text-align:right;border:1px solid #ddd;width:160px;">기말금액 (원)</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${imedGroups.map(g => `
-            <tr>
-              <td style="padding:6px 8px;border:1px solid #ddd;">${g.displayName}</td>
-              <td style="padding:4px 6px;border:1px solid #ddd;">
-                <input type="number" data-group="${g.displayName}" data-depts="${g.depts.join(',')}" value="0"
-                  style="width:100%;text-align:right;border:1px solid #ccc;border-radius:4px;padding:4px 6px;font-size:13px;box-sizing:border-box;" />
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">
-        <button id="imedModalCancel" style="padding:8px 16px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">취소</button>
-        <button id="imedModalConfirm" style="padding:8px 16px;border:none;border-radius:4px;background:#e8c9a8;cursor:pointer;font-size:13px;font-weight:700;">확정</button>
-      </div>
-    `;
-
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-
-    document.getElementById('imedModalCancel').onclick = () => {
-      document.body.removeChild(overlay);
-      resolve(null);
-    };
-    document.getElementById('imedModalConfirm').onclick = () => {
-      // 그룹별 입력값 → 소속 부서들에 균등 분배
-      const result = {};
-      box.querySelectorAll('input[data-group]').forEach(inp => {
-        const amt   = Math.round(parseFloat(inp.value) || 0);
-        const depts = inp.dataset.depts.split(',').filter(Boolean);
-        depts.forEach(dept => { result[dept] = amt; });  // 그룹 전체에 같은 금액 (합산값)
-      });
-      document.body.removeChild(overlay);
-      resolve(result);
-    };
-  });
-
-  if (imedAmounts === null) return;  // 취소
-
   try {
     showGlobalLoading('마감 확정 저장 중...');
     const user  = window.auth?.getSession?.();
 
-    // 품목코드 기준 기말 저장 (시약/소모품) — 기초/증가/감소 모두 0이면 저장 생략
+    // 전월 기초재고 로드 (아이메드 기말 계산용)
+    const prevStockData = R.prevStockData || await loadPrevStock(prevYm, R.branch);
+
+    // ── 시약/소모품: 품목코드 기준 기말 저장 — 기초/증가/감소 모두 0이면 생략
     const items = Object.values(R.subulMap)
       .filter(it => (it.기초 || 0) + it.증가 + it.감소 > 0)
       .map(it => ({
@@ -1821,16 +1764,67 @@ async function confirmClosing() {
         closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소),
       }));
 
-    // 의약품 기말금액 추가 (부서별, 금액만)
-    Object.entries(imedAmounts).forEach(([dept, amt]) => {
-      if (amt !== 0) {
+    // ── 의약품: 3시트(writeWonjaeryo)와 동일한 방식으로 부서별 기말 계산 후 저장
+    //    기말 = 기초(전월 closing_stock) + 당기매입(합계금액=부가세포함) - 당기사용(사용합계=부가세포함)
+    //    + 시약5%(부가세포함) 합산
+    const imedGroups = buildImedDeptGroups(R.closingDeptMaster || []);
+    const deptToGroup = {};
+    imedGroups.forEach(g => g.depts.forEach(dept => { deptToGroup[dept] = g.displayName; }));
+    const resolveGroup = dept => deptToGroup[dept] || dept;
+
+    const siyakDeptNames = new Set(
+      (R.closingDeptMaster || [])
+        .filter(d => String(d.extra1 || '').trim() === '시약')
+        .map(d => String(d.code_name || '').trim())
+    );
+
+    // 기초: 전월 closing_stock 의약품 → 그룹별 합산
+    const imedBase = {};
+    prevStockData
+      .filter(s => s.item_type === '의약품')
+      .forEach(s => {
+        const g = resolveGroup(s.dept || '');
+        imedBase[g] = (imedBase[g] || 0) + toN(s.closing_amount);
+      });
+
+    // 당기매입: imedIpgo 의약품 합계금액(부가세포함) → 그룹별 합산
+    const imedBuy = {};
+    (R.imedIpgo || [])
+      .filter(r => String(r['자재구분'] || '').trim() === '의약품')
+      .forEach(r => {
+        const g = resolveGroup(String(r['의뢰부서'] || '').trim());
+        imedBuy[g] = (imedBuy[g] || 0) + toN(r['합계금액']);
+      });
+
+    // 당기사용: usageImed 사용합계(부가세포함) → 그룹별 합산
+    const imedUse = {};
+    (R.usageImed || []).forEach(r => {
+      const g = resolveGroup(String(r['부서명'] || '').trim());
+      imedUse[g] = (imedUse[g] || 0) + toN(r['사용합계']);
+    });
+
+    // 시약5%(부가세포함) → 시약 부서만, 그룹별 합산해서 매입+사용에 추가
+    (R.imedSiSoPivot5 || [])
+      .filter(d => String(d.자재구분 || '').trim() === '시약' && siyakDeptNames.has(String(d.부서명 || '').trim()))
+      .forEach(d => {
+        const g   = resolveGroup(String(d.부서명 || '').trim());
+        const amt = toN(d.사용합계 || 0);
+        imedBuy[g] = (imedBuy[g] || 0) + amt;
+        imedUse[g] = (imedUse[g] || 0) + amt;
+      });
+
+    // 그룹별 기말 = 기초 + 매입 - 사용, 0이 아닌 것만 저장
+    const allGroups = new Set([...Object.keys(imedBase), ...Object.keys(imedBuy), ...Object.keys(imedUse)]);
+    allGroups.forEach(g => {
+      const end = Math.round((imedBase[g] || 0) + (imedBuy[g] || 0) - (imedUse[g] || 0));
+      if (end !== 0) {
         items.push({
-          dept,
+          dept:           g,
           item_code:      '',
           item_name:      '의약품',
           item_type:      '의약품',
           closing_qty:    0,
-          closing_amount: amt,
+          closing_amount: end,
         });
       }
     });
