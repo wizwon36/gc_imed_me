@@ -1752,8 +1752,9 @@ async function confirmClosing() {
     // 전월 기초재고 로드 (아이메드 기말 계산용)
     const prevStockData = R.prevStockData || await loadPrevStock(prevYm, R.branch);
 
-    // ── 시약/소모품: 품목코드 기준 기말 저장 — 기초/증가/감소 모두 0이면 생략
+    // ── 시약/소모품: 품목코드 기준 기말 저장 — 의약품·모두 0인 항목 제외
     const items = Object.values(R.subulMap)
+      .filter(it => String(it.type || '').trim() !== '의약품')  // 의약품은 별도 저장
       .filter(it => (it.기초 || 0) + it.증가 + it.감소 > 0)
       .map(it => ({
         dept:           '',
@@ -1879,9 +1880,12 @@ async function confirmClosing() {
         clog('수불부 Drive 저장 완료', 'ok');
       } catch (e) {
         clog('수불부 Drive 저장 실패: ' + e.message, 'warn');
+      } finally {
+        await hideGlobalLoading();
       }
+    } else {
+      await hideGlobalLoading();
     }
-    await hideGlobalLoading();
   } catch (e) {
     showMessage('마감 확정 중 오류: ' + e.message, 'error');
     await hideGlobalLoading();
