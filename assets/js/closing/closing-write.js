@@ -1942,9 +1942,29 @@ async function confirmClosing() {
     statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
     showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
 
-    // ── 수불부 Drive 자동 저장: 현재 비활성화 (수동 다운로드 이용)
-    // zip 재조립 방식 안정화 후 재개 예정
-    clog('수불부 Drive 자동 저장 생략', 'info');
+    // ── 수불부 Drive 저장: subulBuffer(다운로드와 동일한 완성 버퍼)를 그대로 업로드
+    if (R.subulBuffer && R.subulFileId) {
+      try {
+        showGlobalLoading('수불부 저장 중...');
+        const bytes = new Uint8Array(R.subulBuffer);
+        const chunkSize = 8192;
+        let binary = '';
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+        }
+        const base64 = btoa(binary);
+        await apiPost('closingUpdateSubulFile', {
+          request_user_email: user?.email,
+          file_id: R.subulFileId,
+          base64,
+        });
+        clog('수불부 Drive 저장 완료', 'ok');
+      } catch (e) {
+        clog('수불부 Drive 저장 실패: ' + e.message, 'warn');
+      } finally {
+        await hideGlobalLoading();
+      }
+    }
   } catch (e) {
     await hideGlobalLoading();
     showMessage('마감 확정 중 오류: ' + e.message, 'error');
