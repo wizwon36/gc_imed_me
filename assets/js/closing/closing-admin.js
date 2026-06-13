@@ -1034,28 +1034,22 @@ async function loadClosingHistory() {
   const branch = branchSel.value;
   if (!year || !branch) return;
 
-  wrap.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">로드 중...</div>';
-
   try {
+    showGlobalLoading('마감 현황 로드 중...');
     const user = window.auth?.getSession?.();
 
-    // closing_stock: 마감 확정 여부 (confirmed_at, confirmed_by)
-    const stockRes = await apiGet('closingGetStock', {
-      request_user_email: user?.email,
-      year, branch,
-    });
+    const [stockRes, usageRes] = await Promise.all([
+      apiGet('closingGetStock',        { request_user_email: user?.email, year, branch }),
+      apiGet('closingGetUsageMonthly', { request_user_email: user?.email, year, branch }),
+    ]);
     const stockData = Array.isArray(stockRes.data) ? stockRes.data : [];
-
-    // closing_usage_monthly: 사용 데이터 (GC케어/아이메드)
-    const usageRes = await apiGet('closingGetUsageMonthly', {
-      request_user_email: user?.email,
-      year, branch,
-    });
     const usageData = Array.isArray(usageRes.data) ? usageRes.data : [];
 
     renderHistoryTable(year, branch, stockData, usageData);
   } catch (e) {
     wrap.innerHTML = `<div style="text-align:center;color:#e74c3c;padding:40px;">로드 실패: ${e.message}</div>`;
+  } finally {
+    await hideGlobalLoading();
   }
 }
 
@@ -1106,50 +1100,52 @@ function renderHistoryTable(year, branch, stockData, usageData) {
 
   const rows = months.map(m => {
     const d = monthMap[m];
-    const done = !!d.confirmed_at;
+    const done    = !!d.confirmed_at;
     const hasData = d.gcSiyak || d.gcSomoum || d.imedDrug;
     const statusBadge = done
-      ? '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">✓ 확정</span>'
+      ? '<span class="hist-badge hist-badge--done">✓ 확정</span>'
       : hasData
-        ? '<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:10px;font-size:11px;">진행중</span>'
-        : '<span style="background:#f1f5f9;color:#94a3b8;padding:2px 8px;border-radius:10px;font-size:11px;">-</span>';
+        ? '<span class="hist-badge hist-badge--wip">진행중</span>'
+        : '<span class="hist-badge hist-badge--none">-</span>';
+
+    const rowCls = done ? 'hist-row--done' : hasData ? 'hist-row--wip' : 'hist-row--none';
 
     return `
-      <tr style="border-bottom:1px solid #f1f5f9;${done ? '' : 'color:#94a3b8;'}">
-        <td style="padding:10px 14px;font-weight:600;">${year.slice(2)}년 ${parseInt(m)}월</td>
-        <td style="padding:10px 14px;text-align:center;">${statusBadge}</td>
-        <td style="padding:10px 14px;text-align:right;">${done ? fmt(d.gcSiyak) : '-'}</td>
-        <td style="padding:10px 14px;text-align:right;">${done ? fmt(d.gcSomoum) : '-'}</td>
-        <td style="padding:10px 14px;text-align:right;">${done ? fmt(d.imedDrug) : '-'}</td>
-        <td style="padding:10px 14px;font-size:12px;color:#64748b;">${fmtDate(d.confirmed_at)}</td>
-        <td style="padding:10px 14px;font-size:12px;color:#64748b;">${d.confirmed_by ? d.confirmed_by.split('@')[0] : '-'}</td>
-        <td style="padding:10px 14px;text-align:center;">
-          ${done ? `<button onclick="dlHistoryReport('${year}','${m}','${branch}')"
-            style="padding:4px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer;">
-            ⬇ 보고서
-          </button>` : ''}
-        </td>
+      <tr class="hist-row ${rowCls}">
+        <td class="hist-td hist-td--month">${year.slice(2)}년 ${parseInt(m)}월</td>
+        <td class="hist-td hist-td--center">${statusBadge}</td>
+        <td class="hist-td hist-td--num hist-td--gc">${done ? fmt(d.gcSiyak) : '-'}</td>
+        <td class="hist-td hist-td--num hist-td--gc">${done ? fmt(d.gcSomoum) : '-'}</td>
+        <td class="hist-td hist-td--num hist-td--imed">${done ? fmt(d.imedDrug) : '-'}</td>
+        <td class="hist-td hist-td--meta">${fmtDate(d.confirmed_at)}</td>
+        <td class="hist-td hist-td--meta">${d.confirmed_by ? d.confirmed_by.split('@')[0] : '-'}</td>
+        <td class="hist-td hist-td--center"></td>
       </tr>`;
   }).join('');
 
   wrap.innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-      <thead>
-        <tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
-          <th style="padding:10px 14px;text-align:left;font-weight:600;">월</th>
-          <th style="padding:10px 14px;text-align:center;font-weight:600;">상태</th>
-          <th style="padding:10px 14px;text-align:right;font-weight:600;">GC케어 시약</th>
-          <th style="padding:10px 14px;text-align:right;font-weight:600;">GC케어 소모품</th>
-          <th style="padding:10px 14px;text-align:right;font-weight:600;">아이메드 의약품</th>
-          <th style="padding:10px 14px;font-weight:600;">확정 일시</th>
-          <th style="padding:10px 14px;font-weight:600;">담당자</th>
-          <th style="padding:10px 14px;text-align:center;font-weight:600;">산출물</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
+    <div class="hist-wrap">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th class="hist-th">월</th>
+            <th class="hist-th hist-th--center">상태</th>
+            <th class="hist-th hist-th--num hist-th--gc" colspan="2">GC케어 사용금액</th>
+            <th class="hist-th hist-th--num hist-th--imed">아이메드 의약품</th>
+            <th class="hist-th">확정 일시</th>
+            <th class="hist-th">담당자</th>
 
-async function dlHistoryReport(year, mon, branch) {
-  showMessage('보고서 다운로드는 월마감 자동화 탭에서 해당 월 데이터를 불러온 후 이용해주세요.', 'info');
+          </tr>
+          <tr class="hist-sub-header">
+            <th class="hist-th-sub"></th>
+            <th class="hist-th-sub"></th>
+            <th class="hist-th-sub hist-th--num hist-th--gc">시약</th>
+            <th class="hist-th-sub hist-th--num hist-th--gc">소모품</th>
+            <th class="hist-th-sub hist-th--num hist-th--imed">의약품</th>
+            <th class="hist-th-sub"></th>
+            <th class="hist-th-sub"></th>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
