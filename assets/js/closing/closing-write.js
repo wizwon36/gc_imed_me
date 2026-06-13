@@ -1772,6 +1772,13 @@ async function confirmClosing() {
     showGlobalLoading('마감 확정 저장 중...');
     const user  = window.auth?.getSession?.();
 
+    // 담당자 표시명: 소속의원/팀/이름
+    const confirmedBy = [
+      user?.clinic_name || '',
+      user?.team_name   || '',
+      user?.user_name   || user?.email || '',
+    ].filter(Boolean).join(' / ');
+
     // 전월 기초재고 로드 (아이메드 기말 계산용)
     const prevStockData = R.prevStockData || await loadPrevStock(prevYm, R.branch);
 
@@ -1856,6 +1863,7 @@ async function confirmClosing() {
 
     await apiPost('closingSaveStock', {
       request_user_email: user?.email,
+      confirmed_by_display: confirmedBy,
       branch: R.branch,
       ym,
       items,
