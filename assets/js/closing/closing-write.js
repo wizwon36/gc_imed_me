@@ -1912,17 +1912,18 @@ async function confirmClosing() {
     statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
     showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
 
-    // 수불부 Drive 저장 (마감 확정 시점에만)
-    if (R.subulBuffer && R.subulFileId) {
+    // 수불부 Drive 저장: 당월 시트만 서버에서 기존 파일에 삽입
+    if (R.subulSheetBuf && R.subulFileId && R.subulSheetName) {
       try {
         showGlobalLoading('수불부 저장 중...');
         const base64 = btoa(
-          new Uint8Array(R.subulBuffer).reduce((d, b) => d + String.fromCharCode(b), '')
+          new Uint8Array(R.subulSheetBuf).reduce((d, b) => d + String.fromCharCode(b), '')
         );
-        await apiPost('closingUpdateSubulFile', {
+        await apiPost('closingInsertSubulSheet', {
           request_user_email: user?.email,
-          file_id: R.subulFileId,
-          base64,
+          file_id:    R.subulFileId,
+          sheet_name: R.subulSheetName,
+          sheet_xlsx: base64,   // 당월 시트만 있는 xlsx (서버에서 기존 파일에 삽입)
         });
         clog('수불부 Drive 저장 완료', 'ok');
       } catch (e) {
