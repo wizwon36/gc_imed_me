@@ -2211,8 +2211,11 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
       prevDeptStock[k] += toN(s.closing_amount);
     });
 
-  // GC케어: extra2 그룹핑 → 그룹명으로 기초재고 합산
-  const gcGroups = isGC ? buildImedDeptGroups(R.closingDeptMaster || []) : null;
+  // GC케어: extra1='시약' 부서만 필터 후 extra2 그룹핑
+  const gcSiyakMaster = isGC
+    ? (R.closingDeptMaster || []).filter(d => String(d.extra1 || '').trim() === '시약')
+    : [];
+  const gcGroups = isGC ? buildImedDeptGroups(gcSiyakMaster) : null;
   // 아이메드: extra2 그룹핑 → 그룹명으로 합산
   const imedGroups = !isGC ? buildImedDeptGroups(R.closingDeptMaster || []) : null;
 
@@ -2448,7 +2451,8 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
   if (isGC) {
     // ── GC케어: 시약 당기사용 (extra2 그룹핑 적용) ──────────
     const targetType = '시약';
-    const gcGroups   = buildImedDeptGroups(R.closingDeptMaster || []);
+    const gcSiyakMaster = (R.closingDeptMaster || []).filter(d => String(d.extra1 || '').trim() === '시약');
+    const gcGroups   = buildImedDeptGroups(gcSiyakMaster);
     const gcDeptToGroup = {};
     gcGroups.forEach(g => g.depts.forEach(dept => { gcDeptToGroup[dept] = g.displayName; }));
     const resolveGcGroup = dept => gcDeptToGroup[dept] || dept;
