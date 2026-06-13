@@ -947,23 +947,35 @@ async function loadPrevStock(ym, branch) {
 
 // 당월 부서별 사용 집계 (마감 확정 시 저장용)
 function buildDeptUsageForMonthly(R) {
+  // 그룹핑 맵 (extra2 기준, GC케어/아이메드 공용)
+  const master = R.closingDeptMaster || [];
+  const groups = buildImedDeptGroups(master);
+  const deptToGroup = {};
+  groups.forEach(g => g.depts.forEach(dept => { deptToGroup[dept] = g.displayName; }));
+  const resolveGroup = dept => deptToGroup[dept] || dept;
+
   const gcMap = {}, imedMap = {};
-  // GC케어: 시약 + 소모품
+
+  // GC케어: 시약 + 소모품 → 그룹명으로 합산
   [...R.usageSiyak, ...R.usageSomoum].forEach(r => {
-    const dept = String(r['부서명'] || '').trim(); if (!dept) return;
+    const rawDept = String(r['부서명'] || '').trim(); if (!rawDept) return;
+    const dept = resolveGroup(rawDept);
     const type = String(r['자재구분'] || '').trim();
     const k = dept + '||' + type;
     if (!gcMap[k]) gcMap[k] = { dept, item_type: type, report_type: 'GC케어', usage_amount: 0 };
     gcMap[k].usage_amount += toN(r['사용공급가']);
   });
-  // 아이메드: 의약품
+
+  // 아이메드: 의약품 → 그룹명으로 합산
   R.usageImed.forEach(r => {
-    const dept = String(r['부서명'] || '').trim(); if (!dept) return;
+    const rawDept = String(r['부서명'] || '').trim(); if (!rawDept) return;
+    const dept = resolveGroup(rawDept);
     const type = String(r['자재구분'] || '').trim();
     const k = dept + '||' + type;
     if (!imedMap[k]) imedMap[k] = { dept, item_type: type, report_type: '아이메드', usage_amount: 0 };
-    imedMap[k].usage_amount += toN(r['사용공급가']);
+    imedMap[k].usage_amount += toN(r['사용합계']);  // 아이메드는 부가세포함(사용합계)
   });
+
   return [
     ...Object.values(gcMap),
     ...Object.values(imedMap),
@@ -1752,9 +1764,9 @@ async function confirmClosing() {
     // 전월 기초재고 로드 (아이메드 기말 계산용)
     const prevStockData = R.prevStockData || await loadPrevStock(prevYm, R.branch);
 
-    // ── 시약/소모품: 품목코드 기준 기말 저장 — 의약품·모두 0인 항목 제외
+    // ── 시약/소모품: 품목코드 기준 기말 저장 — 의약품·기말0 항목 제외
     const items = Object.values(R.subulMap)
-      .filter(it => String(it.type || '').trim() !== '의약품')  // 의약품은 별도 저장
+      .filter(it => String(it.type || '').trim() !== '의약품')
       .filter(it => (it.기초 || 0) + it.증가 + it.감소 > 0)
       .map(it => ({
         dept:           '',
@@ -1763,7 +1775,8 @@ async function confirmClosing() {
         item_type:      it.type,
         closing_qty:    (it.기초수량 || 0),
         closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소),
-      }));
+      }))
+      .filter(it => it.closing_amount !== 0);  // 기말 0원 저장 생략
 
     // ── 의약품: 3시트(writeWonjaeryo)와 동일한 방식으로 부서별 기말 계산 후 저장
     //    기말 = 기초(전월 closing_stock) + 당기매입(합계금액=부가세포함) - 당기사용(사용합계=부가세포함)
@@ -1905,6 +1918,8 @@ async function confirmClosing() {
       });
     }
 
+    // ── 메인 저장 완료: 스피너 먼저 종료 후 완료 표시
+    await hideGlobalLoading();
     btn.disabled    = true;
     btn.textContent = '✓ 확정 완료';
     btn.style.background = '#0e7c3a';
@@ -1912,18 +1927,23 @@ async function confirmClosing() {
     statusEl.textContent = `✓ ${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. (${now})`;
     showMessage(`${R.branch} ${R.y}년 ${R.m}월 마감이 확정됐습니다. 품목 ${items.length}건 저장됨.`, 'success');
 
-    // 수불부 Drive 저장: 당월 시트만 서버에서 기존 파일에 삽입
+    // ── 수불부 Drive 저장: 백그라운드 처리 (완료 표시에 영향 없음)
     if (R.subulSheetBuf && R.subulFileId && R.subulSheetName) {
       try {
         showGlobalLoading('수불부 저장 중...');
-        const base64 = btoa(
-          new Uint8Array(R.subulSheetBuf).reduce((d, b) => d + String.fromCharCode(b), '')
-        );
+        // btoa+reduce는 대용량에서 stack overflow → 청크 방식으로 변환
+        const bytes = new Uint8Array(R.subulSheetBuf);
+        const chunkSize = 8192;
+        let binary = '';
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+        }
+        const base64 = btoa(binary);
         await apiPost('closingInsertSubulSheet', {
           request_user_email: user?.email,
           file_id:    R.subulFileId,
           sheet_name: R.subulSheetName,
-          sheet_xlsx: base64,   // 당월 시트만 있는 xlsx (서버에서 기존 파일에 삽입)
+          sheet_xlsx: base64,
         });
         clog('수불부 Drive 저장 완료', 'ok');
       } catch (e) {
@@ -1931,11 +1951,9 @@ async function confirmClosing() {
       } finally {
         await hideGlobalLoading();
       }
-    } else {
-      await hideGlobalLoading();
     }
   } catch (e) {
-    showMessage('마감 확정 중 오류: ' + e.message, 'error');
     await hideGlobalLoading();
+    showMessage('마감 확정 중 오류: ' + e.message, 'error');
   }
 }
