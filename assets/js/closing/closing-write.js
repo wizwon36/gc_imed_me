@@ -1809,15 +1809,17 @@ async function confirmClosing() {
     showGlobalLoading('마감 확정 저장 중...');
     const user  = window.auth?.getSession?.();
 
-    // 품목코드 기준 기말 저장 (시약/소모품)
-    const items = Object.values(R.subulMap).map(it => ({
-      dept:           '',
-      item_code:      it.code,
-      item_name:      it.name,
-      item_type:      it.type,
-      closing_qty:    (it.기초수량 || 0),
-      closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소),
-    }));
+    // 품목코드 기준 기말 저장 (시약/소모품) — 기초/증가/감소 모두 0이면 저장 생략
+    const items = Object.values(R.subulMap)
+      .filter(it => (it.기초 || 0) + it.증가 + it.감소 > 0)
+      .map(it => ({
+        dept:           '',
+        item_code:      it.code,
+        item_name:      it.name,
+        item_type:      it.type,
+        closing_qty:    (it.기초수량 || 0),
+        closing_amount: Math.round((it.기초 || 0) + it.증가 - it.감소),
+      }));
 
     // 의약품 기말금액 추가 (부서별, 금액만)
     Object.entries(imedAmounts).forEach(([dept, amt]) => {
@@ -1891,4 +1893,3 @@ async function confirmClosing() {
     await hideGlobalLoading();
   }
 }
-
