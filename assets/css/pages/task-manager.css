@@ -1780,3 +1780,94 @@ input[type="date"].form-input {
   border: 1.5px solid #fecaca;
   color: #b91c1c;
 }
+
+/* ── 부서원 업무 보기 (팀뷰) ── */
+
+/* 팀뷰 활성 안내 배너 */
+.team-view-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  background: #eff6ff;
+  border-bottom: 1.5px solid #bfdbfe;
+  font-size: 12.5px;
+  color: #1d4ed8;
+}
+.team-view-banner-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* 일별 팀원 업무 배지 (헤더 칩) */
+.day-member-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6d28d9;
+  background: #ede9fe;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin-left: 6px;
+}
+
+/* 팀원 업무 구분 섹션 */
+.team-task-section {
+  border-top: 1.5px dashed #dbeafe;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+.team-task-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6d28d9;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 16px 2px;
+  opacity: 0.75;
+}
+
+/* 읽기 전용 업무 카드 */
+.task-item--readonly {
+  background: #f5f3ff;
+  border-color: #ddd6fe !important;
+  cursor: default !important;
+  opacity: 0.92;
+}
+.task-item--readonly:hover {
+  background: #ede9fe;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 소유자 태그 */
+.task-owner-tag {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #7c3aed;
+  background: #ede9fe;
+  border: 1px solid #ddd6fe;
+  border-radius: 5px;
+  padding: 0 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 18px;
+}
+
+/* 읽기 전용 뱃지 (카드 우측) */
+.task-item-readonly-badge {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #7c3aed;
+  background: #ede9fe;
+  border: 1px solid #ddd6fe;
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  align-self: center;
+}
