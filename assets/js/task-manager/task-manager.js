@@ -1168,7 +1168,13 @@
             </div>
           </div>
           <div class="day-tasks" id="day-tasks-${dateStr}" style="${showExpand ? '' : 'display:none;'}">
-            ${taskItems || `<div class="task-empty" style="padding:16px;"><span style="font-size:12px;color:var(--text-muted);">등록된 업무가 없습니다.</span></div>`}
+            ${teamSectionHtml
+              ? `<div class="team-task-section" style="border-top:none;padding-top:0;">
+                   <div class="team-task-section-label">내 업무</div>
+                   ${taskItems || `<div style="padding:8px 16px;"><span style="font-size:12px;color:var(--text-muted);">등록된 업무가 없습니다.</span></div>`}
+                 </div>`
+              : taskItems || `<div class="task-empty" style="padding:16px;"><span style="font-size:12px;color:var(--text-muted);">등록된 업무가 없습니다.</span></div>`
+            }
             ${teamSection}
           </div>
         </div>
