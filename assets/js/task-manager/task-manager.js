@@ -1247,6 +1247,9 @@
     const isDone     = t.status === 'DONE';
     const ownerName  = esc(t.user_name || t.user_email || '팀원');
     const clinicName = esc(t.work_clinic_name || t.clinic_name || '');
+    const ownerBadge = clinicName
+      ? `<span class="task-owner-tag">${clinicName} · ${ownerName}</span>`
+      : `<span class="task-owner-tag">${ownerName}</span>`;
 
     return `
       <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}"
@@ -1255,9 +1258,8 @@
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
           <div class="task-item-title">
-            ${clinicName ? `<span class="task-clinic-tag">${clinicName}</span>` : ''}
             ${esc(t.title)}
-            <span class="task-owner-tag">${ownerName}</span>
+            ${ownerBadge}
           </div>
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
