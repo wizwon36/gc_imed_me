@@ -131,8 +131,24 @@
             </button>
           </div>
 
-          <!-- 업무일지 자동 동기화 토글 — 타임라인 위 별도 행 -->
-          <div style="display:flex;align-items:center;justify-content:flex-end;padding:4px 22px 8px;background:#f0f7ff;border-bottom:1.5px solid #dbeafe;">
+          <!-- 업무일지 자동 동기화 토글 + 부서원 전체 보기 토글 — 타임라인 위 별도 행 -->
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:18px;padding:4px 22px 8px;background:#f0f7ff;border-bottom:1.5px solid #dbeafe;">
+            <!-- 부서원 전체 보기 (manager/admin 전용) -->
+            <label id="teamViewToggleWrap"
+              style="display:none;align-items:center;gap:7px;cursor:pointer;user-select:none;"
+              title="켜짐: 부서원이 등록한 업무를 함께 표시합니다. 타인의 업무는 읽기 전용입니다.&#10;꺼짐: 내 업무만 표시합니다.">
+              <span style="font-size:11.5px;color:var(--text-secondary);font-weight:500;">부서원 업무 보기</span>
+              <div style="position:relative;width:36px;height:20px;">
+                <input type="checkbox" id="teamViewToggle"
+                  style="opacity:0;width:0;height:0;position:absolute;">
+                <span id="teamViewSlider"
+                  style="position:absolute;inset:0;border-radius:20px;background:#cbd5e1;transition:background 0.2s;cursor:pointer;">
+                  <span id="teamViewKnob"
+                    style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+                </span>
+              </div>
+            </label>
+
             <label id="journalAutoSyncWrap"
               style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;"
               title="켜짐: 업무 등록/수정 시 업무일지 요약이 자동으로 업데이트됩니다.&#10;꺼짐: 자동 업데이트를 하지 않고 직접 작성합니다.">
