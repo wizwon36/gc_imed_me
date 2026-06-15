@@ -1827,18 +1827,36 @@ input[type="date"].form-input {
 
 /* 부서원 업무 구분 섹션 */
 .team-task-section {
-  border-top: 1.5px dashed #dbeafe;
-  margin-top: 4px;
-  padding-top: 4px;
+  border-top: 2px solid #e2e8f0;
+  margin-top: 6px;
+  padding-top: 0;
 }
+
+/* 내 업무 / 부서원 업무 공통 섹션 헤더 */
 .team-task-section-label {
-  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  margin: 8px 14px 6px;
+  border-radius: 6px;
+}
+
+/* 내 업무 헤더 — 파란 계열 */
+.team-task-section-label--mine {
+  color: #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+}
+
+/* 부서원 업무 헤더 — 보라 계열 */
+.team-task-section-label--team {
   color: #6d28d9;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 5px 16px 2px;
-  opacity: 0.7;
+  background: #ede9fe;
+  border: 1px solid #ddd6fe;
 }
 
 /* 읽기 전용 업무 카드 */
