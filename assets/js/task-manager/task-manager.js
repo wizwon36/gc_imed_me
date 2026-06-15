@@ -99,10 +99,11 @@
       if (isManager && !isEdit) {
         document.getElementById('categoryManageBtn').style.display  = '';
         document.getElementById('exportJournalBtn').style.display   = '';
-        // 부서원 업무 보기 토글 노출
-        const tvWrap = document.getElementById('teamViewToggleWrap');
-        if (tvWrap) tvWrap.style.display = 'flex';
       }
+
+      // 부서원 업무 보기 토글 — 전체 사용자 노출
+      const tvWrap = document.getElementById('teamViewToggleWrap');
+      if (tvWrap) tvWrap.style.display = 'flex';
 
       const todayStr      = formatDateStr(new Date());
       weeklyWeekStart     = getWeekStart(todayStr);
@@ -992,7 +993,7 @@
     document.getElementById('weekTimeline').innerHTML = '';
 
     try {
-      if (teamViewEnabled && isManager) {
+      if (teamViewEnabled) {
         // 내 업무 + 팀원 업무 병렬 조회
         const [tasksRes, teamRes] = await Promise.all([
           apiGet('taskGetItems', {
@@ -1049,7 +1050,7 @@
     const container = document.getElementById('weekTimeline');
 
     // 팀뷰 안내 배너
-    const teamBanner = (teamViewEnabled && isManager && teamWeeklyTasks.length > 0)
+    const teamBanner = (teamViewEnabled && teamWeeklyTasks.length > 0)
       ? `<div class="team-view-banner">
            <span class="team-view-banner-icon">👥</span>
            <span>부서원 업무 보기 활성 — 타인의 업무는 <strong>읽기 전용</strong>입니다.</span>
@@ -1073,7 +1074,7 @@
 
       // 팀원 업무 (팀뷰 활성 시) — 중요도 > 이름순 정렬
       const _PRI_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-      const dayTeamTasks = (teamViewEnabled && isManager)
+      const dayTeamTasks = (teamViewEnabled)
         ? teamWeeklyTasks.filter(t => {
             const s = t.start_date || '';
             const e = t.end_date   || s;
