@@ -1011,7 +1011,7 @@ function validatePayload(p) {
     if (!p.sign_type)        return fail('형태/종류를 입력해 주세요.', 'sign_type');
     if (!p.install_env)      return fail('설치 환경을 선택해 주세요.', 'install_env');
     if (!p.install_location) return fail('설치 위치를 입력해 주세요.', 'install_location');
-    if (uploadedFileIds.location.length === 0) return fail('설치 위치 사진 또는 참고자료를 첨부해 주세요.', null);
+    if (pendingFiles.location.length === 0) return fail('설치 위치 사진 또는 참고자료를 첨부해 주세요.', null);
   }
 
   if (p.type === 'NAMEPLATE') {
