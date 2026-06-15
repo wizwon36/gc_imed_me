@@ -1228,7 +1228,7 @@
 
     return `
       <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}"
-           title="${ownerName}의 업무 — 클릭하여 상세 보기"
+           title="${ownerName}의 업무"
            onclick="TASK_APP.openTeamTaskModal('${esc(t.task_id)}')">
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
@@ -1245,7 +1245,9 @@
             ${t.description ? `<span class="task-item-desc">${esc(t.description)}</span>` : ''}
           </div>
         </div>
-        <div class="task-item-readonly-badge">상세 보기</div>
+        <button class="team-task-detail-btn" onclick="event.stopPropagation();TASK_APP.openTeamTaskModal('${esc(t.task_id)}')">
+          🔍 상세
+        </button>
       </div>
     `;
   }
