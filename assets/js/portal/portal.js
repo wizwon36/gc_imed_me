@@ -123,11 +123,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // support / support_admin 은 권한 기반으로만 노출 (강제 노출 제거)
 
-    const visiblePermissions = permissions.filter(item => {
-      if (!item || !item.app_id) return false;
-      if (String(item.active || 'Y').trim().toUpperCase() !== 'Y') return false;
-      return !!APP_MAP[item.app_id];
-    });
+    const APP_ORDER = Object.keys(APP_MAP);
+
+    const visiblePermissions = permissions
+      .filter(item => {
+        if (!item || !item.app_id) return false;
+        if (String(item.active || 'Y').trim().toUpperCase() !== 'Y') return false;
+        return !!APP_MAP[item.app_id];
+      })
+      .sort((a, b) => APP_ORDER.indexOf(a.app_id) - APP_ORDER.indexOf(b.app_id));
 
     if (!visiblePermissions.length) {
       if (gridEl) gridEl.innerHTML = '';
