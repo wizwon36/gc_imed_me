@@ -2043,3 +2043,18 @@ input[type="date"].form-input {
 .team-pri-group-header--medium .team-pri-group-dot { background: #d97706; }
 .team-pri-group-header--low    { color: #166534; }
 .team-pri-group-header--low    .team-pri-group-dot { background: #16a34a; }
+
+/* 기간 업무 종료일 표기 */
+.task-period-end {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0 5px;
+  margin-left: 5px;
+  vertical-align: middle;
+  line-height: 18px;
+}
