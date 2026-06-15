@@ -1890,3 +1890,18 @@ input[type="date"].form-input {
   background: #ddd6fe;
   border-color: #c4b5fd;
 }
+
+/* 팀원 업무 카드 — 수행의원 태그 */
+.task-clinic-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  border-radius: 5px;
+  white-space: nowrap;
+}
