@@ -31,10 +31,10 @@ async function parseApiResponse(response) {
   return data;
 }
 
-async function apiGet(action, params = {}) {
+async function apiGet(action, params = {}, _retry = 2) {
   const url = buildApiUrl(action, params);
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 30000);  // 30초 타임아웃
+  const timer = setTimeout(() => ctrl.abort(), 60000);  // 60초 타임아웃
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -43,17 +43,23 @@ async function apiGet(action, params = {}) {
     });
     return await parseApiResponse(response);
   } catch (e) {
-    if (e.name === 'AbortError') throw new Error('요청 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.');
+    if (e.name === 'AbortError') {
+      if (_retry > 0) {
+        console.warn(`[apiGet] 타임아웃 재시도 (남은 횟수: ${_retry}) - action: ${action}`);
+        return apiGet(action, params, _retry - 1);
+      }
+      throw new Error('요청 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.');
+    }
     throw e;
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function apiPost(action, payload = {}) {
+async function apiPost(action, payload = {}, _retry = 2) {
   const url = buildApiUrl(action);
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 30000);  // 30초 타임아웃
+  const timer = setTimeout(() => ctrl.abort(), 60000);  // 60초 타임아웃
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -63,7 +69,13 @@ async function apiPost(action, payload = {}) {
     });
     return await parseApiResponse(response);
   } catch (e) {
-    if (e.name === 'AbortError') throw new Error('요청 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.');
+    if (e.name === 'AbortError') {
+      if (_retry > 0) {
+        console.warn(`[apiPost] 타임아웃 재시도 (남은 횟수: ${_retry}) - action: ${action}`);
+        return apiPost(action, payload, _retry - 1);
+      }
+      throw new Error('요청 시간이 초과됐습니다. 잠시 후 다시 시도해주세요.');
+    }
     throw e;
   } finally {
     clearTimeout(timer);
