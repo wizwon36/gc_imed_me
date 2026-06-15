@@ -1065,12 +1065,18 @@
         return s <= dateStr && e >= dateStr;
       });
 
-      // 팀원 업무 (팀뷰 활성 시)
+      // 팀원 업무 (팀뷰 활성 시) — 중요도 > 이름순 정렬
+      const _PRI_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
       const dayTeamTasks = (teamViewEnabled && isManager)
         ? teamWeeklyTasks.filter(t => {
             const s = t.start_date || '';
             const e = t.end_date   || s;
             return s <= dateStr && e >= dateStr;
+          }).sort((a, b) => {
+            const pa = _PRI_ORDER[(a.priority || 'MEDIUM').toUpperCase()] ?? 1;
+            const pb = _PRI_ORDER[(b.priority || 'MEDIUM').toUpperCase()] ?? 1;
+            if (pa !== pb) return pa - pb;
+            return (a.user_name || a.user_email || '').localeCompare(b.user_name || b.user_email || '');
           })
         : [];
 
