@@ -681,51 +681,41 @@
        팀원 업무 상세 보기 모달 (읽기 전용)
   ──────────────────────────────────────── -->
   <div class="task-modal-overlay" id="teamTaskModal">
-    <div class="task-modal" style="max-width:640px;width:95vw;">
-      <div class="task-modal-head" style="background:#f5f3ff;border-bottom:1.5px solid #ddd6fe;">
-        <div style="display:flex;flex-direction:column;gap:2px;">
-          <span class="task-modal-title" style="color:#5b21b6;">📋 업무 상세 보기</span>
-          <span style="font-size:12px;color:#7c3aed;font-weight:500;" id="teamTaskModalOwner"></span>
+    <div class="task-modal" style="max-width:620px;width:95vw;">
+      <div class="task-modal-head">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="task-modal-title" id="teamTaskModalTitle"></span>
+          <span class="team-modal-owner-badge" id="teamTaskModalOwner"></span>
         </div>
         <button class="task-modal-close" id="teamTaskModalClose">✕</button>
       </div>
-      <div class="task-modal-body" style="padding:20px 22px;">
+      <div class="task-modal-body">
 
-        <!-- 제목 -->
-        <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;line-height:1.4;"
-             id="teamTaskModalTitle"></div>
+        <!-- 메타 칩 행 -->
+        <div class="team-modal-meta-row" id="teamTaskModalMetaRow"></div>
 
-        <!-- 메타 정보 그리드 -->
-        <div style="display:grid;grid-template-columns:80px 1fr;gap:8px 12px;font-size:13px;margin-bottom:16px;">
-          <span style="color:var(--text-muted);font-weight:500;">날짜</span>
-          <span style="color:var(--text-primary);font-weight:500;" id="teamTaskModalDate"></span>
-
-          <span style="color:var(--text-muted);font-weight:500;">수행 의원</span>
-          <span style="color:var(--text-primary);" id="teamTaskModalClinic"></span>
-
-          <span style="color:var(--text-muted);font-weight:500;">업무 구분</span>
-          <span style="color:var(--text-primary);" id="teamTaskModalCategory"></span>
-
-          <span style="color:var(--text-muted);font-weight:500;">중요도</span>
-          <span style="color:var(--text-primary);" id="teamTaskModalPriority"></span>
-
-          <span style="color:var(--text-muted);font-weight:500;">진행 상태</span>
-          <span style="color:var(--text-primary);" id="teamTaskModalStatus"></span>
+        <!-- 날짜 / 수행의원 행 -->
+        <div class="team-modal-info-row">
+          <span class="team-modal-info-item">
+            <span class="team-modal-info-label">날짜</span>
+            <span class="team-modal-info-value" id="teamTaskModalDate"></span>
+          </span>
+          <span class="team-modal-info-sep"></span>
+          <span class="team-modal-info-item">
+            <span class="team-modal-info-label">수행 의원</span>
+            <span class="team-modal-info-value" id="teamTaskModalClinic"></span>
+          </span>
         </div>
 
         <!-- 상세 내용 -->
-        <div id="teamTaskModalDescWrap" style="border-top:1.5px solid #ede9fe;padding-top:14px;">
-          <div style="font-size:11.5px;font-weight:600;color:#7c3aed;margin-bottom:6px;">상세 내용</div>
-          <div style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;line-height:1.65;
-                      background:#faf5ff;border:1.5px solid #ede9fe;border-radius:10px;padding:12px 14px;"
-               id="teamTaskModalDesc"></div>
+        <div id="teamTaskModalDescWrap">
+          <div class="form-label" style="margin-bottom:6px;">상세 내용</div>
+          <div class="team-modal-desc" id="teamTaskModalDesc"></div>
         </div>
 
       </div>
-      <div class="task-modal-footer" style="background:#f5f3ff;border-top:1.5px solid #ddd6fe;">
-        <div style="font-size:11.5px;color:#7c3aed;display:flex;align-items:center;gap:5px;">
-          🔒 읽기 전용 — 수정은 본인만 가능합니다.
-        </div>
+      <div class="task-modal-footer">
+        <span class="team-modal-readonly-note">🔒 읽기 전용 — 수정은 본인만 가능합니다.</span>
         <button class="btn" id="teamTaskModalDismiss">닫기</button>
       </div>
     </div>
