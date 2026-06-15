@@ -1082,7 +1082,10 @@
             const pa = _PRI_ORDER[(a.priority || 'MEDIUM').toUpperCase()] ?? 1;
             const pb = _PRI_ORDER[(b.priority || 'MEDIUM').toUpperCase()] ?? 1;
             if (pa !== pb) return pa - pb;
-            return (a.user_name || a.user_email || '').localeCompare(b.user_name || b.user_email || '');
+            const ca = (CATEGORY_LABELS[a.category] || a.category || '');
+            const cb = (CATEGORY_LABELS[b.category] || b.category || '');
+            if (ca !== cb) return ca.localeCompare(cb, 'ko');
+            return (a.user_name || a.user_email || '').localeCompare(b.user_name || b.user_email || '', 'ko');
           })
         : [];
 
@@ -1187,6 +1190,7 @@
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
             <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
+            ${(t.work_clinic_name || t.clinic_name) ? `<span class="task-clinic-tag">${esc(t.work_clinic_name || t.clinic_name)}</span>` : ''}
             ${!isSingleDay
               ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
               : ''}
