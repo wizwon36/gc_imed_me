@@ -1261,33 +1261,50 @@
     const task = teamWeeklyTasks.find(t => t.task_id === taskId);
     if (!task) return;
 
-    const ownerName = task.user_name || task.user_email || '팀원';
-
-    // 우선순위 레이블
-    const priLabel = { HIGH: '🔴 높음', MEDIUM: '🟡 보통', LOW: '🟢 낮음' };
-    const stLabel  = { TODO: '예정', IN_PROGRESS: '진행중', DONE: '완료' };
-    const isSingle = !task.end_date || task.end_date === task.start_date;
-
-    const dateRange = isSingle
-      ? task.start_date
-      : `${task.start_date} ~ ${task.end_date}`;
-
+    const ownerName  = task.user_name || task.user_email || '팀원';
+    const isSingle   = !task.end_date || task.end_date === task.start_date;
+    const dateRange  = isSingle ? task.start_date : `${task.start_date} ~ ${task.end_date}`;
     const workClinic = task.work_clinic_name || task.clinic_name || '';
 
-    document.getElementById('teamTaskModalOwner').textContent    = ownerName;
-    document.getElementById('teamTaskModalTitle').textContent    = task.title || '';
-    document.getElementById('teamTaskModalDate').textContent     = dateRange;
-    document.getElementById('teamTaskModalClinic').textContent   = workClinic;
-    document.getElementById('teamTaskModalCategory').textContent = CATEGORY_LABELS[task.category] || task.category || '';
-    document.getElementById('teamTaskModalPriority').textContent = priLabel[task.priority] || task.priority || '';
-    document.getElementById('teamTaskModalStatus').textContent   = stLabel[task.status] || task.status || '';
+    const priCls   = { HIGH: 'priority-high', MEDIUM: 'priority-medium', LOW: 'priority-low' };
+    const priLabel = { HIGH: '높음', MEDIUM: '보통', LOW: '낮음' };
+    const stCls    = { TODO: 'badge-status-todo', IN_PROGRESS: 'badge-status-inprogress', DONE: 'badge-status-done' };
+    const stLabel  = { TODO: '예정', IN_PROGRESS: '진행중', DONE: '완료' };
 
-    const descEl = document.getElementById('teamTaskModalDesc');
+    const pri = (task.priority || 'MEDIUM').toUpperCase();
+    const st  = (task.status  || 'TODO').toUpperCase();
+    const cat = CATEGORY_LABELS[task.category] || task.category || '';
+
+    // 제목 + 소유자
+    document.getElementById('teamTaskModalTitle').textContent = task.title || '';
+    document.getElementById('teamTaskModalOwner').textContent = ownerName;
+
+    // 날짜 / 의원
+    document.getElementById('teamTaskModalDate').textContent   = dateRange;
+    document.getElementById('teamTaskModalClinic').textContent = workClinic;
+
+    // 메타 칩 행 (업무구분 · 중요도 · 상태)
+    const metaRow = document.getElementById('teamTaskModalMetaRow');
+    if (metaRow) {
+      metaRow.innerHTML = `
+        <span class="task-badge badge-category">${esc(cat)}</span>
+        <span class="task-badge team-modal-pri-badge ${priCls[pri]}">
+          <span class="task-priority-dot ${priCls[pri]}" style="width:7px;height:7px;flex-shrink:0;"></span>
+          ${esc(priLabel[pri] || pri)}
+        </span>
+        <span class="task-badge ${stCls[st]}">${esc(stLabel[st] || st)}</span>
+      `;
+    }
+
+    // 상세 내용 — innerHTML + 공백 보존
+    const descWrap = document.getElementById('teamTaskModalDescWrap');
+    const descEl   = document.getElementById('teamTaskModalDesc');
     if (task.description && task.description.trim()) {
-      descEl.textContent       = task.description;
-      descEl.parentElement.style.display = '';
+      // 줄바꿈·들여쓰기 보존: 공백→&nbsp; 변환 없이 pre-wrap CSS로 처리
+      descEl.textContent = task.description;
+      if (descWrap) descWrap.style.display = '';
     } else {
-      descEl.parentElement.style.display = 'none';
+      if (descWrap) descWrap.style.display = 'none';
     }
 
     _openModal('teamTaskModal');
