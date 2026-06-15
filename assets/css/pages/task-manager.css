@@ -1995,3 +1995,33 @@ input[type="date"].form-input {
   align-items: center;
   gap: 4px;
 }
+
+/* ── 팀원 업무 중요도 그룹 ── */
+.team-pri-group {
+  margin-bottom: 4px;
+}
+
+.team-pri-group-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 5px 16px 3px;
+  opacity: 0.8;
+}
+
+.team-pri-group-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.team-pri-group-header--high   { color: #b91c1c; }
+.team-pri-group-header--high   .team-pri-group-dot { background: #dc2626; }
+.team-pri-group-header--medium { color: #92400e; }
+.team-pri-group-header--medium .team-pri-group-dot { background: #d97706; }
+.team-pri-group-header--low    { color: #166534; }
+.team-pri-group-header--low    .team-pri-group-dot { background: #16a34a; }
