@@ -177,6 +177,13 @@
       if (e.key === 'Enter') runSearch();
     });
 
+    // 팀원 업무 상세 보기 모달
+    document.getElementById('teamTaskModalClose')?.addEventListener('click', () => _closeModal('teamTaskModal'));
+    document.getElementById('teamTaskModalDismiss')?.addEventListener('click', () => _closeModal('teamTaskModal'));
+    document.getElementById('teamTaskModal')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('teamTaskModal')) _closeModal('teamTaskModal');
+    });
+
     // 카테고리 관리
     document.getElementById('categoryManageBtn')?.addEventListener('click', openCategoryModal);
     document.getElementById('categoryModalClose')?.addEventListener('click', closeCategoryModal);
@@ -1204,11 +1211,13 @@
       statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
     }
 
-    const isDone     = t.status === 'DONE';
-    const ownerName  = esc(t.user_name || t.user_email || '팀원');
+    const isDone    = t.status === 'DONE';
+    const ownerName = esc(t.user_name || t.user_email || '팀원');
 
     return `
-      <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}" title="${ownerName}의 업무 (읽기 전용)">
+      <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}"
+           title="${ownerName}의 업무 — 클릭하여 상세 보기"
+           onclick="TASK_APP.openTeamTaskModal('${esc(t.task_id)}')">
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
           <div class="task-item-title">
@@ -1224,10 +1233,47 @@
             ${t.description ? `<span class="task-item-desc">${esc(t.description)}</span>` : ''}
           </div>
         </div>
-        <div class="task-item-readonly-badge">읽기 전용</div>
+        <div class="task-item-readonly-badge">상세 보기</div>
       </div>
     `;
   }
+
+  // ── 팀원 업무 상세 보기 모달 (읽기 전용) ─────────────────────
+  window.TASK_APP.openTeamTaskModal = function(taskId) {
+    const task = teamWeeklyTasks.find(t => t.task_id === taskId);
+    if (!task) return;
+
+    const ownerName = task.user_name || task.user_email || '팀원';
+
+    // 우선순위 레이블
+    const priLabel = { HIGH: '🔴 높음', MEDIUM: '🟡 보통', LOW: '🟢 낮음' };
+    const stLabel  = { TODO: '예정', IN_PROGRESS: '진행중', DONE: '완료' };
+    const isSingle = !task.end_date || task.end_date === task.start_date;
+
+    const dateRange = isSingle
+      ? task.start_date
+      : `${task.start_date} ~ ${task.end_date}`;
+
+    const workClinic = task.work_clinic_name || task.clinic_name || '';
+
+    document.getElementById('teamTaskModalOwner').textContent    = ownerName;
+    document.getElementById('teamTaskModalTitle').textContent    = task.title || '';
+    document.getElementById('teamTaskModalDate').textContent     = dateRange;
+    document.getElementById('teamTaskModalClinic').textContent   = workClinic;
+    document.getElementById('teamTaskModalCategory').textContent = CATEGORY_LABELS[task.category] || task.category || '';
+    document.getElementById('teamTaskModalPriority').textContent = priLabel[task.priority] || task.priority || '';
+    document.getElementById('teamTaskModalStatus').textContent   = stLabel[task.status] || task.status || '';
+
+    const descEl = document.getElementById('teamTaskModalDesc');
+    if (task.description && task.description.trim()) {
+      descEl.textContent       = task.description;
+      descEl.parentElement.style.display = '';
+    } else {
+      descEl.parentElement.style.display = 'none';
+    }
+
+    _openModal('teamTaskModal');
+  };
 
 
   // 자동 동기화 토글 UI 업데이트
