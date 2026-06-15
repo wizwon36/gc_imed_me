@@ -1133,7 +1133,7 @@
             </div>`;
         }).join('');
         teamSectionHtml = `<div class="team-task-section">
-          <div class="team-task-section-label">부서원 업무</div>
+          <div class="team-task-section-label team-task-section-label--team">👥 부서원 업무</div>
           ${groupHtml}
         </div>`;
       }
@@ -1171,7 +1171,7 @@
           <div class="day-tasks" id="day-tasks-${dateStr}" style="${showExpand ? '' : 'display:none;'}">
             ${teamSectionHtml
               ? `<div class="team-task-section" style="border-top:none;padding-top:0;">
-                   <div class="team-task-section-label">내 업무</div>
+                   <div class="team-task-section-label team-task-section-label--mine">👤 내 업무</div>
                    ${taskItems || `<div style="padding:8px 16px;"><span style="font-size:12px;color:var(--text-muted);">등록된 업무가 없습니다.</span></div>`}
                  </div>`
               : taskItems || `<div class="task-empty" style="padding:16px;"><span style="font-size:12px;color:var(--text-muted);">등록된 업무가 없습니다.</span></div>`
