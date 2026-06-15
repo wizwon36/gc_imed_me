@@ -48,6 +48,9 @@
   // 사용자 설정
   let _userSettingsLoaded = false;
 
+  // 전역 공개 API
+  window.TASK_APP = window.TASK_APP || {};
+
   // 캘린더 팝업
   let calendarPopupMonth = '';   // 'yyyy-MM' 형태
 
@@ -1856,7 +1859,6 @@
   }
 
   // ── 팀원 일지 모달 ────────────────────────────────────────────
-  window.TASK_APP = window.TASK_APP || {};
 
   window.TASK_APP.openMemberJournal = async function(idx) {
     const m = _lastTeamData[idx];
