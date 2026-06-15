@@ -1110,8 +1110,32 @@
         ? `<span class="day-member-badge">👥 부서원 ${memberCount}</span>`
         : '';
 
-      const taskItems     = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
-      const teamTaskItems = dayTeamTasks.map(t => renderTeamTaskItem(t, dateStr)).join('');
+      const taskItems = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
+
+      // 팀원 업무 — 중요도별 그룹 헤더
+      const PRI_GROUPS = [
+        { key: 'HIGH',   label: '높음', cls: 'high'   },
+        { key: 'MEDIUM', label: '보통', cls: 'medium' },
+        { key: 'LOW',    label: '낮음', cls: 'low'    }
+      ];
+      let teamSectionHtml = '';
+      if (dayTeamTasks.length > 0) {
+        const groupHtml = PRI_GROUPS.map(g => {
+          const items = dayTeamTasks.filter(t => (t.priority || 'MEDIUM').toUpperCase() === g.key);
+          if (!items.length) return '';
+          return `
+            <div class="team-pri-group">
+              <div class="team-pri-group-header team-pri-group-header--${g.cls}">
+                <span class="team-pri-group-dot"></span>${g.label}
+              </div>
+              ${items.map(t => renderTeamTaskItem(t, dateStr)).join('')}
+            </div>`;
+        }).join('');
+        teamSectionHtml = `<div class="team-task-section">
+          <div class="team-task-section-label">부서원 업무</div>
+          ${groupHtml}
+        </div>`;
+      }
 
       const hasContent  = dayTasks.length > 0 || dayTeamTasks.length > 0;
       const showExpand  = isToday || hasContent;
@@ -1122,13 +1146,7 @@
         isSat   ? 'is-saturday' : ''
       ].filter(Boolean).join(' ');
 
-      // 팀원 업무 구분선
-      const teamSection = teamTaskItems
-        ? `<div class="team-task-section">
-             <div class="team-task-section-label">부서원 업무</div>
-             ${teamTaskItems}
-           </div>`
-        : '';
+      const teamSection = teamSectionHtml;
 
       return `
         <div class="day-row">
@@ -1190,7 +1208,6 @@
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
             <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
-            ${(t.work_clinic_name || t.clinic_name) ? `<span class="task-clinic-tag">${esc(t.work_clinic_name || t.clinic_name)}</span>` : ''}
             ${!isSingleDay
               ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
               : ''}
@@ -1227,8 +1244,9 @@
       statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
     }
 
-    const isDone    = t.status === 'DONE';
-    const ownerName = esc(t.user_name || t.user_email || '팀원');
+    const isDone     = t.status === 'DONE';
+    const ownerName  = esc(t.user_name || t.user_email || '팀원');
+    const clinicName = esc(t.work_clinic_name || t.clinic_name || '');
 
     return `
       <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}"
@@ -1237,6 +1255,7 @@
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
           <div class="task-item-title">
+            ${clinicName ? `<span class="task-clinic-tag">${clinicName}</span>` : ''}
             ${esc(t.title)}
             <span class="task-owner-tag">${ownerName}</span>
           </div>
