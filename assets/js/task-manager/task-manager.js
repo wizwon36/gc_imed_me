@@ -1065,20 +1065,16 @@
       const isSun   = dow === 0;
       const isSat   = dow === 6;
 
-      // 내 업무
+      // 내 업무 — 기간 업무는 시작일에만 표시
       const dayTasks = weeklyTasks.filter(t => {
-        const s = t.start_date || '';
-        const e = t.end_date   || s;
-        return s <= dateStr && e >= dateStr;
+        return (t.start_date || '') === dateStr;
       });
 
       // 팀원 업무 (팀뷰 활성 시) — 중요도 > 이름순 정렬
       const _PRI_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 };
       const dayTeamTasks = (teamViewEnabled)
         ? teamWeeklyTasks.filter(t => {
-            const s = t.start_date || '';
-            const e = t.end_date   || s;
-            return s <= dateStr && e >= dateStr;
+            return (t.start_date || '') === dateStr;
           }).sort((a, b) => {
             const pa = _PRI_ORDER[(a.priority || 'MEDIUM').toUpperCase()] ?? 1;
             const pb = _PRI_ORDER[(b.priority || 'MEDIUM').toUpperCase()] ?? 1;
@@ -1186,38 +1182,26 @@
   function renderTaskItem(t, dateStr) {
     const priorityCls = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
     const isSingleDay = !t.end_date || t.start_date === t.end_date;
-    const isEndDate   = !isSingleDay && dateStr && t.end_date === dateStr;
-    const isMidDate   = !isSingleDay && dateStr && t.end_date > dateStr && t.start_date <= dateStr;
 
-    // 날짜별 표시 상태 결정
-    // - 단기업무: status 그대로
-    // - 기간 중간 날짜: 항상 진행중
-    // - 마지막 날(end_date): DONE이면 완료, 아니면 종료예정
-    let displayStatus, statusCls;
-    if (isMidDate) {
-      displayStatus = '진행중';
-      statusCls     = 'badge-status-inprogress';
-    } else if (isEndDate) {
-      displayStatus = t.status === 'DONE' ? '완료' : '종료예정';
-      statusCls     = t.status === 'DONE' ? 'badge-status-done' : 'badge-status-inprogress';
-    } else {
-      displayStatus = STATUS_LABELS[t.status] || t.status;
-      statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
-    }
+    const displayStatus = STATUS_LABELS[t.status] || t.status;
+    const statusCls     = t.status === 'DONE' ? 'badge-status-done'
+                        : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress'
+                        : 'badge-status-todo';
+    const isDone = t.status === 'DONE';
 
-    const isDone = t.status === 'DONE' && (isSingleDay || isEndDate || isMidDate);
+    // 기간 업무 종료일 표기
+    const endTag = !isSingleDay
+      ? `<span class="task-period-end">~ ${esc(t.end_date ? t.end_date.substring(5).replace('-', '/') : '')}</span>`
+      : '';
 
     return `
       <div class="task-item${isDone ? ' is-done' : ''}" onclick="TASK_APP.openEditModal('${esc(t.task_id)}')">
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
-          <div class="task-item-title">${esc(t.title)}</div>
+          <div class="task-item-title">${esc(t.title)}${endTag}</div>
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
             <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
-            ${!isSingleDay
-              ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
-              : ''}
             ${t.description ? `<span class="task-item-desc">${esc(t.description)}</span>` : ''}
           </div>
         </div>
@@ -1237,19 +1221,11 @@
   function renderTeamTaskItem(t, dateStr) {
     const priorityCls  = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
     const isSingleDay  = !t.end_date || t.start_date === t.end_date;
-    const isEndDate    = !isSingleDay && dateStr && t.end_date === dateStr;
-    const isMidDate    = !isSingleDay && dateStr && t.end_date > dateStr && t.start_date <= dateStr;
 
-    let displayStatus, statusCls;
-    if (isMidDate) {
-      displayStatus = '진행중';  statusCls = 'badge-status-inprogress';
-    } else if (isEndDate) {
-      displayStatus = t.status === 'DONE' ? '완료' : '종료예정';
-      statusCls     = t.status === 'DONE' ? 'badge-status-done' : 'badge-status-inprogress';
-    } else {
-      displayStatus = STATUS_LABELS[t.status] || t.status;
-      statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
-    }
+    const displayStatus = STATUS_LABELS[t.status] || t.status;
+    const statusCls     = t.status === 'DONE' ? 'badge-status-done'
+                        : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress'
+                        : 'badge-status-todo';
 
     const isDone     = t.status === 'DONE';
     const ownerName  = esc(t.user_name || t.user_email || '팀원');
@@ -1257,6 +1233,9 @@
     const ownerBadge = clinicName
       ? `<span class="task-owner-tag">${clinicName} · ${ownerName}</span>`
       : `<span class="task-owner-tag">${ownerName}</span>`;
+    const endTag = !isSingleDay
+      ? `<span class="task-period-end">~ ${esc(t.end_date ? t.end_date.substring(5).replace('-', '/') : '')}</span>`
+      : '';
 
     return `
       <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}"
@@ -1265,7 +1244,7 @@
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
           <div class="task-item-title">
-            ${esc(t.title)}
+            ${esc(t.title)}${endTag}
             ${ownerBadge}
           </div>
           <div class="task-item-meta">
