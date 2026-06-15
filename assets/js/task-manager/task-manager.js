@@ -45,6 +45,9 @@
   let teamWeekStart  = '';
   let _lastTeamData  = [];
 
+  // 사용자 설정
+  let _userSettingsLoaded = false;
+
   // 캘린더 팝업
   let calendarPopupMonth = '';   // 'yyyy-MM' 형태
 
@@ -1304,9 +1307,6 @@
   }
 
   // 앱 초기화 시 사용자 설정 로드
-  // 설정 로드 완료 여부 — 초기 1회만 로드
-  let _userSettingsLoaded = false;
-
   async function loadUserSettings() {
     if (_userSettingsLoaded) return;  // 이미 로드됐으면 스킵
     try {
