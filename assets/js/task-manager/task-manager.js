@@ -27,8 +27,10 @@
   let isAdmin     = false;
 
   // 주간 업무 탭
-  let weeklyWeekStart = '';
-  let weeklyTasks     = [];
+  let weeklyWeekStart  = '';
+  let weeklyTasks      = [];
+  let teamViewEnabled  = false;   // 부서원 업무 보기 토글 (manager/admin 전용)
+  let teamWeeklyTasks  = [];      // 부서원 업무 목록 (팀뷰 활성 시)
 
   // 주간일지 탭
   let journalWeekStart    = '';
@@ -89,8 +91,11 @@
       // tabTeam은 모든 사용자에게 표시
       // 카테고리 관리, 엑셀 다운로드는 manager/admin 전용 (edit 제외)
       if (isManager && !isEdit) {
-        document.getElementById('categoryManageBtn').style.display = '';
-        document.getElementById('exportJournalBtn').style.display  = '';
+        document.getElementById('categoryManageBtn').style.display  = '';
+        document.getElementById('exportJournalBtn').style.display   = '';
+        // 부서원 업무 보기 토글 노출
+        const tvWrap = document.getElementById('teamViewToggleWrap');
+        if (tvWrap) tvWrap.style.display = 'flex';
       }
 
       const todayStr      = formatDateStr(new Date());
@@ -112,6 +117,7 @@
 
       // 자동 동기화 토글 초기화 + 설정 로드
       initAutoSyncToggle();
+      initTeamViewToggle();
       loadUserSettings();
 
     } catch (err) {
@@ -657,7 +663,31 @@
   }
 
   // ── 주간 업무 로드 ───────────────────────────────────────────
-  // ── 업무 변경 시 일지 자동 동기화 ───────────────────────────
+  // ── 팀뷰 토글 초기화 ─────────────────────────────────────────
+  function initTeamViewToggle() {
+    const toggle = document.getElementById('teamViewToggle');
+    if (!toggle || toggle._bound) return;
+    toggle._bound = true;
+
+    toggle.addEventListener('change', async function () {
+      teamViewEnabled = this.checked;
+      updateTeamViewToggleUI(teamViewEnabled);
+      showGlobalLoading(teamViewEnabled ? '부서원 업무를 불러오는 중...' : '업무 목록을 불러오는 중...');
+      await loadWeeklyTasks().finally(() => hideGlobalLoading());
+    });
+  }
+
+  function updateTeamViewToggleUI(isOn) {
+    const slider = document.getElementById('teamViewSlider');
+    const knob   = document.getElementById('teamViewKnob');
+    const toggle = document.getElementById('teamViewToggle');
+    if (!slider) return;
+    slider.style.background = isOn ? '#0369a1' : '#cbd5e1';
+    if (knob)   knob.style.left   = isOn ? '18px' : '2px';
+    if (toggle) toggle.checked    = isOn;
+  }
+
+
   /**
    * 업무 등록/수정/삭제/상태변경 후 자동 호출.
    * 이번 주 일지가 존재하고 CLOSED가 아닌 경우에만
@@ -949,12 +979,28 @@
     document.getElementById('weekTimeline').innerHTML = '';
 
     try {
-      const tasksRes = await apiGet('taskGetItems', {
-        request_user_email: currentUser.email,
-        week_start:         weeklyWeekStart
-      });
-
-      weeklyTasks = tasksRes.data || [];
+      if (teamViewEnabled && isManager) {
+        // 내 업무 + 팀원 업무 병렬 조회
+        const [tasksRes, teamRes] = await Promise.all([
+          apiGet('taskGetItems', {
+            request_user_email: currentUser.email,
+            week_start:         weeklyWeekStart
+          }),
+          apiGet('taskGetTeamItems', {
+            request_user_email: currentUser.email,
+            week_start:         weeklyWeekStart
+          }).catch(() => ({ data: [] }))
+        ]);
+        weeklyTasks     = tasksRes.data || [];
+        teamWeeklyTasks = (teamRes.data || []).filter(t => t.user_email !== currentUser.email);
+      } else {
+        const tasksRes  = await apiGet('taskGetItems', {
+          request_user_email: currentUser.email,
+          week_start:         weeklyWeekStart
+        });
+        weeklyTasks     = tasksRes.data || [];
+        teamWeeklyTasks = [];
+      }
       renderWeekTimeline();
       updateWeeklySummary();
 
@@ -985,11 +1031,19 @@
   }
 
   function renderWeekTimeline() {
-    const days     = getDaysOfWeek(weeklyWeekStart);
-    const todayStr = formatDateStr(new Date());
+    const days      = getDaysOfWeek(weeklyWeekStart);
+    const todayStr  = formatDateStr(new Date());
     const container = document.getElementById('weekTimeline');
 
-    container.innerHTML = days.map(dateStr => {
+    // 팀뷰 안내 배너
+    const teamBanner = (teamViewEnabled && isManager && teamWeeklyTasks.length > 0)
+      ? `<div class="team-view-banner">
+           <span class="team-view-banner-icon">👥</span>
+           <span>부서원 업무 보기 활성 — 타인의 업무는 <strong>읽기 전용</strong>입니다.</span>
+         </div>`
+      : '';
+
+    container.innerHTML = teamBanner + days.map(dateStr => {
       const d      = new Date(dateStr + 'T00:00:00');
       const dayNum = d.getDate();
       const dow    = d.getDay();
@@ -997,18 +1051,29 @@
       const isSun   = dow === 0;
       const isSat   = dow === 6;
 
-      // 해당 날짜가 start_date ~ end_date 범위에 포함된 업무 표시
+      // 내 업무
       const dayTasks = weeklyTasks.filter(t => {
         const s = t.start_date || '';
         const e = t.end_date   || s;
         return s <= dateStr && e >= dateStr;
       });
 
+      // 팀원 업무 (팀뷰 활성 시)
+      const dayTeamTasks = (teamViewEnabled && isManager)
+        ? teamWeeklyTasks.filter(t => {
+            const s = t.start_date || '';
+            const e = t.end_date   || s;
+            return s <= dateStr && e >= dateStr;
+          })
+        : [];
+
       const total  = dayTasks.length;
       const done   = dayTasks.filter(t => t.status === 'DONE').length;
       const high   = dayTasks.filter(t => t.priority === 'HIGH').length;
       const medium = dayTasks.filter(t => t.priority === 'MEDIUM').length;
       const low    = dayTasks.filter(t => t.priority === 'LOW').length;
+
+      const memberCount = dayTeamTasks.length;
 
       const dayProgress = total === 0
         ? `<span class="day-empty-label">업무 없음</span>`
@@ -1019,13 +1084,29 @@
             ${low    > 0 ? `<span class="day-priority-badge low">낮음 ${low}</span>`    : ''}
           </div>`;
 
-      const taskItems = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
+      const memberBadge = memberCount > 0
+        ? `<span class="day-member-badge">👥 부서원 ${memberCount}</span>`
+        : '';
+
+      const taskItems     = dayTasks.map(t => renderTaskItem(t, dateStr)).join('');
+      const teamTaskItems = dayTeamTasks.map(t => renderTeamTaskItem(t, dateStr)).join('');
+
+      const hasContent  = dayTasks.length > 0 || dayTeamTasks.length > 0;
+      const showExpand  = isToday || hasContent;
 
       const headClasses = ['day-row-head',
         isToday ? 'is-today'    : '',
         isSun   ? 'is-sunday'   : '',
         isSat   ? 'is-saturday' : ''
       ].filter(Boolean).join(' ');
+
+      // 팀원 업무 구분선
+      const teamSection = teamTaskItems
+        ? `<div class="team-task-section">
+             <div class="team-task-section-label">부서원 업무</div>
+             ${teamTaskItems}
+           </div>`
+        : '';
 
       return `
         <div class="day-row">
@@ -1037,6 +1118,7 @@
               </div>
               <div class="day-task-chips">
                 ${dayProgress}
+                ${memberBadge}
               </div>
             </div>
             <div class="day-row-add">
@@ -1045,8 +1127,9 @@
               </button>
             </div>
           </div>
-          <div class="day-tasks" id="day-tasks-${dateStr}" style="${isToday || dayTasks.length > 0 ? '' : 'display:none;'}">
+          <div class="day-tasks" id="day-tasks-${dateStr}" style="${showExpand ? '' : 'display:none;'}">
             ${taskItems || `<div class="task-empty" style="padding:16px;"><span style="font-size:12px;color:var(--text-muted);">등록된 업무가 없습니다.</span></div>`}
+            ${teamSection}
           </div>
         </div>
       `;
@@ -1103,7 +1186,50 @@
     `;
   }
 
-  // ── 주간일지 로드 ────────────────────────────────────────────
+  // ── 팀원 업무 아이템 (읽기 전용) ────────────────────────────
+  function renderTeamTaskItem(t, dateStr) {
+    const priorityCls  = t.priority === 'HIGH' ? 'priority-high' : t.priority === 'LOW' ? 'priority-low' : 'priority-medium';
+    const isSingleDay  = !t.end_date || t.start_date === t.end_date;
+    const isEndDate    = !isSingleDay && dateStr && t.end_date === dateStr;
+    const isMidDate    = !isSingleDay && dateStr && t.end_date > dateStr && t.start_date <= dateStr;
+
+    let displayStatus, statusCls;
+    if (isMidDate) {
+      displayStatus = '진행중';  statusCls = 'badge-status-inprogress';
+    } else if (isEndDate) {
+      displayStatus = t.status === 'DONE' ? '완료' : '종료예정';
+      statusCls     = t.status === 'DONE' ? 'badge-status-done' : 'badge-status-inprogress';
+    } else {
+      displayStatus = STATUS_LABELS[t.status] || t.status;
+      statusCls     = t.status === 'DONE' ? 'badge-status-done' : t.status === 'IN_PROGRESS' ? 'badge-status-inprogress' : 'badge-status-todo';
+    }
+
+    const isDone     = t.status === 'DONE';
+    const ownerName  = esc(t.user_name || t.user_email || '팀원');
+
+    return `
+      <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}" title="${ownerName}의 업무 (읽기 전용)">
+        <span class="task-priority-dot ${priorityCls}"></span>
+        <div class="task-item-body">
+          <div class="task-item-title">
+            ${esc(t.title)}
+            <span class="task-owner-tag">${ownerName}</span>
+          </div>
+          <div class="task-item-meta">
+            <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
+            <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
+            ${!isSingleDay
+              ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
+              : ''}
+            ${t.description ? `<span class="task-item-desc">${esc(t.description)}</span>` : ''}
+          </div>
+        </div>
+        <div class="task-item-readonly-badge">읽기 전용</div>
+      </div>
+    `;
+  }
+
+
   // 자동 동기화 토글 UI 업데이트
   // instant=true: 애니메이션 없이 즉시 전환 (초기 로드 시)
   function updateAutoSyncToggleUI(isOn, instant = false) {
