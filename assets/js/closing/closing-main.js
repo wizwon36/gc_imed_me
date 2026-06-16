@@ -1099,7 +1099,8 @@ async function dlImedReport() {
     const user = window.auth?.getSession?.();
     const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
     const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-    let prevStockData = R.prevStockData || await loadPrevStock(prevYm, R.branch);
+    // 아이메드는 항상 새로 로드 (GC케어 prevStockData와 분리)
+    let prevStockData = await loadPrevStock(prevYm, R.branch);
     if (!prevStockData.length) {
       clog('전월 closing_stock 없음 → closing_usage_monthly end_amount로 대체', 'warn');
       prevStockData = await loadPrevStockFromUsage(prevYm, R.branch, '아이메드');
