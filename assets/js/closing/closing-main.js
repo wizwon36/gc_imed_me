@@ -756,7 +756,19 @@ function renderResults() {
   }
   if (statusEl) statusEl.textContent = '';
 
-  document.getElementById('downloadGrid').innerHTML = `
+  // 강남의원 전용 세포치료/특수의약품 입력 카드
+  const gangnamCard = document.getElementById('gangnamExtraCard');
+  if (gangnamCard) {
+    const isGangnam = (App.R?.branch || '').includes('강남');
+    gangnamCard.style.display = isGangnam ? '' : 'none';
+    if (isGangnam) {
+      // 산출물 재로드 시 입력값 초기화
+      document.getElementById('inputCellTherapy').value = '';
+      document.getElementById('inputSpecialMed').value  = '';
+    }
+  }
+
+
     <div class="cl-dl-card both" onclick="dlIpgo()">
       <span class="cl-dl-tag both">공통</span>
       <div class="cl-dl-name">입고 (편집본)</div>
