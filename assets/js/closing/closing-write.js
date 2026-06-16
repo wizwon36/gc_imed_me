@@ -379,7 +379,7 @@ function writeKyuljai(ws, year, month, label, vendors, vendorMap, gcRow) {
 }
 
 // ── 부서별 금액 시트 ─────────────────────────────────────
-function writeDeptAmount(ws, month, depts) {
+function writeDeptAmount(ws, month, depts, skipZero = false) {
   // 1행: 제목 (A~E 병합)
   ws.mergeCells(1, 1, 1, 5);
   const tc = ws.getCell(1, 1);
@@ -428,9 +428,9 @@ function writeDeptAmount(ws, month, depts) {
 
   let r = 4;
   groups.forEach((g, gi) => {
-    // GC케어(의약품 없음)에서 값이 모두 0인 그룹 생략
+    // skipZero=true일 때만 합계 0인 그룹 생략 (GC케어용)
     const groupTotal = sumF(g.items, '합계금액');
-    if (!groupTotal) return;
+    if (skipZero && !groupTotal) return;
     const groupStart = r;
     g.items.forEach((d, di) => {
       // 데이터 행: 흰 배경, 일반 폰트
