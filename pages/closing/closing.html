@@ -1,1238 +1,605 @@
-/**
- * closing.js
- * GC녹십자아이메드 월마감 자동화 앱
- *
- * 기능
- *  - Raw 입고 / 사용현황 엑셀 업로드 → GC케어 / 아이메드 자동 분류
- *  - 산출물 6종 엑셀 다운로드 (ExcelJS 서식 완전 적용)
- *  - 거래처 마스터 관리 (API 연동 → 서버 저장)
- */
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>월마감 자동화 | MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/closing.css" />
+</head>
+<body class="portal-page">
+  <div class="container page-shell">
 
-'use strict';
+    <!-- 헤더 -->
+    <section class="top-brand-bar portal-topbar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">📊</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">MSO관리팀 업무지원 시스템</strong>
+          <span class="top-brand-sub">월마감 자동화</span>
+        </div>
+      </div>
+      <div class="top-brand-actions portal-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+        <button type="button" id="logoutBtn" class="portal-header-btn portal-header-btn--secondary">로그아웃</button>
+      </div>
+    </section>
 
-// ═══════════════════════════════════════════════════════════
-// 0. 진입점
-// ═══════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    showGlobalLoading('월마감 앱 초기화 중...');
+    <!-- 메시지 박스 -->
+    <div id="messageBox" class="message-box"></div>
 
-    // 로그인 체크
-    const user = window.auth?.getSession?.();
-    if (!user) { location.replace(`${CONFIG.SITE_BASE_URL}/index.html`); return; }
-
-    // 로그아웃
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
-      window.auth?.logout?.();
-      location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
-    });
-
-    // 마감월 초기값: 전월 자동 설정
-    const now = new Date();
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const yy = prevMonth.getFullYear();
-    const mm = String(prevMonth.getMonth() + 1).padStart(2, '0');
-    document.getElementById('inputMonth').value = `${yy}-${mm}`;
-
-    // 지점명 드롭다운: ORG_CLINIC 로드 후 소속 의원 기본 선택
-    await loadBranchOptions(user);
-
-    // 권한 체크 (closing: view 이상)
-    const ok = await window.appPermission?.requirePermission?.('closing', ['admin', 'edit', 'view']);
-    if (ok === false) {
-      document.getElementById('permissionDenied').style.display = '';
-      return;
-    }
-
-    // 관리자 여부 저장
-    const isAdmin = String(user?.role || '').trim().toLowerCase() === 'admin';
-    const editPerm = await window.appPermission?.getPermission?.('closing');
-    App.canEdit = isAdmin || ['admin', 'edit'].includes(editPerm);
-
-    document.getElementById('appBody').style.display = '';
-
-    // 모바일에서 자재코드 탭 자동 활성화
-    if (window.innerWidth <= 768) {
-      switchTab('item');
-    }
-
-    // 해상도 변화 감지
-    const mobileQuery = window.matchMedia('(max-width: 768px)');
-    mobileQuery.addEventListener('change', e => {
-      if (e.matches) switchTab('item');
-    });
-
-    // 거래처·자재 데이터 로드 (처리 시작 전 반드시 완료되어야 함, 최대 10초)
-    const timeout = ms => new Promise(r => setTimeout(r, ms));
-    await Promise.all([
-      Promise.race([loadVendorsFromServer(), timeout(10000)]).catch(() => {}),
-      Promise.race([loadItemsFromServer(),   timeout(10000)]).catch(() => {}),
-      Promise.race([loadRoundModes(),        timeout(5000)]).catch(() => {}),
-    ]);
-
-  } catch (e) {
-    showMessage('앱 초기화 중 오류가 발생했습니다: ' + e.message, 'error');
-  } finally {
-    await hideGlobalLoading();
-  }
-});
-
-// ═══════════════════════════════════════════════════════════
-// 1. 앱 상태
-// ═══════════════════════════════════════════════════════════
-const App = {
-  canEdit: false,
-  ipgoRaw: null,
-  usageRaw: null,
-  ipgoData: [],
-  usageData: [],
-  R: {},             // 처리 결과
-  vendors: [],       // 거래처 마스터 (서버에서 로드)
-  items: [],         // 자재코드 마스터 (서버에서 로드)
-  vendorsDirty: false,
-  itemsDirty: false,
-};
-
-// ═══════════════════════════════════════════════════════════
-// 2. 탭 전환
-// ═══════════════════════════════════════════════════════════
-function switchTab(tab) {
-  ['closing', 'vendor', 'item', 'history'].forEach(t => {
-    document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`)
-      ?.classList.toggle('active', t === tab);
-    document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Content`)
-      ?.classList.toggle('active', t === tab);
-  });
-  if (tab === 'vendor') {
-    if (App.vendors.length) {
-      renderVendorTable();
-    } else {
-      showGlobalLoading('거래처 정보 로드 중...');
-      loadVendorsFromServer()
-        .then(() => renderVendorTable())
-        .finally(() => hideGlobalLoading());
-    }
-  }
-  if (tab === 'history') {
-    initHistoryTab();
-  }
-  if (tab === 'item') {
-    if (App.items.length) {
-      renderItemTable();
-    } else {
-      showGlobalLoading('자재코드 로드 중...');
-      loadItemsFromServer()
-        .then(() => renderItemTable())
-        .finally(() => hideGlobalLoading());
-    }
-    initStockInitUI();
-    initUsageInitUI();
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// 3. 파일 업로드
-// ═══════════════════════════════════════════════════════════
-function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('dragover'); }
-function dragLeave(id)   { document.getElementById(id).classList.remove('dragover'); }
-function dropFile(e, type) {
-  e.preventDefault();
-  document.getElementById('zone-' + type).classList.remove('dragover');
-  if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0], type);
-}
-function handleFile(input, type) {
-  if (input.files[0]) processFile(input.files[0], type);
-}
-function processFile(file, type) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const wb = XLSX.read(e.target.result, { type: 'array' });
-    App[type + 'Raw'] = { wb, name: file.name };
-    document.getElementById('zone-' + type).classList.add('uploaded');
-    document.getElementById('status-' + type).textContent = '✓ ' + file.name;
-    if (App.ipgoRaw && App.usageRaw) {
-      document.getElementById('btnNext1').disabled = false;
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// ═══════════════════════════════════════════════════════════
-// 4. 스텝 내비게이션
-// ═══════════════════════════════════════════════════════════
-function goStep(n) {
-  [1, 2, 3, 4].forEach(i => {
-    document.getElementById('sec' + i)?.classList.toggle('active', i === n);
-    const el = document.getElementById('step' + i);
-    if (!el) return;
-    el.classList.remove('active', 'done');
-    if (i < n) el.classList.add('done');
-    else if (i === n) el.classList.add('active');
-    el.querySelector('.cl-step-num').textContent = i < n ? '✓' : i;
-  });
-}
-function startProcessing() {
-  goStep(3);
-  // 버튼 초기화
-  const btnGo = document.getElementById('btnGoResult');
-  if (btnGo) {
-    btnGo.disabled = true;
-    btnGo.style.opacity = '0.4';
-    btnGo.style.cursor = 'not-allowed';
-    btnGo.style.background = '';
-    btnGo.textContent = '산출물 확인 →';
-  }
-  setTimeout(runProcessing, 200);
-}
-
-// ═══════════════════════════════════════════════════════════
-// 5. 로그 / 진행
-// ═══════════════════════════════════════════════════════════
-function clog(msg, cls = 'info') {
-  const box = document.getElementById('logBox');
-  if (!box) return;
-  const t = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  box.innerHTML += `<div class="cl-log-line ${cls}"><span class="cl-log-time">[${t}]</span>${msg}</div>`;
-  box.scrollTop = box.scrollHeight;
-}
-function prog(pct, label) {
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressPct').textContent = pct + '%';
-  document.getElementById('progressLabel').textContent = label;
-}
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-// ═══════════════════════════════════════════════════════════
-// 6. 파싱
-// ═══════════════════════════════════════════════════════════
-function toN(v) { const n = parseFloat(String(v || 0).replace(/,/g, '')); return isNaN(n) ? 0 : n; }
-const sumF = (arr, k) => arr.reduce((s, r) => s + toN(r[k]), 0);
-
-function parseIpgo(wb) {
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-  let hr = 0;
-  for (let i = 0; i < all.length; i++) {
-    if (String(all[i][0]).trim() === 'No.') { hr = i; break; }
-  }
-  const hdrs = all[hr].map(h => String(h).trim());
-  const data = [];
-  for (let i = hr + 1; i < all.length; i++) {
-    const row = all[i];
-    if (!String(row[0]).trim() || isNaN(parseInt(row[0]))) continue;
-    const obj = {};
-    hdrs.forEach((h, idx) => { obj[h] = row[idx]; });
-    const t = String(obj['자재구분'] || '').trim();
-    obj['구분'] = (t === '소모품' || t === '시약') ? 'GC케어' : '아이메드';
-    data.push(obj);
-  }
-  return data;
-}
-
-function parseUsage(wb) {
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-  let hr = 1;
-  for (let i = 0; i < all.length; i++) {
-    if (String(all[i][0]).trim() === '부서명' || String(all[i][1]).trim() === '부서명') { hr = i; break; }
-  }
-  const hdrs = all[hr].map(h => String(h).trim());
-  // 자재코드 컬럼 인덱스 찾기
-  const codeIdx = hdrs.findIndex(h => h === '자재코드');
-  const data = [];
-  for (let i = hr + 1; i < all.length; i++) {
-    const row = all[i];
-    const col0 = String(row[0] || '').trim();
-    const col1 = String(row[1] || '').trim();
-    // 빈 행 스킵
-    if (!col0 && !col1) continue;
-    // 합계 행 스킵: 자재코드가 없으면 합계/소계 행
-    if (codeIdx >= 0 && !String(row[codeIdx] || '').trim()) continue;
-    const obj = {};
-    hdrs.forEach((h, idx) => { if (h) obj[h] = row[idx]; });
-    data.push(obj);
-  }
-  return data;
-}
-
-// ═══════════════════════════════════════════════════════════
-// 7. 집계 헬퍼
-// ═══════════════════════════════════════════════════════════
-function byVendor(data) {
-  const m = {};
-  data.forEach(r => {
-    const v = String(r['공급업체'] || '').trim(); if (!v) return;
-    if (!m[v]) m[v] = { 공급업체: v, 공급가액: 0, 부가세: 0, 합계금액: 0 };
-    m[v].공급가액 += toN(r['공급가액']); m[v].부가세 += toN(r['부가세']); m[v].합계금액 += toN(r['합계금액']);
-  });
-  return Object.values(m).sort((a, b) => b.공급가액 - a.공급가액);
-}
-function byDeptIpgo(data) {
-  const m = {};
-  data.forEach(r => {
-    const k = String(r['의뢰부서'] || '').trim() + '||' + String(r['자재구분'] || '').trim();
-    if (!m[k]) m[k] = { 의뢰부서: String(r['의뢰부서'] || '').trim(), 자재구분: String(r['자재구분'] || '').trim(), 공급가액: 0, 부가세: 0, 합계금액: 0 };
-    m[k].공급가액 += toN(r['공급가액']); m[k].부가세 += toN(r['부가세']); m[k].합계금액 += toN(r['합계금액']);
-  });
-  return Object.values(m);
-}
-
-// 입고 + 사용 데이터의 부서 합집합으로 구성 (입고 없는 부서도 포함)
-function byDeptIpgoFull(ipgoData, usageData) {
-  const m = {};
-
-  // 사용 데이터에서 부서+자재구분 목록 확보 (금액 0으로 초기화)
-  usageData.forEach(r => {
-    const dept = String(r['부서명'] || '').trim();
-    const type = String(r['자재구분'] || '').trim();
-    if (!dept) return;
-    const k = dept + '||' + type;
-    if (!m[k]) m[k] = { 의뢰부서: dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
-  });
-
-  // 입고 데이터로 금액 채우기
-  ipgoData.forEach(r => {
-    const dept = String(r['의뢰부서'] || '').trim();
-    const type = String(r['자재구분'] || '').trim();
-    if (!dept) return;
-    const k = dept + '||' + type;
-    if (!m[k]) m[k] = { 의뢰부서: dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
-    m[k].공급가액 += toN(r['공급가액']);
-    m[k].부가세   += toN(r['부가세']);
-    m[k].합계금액 += toN(r['합계금액']);
-  });
-
-  return Object.values(m);
-}
-function byDeptUsage(data) {
-  const m = {};
-  data.forEach(r => {
-    const k = String(r['부서명'] || '').trim() + '||' + String(r['자재구분'] || '').trim();
-    if (!m[k]) m[k] = { 부서명: String(r['부서명'] || '').trim(), 자재구분: String(r['자재구분'] || '').trim(), 사용공급가: 0, 사용부가세: 0, 사용합계: 0 };
-    m[k].사용공급가 += toN(r['사용공급가']); m[k].사용부가세 += toN(r['사용부가세']); m[k].사용합계 += toN(r['사용합계']);
-  });
-  return Object.values(m);
-}
-
-// CLOSING_DEPT 마스터 기반으로 빠진 부서 보완
-function fillMissingDepts(data, deptMaster, types) {
-  const result = [...data];
-  (deptMaster || []).forEach(d => {
-    const deptName = String(d.code_name || '').trim();
-    if (!deptName) return;
-    (types || []).forEach(type => {
-      const exists = result.find(x => x.부서명 === deptName && x.자재구분 === type);
-      if (!exists) result.push({
-        부서명: deptName, 자재구분: type,
-        사용공급가: 0, 사용부가세: 0, 사용합계: 0,
-        공5pct: 0, 부5pct: 0, 계5pct: 0,
-      });
-    });
-  });
-  return result;
-}
-
-// 5% 가산 요약: 행별 ROUNDUP 후 부서별 합산 (합산 후 ROUNDUP과 다름)
-// roundFn: Math.ceil(ROUNDUP) 또는 Math.round(ROUND) — 의원별 설정
-function byDeptUsage5pct(data, roundFn = Math.ceil) {
-  const m = {};
-  data.forEach(r => {
-    const k = String(r['부서명'] || '').trim() + '||' + String(r['자재구분'] || '').trim();
-    if (!m[k]) m[k] = { 부서명: String(r['부서명'] || '').trim(), 자재구분: String(r['자재구분'] || '').trim(), 사용공급가: 0, 사용부가세: 0, 사용합계: 0 };
-    const sup5 = roundFn(toN(r['사용공급가']) * 1.05);
-    const vat5 = roundFn(toN(r['사용부가세']) * 1.05);
-    m[k].사용공급가 += sup5;
-    m[k].사용부가세 += vat5;
-    m[k].사용합계  += sup5 + vat5;
-  });
-  return Object.values(m);
-}
-function byItem(data, codeKey, nameKey, qtyKey, amtKey) {
-  const m = {};
-  data.forEach(r => {
-    const code = String(r[codeKey] || '').trim(); if (!code) return;
-    if (!m[code]) m[code] = { 코드: code, 명: String(r[nameKey] || ''), 구분: String(r['자재구분'] || ''), 수량: 0, 금액: 0 };
-    m[code].수량 += toN(r[qtyKey]); m[code].금액 += toN(r[amtKey]);
-  });
-  return Object.values(m);
-}
-
-// ═══════════════════════════════════════════════════════════
-// 8. 메인 처리
-// ═══════════════════════════════════════════════════════════
-async function runProcessing() {
-  const branch  = document.getElementById('inputBranch').value.trim() || '서울숲';
-  const ym      = document.getElementById('inputMonth').value;
-  const [y, m]  = ym.split('-');
-  const mi      = parseInt(m);
-  const cc      = document.getElementById('inputCC').value.trim();
-  const account = '11301101'; // 계정코드 고정값
-
-  try {
-    clog('처리를 시작합니다...', 'info'); await sleep(150);
-
-    // 거래처/자재 로드가 안 된 경우 재시도 (초기화 타임아웃 대비)
-    if (!App.vendors.length) {
-      clog('거래처 정보 재로드 중...', 'info');
-      await loadVendorsFromServer().catch(() => {});
-    }
-    if (!App.items.length) {
-      clog('자재코드 정보 재로드 중...', 'info');
-      await loadItemsFromServer().catch(() => {});
-    }
-
-    prog(10, '입고 데이터 파싱 중...');
-    const ipgoData  = parseIpgo(App.ipgoRaw.wb);
-    App.ipgoData    = ipgoData;
-    clog(`입고 ${ipgoData.length}건 파싱 완료 (소계행 자동 제거)`, 'ok');
-
-    await sleep(150); prog(22, '사용현황 파싱 중...');
-    const usageData = parseUsage(App.usageRaw.wb);
-    App.usageData   = usageData;
-    clog(`사용현황 ${usageData.length}건 파싱 완료`, 'ok');
-
-    await sleep(150); prog(38, 'GC케어 / 아이메드 분류 중...');
-    const gcIpgo    = ipgoData.filter(r => r['구분'] === 'GC케어');
-    const imedIpgo  = ipgoData.filter(r => r['구분'] === '아이메드');
-    const usageSiyak   = usageData.filter(r => String(r['자재구분'] || '').trim() === '시약');
-    const usageSomoum  = usageData.filter(r => String(r['자재구분'] || '').trim() === '소모품');
-    const usageGC   = [...usageSiyak, ...usageSomoum];
-    const usageImed = usageData.filter(r => String(r['자재구분'] || '').trim() === '의약품');
-    clog(`입고 GC케어:${gcIpgo.length}건 / 아이메드:${imedIpgo.length}건`, 'ok');
-    clog(`사용 GC케어(시약+소모품):${usageGC.length}건 / 아이메드(의약품):${usageImed.length}건`, 'ok');
-
-    await sleep(150); prog(55, '집계 중...');
-    const gcVendors        = byVendor(gcIpgo);
-    const imedVendors      = byVendor(imedIpgo);
-    const gcDepts   = byDeptIpgoFull(gcIpgo, usageGC);
-    const imedDepts = byDeptIpgoFull(imedIpgo, usageImed);
-    let imedDeptsRaw = [...imedDepts.map(d => ({ ...d }))];  // 그룹핑 전 raw 복사본
-    let closingDeptMaster = [];   // { code_name, extra1, parent_code } — 전체 부서 마스터
-
-    // CLOSING_DEPT 마스터에서 의원별 부서 목록 로드 → 당월 데이터 없는 부서도 0으로 포함
-    try {
-      const user2  = window.auth?.getSession?.();
-      const clinicRes = await apiGet('getCodes', {
-        request_user_email: user2?.email,
-        code_group: 'ORG_CLINIC',
-      });
-      const clinicCode = (clinicRes.data || [])
-        .find(c => String(c.code_name || '').trim() === branch)
-        ?.code_value || '';
-
-      if (clinicCode) {
-        const deptRes = await apiGet('getCodes', {
-          request_user_email: user2?.email,
-          code_group: 'CLOSING_DEPT',
-        });
-        const depts = (deptRes.data || [])
-          .filter(d => String(d.parent_code || '').trim() === clinicCode);
-
-        closingDeptMaster = depts;
-
-        depts.forEach(d => {
-          const deptName = String(d.code_name || '').trim();
-          if (!deptName) return;
-          ['시약', '소모품'].forEach(type => {
-            if (!gcDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === type))
-              gcDepts.push({ 의뢰부서: deptName, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 });
-          });
-          if (!imedDepts.find(x => x.의뢰부서 === deptName && x.자재구분 === '의약품'))
-            imedDepts.push({ 의뢰부서: deptName, 자재구분: '의약품', 공급가액: 0, 부가세: 0, 합계금액: 0 });
-        });
-
-        // imedDepts 그룹핑: extra2 기준으로 합산
-        // 마감요약 시트용 raw 복사본 갱신 (마스터로 보완된 후 기준)
-        imedDeptsRaw = [...imedDepts.map(d => ({ ...d }))];
-        const imedGroupList = buildImedDeptGroups(depts);
-        if (imedGroupList.length) {
-          const grouped = {};
-          imedDepts.forEach(d => {
-            const group = imedGroupList.find(g => g.depts.includes(d.의뢰부서));
-            const key   = (group ? group.displayName : d.의뢰부서) + '||' + d.자재구분;
-            if (!grouped[key]) grouped[key] = { 의뢰부서: group?.displayName || d.의뢰부서, 자재구분: d.자재구분, 공급가액: 0, 부가세: 0, 합계금액: 0 };
-            grouped[key].공급가액  += toN(d.공급가액);
-            grouped[key].부가세    += toN(d.부가세);
-            grouped[key].합계금액  += toN(d.합계금액);
-          });
-          imedDepts.length = 0;
-          Object.values(grouped).forEach(d => imedDepts.push(d));
-        }
-
-        // gcDepts 그룹핑: extra2 기준으로 합산 (아이메드와 동일 방식)
-        const gcGroupList = buildImedDeptGroups(depts);
-        if (gcGroupList.length) {
-          const gcGrouped = {};
-          gcDepts.forEach(d => {
-            const group = gcGroupList.find(g => g.depts.includes(d.의뢰부서));
-            const key   = (group ? group.displayName : d.의뢰부서) + '||' + d.자재구분;
-            if (!gcGrouped[key]) gcGrouped[key] = { 의뢰부서: group?.displayName || d.의뢰부서, 자재구분: d.자재구분, 공급가액: 0, 부가세: 0, 합계금액: 0 };
-            gcGrouped[key].공급가액 += toN(d.공급가액);
-            gcGrouped[key].부가세   += toN(d.부가세);
-            gcGrouped[key].합계금액 += toN(d.합계금액);
-          });
-          gcDepts.length = 0;
-          Object.values(gcGrouped).forEach(d => gcDepts.push(d));
-        }
-      }
-    } catch (e) {
-      clog('부서 마스터 로드 실패: ' + e.message, 'warn');
-    }
-    const itemIpgoPivot    = byItem(ipgoData, '자재코드', '자재명', '수량', '공급가액')
-                              .filter(it => !String(it.코드).startsWith('6'));  // 의약품 제외
-    const itemUsagePivot   = byItem(usageGC, '자재코드', '자재명', '사용수량(입)', '사용공급가');
-    const siyakPivot       = byDeptUsage(usageSiyak);
-    // 5% 가산 반올림 방식: App.roundMode[branch] 기준 (초기화 시 CLOSING_ROUND_MODE 로드)
-    const roundFn5 = (App.roundMode?.[branch] === 'round') ? Math.round : Math.ceil;
-    const siyakPivot5      = byDeptUsage5pct(usageSiyak, roundFn5);
-    const imedSiSoPivot5   = byDeptUsage5pct(usageGC, roundFn5);
-    const imedSiSoPivot    = byDeptUsage(usageGC);
-    const imedDrugPivot    = byDeptUsage(usageImed);
-    clog('집계 완료', 'ok');
-
-    await sleep(150); prog(70, 'SAP 양식 생성 중...');
-    // 거래처 맵 (서버 데이터 우선)
-    const vendorMap = {};
-    App.vendors.forEach(v => { vendorMap[v.vendor_name] = v; });
-
-    const sapRows = gcIpgo.map(r => {
-      const vm = vendorMap[String(r['공급업체'] || '').trim()] || {};
-      return {
-        거래처:    String(r['공급업체'] || ''),
-        사업자번호: vm.biz_no       || '',
-        공급가액:  toN(r['공급가액']),
-        기준일:    String(r['입고일자'] || ''),
-        적요:     `(${branch})${r['의뢰부서']}${r['자재명']}${r['수량']}`,
-        지급일:   vm.credit_days   != null ? vm.credit_days : 90,
-        결제방법:  vm.pay_method   || '현금결제',
-        계정:     '11301101',   // 계정코드 고정값
-        전표번호:  '',
-      };
-    });
-    clog(`SAP 양식 ${sapRows.length}건 생성`, 'ok');
-
-    await sleep(150); prog(85, '수불 집계 중...');
-
-    // item_master 기반으로 초기 map 구성 (사용 상태만)
-    const subulMap = {};
-    const activeItems = App.items.filter(it => String(it.item_status || '사용').trim() === '사용');
-    if (activeItems.length) {
-      activeItems
-        .filter(it => String(it.item_type || '').trim() !== '의약품')  // 의약품은 수불 대상 제외
-        .forEach(it => {
-          subulMap[it.item_code] = {
-            code: it.item_code, name: it.item_name,
-            type: it.item_type, 기초: 0, 기초수량: 0,
-            증가: 0, 증가수량: 0, 감소: 0, 감소수량: 0
-          };
-        });
-      clog(`자재 마스터 ${activeItems.length}건 기준으로 수불 구성`, 'ok');
-    } else {
-      clog('자재 마스터 미등록 — 입고/사용 데이터 기준으로 수불 구성', 'warn');
-    }
-
-    // 사용 집계 (의약품 제외 — 의약품은 부서별 금액으로 별도 관리)
-    usageData
-      .filter(r => String(r['자재구분'] || '').trim() !== '의약품')
-      .forEach(r => {
-        const code = String(r['자재코드'] || '').trim(); if (!code) return;
-        if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: 0, 증가수량: 0, 감소: toN(r['사용공급가']), 감소수량: toN(r['사용수량(입)']) };
-        else { subulMap[code].감소 += toN(r['사용공급가']); subulMap[code].감소수량 += toN(r['사용수량(입)']); }
-      });
-    // 입고 집계 (의약품 제외)
-    ipgoData
-      .filter(r => String(r['자재구분'] || '').trim() !== '의약품')
-      .forEach(r => {
-        const code = String(r['자재코드'] || '').trim(); if (!code) return;
-        if (!subulMap[code]) subulMap[code] = { code, name: String(r['자재명'] || ''), type: String(r['자재구분'] || ''), 기초: 0, 기초수량: 0, 증가: toN(r['공급가액']), 증가수량: toN(r['수량']), 감소: 0, 감소수량: 0 };
-        else { subulMap[code].증가 += toN(r['공급가액']); subulMap[code].증가수량 += toN(r['수량']); }
-      });
-
-    // 입고 파일에 자재 마스터 미등록 품목 경고
-    let unregItems = [];
-    if (activeItems.length) {
-      const itemCodeSet = new Set(activeItems.map(it => it.item_code));
-      unregItems = [...new Set(ipgoData.map(r => ({
-        code: String(r['자재코드'] || '').trim(),
-        name: String(r['자재명']   || '').trim(),
-        type: String(r['자재구분'] || '').trim(),
-      })).filter(r => r.code && !itemCodeSet.has(r.code))
-        .map(r => JSON.stringify(r)))
-      ].map(s => JSON.parse(s));
-      if (unregItems.length) clog(`⚠ 자재 마스터 미등록 품목 ${unregItems.length}건`, 'warn');
-    }
-
-    // 전월 기말 → 기초값 세팅
-    const prevYm = (() => {
-      const d = new Date(parseInt(y), mi - 2, 1);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    })();
-    clog(`전월(${prevYm}) 기초 재고 로드 중...`, 'info');
-    const prevStock = await loadPrevStock(prevYm, branch);
-    if (prevStock.length) {
-      prevStock.forEach(s => {
-        const code = String(s.item_code || '').trim(); if (!code) return;
-        if (subulMap[code]) {
-          subulMap[code].기초    = toN(s.closing_amount);
-          subulMap[code].기초수량 = toN(s.closing_qty);   // 소수점 그대로 유지
-        } else {
-          subulMap[code] = { code, name: s.item_name || '', type: s.item_type || '',
-            기초: toN(s.closing_amount), 기초수량: toN(s.closing_qty), 증가: 0, 감소: 0 };
-        }
-      });
-      clog(`전월 기초 재고 ${prevStock.length}건 반영`, 'ok');
-    } else {
-      clog('전월 확정 데이터 없음 — 기초값 0으로 처리', 'warn');
-    }
-
-    // 미등록 거래처 경고
-    const unregVendors = [...new Set(gcIpgo.map(r => String(r['공급업체'] || '').trim()).filter(v => v && !vendorMap[v]))];
-    if (unregVendors.length) clog(`⚠ 거래처 관리 미등록: ${unregVendors.join(', ')}`, 'warn');
-
-    App.R = { gcIpgo, imedIpgo, gcVendors, imedVendors, gcDepts, imedDepts, imedDeptsRaw,
-              closingDeptMaster,
-              itemIpgoPivot, itemUsagePivot, usageGC, usageImed, usageSiyak, usageSomoum,
-              siyakPivot, siyakPivot5, imedSiSoPivot, imedSiSoPivot5, imedDrugPivot,
-              sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
-
-    // 수불부: Drive 파일 로드 + JSZip으로 당월 시트 삽입 → 메모리 보관
-    await sleep(150); prog(88, '수불부 준비 중...');
-    const user = window.auth?.getSession?.();
-    try {
-      const fidRes = await apiGet('closingGetSubulFileId', {
-        request_user_email: user?.email,
-        branch,
-        report_type: 'GC케어',
-      });
-      if (!fidRes.success || !fidRes.data?.file_id) {
-        clog('수불부 file_id 없음 — 당월 시트만 다운로드됩니다.', 'warn');
-      } else {
-        prog(91, '수불부 파일 로드 중...');
-        const fileRes = await apiGet('closingGetSubulFile', {
-          request_user_email: user?.email,
-          file_id: fidRes.data.file_id,
-        });
-        if (!fileRes.success || !fileRes.data?.base64) {
-          clog('수불부 파일 로드 실패', 'warn');
-        } else {
-          clog(`Drive 파일 수신: ${(fileRes.data.base64.length/1024).toFixed(0)}KB`, 'info');
-          prog(94, '수불부 당월 시트 삽입 중...');
-
-          // 당월 시트 xlsx 생성 → sheet XML 추출
-          const sheetName = `원가집계표-${y.slice(2)}년 ${mi}월 ${branch}`;
-          const singleWb  = new ExcelJS.Workbook();
-          writeSubul(singleWb.addWorksheet(sheetName), y, mi, branch,
-            Object.values(subulMap).filter(it => it.type !== '의약품'), App.R);
-
-          // 당월 시트 버퍼 저장 (Drive 삽입용)
-          const sheetBuf = await singleWb.xlsx.writeBuffer();
-          App.R.subulSheetBuf  = sheetBuf;
-          App.R.subulSheetName = sheetName;
-          App.R.subulFileId    = fidRes.data.file_id;
-
-          // 다운로드용: 기존 파일 + 당월 시트 합친 전체 버퍼
-          const existingBytes = Uint8Array.from(atob(fileRes.data.base64), c => c.charCodeAt(0));
-          const resultBuf = await insertSheetIntoXlsx_(existingBytes, singleWb, sheetName);
-          App.R.subulBuffer = resultBuf;
-          clog(`수불부 준비 완료 (${(resultBuf.byteLength/1024).toFixed(0)}KB)`, 'ok');
-        }
-      }
-    } catch (e) {
-      clog('수불부 처리 실패: ' + e.message, 'warn');
-    }
-
-    clog('모든 처리 완료!', 'ok');
-    await sleep(300); prog(100, '완료!');
-
-    // 자동 이동 대신 버튼 활성화
-    const btnGo = document.getElementById('btnGoResult');
-    if (btnGo) {
-      btnGo.disabled = false;
-      btnGo.style.opacity = '1';
-      btnGo.style.cursor = 'pointer';
-      btnGo.textContent = '산출물 확인 →';
-    }
-
-  } catch (err) {
-    clog('처리 중 오류: ' + err.message, 'err');
-    showMessage('처리 중 오류가 발생했습니다: ' + err.message, 'error');
-    // 오류 시에도 버튼 활성화 (확인 가능하도록)
-    const btnGo = document.getElementById('btnGoResult');
-    if (btnGo) {
-      btnGo.disabled = false;
-      btnGo.style.opacity = '1';
-      btnGo.style.cursor = 'pointer';
-      btnGo.textContent = '⚠ 오류 — 로그 확인';
-      btnGo.style.background = '#dc2626';
-    }
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// 9. 결과 렌더링
-// ═══════════════════════════════════════════════════════════
-function renderResults() {
-  const R = App.R;
-  const gcT  = R.gcVendors.reduce((s, v) => s + v.합계금액, 0);
-  const imT  = R.imedVendors.reduce((s, v) => s + v.합계금액, 0);
-
-  document.getElementById('summaryGrid').innerHTML = `
-    <div class="cl-stat">
-      <div class="cl-stat-label">총 입고 건수</div>
-      <div class="cl-stat-val">${(R.gcIpgo.length + R.imedIpgo.length).toLocaleString()}</div>
-      <div class="cl-stat-sub">GC케어 ${R.gcIpgo.length} / 아이메드 ${R.imedIpgo.length}</div>
+    <!-- 권한 없음 -->
+    <div id="permissionDenied" class="card" style="display:none;">
+      <div class="empty-state" style="margin:8px 0;">
+        <div style="font-size:48px;margin-bottom:8px;">🔒</div>
+        <p class="empty-state-title">접근 권한이 없습니다</p>
+        <p class="empty-state-desc">관리자에게 closing 권한을 요청하세요.</p>
+      </div>
     </div>
-    <div class="cl-stat">
-      <div class="cl-stat-label">전체 입고금액</div>
-      <div class="cl-stat-val">${Math.round(gcT + imT).toLocaleString()}원</div>
-      <div class="cl-stat-sub">합계금액 기준</div>
+
+    <!-- 메인 앱 -->
+    <div id="appBody" style="display:none;">
+
+      <!-- 탭: 월마감 자동화 / 거래처 관리 / 자재코드 관리 -->
+      <div class="cl-tabs">
+        <button class="cl-tab active" id="tabClosing" onclick="switchTab('closing')">📋 월마감 자동화</button>
+        <button class="cl-tab" id="tabVendor"  onclick="switchTab('vendor')">🏢 거래처 관리</button>
+        <button class="cl-tab" id="tabItem"    onclick="switchTab('item')">🧪 자재코드 관리</button>
+        <button class="cl-tab" id="tabHistory" onclick="switchTab('history')">📅 마감 현황</button>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭1: 월마감 자동화                                -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabClosingContent" class="cl-section active">
+
+        <!-- 스텝 바 -->
+        <div class="cl-steps" id="stepsBar">
+          <div class="cl-step active" id="step1">
+            <div class="cl-step-num">1</div>
+            <div class="cl-step-label">파일 업로드<br><span style="font-weight:400;font-size:11px;">Raw 데이터 2개</span></div>
+          </div>
+          <div class="cl-step" id="step2">
+            <div class="cl-step-num">2</div>
+            <div class="cl-step-label">마감 설정<br><span style="font-weight:400;font-size:11px;">연월 · 지점</span></div>
+          </div>
+          <div class="cl-step" id="step3">
+            <div class="cl-step-num">3</div>
+            <div class="cl-step-label">자동 처리<br><span style="font-weight:400;font-size:11px;">집계 · 분류</span></div>
+          </div>
+          <div class="cl-step" id="step4">
+            <div class="cl-step-num">4</div>
+            <div class="cl-step-label">산출물 다운로드<br><span style="font-weight:400;font-size:11px;">6개 파일 생성</span></div>
+          </div>
+        </div>
+
+        <!-- SECTION 1: 파일 업로드 -->
+        <div id="sec1" class="cl-section active">
+          <div class="card">
+            <div class="card-body">
+              <div class="cl-upload-grid">
+                <div class="cl-upload-zone" id="zone-ipgo"
+                  ondragover="dragOver(event,'zone-ipgo')"
+                  ondragleave="dragLeave('zone-ipgo')"
+                  ondrop="dropFile(event,'ipgo')">
+                  <input type="file" accept=".xlsx,.xls" onchange="handleFile(this,'ipgo')">
+                  <div class="cl-upload-icon">📥</div>
+                  <div class="cl-upload-label">입고 파일</div>
+                  <div class="cl-upload-hint">예: 26년 5월 입고 - 서울숲.xlsx</div>
+                  <div class="cl-upload-status" id="status-ipgo"></div>
+                </div>
+                <div class="cl-upload-zone" id="zone-usage"
+                  ondragover="dragOver(event,'zone-usage')"
+                  ondragleave="dragLeave('zone-usage')"
+                  ondrop="dropFile(event,'usage')">
+                  <input type="file" accept=".xlsx,.xls" onchange="handleFile(this,'usage')">
+                  <div class="cl-upload-icon">📋</div>
+                  <div class="cl-upload-label">사용현황 파일</div>
+                  <div class="cl-upload-hint">예: 26년 5월 사용현황 - 서울숲.xlsx</div>
+                  <div class="cl-upload-status" id="status-usage"></div>
+                </div>
+              </div>
+              <!-- 테스트 자료 다운로드 -->
+              <div style="margin-top:12px;padding:10px 12px;background:#f8f9fa;border-radius:8px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span style="font-size:12px;color:#64748b;flex:1;">🧪 테스트 자료 (서울숲 26년 5월)</span>
+                <a href="https://raw.githubusercontent.com/wizwon36/gc_imed_me/main/assets/test/26년 5월 입고 - 서울숲.xlsx"
+                   download="26년 5월 입고 - 서울숲.xlsx"
+                   class="btn" style="font-size:12px;padding:5px 12px;background:#e2e8f0;color:#334155;text-decoration:none;">
+                  📥 입고 파일
+                </a>
+                <a href="https://raw.githubusercontent.com/wizwon36/gc_imed_me/main/assets/test/26년 5월 사용현황 - 서울숲.xlsx"
+                   download="26년 5월 사용현황 - 서울숲.xlsx"
+                   class="btn" style="font-size:12px;padding:5px 12px;background:#e2e8f0;color:#334155;text-decoration:none;">
+                  📋 사용현황 파일
+                </a>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+                <button class="btn btn-primary" id="btnNext1" onclick="goStep(2)" disabled>다음 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: 마감 설정 -->
+        <div id="sec2" class="cl-section">
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <div class="cl-field">
+                  <label>마감 연월</label>
+                  <input type="month" id="inputMonth">
+                </div>
+                <div class="cl-field">
+                  <label>지점명</label>
+                  <select id="inputBranch" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;min-width:140px;background:#fff;"></select>
+                </div>
+                <!-- GC케어 CC: 고정값(32073000) — UI 노출 불필요 -->
+                <input type="hidden" id="inputCC" value="32073000">
+                <div class="cl-field" style="flex:1;">
+                  <label>&nbsp;</label>
+                  <div class="cl-info-box" style="margin:0;">
+                    <strong>분류 기준:</strong> 자재구분이 <strong>소모품·시약 → GC케어</strong>, <strong>의약품 → 아이메드</strong>로 자동 분류됩니다.
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                <button class="btn" onclick="goStep(1)">← 이전</button>
+                <button class="btn btn-primary" onclick="startProcessing()">처리 시작 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: 처리 중 -->
+        <div id="sec3" class="cl-section">
+          <div class="card">
+            <div class="card-body">
+              <div style="margin-bottom:10px;">
+                <div class="cl-progress-label">
+                  <span id="progressLabel">준비 중...</span>
+                  <span id="progressPct">0%</span>
+                </div>
+                <div class="cl-progress-bar">
+                  <div class="cl-progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+              </div>
+              <div class="cl-log" id="logBox"></div>
+              <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+                <button id="btnGoResult" class="btn btn-primary" onclick="goStep(4); renderResults();" disabled style="opacity:0.4;cursor:not-allowed;">
+                  산출물 확인 →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: 결과 -->
+        <div id="sec4" class="cl-section">
+
+          <!-- 요약 -->
+          <div class="cl-summary-grid" id="summaryGrid"></div>
+
+          <!-- 미등록 거래처 에러 카드 -->
+          <div id="unregVendorsCard" class="card" style="display:none;margin-bottom:14px;border:1px solid #fde68a;background:#fffbeb;">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:18px;">⚠️</span>
+                <strong style="font-size:14px;color:#92400e;">거래처 관리 미등록 거래처</strong>
+              </div>
+              <div id="unregVendorsBody"></div>
+            </div>
+          </div>
+
+          <!-- 미등록 품목 에러 카드 -->
+          <div id="unregItemsCard" class="card" style="display:none;margin-bottom:14px;border:1px solid #fde68a;background:#fffbeb;">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:18px;">⚠️</span>
+                <strong style="font-size:14px;color:#92400e;">자재코드 마스터 미등록 품목</strong>
+              </div>
+              <div id="unregItemsBody"></div>
+            </div>
+          </div>
+
+          <!-- 미리보기 -->
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-body" style="padding-bottom:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <strong style="font-size:13px;">📋 입고 데이터 미리보기</strong>
+                <select id="previewFilter" onchange="renderPreview()" style="border:1px solid var(--border-input);border-radius:6px;padding:5px 10px;font-size:12px;">
+                  <option value="all">전체</option>
+                  <option value="GC케어">GC케어만</option>
+                  <option value="아이메드">아이메드만</option>
+                </select>
+              </div>
+            </div>
+            <div class="cl-preview-wrap" id="previewTable"></div>
+          </div>
+
+          <!-- 다운로드 -->
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <strong style="font-size:13px;">📦 산출물 다운로드</strong>
+                <button class="btn btn-primary" onclick="downloadAll()" style="padding:7px 16px;font-size:13px;">⬇ 전체 다운로드</button>
+              </div>
+              <div class="cl-dl-grid" id="downloadGrid"></div>
+            </div>
+          </div>
+
+          <!-- 강남의원 전용: 세포치료 / 특수의약품 입력 -->
+          <div class="card" id="gangnamExtraCard" style="display:none;margin-top:14px;border:1px solid #d1fae5;background:#f0fdf4;">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                <span style="font-size:18px;">💉</span>
+                <strong style="font-size:14px;color:#065f46;">강남의원 — 세포치료 / 특수의약품 당월 사용금액 입력</strong>
+              </div>
+              <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">
+                시스템에서 자동 집계되지 않는 항목입니다. 마감 확정 전에 해당 월 사용금액을 입력하세요.<br>
+                입력값은 확정 시 연간 원재료비 시트에 반영됩니다.
+              </p>
+              <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                <div class="cl-field">
+                  <label style="color:#065f46;">세포치료 사용금액 (원)</label>
+                  <input type="text" id="inputCellTherapy" placeholder="0"
+                    style="border:1px solid #6ee7b7;border-radius:6px;padding:7px 11px;font-size:13px;width:180px;text-align:right;"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,',')">
+                </div>
+                <div class="cl-field">
+                  <label style="color:#065f46;">특수의약품 사용금액 (원)</label>
+                  <input type="text" id="inputSpecialMed" placeholder="0"
+                    style="border:1px solid #6ee7b7;border-radius:6px;padding:7px 11px;font-size:13px;width:180px;text-align:right;"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,',')">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 마감 확정 -->
+          <div class="card" id="closingConfirmCard" style="margin-top:14px;border:1px solid #bfdbfe;background:#eff6ff;">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <div>
+                  <strong style="font-size:14px;color:#1e40af;">📌 마감 확정</strong>
+                  <p style="font-size:12px;color:#3b82f6;margin-top:4px;">
+                    산출물 내용이 맞으면 확정하세요. 품목별 기말 재고가 저장되어 다음 달 수불 기초값으로 자동 반영됩니다.
+                  </p>
+                  <p id="closingConfirmStatus" style="font-size:12px;color:#64748b;margin-top:4px;"></p>
+                </div>
+                <button class="btn btn-primary" id="btnClosingConfirm" onclick="confirmClosing()"
+                  style="white-space:nowrap;padding:9px 20px;background:#1d4ed8;flex-shrink:0;">
+                  ✅ 마감 확정
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+            <button class="btn" onclick="restart()">🔄 새 마감 시작</button>
+          </div>
+        </div>
+
+      </div><!-- /tabClosingContent -->
+
+
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭2: 거래처 관리                                  -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabVendorContent" class="cl-section">
+        <div class="card">
+          <div class="card-body">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div>
+                <strong style="font-size:14px;">거래처 마스터 관리</strong>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:3px;">SAP 입력양식에 사업자번호·여신기간이 자동 반영됩니다. 계정코드는 <strong>11301101</strong>로 고정 적용됩니다.</p>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                <button class="btn" onclick="downloadVendorTemplate()" style="font-size:13px;padding:7px 14px;">📄 템플릿 다운로드</button>
+                <label for="vendorFileInput" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;">📂 엑셀 업로드</label>
+                <input type="file" id="vendorFileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleVendorExcel(this)">
+                <button class="btn" onclick="addVendorRow()" style="font-size:13px;padding:7px 14px;">+ 행 추가</button>
+                <button class="btn btn-primary" id="btnSaveVendors" onclick="saveVendors()" style="font-size:13px;padding:7px 14px;">💾 저장</button>
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="cl-vendor-table">
+                <thead>
+                  <tr>
+                    <th style="width:32%;">거래처명</th>
+                    <th style="width:22%;">사업자등록번호</th>
+                    <th style="width:14%;text-align:center;">여신기간(일)</th>
+                    <th style="width:18%;text-align:center;">결제방법</th>
+                    <th style="width:8%;text-align:center;"></th>
+                  </tr>
+                </thead>
+                <tbody id="vendorTbody">
+                  <tr id="vendorLoadingRow">
+                    <td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">불러오는 중...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p style="font-size:11px;color:var(--text-muted);margin-top:10px;">
+              ※ 거래처명은 입고 파일의 <strong>공급업체</strong> 컬럼과 정확히 일치해야 자동 반영됩니다.
+            </p>
+
+            <!-- 엑셀 업로드 미리보기 -->
+            <div id="vendorUploadPreview" style="display:none;margin-top:16px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <span id="vendorUploadCount" style="font-size:13px;font-weight:700;"></span>
+                <span id="vendorUploadError" style="font-size:12px;color:#c0392b;font-weight:600;"></span>
+              </div>
+              <div class="cl-preview-wrap">
+                <table class="cl-preview" id="vendorUploadTable"></table>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button class="btn" onclick="cancelVendorUpload()">취소</button>
+                <button class="btn btn-primary" id="btnApplyUpload" onclick="applyVendorUpload()">이 내용으로 적용</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /tabVendorContent -->
+
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭3: 자재코드 관리                                 -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabItemContent" class="cl-section">
+        <div class="card">
+          <div class="card-body">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div>
+                <strong style="font-size:14px;">자재코드 마스터 관리</strong>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+                  수불 집계표는 입고/사용 여부와 무관하게 이 목록 전체 기준으로 생성됩니다.
+                  시스템에서 받은 자재관리 파일을 그대로 업로드하세요.
+                </p>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                <label for="itemFileInput" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;">📂 자재관리 파일 업로드</label>
+                <input type="file" id="itemFileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleItemExcel(this)">
+                <button class="btn btn-primary" id="btnSaveItems" onclick="saveItems()" style="font-size:13px;padding:7px 14px;">💾 저장</button>
+              </div>
+            </div>
+
+            <!-- 요약 통계 -->
+            <div id="itemSummaryRow" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+              <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:90px;text-align:center;">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">전체</div>
+                <div id="itemCntTotal" style="font-size:20px;font-weight:800;color:var(--text-primary);">-</div>
+              </div>
+              <div style="background:#e6f4ec;border:1px solid #bbf7d0;border-radius:8px;padding:10px 16px;min-width:90px;text-align:center;">
+                <div style="font-size:11px;color:#0e7c3a;margin-bottom:3px;">시약</div>
+                <div id="itemCntSiyak" style="font-size:20px;font-weight:800;color:#0e7c3a;">-</div>
+              </div>
+              <div style="background:#e8effd;border:1px solid #bfdbfe;border-radius:8px;padding:10px 16px;min-width:90px;text-align:center;">
+                <div style="font-size:11px;color:#1a56db;margin-bottom:3px;">소모품</div>
+                <div id="itemCntSomoum" style="font-size:20px;font-weight:800;color:#1a56db;">-</div>
+              </div>
+              <div style="background:#fef3e2;border:1px solid #fde68a;border-radius:8px;padding:10px 16px;min-width:90px;text-align:center;">
+                <div style="font-size:11px;color:#b45309;margin-bottom:3px;">의약품</div>
+                <div id="itemCntUiyak" style="font-size:20px;font-weight:800;color:#b45309;">-</div>
+              </div>
+              <div style="background:#f1f5f9;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:90px;text-align:center;">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">폐기</div>
+                <div id="itemCntDisused" style="font-size:20px;font-weight:800;color:#64748b;">-</div>
+              </div>
+            </div>
+
+            <!-- 검색 / 필터 -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+              <select id="itemFilterType" onchange="onItemSearch()" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 10px;font-size:13px;">
+                <option value="all">전체 구분</option>
+                <option value="시약">시약</option>
+                <option value="소모품">소모품</option>
+                <option value="의약품">의약품</option>
+              </select>
+              <select id="itemFilterStatus" onchange="onItemSearch()" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 10px;font-size:13px;">
+                <option value="all">전체 상태</option>
+                <option value="사용">사용</option>
+                <option value="폐기">폐기</option>
+              </select>
+              <div style="position:relative;flex:1;min-width:200px;">
+                <input type="text" id="itemSearchInput" placeholder="자재코드 또는 자재명 검색..."
+                  onkeydown="if(event.key==='Enter')onItemSearch()"
+                  style="width:100%;border:1px solid var(--border-input);border-radius:6px;padding:7px 12px 7px 32px;font-size:13px;">
+                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">🔍</span>
+              </div>
+              <button class="btn btn-primary" onclick="onItemSearch()" style="padding:7px 14px;font-size:13px;">검색</button>
+              <span id="itemSearchResult" style="font-size:12px;color:var(--text-muted);white-space:nowrap;"></span>
+            </div>
+
+            <!-- 테이블 -->
+            <div style="overflow-x:auto;">
+              <table class="cl-vendor-table">
+                <thead>
+                  <tr>
+                    <th style="width:12%;">자재코드</th>
+                    <th style="width:36%;">자재명</th>
+                    <th style="width:8%;text-align:center;">구분</th>
+                    <th style="width:10%;text-align:right;">입고단가</th>
+                    <th style="width:10%;text-align:right;">산출단가</th>
+                    <th style="width:8%;text-align:center;">상태</th>
+                    <th style="width:6%;text-align:center;"></th>
+                  </tr>
+                </thead>
+                <tbody id="itemTbody">
+                  <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">불러오는 중...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div id="itemPagination" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;flex-wrap:wrap;"></div>
+
+            <p style="font-size:11px;color:var(--text-muted);margin-top:10px;">
+              ※ 자재코드는 입고/사용현황 파일의 <strong>자재코드</strong> 컬럼과 일치해야 수불에 반영됩니다.
+              상태가 <strong>폐기</strong>인 품목은 수불 집계표에서 제외됩니다.
+            </p>
+
+            <!-- 업로드 미리보기 -->
+            <div id="itemUploadPreview" style="display:none;margin-top:16px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <span id="itemUploadCount" style="font-size:13px;font-weight:700;"></span>
+                <span id="itemUploadError"  style="font-size:12px;color:#c0392b;font-weight:600;"></span>
+              </div>
+              <div style="display:flex;gap:12px;margin-bottom:8px;font-size:12px;color:var(--text-muted);">
+                <span id="itemUploadStat"></span>
+              </div>
+              <div class="cl-preview-wrap">
+                <table class="cl-preview" id="itemUploadTable"></table>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button class="btn" onclick="cancelItemUpload()">취소</button>
+                <button class="btn btn-primary" id="btnApplyItemUpload" onclick="applyItemUpload()">이 내용으로 적용</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 초기 재고 업로드 카드 -->
+        <div class="card" style="margin-top:14px;border:1px solid #e2e8f0;">
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <strong style="font-size:14px;">📥 초기 재고 업로드 (수불부)</strong>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+                  기존 수불부 파일의 특정 월 기말 재고를 <code>closing_stock</code>에 저장합니다.
+                  다음 달 마감 시 기초값으로 자동 반영됩니다.
+                </p>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">저장 연월</label>
+                  <input type="month" id="stockInitYm" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">지점명</label>
+                  <select id="stockInitBranch" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;min-width:100px;"></select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">시트 선택</label>
+                  <select id="stockInitSheet" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;min-width:160px;">
+                    <option value="">파일 업로드 후 선택</option>
+                  </select>
+                </div>
+                <div style="margin-top:18px;display:flex;gap:8px;">
+                  <label for="stockInitFileInput" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;">📂 수불부 파일</label>
+                  <input type="file" id="stockInitFileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleStockInitFile(this)">
+                </div>
+              </div>
+            </div>
+
+            <!-- 미리보기 -->
+            <div id="stockInitPreview" style="display:none;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <span id="stockInitCount" style="font-size:13px;font-weight:700;"></span>
+                <span style="font-size:12px;color:var(--text-muted);">기말 수량·금액이 0이 아닌 품목만 표시</span>
+              </div>
+              <div class="cl-preview-wrap">
+                <table class="cl-preview" id="stockInitTable"></table>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button class="btn" onclick="cancelStockInit()">취소</button>
+                <button class="btn btn-primary" id="btnSaveStockInit" onclick="saveStockInit()">💾 초기 재고 저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 초기 월별 사용 데이터 업로드 카드 -->
+        <div class="card" style="margin-top:14px;border:1px solid #e2e8f0;">
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+              <div>
+                <strong style="font-size:14px;">📈 연간 원재료비 초기 데이터 업로드</strong>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+                  기존 보고 파일의 4번째 시트(연간 원재료비)에서 월별 사용 데이터를 가져옵니다.
+                  <strong>GC케어 파일</strong>과 <strong>아이메드 파일</strong>을 각각 업로드해야 합니다.
+                  최초 1회만 실행하면 이후 마감 확정 시 자동으로 누적됩니다.
+                </p>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">지점명</label>
+                  <select id="usageInitBranch" style="border:1px solid var(--border-input);border-radius:6px;padding:7px 11px;font-size:13px;min-width:100px;"></select>
+                </div>
+                <div style="margin-top:18px;display:flex;gap:6px;">
+                  <label for="usageInitFileInputGC" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;background:var(--gc-color,#4A86C8);color:#fff;">📂 GC케어 업로드</label>
+                  <input type="file" id="usageInitFileInputGC" accept=".xlsx,.xls" style="display:none;" onchange="handleUsageInitFile(this,'GC케어')">
+                  <label for="usageInitFileInputImed" class="btn" style="font-size:13px;padding:7px 14px;cursor:pointer;margin:0;background:var(--imed-color,#C8774A);color:#fff;">📂 아이메드 업로드</label>
+                  <input type="file" id="usageInitFileInputImed" accept=".xlsx,.xls" style="display:none;" onchange="handleUsageInitFile(this,'아이메드')">
+                </div>
+              </div>
+            </div>
+
+            <!-- 미리보기 -->
+            <div id="usageInitPreview" style="display:none;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <span id="usageInitCount" style="font-size:13px;font-weight:700;"></span>
+                <span id="usageInitTypeInfo" style="font-size:12px;color:var(--text-muted);"></span>
+              </div>
+              <div class="cl-preview-wrap">
+                <table class="cl-preview" id="usageInitTable"></table>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button class="btn" onclick="cancelUsageInit()">취소</button>
+                <button class="btn btn-primary" id="btnSaveUsageInit" onclick="saveUsageInit()">💾 저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /tabItemContent -->
+
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭4: 마감 현황                                    -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabHistoryContent" class="cl-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h2 style="margin:0;font-size:16px;font-weight:700;">📅 마감 현황</h2>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="historyYearSelect" onchange="loadClosingHistory()" style="border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:13px;"></select>
+            <select id="historyBranchSelect" onchange="loadClosingHistory()" style="border:1px solid #ddd;border-radius:6px;padding:5px 10px;font-size:13px;"></select>
+            <button onclick="loadClosingHistory()" style="padding:5px 14px;border:1px solid #ddd;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;">🔄 새로고침</button>
+          </div>
+        </div>
+        <div id="historyTableWrap">
+          <div style="text-align:center;color:#999;padding:40px;">연도와 지점을 선택하세요.</div>
+        </div>
+      </div><!-- /tabHistoryContent -->
+
+  </div><!-- /container -->
+
+  <!-- 전역 스피너 -->
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
     </div>
-    <div class="cl-stat" style="border-left:3px solid #0e7c3a;">
-      <div class="cl-stat-label" style="color:#0e7c3a;">GC케어 입고</div>
-      <div class="cl-stat-val" style="color:#0e7c3a;">${Math.round(gcT).toLocaleString()}원</div>
-      <div class="cl-stat-sub">소모품·시약 ${R.gcVendors.length}개 거래처</div>
-    </div>
-    <div class="cl-stat" style="border-left:3px solid #b45309;">
-      <div class="cl-stat-label" style="color:#b45309;">아이메드 입고</div>
-      <div class="cl-stat-val" style="color:#b45309;">${Math.round(imT).toLocaleString()}원</div>
-      <div class="cl-stat-sub">의약품 ${R.imedVendors.length}개 거래처</div>
-    </div>
-  `;
+  </div>
 
-  renderPreview();
+  <!-- ExcelJS -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <!-- JSZip (수불부 zip 조작용) -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <!-- SheetJS (파싱용) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- FileSaver -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-  // 미등록 거래처 에러 카드
-  const vendorErrCard = document.getElementById('unregVendorsCard');
-  if (vendorErrCard) {
-    if (R.unregVendors && R.unregVendors.length > 0) {
-      vendorErrCard.style.display = '';
-      document.getElementById('unregVendorsBody').innerHTML = `
-        <p style="font-size:12px;color:#92400e;margin-bottom:10px;">
-          아래 거래처는 <strong>거래처 관리</strong>에 등록되지 않았습니다.
-          결재 시트에 사업자번호·결제방법·결제기일이 비어있으며 노란색으로 표시됩니다.
-        </p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          ${R.unregVendors.map(v =>
-            `<span style="background:#fff;border:1px solid #fde68a;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:600;">${escHtml(v)}</span>`
-          ).join('')}
-        </div>`;
-    } else {
-      vendorErrCard.style.display = 'none';
-    }
-  }
-
-  // 미등록 품목 에러 카드
-  const errCard = document.getElementById('unregItemsCard');
-  if (errCard) {
-    if (R.unregItems && R.unregItems.length > 0) {
-      errCard.style.display = '';
-      document.getElementById('unregItemsBody').innerHTML = `
-        <p style="font-size:12px;color:#92400e;margin-bottom:10px;">
-          아래 품목은 자재코드 마스터에 등록되지 않았습니다.
-          수불 집계표에 포함되어 있으나 <strong>자재코드 관리 탭에서 등록</strong> 후 재처리를 권장합니다.
-        </p>
-        <div class="cl-preview-wrap">
-          <table class="cl-preview">
-            <thead><tr><th>자재코드</th><th>자재명</th><th>구분</th></tr></thead>
-            <tbody>${R.unregItems.map(it => `
-              <tr>
-                <td style="font-family:monospace;font-size:12px;">${escHtml(it.code)}</td>
-                <td>${escHtml(it.name)}</td>
-                <td>${escHtml(it.type)}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-    } else {
-      errCard.style.display = 'none';
-    }
-  }
-  const btn = document.getElementById('btnClosingConfirm');
-  const statusEl = document.getElementById('closingConfirmStatus');
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = '✅ 마감 확정';
-    btn.style.background = '#1d4ed8';
-  }
-  if (statusEl) statusEl.textContent = '';
-
-  // 강남의원 전용 세포치료/특수의약품 입력 카드
-  const gangnamCard = document.getElementById('gangnamExtraCard');
-  if (gangnamCard) {
-    const isGangnam = (App.R?.branch || '').includes('강남');
-    gangnamCard.style.display = isGangnam ? '' : 'none';
-    if (isGangnam) {
-      // 산출물 재로드 시 입력값 초기화
-      document.getElementById('inputCellTherapy').value = '';
-      document.getElementById('inputSpecialMed').value  = '';
-    }
-  }
-
-
-    <div class="cl-dl-card both" onclick="dlIpgo()">
-      <span class="cl-dl-tag both">공통</span>
-      <div class="cl-dl-name">입고 (편집본)</div>
-      <div class="cl-dl-sheets">거래처 요약 · 입고원본 · GC케어 입고분 · 원가집계표 요약 · GC/아이메드 마감요약</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-    <div class="cl-dl-card both" onclick="dlUsage()">
-      <span class="cl-dl-tag both">공통</span>
-      <div class="cl-dl-name">사용현황 (편집본)</div>
-      <div class="cl-dl-sheets">사용원본 · 시약 · 소모품 · 원가집계표 요약 · 시약 마감요약 · 시약5% · 의약품 · 아이메드 마감요약</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-    <div class="cl-dl-card imed" onclick="dlSubul()">
-      <span class="cl-dl-tag imed">GC케어 제출</span>
-      <div class="cl-dl-name">★ 수불 집계표 ★</div>
-      <div class="cl-dl-sheets">품목별 기초·증가·감소·기말 원가집계표</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-    <div class="cl-dl-card gc" onclick="dlSAP()">
-      <span class="cl-dl-tag gc">GC케어</span>
-      <div class="cl-dl-name">GC케어 입고분 SAP 입력 양식</div>
-      <div class="cl-dl-sheets">SAP 전표 입력 (거래처 관리 자동 반영) · 거래처 관리 시트</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-    <div class="cl-dl-card gc" onclick="dlGCReport()">
-      <span class="cl-dl-tag gc">GC케어</span>
-      <div class="cl-dl-name">거래처 구매 내역 및 원재료 보고</div>
-      <div class="cl-dl-sheets">결재 · 부서별 금액 · 원재료비 · 연간 원재료비</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-    <div class="cl-dl-card imed" onclick="dlImedReport()">
-      <span class="cl-dl-tag imed">아이메드</span>
-      <div class="cl-dl-name">거래처 구매 내역 및 원재료 보고</div>
-      <div class="cl-dl-sheets">결재 · 부서별 금액 · 원재료비 · 연간 원재료비</div>
-      <button class="btn" style="margin-top:6px;font-size:12px;padding:5px 12px;">⬇ 다운로드</button>
-    </div>
-  `;
-}
-
-function renderPreview() {
-  const filter = document.getElementById('previewFilter').value;
-  let data = App.ipgoData;
-  if (filter !== 'all') data = data.filter(r => r['구분'] === filter);
-  const show = data.slice(0, 15);
-  const cols = ['공급업체', '자재구분', '자재명', '입고일자', '수량', '공급가액', '부가세', '합계금액', '의뢰부서', '구분'];
-  let html = '<table class="cl-preview"><thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
-  show.forEach(r => {
-    const tag = r['구분'] === 'GC케어' ? '<span class="cl-tag-gc">GC케어</span>' : '<span class="cl-tag-imed">아이메드</span>';
-    html += `<tr>
-      <td>${r['공급업체'] || ''}</td>
-      <td>${r['자재구분'] || ''}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">${r['자재명'] || ''}</td>
-      <td>${r['입고일자'] || ''}</td>
-      <td class="num">${toN(r['수량']).toLocaleString()}</td>
-      <td class="num">${toN(r['공급가액']).toLocaleString()}</td>
-      <td class="num">${toN(r['부가세']).toLocaleString()}</td>
-      <td class="num">${toN(r['합계금액']).toLocaleString()}</td>
-      <td>${r['의뢰부서'] || ''}</td>
-      <td>${tag}</td>
-    </tr>`;
-  });
-  if (data.length > 15) html += `<tr><td colspan="${cols.length}" class="more">외 ${data.length - 15}건 더 있음</td></tr>`;
-  html += '</tbody></table>';
-  document.getElementById('previewTable').innerHTML = html;
-}
-
-function restart() {
-  // Raw 데이터 완전 해제 (메모리 누수 방지)
-  if (App.ipgoRaw) { App.ipgoRaw.wb = null; App.ipgoRaw = null; }
-  if (App.usageRaw) { App.usageRaw.wb = null; App.usageRaw = null; }
-  App.ipgoData = []; App.usageData = [];
-  // App.R 내 대용량 데이터 완전 해제
-  if (App.R) {
-    App.R.gcIpgo = null; App.R.imedIpgo = null;
-    App.R.usageGC = null; App.R.usageImed = null;
-    App.R.usageSiyak = null; App.R.usageSomoum = null;
-    App.R.subulMap = null; App.R.sapRows = null;
-    App.R.subulSheetBuf = null; App.R.subulSheetName = null; App.R.subulBuffer = null;
-  }
-  App.R = {};
-  ['ipgo', 'usage'].forEach(t => {
-    document.getElementById('status-' + t).textContent = '';
-    document.getElementById('zone-' + t).classList.remove('uploaded');
-    // file input 초기화 (같은 파일 재선택 시 onchange 재발동)
-    const inp = document.querySelector(`input[onchange*="${t}"]`);
-    if (inp) inp.value = '';
-  });
-  document.getElementById('btnNext1').disabled = true;
-  document.getElementById('logBox').innerHTML = '';
-  document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('progressPct').textContent = '0%';
-  document.getElementById('progressLabel').textContent = '';
-  // 4단계 카드 초기화
-  const confirmCard = document.getElementById('unregItemsCard');
-  if (confirmCard) confirmCard.style.display = 'none';
-  const vendorCard = document.getElementById('unregVendorsCard');
-  if (vendorCard) vendorCard.style.display = 'none';
-  const confirmBtn = document.getElementById('btnClosingConfirm');
-  if (confirmBtn) {
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = '✅ 마감 확정';
-    confirmBtn.style.background = '#1d4ed8';
-  }
-  goStep(1);
-}
-
-
-// ═══════════════════════════════════════════════════════════
-// 11. 다운로드 함수
-// ═══════════════════════════════════════════════════════════
-function newWb() { return new ExcelJS.Workbook(); }
-// ── 수불부 xlsx에 sheet XML 삽입 (JSZip) ─────────────────────
-// 수불부 xlsx에 새 시트 추가
-// 새 ExcelJS wb 기준으로 생성: 새 시트(서식 완전) 맨 앞 + 기존 시트들 값만 복사
-async function insertSheetIntoXlsx_(existingBytes, newSheetWb, sheetName) {
-  // 기존 파일 파싱 (값만 읽기)
-  const existingWb = new ExcelJS.Workbook();
-  await existingWb.xlsx.load(existingBytes.buffer || existingBytes);
-
-  // 새 시트(당월)를 맨 앞에 두고, 기존 시트 중 동일 이름은 제외하고 복사
-  for (const srcWs of existingWb.worksheets) {
-    if (srcWs.name === sheetName) continue;  // 동일 이름 시트 제외 (재마감 시 중복 방지)
-    const dstWs = newSheetWb.addWorksheet(srcWs.name);
-    copyWorksheet_(srcWs, dstWs);
-  }
-
-  return await newSheetWb.xlsx.writeBuffer();
-}
-
-// ── 수불부 시트 복사 헬퍼 ────────────────────────────────────
-function copyWorksheet_(src, dst) {
-  // 열 너비 복사
-  src.columns.forEach((col, i) => {
-    if (col.width) dst.getColumn(i + 1).width = col.width;
-  });
-
-  // 확대율 복사
-  if (src.views && src.views.length > 0) {
-    dst.views = src.views.map(v => Object.assign({}, v));
-  }
-
-  // 행 복사 (값, 서식, 병합)
-  src.eachRow({ includeEmpty: true }, (row, rn) => {
-    const dstRow = dst.getRow(rn);
-    if (row.height) dstRow.height = row.height;
-    try {
-      row.eachCell({ includeEmpty: true }, (cell, cn) => {
-        const dstCell = dstRow.getCell(cn);
-        dstCell.value = cell.value;
-        if (cell.numFmt)    dstCell.numFmt    = cell.numFmt;
-        if (cell.font)      dstCell.font      = Object.assign({}, cell.font);
-        if (cell.fill)      dstCell.fill      = Object.assign({}, cell.fill);
-        if (cell.alignment) dstCell.alignment = Object.assign({}, cell.alignment);
-        if (cell.border)    dstCell.border    = Object.assign({}, cell.border);
-      });
-    } catch (_) {}
-    dstRow.commit();
-  });
-
-  // 병합 셀 복사
-  const merges = (src.model && src.model.merges) ? src.model.merges : Object.keys(src._merges || {});
-  merges.forEach(range => {
-    try {
-      if (typeof range === 'string' && /^[A-Z]+\d+:[A-Z]+\d+$/.test(range)) {
-        dst.mergeCells(range);
-      }
-    } catch (_) {}
-  });
-}
-
-async function saveWb(wb, filename) {
-  const buf = await wb.xlsx.writeBuffer();
-  saveAs(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
-  // 워크북 메모리 해제
-  wb.worksheets.forEach(ws => { ws._rows = []; ws._columns = []; });
-  wb._worksheets = [];
-}
-
-async function dlIpgo() {
-  try {
-    showGlobalLoading('입고 편집본 생성 중...');
-    const R = App.R; const wb = newWb();
-    const ic = ['공급업체', '구매번호', '자재구분', '자재코드', '자재명', '상태', '입고일자', '수량', '단가', '공급가액', '부가세', '합계금액', '규격', '산출단위', '입고단위', '의뢰부서', '구분'];
-    const iw = [16, 14, 8, 12, 40, 8, 12, 8, 12, 14, 12, 14, 10, 8, 8, 14, 10];
-    const in_ = [8, 9, 10, 11, 12];
-    writePivotVendor(wb.addWorksheet('거래처 요약'), R.gcVendors, R.imedVendors);
-    writeDataSheet(wb.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
-    writeDataSheet(wb.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotItem(wb.addWorksheet('원가집계표 요약'), R.itemIpgoPivot, false);
-    writePivotDept(wb.addWorksheet('GC케어 마감요약'), R.gcDepts.filter(d => d.공급가액 || d.부가세 || d.합계금액));
-    writeDataSheet(wb.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotDept(wb.addWorksheet('아이메드 마감요약'), R.imedDeptsRaw.filter(d => d.공급가액 || d.부가세 || d.합계금액));
-    await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
-  } finally {
-    await hideGlobalLoading();
-  }
-}
-
-async function dlUsage() {
-  try {
-    showGlobalLoading('사용현황 편집본 생성 중...');
-    const R = App.R; const wb = newWb();
-    const uc  = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '사용부가세', '사용합계', '공급업체', '규격'];
-    const uw  = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 14, 16, 10];
-    const un  = [7, 8, 9, 10, 11];
-    // 사용원본/의약품: 1행 합계 컬럼 = 사용공급가(9), 사용부가세(10), 사용합계(11)
-    const uSumCols = [9, 10, 11];
-
-    const uc5 = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '공5%', '사용부가세', '부5%', '사용합계', '계5%', '공급업체', '규격'];
-    const uw5 = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 12, 10, 14, 12, 16, 10];
-    const un5 = [7, 8, 9, 10, 11, 12, 13, 14];
-    const roundUp = v => Math.ceil(toN(v) * 1.05);  // ROUNDUP(*1.05, 0)
-    const make5 = d => {
-      const sup5 = roundUp(d['사용공급가']);
-      const vat5 = roundUp(d['사용부가세']);
-      return [d['부서명'], d['자재구분'], d['자재코드'], d['자재명'], d['구매번호'], d['사용일자'],
-        toN(d['사용수량(입)']), toN(d['사용수량(산)']),
-        toN(d['사용공급가']), sup5,
-        toN(d['사용부가세']), vat5,
-        toN(d['사용합계']), sup5 + vat5,  // 계5% = 공5% + 부5%
-        d['공급업체'], d['규격']];
-    };
-
-    const dm = R.closingDeptMaster || [];
-
-    // 사용원본: 1행에 합계
-    writeDataSheet(wb.addWorksheet('사용원본'), uc, App.usageData.map(d => uc.map(c => d[c] || '')), un, uw, uSumCols);
-    writeUsageWith5pct(wb.addWorksheet('시약, 소모품'), uc5, R.usageGC.map(make5), un5, uw5);
-    writePivotItem(wb.addWorksheet('원가집계표 요약'), R.itemUsagePivot, true);
-    writeUsageWith5pct(wb.addWorksheet('소모품'), uc5, R.usageSomoum.map(make5), un5, uw5);
-    writeUsageWith5pct(wb.addWorksheet('시약'), uc5, R.usageSiyak.map(make5), un5, uw5);
-    writePivotUsageDept(wb.addWorksheet('시약 마감요약'),      R.siyakPivot,     ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계']);
-    writePivotUsageDept(wb.addWorksheet('시약5%'),            R.siyakPivot5,    ['합계 : 공5%',       '합계 : 부5%',       '합계 : 계5%']);
-    writeDataSheet(wb.addWorksheet('의약품'), uc, R.usageImed.map(d => uc.map(c => d[c] || '')), un, uw, uSumCols);
-    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(시, 소)'), R.imedSiSoPivot5, ['합계 : 공5%',       '합계 : 부5%',       '합계 : 계5%']);
-    writePivotUsageDept(wb.addWorksheet('아이메드 마감요약(의약품)'), R.imedDrugPivot,  ['합계 : 사용공급가', '합계 : 사용부가세', '합계 : 사용합계']);
-    await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 사용현황 - ${R.branch}.xlsx`);
-  } finally {
-    await hideGlobalLoading();
-  }
-}
-
-// ── GC케어 보고서 ──────────────────────────────────────────
-async function dlGCReport() {
-  try {
-    showGlobalLoading('GC케어 보고서 생성 중...');
-    const R   = App.R;
-    const wb  = newWb();
-    const label = '시약 및 소모품';
-    const filename = `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - GC케어 - ${R.branch}.xlsx`;
-
-    // 1시트: 결재
-    writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, R.gcVendors, R.vendorMap, null);
-
-    // 2시트: 부서별 금액 — 시약은 입고금액 있는 부서만 표시, 0그룹 생략
-    const gcDeptsForAmount = R.gcDepts.filter(d =>
-      String(d.자재구분 || '').trim() !== '시약' || toN(d.공급가액) > 0
-    );
-    writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, gcDeptsForAmount, true);
-
-    // 3·4시트: 원재료비
-    const user = window.auth?.getSession?.();
-    const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
-    const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-    let prevStockData = await loadPrevStock(prevYm, R.branch);
-    if (!prevStockData.length) {
-      clog('전월 closing_stock 없음 → closing_usage_monthly end_amount로 대체', 'warn');
-      prevStockData = await loadPrevStockFromUsage(prevYm, R.branch, 'GC케어');
-    }
-    R.prevStockData = prevStockData;
-    writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
-    const yearUsage = await loadYearUsage(null, R.branch, user, 'GC케어');
-    writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
-
-    await saveWb(wb, filename);
-  } finally {
-    await hideGlobalLoading();
-  }
-}
-
-// ── 아이메드 보고서 ────────────────────────────────────────
-async function dlImedReport() {
-  try {
-    showGlobalLoading('아이메드 보고서 생성 중...');
-    const R   = App.R;
-    const wb  = newWb();
-    const label = '원재료 및 소모품';
-    const filename = `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - 아이메드 - ${R.branch}.xlsx`;
-
-    // 1시트: 결재 — GC케어 금액(아이메드 마감요약 시,소 합계) 포함
-    const gcSiSo5 = R.imedSiSoPivot5 || [];
-    const gcRow = {
-      공급가액: gcSiSo5.reduce((s,d) => s + toN(d.사용공급가||0), 0),
-      부가세:   gcSiSo5.reduce((s,d) => s + toN(d.사용부가세||0), 0),
-      합계금액: gcSiSo5.reduce((s,d) => s + toN(d.사용합계  ||0), 0),
-    };
-    writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, R.imedVendors, R.vendorMap, gcRow);
-
-    // 2시트: 부서별 금액 — 시약+소모품(5% 적용) 그룹핑 합산, 0부서도 표시
-    const imedGroups = buildImedDeptGroups(R.closingDeptMaster || []);
-    const groupedMap = {};
-    (R.imedSiSoPivot5 || []).forEach(d => {
-      const dept  = String(d.부서명  || '').trim();
-      const type  = String(d.자재구분 || '').trim();
-      const group = imedGroups.find(g => g.depts.includes(dept));
-      const key   = (group ? group.displayName : dept) + '||' + type;
-      if (!groupedMap[key]) groupedMap[key] = { 의뢰부서: group?.displayName || dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
-      groupedMap[key].공급가액  += Math.round(d.사용공급가 || 0);
-      groupedMap[key].부가세    += Math.round(d.사용부가세 || 0);
-      groupedMap[key].합계금액  += Math.round(d.사용합계   || 0);
-    });
-    const siyakDeptNames = new Set(
-      (R.closingDeptMaster || [])
-        .filter(d => String(d.extra1 || '').trim() === '시약')
-        .map(d => String(d.code_name || '').trim())
-    );
-    const masterKeys = imedGroups.length
-      ? imedGroups.flatMap(g => {
-          const keys = [g.displayName + '||소모품'];
-          if (g.depts.some(dept => siyakDeptNames.has(dept))) keys.push(g.displayName + '||시약');
-          return keys;
-        })
-      : (R.closingDeptMaster || []).flatMap(d => {
-          const n = String(d.code_name || '').trim();
-          if (!n) return [];
-          const keys = [n + '||소모품'];
-          if (siyakDeptNames.has(n)) keys.push(n + '||시약');
-          return keys;
-        });
-    masterKeys.forEach(key => {
-      if (!groupedMap[key]) {
-        const [dept, type] = key.split('||');
-        groupedMap[key] = { 의뢰부서: dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
-      }
-    });
-    const imedDeptsForAmount = [...R.imedDepts, ...Object.values(groupedMap)];
-    writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, imedDeptsForAmount, false);
-
-    // 3·4시트: 원재료비
-    const user = window.auth?.getSession?.();
-    const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
-    const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-    // 아이메드는 항상 새로 로드 (GC케어 prevStockData와 분리)
-    let prevStockData = await loadPrevStock(prevYm, R.branch);
-    if (!prevStockData.length) {
-      clog('전월 closing_stock 없음 → closing_usage_monthly end_amount로 대체', 'warn');
-      prevStockData = await loadPrevStockFromUsage(prevYm, R.branch, '아이메드');
-    }
-    R.prevStockData = prevStockData;
-    writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
-    const yearUsage = await loadYearUsage(null, R.branch, user, '아이메드');
-    writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
-
-    await saveWb(wb, filename);
-  } finally {
-    await hideGlobalLoading();
-  }
-}
-
-async function dlSAP() {
-  try {
-    showGlobalLoading('SAP 입력 양식 생성 중...');
-    const R = App.R; const wb = newWb();
-    const totalSup = R.gcIpgo.reduce((s, r) => s + toN(r['공급가액']), 0);
-    writeSAP(wb.addWorksheet(`GC케어 SAP 입고 - ${R.y.slice(2)}년 ${R.m}월 - ${R.branch}`),
-      R.y, R.m, R.branch, R.sapRows, totalSup, R.cc, R.account, R.vendorMap);
-    writeVendorMasterSheet(wb.addWorksheet('거래처 관리'), App.vendors);
-    await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 GC케어 입고분 SAP 입력 양식 - ${R.branch}.xlsx`);
-  } finally {
-    await hideGlobalLoading();
-  }
-}
-
-async function dlSubul() {
-  try {
-    showGlobalLoading('수불 집계표 다운로드 중...');
-    const R    = App.R;
-    const filename = `★ ${R.y.slice(2)}년도 ${R.m}월 아이메드 수불 - GC케어 제출용 ★ ${R.branch}.xlsx`;
-
-    if (R.subulBuffer) {
-      // 파싱 시점에 준비된 전체 파일 (기존 + 당월)
-      saveAs(new Blob([R.subulBuffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      }), filename);
-    } else {
-      // Drive 파일 없는 경우 당월 시트만 생성
-      const wb = newWb();
-      writeSubul(wb.addWorksheet(`원가집계표-${R.y.slice(2)}년 ${R.m}월 ${R.branch}`),
-        R.y, R.m, R.branch,
-        Object.values(R.subulMap).filter(it => it.type !== '의약품'), R);
-      await saveWb(wb, filename);
-    }
-  } catch (e) {
-    showMessage('수불 집계표 오류: ' + e.message, 'error');
-  } finally {
-    await hideGlobalLoading();
-  }
-}
-
-async function downloadAll() {
-  try {
-    showGlobalLoading('전체 산출물 생성 중...');
-    const R = App.R; 
-    // 스피너는 유지한 채 순차 생성
-    const wb1 = newWb();
-    const ic = ['공급업체', '구매번호', '자재구분', '자재코드', '자재명', '상태', '입고일자', '수량', '단가', '공급가액', '부가세', '합계금액', '규격', '산출단위', '입고단위', '의뢰부서', '구분'];
-    const iw = [16, 14, 8, 12, 40, 8, 12, 8, 12, 14, 12, 14, 10, 8, 8, 14, 10];
-    const in_ = [8, 9, 10, 11, 12];
-    writePivotVendor(wb1.addWorksheet('거래처 요약'), R.gcVendors, R.imedVendors);
-    writeDataSheet(wb1.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
-    writeDataSheet(wb1.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotItem(wb1.addWorksheet('원가집계표 요약'), R.itemIpgoPivot, false);
-    writePivotDept(wb1.addWorksheet('GC케어 마감요약'), R.gcDepts.filter(d => d.공급가액 || d.부가세 || d.합계금액));
-    writeDataSheet(wb1.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
-    writePivotDept(wb1.addWorksheet('아이메드 마감요약'), R.imedDeptsRaw.filter(d => d.공급가액 || d.부가세 || d.합계금액));
-    await saveWb(wb1, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
-    await sleep(200);
-
-    // 나머지는 개별 함수 재사용 (각 함수 내부 스피너는 hideGlobalLoading 하지 않도록 플래그 없이 직접 호출)
-    await hideGlobalLoading();
-    await dlUsage();   await sleep(200);
-    await dlGCReport(); await sleep(200);
-    await dlImedReport(); await sleep(200);
-    await dlSAP();     await sleep(200);
-    await dlSubul();
-  } catch(e) {
-    await hideGlobalLoading();
-    showMessage('전체 다운로드 중 오류: ' + e.message, 'error');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// 12. 지점명 드롭다운 (ORG_CLINIC)
-// ═══════════════════════════════════════════════════════════
-async function loadBranchOptions(user) {
-  const sel = document.getElementById('inputBranch');
-  if (!sel) return;
-
-  let clinics = [];
-  try {
-    const res = await apiGet('getCodes', {
-      request_user_email: user?.email,
-      code_group: 'ORG_CLINIC',
-    });
-    const data = res.data || res || [];
-    clinics = Array.isArray(data)
-      ? data
-          .filter(c => String(c.use_yn || 'Y').toUpperCase() === 'Y')
-          .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
-          .map(c => ({ value: c.code_name, label: c.code_name }))
-      : [];
-  } catch (e) {
-    clinics = [];
-  }
-
-  // API 실패 또는 목록 없으면 소속 의원만 표시
-  if (!clinics.length) {
-    const fallback = user?.clinic_name || user?.org_name || '서울숲의원';
-    clinics = [{ value: fallback, label: fallback }];
-  }
-
-  // 소속 의원 기본 선택
-  const defaultBranch = user?.clinic_name || clinics[0]?.value || '';
-  sel.innerHTML = clinics.map(c =>
-    `<option value="${c.value}"${c.value === defaultBranch ? ' selected' : ''}>${c.label}</option>`
-  ).join('');
-}
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
+  <script src="../../assets/js/closing/closing-write.js"></script>
+  <script src="../../assets/js/closing/closing-admin.js"></script>
+  <script src="../../assets/js/closing/closing-main.js"></script>
+</body>
+</html>
