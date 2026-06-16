@@ -995,20 +995,68 @@ async function dlUsage() {
   }
 }
 
-async function dlReport(label, vendors, depts, filename, gcRow) {
-  const R = App.R; const wb = newWb();
-  const isImed = label.includes('원재료');
+// ── GC케어 보고서 ──────────────────────────────────────────
+async function dlGCReport() {
+  try {
+    showGlobalLoading('GC케어 보고서 생성 중...');
+    const R   = App.R;
+    const wb  = newWb();
+    const label = '시약 및 소모품';
+    const filename = `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - GC케어 - ${R.branch}.xlsx`;
 
-  // 아이메드 보고서: 부서별 금액에 시약+소모품(5% 적용) 그룹핑 합산
-  let deptsForAmount = depts;
-  if (isImed && R.imedSiSoPivot5?.length) {
+    // 1시트: 결재
+    writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, R.gcVendors, R.vendorMap, null);
+
+    // 2시트: 부서별 금액 — 시약은 입고금액 있는 부서만 표시, 0그룹 생략
+    const gcDeptsForAmount = R.gcDepts.filter(d =>
+      String(d.자재구분 || '').trim() !== '시약' || toN(d.공급가액) > 0
+    );
+    writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, gcDeptsForAmount, true);
+
+    // 3·4시트: 원재료비
+    const user = window.auth?.getSession?.();
+    const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
+    const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    let prevStockData = await loadPrevStock(prevYm, R.branch);
+    if (!prevStockData.length) {
+      clog('전월 closing_stock 없음 → closing_usage_monthly end_amount로 대체', 'warn');
+      prevStockData = await loadPrevStockFromUsage(prevYm, R.branch, 'GC케어');
+    }
+    R.prevStockData = prevStockData;
+    writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
+    const yearUsage = await loadYearUsage(null, R.branch, user, 'GC케어');
+    writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
+
+    await saveWb(wb, filename);
+  } finally {
+    await hideGlobalLoading();
+  }
+}
+
+// ── 아이메드 보고서 ────────────────────────────────────────
+async function dlImedReport() {
+  try {
+    showGlobalLoading('아이메드 보고서 생성 중...');
+    const R   = App.R;
+    const wb  = newWb();
+    const label = '원재료 및 소모품';
+    const filename = `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - 아이메드 - ${R.branch}.xlsx`;
+
+    // 1시트: 결재 — GC케어 금액(아이메드 마감요약 시,소 합계) 포함
+    const gcSiSo5 = R.imedSiSoPivot5 || [];
+    const gcRow = {
+      공급가액: gcSiSo5.reduce((s,d) => s + toN(d.사용공급가||0), 0),
+      부가세:   gcSiSo5.reduce((s,d) => s + toN(d.사용부가세||0), 0),
+      합계금액: gcSiSo5.reduce((s,d) => s + toN(d.사용합계  ||0), 0),
+    };
+    writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, R.imedVendors, R.vendorMap, gcRow);
+
+    // 2시트: 부서별 금액 — 시약+소모품(5% 적용) 그룹핑 합산, 0부서도 표시
     const imedGroups = buildImedDeptGroups(R.closingDeptMaster || []);
-    // 그룹별로 합산
     const groupedMap = {};
-    R.imedSiSoPivot5.forEach(d => {
+    (R.imedSiSoPivot5 || []).forEach(d => {
       const dept  = String(d.부서명  || '').trim();
       const type  = String(d.자재구분 || '').trim();
-      // 그룹명 찾기
       const group = imedGroups.find(g => g.depts.includes(dept));
       const key   = (group ? group.displayName : dept) + '||' + type;
       if (!groupedMap[key]) groupedMap[key] = { 의뢰부서: group?.displayName || dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
@@ -1016,8 +1064,6 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
       groupedMap[key].부가세    += Math.round(d.사용부가세 || 0);
       groupedMap[key].합계금액  += Math.round(d.사용합계   || 0);
     });
-    // 값 없어도 CLOSING_DEPT 마스터에 있는 부서는 0행으로 포함
-    // 시약은 extra1='시약'인 부서만, 소모품은 전체 부서
     const siyakDeptNames = new Set(
       (R.closingDeptMaster || [])
         .filter(d => String(d.extra1 || '').trim() === '시약')
@@ -1026,10 +1072,7 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
     const masterKeys = imedGroups.length
       ? imedGroups.flatMap(g => {
           const keys = [g.displayName + '||소모품'];
-          // 그룹 내 시약 부서가 하나라도 있으면 시약 행 추가
-          if (g.depts.some(dept => siyakDeptNames.has(dept))) {
-            keys.push(g.displayName + '||시약');
-          }
+          if (g.depts.some(dept => siyakDeptNames.has(dept))) keys.push(g.displayName + '||시약');
           return keys;
         })
       : (R.closingDeptMaster || []).flatMap(d => {
@@ -1045,57 +1088,24 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
         groupedMap[key] = { 의뢰부서: dept, 자재구분: type, 공급가액: 0, 부가세: 0, 합계금액: 0 };
       }
     });
-    const siSoRows = Object.values(groupedMap);
-    deptsForAmount = [...depts, ...siSoRows];
-  }
+    const imedDeptsForAmount = [...R.imedDepts, ...Object.values(groupedMap)];
+    writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, imedDeptsForAmount, false);
 
-  // GC케어 보고서: 시약은 실제 사용/입고 금액 있는 부서만 표시
-  if (!isImed) {
-    deptsForAmount = depts.filter(d =>
-      String(d.자재구분 || '').trim() !== '시약' || toN(d.공급가액) > 0
-    );
-  }
+    // 3·4시트: 원재료비
+    const user = window.auth?.getSession?.();
+    const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
+    const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    let prevStockData = R.prevStockData || await loadPrevStock(prevYm, R.branch);
+    if (!prevStockData.length) {
+      clog('전월 closing_stock 없음 → closing_usage_monthly end_amount로 대체', 'warn');
+      prevStockData = await loadPrevStockFromUsage(prevYm, R.branch, '아이메드');
+    }
+    R.prevStockData = prevStockData;
+    writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
+    const yearUsage = await loadYearUsage(null, R.branch, user, '아이메드');
+    writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
 
-  writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap, gcRow);
-  writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, deptsForAmount, !isImed);
-
-  const user = window.auth?.getSession?.();
-  const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
-  const prevYm   = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-  const prevStockData = await loadPrevStock(prevYm, R.branch);
-  R.prevStockData = prevStockData;  // writeWonjaeryoYear에서 기말 계산에 사용
-  writeWonjaeryo(wb.addWorksheet(`원재료비 ${R.y.slice(2)}년 ${R.m}월`), R, prevStockData, label);
-
-  // 연간 사용 데이터 로드 (GC케어/아이메드 분리)
-  const reportType  = isImed ? '아이메드' : 'GC케어';
-  const yearUsage   = await loadYearUsage(null, R.branch, user, reportType);
-  writeWonjaeryoYear(wb.addWorksheet(`${R.y}년도 원재료비`), R, yearUsage, label);
-
-  await saveWb(wb, filename);
-}
-async function dlGCReport() {
-  try {
-    showGlobalLoading('GC케어 보고서 생성 중...');
-    const R = App.R;
-    await dlReport('시약 및 소모품', R.gcVendors, R.gcDepts, `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - GC케어 - ${R.branch}.xlsx`);
-  } finally {
-    await hideGlobalLoading();
-  }
-}
-async function dlImedReport() {
-  try {
-    showGlobalLoading('아이메드 보고서 생성 중...');
-    const R = App.R;
-    // GC케어 금액: 사용현황 아이메드 마감요약(시,소) 합계
-    const gcSiSo5 = R.imedSiSoPivot5 || [];
-    const gcRow = {
-      공급가액: gcSiSo5.reduce((s,d)=>s+toN(d.사용공급가||0),0),
-      부가세:   gcSiSo5.reduce((s,d)=>s+toN(d.사용부가세||0),0),
-      합계금액: gcSiSo5.reduce((s,d)=>s+toN(d.사용합계  ||0),0),
-    };
-    await dlReport('원재료 및 소모품', R.imedVendors, R.imedDepts,
-      `${R.y.slice(2)}년 ${R.m}월 거래처 구매 내역 및 원재료 보고 - 아이메드 - ${R.branch}.xlsx`,
-      gcRow);
+    await saveWb(wb, filename);
   } finally {
     await hideGlobalLoading();
   }
