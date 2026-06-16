@@ -831,6 +831,11 @@ function parseUsageInitFile(file, reportType) {
         const ws  = wb.Sheets[sheetName];
         const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
+        // 천원 단위 여부 감지 (시트 어딘가에 '천원' 텍스트 포함 여부)
+        const wsStr = JSON.stringify(all);
+        const isThousand = wsStr.includes('천원') || wsStr.includes('단위 : 천') || wsStr.includes('단위:천');
+        const unitMultiplier = isThousand ? 1000 : 1;
+
         const rows = [];
         let currentYear = null;
         const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
@@ -854,10 +859,10 @@ function parseUsageInitFile(file, reportType) {
             const parts = bigo.split(' - ').map(s => s.trim());
             const dept = parts[0]; const itype = parts[1];
             if (!dept || !itype) return;
-            const baseVal = parseFloat(String(row[1]  || '').replace(/,/g, '')) || 0;
-            const endVal  = parseFloat(String(row[14] || '').replace(/,/g, '')) || 0;
+            const baseVal = (parseFloat(String(row[1]  || '').replace(/,/g, '')) || 0) * unitMultiplier;
+            const endVal  = (parseFloat(String(row[14] || '').replace(/,/g, '')) || 0) * unitMultiplier;
             months.forEach((mon, mi) => {
-              const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
+              const val = (parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0) * unitMultiplier;
               if (!val && mon !== '01' && mon !== '12') return;  // 기초/기말 저장월 제외하고 0이면 스킵
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: itype,
                 usage_amount: Math.round(val),
@@ -865,16 +870,30 @@ function parseUsageInitFile(file, reportType) {
                 end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
             });
           } else {
-            // 아이메드: B열(idx1)에 부서명
-            const dept = col1;
-            if (!dept || SKIP.has(dept)) return;
-            // C열(idx2)에 세포치료/특수의약품 텍스트가 오는 경우도 스킵
-            const col2 = String(row[2] || '').trim();
-            if (SKIP.has(col2)) return;
-            const baseVal = parseFloat(String(row[2]  || '').replace(/,/g, '')) || 0;
-            const endVal  = parseFloat(String(row[15] || '').replace(/,/g, '')) || 0;
+            // 아이메드: A열이 비어있으면 B열(idx1)=부서명, 아니면 A열(idx0)=부서명
+            // XLSX.js가 빈 첫 열을 압축할 경우 idx가 한 칸씩 당겨짐
+            const _col0IsNum = col0 && !isNaN(Number(String(col0).replace(/,/g,'')));
+            const _col0Empty = !col0 || SKIP.has(col0) || _col0IsNum;
+            const rawDept  = _col0Empty ? col1 : col0;
+            const baseIdx  = _col0Empty ? 2  : 1;
+            const monthOff = _col0Empty ? 3  : 2;
+            const endIdx   = _col0Empty ? 15 : 14;
+
+            if (!rawDept || SKIP.has(rawDept)) return;
+            const dept = rawDept
+              .replace(/\s*-\s*/g, '(')
+              .replace(/\s{2,}/g, ' ')
+              .trim()
+              .replace(/\(([^)]+)$/, '($1)')
+              .replace(/([^)])$/, match =>
+                match.includes('(') ? match + ')' : match);
+
+            const _col2 = String(row[baseIdx] || '').trim();
+            if (SKIP.has(_col2)) return;
+            const baseVal = (parseFloat(String(row[baseIdx] || '').replace(/,/g, '')) || 0) * unitMultiplier;
+            const endVal  = (parseFloat(String(row[endIdx]  || '').replace(/,/g, '')) || 0) * unitMultiplier;
             months.forEach((mon, mi) => {
-              const val = parseFloat(String(row[mi + 3] || '').replace(/,/g, '')) || 0;
+              const val = (parseFloat(String(row[mi + monthOff] || '').replace(/,/g, '')) || 0) * unitMultiplier;
               if (!val && mon !== '01' && mon !== '12') return;
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
                 usage_amount: Math.round(val),
