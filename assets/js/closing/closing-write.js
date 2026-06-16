@@ -744,50 +744,56 @@ function writeSubul(ws, year, month, branch, items, R) {
     const fill    = ri % 2 === 0 ? FILL.odd : FILL.even;
     const typeFill = String(it.type||'').trim() === '시약' ? FILL_SIYK : FILL_SOMO;
     const 기초    = it.기초 || 0;
-    const 기초수량  = Math.round(it.기초수량 || 0);
-    const 증가수량  = Math.round(it.증가수량 || 0);
-    const 감소수량  = Math.round(it.감소수량 || 0);
+    // 수량: 소수 2자리까지 저장, 표시는 정수형태(numFmt '0')
+    const 기초수량  = Math.round((it.기초수량 || 0) * 100) / 100;
+    const 증가수량  = Math.round((it.증가수량 || 0) * 100) / 100;
+    const 감소수량  = Math.round((it.감소수량 || 0) * 100) / 100;
     const 기말     = 기초 + it.증가 - it.감소;
-    const 기말수량  = 기초수량 + 증가수량 - 감소수량;
+    const 기말수량  = Math.round((기초수량 + 증가수량 - 감소수량) * 100) / 100;
 
-    const accCell = (c, v) => {
+    const accCell = (c, v, isQty = false) => {
       const cell = ws.getCell(r, c);
-      cell.value = Math.round(toN(v));
+      cell.value = isQty ? (Math.round(toN(v) * 100) / 100) : Math.round(toN(v));
       cell.font = cell.value < 0 ? F.red : F.base;
       cell.fill = fill || FILL.odd;
       cell.alignment = AL('right');
       cell.border = BORDER_DATA;
-      cell.numFmt = NUM_FMT;
+      cell.numFmt = isQty ? '0' : NUM_FMT;  // 수량: 정수 표시, 금액: 천단위
     };
 
     txtCell(ws, r, 1, it.code, FILL.odd);
     txtCell(ws, r, 2, it.name, typeFill);
     txtCell(ws, r, 3, it.type, typeFill, false, true);
-    accCell(4,  기초수량);
-    accCell(5,  0);  // 기초단가
+    accCell(4,  기초수량, true);
+    accCell(5,  0);          // 기초단가
     accCell(6,  기초);
-    accCell(7,  증가수량);
+    accCell(7,  증가수량, true);
     accCell(8,  it.증가);
-    accCell(9,  감소수량);
+    accCell(9,  감소수량, true);
     accCell(10, it.감소);
-    accCell(11, 기말수량);
-    accCell(12, 0);  // 기말단가
+    accCell(11, 기말수량, true);
+    accCell(12, 0);          // 기말단가
     accCell(13, 기말);
     ws.getRow(r).height = 18; r++;
   });
 
   const t기초    = sorted.reduce((s, it) => s + (it.기초 || 0), 0);
-  const t기초수량 = Math.round(sorted.reduce((s, it) => s + (it.기초수량 || 0), 0));
+  // 총합계 수량: 소수 합산 후 소수 2자리, 표시는 정수(numFmt '0')
+  const t기초수량 = Math.round(sorted.reduce((s, it) => s + (it.기초수량 || 0), 0) * 100) / 100;
   const tI       = sorted.reduce((s, it) => s + it.증가, 0);
-  const tI수량   = Math.round(sorted.reduce((s, it) => s + (it.증가수량 || 0), 0));
+  const tI수량   = Math.round(sorted.reduce((s, it) => s + (it.증가수량 || 0), 0) * 100) / 100;
   const tD       = sorted.reduce((s, it) => s + it.감소, 0);
-  const tD수량   = Math.round(sorted.reduce((s, it) => s + (it.감소수량 || 0), 0));
+  const tD수량   = Math.round(sorted.reduce((s, it) => s + (it.감소수량 || 0), 0) * 100) / 100;
   const t기말    = t기초 + tI - tD;
-  const t기말수량 = t기초수량 + tI수량 - tD수량;
+  const t기말수량 = Math.round((t기초수량 + tI수량 - tD수량) * 100) / 100;
   ws.mergeCells(r, 1, r, 3);
   totalRow(ws, r, [4, 6, 7, 8, 9, 10, 11, 13],
     [t기초수량, t기초, tI수량, tI, tD수량, tD, t기말수량, t기말],
     [1], ['총합계']);
+  // 수량 컬럼(4,7,9,11) numFmt '0' 적용 (소수 저장, 정수 표시)
+  [4, 7, 9, 11].forEach(c => { ws.getCell(r, c).numFmt = '0'; });
+  // 총합계 수량 열 numFmt='0' (소수 저장, 정수 표시)
+  [4, 7, 9, 11].forEach(c => { ws.getCell(r, c).numFmt = '0'; });
   // 단가 컬럼(5, 12) 총합계 색+0 채우기
   [5, 12].forEach(c => {
     const cell = ws.getCell(r, c);
