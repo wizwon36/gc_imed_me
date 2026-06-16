@@ -839,6 +839,31 @@ function parseUsageInitFile(file, reportType) {
         const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
         const SKIP = new Set(['구   분','구분','총  계','총    계','소  계','소 계','매  출','매   출','세포치료','특수의약품','납품처']);
 
+        // 1패스: 연도별 마지막 데이터 월 파악 (실제 숫자값 기준)
+        const lastMonByYear = {};
+        let _scanYear = null;
+        all.forEach(row => {
+          const c0 = String(row[0]||'').trim();
+          const c1 = String(row[1]||'').trim();
+          const ymA = c0.match(/(\d{4})년도\s*원재료비/);
+          const ymB = c1.match(/(\d{4})년도\s*원재료비/);
+          if (ymA) { _scanYear = ymA[1]; return; }
+          if (ymB) { _scanYear = ymB[1]; return; }
+          if (!_scanYear) return;
+          // 부서 데이터행: 헤더/스킵 행 제외
+          const dept = c0 === '' ? c1 : c0;
+          if (!dept || dept === '구   분' || dept === '매   출' || dept === '총    계') return;
+          // 오프셋: c0 비어있으면 서울숲형(monthOff=3), 아니면 강북형(monthOff=2)
+          const off = (!c0 || c0 === '') ? 3 : 2;
+          months.forEach((mon, mi) => {
+            const v = row[mi + off];
+            if (v !== '' && v !== null && v !== undefined && !isNaN(Number(v)) && Number(v) !== 0) {
+              if (!lastMonByYear[_scanYear] || mon > lastMonByYear[_scanYear])
+                lastMonByYear[_scanYear] = mon;
+            }
+          });
+        });
+
         all.forEach(row => {
           const col0 = String(row[0] || '').trim();
           const col1 = String(row[1] || '').trim();
@@ -859,19 +884,14 @@ function parseUsageInitFile(file, reportType) {
             if (!dept || !itype) return;
             const baseVal = (parseFloat(String(row[1]  || '').replace(/,/g, '')) || 0) * unitMultiplier;
             const endVal  = (parseFloat(String(row[14] || '').replace(/,/g, '')) || 0) * unitMultiplier;
-            // 마지막 유효월 찾기 (기말을 12월 고정이 아닌 실제 마지막 달에 저장)
-            let lastMon = null;
-            months.forEach((mon, mi) => {
-              const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
-              if (val) lastMon = mon;
-            });
+            const lastMon = lastMonByYear[currentYear] || '12';
             months.forEach((mon, mi) => {
               const val = (parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0) * unitMultiplier;
               if (!val && mon !== '01' && mon !== lastMon) return;
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: itype,
                 usage_amount: Math.round(val),
-                base_amount: mon === '01'      ? Math.round(baseVal) : 0,
-                end_amount:  mon === lastMon   ? Math.round(endVal)  : 0 });
+                base_amount: mon === '01'    ? Math.round(baseVal) : 0,
+                end_amount:  mon === lastMon ? Math.round(endVal)  : 0 });
             });
           } else {
             // 아이메드: A열(idx0)이 비어있으면 B열(idx1)=부서명 (서울숲 형식)
@@ -895,12 +915,7 @@ function parseUsageInitFile(file, reportType) {
             if (SKIP.has(_col2)) return;
             const baseVal = (parseFloat(String(row[baseIdx] || '').replace(/,/g, '')) || 0) * unitMultiplier;
             const endVal  = (parseFloat(String(row[endIdx]  || '').replace(/,/g, '')) || 0) * unitMultiplier;
-            // 마지막 유효월 찾기
-            let lastMon = null;
-            months.forEach((mon, mi) => {
-              const val = parseFloat(String(row[mi + monthOff] || '').replace(/,/g, '')) || 0;
-              if (val) lastMon = mon;
-            });
+            const lastMon = lastMonByYear[currentYear] || '12';
             months.forEach((mon, mi) => {
               const val = (parseFloat(String(row[mi + monthOff] || '').replace(/,/g, '')) || 0) * unitMultiplier;
               if (!val && mon !== '01' && mon !== lastMon) return;
