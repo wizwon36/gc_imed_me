@@ -859,13 +859,19 @@ function parseUsageInitFile(file, reportType) {
             if (!dept || !itype) return;
             const baseVal = (parseFloat(String(row[1]  || '').replace(/,/g, '')) || 0) * unitMultiplier;
             const endVal  = (parseFloat(String(row[14] || '').replace(/,/g, '')) || 0) * unitMultiplier;
+            // 마지막 유효월 찾기 (기말을 12월 고정이 아닌 실제 마지막 달에 저장)
+            let lastMon = null;
+            months.forEach((mon, mi) => {
+              const val = parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0;
+              if (val) lastMon = mon;
+            });
             months.forEach((mon, mi) => {
               const val = (parseFloat(String(row[mi + 2] || '').replace(/,/g, '')) || 0) * unitMultiplier;
-              if (!val && mon !== '01' && mon !== '12') return;  // 기초/기말 저장월 제외하고 0이면 스킵
+              if (!val && mon !== '01' && mon !== lastMon) return;
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: itype,
                 usage_amount: Math.round(val),
-                base_amount: mon === '01' ? Math.round(baseVal) : 0,
-                end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
+                base_amount: mon === '01'      ? Math.round(baseVal) : 0,
+                end_amount:  mon === lastMon   ? Math.round(endVal)  : 0 });
             });
           } else {
             // 아이메드: A열(idx0)이 비어있으면 B열(idx1)=부서명 (서울숲 형식)
@@ -889,13 +895,19 @@ function parseUsageInitFile(file, reportType) {
             if (SKIP.has(_col2)) return;
             const baseVal = (parseFloat(String(row[baseIdx] || '').replace(/,/g, '')) || 0) * unitMultiplier;
             const endVal  = (parseFloat(String(row[endIdx]  || '').replace(/,/g, '')) || 0) * unitMultiplier;
+            // 마지막 유효월 찾기
+            let lastMon = null;
+            months.forEach((mon, mi) => {
+              const val = parseFloat(String(row[mi + monthOff] || '').replace(/,/g, '')) || 0;
+              if (val) lastMon = mon;
+            });
             months.forEach((mon, mi) => {
               const val = (parseFloat(String(row[mi + monthOff] || '').replace(/,/g, '')) || 0) * unitMultiplier;
-              if (!val && mon !== '01' && mon !== '12') return;
+              if (!val && mon !== '01' && mon !== lastMon) return;
               rows.push({ ym: `${currentYear}-${mon}`, dept, item_type: '의약품',
                 usage_amount: Math.round(val),
-                base_amount: mon === '01' ? Math.round(baseVal) : 0,
-                end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
+                base_amount: mon === '01'    ? Math.round(baseVal) : 0,
+                end_amount:  mon === lastMon ? Math.round(endVal)  : 0 });
             });
           }
         });
