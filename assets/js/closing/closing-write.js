@@ -1106,8 +1106,11 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   }
   if (!prevHasNoDept && imedGroups) {
     imedGroups.forEach(g => {
-      prevDeptStockGrouped[g.displayName + '||' + targetType] =
-        g.depts.reduce((s, dept) => s + (prevDeptStock[dept] || 0), 0);
+      // g.depts로 찾거나, displayName(그룹명) 자체로도 찾음
+      // closing_stock에 그룹명으로 저장된 경우(강북 초기업로드) 대응
+      const byDepts = g.depts.reduce((s, dept) => s + (prevDeptStock[dept] || 0), 0);
+      const byGroup = prevDeptStock[g.displayName] || 0;
+      prevDeptStockGrouped[g.displayName + '||' + targetType] = byDepts + byGroup;
     });
   }
 
