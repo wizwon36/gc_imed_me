@@ -1057,7 +1057,7 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
   }
 
   writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap, gcRow);
-  writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, deptsForAmount);
+  writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, deptsForAmount, !isImed);
 
   const user = window.auth?.getSession?.();
   const prevDate = new Date(parseInt(R.y), R.m - 2, 1);
