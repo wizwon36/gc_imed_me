@@ -1061,10 +1061,12 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   // 기초재고: 부서별 집계 (아이메드는 그룹핑 적용)
   const targetType = isGC ? '시약' : '의약품';
   const prevDeptStock = {};
+  // dept가 없는 경우(수불부 초기 업로드): item_type 기준 전체 합산 → '_total||type' 키로 저장
+  const prevHasNoDept = prevStockData.length > 0 && prevStockData.every(s => !s.dept);
   prevStockData
     .filter(s => !s.item_type || s.item_type === targetType)
     .forEach(s => {
-      const dept = s.dept || '';
+      const dept = prevHasNoDept ? '_total' : (s.dept || '');
       // GC케어: dept||시약 키로 통일, 아이메드: 그룹핑 전 순수 부서명 키
       const k = isGC ? dept + '||' + targetType : dept;
       if (!prevDeptStock[k]) prevDeptStock[k] = 0;
@@ -1080,13 +1082,17 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   const imedGroups = !isGC ? buildImedDeptGroups(R.closingDeptMaster || []) : null;
 
   const prevDeptStockGrouped = {};
-  if (gcGroups) {
+  if (prevHasNoDept) {
+    // dept 없는 경우(수불부 초기 업로드): 전체 합산값을 모든 그룹에 배분하지 않고
+    // '_total' 키로 저장 → 행 생성 시 납품처 단일행으로 표시
+    prevDeptStockGrouped['_total||' + targetType] = prevDeptStock['_total||' + targetType] || 0;
+  } else if (gcGroups) {
     gcGroups.forEach(g => {
       prevDeptStockGrouped[g.displayName + '||' + targetType] =
         g.depts.reduce((s, dept) => s + (prevDeptStock[dept + '||' + targetType] || 0), 0);
     });
   }
-  if (imedGroups) {
+  if (!prevHasNoDept && imedGroups) {
     imedGroups.forEach(g => {
       prevDeptStockGrouped[g.displayName + '||' + targetType] =
         g.depts.reduce((s, dept) => s + (prevDeptStock[dept] || 0), 0);
@@ -1158,8 +1164,11 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   const dataDeptKeys = [...new Set([
     ...Object.keys(deptIpgo),
     ...Object.keys(deptUsage),
-    ...Object.keys(prevDeptStockFinal),
+    ...Object.keys(prevDeptStockFinal).filter(k => !k.startsWith('_total')),
   ])];
+
+  // dept 없는 초기 업로드의 경우 _total 키 별도 처리
+  const totalBase = prevHasNoDept ? toN(prevDeptStockFinal['_total||' + targetType]) : 0;
 
   const isImedOnlyDept = k => /의료공통|의료 공통/i.test(k.split('||')[0]);
   const deptKeys = (masterDepts.length
@@ -1185,7 +1194,10 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
     const fill  = ri % 2 === 0 ? FILL.odd : FILL.even;
     const parts = k.split('||');
     const dept  = parts[0];
-    const base  = toN(prevDeptStockFinal[k]);
+    // dept 없는 초기 업로드: 기초를 totalBase에서 배분 (전체를 첫 번째 행에 합산)
+    const base  = prevHasNoDept && ri === 0
+      ? totalBase + toN(prevDeptStockFinal[k])
+      : toN(prevDeptStockFinal[k]);
     const buy   = toN(deptIpgo[k]?.amt);
     const use   = toN(deptUsage[k]?.amt);
     const end   = base + buy - use;
