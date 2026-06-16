@@ -7,8 +7,8 @@
 // 14. 거래처 관리 (API 연동)
 // ═══════════════════════════════════════════════════════════
 // 의원별 5% 가산 반올림 방식 로드 (CLOSING_ROUND_MODE)
-App.roundMode = {};
 async function loadRoundModes() {
+  if (!App.roundMode) App.roundMode = {};
   try {
     const user = window.auth?.getSession?.();
     const res  = await apiGet('getCodes', {
