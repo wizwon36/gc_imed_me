@@ -80,6 +80,20 @@ function numCell(ws, r, c, v, fill, bold = false) {
     numFmt: NUM_FMT,
   });
 }
+// 천원 단위 표시 (원 단위 저장, numFmt으로 /1000 표시)
+const NUM_FMT_K = '#,##0,;[Red]-#,##0,;"-"';
+function numCellK(ws, r, c, v, fill, bold = false) {
+  const nv = Math.round(toN(v));
+  const cell = ws.getCell(r, c);
+  sc(cell, {
+    value: nv,
+    font: nv < 0 ? (bold ? F.redb : F.red) : (bold ? F.total : F.base),
+    fill: fill || FILL.odd,
+    alignment: AL('right'),
+    border: BORDER_DATA,
+    numFmt: NUM_FMT_K,
+  });
+}
 function txtCell(ws, r, c, v, fill, bold = false, center = false) {
   sc(ws.getCell(r, c), {
     value: v || null,
@@ -95,19 +109,19 @@ function titleRow(ws, r, c, v, span, rowH = 22) {
   if (span > 1) ws.mergeCells(r, c, r, c + span - 1);
   ws.getRow(r).height = rowH;
 }
-function totalRow(ws, r, numCols, numVals, textCols, textVals) {
+function totalRow(ws, r, numCols, numVals, textCols, textVals, fmt = NUM_FMT) {
   numCols.forEach((c, i) => {
     const cell = ws.getCell(r, c);
-    sc(cell, { value: Math.round(toN(numVals[i])) || null, font: F.total, fill: FILL.total, alignment: AL('right'), border: BORDER_TOTAL, numFmt: NUM_FMT });
+    sc(cell, { value: Math.round(toN(numVals[i])) || null, font: F.total, fill: FILL.total, alignment: AL('right'), border: BORDER_TOTAL, numFmt: fmt });
   });
   textCols.forEach((c, i) => {
     sc(ws.getCell(r, c), { value: textVals[i] || null, font: F.total, fill: FILL.total, alignment: AL('center'), border: BORDER_TOTAL });
   });
   ws.getRow(r).height = 18;
 }
-function subtotRow(ws, r, textCols, textVals, numCols, numVals) {
+function subtotRow(ws, r, textCols, textVals, numCols, numVals, fmt = NUM_FMT) {
   textCols.forEach((c, i) => sc(ws.getCell(r, c), { value: textVals[i] || null, font: F.bold, fill: FILL.subtot, alignment: AL('center'), border: BORDER_THIN }));
-  numCols.forEach((c, i) => { const cell = ws.getCell(r, c); sc(cell, { value: Math.round(toN(numVals[i])) || null, font: F.bold, fill: FILL.subtot, alignment: AL('right'), border: BORDER_THIN, numFmt: NUM_FMT }); });
+  numCols.forEach((c, i) => { const cell = ws.getCell(r, c); sc(cell, { value: Math.round(toN(numVals[i])) || null, font: F.bold, fill: FILL.subtot, alignment: AL('right'), border: BORDER_THIN, numFmt: fmt }); });
   ws.getRow(r).height = 18;
 }
 function cw(ws, arr) { arr.forEach(([c, w]) => ws.getColumn(c).width = w); }
@@ -1355,20 +1369,20 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         if (!yearMap[yr]) yearMap[yr] = {};
         if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { dept: groupName, base: 0, end: 0 };
         yearMap[yr][groupName]['m' + mon] =
-          (yearMap[yr][groupName]['m' + mon] || 0) + Math.round(u.usage_amount / 1000);
+          (yearMap[yr][groupName]['m' + mon] || 0) + Math.round(u.usage_amount );
         if (mon === '01' && u.base_amount)
-          yearMap[yr][groupName].base = (yearMap[yr][groupName].base || 0) + Math.round(u.base_amount / 1000);
+          yearMap[yr][groupName].base = (yearMap[yr][groupName].base || 0) + Math.round(u.base_amount );
         // end_amount: 연도별 가장 마지막 달 기준으로 덮어씀 (B안)
         if (u.end_amount) {
           const prev = yearMap[yr][groupName]._endMon || '00';
           if (mon >= prev) {
-            yearMap[yr][groupName].end    = Math.round(u.end_amount / 1000);
+            yearMap[yr][groupName].end    = Math.round(u.end_amount );
             yearMap[yr][groupName]._endMon = mon;
           }
         }
       });
 
-    // 당월 추가 (그룹별 원단위 합산 후 /1000)
+    // 당월 추가 (그룹별 원단위 합산)
     const gcCurRaw = {};
     buildDeptUsageForMonthly(R)
       .filter(u => u.item_type === targetType)
@@ -1379,7 +1393,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     if (!yearMap[R.y]) yearMap[R.y] = {};
     Object.entries(gcCurRaw).forEach(([groupName, raw]) => {
       if (!yearMap[R.y][groupName]) yearMap[R.y][groupName] = { dept: groupName, base: 0, end: 0 };
-      yearMap[R.y][groupName]['m' + curMon] = Math.round(raw / 1000);
+      yearMap[R.y][groupName]['m' + curMon] = Math.round(raw );
     });
 
     // 당해 연도 기말: 그룹별 기초+매입-사용 집계
@@ -1395,7 +1409,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         s + (R.prevStockData || [])
           .filter(s => (s.dept||'') === dept && s.item_type === targetType)
           .reduce((acc, v) => acc + toN(v.closing_amount), 0), 0);
-      if (!d.base && baseAmt) d.base = Math.round(baseAmt / 1000);
+      if (!d.base && baseAmt) d.base = Math.round(baseAmt );
 
       const buy = memberDepts.reduce((s, dept) =>
         s + R.gcIpgo
@@ -1405,7 +1419,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         s + R.usageSiyak
           .filter(r => String(r['부서명']||'').trim() === dept)
           .reduce((acc, r) => acc + toN(r['사용공급가']), 0), 0);
-      d.end = Math.round((baseAmt + buy - use) / 1000);
+      d.end = Math.round((baseAmt + buy - use) );
     });
 
     const years = Object.keys(yearMap).sort((a, b) => b.localeCompare(a));
@@ -1458,13 +1472,13 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         } else {
           const ac = ws.getCell(r, 1); ac.fill = fill; ac.border = BORDER_DATA;
         }
-        numCell(ws, r, 2, d.base || 0, fill);
+        numCellK(ws, r, 2, d.base || 0, fill);
         months.forEach((mon, mi) => {
           const v = d['m' + mon] || 0;
           colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
-          numCell(ws, r, mi + 3, v, yr === R.y && mon === curMon ? CUR_FILL : fill);
+          numCellK(ws, r, mi + 3, v, yr === R.y && mon === curMon ? CUR_FILL : fill);
         });
-        numCell(ws, r, 15, d.end || 0, fill);
+        numCellK(ws, r, 15, d.end || 0, fill);
         txtCell(ws, r, 16, `${dept} - 시약`, fill);
         ws.getRow(r).height = 18; r++;
       });
@@ -1475,7 +1489,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       subtotRow(ws, r, [1], ['소  계'],
         [2, ...months.map((_, i) => i + 3), 15],
         [colTotals.base, ...months.map((_, i) => colTotals[i + 3] || 0), colTotals.end]
-      );
+      , NUM_FMT_K);
       if (yr === R.y) {
         const cc = ws.getCell(r, months.indexOf(curMon) + 3);
         cc.fill = CUR_FILL;
@@ -1512,7 +1526,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     if (!yearMap[yr]) yearMap[yr] = {};
     if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
     yearMap[yr][groupName]['m' + mon] =
-      (yearMap[yr][groupName]['m' + mon] || 0) + Math.round(amt / 1000);
+      (yearMap[yr][groupName]['m' + mon] || 0) + Math.round(amt );
   };
 
   yearUsage
@@ -1528,7 +1542,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       if (mon === '01' && u.base_amount) {
         if (!yearMap[yr]) yearMap[yr] = {};
         if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
-        yearMap[yr][groupName].base += Math.round(u.base_amount / 1000);
+        yearMap[yr][groupName].base += Math.round(u.base_amount );
       }
       // end_amount: 연도별 가장 마지막 달 기준으로 덮어씀 (B안)
       if (u.end_amount) {
@@ -1536,13 +1550,13 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         if (!yearMap[yr][groupName]) yearMap[yr][groupName] = { base: 0, end: 0 };
         const prev = yearMap[yr][groupName]._endMon || '00';
         if (mon >= prev) {
-          yearMap[yr][groupName].end    = Math.round(u.end_amount / 1000);
+          yearMap[yr][groupName].end    = Math.round(u.end_amount );
           yearMap[yr][groupName]._endMon = mon;
         }
       }
     });
 
-  // 당월 추가 (의약품 + 시약5%) — 그룹별 원단위 합산 후 /1000 (3번째 시트와 동일 방식)
+  // 당월 추가 (의약품 + 시약5%) — 그룹별 원단위 합산
   if (!yearMap[R.y]) yearMap[R.y] = {};
 
   // 의약품 당월: 그룹별 원단위 합산
@@ -1562,12 +1576,12 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       siyakCurRaw[groupName] = (siyakCurRaw[groupName] || 0) + toN(d.사용합계||0);
     });
 
-  // 그룹별 합산 후 /1000 → yearMap에 저장
+  // 그룹별 합산 후 원단위로 yearMap에 저장
   const allCurGroups = new Set([...Object.keys(imedCurRaw), ...Object.keys(siyakCurRaw)]);
   allCurGroups.forEach(groupName => {
     if (!yearMap[R.y][groupName]) yearMap[R.y][groupName] = { base: 0, end: 0 };
     const combined = (imedCurRaw[groupName] || 0) + (siyakCurRaw[groupName] || 0);
-    yearMap[R.y][groupName]['m' + curMon] = Math.round(combined / 1000);
+    yearMap[R.y][groupName]['m' + curMon] = Math.round(combined );
   });
 
   // 당해 연도 기말: 3번째 시트 기말재고 (writeWonjaeryo의 end 값과 동일 계산)
@@ -1585,7 +1599,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
           .filter(s2 => (s2.dept||'') === dept && s2.item_type === '의약품')
           .reduce((ss, v) => ss + toN(v.closing_amount), 0);
       }, 0);
-      if (base) d.base = Math.round(base / 1000);
+      if (base) d.base = Math.round(base );
     }
 
     // 기말 = 기초 + 의약품매입 - 의약품사용 (시약5%는 매입=사용으로 상쇄)
@@ -1604,7 +1618,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         .filter(r2 => String(r2['부서명']||'').trim() === dept)
         .reduce((ss, r2) => ss + toN(r2['사용합계']), 0);
     }, 0);
-    d.end = Math.round((baseAmt + buyImed - useImed) / 1000);
+    d.end = Math.round((baseAmt + buyImed - useImed) );
   });
 
   // 연도 목록: 내림차순
@@ -1667,13 +1681,13 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       colTotals.base += d.base || 0;
       colTotals.end  += d.end  || 0;
       txtCell(ws, r, 1, gName, fill, false, false);
-      numCell(ws, r, 2, d.base || 0, fill);
+      numCellK(ws, r, 2, d.base || 0, fill);
       months.forEach((mon, mi) => {
         const v = d['m' + mon] || 0;
         colTotals[mi + 3] = (colTotals[mi + 3] || 0) + v;
-        numCell(ws, r, mi + 3, v, yr === R.y && mon === curMon ? CUR_FILL : fill);
+        numCellK(ws, r, mi + 3, v, yr === R.y && mon === curMon ? CUR_FILL : fill);
       });
-      numCell(ws, r, 15, d.end || 0, fill);
+      numCellK(ws, r, 15, d.end || 0, fill);
       ws.getRow(r).height = 18; r++;
     });
 
@@ -1685,7 +1699,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     subtotRow(ws, r, [1], ['총  계'],
       [2, ...months.map((_, i) => i + 3), 15],
       [colTotals.base, ...months.map((_, i) => colTotals[i + 3] || 0), colTotals.end]
-    );
+    , NUM_FMT_K);
     if (yr === R.y) {
       const cc = ws.getCell(r, months.indexOf(curMon) + 3);
       cc.fill = CUR_FILL;
@@ -1742,7 +1756,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
         const curAmt  = yearMap[yr]?.[gName]?.['m' + curMon]     || 0;
         const prevAmt = yearMap[prevYr]?.[gName]?.['m' + curMon] || 0;
         txtCell(ws, tr, TC,     gName,           fill, false, false);
-        numCell(ws, tr, TC + 1, curAmt - prevAmt, fill);
+        numCellK(ws, tr, TC + 1, curAmt - prevAmt, fill);
         ws.getRow(tr).height = 18; tr++;
       });
 
