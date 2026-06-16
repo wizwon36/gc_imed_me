@@ -831,10 +831,8 @@ function parseUsageInitFile(file, reportType) {
         const ws  = wb.Sheets[sheetName];
         const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
-        // 천원 단위 여부 감지 (시트 어딘가에 '천원' 텍스트 포함 여부)
-        const wsStr = JSON.stringify(all);
-        const isThousand = wsStr.includes('천원') || wsStr.includes('단위 : 천') || wsStr.includes('단위:천');
-        const unitMultiplier = isThousand ? 1000 : 1;
+        // 셀값은 항상 원 단위로 저장됨 (단위표기와 무관)
+        const unitMultiplier = 1;
 
         const rows = [];
         let currentYear = null;
