@@ -1530,12 +1530,14 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
   };
 
   yearUsage
-    .filter(u => u.item_type === '의약품' || u.item_type === '시약')
+    .filter(u => u.item_type === '의약품' || u.item_type === '시약' || u.item_type === '세포치료' || u.item_type === '특수의약품')
     .forEach(u => {
       const parts = (u.ym || '').split('-');
       const yr = parts[0]; const mon = parts[1];
       if (!yr || !mon) return;
-      const groupName = resolveGroup(u.dept || '');
+      // 세포치료/특수의약품은 그룹핑 없이 item_type을 그대로 키로 사용
+      const isCellOrSpecial = u.item_type === '세포치료' || u.item_type === '특수의약품';
+      const groupName = isCellOrSpecial ? u.item_type : resolveGroup(u.dept || '');
       // 시약은 extra1='시약' 부서만
       if (u.item_type === '시약' && !siyakDeptNames.has(u.dept || '')) return;
       addToMap(yr, mon, groupName, u.usage_amount || 0);
@@ -1642,7 +1644,8 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
           return a.localeCompare(b, 'ko');
         })
       : dataGroups.sort((a, b) => a.localeCompare(b, 'ko'));
-    const groupKeys = rawGroupKeys.filter(g => !/의료공통|의료 공통/i.test(g));
+    const EXTRA_ROWS = new Set(['세포치료', '특수의약품']);
+    const groupKeys = rawGroupKeys.filter(g => !/의료공통|의료 공통/i.test(g) && !EXTRA_ROWS.has(g));
     groupKeys.forEach(g => { if (!data[g]) data[g] = { base: 0, end: 0 }; });
 
     // ── 연도 제목
@@ -1706,14 +1709,23 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     }
     ws.getRow(r).height = 18; r++;
 
-    // ── 세포치료 / 특수의약품 (빈칸, B열부터)
+    // ── 세포치료 / 특수의약품 (DB 데이터가 있으면 값 출력, 없으면 빈칸)
     ['세포치료', '특수의약품'].forEach(lbl => {
       const lFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
+      const d = data[lbl] || null;
       const ac = ws.getCell(r, 1); ac.fill = lFill; ac.border = BORDER_DATA;  // A열 빈칸
       txtCell(ws, r, 2, lbl, lFill, false, true);  // B열에 라벨
-      [3,4,5,6,7,8,9,10,11,12,13,14,15].forEach(c => {
-        const cell = ws.getCell(r, c); cell.fill = lFill; cell.border = BORDER_DATA;
+      months.forEach((mon, mi) => {
+        const c = mi + 3;
+        const v = d ? (d['m' + mon] || 0) : 0;
+        if (d && v) {
+          numCellK(ws, r, c, v, yr === R.y && mon === curMon ? CUR_FILL : lFill);
+        } else {
+          const cell = ws.getCell(r, c); cell.fill = (yr === R.y && mon === curMon ? CUR_FILL : lFill); cell.border = BORDER_DATA;
+        }
       });
+      // 15열(기말)은 항상 빈칸
+      const endCell = ws.getCell(r, 15); endCell.fill = lFill; endCell.border = BORDER_DATA;
       ws.getRow(r).height = 18; r++;
     });
 
@@ -1988,6 +2000,26 @@ async function confirmClosing() {
         const g = resolveGroup(it.dept);
         if (imedEndMap[g] !== undefined) it.end_amount = Math.round(imedEndMap[g]);
       });
+
+    // ── 강남의원 전용: 세포치료 / 특수의약품 사용금액 추가
+    if ((R.branch || '').includes('강남')) {
+      const parseAmt = id => {
+        const v = document.getElementById(id)?.value?.replace(/,/g, '') || '0';
+        return Math.round(parseFloat(v) || 0);
+      };
+      const cellAmt    = parseAmt('inputCellTherapy');
+      const specialAmt = parseAmt('inputSpecialMed');
+      if (cellAmt > 0) {
+        imedUsageItems.push({ dept: '세포치료', item_type: '세포치료',
+          report_type: '아이메드', usage_amount: cellAmt,
+          base_amount: 0, end_amount: 0 });
+      }
+      if (specialAmt > 0) {
+        imedUsageItems.push({ dept: '특수의약품', item_type: '특수의약품',
+          report_type: '아이메드', usage_amount: specialAmt,
+          base_amount: 0, end_amount: 0 });
+      }
+    }
 
     if (gcUsageItems.length > 0) {
       await apiPost('closingSaveUsageMonthly', {
