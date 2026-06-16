@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([
       Promise.race([loadVendorsFromServer(), timeout(10000)]).catch(() => {}),
       Promise.race([loadItemsFromServer(),   timeout(10000)]).catch(() => {}),
+      Promise.race([loadRoundModes(),        timeout(5000)]).catch(() => {}),
     ]);
 
   } catch (e) {
@@ -332,16 +333,17 @@ function fillMissingDepts(data, deptMaster, types) {
 }
 
 // 5% 가산 요약: 행별 ROUNDUP 후 부서별 합산 (합산 후 ROUNDUP과 다름)
-function byDeptUsage5pct(data) {
+// roundFn: Math.ceil(ROUNDUP) 또는 Math.round(ROUND) — 의원별 설정
+function byDeptUsage5pct(data, roundFn = Math.ceil) {
   const m = {};
   data.forEach(r => {
     const k = String(r['부서명'] || '').trim() + '||' + String(r['자재구분'] || '').trim();
     if (!m[k]) m[k] = { 부서명: String(r['부서명'] || '').trim(), 자재구분: String(r['자재구분'] || '').trim(), 사용공급가: 0, 사용부가세: 0, 사용합계: 0 };
-    const sup5 = Math.ceil(toN(r['사용공급가']) * 1.05);
-    const vat5 = Math.ceil(toN(r['사용부가세']) * 1.05);
+    const sup5 = roundFn(toN(r['사용공급가']) * 1.05);
+    const vat5 = roundFn(toN(r['사용부가세']) * 1.05);
     m[k].사용공급가 += sup5;
     m[k].사용부가세 += vat5;
-    m[k].사용합계  += sup5 + vat5;  // 계5% = 공5% + 부5%
+    m[k].사용합계  += sup5 + vat5;
   });
   return Object.values(m);
 }
@@ -480,8 +482,10 @@ async function runProcessing() {
                               .filter(it => !String(it.코드).startsWith('6'));  // 의약품 제외
     const itemUsagePivot   = byItem(usageGC, '자재코드', '자재명', '사용수량(입)', '사용공급가');
     const siyakPivot       = byDeptUsage(usageSiyak);
-    const siyakPivot5      = byDeptUsage5pct(usageSiyak);
-    const imedSiSoPivot5   = byDeptUsage5pct(usageGC);
+    // 5% 가산 반올림 방식: App.roundMode[branch] 기준 (초기화 시 CLOSING_ROUND_MODE 로드)
+    const roundFn5 = (App.roundMode?.[branch] === 'round') ? Math.round : Math.ceil;
+    const siyakPivot5      = byDeptUsage5pct(usageSiyak, roundFn5);
+    const imedSiSoPivot5   = byDeptUsage5pct(usageGC, roundFn5);
     const imedSiSoPivot    = byDeptUsage(usageGC);
     const imedDrugPivot    = byDeptUsage(usageImed);
     clog('집계 완료', 'ok');
