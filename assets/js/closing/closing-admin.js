@@ -870,10 +870,9 @@ function parseUsageInitFile(file, reportType) {
                 end_amount:  mon === '12' ? Math.round(endVal)  : 0 });
             });
           } else {
-            // 아이메드: A열이 비어있으면 B열(idx1)=부서명, 아니면 A열(idx0)=부서명
-            // XLSX.js가 빈 첫 열을 압축할 경우 idx가 한 칸씩 당겨짐
-            const _col0IsNum = col0 && !isNaN(Number(String(col0).replace(/,/g,'')));
-            const _col0Empty = !col0 || SKIP.has(col0) || _col0IsNum;
+            // 아이메드: A열(idx0)이 비어있으면 B열(idx1)=부서명 (서울숲 형식)
+            //           A열(idx0)에 부서명이 있으면 그대로 사용 (강북 형식)
+            const _col0Empty = !col0 || col0 === '';
             const rawDept  = _col0Empty ? col1 : col0;
             const baseIdx  = _col0Empty ? 2  : 1;
             const monthOff = _col0Empty ? 3  : 2;
