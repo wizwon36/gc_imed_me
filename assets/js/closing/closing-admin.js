@@ -922,6 +922,22 @@ function parseUsageInitFile(file, reportType) {
             const monthOff = _col0Empty ? 3  : 2;
             const endIdx   = _col0Empty ? 15 : 14;
 
+            // 세포치료 / 특수의약품: A·B열 모두 비어있고 C열(idx2)에 라벨이 있는 행
+            // (총    계 다음에 들어오는 강남의원 전용 항목)
+            const col2 = String(row[2] || '').trim();
+            if (!rawDept && (col2 === '세포치료' || col2 === '특수의약품')) {
+              const lastMon = lastMonByYear[currentYear] || '12';
+              months.forEach((mon, mi) => {
+                const val = parseFloat(String(row[mi + 3] || '').replace(/,/g, '')) || 0;
+                if (!val) return;
+                rows.push({ ym: `${currentYear}-${mon}`, dept: col2, item_type: col2,
+                  usage_amount: Math.round(val),
+                  base_amount: 0,
+                  end_amount:  0 });
+              });
+              return;
+            }
+
             if (!rawDept || SKIP.has(rawDept)) return;
             const dept = rawDept
               .replace(/\s*-\s*/g, '(')
