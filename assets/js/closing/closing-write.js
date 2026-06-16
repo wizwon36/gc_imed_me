@@ -1210,7 +1210,7 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   subtotRow(ws, r, [1], ['계'], [2, 3, 4, 5], [totBase, totBuy, totUse, totEnd]);
   ws.getCell(r, 4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4E8D8' } };
   if (isGC) {
-    ws.getCell(r, 6).value = '+VAT';
+    ws.getCell(r, 6).value = '-VAT';
     ws.getCell(r, 6).font  = F.bold;
   }
   const bigoCell = ws.getCell(r, 6);
