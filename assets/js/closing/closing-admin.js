@@ -947,7 +947,7 @@ function renderUsageInitPreview(rows) {
   const tbody = `<tbody>${yms.map((ym, i) => `
     <tr style="${i % 2 ? 'background:#f8fafc;' : ''}">
       <td style="font-weight:600;">${ym}</td>
-      ${deptKeys.map(k => `<td class="num">${((byYm[ym][k] || 0) / 1000).toLocaleString()}</td>`).join('')}
+      ${deptKeys.map(k => `<td class="num">${Math.round(byYm[ym][k] || 0).toLocaleString()}</td>`).join('')}
     </tr>`).join('')}
   </tbody>`;
 
