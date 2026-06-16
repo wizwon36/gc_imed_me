@@ -1049,8 +1049,12 @@ async function dlReport(label, vendors, depts, filename, gcRow) {
     deptsForAmount = [...depts, ...siSoRows];
   }
 
-  // GC케어 보고서: gcDepts는 runProcessing에서 이미 extra2 그룹핑 완료
-  // writeDeptAmount는 depts(=gcDepts)를 그대로 사용 — 별도 처리 불필요
+  // GC케어 보고서: 시약은 실제 사용/입고 금액 있는 부서만 표시
+  if (!isImed) {
+    deptsForAmount = depts.filter(d =>
+      String(d.자재구분 || '').trim() !== '시약' || toN(d.공급가액) > 0
+    );
+  }
 
   writeKyuljai(wb.addWorksheet(`${R.m}월결재`), R.y, R.m, label, vendors, R.vendorMap, gcRow);
   writeDeptAmount(wb.addWorksheet(`${R.m}월 부서별 금액`), R.m, deptsForAmount);
