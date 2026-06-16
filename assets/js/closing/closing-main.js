@@ -768,7 +768,7 @@ function renderResults() {
     }
   }
 
-
+  document.getElementById('downloadGrid').innerHTML = `
     <div class="cl-dl-card both" onclick="dlIpgo()">
       <span class="cl-dl-tag both">공통</span>
       <div class="cl-dl-name">입고 (편집본)</div>
