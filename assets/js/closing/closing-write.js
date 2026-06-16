@@ -777,11 +777,11 @@ function writeSubul(ws, year, month, branch, items, R) {
   });
 
   const t기초    = sorted.reduce((s, it) => s + (it.기초 || 0), 0);
-  const t기초수량 = sorted.reduce((s, it) => s + Math.round(it.기초수량 || 0), 0);
+  const t기초수량 = Math.round(sorted.reduce((s, it) => s + (it.기초수량 || 0), 0));
   const tI       = sorted.reduce((s, it) => s + it.증가, 0);
-  const tI수량   = sorted.reduce((s, it) => s + Math.round(it.증가수량 || 0), 0);
+  const tI수량   = Math.round(sorted.reduce((s, it) => s + (it.증가수량 || 0), 0));
   const tD       = sorted.reduce((s, it) => s + it.감소, 0);
-  const tD수량   = sorted.reduce((s, it) => s + Math.round(it.감소수량 || 0), 0);
+  const tD수량   = Math.round(sorted.reduce((s, it) => s + (it.감소수량 || 0), 0));
   const t기말    = t기초 + tI - tD;
   const t기말수량 = t기초수량 + tI수량 - tD수량;
   ws.mergeCells(r, 1, r, 3);
@@ -927,6 +927,30 @@ function writeSubul(ws, year, month, branch, items, R) {
 // ═══════════════════════════════════════════════════════════
 
 // 전월 기말 재고 로드 → subulMap 기초값으로 세팅
+// 전월 closing_stock이 없을 때 closing_usage_monthly의 end_amount를 기초로 사용
+async function loadPrevStockFromUsage(ym, branch, reportType) {
+  try {
+    const user = window.auth?.getSession?.();
+    const res  = await apiGet('closingGetUsageMonthly', {
+      request_user_email: user?.email,
+      ym, branch,
+    });
+    const data = Array.isArray(res.data) ? res.data : [];
+    return data
+      .filter(u => u.end_amount && u.report_type === reportType)
+      .map(u => ({
+        dept:           u.dept,
+        item_code:      '',
+        item_name:      '',
+        item_type:      u.item_type,
+        closing_qty:    0,
+        closing_amount: Math.round(u.end_amount),
+      }));
+  } catch (e) {
+    return [];
+  }
+}
+
 async function loadPrevStock(ym, branch) {
   try {
     const user = window.auth?.getSession?.();
