@@ -6,6 +6,26 @@
 // ═══════════════════════════════════════════════════════════
 // 14. 거래처 관리 (API 연동)
 // ═══════════════════════════════════════════════════════════
+// 의원별 5% 가산 반올림 방식 로드 (CLOSING_ROUND_MODE)
+App.roundMode = {};
+async function loadRoundModes() {
+  try {
+    const user = window.auth?.getSession?.();
+    const res  = await apiGet('getCodes', {
+      request_user_email: user?.email,
+      code_group: 'CLOSING_ROUND_MODE',
+    });
+    const data = Array.isArray(res?.data) ? res.data : [];
+    data.forEach(c => {
+      const branch = String(c.code_name || '').trim();
+      const mode   = String(c.extra1 || 'roundup').trim().toLowerCase();
+      if (branch) App.roundMode[branch] = mode;
+    });
+  } catch (e) {
+    // 기본값 roundup 사용
+  }
+}
+
 async function loadVendorsFromServer() {
   try {
     const user = window.auth?.getSession?.();
