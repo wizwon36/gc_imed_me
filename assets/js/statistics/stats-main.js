@@ -317,13 +317,17 @@ async function runStatsDashboard() {
     let renderFn;
 
     if (currentSubtab === 'vendor') {
-      const { data, summary } = await window.statsClient.getVendorStats(filters);
+      const { data, summary, itemTypes } = await window.statsClient.getVendorStats(filters);
       renderFn = () => {
         renderSummaryCards(summaryGrid, summary, '거래처', '구매');
+        const itemTypeColumns = (itemTypes || []).map(t => ({
+          key: `byItemType.${t}`, label: t, numeric: true, isItemType: true,
+        }));
         renderStatsTable(resultArea, data, 'total_amount', [
           { key: 'vendor_name',   label: '거래처' },
           { key: 'supply_amount', label: '공급가액', numeric: true },
           { key: 'vat_amount',    label: '부가세',   numeric: true },
+          ...itemTypeColumns,
           { key: 'total_amount',  label: '합계금액', numeric: true, withBar: true },
           { key: 'record_count',  label: '건수',     numeric: true },
         ]);
@@ -406,6 +410,10 @@ function renderStatsTable(container, rows, barKey, columns) {
   }
 
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
+  // 'byItemType.소모품' 같은 점 표기 키도 읽을 수 있게 하는 헬퍼
+  const getVal = (row, key) => key.includes('.')
+    ? key.split('.').reduce((obj, k) => (obj == null ? obj : obj[k]), row)
+    : row[key];
   const maxVal = Math.max(...rows.map(r => Number(r[barKey]) || 0), 1);
   const rankClass = i => i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
 
@@ -441,12 +449,14 @@ function renderStatsTable(container, rows, barKey, columns) {
         return `<td>${nameCell}</td>`;
       }
       if (c.withBar) {
-        const val = Number(row[c.key]) || 0;
+        const val = Number(getVal(row, c.key)) || 0;
         const pct = (val / maxVal) * 100;
         return `<td class="num stat-bar-cell" style="--bar-pct:${pct}%;">${fmtNum(val)}</td>`;
       }
-      const val = c.numeric ? fmtNum(row[c.key]) : (row[c.key] || '-');
-      return `<td class="${c.numeric ? 'num' : ''}">${val}</td>`;
+      const raw = getVal(row, c.key);
+      const val = c.numeric ? fmtNum(raw) : (raw || '-');
+      const cellClass = c.numeric ? 'num' : '';
+      return `<td class="${cellClass}${c.isItemType ? ' stat-itemtype-cell' : ''}">${val}</td>`;
     }).join('');
 
     const mainRow = expandable
