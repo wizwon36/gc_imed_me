@@ -49,9 +49,15 @@
       </div>
 
       <!-- ══════════════════════════════════════════════════ -->
-      <!-- 탭1: 통계 조회 (다음 단계에서 채울 예정)            -->
+      <!-- 탭1: 통계 조회                                      -->
       <!-- ══════════════════════════════════════════════════ -->
       <div id="tabDashboardContent" class="cl-section active">
+
+        <!-- 입고조회 / 사용조회 (최상위 구분 탭) -->
+        <div class="cl-tabs" style="margin-bottom:16px;">
+          <button class="cl-tab active" id="recordTypePurchase" onclick="switchRecordType('purchase')">📥 입고조회</button>
+          <button class="cl-tab" id="recordTypeUsage" onclick="switchRecordType('usage')">📋 사용조회</button>
+        </div>
 
         <!-- 공통 필터 바 -->
         <div class="stat-filter-bar">
