@@ -390,6 +390,115 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
 }
 
 // ── 결과 표 렌더링: 순위 배지 + 점유율 바 포함 ────────────────
+// ── 자재구분 컬럼 드릴다운 모달 ───────────────────────────────
+// 거래처 한 행에서 특정 자재구분(소모품/시약/의약품 등) 셀을 클릭하면
+// 그 거래처가 그 기간에 구매한 개별 입고 건(원본 데이터 전체 컬럼)을 모달로 보여줌
+let _drilldownAllRows = []; // 검색 필터링의 기준이 되는 전체 원본 행(자재구분으로 1차 필터된 상태)
+
+function openItemTypeDrilldown(rowIndex, itemTypeLabel) {
+  const row = window._statsRowsCache?.[rowIndex];
+  if (!row || !row._rawRows) return;
+
+  _drilldownAllRows = row._rawRows.filter(r => (r.item_type || '미분류') === itemTypeLabel);
+
+  const modal = document.getElementById('itemDrilldownModal');
+  const title = document.getElementById('itemDrilldownTitle');
+  const searchInput = document.getElementById('itemDrilldownSearch');
+  if (!modal) return;
+
+  title.textContent = `${row.vendor_name} — ${itemTypeLabel} (${_drilldownAllRows.length}건)`;
+  searchInput.value = '';
+  modal.style.display = 'flex';
+  renderItemDrilldownTable(_drilldownAllRows);
+  searchInput.focus();
+}
+
+function closeItemTypeDrilldown() {
+  const modal = document.getElementById('itemDrilldownModal');
+  if (modal) modal.style.display = 'none';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('itemDrilldownModal');
+    if (modal && modal.style.display !== 'none') closeItemTypeDrilldown();
+  }
+});
+
+function filterItemDrilldown() {
+  const kw = document.getElementById('itemDrilldownSearch')?.value?.trim().toLowerCase() || '';
+  if (!kw) {
+    renderItemDrilldownTable(_drilldownAllRows);
+    return;
+  }
+  // 품목명, 구매번호, 자재코드, 규격, 상태, 부서 등 보이는 텍스트 컬럼 전체를 대상으로 검색
+  const filtered = _drilldownAllRows.filter(r => {
+    const haystack = [
+      r.item_name, r.item_code, r.purchase_no, r.spec, r.status,
+      r.dept, r.vendor_name, r.vendor_code, r.calc_unit, r.receive_unit,
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(kw);
+  });
+  renderItemDrilldownTable(filtered);
+}
+
+function renderItemDrilldownTable(items) {
+  const body = document.getElementById('itemDrilldownBody');
+  const countEl = document.getElementById('itemDrilldownCount');
+  if (!body) return;
+
+  countEl.textContent = `${items.length}건`;
+
+  if (!items.length) {
+    body.innerHTML = '<p style="color:var(--text-muted,#7b8794);font-size:13px;padding:20px;text-align:center;">검색 결과가 없습니다.</p>';
+    return;
+  }
+
+  const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
+  const cols = [
+    { key: 'received_date', label: '입고일자' },
+    { key: 'vendor_name',   label: '공급업체' },
+    { key: 'vendor_code',   label: '공급업체코드' },
+    { key: 'purchase_no',   label: '구매번호' },
+    { key: 'item_code',     label: '자재코드' },
+    { key: 'item_name',     label: '자재명' },
+    { key: 'spec',          label: '규격' },
+    { key: 'status',        label: '상태' },
+    { key: 'dept',          label: '의뢰부서' },
+    { key: 'quantity',      label: '수량', numeric: true },
+    { key: 'calc_unit',     label: '산출단위' },
+    { key: 'receive_unit',  label: '입고단위' },
+    { key: 'unit_price',    label: '단가', numeric: true },
+    { key: 'supply_amount', label: '공급가액', numeric: true },
+    { key: 'vat_amount',    label: '부가세', numeric: true },
+    { key: 'total_amount',  label: '합계금액', numeric: true },
+    { key: 'item_type',     label: '자재구분' },
+    { key: 'branch',        label: '의원' },
+    { key: 'ym',            label: '연월' },
+    { key: 'vendor_biz_no', label: '사업자번호' },
+    { key: 'source_file',   label: '원본파일' },
+    { key: 'id',            label: 'ID' },
+  ];
+
+  const thead = cols.map(c => `<th class="${c.numeric ? 'num' : ''}">${c.label}</th>`).join('');
+  const tbody = items.map(item => {
+    const cells = cols.map(c => {
+      const v = item[c.key];
+      const display = c.numeric ? fmtNum(v) : (v ?? '-');
+      return `<td class="${c.numeric ? 'num' : ''}">${display}</td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div style="overflow:auto;max-height:60vh;">
+      <table class="stat-table">
+        <thead><tr>${thead}</tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+}
+
 // 거래처 그룹(사업자번호 동일, 명칭 변경 이력 있음) 펼치기/접기
 function toggleStatRowExpand(rowId) {
   const toggle = document.getElementById(`${rowId}_toggle`);
@@ -408,6 +517,9 @@ function renderStatsTable(container, rows, barKey, columns) {
     container.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 결과가 없습니다.</p>';
     return;
   }
+
+  // 자재구분 컬럼 드릴다운 모달에서 원본 행을 찾기 위해 현재 표의 rows를 전역에 캐시
+  window._statsRowsCache = rows;
 
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
   // 'byItemType.소모품' 같은 점 표기 키도 읽을 수 있게 하는 헬퍼
@@ -455,8 +567,15 @@ function renderStatsTable(container, rows, barKey, columns) {
       }
       const raw = getVal(row, c.key);
       const val = c.numeric ? fmtNum(raw) : (raw || '-');
+      if (c.isItemType) {
+        const numVal = Number(raw) || 0;
+        if (numVal > 0) {
+          return `<td class="num stat-itemtype-cell stat-itemtype-clickable" onclick="event.stopPropagation();openItemTypeDrilldown(${i}, '${c.label.replace(/'/g, "\\'")}')">${val}</td>`;
+        }
+        return `<td class="num stat-itemtype-cell">${val}</td>`;
+      }
       const cellClass = c.numeric ? 'num' : '';
-      return `<td class="${cellClass}${c.isItemType ? ' stat-itemtype-cell' : ''}">${val}</td>`;
+      return `<td class="${cellClass}">${val}</td>`;
     }).join('');
 
     const mainRow = expandable
