@@ -107,11 +107,22 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 14px;
+  margin-top: 12px;
 }
-.stat-trend-compare-label { font-size: 13px; color: var(--text-secondary, #5f6b7a); font-weight: 500; }
+.stat-trend-compare-label { font-size: 13px; color: var(--text-secondary, #5f6b7a); font-weight: 500; width: 64px; flex-shrink: 0; }
 .stat-trend-quick-buttons { display: flex; gap: 6px; margin-left: 6px; }
 .stat-trend-quick-buttons .btn { font-size: 12px; padding: 6px 12px; }
+.stat-trend-quick-buttons .btn:disabled { opacity: .45; cursor: not-allowed; }
+.stat-trend-compare-note {
+  font-size: 12px;
+  color: var(--text-muted, #9aa5b1);
+  margin: 12px 0 0;
+}
+#statDashYmFrom:disabled, #statDashYmTo:disabled {
+  background: var(--surface-soft, #f1f4f9);
+  color: var(--text-muted, #9aa5b1);
+  cursor: not-allowed;
+}
 
 /* ── 구간 비교 결과 표시 ──────────────────────────────────── */
 .stat-compare-period-labels {
