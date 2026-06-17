@@ -279,6 +279,14 @@ function applyAdvancedSearch() {
 
 // ── 통계 조회: 서브탭 전환 ─────────────────────────────────
 let currentSubtab = 'vendor';
+let currentRecordType = 'purchase'; // 'purchase'(입고) | 'usage'(사용)
+
+function switchRecordType(type) {
+  currentRecordType = type;
+  document.getElementById('recordTypePurchase')?.classList.toggle('active', type === 'purchase');
+  document.getElementById('recordTypeUsage')?.classList.toggle('active', type === 'usage');
+  runStatsDashboard();
+}
 function setActiveSubtab_(subtab) {
   currentSubtab = subtab;
   ['vendor', 'dept', 'item', 'trend'].forEach(t => {
@@ -320,45 +328,47 @@ async function runStatsDashboard() {
   try {
     let renderFn;
 
+    const recLabel = currentRecordType === 'usage' ? '사용' : '구매';
+
     if (currentSubtab === 'vendor') {
-      const { data, summary, itemTypes } = await window.statsClient.getVendorStats(filters);
+      const { data, summary, itemTypes } = await window.statsClient.getVendorStats(filters, currentRecordType);
       renderFn = () => {
-        renderSummaryCards(summaryGrid, summary, '거래처', '구매');
+        renderSummaryCards(summaryGrid, summary, '거래처', recLabel);
         const itemTypeColumns = (itemTypes || []).map(t => ({
           key: `byItemType.${t}`, label: t, numeric: true, isItemType: true,
         }));
-        renderStatsTable(resultArea, data, 'total_amount', [
-          { key: 'vendor_name',   label: '거래처' },
-          { key: 'supply_amount', label: '공급가액', numeric: true },
-          { key: 'vat_amount',    label: '부가세',   numeric: true },
+        renderStatsTable(resultArea, data, 'amount', [
+          { key: 'vendor_name', label: '거래처' },
+          { key: 'supply',      label: '공급가액', numeric: true },
+          { key: 'vat',         label: '부가세',   numeric: true },
           ...itemTypeColumns,
-          { key: 'total_amount',  label: '합계금액', numeric: true, withBar: true },
-          { key: 'record_count',  label: '건수',     numeric: true },
+          { key: 'amount',      label: '합계금액', numeric: true, withBar: true },
+          { key: 'record_count', label: '건수',    numeric: true },
         ]);
       };
     } else if (currentSubtab === 'dept') {
-      const { data, summary } = await window.statsClient.getDeptStats(filters);
+      const { data, summary } = await window.statsClient.getDeptStats(filters, currentRecordType);
       renderFn = () => {
-        renderSummaryCards(summaryGrid, summary, '부서', '사용');
-        renderStatsTable(resultArea, data, 'usage_total', [
-          { key: 'dept',          label: '부서' },
-          { key: 'usage_supply',  label: '사용공급가', numeric: true },
-          { key: 'usage_vat',     label: '사용부가세', numeric: true },
-          { key: 'usage_total',   label: '사용합계',   numeric: true, withBar: true },
-          { key: 'record_count',  label: '건수',       numeric: true },
+        renderSummaryCards(summaryGrid, summary, '부서', recLabel);
+        renderStatsTable(resultArea, data, 'amount', [
+          { key: 'dept',   label: '부서' },
+          { key: 'supply', label: '공급가액', numeric: true },
+          { key: 'vat',    label: '부가세',   numeric: true },
+          { key: 'amount', label: '합계금액', numeric: true, withBar: true },
+          { key: 'record_count', label: '건수', numeric: true },
         ]);
       };
     } else if (currentSubtab === 'item') {
-      const { data, summary } = await window.statsClient.getItemStats(filters);
+      const { data, summary } = await window.statsClient.getItemStats(filters, currentRecordType);
       renderFn = () => {
-        renderSummaryCards(summaryGrid, summary, '품목', '구매');
-        renderStatsTable(resultArea, data, 'total_amount', [
-          { key: 'item_name',     label: '자재명' },
-          { key: 'quantity',      label: '수량',     numeric: true },
-          { key: 'supply_amount', label: '공급가액', numeric: true },
-          { key: 'vat_amount',    label: '부가세',   numeric: true },
-          { key: 'total_amount',  label: '합계금액', numeric: true, withBar: true },
-          { key: 'record_count',  label: '건수',     numeric: true },
+        renderSummaryCards(summaryGrid, summary, '품목', recLabel);
+        renderStatsTable(resultArea, data, 'amount', [
+          { key: 'item_name', label: '자재명' },
+          { key: 'qty',        label: '수량',     numeric: true },
+          { key: 'supply',     label: '공급가액', numeric: true },
+          { key: 'vat',        label: '부가세',   numeric: true },
+          { key: 'amount',     label: '합계금액', numeric: true, withBar: true },
+          { key: 'record_count', label: '건수',   numeric: true },
         ]);
       };
     } else {
@@ -532,7 +542,7 @@ function renderStatsTable(container, rows, barKey, columns) {
     const breakdownRows = row.breakdown.map(b => {
       const bCells = columns.map((c, ci) => {
         if (ci === 0) return `<td class="stat-breakdown-name">└ ${b.vendor_name}</td>`;
-        if (c.withBar) return `<td class="num">${fmtNum(b.total_amount)}</td>`;
+        if (c.withBar) return `<td class="num">${fmtNum(b.amount)}</td>`;
         if (ci === columns.length - 1) return `<td class="num">${fmtNum(b.record_count)}</td>`;
         return `<td></td>`;
       }).join('');
