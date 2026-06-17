@@ -1318,9 +1318,9 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
 
     // 계 행
     ws.mergeCells(r, 3, r, 3);
-    txtCell(ws, r, 3, '계', null, true, true);
-    numCell(ws, r, 4, vaccineUse, FILL.subtot);
-    txtCell(ws, r, 5, '', FILL.subtot);
+    txtCell(ws, r, 3, '계', null, true, true); ws.getCell(r, 3).border = BORDER_THIN;
+    numCell(ws, r, 4, vaccineUse, FILL.subtot); ws.getCell(r, 4).border = BORDER_THIN;
+    txtCell(ws, r, 5, '', FILL.subtot); ws.getCell(r, 5).border = BORDER_THIN;
     ws.getRow(r).height = 18; r += 2;
 
     // 기능의학 블록
@@ -1340,9 +1340,9 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
 
     // 기능의학 계
     ws.mergeCells(r, 3, r, 3);
-    txtCell(ws, r, 3, '계', null, true, true);
-    numCell(ws, r, 4, 0, FILL.subtot);
-    txtCell(ws, r, 5, '', FILL.subtot);
+    txtCell(ws, r, 3, '계', null, true, true); ws.getCell(r, 3).border = BORDER_THIN;
+    numCell(ws, r, 4, 0, FILL.subtot); ws.getCell(r, 4).border = BORDER_THIN;
+    txtCell(ws, r, 5, '', FILL.subtot); ws.getCell(r, 5).border = BORDER_THIN;
     ws.getRow(r).height = 18;
   }
 
@@ -1721,19 +1721,20 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
     ['세포치료', '특수의약품'].forEach(lbl => {
       const lFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0F0' } };
       const d = data[lbl] || null;
-      const ac = ws.getCell(r, 1); ac.fill = lFill; ac.border = BORDER_DATA;  // A열 빈칸
-      txtCell(ws, r, 2, lbl, lFill, false, true);  // B열에 라벨
+      const ac = ws.getCell(r, 1); ac.fill = lFill; ac.border = BORDER_THIN;  // A열 빈칸
+      txtCell(ws, r, 2, lbl, lFill, false, true); ws.getCell(r, 2).border = BORDER_THIN;
       months.forEach((mon, mi) => {
         const c = mi + 3;
         const v = d ? (d['m' + mon] || 0) : 0;
         if (d && v) {
           numCellK(ws, r, c, v, yr === R.y && mon === curMon ? CUR_FILL : lFill);
+          ws.getCell(r, c).border = BORDER_THIN;
         } else {
-          const cell = ws.getCell(r, c); cell.fill = (yr === R.y && mon === curMon ? CUR_FILL : lFill); cell.border = BORDER_DATA;
+          const cell = ws.getCell(r, c); cell.fill = (yr === R.y && mon === curMon ? CUR_FILL : lFill); cell.border = BORDER_THIN;
         }
       });
       // 15열(기말)은 항상 빈칸
-      const endCell = ws.getCell(r, 15); endCell.fill = lFill; endCell.border = BORDER_DATA;
+      const endCell = ws.getCell(r, 15); endCell.fill = lFill; endCell.border = BORDER_THIN;
       ws.getRow(r).height = 18; r++;
     });
 
