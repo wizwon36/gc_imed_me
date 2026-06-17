@@ -279,11 +279,15 @@ function applyAdvancedSearch() {
 
 // ── 통계 조회: 서브탭 전환 ─────────────────────────────────
 let currentSubtab = 'vendor';
-function switchStatsSubtab(subtab) {
+function setActiveSubtab_(subtab) {
   currentSubtab = subtab;
   ['vendor', 'dept', 'item', 'trend'].forEach(t => {
     document.getElementById(`subtab${capitalize(t)}`)?.classList.toggle('active', t === subtab);
   });
+}
+
+function switchStatsSubtab(subtab) {
+  setActiveSubtab_(subtab);
   runStatsDashboard();
 }
 
@@ -344,6 +348,19 @@ async function runStatsDashboard() {
           { key: 'record_count',  label: '건수',       numeric: true },
         ]);
       };
+    } else if (currentSubtab === 'item') {
+      const { data, summary } = await window.statsClient.getItemStats(filters);
+      renderFn = () => {
+        renderSummaryCards(summaryGrid, summary, '품목', '구매');
+        renderStatsTable(resultArea, data, 'total_amount', [
+          { key: 'item_name',     label: '자재명' },
+          { key: 'quantity',      label: '수량',     numeric: true },
+          { key: 'supply_amount', label: '공급가액', numeric: true },
+          { key: 'vat_amount',    label: '부가세',   numeric: true },
+          { key: 'total_amount',  label: '합계금액', numeric: true, withBar: true },
+          { key: 'record_count',  label: '건수',     numeric: true },
+        ]);
+      };
     } else {
       renderFn = () => {
         resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">🚧 준비 중인 기능입니다.</p>';
@@ -390,113 +407,39 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
 }
 
 // ── 결과 표 렌더링: 순위 배지 + 점유율 바 포함 ────────────────
-// ── 자재구분 컬럼 드릴다운 모달 ───────────────────────────────
-// 거래처 한 행에서 특정 자재구분(소모품/시약/의약품 등) 셀을 클릭하면
-// 그 거래처가 그 기간에 구매한 개별 입고 건(원본 데이터 전체 컬럼)을 모달로 보여줌
-let _drilldownAllRows = []; // 검색 필터링의 기준이 되는 전체 원본 행(자재구분으로 1차 필터된 상태)
-
-function openItemTypeDrilldown(rowIndex, itemTypeLabel) {
+// ── 자재구분 컬럼 클릭: 그 거래처+자재구분 조건으로 상세검색을 채워 표를 다시 조회 ──
+function filterByVendorAndItemType(rowIndex, itemTypeLabel) {
   const row = window._statsRowsCache?.[rowIndex];
-  if (!row || !row._rawRows) return;
+  if (!row) return;
 
-  _drilldownAllRows = row._rawRows.filter(r => (r.item_type || '미분류') === itemTypeLabel);
+  // 거래처별 표에서는 합산된 자재구분 금액만 보이므로, 개별 품목 내역을 보려면 품목별 탭으로 전환
+  setActiveSubtab_('item');
 
-  const modal = document.getElementById('itemDrilldownModal');
-  const title = document.getElementById('itemDrilldownTitle');
-  const searchInput = document.getElementById('itemDrilldownSearch');
-  if (!modal) return;
+  // 기본 검색바는 비우고, 상세검색에 "업체명=거래처명" AND "자재구분=레이블" 두 조건을 채움
+  const basicKeywordEl = document.getElementById('statSearchKeyword');
+  if (basicKeywordEl) basicKeywordEl.value = '';
 
-  title.textContent = `${row.vendor_name} — ${itemTypeLabel} (${_drilldownAllRows.length}건)`;
-  searchInput.value = '';
-  modal.style.display = 'flex';
-  renderItemDrilldownTable(_drilldownAllRows);
-  searchInput.focus();
-}
+  clearAdvancedConditions();
 
-function closeItemTypeDrilldown() {
-  const modal = document.getElementById('itemDrilldownModal');
-  if (modal) modal.style.display = 'none';
-}
+  const wrap = document.getElementById('advancedConditionRows');
+  const rows = wrap.querySelectorAll('.stat-advanced-row');
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    const modal = document.getElementById('itemDrilldownModal');
-    if (modal && modal.style.display !== 'none') closeItemTypeDrilldown();
-  }
-});
+  // 첫 행: 업체명 = 거래처명
+  const firstField = rows[0].querySelector('.stat-advanced-field');
+  const firstKeyword = rows[0].querySelector('.stat-advanced-keyword');
+  firstField.value = 'vendor';
+  firstKeyword.value = row.vendor_name;
 
-function filterItemDrilldown() {
-  const kw = document.getElementById('itemDrilldownSearch')?.value?.trim().toLowerCase() || '';
-  if (!kw) {
-    renderItemDrilldownTable(_drilldownAllRows);
-    return;
-  }
-  // 품목명, 구매번호, 자재코드, 규격, 상태, 부서 등 보이는 텍스트 컬럼 전체를 대상으로 검색
-  const filtered = _drilldownAllRows.filter(r => {
-    const haystack = [
-      r.item_name, r.item_code, r.purchase_no, r.spec, r.status,
-      r.dept, r.vendor_name, r.vendor_code, r.calc_unit, r.receive_unit,
-    ].filter(Boolean).join(' ').toLowerCase();
-    return haystack.includes(kw);
-  });
-  renderItemDrilldownTable(filtered);
-}
+  // 두 번째 행 추가: 자재구분 = 레이블 (AND)
+  addAdvancedConditionRow();
+  const secondRow = wrap.querySelectorAll('.stat-advanced-row')[1];
+  secondRow.querySelector('.stat-advanced-combinator').value = 'AND';
+  secondRow.querySelector('.stat-advanced-field').value = 'itemType';
+  secondRow.querySelector('.stat-advanced-keyword').value = itemTypeLabel;
 
-function renderItemDrilldownTable(items) {
-  const body = document.getElementById('itemDrilldownBody');
-  const countEl = document.getElementById('itemDrilldownCount');
-  if (!body) return;
-
-  countEl.textContent = `${items.length}건`;
-
-  if (!items.length) {
-    body.innerHTML = '<p style="color:var(--text-muted,#7b8794);font-size:13px;padding:20px;text-align:center;">검색 결과가 없습니다.</p>';
-    return;
-  }
-
-  const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
-  const cols = [
-    { key: 'received_date', label: '입고일자' },
-    { key: 'vendor_name',   label: '공급업체' },
-    { key: 'vendor_code',   label: '공급업체코드' },
-    { key: 'purchase_no',   label: '구매번호' },
-    { key: 'item_code',     label: '자재코드' },
-    { key: 'item_name',     label: '자재명' },
-    { key: 'spec',          label: '규격' },
-    { key: 'status',        label: '상태' },
-    { key: 'dept',          label: '의뢰부서' },
-    { key: 'quantity',      label: '수량', numeric: true },
-    { key: 'calc_unit',     label: '산출단위' },
-    { key: 'receive_unit',  label: '입고단위' },
-    { key: 'unit_price',    label: '단가', numeric: true },
-    { key: 'supply_amount', label: '공급가액', numeric: true },
-    { key: 'vat_amount',    label: '부가세', numeric: true },
-    { key: 'total_amount',  label: '합계금액', numeric: true },
-    { key: 'item_type',     label: '자재구분' },
-    { key: 'branch',        label: '의원' },
-    { key: 'ym',            label: '연월' },
-    { key: 'vendor_biz_no', label: '사업자번호' },
-    { key: 'source_file',   label: '원본파일' },
-    { key: 'id',            label: 'ID' },
-  ];
-
-  const thead = cols.map(c => `<th class="${c.numeric ? 'num' : ''}">${c.label}</th>`).join('');
-  const tbody = items.map(item => {
-    const cells = cols.map(c => {
-      const v = item[c.key];
-      const display = c.numeric ? fmtNum(v) : (v ?? '-');
-      return `<td class="${c.numeric ? 'num' : ''}">${display}</td>`;
-    }).join('');
-    return `<tr>${cells}</tr>`;
-  }).join('');
-
-  body.innerHTML = `
-    <div style="overflow:auto;max-height:60vh;">
-      <table class="stat-table">
-        <thead><tr>${thead}</tr></thead>
-        <tbody>${tbody}</tbody>
-      </table>
-    </div>`;
+  updateAdvancedSearchBadge();
+  openAdvancedSearch(); // 자동으로 채워진 조건을 사용자가 바로 확인할 수 있도록 패널을 열어둠
+  runStatsDashboard(); // 탭 전환 시 조건이 비어있었으므로, 조건을 채운 뒤 다시 조회
 }
 
 // 거래처 그룹(사업자번호 동일, 명칭 변경 이력 있음) 펼치기/접기
@@ -570,7 +513,7 @@ function renderStatsTable(container, rows, barKey, columns) {
       if (c.isItemType) {
         const numVal = Number(raw) || 0;
         if (numVal > 0) {
-          return `<td class="num stat-itemtype-cell stat-itemtype-clickable" onclick="event.stopPropagation();openItemTypeDrilldown(${i}, '${c.label.replace(/'/g, "\\'")}')">${val}</td>`;
+          return `<td class="num stat-itemtype-cell stat-itemtype-clickable" onclick="event.stopPropagation();filterByVendorAndItemType(${i}, '${c.label.replace(/'/g, "\\'")}')">${val}</td>`;
         }
         return `<td class="num stat-itemtype-cell">${val}</td>`;
       }
