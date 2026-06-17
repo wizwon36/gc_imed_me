@@ -983,7 +983,8 @@ async function dlUsage() {
     const uc5 = ['부서명', '자재구분', '자재코드', '자재명', '구매번호', '사용일자', '사용수량(입)', '사용수량(산)', '사용공급가', '공5%', '사용부가세', '부5%', '사용합계', '계5%', '공급업체', '규격'];
     const uw5 = [14, 8, 12, 40, 14, 12, 10, 10, 14, 12, 12, 10, 14, 12, 16, 10];
     const un5 = [7, 8, 9, 10, 11, 12, 13, 14];
-    const roundUp = v => Math.ceil(toN(v) * 1.05);  // ROUNDUP(*1.05, 0)
+    const roundFn5 = (App.roundMode?.[R.branch] === 'round') ? Math.round : Math.ceil;
+    const roundUp = v => roundFn5(toN(v) * 1.05);
     const make5 = d => {
       const sup5 = roundUp(d['사용공급가']);
       const vat5 = roundUp(d['사용부가세']);
