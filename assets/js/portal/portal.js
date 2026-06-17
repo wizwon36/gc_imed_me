@@ -58,9 +58,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '📋',
       url: `${CONFIG.SITE_BASE_URL}/pages/task-manager/task-manager.html`
     },
-    // ── 월마감 자동화(구매) ──────────────────────────────────────────────
+    // ── 월마감(구매) ──────────────────────────────────────────────
     closing: {
-      title: '마감 자동화(구매)',
+      title: '월마감(구매)',
       desc: 'Raw 데이터 → 산출물 엑셀 자동 생성',
       icon: '📊',
       url: `${CONFIG.SITE_BASE_URL}/pages/closing/closing.html`
