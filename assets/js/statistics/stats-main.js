@@ -253,6 +253,19 @@ function clearAdvancedConditions() {
   updateAdvancedSearchBadge();
 }
 
+// ── 전체 검색조건 초기화: 기본 검색바 + 상세검색 조건을 모두 비우고 패널 닫음 ──
+function resetAllSearchConditions() {
+  const typeEl = document.getElementById('statSearchType');
+  const keywordEl = document.getElementById('statSearchKeyword');
+  if (typeEl) typeEl.value = 'vendor';
+  if (keywordEl) keywordEl.value = '';
+
+  clearAdvancedConditions();
+  closeAdvancedSearch();
+  updateSearchKeywordSuggestions();
+  runStatsDashboard();
+}
+
 function getAdvancedConditions() {
   const wrap = document.getElementById('advancedConditionRows');
   if (!wrap) return [];
