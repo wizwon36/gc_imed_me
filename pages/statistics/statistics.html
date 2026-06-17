@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>구매·사용 통계 | MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/closing.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/statistics.css" />
+</head>
+<body class="portal-page">
+  <div class="container page-shell">
+
+    <!-- 헤더 -->
+    <section class="top-brand-bar portal-topbar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">📈</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">MSO관리팀 업무지원 시스템</strong>
+          <span class="top-brand-sub">구매·사용 통계</span>
+        </div>
+      </div>
+      <div class="top-brand-actions portal-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+        <button type="button" id="logoutBtn" class="portal-header-btn portal-header-btn--secondary">로그아웃</button>
+      </div>
+    </section>
+
+    <!-- 메시지 박스 -->
+    <div id="messageBox" class="message-box"></div>
+
+    <!-- 권한 없음 -->
+    <div id="permissionDenied" class="card" style="display:none;">
+      <div class="empty-state" style="margin:8px 0;">
+        <div style="font-size:48px;margin-bottom:8px;">🔒</div>
+        <p class="empty-state-title">접근 권한이 없습니다</p>
+        <p class="empty-state-desc">관리자에게 statistics 권한을 요청하세요.</p>
+      </div>
+    </div>
+
+    <!-- 메인 앱 -->
+    <div id="appBody" style="display:none;">
+
+      <!-- 탭 -->
+      <div class="cl-tabs">
+        <button class="cl-tab active" id="tabUpload" onclick="switchStatsTab('upload')">📤 데이터 업로드</button>
+        <button class="cl-tab" id="tabDashboard" onclick="switchStatsTab('dashboard')">📊 통계 조회</button>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭1: 데이터 업로드                                -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabUploadContent" class="cl-section active">
+
+        <div class="card">
+          <div class="card-body">
+            <strong style="font-size:14px;">과거 입고·사용현황 원본 업로드</strong>
+            <p style="font-size:12px;color:#6b7280;margin-top:6px;">
+              엑셀 파일의 실제 날짜(입고일자/사용일자)를 기준으로 연월이 자동 분류되어 저장됩니다.<br>
+              같은 의원·연월·파일명으로 다시 업로드하면 기존 데이터는 자동 교체됩니다.
+            </p>
+
+            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;">
+              <div class="cl-field">
+                <label>의원</label>
+                <select id="statsBranch" style="border:1px solid #d1d5db;border-radius:6px;padding:7px 11px;font-size:13px;width:160px;">
+                  <option value="서울숲">서울숲의원</option>
+                  <option value="강북">강북의원</option>
+                  <option value="강남">강남의원</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;">
+              <!-- 입고 파일 -->
+              <div class="card" style="flex:1;min-width:280px;border:1px solid #e5e7eb;">
+                <div class="card-body">
+                  <strong style="font-size:13px;">📥 입고(구매) 파일</strong>
+                  <input type="file" id="purchaseFileInput" accept=".xlsx" style="display:block;margin-top:10px;font-size:13px;">
+                  <button type="button" class="btn btn-primary" style="margin-top:10px;" onclick="handleStatsUpload('purchase')">업로드</button>
+                  <div id="purchaseUploadResult" style="margin-top:10px;font-size:12px;"></div>
+                </div>
+              </div>
+
+              <!-- 사용현황 파일 -->
+              <div class="card" style="flex:1;min-width:280px;border:1px solid #e5e7eb;">
+                <div class="card-body">
+                  <strong style="font-size:13px;">📤 사용현황 파일</strong>
+                  <input type="file" id="usageFileInput" accept=".xlsx" style="display:block;margin-top:10px;font-size:13px;">
+                  <button type="button" class="btn btn-primary" style="margin-top:10px;" onclick="handleStatsUpload('usage')">업로드</button>
+                  <div id="usageUploadResult" style="margin-top:10px;font-size:12px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭2: 통계 조회 (다음 단계에서 채울 예정)            -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabDashboardContent" class="cl-section" style="display:none;">
+        <div class="card">
+          <div class="card-body">
+            <p style="color:#6b7280;font-size:13px;">통계 조회 화면은 다음 단계에서 구현됩니다.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 라이브러리 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- 공통 -->
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
+
+  <!-- 통계 모듈 -->
+  <script src="../../assets/js/statistics/stats-upload.js"></script>
+  <script src="../../assets/js/statistics/stats-main.js"></script>
+</body>
+</html>
