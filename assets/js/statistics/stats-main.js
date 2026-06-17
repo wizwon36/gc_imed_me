@@ -28,12 +28,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('appBody').style.display = '';
 
-    // 의원 드롭다운 기본값: 본인 소속 의원
-    const branchSelect = document.getElementById('statsBranch');
-    if (branchSelect && user.clinic_name) {
-      const matched = Array.from(branchSelect.options).find(o => user.clinic_name.includes(o.value));
-      if (matched) branchSelect.value = matched.value;
-    }
+    // 의원 드롭다운 기본값: 본인 소속 의원 (업로드/조회 탭 둘 다)
+    ['statsBranch', 'statDashBranch'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel && user.clinic_name) {
+        const matched = Array.from(sel.options).find(o => user.clinic_name.includes(o.value));
+        if (matched) sel.value = matched.value;
+      }
+    });
 
   } catch (error) {
     console.error(error);
