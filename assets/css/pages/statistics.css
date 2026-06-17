@@ -3,7 +3,93 @@
    공통 레이아웃(cl-tabs, cl-field, cl-section 등)은 closing.css 재사용
    ════════════════════════════════════════════════════════════ */
 
-/* ── 요약 카드: 하나의 패널 안에서 구분선으로 나뉜 통합 그리드 ── */
+/* ── 필터 바: 카드형 검색 도구 ──────────────────────────── */
+.stat-filter-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: var(--radius-lg, 20px);
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.05));
+  padding: 16px 20px;
+  margin-bottom: 14px;
+}
+.stat-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.stat-filter-field label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted, #7b8794);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.stat-filter-field select,
+.stat-filter-field input[type=month] {
+  border: 1px solid var(--border-input, #dde3ed);
+  border-radius: var(--radius-md, 16px);
+  background: var(--surface-soft, #f8fafc);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-primary, #111827);
+  min-width: 130px;
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+.stat-filter-field select:focus,
+.stat-filter-field input[type=month]:focus {
+  border-color: var(--blue, #2f6df6);
+  background: #fff;
+}
+.stat-filter-sep {
+  align-self: center;
+  color: var(--text-muted, #7b8794);
+  font-size: 13px;
+  margin: 0 -6px 9px;
+}
+.stat-filter-field--search { min-width: 180px; flex: 1; }
+.stat-filter-input-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.stat-filter-input-icon span {
+  position: absolute;
+  left: 11px;
+  font-size: 12px;
+  opacity: .55;
+  pointer-events: none;
+}
+.stat-filter-input-icon input {
+  width: 100%;
+  border: 1px solid var(--border-input, #dde3ed);
+  border-radius: var(--radius-md, 16px);
+  background: var(--surface-soft, #f8fafc);
+  padding: 8px 12px 8px 30px;
+  font-size: 13px;
+  color: var(--text-primary, #111827);
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+.stat-filter-input-icon input:focus {
+  border-color: var(--blue, #2f6df6);
+  background: #fff;
+}
+.stat-filter-submit {
+  height: 38px;
+  padding: 0 22px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .stat-filter-bar { padding: 14px; }
+  .stat-filter-field, .stat-filter-field--search { flex: 1 1 140px; }
+  .stat-filter-submit { width: 100%; }
+}
 .stat-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
