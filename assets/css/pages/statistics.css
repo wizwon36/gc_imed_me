@@ -3,6 +3,23 @@
    공통 레이아웃(cl-tabs, cl-field, cl-section 등)은 closing.css 재사용
    ════════════════════════════════════════════════════════════ */
 
+/* ── 버튼 가볍게: common.css의 기본 .btn(50px/16px/700)은 포털 전체 톤이라
+   통계 화면의 조밀한 영역(조회/상세검색/조건추가 등)에서는 과하게 무거워 보임 ── */
+#tabDashboardContent .btn,
+#tabUploadContent .btn,
+#tabVendorContent .btn {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-md, 14px);
+}
+#tabDashboardContent .btn-primary,
+#tabUploadContent .btn-primary,
+#tabVendorContent .btn-primary {
+  font-weight: 600;
+}
+
 /* ── 공용 패널: 통계 조회 탭과 동일한 카드 톤 (업로드/거래처 탭에서 사용) ── */
 .stat-panel {
   background: #fff;
@@ -219,15 +236,10 @@
   background: #fff;
 }
 .stat-filter-submit {
-  height: 38px;
   padding: 0 22px;
-  font-size: 13px;
   white-space: nowrap;
 }
 .stat-filter-advanced {
-  height: 38px;
-  padding: 0 16px;
-  font-size: 13px;
   white-space: nowrap;
   display: flex;
   align-items: center;
