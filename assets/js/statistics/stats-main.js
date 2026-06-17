@@ -54,6 +54,86 @@ function switchStatsTab(tab) {
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+// ── 통계 조회: 서브탭 전환 ─────────────────────────────────
+let currentSubtab = 'vendor';
+function switchStatsSubtab(subtab) {
+  currentSubtab = subtab;
+  ['vendor', 'dept', 'item', 'trend'].forEach(t => {
+    document.getElementById(`subtab${capitalize(t)}`)?.classList.toggle('active', t === subtab);
+  });
+  runStatsDashboard();
+}
+
+// ── 통계 조회: 실행 ────────────────────────────────────────
+async function runStatsDashboard() {
+  const resultArea = document.getElementById('statsResultArea');
+  const branch = document.getElementById('statDashBranch').value;
+  const ymFrom = document.getElementById('statDashYmFrom').value;
+  const ymTo   = document.getElementById('statDashYmTo').value;
+
+  const filters = { branch, ymFrom: ymFrom || null, ymTo: ymTo || null };
+
+  resultArea.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 중...</p>';
+
+  try {
+    if (currentSubtab === 'vendor') {
+      const data = await window.statsClient.getVendorStats(filters);
+      renderStatsTable(resultArea, data, [
+        { key: 'vendor_name',   label: '거래처' },
+        { key: 'supply_amount', label: '공급가액', numeric: true },
+        { key: 'vat_amount',    label: '부가세',   numeric: true },
+        { key: 'total_amount',  label: '합계금액', numeric: true },
+        { key: 'record_count',  label: '건수',     numeric: true },
+      ]);
+    } else if (currentSubtab === 'dept') {
+      const data = await window.statsClient.getDeptStats(filters);
+      renderStatsTable(resultArea, data, [
+        { key: 'dept',          label: '부서' },
+        { key: 'usage_supply',  label: '사용공급가', numeric: true },
+        { key: 'usage_vat',     label: '사용부가세', numeric: true },
+        { key: 'usage_total',   label: '사용합계',   numeric: true },
+        { key: 'record_count',  label: '건수',       numeric: true },
+      ]);
+    } else {
+      resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">🚧 준비 중인 기능입니다.</p>';
+    }
+  } catch (error) {
+    console.error(error);
+    resultArea.innerHTML = `<p style="color:#dc2626;font-size:13px;">오류: ${error.message}</p>`;
+  }
+}
+
+// ── 결과 표 렌더링 (공통) ──────────────────────────────────
+function renderStatsTable(container, rows, columns) {
+  if (!rows.length) {
+    container.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 결과가 없습니다.</p>';
+    return;
+  }
+
+  const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
+
+  const thead = columns.map(c =>
+    `<th style="text-align:${c.numeric ? 'right' : 'left'};padding:8px 10px;border-bottom:2px solid #e5e7eb;font-size:12px;color:#374151;">${c.label}</th>`
+  ).join('');
+
+  const tbody = rows.map((row, i) => {
+    const cells = columns.map(c => {
+      const val = c.numeric ? fmtNum(row[c.key]) : row[c.key];
+      return `<td style="text-align:${c.numeric ? 'right' : 'left'};padding:7px 10px;font-size:13px;border-bottom:1px solid #f1f5f9;">${val}</td>`;
+    }).join('');
+    return `<tr style="background:${i % 2 === 0 ? '#fff' : '#fafbfc'};">${cells}</tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>${thead}</tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+    <p style="color:#9ca3af;font-size:11px;margin-top:10px;">총 ${rows.length}건</p>
+  `;
+}
 // ── 파일 업로드 (드래그&드롭) ──────────────────────────────
 const StatsApp = { purchaseRaw: null, usageRaw: null };
 
