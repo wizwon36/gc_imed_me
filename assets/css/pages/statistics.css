@@ -75,12 +75,9 @@
 
 /* ── 기간 비교: 모드 토글 + 비교 구간 컨트롤 ──────────────── */
 .stat-trend-controls {
-  background: #fff;
-  border: 1px solid var(--border-card, #e2e8f0);
-  border-radius: var(--radius-lg, 20px);
-  box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.05));
-  padding: 14px 18px;
-  margin-bottom: 16px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft, #e2e8f0);
 }
 .stat-trend-mode-toggle {
   display: inline-flex;
@@ -140,6 +137,12 @@
 }
 .stat-compare-period-chip--base { background: var(--blue-50, #e6f1fb); color: var(--blue, #2f6df6); }
 .stat-compare-period-chip--compare { background: var(--surface-soft, #f1f4f9); color: var(--text-secondary, #5f6b7a); }
+.stat-compare-subheading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #5f6b7a);
+  margin: 22px 0 10px;
+}
 .stat-table td.stat-trend-up { color: #c0392b; }
 .stat-table td.stat-trend-down { color: #1d6f42; }
 
