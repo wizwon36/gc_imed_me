@@ -406,6 +406,7 @@ async function runProcessing() {
     const imedVendors      = byVendor(imedIpgo);
     const gcDepts   = byDeptIpgoFull(gcIpgo, usageGC);
     const imedDepts = byDeptIpgoFull(imedIpgo, usageImed);
+    let gcDeptsRaw   = [...gcDepts.map(d => ({ ...d }))];    // 그룹핑 전 raw 복사본
     let imedDeptsRaw = [...imedDepts.map(d => ({ ...d }))];  // 그룹핑 전 raw 복사본
     let closingDeptMaster = [];   // { code_name, extra1, parent_code } — 전체 부서 마스터
 
@@ -460,6 +461,8 @@ async function runProcessing() {
         }
 
         // gcDepts 그룹핑: extra2 기준으로 합산 (아이메드와 동일 방식)
+        // 마감요약 시트용 raw 복사본 갱신 (마스터로 보완된 후 기준)
+        gcDeptsRaw = [...gcDepts.map(d => ({ ...d }))];
         const gcGroupList = buildImedDeptGroups(depts);
         if (gcGroupList.length) {
           const gcGrouped = {};
@@ -589,7 +592,7 @@ async function runProcessing() {
     const unregVendors = [...new Set(gcIpgo.map(r => String(r['공급업체'] || '').trim()).filter(v => v && !vendorMap[v]))];
     if (unregVendors.length) clog(`⚠ 거래처 관리 미등록: ${unregVendors.join(', ')}`, 'warn');
 
-    App.R = { gcIpgo, imedIpgo, gcVendors, imedVendors, gcDepts, imedDepts, imedDeptsRaw,
+    App.R = { gcIpgo, imedIpgo, gcVendors, imedVendors, gcDepts, gcDeptsRaw, imedDepts, imedDeptsRaw,
               closingDeptMaster,
               itemIpgoPivot, itemUsagePivot, usageGC, usageImed, usageSiyak, usageSomoum,
               siyakPivot, siyakPivot5, imedSiSoPivot, imedSiSoPivot5, imedDrugPivot,
@@ -958,7 +961,7 @@ async function dlIpgo() {
     writeDataSheet(wb.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
     writeDataSheet(wb.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
     writePivotItem(wb.addWorksheet('원가집계표 요약'), R.itemIpgoPivot, false);
-    writePivotDept(wb.addWorksheet('GC케어 마감요약'), R.gcDepts.filter(d => d.공급가액 || d.부가세 || d.합계금액));
+    writePivotDept(wb.addWorksheet('GC케어 마감요약'), (R.gcDeptsRaw || R.gcDepts).filter(d => d.공급가액 || d.부가세 || d.합계금액));
     writeDataSheet(wb.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
     writePivotDept(wb.addWorksheet('아이메드 마감요약'), R.imedDeptsRaw.filter(d => d.공급가액 || d.부가세 || d.합계금액));
     await saveWb(wb, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
@@ -1181,7 +1184,7 @@ async function downloadAll() {
     writeDataSheet(wb1.addWorksheet('입고원본'), ic, [...R.gcIpgo, ...R.imedIpgo].map(d => ic.map(c => d[c] || '')), in_, iw);
     writeDataSheet(wb1.addWorksheet('GC케어 입고분'), ic, R.gcIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
     writePivotItem(wb1.addWorksheet('원가집계표 요약'), R.itemIpgoPivot, false);
-    writePivotDept(wb1.addWorksheet('GC케어 마감요약'), R.gcDepts.filter(d => d.공급가액 || d.부가세 || d.합계금액));
+    writePivotDept(wb1.addWorksheet('GC케어 마감요약'), (R.gcDeptsRaw || R.gcDepts).filter(d => d.공급가액 || d.부가세 || d.합계금액));
     writeDataSheet(wb1.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
     writePivotDept(wb1.addWorksheet('아이메드 마감요약'), R.imedDeptsRaw.filter(d => d.공급가액 || d.부가세 || d.합계금액));
     await saveWb(wb1, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
