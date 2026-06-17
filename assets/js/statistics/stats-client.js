@@ -278,10 +278,12 @@ async function getItemStats(filters, recordType = 'purchase') {
         item_name: name,
         item_code: code || null,
         qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0,
+        _rawRows: [], // 원본 행 (행 클릭 시 세부내역 모달용)
       };
     }
     // 자재명이 바뀌어 들어온 경우(코드 기준 그룹일 때) 최신 표기로 갱신은 생략 — 거래처와 달리
     // 품목명 변경 이력 관리 마스터가 없으므로 최초 등장한 이름을 그대로 유지
+    grouped[key]._rawRows.push(r);
     grouped[key].qty          += Number(r[cols.qty])    || 0;
     grouped[key].supply       += Number(r[cols.supply]) || 0;
     grouped[key].vat          += Number(r[cols.vat])    || 0;
