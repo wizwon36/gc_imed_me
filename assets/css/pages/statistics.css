@@ -114,7 +114,7 @@
   color: var(--text-muted, #9aa5b1);
   margin: 12px 0 0;
 }
-#statDashYmFrom:disabled, #statDashYmTo:disabled {
+#statDashYmFrom:disabled, #statDashYmTo:disabled, #statDashBranch:disabled {
   background: var(--surface-soft, #f1f4f9);
   color: var(--text-muted, #9aa5b1);
   cursor: not-allowed;
