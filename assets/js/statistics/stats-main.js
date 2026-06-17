@@ -28,6 +28,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('appBody').style.display = '';
 
+    // 연도 선택 옵션 생성: 2016 ~ 올해
+    const yearSelect = document.getElementById('statsYear');
+    if (yearSelect) {
+      const curYear = new Date().getFullYear();
+      let opts = '';
+      for (let y = curYear; y >= 2016; y--) {
+        opts += `<option value="${y}">${y}년</option>`;
+      }
+      yearSelect.innerHTML = opts;
+    }
+
     // 의원 드롭다운 기본값: 본인 소속 의원 (업로드/조회 탭 둘 다)
     ['statsBranch', 'statDashBranch'].forEach(id => {
       const sel = document.getElementById(id);
@@ -36,6 +47,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (matched) sel.value = matched.value;
       }
     });
+
+    // 업로드 현황 최초 로드
+    await loadUploadStatus();
 
   } catch (error) {
     console.error(error);
@@ -54,6 +68,43 @@ function switchStatsTab(tab) {
   });
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── 업로드 현황 조회/렌더링 ────────────────────────────────
+const ALL_MONTHS = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+async function loadUploadStatus() {
+  const branch = document.getElementById('statsBranch').value;
+  const area = document.getElementById('uploadStatusArea');
+  area.innerHTML = '<p style="color:#6b7280;font-size:12px;">불러오는 중...</p>';
+
+  try {
+    const status = await window.statsClient.getUploadStatus(branch);
+    if (!status.length) {
+      area.innerHTML = '<p style="color:#9ca3af;font-size:12px;">업로드된 데이터가 없습니다.</p>';
+      return;
+    }
+
+    const rows = status.slice().reverse().map(s => {
+      const renderMonths = (months, allLabel) => {
+        if (!months.length) return '<span style="color:#d1d5db;">없음</span>';
+        if (months.length === 12) return `<span style="color:#059669;font-weight:600;">${allLabel} (1~12월 전체)</span>`;
+        const last = months[months.length - 1];
+        return `<span style="color:#1a56db;">${months.length}개월 (~${last}월)</span>`;
+      };
+      return `
+        <tr>
+          <td style="padding:6px 10px;font-size:12px;font-weight:600;border-bottom:1px solid #f1f5f9;">${s.year}년</td>
+          <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">입고: ${renderMonths(s.purchaseMonths, '완료')}</td>
+          <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">사용현황: ${renderMonths(s.usageMonths, '완료')}</td>
+        </tr>`;
+    }).join('');
+
+    area.innerHTML = `<table style="width:100%;border-collapse:collapse;"><tbody>${rows}</tbody></table>`;
+  } catch (error) {
+    console.error(error);
+    area.innerHTML = `<p style="color:#dc2626;font-size:12px;">오류: ${error.message}</p>`;
+  }
+}
 
 // ── 통계 조회: 서브탭 전환 ─────────────────────────────────
 let currentSubtab = 'vendor';
@@ -160,6 +211,7 @@ function statsProcessFile(file, type) {
 // ── 업로드 실행 ────────────────────────────────────────────
 async function handleStatsUpload() {
   const branch = document.getElementById('statsBranch').value;
+  const year = document.getElementById('statsYear').value;
   const resultEl = document.getElementById('statsUploadResult');
   const btn = document.getElementById('btnStatsUpload');
 
@@ -169,11 +221,11 @@ async function handleStatsUpload() {
   const lines = [];
   try {
     if (StatsApp.purchaseRaw) {
-      const results = await window.uploadStatsFile(StatsApp.purchaseRaw, branch, 'purchase');
+      const results = await window.uploadStatsFile(StatsApp.purchaseRaw, branch, 'purchase', year);
       results.forEach(r => lines.push(`<div style="color:#059669;font-size:12px;">✓ 입고 ${r.ym}: ${r.count}건 저장</div>`));
     }
     if (StatsApp.usageRaw) {
-      const results = await window.uploadStatsFile(StatsApp.usageRaw, branch, 'usage');
+      const results = await window.uploadStatsFile(StatsApp.usageRaw, branch, 'usage', year);
       results.forEach(r => lines.push(`<div style="color:#059669;font-size:12px;">✓ 사용현황 ${r.ym}: ${r.count}건 저장</div>`));
     }
     resultEl.innerHTML = lines.join('');
@@ -186,6 +238,9 @@ async function handleStatsUpload() {
       const inputEl = document.querySelector(`#zone-${type} input[type=file]`);
       if (inputEl) inputEl.value = '';
     });
+
+    // 업로드 현황 갱신
+    await loadUploadStatus();
   } catch (error) {
     console.error(error);
     resultEl.innerHTML = `<div style="color:#dc2626;font-size:12px;">오류: ${error.message}</div>` + lines.join('');
