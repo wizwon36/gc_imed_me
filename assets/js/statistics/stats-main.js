@@ -86,32 +86,36 @@ const ALL_MONTHS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 
 async function loadUploadStatus() {
   const branch = document.getElementById('statsBranch').value;
+  const year = document.getElementById('statsYear').value;
   const area = document.getElementById('uploadStatusArea');
   area.innerHTML = '<p style="color:#6b7280;font-size:12px;">불러오는 중...</p>';
 
   try {
     const status = await window.statsClient.getUploadStatus(branch);
-    if (!status.length) {
-      area.innerHTML = '<p style="color:#9ca3af;font-size:12px;">업로드된 데이터가 없습니다.</p>';
+    const yearStatus = status.find(s => s.year === year);
+
+    if (!yearStatus || (!yearStatus.purchaseMonths.length && !yearStatus.usageMonths.length)) {
+      area.innerHTML = `<p style="color:#9ca3af;font-size:12px;">${year}년에 업로드된 데이터가 없습니다.</p>`;
       return;
     }
 
-    const rows = status.slice().reverse().map(s => {
-      const renderMonths = (months, allLabel) => {
-        if (!months.length) return '<span style="color:#d1d5db;">없음</span>';
-        if (months.length === 12) return `<span style="color:#059669;font-weight:600;">${allLabel} (1~12월 전체)</span>`;
-        const last = months[months.length - 1];
-        return `<span style="color:#1a56db;">${months.length}개월 (~${last}월)</span>`;
-      };
-      return `
-        <tr>
-          <td style="padding:6px 10px;font-size:12px;font-weight:600;border-bottom:1px solid #f1f5f9;">${s.year}년</td>
-          <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">입고: ${renderMonths(s.purchaseMonths, '완료')}</td>
-          <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">사용현황: ${renderMonths(s.usageMonths, '완료')}</td>
-        </tr>`;
-    }).join('');
+    const renderMonths = (months, allLabel) => {
+      if (!months.length) return '<span style="color:#d1d5db;">없음</span>';
+      if (months.length === 12) return `<span style="color:#059669;font-weight:600;">${allLabel} (1~12월 전체)</span>`;
+      const last = months[months.length - 1];
+      return `<span style="color:#1a56db;">${months.length}개월 (~${last}월)</span>`;
+    };
 
-    area.innerHTML = `<table style="width:100%;border-collapse:collapse;"><tbody>${rows}</tbody></table>`;
+    area.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;">
+        <tbody>
+          <tr>
+            <td style="padding:6px 10px;font-size:12px;font-weight:600;border-bottom:1px solid #f1f5f9;">${year}년</td>
+            <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">입고: ${renderMonths(yearStatus.purchaseMonths, '완료')}</td>
+            <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">사용현황: ${renderMonths(yearStatus.usageMonths, '완료')}</td>
+          </tr>
+        </tbody>
+      </table>`;
   } catch (error) {
     console.error(error);
     area.innerHTML = `<p style="color:#dc2626;font-size:12px;">오류: ${error.message}</p>`;
