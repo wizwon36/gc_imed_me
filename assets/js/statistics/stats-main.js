@@ -240,20 +240,20 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
 
   container.innerHTML = `
-    <div class="stat-summary-card">
+    <div class="stat-summary-card accent-total">
       <div class="stat-summary-label">총 ${amountLabel}액</div>
       <div class="stat-summary-value">${fmtNum(summary.total)}원</div>
     </div>
-    <div class="stat-summary-card">
+    <div class="stat-summary-card accent-count">
       <div class="stat-summary-label">${groupLabel} 수</div>
       <div class="stat-summary-value">${fmtNum(summary.groupCount)}개</div>
       <div class="stat-summary-sub">총 ${fmtNum(summary.totalRecords)}건</div>
     </div>
-    <div class="stat-summary-card">
+    <div class="stat-summary-card accent-avg">
       <div class="stat-summary-label">${groupLabel}당 평균</div>
       <div class="stat-summary-value">${fmtNum(Math.round(summary.avgPerGroup))}원</div>
     </div>
-    <div class="stat-summary-card">
+    <div class="stat-summary-card accent-top">
       <div class="stat-summary-label">최다 ${groupLabel}</div>
       <div class="stat-summary-value small">${summary.topName || '-'}</div>
       <div class="stat-summary-sub">${fmtNum(summary.topAmount)}원</div>
@@ -309,13 +309,15 @@ function renderStatsTable(container, rows, barKey, columns) {
   }).join('');
 
   container.innerHTML = `
-    <div style="overflow-x:auto;">
-      <table class="stat-table">
-        <thead><tr>${thead}</tr></thead>
-        <tbody>${tbody}</tbody>
-      </table>
+    <div class="stat-table-wrap">
+      <div style="overflow-x:auto;">
+        <table class="stat-table">
+          <thead><tr>${thead}</tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
     </div>
-    <p style="color:#9ca3af;font-size:11px;margin-top:10px;">총 ${rows.length}건</p>
+    <p style="color:var(--text-muted,#7b8794);font-size:11px;margin-top:10px;">총 ${rows.length}건</p>
   `;
 }
 // ── 로그 출력 (closing 모듈의 clog와 동일한 패턴) ─────────────
