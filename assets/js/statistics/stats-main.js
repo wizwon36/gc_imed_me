@@ -211,7 +211,7 @@ function addAdvancedConditionRow() {
   row.id = rowId;
   row.innerHTML = `
     ${isFirst
-      ? `<span class="stat-advanced-combinator-placeholder"></span>`
+      ? `<span class="stat-advanced-combinator-placeholder">조건 1</span>`
       : `<select class="stat-advanced-combinator">
            <option value="AND">그리고 (AND)</option>
            <option value="OR">또는 (OR)</option>
@@ -241,6 +241,7 @@ function removeAdvancedConditionRow(rowId) {
   if (first && first.querySelector('.stat-advanced-combinator')) {
     const placeholder = document.createElement('span');
     placeholder.className = 'stat-advanced-combinator-placeholder';
+    placeholder.textContent = '조건 1';
     first.querySelector('.stat-advanced-combinator').replaceWith(placeholder);
   }
 }
