@@ -42,13 +42,14 @@ async function fetchAllRows_(table, buildQuery) {
 
 // ── 필터 적용 헬퍼 ─────────────────────────────────────────
 function applyFilters_(query, filters) {
-  const { branch, ymFrom, ymTo, itemType, dept, vendor } = filters || {};
-  if (branch)   query = query.eq('branch', branch);
-  if (ymFrom)   query = query.gte('ym', ymFrom);
-  if (ymTo)     query = query.lte('ym', ymTo);
-  if (itemType) query = query.eq('item_type', itemType);
-  if (dept)     query = query.eq('dept', dept);
-  if (vendor)   query = query.eq('vendor_name', vendor);
+  const { branch, ymFrom, ymTo, itemType, dept, vendor, vendorBizNo } = filters || {};
+  if (branch)      query = query.eq('branch', branch);
+  if (ymFrom)      query = query.gte('ym', ymFrom);
+  if (ymTo)        query = query.lte('ym', ymTo);
+  if (itemType)    query = query.eq('item_type', itemType);
+  if (dept)        query = query.eq('dept', dept);
+  if (vendorBizNo) query = query.eq('vendor_biz_no', vendorBizNo);
+  else if (vendor) query = query.eq('vendor_name', vendor);
   return query;
 }
 
