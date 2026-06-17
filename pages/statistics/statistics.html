@@ -122,6 +122,27 @@
           </div>
         </div>
 
+        <!-- 기간 비교 전용 컨트롤 (기간비교 서브탭에서만 표시) -->
+        <div class="stat-trend-controls" id="trendControlsPanel" style="display:none;">
+          <div class="stat-trend-mode-toggle">
+            <button class="stat-trend-mode-btn active" id="trendModeMonthly" onclick="switchTrendMode('monthly')">월별 추이</button>
+            <button class="stat-trend-mode-btn" id="trendModeCompare" onclick="switchTrendMode('compare')">구간 비교</button>
+          </div>
+
+          <div id="trendCompareFields" style="display:none;">
+            <div class="stat-trend-compare-row">
+              <span class="stat-trend-compare-label">비교 구간</span>
+              <input type="month" id="trendCompareYmFrom">
+              <span style="color:var(--text-muted,#9aa5b1);">~</span>
+              <input type="month" id="trendCompareYmTo">
+              <div class="stat-trend-quick-buttons">
+                <button type="button" class="btn" onclick="applyTrendQuickRange('prevMonth')">전월</button>
+                <button type="button" class="btn" onclick="applyTrendQuickRange('prevYear')">전년 동기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 요약 카드 -->
         <div class="stat-summary-grid" id="statsSummaryGrid"></div>
 
