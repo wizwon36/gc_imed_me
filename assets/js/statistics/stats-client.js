@@ -53,6 +53,54 @@ function applyFilters_(query, filters) {
   return query;
 }
 
+// ── 검색구분 → 실제 컬럼명 매핑 ──────────────────────────────
+function searchFieldToColumn_(type) {
+  if (type === 'vendor')   return 'vendor_name';
+  if (type === 'dept')     return 'dept';
+  if (type === 'itemType') return 'item_type';
+  return null;
+}
+
+// ── 기본 검색(구분+키워드, LIKE) + 상세검색(다중 조건, AND/OR) 클라이언트 필터링 ──
+// basicSearch: { type, keyword } | null
+// advancedConditions: [{ field, keyword, combinator }]  combinator는 그 조건이 "앞 조건과" 어떻게 결합되는지 (첫 행은 무시)
+function applyClientSideSearch_(rows, basicSearch, advancedConditions) {
+  let result = rows;
+
+  if (basicSearch && basicSearch.keyword && basicSearch.keyword.trim()) {
+    const col = searchFieldToColumn_(basicSearch.type);
+    const kw = basicSearch.keyword.trim().toLowerCase();
+    if (col) {
+      result = result.filter(r => String(r[col] || '').toLowerCase().includes(kw));
+    }
+  }
+
+  if (Array.isArray(advancedConditions) && advancedConditions.length) {
+    const valid = advancedConditions.filter(c => c.field && c.keyword && c.keyword.trim());
+    if (valid.length) {
+      result = result.filter(row => {
+        // 좌결합: 첫 조건의 결과에서 시작해, 이후 조건을 combinator(AND/OR)로 누적 결합
+        let acc = null;
+        valid.forEach((cond, idx) => {
+          const col = searchFieldToColumn_(cond.field);
+          const kw = cond.keyword.trim().toLowerCase();
+          const matched = col ? String(row[col] || '').toLowerCase().includes(kw) : false;
+          if (idx === 0) {
+            acc = matched;
+          } else if (cond.combinator === 'OR') {
+            acc = acc || matched;
+          } else {
+            acc = acc && matched;
+          }
+        });
+        return acc;
+      });
+    }
+  }
+
+  return result;
+}
+
 // ── 공통: 통계 결과로부터 요약 카드용 정보 산출 ──────────────
 // rows: 정렬된 집계 결과 배열, amountKey: 합계금액 필드명
 function buildSummary_(rows, amountKey, countKey) {
@@ -78,7 +126,8 @@ function buildSummary_(rows, amountKey, countKey) {
 // 사업자번호가 없는 행(거래처 마스터 미등록)은 거래처명 기준으로 별도 그룹핑하고 미등록 표시
 // ═══════════════════════════════════════════════════════════
 async function getVendorStats(filters) {
-  const rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
+  let rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
+  rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
   const grouped = {};
   rows.forEach(r => {
@@ -111,7 +160,8 @@ async function getVendorStats(filters) {
 // 2. 부서별 통계 (usage_records 기반)
 // ═══════════════════════════════════════════════════════════
 async function getDeptStats(filters) {
-  const rows = await fetchAllRows_('usage_records', q => applyFilters_(q, filters));
+  let rows = await fetchAllRows_('usage_records', q => applyFilters_(q, filters));
+  rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
   const grouped = {};
   rows.forEach(r => {
@@ -146,6 +196,30 @@ async function getTrendStats(filters) {
 // ═══════════════════════════════════════════════════════════
 // 5. 업로드 현황 조회 (연도별 업로드된 월 목록)
 // ═══════════════════════════════════════════════════════════
+// ── 검색 옵션용: 실제 데이터에 존재하는 부서명/자재구분 distinct 목록 ──
+// 두 테이블(purchase_records, usage_records)을 합쳐서 등장하는 모든 값을 추출
+async function getDistinctValues(column) {
+  const PAGE_SIZE = 1000;
+  const values = new Set();
+
+  async function collectFrom(table) {
+    let from = 0;
+    while (true) {
+      const { data, error } = await _supabase
+        .from(table)
+        .select(column)
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) throw new Error(error.message);
+      (data || []).forEach(r => { if (r[column]) values.add(r[column]); });
+      if (!data || data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
+  }
+
+  await Promise.all([collectFrom('purchase_records'), collectFrom('usage_records')]);
+  return Array.from(values).sort((a, b) => a.localeCompare(b, 'ko'));
+}
+
 async function getUploadStatus(branch) {
   const [purchaseRows, usageRows] = await Promise.all([
     fetchAllRows_('purchase_records', q => q.eq('branch', branch)),
@@ -184,4 +258,5 @@ window.statsClient = {
   getItemStats,
   getTrendStats,
   getUploadStatus,
+  getDistinctValues,
 };
