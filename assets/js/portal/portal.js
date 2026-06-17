@@ -65,6 +65,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       icon: '📊',
       url: `${CONFIG.SITE_BASE_URL}/pages/closing/closing.html`
     },
+    // ── 구매·사용 통계 (신규) ────────────────────────────────────
+    statistics: {
+      title: '구매·사용 통계',
+      desc: '과거 입고·사용현황 데이터 업로드 및 통계 조회',
+      icon: '📈',
+      url: `${CONFIG.SITE_BASE_URL}/pages/statistics/statistics.html`
+    },    
     // ── 규정 및 가이드라인: 권한 있는 규정 목록 표시 ──────────────
     regulation: {
       title: '규정 및 가이드라인',
