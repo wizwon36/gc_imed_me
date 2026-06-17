@@ -832,10 +832,11 @@ function writeSubul(ws, year, month, branch, items, R) {
   }, 0);
   [['소모품', somoItems, FILL.gc], ['시약', siyakItems, FILL.imed]].forEach(([lbl, arr, fill]) => {
     txtCell(ws, r, 3, lbl, fill, true, true);
-    numCell(ws, r, 6,  subSum(arr,'기초'), fill);
-    numCell(ws, r, 8,  subSum(arr,'증가'), fill);
-    numCell(ws, r, 10, subSum(arr,'감소'), fill);
-    numCell(ws, r, 13, subSum(arr,'기말'), fill);
+    [6, 8, 10, 13].forEach(c => { ws.getCell(r, c).border = BORDER_THIN; });
+    numCell(ws, r, 6,  subSum(arr,'기초'), fill); ws.getCell(r, 6).border  = BORDER_THIN;
+    numCell(ws, r, 8,  subSum(arr,'증가'), fill); ws.getCell(r, 8).border  = BORDER_THIN;
+    numCell(ws, r, 10, subSum(arr,'감소'), fill); ws.getCell(r, 10).border = BORDER_THIN;
+    numCell(ws, r, 13, subSum(arr,'기말'), fill); ws.getCell(r, 13).border = BORDER_THIN;
     ws.getRow(r).height = 18; r++;
   });
 
@@ -876,9 +877,9 @@ function writeSubul(ws, year, month, branch, items, R) {
     hdrCell(ws, r, 11, '비고');
     ws.getRow(r).height = 18; r++;
     // 데이터행
-    numCell(ws, r, 8,  supV, dataFill);
-    numCell(ws, r, 9,  vatV, dataFill);
-    numCell(ws, r, 10, totV, dataFill);
+    numCell(ws, r, 8,  supV, dataFill); ws.getCell(r, 8).border  = BORDER_THIN;
+    numCell(ws, r, 9,  vatV, dataFill); ws.getCell(r, 9).border  = BORDER_THIN;
+    numCell(ws, r, 10, totV, dataFill); ws.getCell(r, 10).border = BORDER_THIN;
     const bc = ws.getCell(r, 11);
     bc.value=bigoText; bc.font=F.bold; bc.fill=FILL.warn; bc.alignment=AL('center'); bc.border=BORDER_THIN;
     if (memo) {
@@ -901,14 +902,14 @@ function writeSubul(ws, year, month, branch, items, R) {
   const subulSiyk = subSum(siyakItems,'감소');
   [['소모품', subulSomo, uSup(usageSomo)], ['시약', subulSiyk, uSup(usageSiyk)]].forEach(([lbl, subulVal, usageVal]) => {
     const diffVal = Math.round(subulVal - usageVal);
-    txtCell(ws, r, 9, lbl, null, false, false);
+    txtCell(ws, r, 9, lbl, FILL.odd, false, false); ws.getCell(r, 9).border = BORDER_THIN;
     const dc = ws.getCell(r, 10);
     dc.value = diffVal;
     dc.font = diffVal !== 0
       ? { name:'Calibri', size:10, color:{argb:'FFFF0000'}, bold:true }
       : F.base;
     dc.fill = FILL.odd; dc.alignment = AL('right');
-    dc.border = BORDER_DATA; dc.numFmt = NUM_FMT;
+    dc.border = BORDER_THIN; dc.numFmt = NUM_FMT;
     ws.getRow(r).height = 18; r++;
   });
 
@@ -931,10 +932,10 @@ function writeSubul(ws, year, month, branch, items, R) {
     hdrCell(ws, r, 10, '계');
     ws.getRow(r).height = 18; r++;
     [['소모품', somoRow], ['시약', siykRow]].forEach(([lbl,[sup,vat,tot]]) => {
-      txtCell(ws, r, 7, lbl, FILL.odd, false, true);
-      numCell(ws, r, 8, sup, FILL.odd);
-      numCell(ws, r, 9, vat, FILL.odd);
-      numCell(ws, r, 10, tot, FILL.odd);
+      txtCell(ws, r, 7, lbl, FILL.odd, false, true); ws.getCell(r, 7).border = BORDER_THIN;
+      numCell(ws, r, 8, sup, FILL.odd); ws.getCell(r, 8).border = BORDER_THIN;
+      numCell(ws, r, 9, vat, FILL.odd); ws.getCell(r, 9).border = BORDER_THIN;
+      numCell(ws, r, 10, tot, FILL.odd); ws.getCell(r, 10).border = BORDER_THIN;
       ws.getRow(r).height = 18; r++;
     });
     r++;
