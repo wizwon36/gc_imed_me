@@ -299,8 +299,77 @@ async function getItemStats(filters, recordType = 'purchase') {
 // ═══════════════════════════════════════════════════════════
 // 4. 기간(월별/연도별) 추이 통계 (다음 단계에서 구현)
 // ═══════════════════════════════════════════════════════════
-async function getTrendStats(filters) {
-  throw new Error('기간별 추이 통계는 아직 구현되지 않았습니다.');
+// ═══════════════════════════════════════════════════════════
+// 4-1. 월별 추이 (입고/사용 공통) — 조회 구간을 월 단위로 집계
+// ═══════════════════════════════════════════════════════════
+async function getMonthlyTrend(filters, recordType = 'purchase') {
+  const table = RECORD_TYPE_TABLES[recordType];
+  const cols = RECORD_TYPE_COLUMNS[recordType];
+
+  let rows = await fetchAllRows_(table, q => applyFilters_(q, filters));
+  rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
+
+  const grouped = {};
+  rows.forEach(r => {
+    const key = r.ym || '(미확인)';
+    if (!grouped[key]) {
+      grouped[key] = { ym: key, qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0 };
+    }
+    grouped[key].qty          += Number(r[cols.qty])    || 0;
+    grouped[key].supply       += Number(r[cols.supply]) || 0;
+    grouped[key].vat          += Number(r[cols.vat])    || 0;
+    grouped[key].amount       += Number(r[cols.amount]) || 0;
+    grouped[key].record_count += 1;
+  });
+
+  // 추이는 시간 순서가 의미 있으므로 금액이 아니라 연월(ym) 오름차순으로 정렬
+  const data = Object.values(grouped).sort((a, b) => a.ym.localeCompare(b.ym));
+  return { data, summary: buildSummary_(data, 'amount', 'record_count') };
+}
+
+// ═══════════════════════════════════════════════════════════
+// 4-2. 구간 비교 (입고/사용 공통) — 기준 구간 vs 비교 구간
+// filters의 ymFrom/ymTo가 기준 구간, compareYmFrom/compareYmTo가 비교 구간
+// ═══════════════════════════════════════════════════════════
+async function getPeriodComparison(filters, recordType = 'purchase', compareYmFrom, compareYmTo) {
+  const table = RECORD_TYPE_TABLES[recordType];
+  const cols = RECORD_TYPE_COLUMNS[recordType];
+
+  async function aggregate(ymFrom, ymTo) {
+    const periodFilters = { ...filters, ymFrom, ymTo };
+    let rows = await fetchAllRows_(table, q => applyFilters_(q, periodFilters));
+    rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
+
+    const agg = { qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0 };
+    rows.forEach(r => {
+      agg.qty          += Number(r[cols.qty])    || 0;
+      agg.supply       += Number(r[cols.supply]) || 0;
+      agg.vat          += Number(r[cols.vat])    || 0;
+      agg.amount       += Number(r[cols.amount]) || 0;
+      agg.record_count += 1;
+    });
+    return agg;
+  }
+
+  const [base, compare] = await Promise.all([
+    aggregate(filters.ymFrom, filters.ymTo),
+    aggregate(compareYmFrom, compareYmTo),
+  ]);
+
+  // 각 지표별 증감액/증감률 계산 (비교 구간이 0이면 증감률은 null로 표시 — 분모 0 방지)
+  const metrics = ['qty', 'supply', 'vat', 'amount', 'record_count'].map(key => {
+    const baseVal = base[key];
+    const compareVal = compare[key];
+    const diff = baseVal - compareVal;
+    const pct = compareVal !== 0 ? (diff / compareVal) * 100 : null;
+    return { key, baseVal, compareVal, diff, pct };
+  });
+
+  return {
+    basePeriod: { ymFrom: filters.ymFrom, ymTo: filters.ymTo, ...base },
+    comparePeriod: { ymFrom: compareYmFrom, ymTo: compareYmTo, ...compare },
+    metrics,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -366,7 +435,8 @@ window.statsClient = {
   getVendorStats,
   getDeptStats,
   getItemStats,
-  getTrendStats,
+  getMonthlyTrend,
+  getPeriodComparison,
   getUploadStatus,
   getDistinctValues,
 };
