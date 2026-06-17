@@ -9,7 +9,7 @@
 
 // ★ 실제 값으로 교체 필요
 const SUPABASE_URL = 'https://llfbjgsuoaaifbfftuuf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZmJqZ3N1b2FhaWZiZmZ0dXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NTUxMTcsImV4cCI6MjA5NzIzMTExN30.5btOquOHOopWs502uMZxy0vBUzZ-xSnd22lCc-Yc-m8';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
 
 const _supabase = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -109,9 +109,45 @@ async function getTrendStats(filters) {
   throw new Error('기간별 추이 통계는 아직 구현되지 않았습니다.');
 }
 
+// ═══════════════════════════════════════════════════════════
+// 5. 업로드 현황 조회 (연도별 업로드된 월 목록)
+// ═══════════════════════════════════════════════════════════
+async function getUploadStatus(branch) {
+  const [purchaseRows, usageRows] = await Promise.all([
+    fetchAllRows_('purchase_records', q => q.eq('branch', branch)),
+    fetchAllRows_('usage_records',    q => q.eq('branch', branch)),
+  ]);
+
+  // ym(YYYY-MM) 집합을 연도별로 묶기: { '2026': Set('01','02',...), ... }
+  const buildYearMonthMap = (rows) => {
+    const map = {};
+    rows.forEach(r => {
+      const ym = r.ym || '';
+      const year = ym.slice(0, 4);
+      const month = ym.slice(5, 7);
+      if (!year || !month) return;
+      if (!map[year]) map[year] = new Set();
+      map[year].add(month);
+    });
+    return map;
+  };
+
+  const purchaseMap = buildYearMonthMap(purchaseRows);
+  const usageMap    = buildYearMonthMap(usageRows);
+
+  const allYears = [...new Set([...Object.keys(purchaseMap), ...Object.keys(usageMap)])].sort();
+
+  return allYears.map(year => ({
+    year,
+    purchaseMonths: purchaseMap[year] ? [...purchaseMap[year]].sort() : [],
+    usageMonths:    usageMap[year]    ? [...usageMap[year]].sort()    : [],
+  }));
+}
+
 window.statsClient = {
   getVendorStats,
   getDeptStats,
   getItemStats,
   getTrendStats,
+  getUploadStatus,
 };
