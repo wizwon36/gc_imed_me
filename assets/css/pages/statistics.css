@@ -37,16 +37,16 @@
   margin-top: 6px;
   margin-bottom: 22px;
 }
-.stat-recordtype-seg {
+/* ── 세그먼트 토글 공용 스타일 (입고/사용, 월별추이/구간비교에서 동일하게 사용) ── */
+.stat-seg-toggle {
   display: inline-flex;
   gap: 4px;
   background: #fff;
   border: 1px solid var(--border-input, #dde3ed);
   border-radius: var(--radius-md, 16px);
   padding: 3px;
-  margin-bottom: 18px;
 }
-.stat-recordtype-seg-btn {
+.stat-seg-toggle-btn {
   border: none;
   background: none;
   cursor: pointer;
@@ -57,14 +57,18 @@
   border-radius: 12px;
   transition: background .12s, color .12s;
 }
-.stat-recordtype-seg-btn:hover { color: var(--text-primary, #111827); }
-.stat-recordtype-seg-btn.active {
+.stat-seg-toggle-btn:hover { color: var(--text-primary, #111827); }
+.stat-seg-toggle-btn.active {
   background: var(--blue-50, #e6f1fb);
   color: var(--blue, #2f6df6);
 }
+
 .stat-subtab-underline {
   display: flex;
   gap: 26px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft, #e2e8f0);
   border-bottom: 1px solid var(--border-soft, #e2e8f0);
 }
 .stat-subtab-underline-btn {
@@ -90,32 +94,10 @@
   .stat-subtab-underline { gap: 18px; overflow-x: auto; }
 }
 
-/* ── 기간 비교: 모드 토글 + 비교 구간 컨트롤 ──────────────── */
+/* ── 기간 비교: 모드 토글(세그먼트는 .stat-seg-toggle 공용 클래스 사용) + 비교 구간 컨트롤 ── */
 .stat-trend-controls {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-soft, #e2e8f0);
+  margin-top: 16px;
 }
-.stat-trend-mode-toggle {
-  display: inline-flex;
-  gap: 4px;
-  background: var(--surface-soft, #f1f4f9);
-  border-radius: var(--radius-md, 16px);
-  padding: 3px;
-}
-.stat-trend-mode-btn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary, #5f6b7a);
-  border-radius: 12px;
-  transition: background .12s, color .12s;
-}
-.stat-trend-mode-btn:hover { color: var(--text-primary, #111827); }
-.stat-trend-mode-btn.active { background: #fff; color: var(--blue, #2f6df6); box-shadow: 0 1px 3px rgba(15,23,42,.08); }
 .stat-trend-compare-row {
   display: flex;
   align-items: center;
