@@ -108,7 +108,7 @@
           </div>
         </div>
 
-        <!-- 입고/사용 구분 + 관점 서브탭 (하나의 패널로 묶어 위계를 시각적으로 구분) -->
+        <!-- 입고/사용 구분 + 관점 서브탭 + 기간비교 전용 컨트롤 (하나의 패널로 묶어 위계를 시각적으로 구분) -->
         <div class="stat-scope-panel">
           <div class="stat-recordtype-seg">
             <button class="stat-recordtype-seg-btn active" id="recordTypePurchase" onclick="switchRecordType('purchase')">📥 입고조회</button>
@@ -120,31 +120,31 @@
             <button class="stat-subtab-underline-btn" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
             <button class="stat-subtab-underline-btn" id="subtabTrend" onclick="switchStatsSubtab('trend')">📅 기간 비교</button>
           </div>
-        </div>
 
-        <!-- 기간 비교 전용 컨트롤 (기간비교 서브탭에서만 표시) -->
-        <div class="stat-trend-controls" id="trendControlsPanel" style="display:none;">
-          <div class="stat-trend-mode-toggle">
-            <button class="stat-trend-mode-btn active" id="trendModeMonthly" onclick="switchTrendMode('monthly')">월별 추이</button>
-            <button class="stat-trend-mode-btn" id="trendModeCompare" onclick="switchTrendMode('compare')">구간 비교</button>
-          </div>
-
-          <div id="trendCompareFields" style="display:none;">
-            <p class="stat-trend-compare-note">구간 비교에서는 상단 검색바의 기간 대신, 아래에서 지정한 두 구간을 사용합니다.</p>
-            <div class="stat-trend-compare-row">
-              <span class="stat-trend-compare-label">기준 구간</span>
-              <input type="month" id="trendBaseYmFrom" onchange="updateTrendQuickButtonState()">
-              <span style="color:var(--text-muted,#9aa5b1);">~</span>
-              <input type="month" id="trendBaseYmTo" onchange="updateTrendQuickButtonState()">
+          <!-- 기간 비교 전용 컨트롤 (기간비교 서브탭에서만 표시) -->
+          <div class="stat-trend-controls" id="trendControlsPanel" style="display:none;">
+            <div class="stat-trend-mode-toggle">
+              <button class="stat-trend-mode-btn active" id="trendModeMonthly" onclick="switchTrendMode('monthly')">월별 추이</button>
+              <button class="stat-trend-mode-btn" id="trendModeCompare" onclick="switchTrendMode('compare')">구간 비교</button>
             </div>
-            <div class="stat-trend-compare-row">
-              <span class="stat-trend-compare-label">비교 구간</span>
-              <input type="month" id="trendCompareYmFrom">
-              <span style="color:var(--text-muted,#9aa5b1);">~</span>
-              <input type="month" id="trendCompareYmTo">
-              <div class="stat-trend-quick-buttons">
-                <button type="button" class="btn" onclick="applyTrendQuickRange('prevMonth')">전월</button>
-                <button type="button" class="btn" onclick="applyTrendQuickRange('prevYear')">전년 동기</button>
+
+            <div id="trendCompareFields" style="display:none;">
+              <p class="stat-trend-compare-note">구간 비교에서는 상단 검색바의 기간 대신, 아래에서 지정한 두 구간을 사용합니다.</p>
+              <div class="stat-trend-compare-row">
+                <span class="stat-trend-compare-label">기준 구간</span>
+                <input type="month" id="trendBaseYmFrom" onchange="updateTrendQuickButtonState()">
+                <span style="color:var(--text-muted,#9aa5b1);">~</span>
+                <input type="month" id="trendBaseYmTo" onchange="updateTrendQuickButtonState()">
+              </div>
+              <div class="stat-trend-compare-row">
+                <span class="stat-trend-compare-label">비교 구간</span>
+                <input type="month" id="trendCompareYmFrom">
+                <span style="color:var(--text-muted,#9aa5b1);">~</span>
+                <input type="month" id="trendCompareYmTo">
+                <div class="stat-trend-quick-buttons">
+                  <button type="button" class="btn" onclick="applyTrendQuickRange('prevMonth')">전월</button>
+                  <button type="button" class="btn" onclick="applyTrendQuickRange('prevYear')">전년 동기</button>
+                </div>
               </div>
             </div>
           </div>
