@@ -53,13 +53,7 @@
       <!-- ══════════════════════════════════════════════════ -->
       <div id="tabDashboardContent" class="cl-section active">
 
-        <!-- 입고조회 / 사용조회 (최상위 구분 탭) -->
-        <div class="cl-tabs" style="margin-bottom:16px;">
-          <button class="cl-tab active" id="recordTypePurchase" onclick="switchRecordType('purchase')">📥 입고조회</button>
-          <button class="cl-tab" id="recordTypeUsage" onclick="switchRecordType('usage')">📋 사용조회</button>
-        </div>
-
-        <!-- 공통 필터 바 -->
+        <!-- 공통 필터 바 (입고/사용 구분과 무관하게 항상 동일 적용) -->
         <div class="stat-filter-bar">
           <div class="stat-filter-field">
             <label>의원</label>
@@ -114,12 +108,18 @@
           </div>
         </div>
 
-        <!-- 관점 서브탭 -->
-        <div class="cl-tabs" style="margin-bottom:14px;">
-          <button class="cl-tab active" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
-          <button class="cl-tab" id="subtabDept" onclick="switchStatsSubtab('dept')">🏬 부서별</button>
-          <button class="cl-tab" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
-          <button class="cl-tab" id="subtabTrend" onclick="switchStatsSubtab('trend')">📅 기간 비교</button>
+        <!-- 입고/사용 구분 + 관점 서브탭 (하나의 패널로 묶어 위계를 시각적으로 구분) -->
+        <div class="stat-scope-panel">
+          <div class="stat-recordtype-seg">
+            <button class="stat-recordtype-seg-btn active" id="recordTypePurchase" onclick="switchRecordType('purchase')">📥 입고조회</button>
+            <button class="stat-recordtype-seg-btn" id="recordTypeUsage" onclick="switchRecordType('usage')">📋 사용조회</button>
+          </div>
+          <div class="stat-subtab-underline">
+            <button class="stat-subtab-underline-btn active" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
+            <button class="stat-subtab-underline-btn" id="subtabDept" onclick="switchStatsSubtab('dept')">🏬 부서별</button>
+            <button class="stat-subtab-underline-btn" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
+            <button class="stat-subtab-underline-btn" id="subtabTrend" onclick="switchStatsSubtab('trend')">📅 기간 비교</button>
+          </div>
         </div>
 
         <!-- 요약 카드 -->
