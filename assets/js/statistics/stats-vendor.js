@@ -236,6 +236,7 @@ async function saveVendors() {
     StatsApp.vendorsDirty = false;
     showMessage('거래처 정보가 저장됐습니다.', 'success');
     btn.textContent = '✓ 저장됨';
+    if (typeof populateVendorDatalist === 'function') populateVendorDatalist();
     setTimeout(() => { btn.textContent = '💾 저장'; btn.disabled = false; }, 2000);
   } catch (e) {
     showMessage('저장 중 오류: ' + e.message, 'error');
@@ -251,6 +252,11 @@ let _vendorTabLoaded = false;
 async function ensureVendorTabLoaded() {
   if (_vendorTabLoaded) return;
   _vendorTabLoaded = true;
-  await loadVendorsFromServer();
-  renderVendorTable();
+  try {
+    showGlobalLoading('거래처 정보를 불러오는 중...');
+    await loadVendorsFromServer();
+    renderVendorTable();
+  } finally {
+    await hideGlobalLoading();
+  }
 }
