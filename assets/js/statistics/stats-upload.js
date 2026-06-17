@@ -150,6 +150,24 @@ function groupByYm_(rows, targetYear) {
   return groups;
 }
 
+// ── 업로드 전 사전 점검: 파일에 어느 연월이 포함되어 있는지만 확인 ──
+// (실제 업로드 없이, 재업로드 시 덮어쓸 월을 미리 알려주기 위함)
+async function peekStatsFileMonths(file, kind, targetYear) {
+  const buf = await file.arrayBuffer();
+  const workbook = XLSX.read(buf, { type: 'array' });
+
+  const rows = kind === 'purchase' ? parsePurchaseFile(workbook) : parseUsageFile(workbook);
+
+  const months = new Set();
+  rows.forEach(r => {
+    if (r._ym && r._ym.slice(0, 4) === String(targetYear)) {
+      months.add(r._ym.slice(5, 7));
+    }
+  });
+
+  return [...months].sort();
+}
+
 // ── 업로드 메인 함수 ───────────────────────────────────────
 // file: <input type="file"> 에서 받은 File 객체
 // branch: '서울숲' | '강북' | '강남'
@@ -192,3 +210,4 @@ async function uploadStatsFile(file, branch, kind, targetYear) {
 }
 
 window.uploadStatsFile = uploadStatsFile;
+window.peekStatsFileMonths = peekStatsFileMonths;
