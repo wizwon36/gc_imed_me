@@ -454,10 +454,10 @@ async function runStatsDashboard() {
         }));
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'vendor_name', label: '거래처' },
-          { key: 'supply',      label: '공급가액', numeric: true },
+          { key: 'supply',      label: '공급가액(VAT별도)', numeric: true },
           { key: 'vat',         label: '부가세',   numeric: true },
           ...itemTypeColumns,
-          { key: 'amount',      label: '합계금액', numeric: true, withBar: true },
+          { key: 'amount',      label: '합계금액(VAT포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수',    numeric: true },
         ]);
       };
@@ -470,10 +470,10 @@ async function runStatsDashboard() {
         }));
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'dept',   label: '부서' },
-          { key: 'supply', label: '공급가액', numeric: true },
+          { key: 'supply', label: '공급가액(VAT별도)', numeric: true },
           { key: 'vat',    label: '부가세',   numeric: true },
           ...itemTypeColumns,
-          { key: 'amount', label: '합계금액', numeric: true, withBar: true },
+          { key: 'amount', label: '합계금액(VAT포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수', numeric: true },
         ]);
       };
@@ -484,9 +484,9 @@ async function runStatsDashboard() {
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'item_name', label: '자재명' },
           { key: 'qty',        label: '수량',     numeric: true },
-          { key: 'supply',     label: '공급가액', numeric: true },
+          { key: 'supply',     label: '공급가액(VAT별도)', numeric: true },
           { key: 'vat',        label: '부가세',   numeric: true },
-          { key: 'amount',     label: '합계금액', numeric: true, withBar: true },
+          { key: 'amount',     label: '합계금액(VAT포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수',   numeric: true },
         ], 'openItemDetailModal');
       };
@@ -500,10 +500,10 @@ async function runStatsDashboard() {
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'ym',     label: '연월' },
           { key: 'qty',    label: '수량',     numeric: true },
-          { key: 'supply', label: '공급가액', numeric: true },
+          { key: 'supply', label: '공급가액(VAT별도)', numeric: true },
           { key: 'vat',    label: '부가세',   numeric: true },
           ...itemTypeColumns,
-          { key: 'amount', label: '합계금액', numeric: true, withBar: true },
+          { key: 'amount', label: '합계금액(VAT포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수', numeric: true },
         ]);
       };
@@ -551,7 +551,7 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
 
   container.innerHTML = `
     <div class="stat-summary-card accent-total">
-      <div class="stat-summary-label">총 ${amountLabel}액</div>
+      <div class="stat-summary-label">총 ${amountLabel}액 <span class="stat-summary-vat-tag">VAT포함</span></div>
       <div class="stat-summary-value">${fmtNum(summary.total)}원</div>
     </div>
     <div class="stat-summary-card accent-count">
@@ -697,9 +697,9 @@ function renderItemDetailModalTable(items) {
         { key: 'status',        label: '상태' },
         { key: 'quantity',      label: '수량',     numeric: true },
         { key: 'unit_price',    label: '단가',     numeric: true },
-        { key: 'supply_amount', label: '공급가액', numeric: true },
+        { key: 'supply_amount', label: '공급가액(VAT별도)', numeric: true },
         { key: 'vat_amount',    label: '부가세',   numeric: true },
-        { key: 'total_amount',  label: '합계금액', numeric: true },
+        { key: 'total_amount',  label: '합계금액(VAT포함)', numeric: true },
         { key: 'purchase_no',   label: '구매번호' },
       ];
 
@@ -746,7 +746,13 @@ function toggleStatRowExpand(rowId) {
 function renderPeriodComparisonTable(container, comparison) {
   const { basePeriod, comparePeriod, metrics, itemTypeComparison } = comparison;
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
-  const metricLabels = { qty: '수량', supply: '공급가액', vat: '부가세', amount: '합계금액', record_count: '건수' };
+  const metricLabels = {
+    qty: '수량',
+    supply: '공급가액 (부가세 별도)',
+    vat: '부가세',
+    amount: '합계금액 (부가세 포함)',
+    record_count: '건수',
+  };
 
   const rows = metrics.map(m => {
     const diffClass = m.diff > 0 ? 'stat-trend-up' : m.diff < 0 ? 'stat-trend-down' : '';
@@ -797,7 +803,7 @@ function renderPeriodComparisonTable(container, comparison) {
       </div>
     </div>
 
-    <p class="stat-compare-subheading">자재구분별 합계금액 비교</p>
+    <p class="stat-compare-subheading">자재구분별 합계금액 비교 (부가세 포함)</p>
     <div class="stat-table-wrap">
       <div style="overflow-x:auto;">
         <table class="stat-table">
