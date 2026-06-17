@@ -173,7 +173,13 @@ async function peekStatsFileMonths(file, kind, targetYear) {
 // branch: '서울숲' | '강북' | '강남'
 // kind: 'purchase' | 'usage'
 // targetYear: '2026' 같은 문자열 — 선택한 연도 외 데이터는 무시
-async function uploadStatsFile(file, branch, kind, targetYear) {
+// onProgress: ({ phase, current, total, ym }) => void — 진행 상황 콜백 (옵션)
+//   phase: 'parsing' | 'uploading'
+async function uploadStatsFile(file, branch, kind, targetYear, onProgress) {
+  const notify = (info) => { if (typeof onProgress === 'function') onProgress(info); };
+
+  notify({ phase: 'parsing' });
+
   const buf = await file.arrayBuffer();
   const workbook = XLSX.read(buf, { type: 'array' });
 
@@ -195,7 +201,10 @@ async function uploadStatsFile(file, branch, kind, targetYear) {
   const action = kind === 'purchase' ? 'uploadPurchaseRecords' : 'uploadUsageRecords';
 
   const results = [];
-  for (const ym of ymList) {
+  for (let i = 0; i < ymList.length; i++) {
+    const ym = ymList[i];
+    notify({ phase: 'uploading', current: i, total: ymList.length, ym });
+
     const res = await apiPost(action, {
       branch,
       ym,
@@ -204,6 +213,8 @@ async function uploadStatsFile(file, branch, kind, targetYear) {
       uploaded_by: user?.email || 'unknown',
     });
     results.push({ ym, count: grouped[ym].length, message: res.message });
+
+    notify({ phase: 'uploading', current: i + 1, total: ymList.length, ym });
   }
 
   return results;
