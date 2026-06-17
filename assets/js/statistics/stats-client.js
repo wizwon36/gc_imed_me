@@ -1,153 +1,214 @@
-/**
- * stats-client.js
- * Supabase 클라이언트 초기화 + 통계 조회용 쿼리 함수
- *
- * anon key로 SELECT만 수행 (RLS 정책상 쓰기 불가)
- */
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>구매·사용 통계 | MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/closing.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/statistics.css" />
+</head>
+<body class="portal-page">
+  <div class="container page-shell">
 
-'use strict';
+    <!-- 헤더 -->
+    <section class="top-brand-bar portal-topbar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">📈</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">MSO관리팀 업무지원 시스템</strong>
+          <span class="top-brand-sub">구매·사용 통계</span>
+        </div>
+      </div>
+      <div class="top-brand-actions portal-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+        <button type="button" id="logoutBtn" class="portal-header-btn portal-header-btn--secondary">로그아웃</button>
+      </div>
+    </section>
 
-// ★ 실제 값으로 교체 필요
-const SUPABASE_URL = 'https://llfbjgsuoaaifbfftuuf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZmJqZ3N1b2FhaWZiZmZ0dXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NTUxMTcsImV4cCI6MjA5NzIzMTExN30.5btOquOHOopWs502uMZxy0vBUzZ-xSnd22lCc-Yc-m8';
+    <!-- 메시지 박스 -->
+    <div id="messageBox" class="message-box"></div>
 
-const _supabase = window.supabase
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+    <!-- 권한 없음 -->
+    <div id="permissionDenied" class="card" style="display:none;">
+      <div class="empty-state" style="margin:8px 0;">
+        <div style="font-size:48px;margin-bottom:8px;">🔒</div>
+        <p class="empty-state-title">접근 권한이 없습니다</p>
+        <p class="empty-state-desc">관리자에게 statistics 권한을 요청하세요.</p>
+      </div>
+    </div>
 
-if (!_supabase) {
-  console.error('Supabase 클라이언트 로드 실패. supabase-js CDN 스크립트가 먼저 로드되어야 합니다.');
-}
+    <!-- 메인 앱 -->
+    <div id="appBody" style="display:none;">
 
-// ── 공통: 페이지네이션 없이 전체 행 가져오기 (Supabase는 기본 1000행 제한) ──
-async function fetchAllRows_(table, buildQuery) {
-  const PAGE_SIZE = 1000;
-  let from = 0;
-  let all = [];
+      <!-- 탭 -->
+      <div class="cl-tabs">
+        <button class="cl-tab active" id="tabDashboard" onclick="switchStatsTab('dashboard')">📊 통계 조회</button>
+        <button class="cl-tab" id="tabUpload" onclick="switchStatsTab('upload')">📤 데이터 업로드</button>
+      </div>
 
-  while (true) {
-    let query = buildQuery(_supabase.from(table).select('*'));
-    query = query.range(from, from + PAGE_SIZE - 1);
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭1: 통계 조회 (다음 단계에서 채울 예정)            -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabDashboardContent" class="cl-section active">
 
-    const { data, error } = await query;
-    if (error) throw new Error(error.message);
+        <!-- 공통 필터 바 -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-body">
+            <div class="cl-settings-row">
+              <div class="cl-field">
+                <label>의원</label>
+                <select id="statDashBranch">
+                  <option value="강남">강남의원</option>
+                  <option value="강북">강북의원</option>
+                  <option value="서울숲">서울숲의원</option>
+                </select>
+              </div>
+              <div class="cl-field">
+                <label>시작월</label>
+                <input type="month" id="statDashYmFrom">
+              </div>
+              <div class="cl-field">
+                <label>종료월</label>
+                <input type="month" id="statDashYmTo">
+              </div>
+              <div class="cl-field">
+                <label>&nbsp;</label>
+                <button type="button" class="btn btn-primary" onclick="runStatsDashboard()">조회</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    all = all.concat(data || []);
-    if (!data || data.length < PAGE_SIZE) break;
-    from += PAGE_SIZE;
-  }
+        <!-- 관점 서브탭 -->
+        <div class="cl-tabs" style="margin-bottom:14px;">
+          <button class="cl-tab active" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
+          <button class="cl-tab" id="subtabDept" onclick="switchStatsSubtab('dept')">🏬 부서별</button>
+          <button class="cl-tab" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
+          <button class="cl-tab" id="subtabTrend" onclick="switchStatsSubtab('trend')">📅 기간 비교</button>
+        </div>
 
-  return all;
-}
+        <!-- 요약 카드 -->
+        <div class="stat-summary-grid" id="statsSummaryGrid"></div>
 
-// ── 필터 적용 헬퍼 ─────────────────────────────────────────
-function applyFilters_(query, filters) {
-  const { branch, ymFrom, ymTo, itemType, dept, vendor } = filters || {};
-  if (branch)   query = query.eq('branch', branch);
-  if (ymFrom)   query = query.gte('ym', ymFrom);
-  if (ymTo)     query = query.lte('ym', ymTo);
-  if (itemType) query = query.eq('item_type', itemType);
-  if (dept)     query = query.eq('dept', dept);
-  if (vendor)   query = query.eq('vendor_name', vendor);
-  return query;
-}
+        <!-- 상세 표 -->
+        <div class="card">
+          <div class="card-body">
+            <div id="statsResultArea">
+              <p style="color:#6b7280;font-size:13px;">조회 버튼을 눌러 결과를 확인하세요.</p>
+            </div>
+          </div>
+        </div>
 
-// ═══════════════════════════════════════════════════════════
-// 1. 거래처별 통계 (purchase_records 기반)
-// ═══════════════════════════════════════════════════════════
-async function getVendorStats(filters) {
-  const rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
+      </div>
 
-  const grouped = {};
-  rows.forEach(r => {
-    const key = r.vendor_name || '(미확인)';
-    if (!grouped[key]) {
-      grouped[key] = { vendor_name: key, total_amount: 0, supply_amount: 0, vat_amount: 0, item_count: 0, record_count: 0 };
-    }
-    grouped[key].total_amount  += Number(r.total_amount)  || 0;
-    grouped[key].supply_amount += Number(r.supply_amount) || 0;
-    grouped[key].vat_amount    += Number(r.vat_amount)    || 0;
-    grouped[key].item_count    += 1;
-    grouped[key].record_count  += 1;
-  });
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭2: 데이터 업로드                                -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabUploadContent" class="cl-section">
 
-  return Object.values(grouped).sort((a, b) => b.total_amount - a.total_amount);
-}
+        <!-- 업로드 현황 -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-body">
+            <strong style="font-size:13px;">현재 의원 업로드 현황</strong>
+            <div id="uploadStatusArea" style="margin-top:10px;">
+              <p style="color:#6b7280;font-size:12px;">불러오는 중...</p>
+            </div>
+          </div>
+        </div>
 
-// ═══════════════════════════════════════════════════════════
-// 2. 부서별 통계 (usage_records 기반)
-// ═══════════════════════════════════════════════════════════
-async function getDeptStats(filters) {
-  const rows = await fetchAllRows_('usage_records', q => applyFilters_(q, filters));
+        <div class="card">
+          <div class="card-body">
+            <strong style="font-size:14px;">과거 입고·사용현황 원본 업로드</strong>
+            <p style="font-size:12px;color:#6b7280;margin-top:6px;margin-bottom:18px;">
+              선택한 연도에 해당하는 데이터만 추출되어 저장됩니다. (파일에 다른 연도가 섞여 있어도 무시됩니다)<br>
+              같은 의원·연월·파일명으로 다시 업로드하면 기존 데이터는 자동 교체됩니다.
+            </p>
 
-  const grouped = {};
-  rows.forEach(r => {
-    const key = r.dept || '(미확인)';
-    if (!grouped[key]) {
-      grouped[key] = { dept: key, usage_total: 0, usage_supply: 0, usage_vat: 0, record_count: 0 };
-    }
-    grouped[key].usage_total  += Number(r.usage_total)  || 0;
-    grouped[key].usage_supply += Number(r.usage_supply) || 0;
-    grouped[key].usage_vat    += Number(r.usage_vat)    || 0;
-    grouped[key].record_count += 1;
-  });
+            <div class="cl-settings-row" style="margin-bottom:18px;">
+              <div class="cl-field">
+                <label>의원</label>
+                <select id="statsBranch" onchange="loadUploadStatus()">
+                  <option value="강남">강남의원</option>
+                  <option value="강북">강북의원</option>
+                  <option value="서울숲">서울숲의원</option>
+                </select>
+              </div>
+              <div class="cl-field">
+                <label>연도</label>
+                <select id="statsYear"></select>
+              </div>
+            </div>
 
-  return Object.values(grouped).sort((a, b) => b.usage_total - a.usage_total);
-}
+            <div class="cl-upload-grid">
+              <div class="cl-upload-zone" id="zone-purchase"
+                ondragover="statsDragOver(event,'zone-purchase')"
+                ondragleave="statsDragLeave('zone-purchase')"
+                ondrop="statsDropFile(event,'purchase')">
+                <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'purchase')">
+                <div class="cl-upload-icon">📥</div>
+                <div class="cl-upload-label">입고(구매) 파일</div>
+                <div class="cl-upload-hint">예: 26년 1월 입고 - 강남.xlsx</div>
+                <div class="cl-upload-status" id="status-purchase"></div>
+              </div>
+              <div class="cl-upload-zone" id="zone-usage"
+                ondragover="statsDragOver(event,'zone-usage')"
+                ondragleave="statsDragLeave('zone-usage')"
+                ondrop="statsDropFile(event,'usage')">
+                <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'usage')">
+                <div class="cl-upload-icon">📋</div>
+                <div class="cl-upload-label">사용현황 파일</div>
+                <div class="cl-upload-hint">예: 26년 1월 사용현황 - 강남.xlsx</div>
+                <div class="cl-upload-status" id="status-usage"></div>
+              </div>
+            </div>
 
-// ═══════════════════════════════════════════════════════════
-// 3. 품목별 통계 (다음 단계에서 구현)
-// ═══════════════════════════════════════════════════════════
-async function getItemStats(filters) {
-  throw new Error('품목별 통계는 아직 구현되지 않았습니다.');
-}
+            <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnStatsUpload" disabled onclick="handleStatsUpload()">선택한 파일 업로드</button>
+            </div>
 
-// ═══════════════════════════════════════════════════════════
-// 4. 기간(월별/연도별) 추이 통계 (다음 단계에서 구현)
-// ═══════════════════════════════════════════════════════════
-async function getTrendStats(filters) {
-  throw new Error('기간별 추이 통계는 아직 구현되지 않았습니다.');
-}
+            <!-- 업로드 진행 표시 -->
+            <div id="statsProgressBox" style="display:none;margin-top:14px;">
+              <div class="cl-progress-label">
+                <span id="statsProgressLabel">준비 중...</span>
+                <span id="statsProgressPct">0%</span>
+              </div>
+              <div class="cl-progress-bar">
+                <div class="cl-progress-fill" id="statsProgressFill" style="width:0%"></div>
+              </div>
+            </div>
 
-// ═══════════════════════════════════════════════════════════
-// 5. 업로드 현황 조회 (연도별 업로드된 월 목록)
-// ═══════════════════════════════════════════════════════════
-async function getUploadStatus(branch) {
-  const [purchaseRows, usageRows] = await Promise.all([
-    fetchAllRows_('purchase_records', q => q.eq('branch', branch)),
-    fetchAllRows_('usage_records',    q => q.eq('branch', branch)),
-  ]);
+            <div id="statsUploadResult" style="margin-top:14px;"></div>
+          </div>
+        </div>
 
-  // ym(YYYY-MM) 집합을 연도별로 묶기: { '2026': Set('01','02',...), ... }
-  const buildYearMonthMap = (rows) => {
-    const map = {};
-    rows.forEach(r => {
-      const ym = r.ym || '';
-      const year = ym.slice(0, 4);
-      const month = ym.slice(5, 7);
-      if (!year || !month) return;
-      if (!map[year]) map[year] = new Set();
-      map[year].add(month);
-    });
-    return map;
-  };
+      </div>
 
-  const purchaseMap = buildYearMonthMap(purchaseRows);
-  const usageMap    = buildYearMonthMap(usageRows);
+    </div>
+  </div>
 
-  const allYears = [...new Set([...Object.keys(purchaseMap), ...Object.keys(usageMap)])].sort();
+  <!-- 전역 스피너 -->
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
+    </div>
+  </div>
 
-  return allYears.map(year => ({
-    year,
-    purchaseMonths: purchaseMap[year] ? [...purchaseMap[year]].sort() : [],
-    usageMonths:    usageMap[year]    ? [...usageMap[year]].sort()    : [],
-  }));
-}
+  <!-- 라이브러리 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-window.statsClient = {
-  getVendorStats,
-  getDeptStats,
-  getItemStats,
-  getTrendStats,
-  getUploadStatus,
-};
+  <!-- 공통 -->
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
+
+  <!-- 통계 모듈 -->
+  <script src="../../assets/js/statistics/stats-client.js"></script>
+  <script src="../../assets/js/statistics/stats-upload.js"></script>
+  <script src="../../assets/js/statistics/stats-main.js"></script>
+</body>
+</html>
