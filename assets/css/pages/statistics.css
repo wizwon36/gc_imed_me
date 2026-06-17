@@ -47,29 +47,30 @@
 }
 .stat-subtab-underline {
   display: flex;
-  gap: 22px;
+  gap: 26px;
   border-bottom: 1px solid var(--border-soft, #e2e8f0);
 }
 .stat-subtab-underline-btn {
   border: none;
   background: none;
   cursor: pointer;
-  padding: 0 0 10px;
+  padding: 0 0 12px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary, #5f6b7a);
-  border-bottom: 2px solid transparent;
+  color: var(--text-muted, #9aa5b1);
+  border-bottom: 3px solid transparent;
   margin-bottom: -1px;
-  transition: color .12s, border-color .12s;
+  transition: color .12s, border-color .12s, font-size .12s;
 }
 .stat-subtab-underline-btn:hover { color: var(--text-primary, #111827); }
 .stat-subtab-underline-btn.active {
   color: var(--blue, #2f6df6);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 14px;
   border-bottom-color: var(--blue, #2f6df6);
 }
 @media (max-width: 720px) {
-  .stat-subtab-underline { gap: 14px; overflow-x: auto; }
+  .stat-subtab-underline { gap: 18px; overflow-x: auto; }
 }
 
 /* ── 필터 바: 카드형 검색 도구 ──────────────────────────── */
