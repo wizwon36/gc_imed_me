@@ -110,9 +110,9 @@
 
         <!-- 입고/사용 구분 + 관점 서브탭 + 기간비교 전용 컨트롤 (하나의 패널로 묶어 위계를 시각적으로 구분) -->
         <div class="stat-scope-panel">
-          <div class="stat-recordtype-seg">
-            <button class="stat-recordtype-seg-btn active" id="recordTypePurchase" onclick="switchRecordType('purchase')">📥 입고조회</button>
-            <button class="stat-recordtype-seg-btn" id="recordTypeUsage" onclick="switchRecordType('usage')">📋 사용조회</button>
+          <div class="stat-seg-toggle">
+            <button class="stat-seg-toggle-btn active" id="recordTypePurchase" onclick="switchRecordType('purchase')">📥 입고조회</button>
+            <button class="stat-seg-toggle-btn" id="recordTypeUsage" onclick="switchRecordType('usage')">📋 사용조회</button>
           </div>
           <div class="stat-subtab-underline">
             <button class="stat-subtab-underline-btn active" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
@@ -123,9 +123,9 @@
 
           <!-- 기간 비교 전용 컨트롤 (기간비교 서브탭에서만 표시) -->
           <div class="stat-trend-controls" id="trendControlsPanel" style="display:none;">
-            <div class="stat-trend-mode-toggle">
-              <button class="stat-trend-mode-btn active" id="trendModeMonthly" onclick="switchTrendMode('monthly')">월별 추이</button>
-              <button class="stat-trend-mode-btn" id="trendModeCompare" onclick="switchTrendMode('compare')">구간 비교</button>
+            <div class="stat-seg-toggle">
+              <button class="stat-seg-toggle-btn active" id="trendModeMonthly" onclick="switchTrendMode('monthly')">월별 추이</button>
+              <button class="stat-seg-toggle-btn" id="trendModeCompare" onclick="switchTrendMode('compare')">구간 비교</button>
             </div>
 
             <div id="trendCompareFields" style="display:none;">
