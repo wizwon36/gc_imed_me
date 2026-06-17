@@ -282,26 +282,8 @@
     </div>
   </div>
 
-  <!-- 자재구분 드릴다운 모달 -->
-  <div id="itemDrilldownModal" class="stat-modal-overlay" style="display:none;" onclick="if(event.target===this)closeItemTypeDrilldown()">
-    <div class="stat-modal-dialog">
-      <div class="stat-modal-header">
-        <strong id="itemDrilldownTitle">상세 내역</strong>
-        <button type="button" class="stat-advanced-close" onclick="closeItemTypeDrilldown()">✕</button>
-      </div>
-      <div class="stat-modal-toolbar">
-        <div class="stat-filter-input-icon" style="flex:1;">
-          <span>🔍</span>
-          <input type="text" id="itemDrilldownSearch" placeholder="자재명, 구매번호, 규격 등으로 재검색" autocomplete="off" oninput="filterItemDrilldown()">
-        </div>
-        <span id="itemDrilldownCount" class="stat-modal-count"></span>
-      </div>
-      <div id="itemDrilldownBody" class="stat-modal-body"></div>
-    </div>
-  </div>
-
   <!-- 품목 세부내역 모달 -->
-  <div id="itemDetailModal" class="stat-modal-overlay" style="display:none;" onclick="if(event.target===this)closeItemDetailModal()">
+  <div id="itemDetailModal" class="stat-modal-overlay" style="display:none;" onmousedown="this._downOnOverlay = (event.target === this)" onclick="if(event.target===this && this._downOnOverlay) closeItemDetailModal()">
     <div class="stat-modal-dialog stat-modal-dialog--wide">
       <div class="stat-modal-header">
         <strong id="itemDetailModalTitle">세부 내역</strong>
