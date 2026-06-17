@@ -71,22 +71,41 @@
             <label>종료월</label>
             <input type="month" id="statDashYmTo">
           </div>
-          <div class="stat-filter-field stat-filter-field--search" id="statDashVendorField">
-            <label>거래처</label>
+          <div class="stat-filter-field">
+            <label>검색구분</label>
+            <select id="statSearchType" onchange="updateSearchKeywordSuggestions()">
+              <option value="vendor">업체명</option>
+              <option value="dept">부서명</option>
+              <option value="itemType">자재구분</option>
+            </select>
+          </div>
+          <div class="stat-filter-field stat-filter-field--search">
+            <label>검색어</label>
             <div class="stat-filter-input-icon">
               <span>🔍</span>
-              <input type="text" id="statDashVendor" list="statDashVendorList" placeholder="전체 거래처" autocomplete="off">
-              <datalist id="statDashVendorList"></datalist>
+              <input type="text" id="statSearchKeyword" list="statSearchSuggestions" placeholder="검색어 입력 (포함된 내용 검색)" autocomplete="off" onkeydown="if(event.key==='Enter')runStatsDashboard()">
+              <datalist id="statSearchSuggestions"></datalist>
             </div>
           </div>
-          <div class="stat-filter-field stat-filter-field--search" id="statDashDeptField" style="display:none;">
-            <label>부서</label>
-            <div class="stat-filter-input-icon">
-              <span>🔍</span>
-              <input type="text" id="statDashDept" placeholder="전체 부서" autocomplete="off">
-            </div>
-          </div>
+          <button type="button" class="btn stat-filter-advanced" id="btnOpenAdvancedSearch" onclick="openAdvancedSearch()">
+            상세검색<span id="advancedSearchBadge" class="stat-advanced-badge" style="display:none;">0</span>
+          </button>
           <button type="button" class="btn btn-primary stat-filter-submit" onclick="runStatsDashboard()">조회</button>
+        </div>
+
+        <!-- 상세검색 패널 (기본 숨김) -->
+        <div class="stat-advanced-panel" id="advancedSearchPanel" style="display:none;">
+          <div class="stat-advanced-header">
+            <strong>상세검색 조건</strong>
+            <button type="button" class="stat-advanced-close" onclick="closeAdvancedSearch()">✕</button>
+          </div>
+          <div id="advancedConditionRows"></div>
+          <div class="stat-advanced-footer">
+            <button type="button" class="btn" onclick="addAdvancedConditionRow()">+ 조건 추가</button>
+            <div style="flex:1;"></div>
+            <button type="button" class="btn" onclick="clearAdvancedConditions()">초기화</button>
+            <button type="button" class="btn btn-primary" onclick="applyAdvancedSearch()">적용</button>
+          </div>
         </div>
 
         <!-- 관점 서브탭 -->
