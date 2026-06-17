@@ -101,31 +101,31 @@ async function loadUploadStatus() {
   const branch = document.getElementById('statsBranch').value;
   const year = document.getElementById('statsYear').value;
   const area = document.getElementById('uploadStatusArea');
-  area.innerHTML = '<p style="color:#6b7280;font-size:12px;">불러오는 중...</p>';
+  area.innerHTML = '<div class="stat-loading-row"><span class="stat-mini-spinner"></span>불러오는 중...</div>';
 
   try {
     const status = await window.statsClient.getUploadStatus(branch);
     const yearStatus = status.find(s => s.year === year);
 
     if (!yearStatus || (!yearStatus.purchaseMonths.length && !yearStatus.usageMonths.length)) {
-      area.innerHTML = `<p style="color:#9ca3af;font-size:12px;">${year}년에 업로드된 데이터가 없습니다.</p>`;
+      area.innerHTML = `<p style="color:var(--text-muted,#7b8794);font-size:12px;">${year}년에 업로드된 데이터가 없습니다.</p>`;
       return;
     }
 
     const renderMonths = (months, allLabel) => {
       if (!months.length) return '<span style="color:#d1d5db;">없음</span>';
-      if (months.length === 12) return `<span style="color:#059669;font-weight:600;">${allLabel} (1~12월 전체)</span>`;
+      if (months.length === 12) return `<span style="color:#2fa36b;font-weight:600;">${allLabel} (1~12월 전체)</span>`;
       const last = months[months.length - 1];
-      return `<span style="color:#1a56db;">${months.length}개월 (~${last}월)</span>`;
+      return `<span style="color:var(--blue,#2f6df6);">${months.length}개월 (~${last}월)</span>`;
     };
 
     area.innerHTML = `
       <table style="width:100%;border-collapse:collapse;">
         <tbody>
           <tr>
-            <td style="padding:6px 10px;font-size:12px;font-weight:600;border-bottom:1px solid #f1f5f9;">${year}년</td>
-            <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">입고: ${renderMonths(yearStatus.purchaseMonths, '완료')}</td>
-            <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">사용현황: ${renderMonths(yearStatus.usageMonths, '완료')}</td>
+            <td style="padding:6px 10px;font-size:12px;font-weight:600;border-bottom:1px solid var(--border-soft,#eaeff5);">${year}년</td>
+            <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border-soft,#eaeff5);">입고: ${renderMonths(yearStatus.purchaseMonths, '완료')}</td>
+            <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border-soft,#eaeff5);">사용현황: ${renderMonths(yearStatus.usageMonths, '완료')}</td>
           </tr>
         </tbody>
       </table>`;
@@ -139,7 +139,10 @@ async function loadUploadStatus() {
 function populateVendorDatalist() {
   const list = document.getElementById('statDashVendorList');
   if (!list) return;
-  const names = (StatsApp.vendors || []).map(v => v.vendor_name).filter(Boolean);
+  const names = (StatsApp.vendors || [])
+    .map(v => v.vendor_name)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'ko'));
   list.innerHTML = names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">`).join('');
 }
 
@@ -279,28 +282,27 @@ function renderStatsTable(container, rows, barKey, columns) {
   const tbody = rows.map((row, i) => {
     const cells = columns.map(c => {
       if (c.key === columns[0].key) {
-        // 첫 번째(이름) 컬럼: 순위 배지 + 이름 + (미등록 거래처는 경고 표시)
+        // 첫 번째(이름) 컬럼: 순위 배지 + 이름 + 사업자번호(있는 경우) + (미등록 거래처는 경고 표시)
         const unmatchedBadge = row.unmatched
           ? ` <span title="거래처 마스터에 등록되지 않음" style="color:#d97706;font-size:11px;">⚠ 미등록</span>`
+          : '';
+        const bizNoText = row.vendor_biz_no
+          ? `<div class="stat-vendor-bizno">${row.vendor_biz_no}</div>`
           : '';
         const nameCell = `
           <span class="stat-name-cell">
             <span class="stat-rank-badge ${rankClass(i)}">${i + 1}</span>
-            ${row[c.key] || '-'}${unmatchedBadge}
+            <span>
+              <div>${row[c.key] || '-'}${unmatchedBadge}</div>
+              ${bizNoText}
+            </span>
           </span>`;
         return `<td>${nameCell}</td>`;
       }
       if (c.withBar) {
         const val = Number(row[c.key]) || 0;
         const pct = (val / maxVal) * 100;
-        return `<td class="num">
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;">
-            <span class="stat-bar-track" style="flex:1;max-width:90px;">
-              <span class="stat-bar-fill" style="width:${pct}%;"></span>
-            </span>
-            <span>${fmtNum(val)}</span>
-          </div>
-        </td>`;
+        return `<td class="num stat-bar-cell" style="--bar-pct:${pct}%;">${fmtNum(val)}</td>`;
       }
       const val = c.numeric ? fmtNum(row[c.key]) : (row[c.key] || '-');
       return `<td class="${c.numeric ? 'num' : ''}">${val}</td>`;
