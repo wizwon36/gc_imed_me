@@ -240,6 +240,15 @@ function renderStatsTable(container, rows, barKey, columns) {
     <p style="color:#9ca3af;font-size:11px;margin-top:10px;">총 ${rows.length}건</p>
   `;
 }
+// ── 로그 출력 (closing 모듈의 clog와 동일한 패턴) ─────────────
+function statsLog(msg, cls = 'info') {
+  const box = document.getElementById('statsUploadResult');
+  if (!box) return;
+  const t = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  box.innerHTML += `<div class="cl-log-line ${cls}"><span class="cl-log-time">[${t}]</span>${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+
 // ── 파일 업로드 (드래그&드롭) ──────────────────────────────
 const StatsApp = { purchaseRaw: null, usageRaw: null };
 
@@ -269,6 +278,9 @@ async function handleStatsUpload() {
   const resultEl = document.getElementById('statsUploadResult');
   const btn = document.getElementById('btnStatsUpload');
 
+  resultEl.innerHTML = '';
+  statsLog(`업로드 시작 — ${branch} ${year}년`, 'info');
+
   // 파일 형식(헤더) 검증 — 잘못된 영역에 올렸거나 형식이 다르면 즉시 중단
   try {
     if (StatsApp.purchaseRaw) {
@@ -278,7 +290,7 @@ async function handleStatsUpload() {
       await window.validateStatsFileHeaders(StatsApp.usageRaw, 'usage');
     }
   } catch (error) {
-    resultEl.innerHTML = `<div style="color:#dc2626;font-size:12px;white-space:pre-line;">⚠ ${error.message}</div>`;
+    statsLog(`⚠ ${error.message.replace(/\n/g, '<br>')}`, 'err');
     return;
   }
 
@@ -305,7 +317,11 @@ async function handleStatsUpload() {
         const msg = `${branch} ${year}년의 다음 데이터가 이미 존재하며, 새 파일로 덮어쓰게 됩니다.\n\n` +
           overlapMsgs.join('\n') +
           `\n\n계속하시겠습니까?`;
-        if (!confirm(msg)) return;
+        if (!confirm(msg)) {
+          statsLog('사용자가 업로드를 취소했습니다.', 'warn');
+          return;
+        }
+        statsLog(`겹치는 월 확인됨 (${overlapMsgs.join(' / ')}) — 덮어쓰기로 진행`, 'warn');
       }
     }
   } catch (e) {
@@ -330,15 +346,15 @@ async function handleStatsUpload() {
 
   progressBox.style.display = '';
   setProgress(0, '준비 중...');
-  resultEl.innerHTML = '';
   btn.disabled = true;
 
-  const lines = [];
   try {
     for (let fi = 0; fi < fileKinds.length; fi++) {
       const { kind, file, label } = fileKinds[fi];
       const baseProgress = (fi / fileKinds.length) * 100;
       const fileWeight = 100 / fileKinds.length;
+
+      statsLog(`${label} 파일 처리 시작: ${file.name}`, 'info');
 
       const results = await window.uploadStatsFile(file, branch, kind, year, (info) => {
         if (info.phase === 'parsing') {
@@ -350,11 +366,11 @@ async function handleStatsUpload() {
         }
       });
 
-      results.forEach(r => lines.push(`<div style="color:#059669;font-size:12px;">✓ ${label} ${r.ym}: ${r.count}건 저장</div>`));
+      results.forEach(r => statsLog(`${label} ${r.ym}: ${r.count}건 저장`, 'ok'));
     }
 
     setProgress(100, '완료');
-    resultEl.innerHTML = lines.join('');
+    statsLog('모든 파일 업로드 완료', 'ok');
 
     // 업로드 완료 후 초기화
     ['purchase', 'usage'].forEach(type => {
@@ -369,7 +385,7 @@ async function handleStatsUpload() {
     await loadUploadStatus();
   } catch (error) {
     console.error(error);
-    resultEl.innerHTML = `<div style="color:#dc2626;font-size:12px;">오류: ${error.message}</div>` + lines.join('');
+    statsLog(`오류: ${error.message}`, 'err');
   } finally {
     btn.disabled = !(StatsApp.purchaseRaw || StatsApp.usageRaw);
     setTimeout(() => { progressBox.style.display = 'none'; }, 1500);
