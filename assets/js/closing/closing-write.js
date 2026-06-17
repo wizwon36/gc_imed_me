@@ -603,6 +603,12 @@ function writeSAP(ws, year, month, branch, sapRows, totalSup, cc, account, vendo
   };
   const MEDIUM_BOTTOM = { bottom: { style: 'medium' } };
 
+  // 1행: D1~L1 노란색 채우기
+  const YELLOW_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+  for (let c = 4; c <= 12; c++) {
+    ws.getCell(1, c).fill = YELLOW_FILL;
+  }
+
   // 2행: 요약정보
   ws.getCell(2, 4).value  = account; ws.getCell(2, 4).font = F.bold;
   ws.getCell(2, 7).value  = totalSup; ws.getCell(2, 7).font = F.bold; ws.getCell(2, 7).numFmt = NUM_FMT;
@@ -831,7 +837,7 @@ function writeSubul(ws, year, month, branch, items, R) {
     return s;
   }, 0);
   [['소모품', somoItems, FILL.gc], ['시약', siyakItems, FILL.imed]].forEach(([lbl, arr, fill]) => {
-    txtCell(ws, r, 3, lbl, fill, true, true);
+    txtCell(ws, r, 3, lbl, fill, true, true); ws.getCell(r, 3).border = BORDER_THIN;
     [6, 8, 10, 13].forEach(c => { ws.getCell(r, c).border = BORDER_THIN; });
     numCell(ws, r, 6,  subSum(arr,'기초'), fill); ws.getCell(r, 6).border  = BORDER_THIN;
     numCell(ws, r, 8,  subSum(arr,'증가'), fill); ws.getCell(r, 8).border  = BORDER_THIN;
@@ -925,7 +931,7 @@ function writeSubul(ws, year, month, branch, items, R) {
     [u5Sup(somo5), u5Vat(somo5), u5Tot(somo5)],
     [u5Sup(siyk5), u5Vat(siyk5), u5Tot(siyk5)]
   ]].forEach(([tag, tagFill, somoRow, siykRow]) => {
-    txtCell(ws, r, 6, '사용현황자료', FILL.subtot, true, true);
+    txtCell(ws, r, 6, '사용현황자료', FILL.subtot, true, true); ws.getCell(r, 6).border = BORDER_THIN;
     const tc=ws.getCell(r,7); tc.value=tag; tc.font=F.bold; tc.fill=tagFill; tc.alignment=AL('center'); tc.border=BORDER_THIN;
     hdrCell(ws, r, 8, '공급가액');
     hdrCell(ws, r, 9, '부가세액');
