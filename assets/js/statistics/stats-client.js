@@ -73,16 +73,28 @@ function buildSummary_(rows, amountKey, countKey) {
 
 // ═══════════════════════════════════════════════════════════
 // 1. 거래처별 통계 (purchase_records 기반)
+// 사업자번호(vendor_biz_no) 기준으로 그룹핑 — 거래처명 변경/표기 차이에도 동일 거래처로 집계
+// 사업자번호가 없는 행(거래처 마스터 미등록)은 거래처명 기준으로 별도 그룹핑하고 미등록 표시
 // ═══════════════════════════════════════════════════════════
 async function getVendorStats(filters) {
   const rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
 
   const grouped = {};
   rows.forEach(r => {
-    const key = r.vendor_name || '(미확인)';
+    const bizNo = r.vendor_biz_no || null;
+    // 사업자번호가 있으면 그걸 키로, 없으면 거래처명 기준 (미등록 거래처 임시 그룹)
+    const key = bizNo ? `biz:${bizNo}` : `name:${r.vendor_name || '(미확인)'}`;
+
     if (!grouped[key]) {
-      grouped[key] = { vendor_name: key, total_amount: 0, supply_amount: 0, vat_amount: 0, item_count: 0, record_count: 0 };
+      grouped[key] = {
+        vendor_name: r.vendor_name || '(미확인)',
+        vendor_biz_no: bizNo,
+        unmatched: !bizNo,
+        total_amount: 0, supply_amount: 0, vat_amount: 0, item_count: 0, record_count: 0,
+      };
     }
+    // 가장 최근 거래처명으로 갱신 (거래처명이 바뀐 경우 최신 표기 사용)
+    grouped[key].vendor_name = r.vendor_name || grouped[key].vendor_name;
     grouped[key].total_amount  += Number(r.total_amount)  || 0;
     grouped[key].supply_amount += Number(r.supply_amount) || 0;
     grouped[key].vat_amount    += Number(r.vat_amount)    || 0;
