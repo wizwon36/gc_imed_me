@@ -454,10 +454,10 @@ async function runStatsDashboard() {
         }));
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'vendor_name', label: '거래처' },
-          { key: 'supply',      label: '공급가액(VAT별도)', numeric: true },
+          { key: 'supply',      label: '공급가액(부가세 별도)', numeric: true },
           { key: 'vat',         label: '부가세',   numeric: true },
           ...itemTypeColumns,
-          { key: 'amount',      label: '합계금액(VAT포함)', numeric: true, withBar: true },
+          { key: 'amount',      label: '합계금액(부가세 포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수',    numeric: true },
         ]);
       };
@@ -470,10 +470,10 @@ async function runStatsDashboard() {
         }));
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'dept',   label: '부서' },
-          { key: 'supply', label: '공급가액(VAT별도)', numeric: true },
+          { key: 'supply', label: '공급가액(부가세 별도)', numeric: true },
           { key: 'vat',    label: '부가세',   numeric: true },
           ...itemTypeColumns,
-          { key: 'amount', label: '합계금액(VAT포함)', numeric: true, withBar: true },
+          { key: 'amount', label: '합계금액(부가세 포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수', numeric: true },
         ]);
       };
@@ -484,9 +484,9 @@ async function runStatsDashboard() {
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'item_name', label: '자재명' },
           { key: 'qty',        label: '수량',     numeric: true },
-          { key: 'supply',     label: '공급가액(VAT별도)', numeric: true },
+          { key: 'supply',     label: '공급가액(부가세 별도)', numeric: true },
           { key: 'vat',        label: '부가세',   numeric: true },
-          { key: 'amount',     label: '합계금액(VAT포함)', numeric: true, withBar: true },
+          { key: 'amount',     label: '합계금액(부가세 포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수',   numeric: true },
         ], 'openItemDetailModal');
       };
@@ -500,10 +500,10 @@ async function runStatsDashboard() {
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'ym',     label: '연월' },
           { key: 'qty',    label: '수량',     numeric: true },
-          { key: 'supply', label: '공급가액(VAT별도)', numeric: true },
+          { key: 'supply', label: '공급가액(부가세 별도)', numeric: true },
           { key: 'vat',    label: '부가세',   numeric: true },
           ...itemTypeColumns,
-          { key: 'amount', label: '합계금액(VAT포함)', numeric: true, withBar: true },
+          { key: 'amount', label: '합계금액(부가세 포함)', numeric: true, withBar: true },
           { key: 'record_count', label: '건수', numeric: true },
         ]);
       };
@@ -552,7 +552,7 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
 
   container.innerHTML = `
     <div class="stat-summary-card accent-total">
-      <div class="stat-summary-label">총 ${amountLabel}액 <span class="stat-summary-vat-tag">VAT포함</span></div>
+      <div class="stat-summary-label">총 ${amountLabel}액 <span class="stat-summary-vat-tag">부가세 포함</span></div>
       <div class="stat-summary-value">${fmtNum(summary.total)}원</div>
     </div>
     <div class="stat-summary-card accent-count">
@@ -698,9 +698,9 @@ function renderItemDetailModalTable(items) {
         { key: 'status',        label: '상태' },
         { key: 'quantity',      label: '수량',     numeric: true },
         { key: 'unit_price',    label: '단가',     numeric: true },
-        { key: 'supply_amount', label: '공급가액(VAT별도)', numeric: true },
+        { key: 'supply_amount', label: '공급가액(부가세 별도)', numeric: true },
         { key: 'vat_amount',    label: '부가세',   numeric: true },
-        { key: 'total_amount',  label: '합계금액(VAT포함)', numeric: true },
+        { key: 'total_amount',  label: '합계금액(부가세 포함)', numeric: true },
         { key: 'purchase_no',   label: '구매번호' },
       ];
 
@@ -749,11 +749,13 @@ function renderPeriodComparisonTable(container, comparison) {
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
   const metricLabels = {
     qty: '수량',
-    supply: '공급가액 (부가세 별도)',
+    supply: '공급가액',
     vat: '부가세',
-    amount: '합계금액 (부가세 포함)',
+    amount: '합계금액',
     record_count: '건수',
   };
+  const compareLabel = `${comparePeriod.ymFrom} ~ ${comparePeriod.ymTo}`;
+  const baseLabel = `${basePeriod.ymFrom} ~ ${basePeriod.ymTo}`;
 
   const rows = metrics.map(m => {
     const diffClass = m.diff > 0 ? 'stat-trend-up' : m.diff < 0 ? 'stat-trend-down' : '';
@@ -785,17 +787,17 @@ function renderPeriodComparisonTable(container, comparison) {
 
   container.innerHTML = `
     <div class="stat-compare-period-labels">
-      <span class="stat-compare-period-chip stat-compare-period-chip--compare">비교 구간 ${comparePeriod.ymFrom} ~ ${comparePeriod.ymTo}</span>
+      <span class="stat-compare-period-chip stat-compare-period-chip--compare">비교 구간 ${compareLabel}</span>
       <span style="color:var(--text-muted,#9aa5b1);">→</span>
-      <span class="stat-compare-period-chip stat-compare-period-chip--base">기준 구간 ${basePeriod.ymFrom} ~ ${basePeriod.ymTo}</span>
+      <span class="stat-compare-period-chip stat-compare-period-chip--base">기준 구간 ${baseLabel}</span>
     </div>
     <div class="stat-table-wrap">
       <div style="overflow-x:auto;">
         <table class="stat-table">
           <thead><tr>
             <th>지표</th>
-            <th class="num">비교 구간</th>
-            <th class="num">기준 구간</th>
+            <th class="num">${compareLabel}</th>
+            <th class="num">${baseLabel}</th>
             <th class="num">증감</th>
             <th class="num">증감률</th>
           </tr></thead>
@@ -804,14 +806,14 @@ function renderPeriodComparisonTable(container, comparison) {
       </div>
     </div>
 
-    <p class="stat-compare-subheading">자재구분별 합계금액 비교 (부가세 포함)</p>
+    <p class="stat-compare-subheading">자재구분별 합계금액 비교</p>
     <div class="stat-table-wrap">
       <div style="overflow-x:auto;">
         <table class="stat-table">
           <thead><tr>
             <th>자재구분</th>
-            <th class="num">비교 구간</th>
-            <th class="num">기준 구간</th>
+            <th class="num">${compareLabel}</th>
+            <th class="num">${baseLabel}</th>
             <th class="num">증감</th>
             <th class="num">증감률</th>
           </tr></thead>
