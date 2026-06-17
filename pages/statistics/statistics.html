@@ -55,15 +55,15 @@
         <div class="card">
           <div class="card-body">
             <strong style="font-size:14px;">과거 입고·사용현황 원본 업로드</strong>
-            <p style="font-size:12px;color:#6b7280;margin-top:6px;">
+            <p style="font-size:12px;color:#6b7280;margin-top:6px;margin-bottom:18px;">
               엑셀 파일의 실제 날짜(입고일자/사용일자)를 기준으로 연월이 자동 분류되어 저장됩니다.<br>
               같은 의원·연월·파일명으로 다시 업로드하면 기존 데이터는 자동 교체됩니다.
             </p>
 
-            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;">
+            <div class="cl-settings-row" style="margin-bottom:18px;">
               <div class="cl-field">
                 <label>의원</label>
-                <select id="statsBranch" style="border:1px solid #d1d5db;border-radius:6px;padding:7px 11px;font-size:13px;width:160px;">
+                <select id="statsBranch">
                   <option value="서울숲">서울숲의원</option>
                   <option value="강북">강북의원</option>
                   <option value="강남">강남의원</option>
@@ -71,27 +71,34 @@
               </div>
             </div>
 
-            <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;">
-              <!-- 입고 파일 -->
-              <div class="card" style="flex:1;min-width:280px;border:1px solid #e5e7eb;">
-                <div class="card-body">
-                  <strong style="font-size:13px;">📥 입고(구매) 파일</strong>
-                  <input type="file" id="purchaseFileInput" accept=".xlsx" style="display:block;margin-top:10px;font-size:13px;">
-                  <button type="button" class="btn btn-primary" style="margin-top:10px;" onclick="handleStatsUpload('purchase')">업로드</button>
-                  <div id="purchaseUploadResult" style="margin-top:10px;font-size:12px;"></div>
-                </div>
+            <div class="cl-upload-grid">
+              <div class="cl-upload-zone" id="zone-purchase"
+                ondragover="statsDragOver(event,'zone-purchase')"
+                ondragleave="statsDragLeave('zone-purchase')"
+                ondrop="statsDropFile(event,'purchase')">
+                <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'purchase')">
+                <div class="cl-upload-icon">📥</div>
+                <div class="cl-upload-label">입고(구매) 파일</div>
+                <div class="cl-upload-hint">예: 16년 1월 입고 - 강남.xlsx</div>
+                <div class="cl-upload-status" id="status-purchase"></div>
               </div>
-
-              <!-- 사용현황 파일 -->
-              <div class="card" style="flex:1;min-width:280px;border:1px solid #e5e7eb;">
-                <div class="card-body">
-                  <strong style="font-size:13px;">📤 사용현황 파일</strong>
-                  <input type="file" id="usageFileInput" accept=".xlsx" style="display:block;margin-top:10px;font-size:13px;">
-                  <button type="button" class="btn btn-primary" style="margin-top:10px;" onclick="handleStatsUpload('usage')">업로드</button>
-                  <div id="usageUploadResult" style="margin-top:10px;font-size:12px;"></div>
-                </div>
+              <div class="cl-upload-zone" id="zone-usage"
+                ondragover="statsDragOver(event,'zone-usage')"
+                ondragleave="statsDragLeave('zone-usage')"
+                ondrop="statsDropFile(event,'usage')">
+                <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'usage')">
+                <div class="cl-upload-icon">📋</div>
+                <div class="cl-upload-label">사용현황 파일</div>
+                <div class="cl-upload-hint">예: 16년 1월 사용현황 - 강남.xlsx</div>
+                <div class="cl-upload-status" id="status-usage"></div>
               </div>
             </div>
+
+            <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnStatsUpload" disabled onclick="handleStatsUpload()">선택한 파일 업로드</button>
+            </div>
+
+            <div id="statsUploadResult" style="margin-top:14px;"></div>
           </div>
         </div>
 
