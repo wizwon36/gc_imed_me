@@ -27,14 +27,32 @@ function renderVendorTable() {
   if (!tbody) return;
 
   if (!StatsApp.vendors.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">등록된 거래처가 없습니다. [+ 행 추가] 또는 [엑셀 업로드]를 이용하세요.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">등록된 거래처가 없습니다. [+ 행 추가] 또는 [엑셀 업로드]를 이용하세요.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = StatsApp.vendors.map((v, i) => `
+  // 사업자번호별 그룹 크기 계산 (2개 이상인 그룹만 대표 선택 라디오가 의미 있음)
+  const bizNoCounts = {};
+  StatsApp.vendors.forEach(v => {
+    const biz = (v.biz_no || '').trim();
+    if (biz) bizNoCounts[biz] = (bizNoCounts[biz] || 0) + 1;
+  });
+
+  tbody.innerHTML = StatsApp.vendors.map((v, i) => {
+    const biz = (v.biz_no || '').trim();
+    const groupSize = biz ? (bizNoCounts[biz] || 0) : 0;
+    let currentCell;
+    if (groupSize >= 2) {
+      currentCell = `<input type="radio" name="vendorCurrent_${vendorEscHtml(biz)}" data-idx="${i}" ${v.is_current ? 'checked' : ''} onchange="vendorSetCurrent(${i})" title="이 사업자번호의 현재 사용 명칭으로 지정">`;
+    } else {
+      // 사업자번호가 비어있거나 그룹에 거래처가 하나뿐이면 대표 지정이 필요 없음
+      currentCell = `<span style="color:#d1d5db;" title="동일 사업자번호 거래처가 2개 이상일 때만 선택 가능">—</span>`;
+    }
+    return `
     <tr>
       <td><input type="text" value="${vendorEscHtml(v.vendor_name || '')}" data-idx="${i}" data-field="vendor_name" onchange="vendorEdit(this)"></td>
       <td><input type="text" value="${vendorEscHtml(v.biz_no || '')}" data-idx="${i}" data-field="biz_no" onchange="vendorEdit(this)"></td>
+      <td style="text-align:center;">${currentCell}</td>
       <td style="text-align:center;"><input type="number" value="${v.credit_days ?? 90}" data-idx="${i}" data-field="credit_days" min="0" style="width:70px;text-align:center;" onchange="vendorEdit(this)"></td>
       <td style="text-align:center;">
         <select data-idx="${i}" data-field="pay_method" onchange="vendorEdit(this)">
@@ -45,7 +63,18 @@ function renderVendorTable() {
       </td>
       <td style="text-align:center;"><button onclick="deleteVendor(${i})" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;" title="삭제">🗑</button></td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
+}
+
+// 사업자번호가 같은 그룹 내에서 대표(현재 사용 명칭)를 하나로만 지정
+function vendorSetCurrent(idx) {
+  const biz = (StatsApp.vendors[idx].biz_no || '').trim();
+  StatsApp.vendors.forEach(v => {
+    if ((v.biz_no || '').trim() === biz) v.is_current = false;
+  });
+  StatsApp.vendors[idx].is_current = true;
+  StatsApp.vendorsDirty = true;
 }
 
 function vendorEscHtml(s) {
@@ -58,10 +87,12 @@ function vendorEdit(el) {
   const val   = field === 'credit_days' ? (parseInt(el.value) || 0) : el.value;
   StatsApp.vendors[idx][field] = val;
   StatsApp.vendorsDirty = true;
+  // 사업자번호가 바뀌면 그룹 구성이 달라지므로 대표 선택 UI를 다시 그려야 함
+  if (field === 'biz_no') renderVendorTable();
 }
 
 function addVendorRow() {
-  StatsApp.vendors.push({ vendor_name: '', biz_no: '', credit_days: 90, pay_method: '현금결제' });
+  StatsApp.vendors.push({ vendor_name: '', biz_no: '', credit_days: 90, pay_method: '현금결제', is_current: true });
   StatsApp.vendorsDirty = true;
   renderVendorTable();
   const lastRow = document.getElementById('vendorTbody').lastElementChild;
