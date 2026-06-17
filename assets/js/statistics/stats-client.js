@@ -161,8 +161,10 @@ async function getVendorStats(filters) {
         total_amount: 0, supply_amount: 0, vat_amount: 0, item_count: 0, record_count: 0,
         breakdown: {}, // 실제 데이터에 등장한 이름별 세부 내역 (펼쳐보기용)
         byItemType: {}, // 자재구분별 합계금액 (컬럼 표시용)
+        _rawRows: [], // 원본 입고 행 (자재구분 컬럼 클릭 시 드릴다운용)
       };
     }
+    grouped[key]._rawRows.push(r);
     grouped[key].total_amount  += Number(r.total_amount)  || 0;
     grouped[key].supply_amount += Number(r.supply_amount) || 0;
     grouped[key].vat_amount    += Number(r.vat_amount)    || 0;
