@@ -130,6 +130,13 @@
           </div>
 
           <div id="trendCompareFields" style="display:none;">
+            <p class="stat-trend-compare-note">구간 비교에서는 상단 검색바의 기간 대신, 아래에서 지정한 두 구간을 사용합니다.</p>
+            <div class="stat-trend-compare-row">
+              <span class="stat-trend-compare-label">기준 구간</span>
+              <input type="month" id="trendBaseYmFrom" onchange="updateTrendQuickButtonState()">
+              <span style="color:var(--text-muted,#9aa5b1);">~</span>
+              <input type="month" id="trendBaseYmTo" onchange="updateTrendQuickButtonState()">
+            </div>
             <div class="stat-trend-compare-row">
               <span class="stat-trend-compare-label">비교 구간</span>
               <input type="month" id="trendCompareYmFrom">
