@@ -150,6 +150,12 @@
 .stat-advanced-combinator-placeholder {
   width: 118px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #7b8794);
 }
 .stat-advanced-combinator,
 .stat-advanced-field {
