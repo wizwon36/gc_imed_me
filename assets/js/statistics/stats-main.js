@@ -26,6 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // 거래처 관리(저장)는 edit 이상만 가능 — StatsApp.canEdit으로 stats-vendor.js에서 참조
+    const isAdmin = String(user?.role || '').trim().toLowerCase() === 'admin';
+    const editPerm = await window.appPermission?.getPermission?.('statistics');
+    window.StatsApp = window.StatsApp || {};
+    StatsApp.canEdit = isAdmin || ['admin', 'edit'].includes(editPerm);
+
     document.getElementById('appBody').style.display = '';
 
     // 연도 선택 옵션 생성: 2016 ~ 올해
@@ -73,11 +79,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── 탭 전환 ────────────────────────────────────────────────
 function switchStatsTab(tab) {
-  const tabs = ['upload', 'dashboard'];
+  const tabs = ['upload', 'dashboard', 'vendor'];
   tabs.forEach(t => {
     document.getElementById(`tab${capitalize(t)}`)?.classList.toggle('active', t === tab);
     document.getElementById(`tab${capitalize(t)}Content`)?.classList.toggle('active', t === tab);
   });
+  if (tab === 'vendor') {
+    ensureVendorTabLoaded();
+  }
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -269,7 +278,9 @@ function statsLog(msg, cls = 'info') {
 }
 
 // ── 파일 업로드 (드래그&드롭) ──────────────────────────────
-const StatsApp = { purchaseRaw: null, usageRaw: null };
+window.StatsApp = window.StatsApp || {};
+StatsApp.purchaseRaw = null;
+StatsApp.usageRaw = null;
 
 function statsDragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('dragover'); }
 function statsDragLeave(id)   { document.getElementById(id).classList.remove('dragover'); }
