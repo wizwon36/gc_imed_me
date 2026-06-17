@@ -147,6 +147,11 @@
   color: var(--text-muted, #9aa5b1);
   margin: 0 0 12px;
 }
+.cl-upload-zone--disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .stat-table td.stat-trend-up { color: #c0392b; }
 .stat-table td.stat-trend-down { color: #1d6f42; }
 
