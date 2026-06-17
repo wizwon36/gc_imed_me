@@ -66,6 +66,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 업로드 현황 최초 로드
     await loadUploadStatus();
 
+    // 거래처 필터(자동완성)용으로 거래처 마스터 미리 로드
+    await loadVendorsFromServer();
+    populateVendorDatalist();
+
     // 통계 조회 탭이 기본 활성 탭이므로, 지난달 기준으로 최초 조회 자동 실행
     await runStatsDashboard();
 
@@ -131,6 +135,14 @@ async function loadUploadStatus() {
   }
 }
 
+// ── 거래처 필터 자동완성 목록 채우기 ──────────────────────────
+function populateVendorDatalist() {
+  const list = document.getElementById('statDashVendorList');
+  if (!list) return;
+  const names = (StatsApp.vendors || []).map(v => v.vendor_name).filter(Boolean);
+  list.innerHTML = names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">`).join('');
+}
+
 // ── 통계 조회: 서브탭 전환 ─────────────────────────────────
 let currentSubtab = 'vendor';
 function switchStatsSubtab(subtab) {
@@ -138,6 +150,13 @@ function switchStatsSubtab(subtab) {
   ['vendor', 'dept', 'item', 'trend'].forEach(t => {
     document.getElementById(`subtab${capitalize(t)}`)?.classList.toggle('active', t === subtab);
   });
+
+  // 거래처별 탭일 때만 거래처 필터, 부서별 탭일 때만 부서 필터 노출
+  const vendorField = document.getElementById('statDashVendorField');
+  const deptField    = document.getElementById('statDashDeptField');
+  if (vendorField) vendorField.style.display = subtab === 'vendor' ? '' : 'none';
+  if (deptField)    deptField.style.display    = subtab === 'dept'   ? '' : 'none';
+
   runStatsDashboard();
 }
 
@@ -149,7 +168,20 @@ async function runStatsDashboard() {
   const ymFrom = document.getElementById('statDashYmFrom').value;
   const ymTo   = document.getElementById('statDashYmTo').value;
 
-  const filters = { branch, ymFrom: ymFrom || null, ymTo: ymTo || null };
+  // 거래처별 탭: 거래처명 입력값을 사업자번호로 변환해서 정확히 필터링
+  let vendorBizNo = null;
+  const vendorInputVal = document.getElementById('statDashVendor')?.value?.trim();
+  if (currentSubtab === 'vendor' && vendorInputVal) {
+    const matched = (StatsApp.vendors || []).find(v => v.vendor_name === vendorInputVal);
+    vendorBizNo = matched ? matched.biz_no : null;
+  }
+  const deptVal = currentSubtab === 'dept' ? document.getElementById('statDashDept')?.value?.trim() : null;
+
+  const filters = {
+    branch, ymFrom: ymFrom || null, ymTo: ymTo || null,
+    vendorBizNo: vendorBizNo || null,
+    dept: deptVal || null,
+  };
 
   resultArea.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 중...</p>';
   summaryGrid.innerHTML = '';
