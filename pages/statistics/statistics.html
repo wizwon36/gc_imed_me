@@ -73,6 +73,15 @@
                 <label>종료월</label>
                 <input type="month" id="statDashYmTo">
               </div>
+              <div class="cl-field" id="statDashVendorField">
+                <label>거래처</label>
+                <input type="text" id="statDashVendor" list="statDashVendorList" placeholder="전체" autocomplete="off">
+                <datalist id="statDashVendorList"></datalist>
+              </div>
+              <div class="cl-field" id="statDashDeptField" style="display:none;">
+                <label>부서</label>
+                <input type="text" id="statDashDept" placeholder="전체" autocomplete="off">
+              </div>
               <div class="cl-field">
                 <label>&nbsp;</label>
                 <button type="button" class="btn btn-primary" onclick="runStatsDashboard()">조회</button>
