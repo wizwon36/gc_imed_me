@@ -120,13 +120,24 @@ function buildSummary_(rows, amountKey, countKey) {
   };
 }
 
+// ── 입고(purchase_records) / 사용(usage_records) 컬럼 매핑 ──
+// 두 테이블은 같은 의미의 정보를 다른 컬럼명으로 가지므로, recordType에 따라 실제 컬럼명을 결정
+const RECORD_TYPE_TABLES = { purchase: 'purchase_records', usage: 'usage_records' };
+const RECORD_TYPE_COLUMNS = {
+  purchase: { qty: 'quantity', supply: 'supply_amount', vat: 'vat_amount', amount: 'total_amount' },
+  usage:    { qty: 'usage_qty', supply: 'usage_supply',  vat: 'usage_vat',  amount: 'usage_total' },
+};
+
 // ═══════════════════════════════════════════════════════════
-// 1. 거래처별 통계 (purchase_records 기반)
+// 1. 거래처별 통계 (입고/사용 공통)
 // 사업자번호(vendor_biz_no) 기준으로 그룹핑 — 거래처명 변경/표기 차이에도 동일 거래처로 집계
 // 사업자번호가 없는 행(거래처 마스터 미등록)은 거래처명 기준으로 별도 그룹핑하고 미등록 표시
 // ═══════════════════════════════════════════════════════════
-async function getVendorStats(filters) {
-  let rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
+async function getVendorStats(filters, recordType = 'purchase') {
+  const table = RECORD_TYPE_TABLES[recordType];
+  const cols = RECORD_TYPE_COLUMNS[recordType];
+
+  let rows = await fetchAllRows_(table, q => applyFilters_(q, filters));
   rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
   // 사업자번호 → 현재 대표 명칭(is_current=true) 매핑. 그룹에 대표가 없으면(이론상 발생 안 함, 서버에서 보정)
@@ -158,33 +169,33 @@ async function getVendorStats(filters) {
         vendor_name: displayName,
         vendor_biz_no: bizNo,
         unmatched: !bizNo,
-        total_amount: 0, supply_amount: 0, vat_amount: 0, item_count: 0, record_count: 0,
+        qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0,
         breakdown: {}, // 실제 데이터에 등장한 이름별 세부 내역 (펼쳐보기용)
         byItemType: {}, // 자재구분별 합계금액 (컬럼 표시용)
-        _rawRows: [], // 원본 입고 행 (자재구분 컬럼 클릭 시 드릴다운용)
+        _rawRows: [], // 원본 행 (자재구분 컬럼 클릭 시 드릴다운용)
       };
     }
     grouped[key]._rawRows.push(r);
-    grouped[key].total_amount  += Number(r.total_amount)  || 0;
-    grouped[key].supply_amount += Number(r.supply_amount) || 0;
-    grouped[key].vat_amount    += Number(r.vat_amount)    || 0;
-    grouped[key].item_count    += 1;
-    grouped[key].record_count  += 1;
+    grouped[key].qty          += Number(r[cols.qty])    || 0;
+    grouped[key].supply       += Number(r[cols.supply]) || 0;
+    grouped[key].vat          += Number(r[cols.vat])    || 0;
+    grouped[key].amount       += Number(r[cols.amount]) || 0;
+    grouped[key].record_count += 1;
 
     if (!grouped[key].breakdown[rawName]) {
-      grouped[key].breakdown[rawName] = { vendor_name: rawName, total_amount: 0, record_count: 0 };
+      grouped[key].breakdown[rawName] = { vendor_name: rawName, amount: 0, record_count: 0 };
     }
-    grouped[key].breakdown[rawName].total_amount += Number(r.total_amount) || 0;
+    grouped[key].breakdown[rawName].amount       += Number(r[cols.amount]) || 0;
     grouped[key].breakdown[rawName].record_count += 1;
 
-    grouped[key].byItemType[itemType] = (grouped[key].byItemType[itemType] || 0) + (Number(r.total_amount) || 0);
+    grouped[key].byItemType[itemType] = (grouped[key].byItemType[itemType] || 0) + (Number(r[cols.amount]) || 0);
   });
 
   // breakdown을 배열로 변환 + 같은 이름이 1개뿐이면(이름 변경 이력 없음) 펼쳐볼 필요 없으니 표시
   const data = Object.values(grouped).map(g => {
-    const breakdownArr = Object.values(g.breakdown).sort((a, b) => b.total_amount - a.total_amount);
+    const breakdownArr = Object.values(g.breakdown).sort((a, b) => b.amount - a.amount);
     return { ...g, breakdown: breakdownArr, hasMultipleNames: breakdownArr.length > 1 };
-  }).sort((a, b) => b.total_amount - a.total_amount);
+  }).sort((a, b) => b.amount - a.amount);
 
   // 자재구분 정렬: 소모품/시약/의약품을 우선 노출하고, 그 외 값은 가나다순으로 뒤에 붙임
   const priorityOrder = ['소모품', '시약', '의약품'];
@@ -196,41 +207,46 @@ async function getVendorStats(filters) {
     return a.localeCompare(b, 'ko');
   });
 
-  return { data, summary: buildSummary_(data, 'total_amount', 'record_count'), itemTypes };
+  return { data, summary: buildSummary_(data, 'amount', 'record_count'), itemTypes };
 }
 
 // ═══════════════════════════════════════════════════════════
-// 2. 부서별 통계 (usage_records 기반)
+// 2. 부서별 통계 (입고/사용 공통)
+// 입고는 의뢰부서(dept), 사용은 사용부서(dept) 기준 — 같은 컬럼명이라 동일 로직 재사용
 // ═══════════════════════════════════════════════════════════
-async function getDeptStats(filters) {
-  let rows = await fetchAllRows_('usage_records', q => applyFilters_(q, filters));
+async function getDeptStats(filters, recordType = 'usage') {
+  const table = RECORD_TYPE_TABLES[recordType];
+  const cols = RECORD_TYPE_COLUMNS[recordType];
+
+  let rows = await fetchAllRows_(table, q => applyFilters_(q, filters));
   rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
   const grouped = {};
   rows.forEach(r => {
     const key = r.dept || '(미확인)';
     if (!grouped[key]) {
-      grouped[key] = { dept: key, usage_total: 0, usage_supply: 0, usage_vat: 0, record_count: 0 };
+      grouped[key] = { dept: key, qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0 };
     }
-    grouped[key].usage_total  += Number(r.usage_total)  || 0;
-    grouped[key].usage_supply += Number(r.usage_supply) || 0;
-    grouped[key].usage_vat    += Number(r.usage_vat)    || 0;
+    grouped[key].qty          += Number(r[cols.qty])    || 0;
+    grouped[key].supply       += Number(r[cols.supply]) || 0;
+    grouped[key].vat          += Number(r[cols.vat])    || 0;
+    grouped[key].amount       += Number(r[cols.amount]) || 0;
     grouped[key].record_count += 1;
   });
 
-  const data = Object.values(grouped).sort((a, b) => b.usage_total - a.usage_total);
-  return { data, summary: buildSummary_(data, 'usage_total', 'record_count') };
+  const data = Object.values(grouped).sort((a, b) => b.amount - a.amount);
+  return { data, summary: buildSummary_(data, 'amount', 'record_count') };
 }
 
 // ═══════════════════════════════════════════════════════════
-// 3. 품목별 통계 (다음 단계에서 구현)
-// ═══════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════
-// 3. 품목별 통계 (purchase_records 기반, 자재코드 기준 그룹핑)
+// 3. 품목별 통계 (입고/사용 공통, 자재코드 기준 그룹핑)
 // 자재코드가 없는 행은 자재명을 키로 대체 그룹핑
 // ═══════════════════════════════════════════════════════════
-async function getItemStats(filters) {
-  let rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
+async function getItemStats(filters, recordType = 'purchase') {
+  const table = RECORD_TYPE_TABLES[recordType];
+  const cols = RECORD_TYPE_COLUMNS[recordType];
+
+  let rows = await fetchAllRows_(table, q => applyFilters_(q, filters));
   rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
   const grouped = {};
@@ -243,21 +259,22 @@ async function getItemStats(filters) {
       grouped[key] = {
         item_name: name,
         item_code: code || null,
-        quantity: 0, supply_amount: 0, vat_amount: 0, total_amount: 0, record_count: 0,
+        qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0,
       };
     }
     // 자재명이 바뀌어 들어온 경우(코드 기준 그룹일 때) 최신 표기로 갱신은 생략 — 거래처와 달리
     // 품목명 변경 이력 관리 마스터가 없으므로 최초 등장한 이름을 그대로 유지
-    grouped[key].quantity      += Number(r.quantity)      || 0;
-    grouped[key].supply_amount += Number(r.supply_amount) || 0;
-    grouped[key].vat_amount    += Number(r.vat_amount)    || 0;
-    grouped[key].total_amount  += Number(r.total_amount)  || 0;
-    grouped[key].record_count  += 1;
+    grouped[key].qty          += Number(r[cols.qty])    || 0;
+    grouped[key].supply       += Number(r[cols.supply]) || 0;
+    grouped[key].vat          += Number(r[cols.vat])    || 0;
+    grouped[key].amount       += Number(r[cols.amount]) || 0;
+    grouped[key].record_count += 1;
   });
 
-  const data = Object.values(grouped).sort((a, b) => b.total_amount - a.total_amount);
-  return { data, summary: buildSummary_(data, 'total_amount', 'record_count') };
+  const data = Object.values(grouped).sort((a, b) => b.amount - a.amount);
+  return { data, summary: buildSummary_(data, 'amount', 'record_count') };
 }
+
 
 // ═══════════════════════════════════════════════════════════
 // 4. 기간(월별/연도별) 추이 통계 (다음 단계에서 구현)
