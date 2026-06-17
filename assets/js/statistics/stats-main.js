@@ -548,6 +548,7 @@ async function runStatsDashboard() {
 // ── 요약 카드 렌더링 ───────────────────────────────────────
 function renderSummaryCards(container, summary, groupLabel, amountLabel) {
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
+  const topLabel = groupLabel === '월' ? '최다 매입월' : `최다 ${groupLabel}`;
 
   container.innerHTML = `
     <div class="stat-summary-card accent-total">
@@ -564,7 +565,7 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
       <div class="stat-summary-value">${fmtNum(Math.round(summary.avgPerGroup))}원</div>
     </div>
     <div class="stat-summary-card accent-top">
-      <div class="stat-summary-label">최다 ${groupLabel}</div>
+      <div class="stat-summary-label">${topLabel}</div>
       <div class="stat-summary-value small">${summary.topName || '-'}</div>
       <div class="stat-summary-sub">${fmtNum(summary.topAmount)}원</div>
     </div>
