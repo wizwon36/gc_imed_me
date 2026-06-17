@@ -1,323 +1,214 @@
-/**
- * stats-main.js
- * 구매·사용 통계 앱 진입점
- */
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>구매·사용 통계 | MSO관리팀 업무포털</title>
+  <link rel="stylesheet" href="../../assets/css/common.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/closing.css" />
+  <link rel="stylesheet" href="../../assets/css/pages/statistics.css" />
+</head>
+<body class="portal-page">
+  <div class="container page-shell">
 
-'use strict';
+    <!-- 헤더 -->
+    <section class="top-brand-bar portal-topbar">
+      <div class="top-brand-left">
+        <div class="top-brand-logo">📈</div>
+        <div class="top-brand-texts">
+          <strong class="top-brand-title">MSO관리팀 업무지원 시스템</strong>
+          <span class="top-brand-sub">구매·사용 통계</span>
+        </div>
+      </div>
+      <div class="top-brand-actions portal-top-actions">
+        <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
+        <button type="button" id="logoutBtn" class="portal-header-btn portal-header-btn--secondary">로그아웃</button>
+      </div>
+    </section>
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    showGlobalLoading('통계 앱 초기화 중...');
+    <!-- 메시지 박스 -->
+    <div id="messageBox" class="message-box"></div>
 
-    // 로그인 체크
-    const user = window.auth?.getSession?.();
-    if (!user) { location.replace(`${CONFIG.SITE_BASE_URL}/index.html`); return; }
-
-    // 로그아웃
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
-      window.auth?.logout?.();
-      location.replace(`${CONFIG.SITE_BASE_URL}/index.html`);
-    });
-
-    // 권한 체크 (statistics: view 이상) — 기존 closing과 동일 패턴
-    const ok = await window.appPermission?.requirePermission?.('statistics', ['admin', 'edit', 'view']);
-    if (ok === false) {
-      document.getElementById('permissionDenied').style.display = '';
-      return;
-    }
-
-    document.getElementById('appBody').style.display = '';
-
-    // 연도 선택 옵션 생성: 2016 ~ 올해
-    const yearSelect = document.getElementById('statsYear');
-    if (yearSelect) {
-      const curYear = new Date().getFullYear();
-      let opts = '';
-      for (let y = curYear; y >= 2016; y--) {
-        opts += `<option value="${y}">${y}년</option>`;
-      }
-      yearSelect.innerHTML = opts;
-    }
-
-    // 의원 드롭다운 기본값: 본인 소속 의원 (업로드/조회 탭 둘 다)
-    ['statsBranch', 'statDashBranch'].forEach(id => {
-      const sel = document.getElementById(id);
-      if (sel && user.clinic_name) {
-        const matched = Array.from(sel.options).find(o => user.clinic_name.includes(o.value));
-        if (matched) sel.value = matched.value;
-      }
-    });
-
-    // 업로드 현황 최초 로드
-    await loadUploadStatus();
-
-  } catch (error) {
-    console.error(error);
-    showMessage?.(error.message || '초기화 중 오류가 발생했습니다.', 'error');
-  } finally {
-    hideGlobalLoading();
-  }
-});
-
-// ── 탭 전환 ────────────────────────────────────────────────
-function switchStatsTab(tab) {
-  const tabs = ['upload', 'dashboard'];
-  tabs.forEach(t => {
-    document.getElementById(`tab${capitalize(t)}`)?.classList.toggle('active', t === tab);
-    document.getElementById(`tab${capitalize(t)}Content`)?.classList.toggle('active', t === tab);
-  });
-}
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-// ── 업로드 현황 조회/렌더링 ────────────────────────────────
-const ALL_MONTHS = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-
-async function loadUploadStatus() {
-  const branch = document.getElementById('statsBranch').value;
-  const area = document.getElementById('uploadStatusArea');
-  area.innerHTML = '<p style="color:#6b7280;font-size:12px;">불러오는 중...</p>';
-
-  try {
-    const status = await window.statsClient.getUploadStatus(branch);
-    if (!status.length) {
-      area.innerHTML = '<p style="color:#9ca3af;font-size:12px;">업로드된 데이터가 없습니다.</p>';
-      return;
-    }
-
-    const rows = status.slice().reverse().map(s => {
-      const renderMonths = (months, allLabel) => {
-        if (!months.length) return '<span style="color:#d1d5db;">없음</span>';
-        if (months.length === 12) return `<span style="color:#059669;font-weight:600;">${allLabel} (1~12월 전체)</span>`;
-        const last = months[months.length - 1];
-        return `<span style="color:#1a56db;">${months.length}개월 (~${last}월)</span>`;
-      };
-      return `
-        <tr>
-          <td style="padding:6px 10px;font-size:12px;font-weight:600;border-bottom:1px solid #f1f5f9;">${s.year}년</td>
-          <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">입고: ${renderMonths(s.purchaseMonths, '완료')}</td>
-          <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid #f1f5f9;">사용현황: ${renderMonths(s.usageMonths, '완료')}</td>
-        </tr>`;
-    }).join('');
-
-    area.innerHTML = `<table style="width:100%;border-collapse:collapse;"><tbody>${rows}</tbody></table>`;
-  } catch (error) {
-    console.error(error);
-    area.innerHTML = `<p style="color:#dc2626;font-size:12px;">오류: ${error.message}</p>`;
-  }
-}
-
-// ── 통계 조회: 서브탭 전환 ─────────────────────────────────
-let currentSubtab = 'vendor';
-function switchStatsSubtab(subtab) {
-  currentSubtab = subtab;
-  ['vendor', 'dept', 'item', 'trend'].forEach(t => {
-    document.getElementById(`subtab${capitalize(t)}`)?.classList.toggle('active', t === subtab);
-  });
-  runStatsDashboard();
-}
-
-// ── 통계 조회: 실행 ────────────────────────────────────────
-async function runStatsDashboard() {
-  const resultArea = document.getElementById('statsResultArea');
-  const branch = document.getElementById('statDashBranch').value;
-  const ymFrom = document.getElementById('statDashYmFrom').value;
-  const ymTo   = document.getElementById('statDashYmTo').value;
-
-  const filters = { branch, ymFrom: ymFrom || null, ymTo: ymTo || null };
-
-  resultArea.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 중...</p>';
-
-  try {
-    if (currentSubtab === 'vendor') {
-      const data = await window.statsClient.getVendorStats(filters);
-      renderStatsTable(resultArea, data, [
-        { key: 'vendor_name',   label: '거래처' },
-        { key: 'supply_amount', label: '공급가액', numeric: true },
-        { key: 'vat_amount',    label: '부가세',   numeric: true },
-        { key: 'total_amount',  label: '합계금액', numeric: true },
-        { key: 'record_count',  label: '건수',     numeric: true },
-      ]);
-    } else if (currentSubtab === 'dept') {
-      const data = await window.statsClient.getDeptStats(filters);
-      renderStatsTable(resultArea, data, [
-        { key: 'dept',          label: '부서' },
-        { key: 'usage_supply',  label: '사용공급가', numeric: true },
-        { key: 'usage_vat',     label: '사용부가세', numeric: true },
-        { key: 'usage_total',   label: '사용합계',   numeric: true },
-        { key: 'record_count',  label: '건수',       numeric: true },
-      ]);
-    } else {
-      resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">🚧 준비 중인 기능입니다.</p>';
-    }
-  } catch (error) {
-    console.error(error);
-    resultArea.innerHTML = `<p style="color:#dc2626;font-size:13px;">오류: ${error.message}</p>`;
-  }
-}
-
-// ── 결과 표 렌더링 (공통) ──────────────────────────────────
-function renderStatsTable(container, rows, columns) {
-  if (!rows.length) {
-    container.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 결과가 없습니다.</p>';
-    return;
-  }
-
-  const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
-
-  const thead = columns.map(c =>
-    `<th style="text-align:${c.numeric ? 'right' : 'left'};padding:8px 10px;border-bottom:2px solid #e5e7eb;font-size:12px;color:#374151;">${c.label}</th>`
-  ).join('');
-
-  const tbody = rows.map((row, i) => {
-    const cells = columns.map(c => {
-      const val = c.numeric ? fmtNum(row[c.key]) : row[c.key];
-      return `<td style="text-align:${c.numeric ? 'right' : 'left'};padding:7px 10px;font-size:13px;border-bottom:1px solid #f1f5f9;">${val}</td>`;
-    }).join('');
-    return `<tr style="background:${i % 2 === 0 ? '#fff' : '#fafbfc'};">${cells}</tr>`;
-  }).join('');
-
-  container.innerHTML = `
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr>${thead}</tr></thead>
-        <tbody>${tbody}</tbody>
-      </table>
+    <!-- 권한 없음 -->
+    <div id="permissionDenied" class="card" style="display:none;">
+      <div class="empty-state" style="margin:8px 0;">
+        <div style="font-size:48px;margin-bottom:8px;">🔒</div>
+        <p class="empty-state-title">접근 권한이 없습니다</p>
+        <p class="empty-state-desc">관리자에게 statistics 권한을 요청하세요.</p>
+      </div>
     </div>
-    <p style="color:#9ca3af;font-size:11px;margin-top:10px;">총 ${rows.length}건</p>
-  `;
-}
-// ── 파일 업로드 (드래그&드롭) ──────────────────────────────
-const StatsApp = { purchaseRaw: null, usageRaw: null };
 
-function statsDragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('dragover'); }
-function statsDragLeave(id)   { document.getElementById(id).classList.remove('dragover'); }
-function statsDropFile(e, type) {
-  e.preventDefault();
-  document.getElementById('zone-' + type).classList.remove('dragover');
-  if (e.dataTransfer.files[0]) statsProcessFile(e.dataTransfer.files[0], type);
-}
-function statsHandleFile(input, type) {
-  if (input.files[0]) statsProcessFile(input.files[0], type);
-}
-function statsProcessFile(file, type) {
-  StatsApp[type + 'Raw'] = file;
-  document.getElementById('zone-' + type).classList.add('uploaded');
-  document.getElementById('status-' + type).textContent = '✓ ' + file.name;
+    <!-- 메인 앱 -->
+    <div id="appBody" style="display:none;">
 
-  const btn = document.getElementById('btnStatsUpload');
-  if (btn) btn.disabled = !(StatsApp.purchaseRaw || StatsApp.usageRaw);
-}
+      <!-- 탭 -->
+      <div class="cl-tabs">
+        <button class="cl-tab active" id="tabDashboard" onclick="switchStatsTab('dashboard')">📊 통계 조회</button>
+        <button class="cl-tab" id="tabUpload" onclick="switchStatsTab('upload')">📤 데이터 업로드</button>
+      </div>
 
-// ── 업로드 실행 ────────────────────────────────────────────
-async function handleStatsUpload() {
-  const branch = document.getElementById('statsBranch').value;
-  const year = document.getElementById('statsYear').value;
-  const resultEl = document.getElementById('statsUploadResult');
-  const btn = document.getElementById('btnStatsUpload');
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭1: 통계 조회 (다음 단계에서 채울 예정)            -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabDashboardContent" class="cl-section active">
 
-  // 파일 형식(헤더) 검증 — 잘못된 영역에 올렸거나 형식이 다르면 즉시 중단
-  try {
-    if (StatsApp.purchaseRaw) {
-      await window.validateStatsFileHeaders(StatsApp.purchaseRaw, 'purchase');
-    }
-    if (StatsApp.usageRaw) {
-      await window.validateStatsFileHeaders(StatsApp.usageRaw, 'usage');
-    }
-  } catch (error) {
-    resultEl.innerHTML = `<div style="color:#dc2626;font-size:12px;white-space:pre-line;">⚠ ${error.message}</div>`;
-    return;
-  }
+        <!-- 공통 필터 바 -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-body">
+            <div class="cl-settings-row">
+              <div class="cl-field">
+                <label>의원</label>
+                <select id="statDashBranch">
+                  <option value="강남">강남의원</option>
+                  <option value="강북">강북의원</option>
+                  <option value="서울숲">서울숲의원</option>
+                </select>
+              </div>
+              <div class="cl-field">
+                <label>시작월</label>
+                <input type="month" id="statDashYmFrom">
+              </div>
+              <div class="cl-field">
+                <label>종료월</label>
+                <input type="month" id="statDashYmTo">
+              </div>
+              <div class="cl-field">
+                <label>&nbsp;</label>
+                <button type="button" class="btn btn-primary" onclick="runStatsDashboard()">조회</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  // 이미 데이터가 있는 월과 겹치는지 사전 확인 → 겹치면 확인창
-  try {
-    const status = await window.statsClient.getUploadStatus(branch);
-    const yearStatus = status.find(s => s.year === year);
+        <!-- 관점 서브탭 -->
+        <div class="cl-tabs" style="margin-bottom:14px;">
+          <button class="cl-tab active" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
+          <button class="cl-tab" id="subtabDept" onclick="switchStatsSubtab('dept')">🏬 부서별</button>
+          <button class="cl-tab" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
+          <button class="cl-tab" id="subtabTrend" onclick="switchStatsSubtab('trend')">📅 기간 비교</button>
+        </div>
 
-    if (yearStatus) {
-      const overlapMsgs = [];
+        <!-- 요약 카드 -->
+        <div class="stat-summary-grid" id="statsSummaryGrid"></div>
 
-      if (StatsApp.purchaseRaw && yearStatus.purchaseMonths.length) {
-        const targetMonths = await window.peekStatsFileMonths(StatsApp.purchaseRaw, 'purchase', year);
-        const overlap = targetMonths.filter(m => yearStatus.purchaseMonths.includes(m));
-        if (overlap.length) overlapMsgs.push(`입고: ${overlap.join(', ')}월`);
-      }
-      if (StatsApp.usageRaw && yearStatus.usageMonths.length) {
-        const targetMonths = await window.peekStatsFileMonths(StatsApp.usageRaw, 'usage', year);
-        const overlap = targetMonths.filter(m => yearStatus.usageMonths.includes(m));
-        if (overlap.length) overlapMsgs.push(`사용현황: ${overlap.join(', ')}월`);
-      }
+        <!-- 상세 표 -->
+        <div class="card">
+          <div class="card-body">
+            <div id="statsResultArea">
+              <p style="color:#6b7280;font-size:13px;">조회 버튼을 눌러 결과를 확인하세요.</p>
+            </div>
+          </div>
+        </div>
 
-      if (overlapMsgs.length) {
-        const msg = `${branch} ${year}년의 다음 데이터가 이미 존재하며, 새 파일로 덮어쓰게 됩니다.\n\n` +
-          overlapMsgs.join('\n') +
-          `\n\n계속하시겠습니까?`;
-        if (!confirm(msg)) return;
-      }
-    }
-  } catch (e) {
-    console.warn('업로드 현황 사전 확인 실패, 진행을 계속합니다.', e);
-  }
+      </div>
 
-  // 진행 단계 가중치 계산: 선택된 파일 수에 따라 50/50 또는 100%
-  const fileKinds = [];
-  if (StatsApp.purchaseRaw) fileKinds.push({ kind: 'purchase', file: StatsApp.purchaseRaw, label: '입고' });
-  if (StatsApp.usageRaw)    fileKinds.push({ kind: 'usage',    file: StatsApp.usageRaw,    label: '사용현황' });
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭2: 데이터 업로드                                -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabUploadContent" class="cl-section">
 
-  const progressBox   = document.getElementById('statsProgressBox');
-  const progressLabel = document.getElementById('statsProgressLabel');
-  const progressPct   = document.getElementById('statsProgressPct');
-  const progressFill  = document.getElementById('statsProgressFill');
+        <!-- 업로드 현황 -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-body">
+            <strong style="font-size:13px;">현재 의원 업로드 현황</strong>
+            <div id="uploadStatusArea" style="margin-top:10px;">
+              <p style="color:#6b7280;font-size:12px;">불러오는 중...</p>
+            </div>
+          </div>
+        </div>
 
-  const setProgress = (pct, label) => {
-    progressFill.style.width = `${pct}%`;
-    progressPct.textContent = `${Math.round(pct)}%`;
-    if (label) progressLabel.textContent = label;
-  };
+        <div class="card">
+          <div class="card-body">
+            <strong style="font-size:14px;">과거 입고·사용현황 원본 업로드</strong>
+            <p style="font-size:12px;color:#6b7280;margin-top:6px;margin-bottom:18px;">
+              선택한 연도에 해당하는 데이터만 추출되어 저장됩니다. (파일에 다른 연도가 섞여 있어도 무시됩니다)<br>
+              같은 의원·연월·파일명으로 다시 업로드하면 기존 데이터는 자동 교체됩니다.
+            </p>
 
-  progressBox.style.display = '';
-  setProgress(0, '준비 중...');
-  resultEl.innerHTML = '';
-  btn.disabled = true;
+            <div class="cl-settings-row" style="margin-bottom:18px;">
+              <div class="cl-field">
+                <label>의원</label>
+                <select id="statsBranch" onchange="loadUploadStatus()">
+                  <option value="강남">강남의원</option>
+                  <option value="강북">강북의원</option>
+                  <option value="서울숲">서울숲의원</option>
+                </select>
+              </div>
+              <div class="cl-field">
+                <label>연도</label>
+                <select id="statsYear"></select>
+              </div>
+            </div>
 
-  const lines = [];
-  try {
-    for (let fi = 0; fi < fileKinds.length; fi++) {
-      const { kind, file, label } = fileKinds[fi];
-      const baseProgress = (fi / fileKinds.length) * 100;
-      const fileWeight = 100 / fileKinds.length;
+            <div class="cl-upload-grid">
+              <div class="cl-upload-zone" id="zone-purchase"
+                ondragover="statsDragOver(event,'zone-purchase')"
+                ondragleave="statsDragLeave('zone-purchase')"
+                ondrop="statsDropFile(event,'purchase')">
+                <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'purchase')">
+                <div class="cl-upload-icon">📥</div>
+                <div class="cl-upload-label">입고(구매) 파일</div>
+                <div class="cl-upload-hint">예: 26년 1월 입고 - 강남.xlsx</div>
+                <div class="cl-upload-status" id="status-purchase"></div>
+              </div>
+              <div class="cl-upload-zone" id="zone-usage"
+                ondragover="statsDragOver(event,'zone-usage')"
+                ondragleave="statsDragLeave('zone-usage')"
+                ondrop="statsDropFile(event,'usage')">
+                <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'usage')">
+                <div class="cl-upload-icon">📋</div>
+                <div class="cl-upload-label">사용현황 파일</div>
+                <div class="cl-upload-hint">예: 26년 1월 사용현황 - 강남.xlsx</div>
+                <div class="cl-upload-status" id="status-usage"></div>
+              </div>
+            </div>
 
-      const results = await window.uploadStatsFile(file, branch, kind, year, (info) => {
-        if (info.phase === 'parsing') {
-          setProgress(baseProgress, `${label} 파일 분석 중...`);
-        } else if (info.phase === 'uploading') {
-          const innerPct = info.total ? (info.current / info.total) : 0;
-          setProgress(baseProgress + innerPct * fileWeight,
-            `${label} 업로드 중... (${info.current}/${info.total}개월${info.ym ? ', ' + info.ym : ''})`);
-        }
-      });
+            <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnStatsUpload" disabled onclick="handleStatsUpload()">선택한 파일 업로드</button>
+            </div>
 
-      results.forEach(r => lines.push(`<div style="color:#059669;font-size:12px;">✓ ${label} ${r.ym}: ${r.count}건 저장</div>`));
-    }
+            <!-- 업로드 진행 표시 -->
+            <div id="statsProgressBox" style="display:none;margin-top:14px;">
+              <div class="cl-progress-label">
+                <span id="statsProgressLabel">준비 중...</span>
+                <span id="statsProgressPct">0%</span>
+              </div>
+              <div class="cl-progress-bar">
+                <div class="cl-progress-fill" id="statsProgressFill" style="width:0%"></div>
+              </div>
+            </div>
 
-    setProgress(100, '완료');
-    resultEl.innerHTML = lines.join('');
+            <div id="statsUploadResult" style="margin-top:14px;"></div>
+          </div>
+        </div>
 
-    // 업로드 완료 후 초기화
-    ['purchase', 'usage'].forEach(type => {
-      StatsApp[type + 'Raw'] = null;
-      document.getElementById('zone-' + type).classList.remove('uploaded');
-      document.getElementById('status-' + type).textContent = '';
-      const inputEl = document.querySelector(`#zone-${type} input[type=file]`);
-      if (inputEl) inputEl.value = '';
-    });
+      </div>
 
-    // 업로드 현황 갱신
-    await loadUploadStatus();
-  } catch (error) {
-    console.error(error);
-    resultEl.innerHTML = `<div style="color:#dc2626;font-size:12px;">오류: ${error.message}</div>` + lines.join('');
-  } finally {
-    btn.disabled = !(StatsApp.purchaseRaw || StatsApp.usageRaw);
-    setTimeout(() => { progressBox.style.display = 'none'; }, 1500);
-  }
-}
+    </div>
+  </div>
+
+  <!-- 전역 스피너 -->
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
+    </div>
+  </div>
+
+  <!-- 라이브러리 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 공통 -->
+  <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/utils.js"></script>
+  <script src="../../assets/js/core/auth.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
+
+  <!-- 통계 모듈 -->
+  <script src="../../assets/js/statistics/stats-client.js"></script>
+  <script src="../../assets/js/statistics/stats-upload.js"></script>
+  <script src="../../assets/js/statistics/stats-main.js"></script>
+</body>
+</html>
