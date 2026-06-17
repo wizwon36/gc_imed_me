@@ -140,11 +140,15 @@ async function getVendorStats(filters) {
   });
 
   const grouped = {};
+  const allItemTypes = new Set();
+
   rows.forEach(r => {
     const bizNo = r.vendor_biz_no || null;
     // 사업자번호가 있으면 그걸 키로, 없으면 거래처명 기준 (미등록 거래처 임시 그룹)
     const key = bizNo ? `biz:${bizNo}` : `name:${r.vendor_name || '(미확인)'}`;
     const rawName = r.vendor_name || '(미확인)';
+    const itemType = r.item_type || '미분류';
+    allItemTypes.add(itemType);
 
     if (!grouped[key]) {
       const displayName = bizNo
@@ -156,6 +160,7 @@ async function getVendorStats(filters) {
         unmatched: !bizNo,
         total_amount: 0, supply_amount: 0, vat_amount: 0, item_count: 0, record_count: 0,
         breakdown: {}, // 실제 데이터에 등장한 이름별 세부 내역 (펼쳐보기용)
+        byItemType: {}, // 자재구분별 합계금액 (컬럼 표시용)
       };
     }
     grouped[key].total_amount  += Number(r.total_amount)  || 0;
@@ -169,6 +174,8 @@ async function getVendorStats(filters) {
     }
     grouped[key].breakdown[rawName].total_amount += Number(r.total_amount) || 0;
     grouped[key].breakdown[rawName].record_count += 1;
+
+    grouped[key].byItemType[itemType] = (grouped[key].byItemType[itemType] || 0) + (Number(r.total_amount) || 0);
   });
 
   // breakdown을 배열로 변환 + 같은 이름이 1개뿐이면(이름 변경 이력 없음) 펼쳐볼 필요 없으니 표시
@@ -177,7 +184,17 @@ async function getVendorStats(filters) {
     return { ...g, breakdown: breakdownArr, hasMultipleNames: breakdownArr.length > 1 };
   }).sort((a, b) => b.total_amount - a.total_amount);
 
-  return { data, summary: buildSummary_(data, 'total_amount', 'record_count') };
+  // 자재구분 정렬: 소모품/시약/의약품을 우선 노출하고, 그 외 값은 가나다순으로 뒤에 붙임
+  const priorityOrder = ['소모품', '시약', '의약품'];
+  const itemTypes = Array.from(allItemTypes).sort((a, b) => {
+    const ai = priorityOrder.indexOf(a), bi = priorityOrder.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b, 'ko');
+  });
+
+  return { data, summary: buildSummary_(data, 'total_amount', 'record_count'), itemTypes };
 }
 
 // ═══════════════════════════════════════════════════════════
