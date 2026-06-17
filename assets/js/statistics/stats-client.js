@@ -222,20 +222,38 @@ async function getDeptStats(filters, recordType = 'usage') {
   rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
   const grouped = {};
+  const allItemTypes = new Set();
+
   rows.forEach(r => {
     const key = r.dept || '(미확인)';
+    const itemType = r.item_type || '미분류';
+    allItemTypes.add(itemType);
+
     if (!grouped[key]) {
-      grouped[key] = { dept: key, qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0 };
+      grouped[key] = { dept: key, qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0, byItemType: {} };
     }
     grouped[key].qty          += Number(r[cols.qty])    || 0;
     grouped[key].supply       += Number(r[cols.supply]) || 0;
     grouped[key].vat          += Number(r[cols.vat])    || 0;
     grouped[key].amount       += Number(r[cols.amount]) || 0;
     grouped[key].record_count += 1;
+
+    grouped[key].byItemType[itemType] = (grouped[key].byItemType[itemType] || 0) + (Number(r[cols.amount]) || 0);
   });
 
   const data = Object.values(grouped).sort((a, b) => b.amount - a.amount);
-  return { data, summary: buildSummary_(data, 'amount', 'record_count') };
+
+  // 자재구분 정렬: 소모품/시약/의약품을 우선 노출하고, 그 외 값은 가나다순으로 뒤에 붙임
+  const priorityOrder = ['소모품', '시약', '의약품'];
+  const itemTypes = Array.from(allItemTypes).sort((a, b) => {
+    const ai = priorityOrder.indexOf(a), bi = priorityOrder.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b, 'ko');
+  });
+
+  return { data, summary: buildSummary_(data, 'amount', 'record_count'), itemTypes };
 }
 
 // ═══════════════════════════════════════════════════════════
