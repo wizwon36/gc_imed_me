@@ -172,7 +172,8 @@
   letter-spacing: .5px;
 }
 .stat-filter-field select,
-.stat-filter-field input[type=month] {
+.stat-filter-field input[type=month],
+.stat-trend-compare-row input[type=month] {
   border: 1px solid var(--border-input, #dde3ed);
   border-radius: var(--radius-md, 16px);
   background: var(--surface-soft, #f8fafc);
@@ -184,7 +185,8 @@
   transition: border-color .15s, background .15s;
 }
 .stat-filter-field select:focus,
-.stat-filter-field input[type=month]:focus {
+.stat-filter-field input[type=month]:focus,
+.stat-trend-compare-row input[type=month]:focus {
   border-color: var(--blue, #2f6df6);
   background: #fff;
 }
