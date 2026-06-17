@@ -164,6 +164,17 @@
               <button type="button" class="btn btn-primary" id="btnStatsUpload" disabled onclick="handleStatsUpload()">선택한 파일 업로드</button>
             </div>
 
+            <!-- 업로드 진행 표시 -->
+            <div id="statsProgressBox" style="display:none;margin-top:14px;">
+              <div class="cl-progress-label">
+                <span id="statsProgressLabel">준비 중...</span>
+                <span id="statsProgressPct">0%</span>
+              </div>
+              <div class="cl-progress-bar">
+                <div class="cl-progress-fill" id="statsProgressFill" style="width:0%"></div>
+              </div>
+            </div>
+
             <div id="statsUploadResult" style="margin-top:14px;"></div>
           </div>
         </div>
