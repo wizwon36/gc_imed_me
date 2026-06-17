@@ -1429,7 +1429,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
       // 마스터 순서: gcGroups 기준, 데이터에만 있는 그룹은 뒤에 추가
       const masterDepts = gcGroups.map(g => g.displayName);
       const dataDepts   = Object.keys(data);
-      const deptKeys = masterDepts.length
+      const deptKeys = (masterDepts.length && yr === R.y)
         ? [...new Set([...masterDepts, ...dataDepts])].sort((a, b) => {
             const ai = masterDepts.indexOf(a); const bi = masterDepts.indexOf(b);
             if (ai >= 0 && bi >= 0) return ai - bi;
