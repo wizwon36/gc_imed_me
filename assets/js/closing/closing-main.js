@@ -147,6 +147,17 @@ function processFile(file, type) {
   const reader = new FileReader();
   reader.onload = e => {
     const wb = XLSX.read(e.target.result, { type: 'array' });
+
+    try {
+      validateClosingFileHeaders_(wb, type);
+    } catch (err) {
+      clog(err.message, 'error');
+      alert(err.message);
+      document.getElementById('zone-' + type).classList.remove('uploaded');
+      document.getElementById('status-' + type).textContent = '';
+      return;
+    }
+
     App[type + 'Raw'] = { wb, name: file.name };
     document.getElementById('zone-' + type).classList.add('uploaded');
     document.getElementById('status-' + type).textContent = '✓ ' + file.name;
@@ -207,6 +218,54 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // ═══════════════════════════════════════════════════════════
 function toN(v) { const n = parseFloat(String(v || 0).replace(/,/g, '')); return isNaN(n) ? 0 : n; }
 const sumF = (arr, k) => arr.reduce((s, r) => s + toN(r[k]), 0);
+
+// ── 파일 헤더 검증: 입고/사용현황 영역에 잘못된 파일이 올라왔는지 확인 ──
+const IPGO_REQUIRED_HEADERS  = ['공급업체', '자재구분', '자재명', '공급가액', '부가세', '합계금액'];
+const USAGE_REQUIRED_HEADERS = ['부서명', '자재구분', '자재명', '사용공급가', '사용부가세', '사용합계'];
+
+function findHeaderRow_(all, markers) {
+  for (let i = 0; i < all.length; i++) {
+    const row = all[i].map(v => String(v || '').trim());
+    if (markers.some(m => row.includes(m))) return i;
+  }
+  return -1;
+}
+
+function validateClosingFileHeaders_(wb, expectedType) {
+  const requiredHeaders = expectedType === 'ipgo' ? IPGO_REQUIRED_HEADERS : USAGE_REQUIRED_HEADERS;
+  const otherHeaders    = expectedType === 'ipgo' ? USAGE_REQUIRED_HEADERS : IPGO_REQUIRED_HEADERS;
+  const expectedLabel = expectedType === 'ipgo' ? '입고' : '사용현황';
+  const otherLabel     = expectedType === 'ipgo' ? '사용현황' : '입고';
+
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const all = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  if (!all.length) {
+    throw new Error('파일에 데이터가 없습니다.');
+  }
+
+  // 헤더 행 위치를 자동 탐색 ('No.' 또는 '부서명' 마커 기준, 기존 parseIpgo/parseUsage와 동일 방식)
+  const headerRowIdx = findHeaderRow_(all, ['No.', '부서명']);
+  const headerRow = headerRowIdx >= 0
+    ? all[headerRowIdx].map(v => String(v || '').trim())
+    : all[0].map(v => String(v || '').trim());
+
+  const missingRequired = requiredHeaders.filter(h => !headerRow.includes(h));
+  const matchedOther    = otherHeaders.filter(h => headerRow.includes(h));
+
+  if (missingRequired.length >= 3 && matchedOther.length >= 3) {
+    throw new Error(
+      `이 파일은 "${expectedLabel}" 파일 형식이 아니라 "${otherLabel}" 파일로 보입니다.\n` +
+      `올바른 업로드 영역에 다시 올려주세요.`
+    );
+  }
+
+  if (missingRequired.length > 0) {
+    throw new Error(
+      `"${expectedLabel}" 파일에 필요한 컬럼이 없습니다: ${missingRequired.join(', ')}\n` +
+      `엑셀 파일의 헤더 행을 확인해주세요.`
+    );
+  }
+}
 
 function parseIpgo(wb) {
   const ws = wb.Sheets[wb.SheetNames[0]];
