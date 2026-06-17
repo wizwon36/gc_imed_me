@@ -347,13 +347,17 @@ async function runStatsDashboard() {
         ]);
       };
     } else if (currentSubtab === 'dept') {
-      const { data, summary } = await window.statsClient.getDeptStats(filters, currentRecordType);
+      const { data, summary, itemTypes } = await window.statsClient.getDeptStats(filters, currentRecordType);
       renderFn = () => {
         renderSummaryCards(summaryGrid, summary, '부서', recLabel);
+        const itemTypeColumns = (itemTypes || []).map(t => ({
+          key: `byItemType.${t}`, label: t, numeric: true, isItemType: true,
+        }));
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'dept',   label: '부서' },
           { key: 'supply', label: '공급가액', numeric: true },
           { key: 'vat',    label: '부가세',   numeric: true },
+          ...itemTypeColumns,
           { key: 'amount', label: '합계금액', numeric: true, withBar: true },
           { key: 'record_count', label: '건수', numeric: true },
         ]);
@@ -422,10 +426,15 @@ function filterByVendorAndItemType(rowIndex, itemTypeLabel) {
   const row = window._statsRowsCache?.[rowIndex];
   if (!row) return;
 
-  // 거래처별 표에서는 합산된 자재구분 금액만 보이므로, 개별 품목 내역을 보려면 품목별 탭으로 전환
+  // 거래처별/부서별 표에서는 합산된 자재구분 금액만 보이므로, 개별 품목 내역을 보려면 품목별 탭으로 전환
   setActiveSubtab_('item');
 
-  // 기본 검색바는 비우고, 상세검색에 "업체명=거래처명" AND "자재구분=레이블" 두 조건을 채움
+  // 어느 표에서 클릭했는지에 따라 "업체명=거래처명" 또는 "부서명=부서명" 조건을 채움
+  const isDeptRow = row.dept !== undefined && row.vendor_name === undefined;
+  const firstConditionField = isDeptRow ? 'dept' : 'vendor';
+  const firstConditionValue = isDeptRow ? row.dept : row.vendor_name;
+
+  // 기본 검색바는 비우고, 상세검색에 두 조건을 채움
   const basicKeywordEl = document.getElementById('statSearchKeyword');
   if (basicKeywordEl) basicKeywordEl.value = '';
 
@@ -434,11 +443,11 @@ function filterByVendorAndItemType(rowIndex, itemTypeLabel) {
   const wrap = document.getElementById('advancedConditionRows');
   const rows = wrap.querySelectorAll('.stat-advanced-row');
 
-  // 첫 행: 업체명 = 거래처명
+  // 첫 행: 업체명/부서명 = 클릭한 행의 이름
   const firstField = rows[0].querySelector('.stat-advanced-field');
   const firstKeyword = rows[0].querySelector('.stat-advanced-keyword');
-  firstField.value = 'vendor';
-  firstKeyword.value = row.vendor_name;
+  firstField.value = firstConditionField;
+  firstKeyword.value = firstConditionValue;
 
   // 두 번째 행 추가: 자재구분 = 레이블 (AND)
   addAdvancedConditionRow();
