@@ -136,11 +136,13 @@ function parseUsageFile(workbook) {
 }
 
 // ── 연월별 그룹핑 (한 파일에 여러 달이 섞여 있을 수 있음) ─────
-function groupByYm_(rows) {
+// targetYear가 주어지면 해당 연도(YYYY)에 해당하는 행만 포함
+function groupByYm_(rows, targetYear) {
   const groups = {};
   rows.forEach(r => {
     const ym = r._ym;
     if (!ym) return; // 날짜 파싱 실패한 행은 제외
+    if (targetYear && ym.slice(0, 4) !== String(targetYear)) return; // 선택 연도 외 데이터 제외
     if (!groups[ym]) groups[ym] = [];
     const { _ym, ...rest } = r;
     groups[ym].push(rest);
@@ -152,7 +154,8 @@ function groupByYm_(rows) {
 // file: <input type="file"> 에서 받은 File 객체
 // branch: '서울숲' | '강북' | '강남'
 // kind: 'purchase' | 'usage'
-async function uploadStatsFile(file, branch, kind) {
+// targetYear: '2026' 같은 문자열 — 선택한 연도 외 데이터는 무시
+async function uploadStatsFile(file, branch, kind, targetYear) {
   const buf = await file.arrayBuffer();
   const workbook = XLSX.read(buf, { type: 'array' });
 
@@ -161,11 +164,13 @@ async function uploadStatsFile(file, branch, kind) {
     throw new Error('파싱된 데이터가 없습니다. 파일 형식을 확인해주세요.');
   }
 
-  const grouped = groupByYm_(rows);
+  const grouped = groupByYm_(rows, targetYear);
   const ymList = Object.keys(grouped).sort();
 
   if (!ymList.length) {
-    throw new Error('날짜를 인식할 수 없습니다.');
+    throw new Error(targetYear
+      ? `선택한 연도(${targetYear})에 해당하는 데이터가 파일에 없습니다.`
+      : '날짜를 인식할 수 없습니다.');
   }
 
   const user = window.auth?.getSession?.();
