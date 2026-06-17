@@ -225,8 +225,38 @@ async function getDeptStats(filters) {
 // ═══════════════════════════════════════════════════════════
 // 3. 품목별 통계 (다음 단계에서 구현)
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// 3. 품목별 통계 (purchase_records 기반, 자재코드 기준 그룹핑)
+// 자재코드가 없는 행은 자재명을 키로 대체 그룹핑
+// ═══════════════════════════════════════════════════════════
 async function getItemStats(filters) {
-  throw new Error('품목별 통계는 아직 구현되지 않았습니다.');
+  let rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
+  rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
+
+  const grouped = {};
+  rows.forEach(r => {
+    const code = (r.item_code || '').trim();
+    const name = r.item_name || '(미확인)';
+    const key = code ? `code:${code}` : `name:${name}`;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        item_name: name,
+        item_code: code || null,
+        quantity: 0, supply_amount: 0, vat_amount: 0, total_amount: 0, record_count: 0,
+      };
+    }
+    // 자재명이 바뀌어 들어온 경우(코드 기준 그룹일 때) 최신 표기로 갱신은 생략 — 거래처와 달리
+    // 품목명 변경 이력 관리 마스터가 없으므로 최초 등장한 이름을 그대로 유지
+    grouped[key].quantity      += Number(r.quantity)      || 0;
+    grouped[key].supply_amount += Number(r.supply_amount) || 0;
+    grouped[key].vat_amount    += Number(r.vat_amount)    || 0;
+    grouped[key].total_amount  += Number(r.total_amount)  || 0;
+    grouped[key].record_count  += 1;
+  });
+
+  const data = Object.values(grouped).sort((a, b) => b.total_amount - a.total_amount);
+  return { data, summary: buildSummary_(data, 'total_amount', 'record_count') };
 }
 
 // ═══════════════════════════════════════════════════════════
