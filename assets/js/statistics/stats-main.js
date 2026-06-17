@@ -32,6 +32,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.StatsApp = window.StatsApp || {};
     StatsApp.canEdit = isAdmin || ['admin', 'edit'].includes(editPerm);
 
+    // 데이터 업로드도 edit 이상만 가능 — view 권한자는 버튼/파일선택을 처음부터 막아 보여줌
+    if (!StatsApp.canEdit) {
+      const uploadBtn = document.getElementById('btnStatsUpload');
+      if (uploadBtn) uploadBtn.disabled = true;
+      ['zone-purchase', 'zone-usage'].forEach(zoneId => {
+        const zone = document.getElementById(zoneId);
+        const fileInput = zone?.querySelector('input[type=file]');
+        if (fileInput) fileInput.disabled = true;
+        if (zone) zone.classList.add('cl-upload-zone--disabled');
+      });
+      const uploadNotice = document.getElementById('statsUploadPermNotice');
+      if (uploadNotice) uploadNotice.style.display = '';
+    }
+
     document.getElementById('appBody').style.display = '';
 
     // 연도 선택 옵션 생성: 2016 ~ 올해
@@ -950,6 +964,8 @@ function statsHandleFile(input, type) {
   if (input.files[0]) statsProcessFile(input.files[0], type);
 }
 function statsProcessFile(file, type) {
+  if (!StatsApp.canEdit) { showMessage('업로드 권한이 없습니다. (edit 이상 필요)', 'error'); return; }
+
   StatsApp[type + 'Raw'] = file;
   document.getElementById('zone-' + type).classList.add('uploaded');
   document.getElementById('status-' + type).textContent = '✓ ' + file.name;
@@ -960,6 +976,8 @@ function statsProcessFile(file, type) {
 
 // ── 업로드 실행 ────────────────────────────────────────────
 async function handleStatsUpload() {
+  if (!StatsApp.canEdit) { showMessage('업로드 권한이 없습니다. (edit 이상 필요)', 'error'); return; }
+
   const branch = document.getElementById('statsBranch').value;
   const year = document.getElementById('statsYear').value;
   const resultEl = document.getElementById('statsUploadResult');
