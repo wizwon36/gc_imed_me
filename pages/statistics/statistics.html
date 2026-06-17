@@ -90,6 +90,7 @@
           <button type="button" class="btn stat-filter-advanced" id="btnOpenAdvancedSearch" onclick="openAdvancedSearch()">
             상세검색<span id="advancedSearchBadge" class="stat-advanced-badge" style="display:none;">0</span>
           </button>
+          <button type="button" class="btn" onclick="resetAllSearchConditions()">초기화</button>
           <button type="button" class="btn btn-primary stat-filter-submit" onclick="runStatsDashboard()">조회</button>
         </div>
 
@@ -103,7 +104,6 @@
           <div class="stat-advanced-footer">
             <button type="button" class="btn" onclick="addAdvancedConditionRow()">+ 조건 추가</button>
             <div style="flex:1;"></div>
-            <button type="button" class="btn" onclick="clearAdvancedConditions()">초기화</button>
             <button type="button" class="btn btn-primary" onclick="applyAdvancedSearch()">적용</button>
           </div>
         </div>
