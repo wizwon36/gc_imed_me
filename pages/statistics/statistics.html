@@ -58,6 +58,7 @@
           <div class="stat-filter-field">
             <label>의원</label>
             <select id="statDashBranch">
+              <option value="">전체</option>
               <option value="강남">강남의원</option>
               <option value="강북">강북의원</option>
               <option value="서울숲">서울숲의원</option>
@@ -115,6 +116,7 @@
             <button class="stat-seg-toggle-btn" id="recordTypeUsage" onclick="switchRecordType('usage')">📋 사용조회</button>
           </div>
           <div class="stat-subtab-underline">
+            <button class="stat-subtab-underline-btn" id="subtabBranch" onclick="switchStatsSubtab('branch')">🏥 의원별</button>
             <button class="stat-subtab-underline-btn active" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
             <button class="stat-subtab-underline-btn" id="subtabDept" onclick="switchStatsSubtab('dept')">🏬 부서별</button>
             <button class="stat-subtab-underline-btn" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
