@@ -54,30 +54,61 @@ function switchStatsTab(tab) {
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-// ── 업로드 핸들러 ──────────────────────────────────────────
-async function handleStatsUpload(kind) {
-  const inputId = kind === 'purchase' ? 'purchaseFileInput' : 'usageFileInput';
-  const resultId = kind === 'purchase' ? 'purchaseUploadResult' : 'usageUploadResult';
-  const fileInput = document.getElementById(inputId);
-  const resultEl = document.getElementById(resultId);
+// ── 파일 업로드 (드래그&드롭) ──────────────────────────────
+const StatsApp = { purchaseRaw: null, usageRaw: null };
+
+function statsDragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('dragover'); }
+function statsDragLeave(id)   { document.getElementById(id).classList.remove('dragover'); }
+function statsDropFile(e, type) {
+  e.preventDefault();
+  document.getElementById('zone-' + type).classList.remove('dragover');
+  if (e.dataTransfer.files[0]) statsProcessFile(e.dataTransfer.files[0], type);
+}
+function statsHandleFile(input, type) {
+  if (input.files[0]) statsProcessFile(input.files[0], type);
+}
+function statsProcessFile(file, type) {
+  StatsApp[type + 'Raw'] = file;
+  document.getElementById('zone-' + type).classList.add('uploaded');
+  document.getElementById('status-' + type).textContent = '✓ ' + file.name;
+
+  const btn = document.getElementById('btnStatsUpload');
+  if (btn) btn.disabled = !(StatsApp.purchaseRaw || StatsApp.usageRaw);
+}
+
+// ── 업로드 실행 ────────────────────────────────────────────
+async function handleStatsUpload() {
   const branch = document.getElementById('statsBranch').value;
+  const resultEl = document.getElementById('statsUploadResult');
+  const btn = document.getElementById('btnStatsUpload');
 
-  const file = fileInput.files[0];
-  if (!file) {
-    resultEl.innerHTML = '<span style="color:#dc2626;">파일을 선택해주세요.</span>';
-    return;
-  }
+  resultEl.innerHTML = '<p style="color:#6b7280;font-size:12px;">업로드 중...</p>';
+  btn.disabled = true;
 
-  resultEl.innerHTML = '<span style="color:#6b7280;">업로드 중...</span>';
-
+  const lines = [];
   try {
-    const results = await window.uploadStatsFile(file, branch, kind);
-    resultEl.innerHTML = results.map(r =>
-      `<div style="color:#059669;">✓ ${r.ym}: ${r.count}건 저장</div>`
-    ).join('');
-    fileInput.value = '';
+    if (StatsApp.purchaseRaw) {
+      const results = await window.uploadStatsFile(StatsApp.purchaseRaw, branch, 'purchase');
+      results.forEach(r => lines.push(`<div style="color:#059669;font-size:12px;">✓ 입고 ${r.ym}: ${r.count}건 저장</div>`));
+    }
+    if (StatsApp.usageRaw) {
+      const results = await window.uploadStatsFile(StatsApp.usageRaw, branch, 'usage');
+      results.forEach(r => lines.push(`<div style="color:#059669;font-size:12px;">✓ 사용현황 ${r.ym}: ${r.count}건 저장</div>`));
+    }
+    resultEl.innerHTML = lines.join('');
+
+    // 업로드 완료 후 초기화
+    ['purchase', 'usage'].forEach(type => {
+      StatsApp[type + 'Raw'] = null;
+      document.getElementById('zone-' + type).classList.remove('uploaded');
+      document.getElementById('status-' + type).textContent = '';
+      const inputEl = document.querySelector(`#zone-${type} input[type=file]`);
+      if (inputEl) inputEl.value = '';
+    });
   } catch (error) {
     console.error(error);
-    resultEl.innerHTML = `<span style="color:#dc2626;">오류: ${error.message}</span>`;
+    resultEl.innerHTML = `<div style="color:#dc2626;font-size:12px;">오류: ${error.message}</div>` + lines.join('');
+  } finally {
+    btn.disabled = !(StatsApp.purchaseRaw || StatsApp.usageRaw);
   }
 }
