@@ -16,8 +16,9 @@
 .stat-scope-panel {
   background: var(--surface-soft, #f1f4f9);
   border-radius: var(--radius-lg, 20px);
-  padding: 14px 16px 14px;
-  margin-bottom: 16px;
+  padding: 20px 22px;
+  margin-top: 6px;
+  margin-bottom: 22px;
 }
 .stat-recordtype-seg {
   display: inline-flex;
@@ -26,7 +27,7 @@
   border: 1px solid var(--border-input, #dde3ed);
   border-radius: var(--radius-md, 16px);
   padding: 3px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 .stat-recordtype-seg-btn {
   border: none;
