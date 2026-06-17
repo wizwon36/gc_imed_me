@@ -51,11 +51,52 @@
       <!-- 탭1: 통계 조회 (다음 단계에서 채울 예정)            -->
       <!-- ══════════════════════════════════════════════════ -->
       <div id="tabDashboardContent" class="cl-section active">
-        <div class="card">
+
+        <!-- 공통 필터 바 -->
+        <div class="card" style="margin-bottom:14px;">
           <div class="card-body">
-            <p style="color:#6b7280;font-size:13px;">통계 조회 화면은 다음 단계에서 구현됩니다.</p>
+            <div class="cl-settings-row">
+              <div class="cl-field">
+                <label>의원</label>
+                <select id="statDashBranch">
+                  <option value="서울숲">서울숲의원</option>
+                  <option value="강북">강북의원</option>
+                  <option value="강남">강남의원</option>
+                </select>
+              </div>
+              <div class="cl-field">
+                <label>시작월</label>
+                <input type="month" id="statDashYmFrom">
+              </div>
+              <div class="cl-field">
+                <label>종료월</label>
+                <input type="month" id="statDashYmTo">
+              </div>
+              <div class="cl-field">
+                <label>&nbsp;</label>
+                <button type="button" class="btn btn-primary" onclick="runStatsDashboard()">조회</button>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- 관점 서브탭 -->
+        <div class="cl-tabs" style="margin-bottom:14px;">
+          <button class="cl-tab active" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
+          <button class="cl-tab" id="subtabDept" onclick="switchStatsSubtab('dept')">🏬 부서별</button>
+          <button class="cl-tab" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
+          <button class="cl-tab" id="subtabTrend" onclick="switchStatsSubtab('trend')">📅 기간 비교</button>
+        </div>
+
+        <!-- 결과 영역 -->
+        <div class="card">
+          <div class="card-body">
+            <div id="statsResultArea">
+              <p style="color:#6b7280;font-size:13px;">조회 버튼을 눌러 결과를 확인하세요.</p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ══════════════════════════════════════════════════ -->
@@ -128,6 +169,7 @@
 
   <!-- 라이브러리 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- 공통 -->
   <script src="../../assets/js/core/config.js"></script>
@@ -137,6 +179,7 @@
   <script src="../../assets/js/core/app-permission.js"></script>
 
   <!-- 통계 모듈 -->
+  <script src="../../assets/js/statistics/stats-client.js"></script>
   <script src="../../assets/js/statistics/stats-upload.js"></script>
   <script src="../../assets/js/statistics/stats-main.js"></script>
 </body>
