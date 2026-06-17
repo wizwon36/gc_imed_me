@@ -39,6 +39,48 @@ function parseStr_(v) {
 // ── 입고(구매) 파일 파싱 ───────────────────────────────────
 // 컬럼: No. | 공급업체코드 | 공급업체 | 구매번호 | 자재구분 | 자재코드 | 자재명 | 상태 |
 //       입고일자 | 수량 | 단가 | 공급가액 | 부가세 | 합계금액 | 규격 | 산출단위 | 입고단위 | 의뢰부서
+// ── 헤더 검증 ──────────────────────────────────────────────
+// 필수 컬럼명이 헤더 행(인덱스 0)에 있는지 확인. 없으면 파일 종류 불일치로 판단.
+const PURCHASE_REQUIRED_HEADERS = ['공급업체', '구매번호', '자재명', '입고일자', '공급가액'];
+const USAGE_REQUIRED_HEADERS    = ['부서명', '자재명', '사용일자', '사용공급가', 'LOT No.'];
+
+function validateFileHeaders_(workbook, expectedKind) {
+  const requiredHeaders = expectedKind === 'purchase' ? PURCHASE_REQUIRED_HEADERS : USAGE_REQUIRED_HEADERS;
+  const otherHeaders    = expectedKind === 'purchase' ? USAGE_REQUIRED_HEADERS : PURCHASE_REQUIRED_HEADERS;
+  const expectedLabel = expectedKind === 'purchase' ? '입고(구매)' : '사용현황';
+  const otherLabel     = expectedKind === 'purchase' ? '사용현황' : '입고(구매)';
+
+  // 첫 번째 시트의 헤더 행만 확인 (모든 시트가 같은 구조라고 가정)
+  const firstSheetName = workbook.SheetNames[0];
+  const ws = workbook.Sheets[firstSheetName];
+  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+  if (!data.length) {
+    throw new Error('파일에 데이터가 없습니다.');
+  }
+
+  const headerRow = data[0].map(v => String(v || '').trim());
+
+  const missingRequired = requiredHeaders.filter(h => !headerRow.includes(h));
+  const matchedOther    = otherHeaders.filter(h => headerRow.includes(h));
+
+  // 기대한 컬럼이 대부분 없고, 반대쪽 파일의 특징적 컬럼이 많이 발견되면 → 파일 종류 불일치
+  if (missingRequired.length >= 3 && matchedOther.length >= 3) {
+    throw new Error(
+      `이 파일은 "${expectedLabel}" 파일 형식이 아니라 "${otherLabel}" 파일로 보입니다.\n` +
+      `올바른 업로드 영역에 다시 올려주세요.`
+    );
+  }
+
+  // 기대한 컬럼이 일부라도 빠진 경우 → 형식이 다르거나 손상된 파일일 가능성
+  if (missingRequired.length > 0) {
+    throw new Error(
+      `"${expectedLabel}" 파일에 필요한 컬럼이 없습니다: ${missingRequired.join(', ')}\n` +
+      `엑셀 파일의 헤더 행(1행)을 확인해주세요.`
+    );
+  }
+}
+
 function parsePurchaseFile(workbook) {
   const allRows = [];
 
@@ -156,6 +198,8 @@ async function peekStatsFileMonths(file, kind, targetYear) {
   const buf = await file.arrayBuffer();
   const workbook = XLSX.read(buf, { type: 'array' });
 
+  validateFileHeaders_(workbook, kind);
+
   const rows = kind === 'purchase' ? parsePurchaseFile(workbook) : parseUsageFile(workbook);
 
   const months = new Set();
@@ -182,6 +226,8 @@ async function uploadStatsFile(file, branch, kind, targetYear, onProgress) {
 
   const buf = await file.arrayBuffer();
   const workbook = XLSX.read(buf, { type: 'array' });
+
+  validateFileHeaders_(workbook, kind);
 
   const rows = kind === 'purchase' ? parsePurchaseFile(workbook) : parseUsageFile(workbook);
   if (!rows.length) {
@@ -222,3 +268,8 @@ async function uploadStatsFile(file, branch, kind, targetYear, onProgress) {
 
 window.uploadStatsFile = uploadStatsFile;
 window.peekStatsFileMonths = peekStatsFileMonths;
+window.validateStatsFileHeaders = async function(file, kind) {
+  const buf = await file.arrayBuffer();
+  const workbook = XLSX.read(buf, { type: 'array' });
+  validateFileHeaders_(workbook, kind);
+};
