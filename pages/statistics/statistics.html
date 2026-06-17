@@ -43,14 +43,25 @@
 
       <!-- 탭 -->
       <div class="cl-tabs">
-        <button class="cl-tab active" id="tabUpload" onclick="switchStatsTab('upload')">📤 데이터 업로드</button>
-        <button class="cl-tab" id="tabDashboard" onclick="switchStatsTab('dashboard')">📊 통계 조회</button>
+        <button class="cl-tab active" id="tabDashboard" onclick="switchStatsTab('dashboard')">📊 통계 조회</button>
+        <button class="cl-tab" id="tabUpload" onclick="switchStatsTab('upload')">📤 데이터 업로드</button>
       </div>
 
       <!-- ══════════════════════════════════════════════════ -->
-      <!-- 탭1: 데이터 업로드                                -->
+      <!-- 탭1: 통계 조회 (다음 단계에서 채울 예정)            -->
       <!-- ══════════════════════════════════════════════════ -->
-      <div id="tabUploadContent" class="cl-section active">
+      <div id="tabDashboardContent" class="cl-section active">
+        <div class="card">
+          <div class="card-body">
+            <p style="color:#6b7280;font-size:13px;">통계 조회 화면은 다음 단계에서 구현됩니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════ -->
+      <!-- 탭2: 데이터 업로드                                -->
+      <!-- ══════════════════════════════════════════════════ -->
+      <div id="tabUploadContent" class="cl-section" style="display:none;">
 
         <div class="card">
           <div class="card-body">
@@ -104,17 +115,14 @@
 
       </div>
 
-      <!-- ══════════════════════════════════════════════════ -->
-      <!-- 탭2: 통계 조회 (다음 단계에서 채울 예정)            -->
-      <!-- ══════════════════════════════════════════════════ -->
-      <div id="tabDashboardContent" class="cl-section" style="display:none;">
-        <div class="card">
-          <div class="card-body">
-            <p style="color:#6b7280;font-size:13px;">통계 조회 화면은 다음 단계에서 구현됩니다.</p>
-          </div>
-        </div>
-      </div>
+    </div>
+  </div>
 
+  <!-- 전역 스피너 -->
+  <div id="globalLoading" aria-hidden="true">
+    <div class="global-loading__dialog">
+      <div class="global-loading__spinner" aria-hidden="true"></div>
+      <div class="global-loading__text" id="globalLoadingText">불러오는 중...</div>
     </div>
   </div>
 
