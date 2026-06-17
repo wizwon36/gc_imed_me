@@ -215,6 +215,36 @@ async function handleStatsUpload() {
   const resultEl = document.getElementById('statsUploadResult');
   const btn = document.getElementById('btnStatsUpload');
 
+  // 이미 데이터가 있는 월과 겹치는지 사전 확인 → 겹치면 확인창
+  try {
+    const status = await window.statsClient.getUploadStatus(branch);
+    const yearStatus = status.find(s => s.year === year);
+
+    if (yearStatus) {
+      const overlapMsgs = [];
+
+      if (StatsApp.purchaseRaw && yearStatus.purchaseMonths.length) {
+        const targetMonths = await window.peekStatsFileMonths(StatsApp.purchaseRaw, 'purchase', year);
+        const overlap = targetMonths.filter(m => yearStatus.purchaseMonths.includes(m));
+        if (overlap.length) overlapMsgs.push(`입고: ${overlap.join(', ')}월`);
+      }
+      if (StatsApp.usageRaw && yearStatus.usageMonths.length) {
+        const targetMonths = await window.peekStatsFileMonths(StatsApp.usageRaw, 'usage', year);
+        const overlap = targetMonths.filter(m => yearStatus.usageMonths.includes(m));
+        if (overlap.length) overlapMsgs.push(`사용현황: ${overlap.join(', ')}월`);
+      }
+
+      if (overlapMsgs.length) {
+        const msg = `${branch} ${year}년의 다음 데이터가 이미 존재하며, 새 파일로 덮어쓰게 됩니다.\n\n` +
+          overlapMsgs.join('\n') +
+          `\n\n계속하시겠습니까?`;
+        if (!confirm(msg)) return;
+      }
+    }
+  } catch (e) {
+    console.warn('업로드 현황 사전 확인 실패, 진행을 계속합니다.', e);
+  }
+
   resultEl.innerHTML = '<p style="color:#6b7280;font-size:12px;">업로드 중...</p>';
   btn.disabled = true;
 
