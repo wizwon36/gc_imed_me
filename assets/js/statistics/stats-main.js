@@ -386,6 +386,19 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
 }
 
 // ── 결과 표 렌더링: 순위 배지 + 점유율 바 포함 ────────────────
+// 거래처 그룹(사업자번호 동일, 명칭 변경 이력 있음) 펼치기/접기
+function toggleStatRowExpand(rowId) {
+  const toggle = document.getElementById(`${rowId}_toggle`);
+  const breakdownRows = document.querySelectorAll(`tr[data-parent="${rowId}"]`);
+  const isExpanded = toggle?.classList.contains('expanded');
+
+  breakdownRows.forEach(r => { r.style.display = isExpanded ? 'none' : ''; });
+  if (toggle) {
+    toggle.classList.toggle('expanded', !isExpanded);
+    toggle.textContent = isExpanded ? '▸' : '▾';
+  }
+}
+
 function renderStatsTable(container, rows, barKey, columns) {
   if (!rows.length) {
     container.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 결과가 없습니다.</p>';
@@ -401,6 +414,9 @@ function renderStatsTable(container, rows, barKey, columns) {
   ).join('');
 
   const tbody = rows.map((row, i) => {
+    const expandable = !!row.hasMultipleNames;
+    const rowId = `statRow${i}_${Math.random().toString(36).slice(2, 7)}`;
+
     const cells = columns.map(c => {
       if (c.key === columns[0].key) {
         // 첫 번째(이름) 컬럼: 순위 배지 + 이름 + 사업자번호(있는 경우) + (미등록 거래처는 경고 표시)
@@ -410,9 +426,13 @@ function renderStatsTable(container, rows, barKey, columns) {
         const bizNoText = row.vendor_biz_no
           ? `<div class="stat-vendor-bizno">${row.vendor_biz_no}</div>`
           : '';
+        const expandToggle = expandable
+          ? `<span class="stat-expand-toggle" id="${rowId}_toggle">▸</span>`
+          : '';
         const nameCell = `
           <span class="stat-name-cell">
             <span class="stat-rank-badge ${rankClass(i)}">${i + 1}</span>
+            ${expandToggle}
             <span>
               <div>${row[c.key] || '-'}${unmatchedBadge}</div>
               ${bizNoText}
@@ -428,7 +448,23 @@ function renderStatsTable(container, rows, barKey, columns) {
       const val = c.numeric ? fmtNum(row[c.key]) : (row[c.key] || '-');
       return `<td class="${c.numeric ? 'num' : ''}">${val}</td>`;
     }).join('');
-    return `<tr>${cells}</tr>`;
+
+    const mainRow = expandable
+      ? `<tr class="stat-expandable-row" onclick="toggleStatRowExpand('${rowId}')">${cells}</tr>`
+      : `<tr>${cells}</tr>`;
+
+    if (!expandable) return mainRow;
+
+    // 펼쳐지는 세부 내역: 사업자번호는 같지만 실제 데이터에 등장한 이름별로 나눠 보여줌
+    const breakdownRows = row.breakdown.map(b => `
+      <tr class="stat-breakdown-row" data-parent="${rowId}" style="display:none;">
+        <td class="stat-breakdown-name">└ ${b.vendor_name}</td>
+        <td colspan="${columns.length - 2}"></td>
+        <td class="num">${fmtNum(b.total_amount)}</td>
+        <td class="num">${fmtNum(b.record_count)}</td>
+      </tr>`).join('');
+
+    return mainRow + breakdownRows;
   }).join('');
 
   container.innerHTML = `
