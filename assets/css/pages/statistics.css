@@ -3,6 +3,15 @@
    공통 레이아웃(cl-tabs, cl-field, cl-section 등)은 closing.css 재사용
    ════════════════════════════════════════════════════════════ */
 
+/* ── 공용 패널: 통계 조회 탭과 동일한 카드 톤 (업로드/거래처 탭에서 사용) ── */
+.stat-panel {
+  background: #fff;
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: var(--radius-lg, 20px);
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.05));
+  padding: 18px 20px;
+}
+
 /* ── 필터 바: 카드형 검색 도구 ──────────────────────────── */
 .stat-filter-bar {
   display: flex;
@@ -44,12 +53,6 @@
 .stat-filter-field input[type=month]:focus {
   border-color: var(--blue, #2f6df6);
   background: #fff;
-}
-.stat-filter-sep {
-  align-self: center;
-  color: var(--text-muted, #7b8794);
-  font-size: 13px;
-  margin: 0 -6px 9px;
 }
 .stat-filter-field--search { min-width: 180px; flex: 1; }
 .stat-filter-input-icon {
