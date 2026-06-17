@@ -107,15 +107,21 @@ function buildSummary_(rows, amountKey, countKey) {
   const total = rows.reduce((s, r) => s + (Number(r[amountKey]) || 0), 0);
   const totalRecords = rows.reduce((s, r) => s + (Number(r[countKey]) || 0), 0);
   const groupCount = rows.length;
-  const top = rows[0] || null;
   const avgPerGroup = groupCount ? total / groupCount : 0;
+
+  // 정렬 기준이 항상 금액 내림차순은 아니므로(예: 월별 추이는 연월 오름차순) rows[0]을 가정하지 않고
+  // 실제로 금액이 가장 큰 행을 직접 찾음
+  let top = null;
+  rows.forEach(r => {
+    if (!top || (Number(r[amountKey]) || 0) > (Number(top[amountKey]) || 0)) top = r;
+  });
 
   return {
     total,
     totalRecords,
     groupCount,
     avgPerGroup,
-    topName: top ? (top.vendor_name || top.dept || top.item_name || '') : '',
+    topName: top ? (top.vendor_name || top.dept || top.item_name || top.ym || '') : '',
     topAmount: top ? (Number(top[amountKey]) || 0) : 0,
   };
 }
