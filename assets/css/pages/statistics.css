@@ -289,6 +289,8 @@
 .stat-table td + td { border-left: 1px solid var(--border-soft, #eaeff5); }
 .stat-table tbody tr:last-child td { border-bottom: none; }
 .stat-table td.num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-table td.stat-itemtype-cell { color: var(--text-secondary, #5f6b7a); font-weight: 500; }
+.stat-table thead th.num { font-weight: 700; }
 .stat-table tbody tr:hover td { background-color: var(--blue-soft, #eaf1ff); }
 .stat-table tbody tr:hover td.stat-bar-cell {
   background-image: linear-gradient(90deg, #d9e6ff var(--bar-pct, 0%), var(--blue-soft, #eaf1ff) var(--bar-pct, 0%));
