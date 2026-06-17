@@ -160,6 +160,11 @@
   color: var(--text-secondary, #5f6b7a);
   margin: 22px 0 10px;
 }
+.stat-vat-note {
+  font-size: 11px;
+  color: var(--text-muted, #9aa5b1);
+  margin: 0 0 12px;
+}
 .stat-table td.stat-trend-up { color: #c0392b; }
 .stat-table td.stat-trend-down { color: #1d6f42; }
 
@@ -392,6 +397,14 @@
   text-transform: uppercase;
   letter-spacing: .5px;
   margin-bottom: 7px;
+}
+.stat-summary-vat-tag {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted, #9aa5b1);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
 }
 .stat-summary-value {
   font-size: 21px;
