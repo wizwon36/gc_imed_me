@@ -1636,7 +1636,7 @@ function writeWonjaeryoYear(ws, R, yearUsage, label) {
   years.forEach(yr => {
     const data = yearMap[yr];
     const dataGroups = Object.keys(data);
-    const rawGroupKeys = masterGroups.length
+    const rawGroupKeys = (masterGroups.length && yr === R.y)
       ? [...new Set([...masterGroups, ...dataGroups])].sort((a, b) => {
           const ai = masterGroups.indexOf(a); const bi = masterGroups.indexOf(b);
           if (ai >= 0 && bi >= 0) return ai - bi;
