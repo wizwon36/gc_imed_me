@@ -48,8 +48,7 @@ function switchStatsTab(tab) {
   const tabs = ['upload', 'dashboard'];
   tabs.forEach(t => {
     document.getElementById(`tab${capitalize(t)}`)?.classList.toggle('active', t === tab);
-    const content = document.getElementById(`tab${capitalize(t)}Content`);
-    if (content) content.style.display = t === tab ? '' : 'none';
+    document.getElementById(`tab${capitalize(t)}Content`)?.classList.toggle('active', t === tab);
   });
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
