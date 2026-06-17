@@ -73,6 +73,65 @@
   .stat-subtab-underline { gap: 18px; overflow-x: auto; }
 }
 
+/* ── 기간 비교: 모드 토글 + 비교 구간 컨트롤 ──────────────── */
+.stat-trend-controls {
+  background: #fff;
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: var(--radius-lg, 20px);
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.05));
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.stat-trend-mode-toggle {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--surface-soft, #f1f4f9);
+  border-radius: var(--radius-md, 16px);
+  padding: 3px;
+}
+.stat-trend-mode-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #5f6b7a);
+  border-radius: 12px;
+  transition: background .12s, color .12s;
+}
+.stat-trend-mode-btn:hover { color: var(--text-primary, #111827); }
+.stat-trend-mode-btn.active { background: #fff; color: var(--blue, #2f6df6); box-shadow: 0 1px 3px rgba(15,23,42,.08); }
+.stat-trend-compare-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.stat-trend-compare-label { font-size: 13px; color: var(--text-secondary, #5f6b7a); font-weight: 500; }
+.stat-trend-quick-buttons { display: flex; gap: 6px; margin-left: 6px; }
+.stat-trend-quick-buttons .btn { font-size: 12px; padding: 6px 12px; }
+
+/* ── 구간 비교 결과 표시 ──────────────────────────────────── */
+.stat-compare-period-labels {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.stat-compare-period-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+.stat-compare-period-chip--base { background: var(--blue-50, #e6f1fb); color: var(--blue, #2f6df6); }
+.stat-compare-period-chip--compare { background: var(--surface-soft, #f1f4f9); color: var(--text-secondary, #5f6b7a); }
+.stat-table td.stat-trend-up { color: #c0392b; }
+.stat-table td.stat-trend-down { color: #1d6f42; }
+
 /* ── 필터 바: 카드형 검색 도구 ──────────────────────────── */
 .stat-filter-bar {
   display: flex;
