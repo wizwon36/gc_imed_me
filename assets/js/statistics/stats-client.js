@@ -121,7 +121,7 @@ function buildSummary_(rows, amountKey, countKey) {
     totalRecords,
     groupCount,
     avgPerGroup,
-    topName: top ? (top.vendor_name || top.dept || top.item_name || top.ym || '') : '',
+    topName: top ? (top.vendor_name || top.dept || top.item_name || top.branch || top.ym || '') : '',
     topAmount: top ? (Number(top[amountKey]) || 0) : 0,
   };
 }
@@ -220,6 +220,52 @@ async function getVendorStats(filters, recordType = 'purchase') {
 // 2. 부서별 통계 (입고/사용 공통)
 // 입고는 의뢰부서(dept), 사용은 사용부서(dept) 기준 — 같은 컬럼명이라 동일 로직 재사용
 // ═══════════════════════════════════════════════════════════
+async function getBranchStats(filters, recordType = 'usage') {
+  const table = RECORD_TYPE_TABLES[recordType];
+  const cols = RECORD_TYPE_COLUMNS[recordType];
+
+  // 의원별 비교는 항상 전체 의원(강남/강북/서울숲)을 동시에 보여줘야 하므로,
+  // 검색바의 의원 선택(filters.branch)은 무시하고 나머지 조건만 적용
+  const branchFilters = { ...filters, branch: '' };
+
+  let rows = await fetchAllRows_(table, q => applyFilters_(q, branchFilters));
+  rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
+
+  const grouped = {};
+  const allItemTypes = new Set();
+
+  rows.forEach(r => {
+    const key = r.branch || '(미확인)';
+    const itemType = r.item_type || '미분류';
+    allItemTypes.add(itemType);
+
+    if (!grouped[key]) {
+      grouped[key] = { branch: key, qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0, byItemType: {} };
+    }
+    grouped[key].qty          += Number(r[cols.qty])    || 0;
+    grouped[key].supply       += Number(r[cols.supply]) || 0;
+    grouped[key].vat          += Number(r[cols.vat])    || 0;
+    grouped[key].amount       += Number(r[cols.amount]) || 0;
+    grouped[key].record_count += 1;
+
+    grouped[key].byItemType[itemType] = (grouped[key].byItemType[itemType] || 0) + (Number(r[cols.amount]) || 0);
+  });
+
+  const data = Object.values(grouped).sort((a, b) => b.amount - a.amount);
+
+  // 자재구분 정렬: 소모품/시약/의약품을 우선 노출하고, 그 외 값은 가나다순으로 뒤에 붙임
+  const priorityOrder = ['소모품', '시약', '의약품'];
+  const itemTypes = Array.from(allItemTypes).sort((a, b) => {
+    const ai = priorityOrder.indexOf(a), bi = priorityOrder.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b, 'ko');
+  });
+
+  return { data, summary: buildSummary_(data, 'amount', 'record_count'), itemTypes };
+}
+
 async function getDeptStats(filters, recordType = 'usage') {
   const table = RECORD_TYPE_TABLES[recordType];
   const cols = RECORD_TYPE_COLUMNS[recordType];
@@ -479,6 +525,7 @@ async function getUploadStatus(branch) {
 window.statsClient = {
   getVendorStats,
   getDeptStats,
+  getBranchStats,
   getItemStats,
   getMonthlyTrend,
   getPeriodComparison,
