@@ -100,3 +100,22 @@
   margin-left: 6px;
   white-space: nowrap;
 }
+
+/* ── 작은 인라인 로딩 스피너 (탭/서브탭 전환 시 표 영역에 표시) ── */
+.stat-loading-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.stat-mini-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #1a56db;
+  border-radius: 50%;
+  animation: stat-spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes stat-spin { to { transform: rotate(360deg); } }
