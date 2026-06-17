@@ -12,6 +12,65 @@
   padding: 18px 20px;
 }
 
+/* ── 입고/사용 + 관점 서브탭 패널 (B안: 회색 배경으로 영역 구분) ── */
+.stat-scope-panel {
+  background: var(--surface-soft, #f1f4f9);
+  border-radius: var(--radius-lg, 20px);
+  padding: 14px 16px 14px;
+  margin-bottom: 16px;
+}
+.stat-recordtype-seg {
+  display: inline-flex;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--border-input, #dde3ed);
+  border-radius: var(--radius-md, 16px);
+  padding: 3px;
+  margin-bottom: 14px;
+}
+.stat-recordtype-seg-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #5f6b7a);
+  border-radius: 12px;
+  transition: background .12s, color .12s;
+}
+.stat-recordtype-seg-btn:hover { color: var(--text-primary, #111827); }
+.stat-recordtype-seg-btn.active {
+  background: var(--blue-50, #e6f1fb);
+  color: var(--blue, #2f6df6);
+}
+.stat-subtab-underline {
+  display: flex;
+  gap: 22px;
+  border-bottom: 1px solid var(--border-soft, #e2e8f0);
+}
+.stat-subtab-underline-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #5f6b7a);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .12s, border-color .12s;
+}
+.stat-subtab-underline-btn:hover { color: var(--text-primary, #111827); }
+.stat-subtab-underline-btn.active {
+  color: var(--blue, #2f6df6);
+  font-weight: 600;
+  border-bottom-color: var(--blue, #2f6df6);
+}
+@media (max-width: 720px) {
+  .stat-subtab-underline { gap: 14px; overflow-x: auto; }
+}
+
 /* ── 필터 바: 카드형 검색 도구 ──────────────────────────── */
 .stat-filter-bar {
   display: flex;
@@ -23,7 +82,7 @@
   border-radius: var(--radius-lg, 20px);
   box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.05));
   padding: 16px 20px;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 .stat-filter-field {
   display: flex;
