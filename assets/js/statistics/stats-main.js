@@ -744,7 +744,7 @@ function toggleStatRowExpand(rowId) {
 
 // ── 구간 비교 결과 렌더링: 기준 구간 vs 비교 구간을 나란히 표시 ──
 function renderPeriodComparisonTable(container, comparison) {
-  const { basePeriod, comparePeriod, metrics } = comparison;
+  const { basePeriod, comparePeriod, metrics, itemTypeComparison } = comparison;
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
   const metricLabels = { qty: '수량', supply: '공급가액', vat: '부가세', amount: '합계금액', record_count: '건수' };
 
@@ -758,6 +758,20 @@ function renderPeriodComparisonTable(container, comparison) {
         <td class="num">${fmtNum(m.compareVal)}</td>
         <td class="num">${fmtNum(m.baseVal)}</td>
         <td class="num ${diffClass}">${diffSign}${fmtNum(m.diff)}</td>
+        <td class="num ${diffClass}">${pctText}</td>
+      </tr>`;
+  }).join('');
+
+  const itemTypeRows = (itemTypeComparison || []).map(it => {
+    const diffClass = it.diff > 0 ? 'stat-trend-up' : it.diff < 0 ? 'stat-trend-down' : '';
+    const diffSign = it.diff > 0 ? '+' : '';
+    const pctText = it.pct === null ? '-' : `${it.pct > 0 ? '+' : ''}${it.pct.toFixed(1)}%`;
+    return `
+      <tr>
+        <td>${it.itemType}</td>
+        <td class="num">${fmtNum(it.compareVal)}</td>
+        <td class="num">${fmtNum(it.baseVal)}</td>
+        <td class="num ${diffClass}">${diffSign}${fmtNum(it.diff)}</td>
         <td class="num ${diffClass}">${pctText}</td>
       </tr>`;
   }).join('');
@@ -779,6 +793,23 @@ function renderPeriodComparisonTable(container, comparison) {
             <th class="num">증감률</th>
           </tr></thead>
           <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="stat-compare-subheading">자재구분별 합계금액 비교</p>
+    <div class="stat-table-wrap">
+      <div style="overflow-x:auto;">
+        <table class="stat-table">
+          <thead><tr>
+            <th>자재구분</th>
+            <th class="num">비교 구간</th>
+            <th class="num">기준 구간</th>
+            <th class="num">증감</th>
+            <th class="num">증감률</th>
+          </tr></thead>
+          <tbody>${itemTypeRows}</tbody>
+
         </table>
       </div>
     </div>`;
