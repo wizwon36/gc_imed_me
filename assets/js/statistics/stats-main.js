@@ -317,11 +317,15 @@ function switchRecordType(type) {
 }
 function setActiveSubtab_(subtab) {
   currentSubtab = subtab;
-  ['vendor', 'dept', 'item', 'trend'].forEach(t => {
+  ['branch', 'vendor', 'dept', 'item', 'trend'].forEach(t => {
     document.getElementById(`subtab${capitalize(t)}`)?.classList.toggle('active', t === subtab);
   });
   const trendPanel = document.getElementById('trendControlsPanel');
   if (trendPanel) trendPanel.style.display = subtab === 'trend' ? '' : 'none';
+
+  // 의원별 비교 탭은 항상 전체 의원을 동시에 보여주므로, 상단 검색바의 의원 선택은 의미가 없어 비활성화
+  const topBranch = document.getElementById('statDashBranch');
+  if (topBranch) topBranch.disabled = (subtab === 'branch');
 
   // 기간비교 탭을 벗어나면 상단 검색바의 기간 입력을 다시 활성화
   if (subtab !== 'trend') {
@@ -459,7 +463,23 @@ async function runStatsDashboard() {
 
     const recLabel = currentRecordType === 'usage' ? '사용' : '구매';
 
-    if (currentSubtab === 'vendor') {
+    if (currentSubtab === 'branch') {
+      const { data, summary, itemTypes } = await window.statsClient.getBranchStats(filters, currentRecordType);
+      renderFn = () => {
+        renderSummaryCards(summaryGrid, summary, '의원', recLabel);
+        const itemTypeColumns = (itemTypes || []).map(t => ({
+          key: `byItemType.${t}`, label: t, numeric: true, isItemType: true, clickable: false,
+        }));
+        renderStatsTable(resultArea, data, 'amount', [
+          { key: 'branch',  label: '의원' },
+          { key: 'supply',  label: '공급가액(부가세 별도)', numeric: true },
+          { key: 'vat',     label: '부가세',   numeric: true },
+          ...itemTypeColumns,
+          { key: 'amount',  label: '합계금액(부가세 포함)', numeric: true, withBar: true },
+          { key: 'record_count', label: '건수', numeric: true },
+        ]);
+      };
+    } else if (currentSubtab === 'vendor') {
       const { data, summary, itemTypes } = await window.statsClient.getVendorStats(filters, currentRecordType);
       renderFn = () => {
         renderSummaryCards(summaryGrid, summary, '거래처', recLabel);
