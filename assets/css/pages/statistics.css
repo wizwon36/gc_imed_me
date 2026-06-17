@@ -3,64 +3,93 @@
    공통 레이아웃(cl-tabs, cl-field, cl-section 등)은 closing.css 재사용
    ════════════════════════════════════════════════════════════ */
 
-/* ── 요약 카드 ──────────────────────────────────────────── */
+/* ── 요약 카드: 하나의 패널 안에서 구분선으로 나뉜 통합 그리드 ── */
 .stat-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: var(--radius-lg, 20px);
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.05));
   margin-bottom: 14px;
+  overflow: hidden;
 }
 @media (max-width: 900px) {
   .stat-summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-summary-card:nth-child(2n) { border-right: none; }
+  .stat-summary-card:nth-child(n+3) { border-top: 1px solid var(--border-soft, #eaeff5); }
 }
 .stat-summary-card {
-  background: #fff;
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: var(--radius-lg, 10px);
-  padding: 16px 18px;
+  position: relative;
+  padding: 18px 20px 16px 22px;
+  border-right: 1px solid var(--border-soft, #eaeff5);
 }
+.stat-summary-card:last-child { border-right: none; }
+.stat-summary-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 16px; bottom: 16px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--stat-accent, #cbd5e1);
+}
+.stat-summary-card.accent-total  { --stat-accent: #2f6df6; }
+.stat-summary-card.accent-count  { --stat-accent: #2fa36b; }
+.stat-summary-card.accent-avg    { --stat-accent: #b45309; }
+.stat-summary-card.accent-top    { --stat-accent: #7c3aed; }
 .stat-summary-label {
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-muted, #9ca3af);
+  color: var(--text-muted, #7b8794);
   text-transform: uppercase;
-  letter-spacing: .4px;
-  margin-bottom: 6px;
+  letter-spacing: .5px;
+  margin-bottom: 7px;
 }
 .stat-summary-value {
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 800;
   color: var(--text-primary, #111827);
   line-height: 1.3;
+  letter-spacing: -.2px;
 }
 .stat-summary-value.small { font-size: 15px; }
 .stat-summary-sub {
   font-size: 11px;
-  color: var(--text-muted, #9ca3af);
-  margin-top: 4px;
+  color: var(--text-muted, #7b8794);
+  margin-top: 5px;
 }
 
-/* ── 상세 표: 순위 배지 + 점유율 바 ─────────────────────── */
+/* ── 상세 표: 헤더 배경 + 컬럼 구분선 + 순위 배지 + 점유율 바 ── */
+.stat-table-wrap {
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: var(--radius-md, 16px);
+  overflow: hidden;
+}
 .stat-table { width: 100%; border-collapse: collapse; }
-.stat-table th {
+.stat-table thead th {
+  background: var(--surface-soft, #f8fafc);
   text-align: left;
-  padding: 9px 10px;
-  border-bottom: 2px solid #e5e7eb;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border-card, #e2e8f0);
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-muted, #6b7280);
+  color: var(--text-secondary, #5f6b7a);
   text-transform: uppercase;
-  letter-spacing: .3px;
+  letter-spacing: .4px;
 }
+.stat-table thead th + th { border-left: 1px solid var(--border-soft, #eaeff5); }
 .stat-table th.num { text-align: right; }
 .stat-table td {
-  padding: 9px 10px;
+  padding: 10px 14px;
   font-size: 13px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-soft, #eaeff5);
+  border-left: 1px solid transparent;
   vertical-align: middle;
 }
-.stat-table td.num { text-align: right; font-weight: 600; }
-.stat-table tr:hover td { background: #f8fafc; }
+.stat-table td + td { border-left: 1px solid var(--border-soft, #eaeff5); }
+.stat-table tbody tr:last-child td { border-bottom: none; }
+.stat-table td.num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-table tbody tr:hover td { background: var(--blue-soft, #eaf1ff); }
 
 .stat-rank-badge {
   display: inline-flex;
@@ -72,7 +101,8 @@
   font-weight: 800;
   background: #f1f5f9;
   color: #64748b;
-  margin-right: 8px;
+  margin-right: 9px;
+  flex-shrink: 0;
 }
 .stat-rank-badge.top1 { background: #fef3c7; color: #b45309; }
 .stat-rank-badge.top2 { background: #e5e7eb; color: #4b5563; }
@@ -82,21 +112,21 @@
 
 .stat-bar-track {
   position: relative;
-  height: 18px;
-  background: #f1f5f9;
+  height: 16px;
+  background: #eef1f6;
   border-radius: 4px;
   overflow: hidden;
-  min-width: 80px;
+  min-width: 70px;
 }
 .stat-bar-fill {
   position: absolute;
   top: 0; left: 0; bottom: 0;
-  background: linear-gradient(90deg, #1a56db, #3b82f6);
+  background: linear-gradient(90deg, #2f6df6, #5a8bff);
   border-radius: 4px;
 }
 .stat-pct-text {
   font-size: 11px;
-  color: var(--text-muted, #9ca3af);
+  color: var(--text-muted, #7b8794);
   margin-left: 6px;
   white-space: nowrap;
 }
