@@ -249,6 +249,12 @@
               ※ 거래처명은 입고/사용현황 파일의 <strong>공급업체</strong> 컬럼과 정확히 일치해야 통계 화면에서 사업자번호로 자동 매핑됩니다.
             </p>
 
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border-soft,#eaeff5);flex-wrap:wrap;">
+              <button class="btn" id="btnBackfillBizNo" onclick="backfillVendorBizNo()" style="font-size:13px;padding:7px 14px;">🔄 기존 데이터 사업자번호 재매핑</button>
+              <span style="font-size:12px;color:var(--text-muted);">거래처명을 추가/수정한 뒤, 이미 업로드된 데이터에도 사업자번호를 반영하려면 눌러주세요.</span>
+            </div>
+            <div id="backfillResult" style="margin-top:8px;font-size:12px;"></div>
+
             <!-- 엑셀 업로드 미리보기 -->
             <div id="vendorUploadPreview" style="display:none;margin-top:16px;">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
