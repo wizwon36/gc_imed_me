@@ -957,7 +957,8 @@ async function loadPrevStockFromUsage(ym, branch, reportType) {
     });
     const data = Array.isArray(res.data) ? res.data : [];
     return data
-      .filter(u => u.end_amount && u.report_type === reportType)
+      .filter(u => u.end_amount && u.report_type === reportType
+                && (u.ym || '').replace(/^'/, '') === ym)
       .map(u => ({
         dept:           u.dept,
         item_code:      '',
