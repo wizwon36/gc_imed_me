@@ -466,6 +466,9 @@
   flex-direction: column;
   overflow: hidden;
 }
+.stat-modal-dialog--wide {
+  width: min(1800px, 96vw);
+}
 .stat-modal-header {
   display: flex;
   align-items: center;
