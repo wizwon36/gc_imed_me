@@ -220,11 +220,14 @@ function renderStatsTable(container, rows, barKey, columns) {
   const tbody = rows.map((row, i) => {
     const cells = columns.map(c => {
       if (c.key === columns[0].key) {
-        // 첫 번째(이름) 컬럼: 순위 배지 + 이름 + (withBar면 비율 바도 같이)
+        // 첫 번째(이름) 컬럼: 순위 배지 + 이름 + (미등록 거래처는 경고 표시)
+        const unmatchedBadge = row.unmatched
+          ? ` <span title="거래처 마스터에 등록되지 않음" style="color:#d97706;font-size:11px;">⚠ 미등록</span>`
+          : '';
         const nameCell = `
           <span class="stat-name-cell">
             <span class="stat-rank-badge ${rankClass(i)}">${i + 1}</span>
-            ${row[c.key] || '-'}
+            ${row[c.key] || '-'}${unmatchedBadge}
           </span>`;
         return `<td>${nameCell}</td>`;
       }
