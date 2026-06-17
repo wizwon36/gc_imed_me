@@ -54,40 +54,40 @@
       <div id="tabDashboardContent" class="cl-section active">
 
         <!-- 공통 필터 바 -->
-        <div class="card" style="margin-bottom:14px;">
-          <div class="card-body">
-            <div class="cl-settings-row">
-              <div class="cl-field">
-                <label>의원</label>
-                <select id="statDashBranch">
-                  <option value="강남">강남의원</option>
-                  <option value="강북">강북의원</option>
-                  <option value="서울숲">서울숲의원</option>
-                </select>
-              </div>
-              <div class="cl-field">
-                <label>시작월</label>
-                <input type="month" id="statDashYmFrom">
-              </div>
-              <div class="cl-field">
-                <label>종료월</label>
-                <input type="month" id="statDashYmTo">
-              </div>
-              <div class="cl-field" id="statDashVendorField">
-                <label>거래처</label>
-                <input type="text" id="statDashVendor" list="statDashVendorList" placeholder="전체" autocomplete="off">
-                <datalist id="statDashVendorList"></datalist>
-              </div>
-              <div class="cl-field" id="statDashDeptField" style="display:none;">
-                <label>부서</label>
-                <input type="text" id="statDashDept" placeholder="전체" autocomplete="off">
-              </div>
-              <div class="cl-field">
-                <label>&nbsp;</label>
-                <button type="button" class="btn btn-primary" onclick="runStatsDashboard()">조회</button>
-              </div>
+        <div class="stat-filter-bar">
+          <div class="stat-filter-field">
+            <label>의원</label>
+            <select id="statDashBranch">
+              <option value="강남">강남의원</option>
+              <option value="강북">강북의원</option>
+              <option value="서울숲">서울숲의원</option>
+            </select>
+          </div>
+          <div class="stat-filter-field">
+            <label>시작월</label>
+            <input type="month" id="statDashYmFrom">
+          </div>
+          <span class="stat-filter-sep">~</span>
+          <div class="stat-filter-field">
+            <label>종료월</label>
+            <input type="month" id="statDashYmTo">
+          </div>
+          <div class="stat-filter-field stat-filter-field--search" id="statDashVendorField">
+            <label>거래처</label>
+            <div class="stat-filter-input-icon">
+              <span>🔍</span>
+              <input type="text" id="statDashVendor" list="statDashVendorList" placeholder="전체 거래처" autocomplete="off">
+              <datalist id="statDashVendorList"></datalist>
             </div>
           </div>
+          <div class="stat-filter-field stat-filter-field--search" id="statDashDeptField" style="display:none;">
+            <label>부서</label>
+            <div class="stat-filter-input-icon">
+              <span>🔍</span>
+              <input type="text" id="statDashDept" placeholder="전체 부서" autocomplete="off">
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary stat-filter-submit" onclick="runStatsDashboard()">조회</button>
         </div>
 
         <!-- 관점 서브탭 -->
