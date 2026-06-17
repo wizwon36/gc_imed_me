@@ -104,22 +104,36 @@
       <!-- ══════════════════════════════════════════════════ -->
       <div id="tabUploadContent" class="cl-section">
 
+        <!-- 업로드 현황 -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-body">
+            <strong style="font-size:13px;">현재 의원 업로드 현황</strong>
+            <div id="uploadStatusArea" style="margin-top:10px;">
+              <p style="color:#6b7280;font-size:12px;">불러오는 중...</p>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-body">
             <strong style="font-size:14px;">과거 입고·사용현황 원본 업로드</strong>
             <p style="font-size:12px;color:#6b7280;margin-top:6px;margin-bottom:18px;">
-              엑셀 파일의 실제 날짜(입고일자/사용일자)를 기준으로 연월이 자동 분류되어 저장됩니다.<br>
+              선택한 연도에 해당하는 데이터만 추출되어 저장됩니다. (파일에 다른 연도가 섞여 있어도 무시됩니다)<br>
               같은 의원·연월·파일명으로 다시 업로드하면 기존 데이터는 자동 교체됩니다.
             </p>
 
             <div class="cl-settings-row" style="margin-bottom:18px;">
               <div class="cl-field">
                 <label>의원</label>
-                <select id="statsBranch">
+                <select id="statsBranch" onchange="loadUploadStatus()">
                   <option value="강남">강남의원</option>
                   <option value="강북">강북의원</option>
                   <option value="서울숲">서울숲의원</option>
                 </select>
+              </div>
+              <div class="cl-field">
+                <label>연도</label>
+                <select id="statsYear"></select>
               </div>
             </div>
 
