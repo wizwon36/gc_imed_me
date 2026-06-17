@@ -456,13 +456,16 @@ function renderStatsTable(container, rows, barKey, columns) {
     if (!expandable) return mainRow;
 
     // 펼쳐지는 세부 내역: 사업자번호는 같지만 실제 데이터에 등장한 이름별로 나눠 보여줌
-    const breakdownRows = row.breakdown.map(b => `
-      <tr class="stat-breakdown-row" data-parent="${rowId}" style="display:none;">
-        <td class="stat-breakdown-name">└ ${b.vendor_name}</td>
-        <td colspan="${columns.length - 2}"></td>
-        <td class="num">${fmtNum(b.total_amount)}</td>
-        <td class="num">${fmtNum(b.record_count)}</td>
-      </tr>`).join('');
+    // 헤더와 정확히 같은 컬럼 수를 만들어야 라인이 맞으므로, colspan 대신 컬럼별로 1:1 매칭
+    const breakdownRows = row.breakdown.map(b => {
+      const bCells = columns.map((c, ci) => {
+        if (ci === 0) return `<td class="stat-breakdown-name">└ ${b.vendor_name}</td>`;
+        if (c.withBar) return `<td class="num">${fmtNum(b.total_amount)}</td>`;
+        if (ci === columns.length - 1) return `<td class="num">${fmtNum(b.record_count)}</td>`;
+        return `<td></td>`;
+      }).join('');
+      return `<tr class="stat-breakdown-row" data-parent="${rowId}" style="display:none;">${bCells}</tr>`;
+    }).join('');
 
     return mainRow + breakdownRows;
   }).join('');
