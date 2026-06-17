@@ -48,8 +48,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
+    // 통계 조회 기본 기간: 지난달
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+    const ymFromEl = document.getElementById('statDashYmFrom');
+    const ymToEl   = document.getElementById('statDashYmTo');
+    if (ymFromEl) ymFromEl.value = lastMonthStr;
+    if (ymToEl)   ymToEl.value   = lastMonthStr;
+
     // 업로드 현황 최초 로드
     await loadUploadStatus();
+
+    // 통계 조회 탭이 기본 활성 탭이므로, 지난달 기준으로 최초 조회 자동 실행
+    await runStatsDashboard();
 
   } catch (error) {
     console.error(error);
