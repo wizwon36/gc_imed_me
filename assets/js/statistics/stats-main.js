@@ -183,33 +183,51 @@ async function runStatsDashboard() {
     dept: deptVal || null,
   };
 
-  resultArea.innerHTML = '<p style="color:#6b7280;font-size:13px;">조회 중...</p>';
+  resultArea.innerHTML = '<div class="stat-loading-row"><span class="stat-mini-spinner"></span>조회 중...</div>';
   summaryGrid.innerHTML = '';
 
+  const startedAt = Date.now();
+  const MIN_LOADING_MS = 300;
+
   try {
+    let renderFn;
+
     if (currentSubtab === 'vendor') {
       const { data, summary } = await window.statsClient.getVendorStats(filters);
-      renderSummaryCards(summaryGrid, summary, '거래처', '구매');
-      renderStatsTable(resultArea, data, 'total_amount', [
-        { key: 'vendor_name',   label: '거래처' },
-        { key: 'supply_amount', label: '공급가액', numeric: true },
-        { key: 'vat_amount',    label: '부가세',   numeric: true },
-        { key: 'total_amount',  label: '합계금액', numeric: true, withBar: true },
-        { key: 'record_count',  label: '건수',     numeric: true },
-      ]);
+      renderFn = () => {
+        renderSummaryCards(summaryGrid, summary, '거래처', '구매');
+        renderStatsTable(resultArea, data, 'total_amount', [
+          { key: 'vendor_name',   label: '거래처' },
+          { key: 'supply_amount', label: '공급가액', numeric: true },
+          { key: 'vat_amount',    label: '부가세',   numeric: true },
+          { key: 'total_amount',  label: '합계금액', numeric: true, withBar: true },
+          { key: 'record_count',  label: '건수',     numeric: true },
+        ]);
+      };
     } else if (currentSubtab === 'dept') {
       const { data, summary } = await window.statsClient.getDeptStats(filters);
-      renderSummaryCards(summaryGrid, summary, '부서', '사용');
-      renderStatsTable(resultArea, data, 'usage_total', [
-        { key: 'dept',          label: '부서' },
-        { key: 'usage_supply',  label: '사용공급가', numeric: true },
-        { key: 'usage_vat',     label: '사용부가세', numeric: true },
-        { key: 'usage_total',   label: '사용합계',   numeric: true, withBar: true },
-        { key: 'record_count',  label: '건수',       numeric: true },
-      ]);
+      renderFn = () => {
+        renderSummaryCards(summaryGrid, summary, '부서', '사용');
+        renderStatsTable(resultArea, data, 'usage_total', [
+          { key: 'dept',          label: '부서' },
+          { key: 'usage_supply',  label: '사용공급가', numeric: true },
+          { key: 'usage_vat',     label: '사용부가세', numeric: true },
+          { key: 'usage_total',   label: '사용합계',   numeric: true, withBar: true },
+          { key: 'record_count',  label: '건수',       numeric: true },
+        ]);
+      };
     } else {
-      resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">🚧 준비 중인 기능입니다.</p>';
+      renderFn = () => {
+        resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">🚧 준비 중인 기능입니다.</p>';
+      };
     }
+
+    // 최소 로딩 표시 시간 보장 (너무 빠르면 스피너가 깜빡임처럼 느껴짐)
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < MIN_LOADING_MS) {
+      await new Promise(r => setTimeout(r, MIN_LOADING_MS - elapsed));
+    }
+    renderFn();
   } catch (error) {
     console.error(error);
     resultArea.innerHTML = `<p style="color:#dc2626;font-size:13px;">오류: ${error.message}</p>`;
