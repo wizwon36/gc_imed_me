@@ -358,13 +358,15 @@ async function getPeriodComparison(filters, recordType = 'purchase', compareYmFr
     let rows = await fetchAllRows_(table, q => applyFilters_(q, periodFilters));
     rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
-    const agg = { qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0 };
+    const agg = { qty: 0, supply: 0, vat: 0, amount: 0, record_count: 0, byItemType: {} };
     rows.forEach(r => {
+      const itemType = r.item_type || '미분류';
       agg.qty          += Number(r[cols.qty])    || 0;
       agg.supply       += Number(r[cols.supply]) || 0;
       agg.vat          += Number(r[cols.vat])    || 0;
       agg.amount       += Number(r[cols.amount]) || 0;
       agg.record_count += 1;
+      agg.byItemType[itemType] = (agg.byItemType[itemType] || 0) + (Number(r[cols.amount]) || 0);
     });
     return agg;
   }
@@ -383,10 +385,29 @@ async function getPeriodComparison(filters, recordType = 'purchase', compareYmFr
     return { key, baseVal, compareVal, diff, pct };
   });
 
+  // 자재구분별 합계금액 비교 — 두 구간 어느 쪽이든 등장한 자재구분은 모두 포함(한쪽이 0이어도 표시)
+  const priorityOrder = ['소모품', '시약', '의약품'];
+  const allItemTypes = Array.from(new Set([...Object.keys(base.byItemType), ...Object.keys(compare.byItemType)]))
+    .sort((a, b) => {
+      const ai = priorityOrder.indexOf(a), bi = priorityOrder.indexOf(b);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a.localeCompare(b, 'ko');
+    });
+  const itemTypeComparison = allItemTypes.map(itemType => {
+    const baseVal = base.byItemType[itemType] || 0;
+    const compareVal = compare.byItemType[itemType] || 0;
+    const diff = baseVal - compareVal;
+    const pct = compareVal !== 0 ? (diff / compareVal) * 100 : null;
+    return { itemType, baseVal, compareVal, diff, pct };
+  });
+
   return {
     basePeriod: { ymFrom: filters.ymFrom, ymTo: filters.ymTo, ...base },
     comparePeriod: { ymFrom: compareYmFrom, ymTo: compareYmTo, ...compare },
     metrics,
+    itemTypeComparison,
   };
 }
 
