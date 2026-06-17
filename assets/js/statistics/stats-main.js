@@ -308,6 +308,21 @@ function setActiveSubtab_(subtab) {
   });
   const trendPanel = document.getElementById('trendControlsPanel');
   if (trendPanel) trendPanel.style.display = subtab === 'trend' ? '' : 'none';
+
+  // 기간비교 탭을 벗어나면 상단 검색바의 기간 입력을 다시 활성화
+  if (subtab !== 'trend') {
+    const topYmFrom = document.getElementById('statDashYmFrom');
+    const topYmTo = document.getElementById('statDashYmTo');
+    if (topYmFrom) topYmFrom.disabled = false;
+    if (topYmTo) topYmTo.disabled = false;
+  } else {
+    // 기간비교 탭으로 들어올 때는 현재 트렌드 모드 기준으로 다시 적용
+    const topYmFrom = document.getElementById('statDashYmFrom');
+    const topYmTo = document.getElementById('statDashYmTo');
+    const shouldDisable = currentTrendMode === 'compare';
+    if (topYmFrom) topYmFrom.disabled = shouldDisable;
+    if (topYmTo) topYmTo.disabled = shouldDisable;
+  }
 }
 
 function switchStatsSubtab(subtab) {
@@ -322,14 +337,55 @@ function switchTrendMode(mode) {
   document.getElementById('trendModeCompare')?.classList.toggle('active', mode === 'compare');
   const compareFields = document.getElementById('trendCompareFields');
   if (compareFields) compareFields.style.display = mode === 'compare' ? '' : 'none';
+
+  // 구간 비교 모드에서는 상단 검색바의 기간이 의미가 없으므로 비활성화 (혼란의 원인이었음)
+  const topYmFrom = document.getElementById('statDashYmFrom');
+  const topYmTo = document.getElementById('statDashYmTo');
+  if (topYmFrom) topYmFrom.disabled = mode === 'compare';
+  if (topYmTo) topYmTo.disabled = mode === 'compare';
+
+  if (mode === 'compare') {
+    initTrendComparePeriodsIfEmpty_();
+    updateTrendQuickButtonState();
+  }
+
   runStatsDashboard();
 }
 
+// 기준 구간/비교 구간이 비어있을 때만 기본값(지난달/지지난달)을 채움 — 사용자가 이미 지정한 값은 보존
+function initTrendComparePeriodsIfEmpty_() {
+  const baseFromEl = document.getElementById('trendBaseYmFrom');
+  const baseToEl = document.getElementById('trendBaseYmTo');
+  const compFromEl = document.getElementById('trendCompareYmFrom');
+  const compToEl = document.getElementById('trendCompareYmTo');
+  if (!baseFromEl || baseFromEl.value) return; // 이미 값이 있으면 건드리지 않음
+
+  const now = new Date();
+  const ymOf = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+
+  baseFromEl.value = ymOf(lastMonth);
+  baseToEl.value = ymOf(lastMonth);
+  compFromEl.value = ymOf(twoMonthsAgo);
+  compToEl.value = ymOf(twoMonthsAgo);
+}
+
 // ── 기간 비교: 비교 구간 빠른 선택 (전월 / 전년 동기) ──────────
+// 기준 구간이 비어있으면 빠른선택 버튼을 시각적으로 비활성화 (클릭해도 동작 안 함을 사전에 알림)
+function updateTrendQuickButtonState() {
+  const baseFrom = document.getElementById('trendBaseYmFrom')?.value;
+  const baseTo = document.getElementById('trendBaseYmTo')?.value;
+  const ready = !!(baseFrom && baseTo);
+  document.querySelectorAll('.stat-trend-quick-buttons .btn').forEach(btn => {
+    btn.disabled = !ready;
+  });
+}
+
 function applyTrendQuickRange(type) {
-  const baseFrom = document.getElementById('statDashYmFrom')?.value;
-  const baseTo = document.getElementById('statDashYmTo')?.value;
-  if (!baseFrom || !baseTo) { showMessage('먼저 기준 구간(시작월/종료월)을 선택해주세요.', 'error'); return; }
+  const baseFrom = document.getElementById('trendBaseYmFrom')?.value;
+  const baseTo = document.getElementById('trendBaseYmTo')?.value;
+  if (!baseFrom || !baseTo) { showMessage('먼저 기준 구간을 선택해주세요.', 'error'); return; }
 
   const addMonths = (ym, delta) => {
     const [y, m] = ym.split('-').map(Number);
@@ -435,28 +491,36 @@ async function runStatsDashboard() {
         ], 'openItemDetailModal');
       };
     } else if (currentSubtab === 'trend' && currentTrendMode === 'monthly') {
-      const { data, summary } = await window.statsClient.getMonthlyTrend(filters, currentRecordType);
+      const { data, summary, itemTypes } = await window.statsClient.getMonthlyTrend(filters, currentRecordType);
       renderFn = () => {
         renderSummaryCards(summaryGrid, summary, '월', recLabel);
+        const itemTypeColumns = (itemTypes || []).map(t => ({
+          key: `byItemType.${t}`, label: t, numeric: true, isItemType: true, clickable: false,
+        }));
         renderStatsTable(resultArea, data, 'amount', [
           { key: 'ym',     label: '연월' },
           { key: 'qty',    label: '수량',     numeric: true },
           { key: 'supply', label: '공급가액', numeric: true },
           { key: 'vat',    label: '부가세',   numeric: true },
+          ...itemTypeColumns,
           { key: 'amount', label: '합계금액', numeric: true, withBar: true },
           { key: 'record_count', label: '건수', numeric: true },
         ]);
       };
     } else if (currentSubtab === 'trend' && currentTrendMode === 'compare') {
+      const baseYmFrom = document.getElementById('trendBaseYmFrom')?.value;
+      const baseYmTo = document.getElementById('trendBaseYmTo')?.value;
       const compareYmFrom = document.getElementById('trendCompareYmFrom')?.value;
       const compareYmTo = document.getElementById('trendCompareYmTo')?.value;
-      if (!compareYmFrom || !compareYmTo) {
+      if (!baseYmFrom || !baseYmTo || !compareYmFrom || !compareYmTo) {
         renderFn = () => {
           summaryGrid.innerHTML = '';
-          resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">비교 구간을 선택한 뒤 조회해주세요.</p>';
+          resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">기준 구간과 비교 구간을 모두 선택한 뒤 조회해주세요.</p>';
         };
       } else {
-        const comparison = await window.statsClient.getPeriodComparison(filters, currentRecordType, compareYmFrom, compareYmTo);
+        // 구간 비교는 상단 검색바의 기간이 아니라, 전용으로 지정한 기준/비교 구간을 사용
+        const compareFilters = { ...filters, ymFrom: baseYmFrom, ymTo: baseYmTo };
+        const comparison = await window.statsClient.getPeriodComparison(compareFilters, currentRecordType, compareYmFrom, compareYmTo);
         renderFn = () => {
           summaryGrid.innerHTML = '';
           renderPeriodComparisonTable(resultArea, comparison);
@@ -512,6 +576,9 @@ function renderSummaryCards(container, summary, groupLabel, amountLabel) {
 function filterByVendorAndItemType(rowIndex, itemTypeLabel) {
   const row = window._statsRowsCache?.[rowIndex];
   if (!row) return;
+
+  // 월별 추이 표(연월 기준 행)에서는 거래처/부서 조건으로 옮길 대상이 없으므로 클릭을 무시
+  if (row.vendor_name === undefined && row.dept === undefined) return;
 
   // 거래처별/부서별 표에서는 합산된 자재구분 금액만 보이므로, 개별 품목 내역을 보려면 품목별 탭으로 전환
   setActiveSubtab_('item');
@@ -774,7 +841,7 @@ function renderStatsTable(container, rows, barKey, columns, onRowClick) {
       const val = c.numeric ? fmtNum(raw) : (raw || '-');
       if (c.isItemType) {
         const numVal = Number(raw) || 0;
-        if (numVal > 0) {
+        if (numVal > 0 && c.clickable !== false) {
           return `<td class="num stat-itemtype-cell stat-itemtype-clickable" onclick="event.stopPropagation();filterByVendorAndItemType(${i}, '${c.label.replace(/'/g, "\\'")}')">${val}</td>`;
         }
         return `<td class="num stat-itemtype-cell">${val}</td>`;
