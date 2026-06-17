@@ -70,6 +70,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadVendorsFromServer();
     populateVendorDatalist();
 
+    // 상세검색 패널 기본 행 1개 준비
+    addAdvancedConditionRow();
+    updateSearchKeywordSuggestions();
+
     // 통계 조회 탭이 기본 활성 탭이므로, 지난달 기준으로 최초 조회 자동 실행
     await runStatsDashboard();
 
@@ -135,15 +139,141 @@ async function loadUploadStatus() {
   }
 }
 
-// ── 거래처 필터 자동완성 목록 채우기 ──────────────────────────
+// ── 검색어 추천(datalist): 검색구분에 따라 실제 데이터의 distinct 값을 보여줌 ──
+const _searchSuggestionCache = {};
+
+// 거래처 마스터가 갱신될 때(최초 로드/저장 후) 검색어 추천 캐시를 무효화
 function populateVendorDatalist() {
-  const list = document.getElementById('statDashVendorList');
-  if (!list) return;
-  const names = (StatsApp.vendors || [])
-    .map(v => v.vendor_name)
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b, 'ko'));
-  list.innerHTML = names.map(n => `<option value="${n.replace(/"/g, '&quot;')}">`).join('');
+  delete _searchSuggestionCache.vendor;
+  // 현재 검색구분이 업체명이면 추천 목록을 바로 새로 채움
+  if (document.getElementById('statSearchType')?.value === 'vendor') {
+    updateSearchKeywordSuggestions();
+  }
+}
+
+async function getSuggestionsFor(type) {
+  if (_searchSuggestionCache[type]) return _searchSuggestionCache[type];
+
+  let values = [];
+  if (type === 'vendor') {
+    values = (StatsApp.vendors || []).map(v => v.vendor_name).filter(Boolean);
+  } else if (type === 'dept') {
+    values = await window.statsClient.getDistinctValues('dept');
+  } else if (type === 'itemType') {
+    values = await window.statsClient.getDistinctValues('item_type');
+  }
+  values = Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, 'ko'));
+  _searchSuggestionCache[type] = values;
+  return values;
+}
+
+async function updateSearchKeywordSuggestions() {
+  const type = document.getElementById('statSearchType')?.value;
+  const list = document.getElementById('statSearchSuggestions');
+  if (!list || !type) return;
+  const values = await getSuggestionsFor(type);
+  list.innerHTML = values.map(v => `<option value="${String(v).replace(/"/g, '&quot;')}">`).join('');
+}
+
+async function updateAdvancedRowSuggestions(selectEl) {
+  const row = selectEl.closest('.stat-advanced-row');
+  const listEl = row?.querySelector('.stat-advanced-suggestions');
+  if (!listEl) return;
+  const values = await getSuggestionsFor(selectEl.value);
+  listEl.innerHTML = values.map(v => `<option value="${String(v).replace(/"/g, '&quot;')}">`).join('');
+}
+
+// ── 상세검색 패널 ──────────────────────────────────────────
+let advancedRowSeq = 0;
+
+function openAdvancedSearch() {
+  const panel = document.getElementById('advancedSearchPanel');
+  if (!panel) return;
+  panel.style.display = '';
+  if (!document.getElementById('advancedConditionRows').children.length) {
+    addAdvancedConditionRow();
+  }
+}
+
+function closeAdvancedSearch() {
+  const panel = document.getElementById('advancedSearchPanel');
+  if (panel) panel.style.display = 'none';
+}
+
+function addAdvancedConditionRow() {
+  const wrap = document.getElementById('advancedConditionRows');
+  if (!wrap) return;
+  const isFirst = wrap.children.length === 0;
+  const rowId = `advRow${advancedRowSeq++}`;
+
+  const row = document.createElement('div');
+  row.className = 'stat-advanced-row';
+  row.id = rowId;
+  row.innerHTML = `
+    ${isFirst
+      ? `<span class="stat-advanced-combinator-placeholder"></span>`
+      : `<select class="stat-advanced-combinator">
+           <option value="AND">그리고 (AND)</option>
+           <option value="OR">또는 (OR)</option>
+         </select>`
+    }
+    <select class="stat-advanced-field" onchange="updateAdvancedRowSuggestions(this)">
+      <option value="vendor">업체명</option>
+      <option value="dept">부서명</option>
+      <option value="itemType">자재구분</option>
+    </select>
+    <input type="text" class="stat-advanced-keyword" list="${rowId}_suggestions" placeholder="검색어 입력" onkeydown="if(event.key==='Enter')applyAdvancedSearch()">
+    <datalist class="stat-advanced-suggestions" id="${rowId}_suggestions"></datalist>
+    <button type="button" class="stat-advanced-remove" onclick="removeAdvancedConditionRow('${rowId}')" title="조건 삭제">✕</button>
+  `;
+  wrap.appendChild(row);
+  updateAdvancedRowSuggestions(row.querySelector('.stat-advanced-field'));
+}
+
+function removeAdvancedConditionRow(rowId) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  row.remove();
+
+  // 첫 행이 삭제되어 다음 행이 맨 위로 올라온 경우, 그 행의 결합자 선택을 placeholder로 교체
+  const wrap = document.getElementById('advancedConditionRows');
+  const first = wrap?.firstElementChild;
+  if (first && first.querySelector('.stat-advanced-combinator')) {
+    const placeholder = document.createElement('span');
+    placeholder.className = 'stat-advanced-combinator-placeholder';
+    first.querySelector('.stat-advanced-combinator').replaceWith(placeholder);
+  }
+}
+
+function clearAdvancedConditions() {
+  const wrap = document.getElementById('advancedConditionRows');
+  if (wrap) wrap.innerHTML = '';
+  addAdvancedConditionRow();
+  updateAdvancedSearchBadge();
+}
+
+function getAdvancedConditions() {
+  const wrap = document.getElementById('advancedConditionRows');
+  if (!wrap) return [];
+  return Array.from(wrap.children).map(row => ({
+    field: row.querySelector('.stat-advanced-field')?.value,
+    keyword: row.querySelector('.stat-advanced-keyword')?.value || '',
+    combinator: row.querySelector('.stat-advanced-combinator')?.value || 'AND',
+  })).filter(c => c.keyword.trim());
+}
+
+function updateAdvancedSearchBadge() {
+  const badge = document.getElementById('advancedSearchBadge');
+  if (!badge) return;
+  const count = getAdvancedConditions().length;
+  badge.textContent = String(count);
+  badge.style.display = count > 0 ? '' : 'none';
+}
+
+function applyAdvancedSearch() {
+  updateAdvancedSearchBadge();
+  closeAdvancedSearch();
+  runStatsDashboard();
 }
 
 // ── 통계 조회: 서브탭 전환 ─────────────────────────────────
@@ -153,13 +283,6 @@ function switchStatsSubtab(subtab) {
   ['vendor', 'dept', 'item', 'trend'].forEach(t => {
     document.getElementById(`subtab${capitalize(t)}`)?.classList.toggle('active', t === subtab);
   });
-
-  // 거래처별 탭일 때만 거래처 필터, 부서별 탭일 때만 부서 필터 노출
-  const vendorField = document.getElementById('statDashVendorField');
-  const deptField    = document.getElementById('statDashDeptField');
-  if (vendorField) vendorField.style.display = subtab === 'vendor' ? '' : 'none';
-  if (deptField)    deptField.style.display    = subtab === 'dept'   ? '' : 'none';
-
   runStatsDashboard();
 }
 
@@ -171,19 +294,16 @@ async function runStatsDashboard() {
   const ymFrom = document.getElementById('statDashYmFrom').value;
   const ymTo   = document.getElementById('statDashYmTo').value;
 
-  // 거래처별 탭: 거래처명 입력값을 사업자번호로 변환해서 정확히 필터링
-  let vendorBizNo = null;
-  const vendorInputVal = document.getElementById('statDashVendor')?.value?.trim();
-  if (currentSubtab === 'vendor' && vendorInputVal) {
-    const matched = (StatsApp.vendors || []).find(v => v.vendor_name === vendorInputVal);
-    vendorBizNo = matched ? matched.biz_no : null;
-  }
-  const deptVal = currentSubtab === 'dept' ? document.getElementById('statDashDept')?.value?.trim() : null;
+  // 기본 검색바: 검색구분 + 키워드 (LIKE 검색, 서브탭과 무관하게 항상 동일 적용)
+  const basicSearch = {
+    type: document.getElementById('statSearchType')?.value,
+    keyword: document.getElementById('statSearchKeyword')?.value || '',
+  };
 
   const filters = {
     branch, ymFrom: ymFrom || null, ymTo: ymTo || null,
-    vendorBizNo: vendorBizNo || null,
-    dept: deptVal || null,
+    basicSearch,
+    advancedConditions: getAdvancedConditions(),
   };
 
   resultArea.innerHTML = '<div class="stat-loading-row"><span class="stat-mini-spinner"></span>조회 중...</div>';
