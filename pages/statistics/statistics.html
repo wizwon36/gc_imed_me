@@ -300,6 +300,24 @@
     </div>
   </div>
 
+  <!-- 품목 세부내역 모달 -->
+  <div id="itemDetailModal" class="stat-modal-overlay" style="display:none;" onclick="if(event.target===this)closeItemDetailModal()">
+    <div class="stat-modal-dialog stat-modal-dialog--wide">
+      <div class="stat-modal-header">
+        <strong id="itemDetailModalTitle">세부 내역</strong>
+        <button type="button" class="stat-advanced-close" onclick="closeItemDetailModal()">✕</button>
+      </div>
+      <div class="stat-modal-toolbar">
+        <div class="stat-filter-input-icon" style="flex:1;">
+          <span>🔍</span>
+          <input type="text" id="itemDetailModalSearch" placeholder="부서, 공급업체, 규격, LOT 등으로 재검색" autocomplete="off" oninput="filterItemDetailModal()">
+        </div>
+        <span id="itemDetailModalCount" class="stat-modal-count"></span>
+      </div>
+      <div id="itemDetailModalBody" class="stat-modal-body"></div>
+    </div>
+  </div>
+
   <!-- 전역 스피너 -->
   <div id="globalLoading" aria-hidden="true">
     <div class="global-loading__dialog">
