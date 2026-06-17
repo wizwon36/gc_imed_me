@@ -280,6 +280,7 @@ function applyAdvancedSearch() {
 // ── 통계 조회: 서브탭 전환 ─────────────────────────────────
 let currentSubtab = 'vendor';
 let currentRecordType = 'purchase'; // 'purchase'(입고) | 'usage'(사용)
+let currentTrendMode = 'monthly'; // 'monthly'(월별 추이) | 'compare'(구간 비교)
 
 function switchRecordType(type) {
   currentRecordType = type;
@@ -292,10 +293,55 @@ function setActiveSubtab_(subtab) {
   ['vendor', 'dept', 'item', 'trend'].forEach(t => {
     document.getElementById(`subtab${capitalize(t)}`)?.classList.toggle('active', t === subtab);
   });
+  const trendPanel = document.getElementById('trendControlsPanel');
+  if (trendPanel) trendPanel.style.display = subtab === 'trend' ? '' : 'none';
 }
 
 function switchStatsSubtab(subtab) {
   setActiveSubtab_(subtab);
+  runStatsDashboard();
+}
+
+// ── 기간 비교: 모드 전환 (월별 추이 / 구간 비교) ──────────────
+function switchTrendMode(mode) {
+  currentTrendMode = mode;
+  document.getElementById('trendModeMonthly')?.classList.toggle('active', mode === 'monthly');
+  document.getElementById('trendModeCompare')?.classList.toggle('active', mode === 'compare');
+  const compareFields = document.getElementById('trendCompareFields');
+  if (compareFields) compareFields.style.display = mode === 'compare' ? '' : 'none';
+  runStatsDashboard();
+}
+
+// ── 기간 비교: 비교 구간 빠른 선택 (전월 / 전년 동기) ──────────
+function applyTrendQuickRange(type) {
+  const baseFrom = document.getElementById('statDashYmFrom')?.value;
+  const baseTo = document.getElementById('statDashYmTo')?.value;
+  if (!baseFrom || !baseTo) { showMessage('먼저 기준 구간(시작월/종료월)을 선택해주세요.', 'error'); return; }
+
+  const addMonths = (ym, delta) => {
+    const [y, m] = ym.split('-').map(Number);
+    const total = y * 12 + (m - 1) + delta;
+    const newY = Math.floor(total / 12);
+    const newM = (total % 12) + 1;
+    return `${newY}-${String(newM).padStart(2, '0')}`;
+  };
+
+  // 기준 구간의 길이(월 수)를 그대로 유지해서 비교 구간을 계산
+  const [fy, fm] = baseFrom.split('-').map(Number);
+  const [ty, tm] = baseTo.split('-').map(Number);
+  const spanMonths = (ty * 12 + tm) - (fy * 12 + fm); // 0이면 1개월
+
+  let compareFrom, compareTo;
+  if (type === 'prevMonth') {
+    compareFrom = addMonths(baseFrom, -(spanMonths + 1));
+    compareTo = addMonths(baseTo, -(spanMonths + 1));
+  } else if (type === 'prevYear') {
+    compareFrom = addMonths(baseFrom, -12);
+    compareTo = addMonths(baseTo, -12);
+  }
+
+  document.getElementById('trendCompareYmFrom').value = compareFrom;
+  document.getElementById('trendCompareYmTo').value = compareTo;
   runStatsDashboard();
 }
 
@@ -375,6 +421,34 @@ async function runStatsDashboard() {
           { key: 'record_count', label: '건수',   numeric: true },
         ], 'openItemDetailModal');
       };
+    } else if (currentSubtab === 'trend' && currentTrendMode === 'monthly') {
+      const { data, summary } = await window.statsClient.getMonthlyTrend(filters, currentRecordType);
+      renderFn = () => {
+        renderSummaryCards(summaryGrid, summary, '월', recLabel);
+        renderStatsTable(resultArea, data, 'amount', [
+          { key: 'ym',     label: '연월' },
+          { key: 'qty',    label: '수량',     numeric: true },
+          { key: 'supply', label: '공급가액', numeric: true },
+          { key: 'vat',    label: '부가세',   numeric: true },
+          { key: 'amount', label: '합계금액', numeric: true, withBar: true },
+          { key: 'record_count', label: '건수', numeric: true },
+        ]);
+      };
+    } else if (currentSubtab === 'trend' && currentTrendMode === 'compare') {
+      const compareYmFrom = document.getElementById('trendCompareYmFrom')?.value;
+      const compareYmTo = document.getElementById('trendCompareYmTo')?.value;
+      if (!compareYmFrom || !compareYmTo) {
+        renderFn = () => {
+          summaryGrid.innerHTML = '';
+          resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">비교 구간을 선택한 뒤 조회해주세요.</p>';
+        };
+      } else {
+        const comparison = await window.statsClient.getPeriodComparison(filters, currentRecordType, compareYmFrom, compareYmTo);
+        renderFn = () => {
+          summaryGrid.innerHTML = '';
+          renderPeriodComparisonTable(resultArea, comparison);
+        };
+      }
     } else {
       renderFn = () => {
         resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">🚧 준비 중인 기능입니다.</p>';
@@ -586,6 +660,48 @@ function toggleStatRowExpand(rowId) {
     toggle.classList.toggle('expanded', !isExpanded);
     toggle.textContent = isExpanded ? '▸' : '▾';
   }
+}
+
+// ── 구간 비교 결과 렌더링: 기준 구간 vs 비교 구간을 나란히 표시 ──
+function renderPeriodComparisonTable(container, comparison) {
+  const { basePeriod, comparePeriod, metrics } = comparison;
+  const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
+  const metricLabels = { qty: '수량', supply: '공급가액', vat: '부가세', amount: '합계금액', record_count: '건수' };
+
+  const rows = metrics.map(m => {
+    const diffClass = m.diff > 0 ? 'stat-trend-up' : m.diff < 0 ? 'stat-trend-down' : '';
+    const diffSign = m.diff > 0 ? '+' : '';
+    const pctText = m.pct === null ? '-' : `${m.pct > 0 ? '+' : ''}${m.pct.toFixed(1)}%`;
+    return `
+      <tr>
+        <td>${metricLabels[m.key] || m.key}</td>
+        <td class="num">${fmtNum(m.compareVal)}</td>
+        <td class="num">${fmtNum(m.baseVal)}</td>
+        <td class="num ${diffClass}">${diffSign}${fmtNum(m.diff)}</td>
+        <td class="num ${diffClass}">${pctText}</td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="stat-compare-period-labels">
+      <span class="stat-compare-period-chip stat-compare-period-chip--compare">비교 구간 ${comparePeriod.ymFrom} ~ ${comparePeriod.ymTo}</span>
+      <span style="color:var(--text-muted,#9aa5b1);">→</span>
+      <span class="stat-compare-period-chip stat-compare-period-chip--base">기준 구간 ${basePeriod.ymFrom} ~ ${basePeriod.ymTo}</span>
+    </div>
+    <div class="stat-table-wrap">
+      <div style="overflow-x:auto;">
+        <table class="stat-table">
+          <thead><tr>
+            <th>지표</th>
+            <th class="num">비교 구간</th>
+            <th class="num">기준 구간</th>
+            <th class="num">증감</th>
+            <th class="num">증감률</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 function renderStatsTable(container, rows, barKey, columns, onRowClick) {
