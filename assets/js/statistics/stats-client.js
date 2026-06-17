@@ -129,30 +129,54 @@ async function getVendorStats(filters) {
   let rows = await fetchAllRows_('purchase_records', q => applyFilters_(q, filters));
   rows = applyClientSideSearch_(rows, filters.basicSearch, filters.advancedConditions);
 
+  // 사업자번호 → 현재 대표 명칭(is_current=true) 매핑. 그룹에 대표가 없으면(이론상 발생 안 함, 서버에서 보정)
+  // 사업자번호로 등록된 첫 거래처명을 fallback으로 사용
+  const bizNoToCurrentName = {};
+  const bizNoToFallbackName = {};
+  (window.StatsApp?.vendors || []).forEach(v => {
+    if (!v.biz_no) return;
+    if (v.is_current) bizNoToCurrentName[v.biz_no] = v.vendor_name;
+    if (!bizNoToFallbackName[v.biz_no]) bizNoToFallbackName[v.biz_no] = v.vendor_name;
+  });
+
   const grouped = {};
   rows.forEach(r => {
     const bizNo = r.vendor_biz_no || null;
     // 사업자번호가 있으면 그걸 키로, 없으면 거래처명 기준 (미등록 거래처 임시 그룹)
     const key = bizNo ? `biz:${bizNo}` : `name:${r.vendor_name || '(미확인)'}`;
+    const rawName = r.vendor_name || '(미확인)';
 
     if (!grouped[key]) {
+      const displayName = bizNo
+        ? (bizNoToCurrentName[bizNo] || bizNoToFallbackName[bizNo] || rawName)
+        : rawName;
       grouped[key] = {
-        vendor_name: r.vendor_name || '(미확인)',
+        vendor_name: displayName,
         vendor_biz_no: bizNo,
         unmatched: !bizNo,
         total_amount: 0, supply_amount: 0, vat_amount: 0, item_count: 0, record_count: 0,
+        breakdown: {}, // 실제 데이터에 등장한 이름별 세부 내역 (펼쳐보기용)
       };
     }
-    // 가장 최근 거래처명으로 갱신 (거래처명이 바뀐 경우 최신 표기 사용)
-    grouped[key].vendor_name = r.vendor_name || grouped[key].vendor_name;
     grouped[key].total_amount  += Number(r.total_amount)  || 0;
     grouped[key].supply_amount += Number(r.supply_amount) || 0;
     grouped[key].vat_amount    += Number(r.vat_amount)    || 0;
     grouped[key].item_count    += 1;
     grouped[key].record_count  += 1;
+
+    if (!grouped[key].breakdown[rawName]) {
+      grouped[key].breakdown[rawName] = { vendor_name: rawName, total_amount: 0, record_count: 0 };
+    }
+    grouped[key].breakdown[rawName].total_amount += Number(r.total_amount) || 0;
+    grouped[key].breakdown[rawName].record_count += 1;
   });
 
-  const data = Object.values(grouped).sort((a, b) => b.total_amount - a.total_amount);
+  // breakdown을 배열로 변환 + 같은 이름이 1개뿐이면(이름 변경 이력 없음) 펼쳐볼 필요 없으니 표시
+  const data = Object.values(grouped).map(g => {
+    const breakdownArr = Object.values(g.breakdown).sort((a, b) => b.total_amount - a.total_amount);
+    return { ...g, breakdown: breakdownArr, hasMultipleNames: breakdownArr.length > 1 };
+  }).sort((a, b) => b.total_amount - a.total_amount);
+
   return { data, summary: buildSummary_(data, 'total_amount', 'record_count') };
 }
 
