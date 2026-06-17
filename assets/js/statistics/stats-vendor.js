@@ -247,6 +247,37 @@ async function saveVendors() {
   }
 }
 
+// ── 기존 업로드 데이터의 사업자번호 일회성 재매핑 ──────────────
+// 거래처명을 마스터에 추가/수정한 뒤, 이미 Supabase에 저장된 행에도 반영하기 위함
+async function backfillVendorBizNo() {
+  if (!StatsApp.canEdit) { showMessage('실행 권한이 없습니다. (edit 이상 필요)', 'error'); return; }
+
+  const btn = document.getElementById('btnBackfillBizNo');
+  const resultEl = document.getElementById('backfillResult');
+  if (!confirm('이미 업로드된 입고/사용현황 데이터 중 사업자번호가 비어있는 행을\n현재 거래처 마스터 기준으로 다시 매핑합니다.\n계속하시겠습니까?')) return;
+
+  btn.disabled = true;
+  resultEl.innerHTML = '<span style="color:var(--text-muted);">처리 중...</span>';
+
+  try {
+    showGlobalLoading('사업자번호를 재매핑하는 중...');
+    const user = window.auth?.getSession?.();
+    const res = await apiPost('backfillVendorBizNo', { request_user_email: user?.email });
+
+    const { purchaseUpdated, usageUpdated, stillUnmatched } = res.data || {};
+    let html = `<span style="color:#2fa36b;">✓ 입고 ${purchaseUpdated ?? 0}건, 사용현황 ${usageUpdated ?? 0}건 업데이트됐습니다.</span>`;
+    if (stillUnmatched && stillUnmatched.length) {
+      html += `<br><span style="color:#d97706;">⚠ 여전히 마스터에 없는 거래처: ${stillUnmatched.join(', ')}</span>`;
+    }
+    resultEl.innerHTML = html;
+  } catch (e) {
+    resultEl.innerHTML = `<span style="color:#c0392b;">오류: ${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    await hideGlobalLoading();
+  }
+}
+
 // 거래처 탭이 처음 열릴 때만 서버에서 로드 (탭 전환마다 재요청하지 않도록)
 let _vendorTabLoaded = false;
 async function ensureVendorTabLoaded() {
