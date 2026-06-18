@@ -84,10 +84,13 @@
           </div>
           <div class="stat-filter-field stat-filter-field--search">
             <label>검색어</label>
-            <div class="stat-filter-input-icon">
+            <div class="stat-filter-input-icon" style="position:relative;">
               <span>🔍</span>
-              <input type="text" id="statSearchKeyword" list="statSearchSuggestions" placeholder="검색어 입력 (포함된 내용 검색)" autocomplete="off" onkeydown="if(event.key==='Enter')runStatsDashboard()">
-              <datalist id="statSearchSuggestions"></datalist>
+              <input type="text" id="statSearchKeyword" placeholder="검색어 입력 (포함된 내용 검색)" autocomplete="off"
+                oninput="updateSearchKeywordSuggestions()"
+                onkeydown="if(event.key==='Enter'){hideAllSuggestionDropdowns_();runStatsDashboard();}"
+                onblur="setTimeout(()=>hideAllSuggestionDropdowns_(), 150)">
+              <div class="stat-suggest-dropdown" id="statSearchSuggestions"></div>
             </div>
           </div>
           <button type="button" class="btn stat-filter-advanced" id="btnOpenAdvancedSearch" onclick="openAdvancedSearch()">
