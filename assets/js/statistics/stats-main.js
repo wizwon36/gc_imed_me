@@ -60,10 +60,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 의원 드롭다운 기본값: 본인 소속 의원 (업로드/조회 탭 둘 다)
+    // "전체"(value="") 옵션은 건너뜀 — 빈 문자열은 모든 문자열에 포함된 것으로 판정되어
+    // 항상 가장 먼저 매칭되는 버그가 있었음
     ['statsBranch', 'statDashBranch'].forEach(id => {
       const sel = document.getElementById(id);
       if (sel && user.clinic_name) {
-        const matched = Array.from(sel.options).find(o => user.clinic_name.includes(o.value));
+        const matched = Array.from(sel.options).find(o => o.value && user.clinic_name.includes(o.value));
         if (matched) sel.value = matched.value;
       }
     });
