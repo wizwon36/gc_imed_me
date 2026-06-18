@@ -28,6 +28,12 @@
   box-shadow: var(--shadow-card, 0 2px 8px rgba(15,23,42,.05));
   padding: 18px 20px;
 }
+.stat-chart-panel {
+  margin-bottom: 14px;
+}
+.stat-chart-panel canvas {
+  max-height: 280px;
+}
 
 /* ── 입고/사용 + 관점 서브탭 패널 (B안: 회색 배경으로 영역 구분) ── */
 .stat-scope-panel {
