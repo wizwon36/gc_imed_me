@@ -593,6 +593,7 @@ async function runStatsDashboard() {
       const { data, summary, itemTypes } = await window.statsClient.getMonthlyTrend(filters, currentRecordType);
       renderFn = () => {
         renderSummaryCards(summaryGrid, summary, '월', recLabel);
+        renderMonthlyTrendChart_(data, itemTypes);
         const itemTypeColumns = (itemTypes || []).map(t => ({
           key: `byItemType.${t}`, label: t, numeric: true, isItemType: true, clickable: false,
         }));
@@ -614,6 +615,7 @@ async function runStatsDashboard() {
       if (!baseYmFrom || !baseYmTo || !compareYmFrom || !compareYmTo) {
         renderFn = () => {
           summaryGrid.innerHTML = '';
+          hideStatsChart_();
           resultArea.innerHTML = '<p style="color:#9ca3af;font-size:13px;">기준 구간과 비교 구간을 모두 선택한 뒤 조회해주세요.</p>';
         };
       } else {
@@ -622,6 +624,7 @@ async function runStatsDashboard() {
         const comparison = await window.statsClient.getPeriodComparison(compareFilters, currentRecordType, compareYmFrom, compareYmTo);
         renderFn = () => {
           summaryGrid.innerHTML = '';
+          renderPeriodComparisonChart_(comparison);
           renderPeriodComparisonTable(resultArea, comparison);
         };
       }
@@ -636,6 +639,8 @@ async function runStatsDashboard() {
     if (elapsed < MIN_LOADING_MS) {
       await new Promise(r => setTimeout(r, MIN_LOADING_MS - elapsed));
     }
+    // 기간비교 탭이 아니면 그래프 영역은 항상 숨김 (각 분기에서 별도 처리 불필요)
+    if (currentSubtab !== 'trend') hideStatsChart_();
     renderFn();
   } catch (error) {
     console.error(error);
@@ -845,6 +850,124 @@ function toggleStatRowExpand(rowId) {
 }
 
 // ── 구간 비교 결과 렌더링: 기준 구간 vs 비교 구간을 나란히 표시 ──
+// ── 기간 비교 그래프 (자재구분별 시각화) ──────────────────────
+let _statsTrendChartInstance = null;
+
+// 자재구분 우선순위와 일관된 고정 색상 — 그 외 자재구분은 순환 팔레트로 배정
+const STAT_ITEMTYPE_COLORS = {
+  '소모품': '#2f6df6',
+  '시약':   '#16a34a',
+  '의약품': '#f59e0b',
+};
+const STAT_ITEMTYPE_FALLBACK_PALETTE = ['#9333ea', '#dc2626', '#0891b2', '#65a30d', '#db2777'];
+
+function getItemTypeColor_(itemType, fallbackIndex) {
+  if (STAT_ITEMTYPE_COLORS[itemType]) return STAT_ITEMTYPE_COLORS[itemType];
+  return STAT_ITEMTYPE_FALLBACK_PALETTE[fallbackIndex % STAT_ITEMTYPE_FALLBACK_PALETTE.length];
+}
+
+function hideStatsChart_() {
+  const panel = document.getElementById('statsChartPanel');
+  if (panel) panel.style.display = 'none';
+  if (_statsTrendChartInstance) {
+    _statsTrendChartInstance.destroy();
+    _statsTrendChartInstance = null;
+  }
+}
+
+function renderMonthlyTrendChart_(data, itemTypes) {
+  const panel = document.getElementById('statsChartPanel');
+  const canvas = document.getElementById('statsTrendChart');
+  if (!panel || !canvas || !window.Chart) return;
+
+  if (!data.length || !itemTypes.length) { hideStatsChart_(); return; }
+
+  panel.style.display = '';
+  if (_statsTrendChartInstance) { _statsTrendChartInstance.destroy(); _statsTrendChartInstance = null; }
+
+  const labels = data.map(d => d.ym);
+  const datasets = itemTypes.map((t, idx) => ({
+    label: t,
+    data: data.map(d => d.byItemType[t] || 0),
+    backgroundColor: getItemTypeColor_(t, idx),
+    stack: 'total',
+  }));
+
+  _statsTrendChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.parsed.y || 0).toLocaleString('ko-KR')}원`,
+          },
+        },
+      },
+      scales: {
+        x: { stacked: true },
+        y: {
+          stacked: true,
+          ticks: { callback: (v) => Number(v).toLocaleString('ko-KR') },
+        },
+      },
+    },
+  });
+}
+
+function renderPeriodComparisonChart_(comparison) {
+  const panel = document.getElementById('statsChartPanel');
+  const canvas = document.getElementById('statsTrendChart');
+  if (!panel || !canvas || !window.Chart) return;
+
+  const { itemTypeComparison, basePeriod, comparePeriod } = comparison;
+  if (!itemTypeComparison || !itemTypeComparison.length) { hideStatsChart_(); return; }
+
+  panel.style.display = '';
+  if (_statsTrendChartInstance) { _statsTrendChartInstance.destroy(); _statsTrendChartInstance = null; }
+
+  const compareLabel = `${comparePeriod.ymFrom} ~ ${comparePeriod.ymTo}`;
+  const baseLabel = `${basePeriod.ymFrom} ~ ${basePeriod.ymTo}`;
+  const labels = itemTypeComparison.map(it => it.itemType);
+
+  _statsTrendChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: compareLabel,
+          data: itemTypeComparison.map(it => it.compareVal),
+          backgroundColor: '#9aa5b1',
+        },
+        {
+          label: baseLabel,
+          data: itemTypeComparison.map(it => it.baseVal),
+          backgroundColor: '#2f6df6',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.parsed.y || 0).toLocaleString('ko-KR')}원`,
+          },
+        },
+      },
+      scales: {
+        y: { ticks: { callback: (v) => Number(v).toLocaleString('ko-KR') } },
+      },
+    },
+  });
+}
+
 function renderPeriodComparisonTable(container, comparison) {
   const { basePeriod, comparePeriod, metrics, itemTypeComparison } = comparison;
   const fmtNum = v => Number(v || 0).toLocaleString('ko-KR');
