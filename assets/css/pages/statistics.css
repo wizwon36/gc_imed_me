@@ -554,7 +554,7 @@
   overflow: hidden;
 }
 .stat-modal-dialog--wide {
-  width: min(1800px, 96vw);
+  width: min(1440px, 96vw);
 }
 .stat-modal-header {
   display: flex;
