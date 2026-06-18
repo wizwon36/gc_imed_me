@@ -58,6 +58,8 @@ function searchFieldToColumn_(type) {
   if (type === 'vendor')   return 'vendor_name';
   if (type === 'dept')     return 'dept';
   if (type === 'itemType') return 'item_type';
+  if (type === 'itemName') return 'item_name';
+  if (type === 'itemCode') return 'item_code';
   return null;
 }
 
