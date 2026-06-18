@@ -174,16 +174,23 @@ async function getSuggestionsFor(type) {
   if (_searchSuggestionCache[type]) return _searchSuggestionCache[type];
 
   let values = [];
-  if (type === 'vendor') {
-    values = (StatsApp.vendors || []).map(v => v.vendor_name).filter(Boolean);
-  } else if (type === 'dept') {
-    values = await window.statsClient.getDistinctValues('dept');
-  } else if (type === 'itemType') {
-    values = await window.statsClient.getDistinctValues('item_type');
-  } else if (type === 'itemName') {
-    values = await window.statsClient.getDistinctValues('item_name');
-  } else if (type === 'itemCode') {
-    values = await window.statsClient.getDistinctValues('item_code');
+  try {
+    if (type === 'vendor') {
+      // 거래처 마스터(StatsApp.vendors)가 아닌, 실제 거래 데이터의 distinct 값을 사용
+      // — 마스터에 등록 안 된 거래처도 통계 표/검색에는 나타날 수 있어 마스터만 쓰면 자동완성이 비어 보이는 문제가 있었음
+      values = await window.statsClient.getDistinctValues('vendor_name');
+    } else if (type === 'dept') {
+      values = await window.statsClient.getDistinctValues('dept');
+    } else if (type === 'itemType') {
+      values = await window.statsClient.getDistinctValues('item_type');
+    } else if (type === 'itemName') {
+      values = await window.statsClient.getDistinctValues('item_name');
+    } else if (type === 'itemCode') {
+      values = await window.statsClient.getDistinctValues('item_code');
+    }
+  } catch (e) {
+    console.error('[검색어 자동완성] 후보 목록 조회 실패 (type=' + type + '):', e);
+    values = [];
   }
   values = Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, 'ko'));
   _searchSuggestionCache[type] = values;
@@ -215,7 +222,7 @@ function renderSuggestDropdown_(dropdownEl, inputEl, values) {
     hideAllSuggestionDropdowns_();
     inputEl.focus();
   };
-  dropdownEl.style.display = '';
+  dropdownEl.style.display = 'block';
 }
 
 async function updateSearchKeywordSuggestions() {
