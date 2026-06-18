@@ -689,7 +689,7 @@ function filterItemDetailModal() {
   }
   const filtered = _itemModalAllRows.filter(r => {
     const haystack = [
-      r.item_name, r.item_code, r.purchase_no, r.spec, r.status,
+      r.branch, r.item_name, r.item_code, r.purchase_no, r.spec, r.status,
       r.dept, r.vendor_name, r.vendor_code, r.lot_no, r.requester,
       r.used_by, r.release_requester, r.item_type,
     ].filter(Boolean).join(' ').toLowerCase();
@@ -715,6 +715,7 @@ function renderItemDetailModalTable(items) {
   // 입고/사용 레코드는 의미 있는 컬럼이 다르므로 분리 — 핵심 정보만 선별(전체 컬럼 나열은 가독성을 해침)
   const cols = currentRecordType === 'usage'
     ? [
+        { key: 'branch',      label: '의원' },
         { key: 'usage_date',  label: '사용일자' },
         { key: 'dept',        label: '부서' },
         { key: 'used_by',     label: '사용자' },
@@ -729,6 +730,7 @@ function renderItemDetailModalTable(items) {
         { key: 'purchase_no', label: '구매번호' },
       ]
     : [
+        { key: 'branch',        label: '의원' },
         { key: 'received_date', label: '입고일자' },
         { key: 'vendor_name',   label: '공급업체' },
         { key: 'dept',          label: '의뢰부서' },
