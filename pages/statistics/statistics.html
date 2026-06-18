@@ -160,6 +160,11 @@
         <!-- 요약 카드 -->
         <div class="stat-summary-grid" id="statsSummaryGrid"></div>
 
+        <!-- 기간 비교 그래프 (월별추이/구간비교 탭에서만 표시) -->
+        <div class="stat-panel stat-chart-panel" id="statsChartPanel" style="display:none;">
+          <canvas id="statsTrendChart" height="100"></canvas>
+        </div>
+
         <!-- 상세 표 -->
         <div class="stat-panel" style="padding:16px;">
           <p class="stat-vat-note">※ 자재구분별 금액과 합계금액은 부가세가 포함된 금액입니다. 공급가액은 부가세 별도 금액입니다.</p>
@@ -348,6 +353,7 @@
 
   <!-- 라이브러리 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- 공통 -->
