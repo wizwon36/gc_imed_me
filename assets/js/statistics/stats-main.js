@@ -180,6 +180,10 @@ async function getSuggestionsFor(type) {
     values = await window.statsClient.getDistinctValues('dept');
   } else if (type === 'itemType') {
     values = await window.statsClient.getDistinctValues('item_type');
+  } else if (type === 'itemName') {
+    values = await window.statsClient.getDistinctValues('item_name');
+  } else if (type === 'itemCode') {
+    values = await window.statsClient.getDistinctValues('item_code');
   }
   values = Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, 'ko'));
   _searchSuggestionCache[type] = values;
@@ -240,6 +244,8 @@ function addAdvancedConditionRow() {
       <option value="vendor">업체명</option>
       <option value="dept">부서명</option>
       <option value="itemType">자재구분</option>
+      <option value="itemName">품목명</option>
+      <option value="itemCode">품목코드</option>
     </select>
     <input type="text" class="stat-advanced-keyword" list="${rowId}_suggestions" placeholder="검색어 입력" onkeydown="if(event.key==='Enter')applyAdvancedSearch()">
     <datalist class="stat-advanced-suggestions" id="${rowId}_suggestions"></datalist>
