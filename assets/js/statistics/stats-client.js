@@ -27,7 +27,8 @@ async function fetchAllRows_(table, buildQuery) {
 
   while (true) {
     let query = buildQuery(_supabase.from(table).select('*'));
-    query = query.range(from, from + PAGE_SIZE - 1);
+    // 페이지네이션 시 안정적인 순서가 없으면 페이지 간 행이 누락/중복될 수 있어, 항상 채워지는 컬럼(ym, uploaded_at) 기준으로 정렬 고정
+    query = query.order('ym', { ascending: true }).order('uploaded_at', { ascending: true }).range(from, from + PAGE_SIZE - 1);
 
     const { data, error } = await query;
     if (error) throw new Error(error.message);
@@ -480,6 +481,7 @@ async function getDistinctValues(column) {
       const { data, error } = await _supabase
         .from(table)
         .select(column)
+        .order('ym', { ascending: true })
         .range(from, from + PAGE_SIZE - 1);
       if (error) throw new Error(error.message);
       (data || []).forEach(r => { if (r[column]) values.add(r[column]); });
