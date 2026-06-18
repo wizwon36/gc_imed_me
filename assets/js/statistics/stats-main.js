@@ -190,20 +190,62 @@ async function getSuggestionsFor(type) {
   return values;
 }
 
+// ── 커스텀 자동완성 드롭다운 (입력한 글자에 맞는 후보만 표시, 빈 입력일 땐 아무것도 안 보임) ──
+function hideAllSuggestionDropdowns_() {
+  document.querySelectorAll('.stat-suggest-dropdown').forEach(el => {
+    el.innerHTML = '';
+    el.style.display = 'none';
+  });
+}
+
+function renderSuggestDropdown_(dropdownEl, inputEl, values) {
+  if (!dropdownEl || !inputEl) return;
+  const kw = (inputEl.value || '').trim().toLowerCase();
+  if (!kw) { dropdownEl.innerHTML = ''; dropdownEl.style.display = 'none'; return; }
+
+  const matched = values.filter(v => String(v).toLowerCase().includes(kw)).slice(0, 30);
+  if (!matched.length) { dropdownEl.innerHTML = ''; dropdownEl.style.display = 'none'; return; }
+
+  dropdownEl.innerHTML = matched.map(v => {
+    const safe = String(v).replace(/"/g, '&quot;');
+    return `<div class="stat-suggest-item" onmousedown="event.preventDefault();this.closest('.stat-suggest-dropdown').__pick('${safe.replace(/'/g, "\\'")}')">${safe}</div>`;
+  }).join('');
+  dropdownEl.__pick = (val) => {
+    inputEl.value = val;
+    hideAllSuggestionDropdowns_();
+    inputEl.focus();
+  };
+  dropdownEl.style.display = '';
+}
+
 async function updateSearchKeywordSuggestions() {
   const type = document.getElementById('statSearchType')?.value;
-  const list = document.getElementById('statSearchSuggestions');
-  if (!list || !type) return;
+  const inputEl = document.getElementById('statSearchKeyword');
+  const dropdownEl = document.getElementById('statSearchSuggestions');
+  if (!dropdownEl || !type || !inputEl) return;
   const values = await getSuggestionsFor(type);
-  list.innerHTML = values.map(v => `<option value="${String(v).replace(/"/g, '&quot;')}">`).join('');
+  renderSuggestDropdown_(dropdownEl, inputEl, values);
 }
 
 async function updateAdvancedRowSuggestions(selectEl) {
   const row = selectEl.closest('.stat-advanced-row');
-  const listEl = row?.querySelector('.stat-advanced-suggestions');
-  if (!listEl) return;
+  const inputEl = row?.querySelector('.stat-advanced-keyword');
+  const dropdownEl = row?.querySelector('.stat-advanced-suggestions');
+  if (!dropdownEl || !inputEl) return;
   const values = await getSuggestionsFor(selectEl.value);
-  listEl.innerHTML = values.map(v => `<option value="${String(v).replace(/"/g, '&quot;')}">`).join('');
+  // 검색구분을 바꾼 직후에는 입력값이 비어 있을 수 있으므로 캐시만 갱신해두고, 실제 표시는 입력 시점에
+  dropdownEl.__cachedValues = values;
+  renderSuggestDropdown_(dropdownEl, inputEl, values);
+}
+
+async function updateAdvancedRowSuggestionsOnInput_(inputEl) {
+  const row = inputEl.closest('.stat-advanced-row');
+  const fieldEl = row?.querySelector('.stat-advanced-field');
+  const dropdownEl = row?.querySelector('.stat-advanced-suggestions');
+  if (!dropdownEl || !fieldEl) return;
+  const values = dropdownEl.__cachedValues || await getSuggestionsFor(fieldEl.value);
+  dropdownEl.__cachedValues = values;
+  renderSuggestDropdown_(dropdownEl, inputEl, values);
 }
 
 // ── 상세검색 패널 ──────────────────────────────────────────
@@ -247,8 +289,13 @@ function addAdvancedConditionRow() {
       <option value="itemName">품목명</option>
       <option value="itemCode">품목코드</option>
     </select>
-    <input type="text" class="stat-advanced-keyword" list="${rowId}_suggestions" placeholder="검색어 입력" onkeydown="if(event.key==='Enter')applyAdvancedSearch()">
-    <datalist class="stat-advanced-suggestions" id="${rowId}_suggestions"></datalist>
+    <div class="stat-advanced-keyword-wrap" style="position:relative;">
+      <input type="text" class="stat-advanced-keyword" placeholder="검색어 입력"
+        oninput="updateAdvancedRowSuggestionsOnInput_(this)"
+        onkeydown="if(event.key==='Enter')applyAdvancedSearch()"
+        onblur="setTimeout(()=>hideAllSuggestionDropdowns_(), 150)">
+      <div class="stat-suggest-dropdown stat-advanced-suggestions"></div>
+    </div>
     <button type="button" class="stat-advanced-remove" onclick="removeAdvancedConditionRow('${rowId}')" title="조건 삭제">✕</button>
   `;
   wrap.appendChild(row);
