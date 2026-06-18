@@ -30,9 +30,11 @@
 }
 .stat-chart-panel {
   margin-bottom: 14px;
+  height: 320px;
+  position: relative;
 }
 .stat-chart-panel canvas {
-  max-height: 280px;
+  max-height: 100%;
 }
 
 /* ── 입고/사용 + 관점 서브탭 패널 (B안: 회색 배경으로 영역 구분) ── */
