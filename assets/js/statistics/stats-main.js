@@ -90,6 +90,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     addAdvancedConditionRow();
     updateSearchKeywordSuggestions();
 
+    // 의원별 탭이 기본 활성 탭 — 상단 검색바 의원 선택 비활성화 등 부수효과를 최초 로드 시에도 적용
+    setActiveSubtab_('branch');
+
     // 통계 조회 탭이 기본 활성 탭이므로, 지난달 기준으로 최초 조회 자동 실행
     await runStatsDashboard();
 
@@ -307,7 +310,7 @@ function applyAdvancedSearch() {
 }
 
 // ── 통계 조회: 서브탭 전환 ─────────────────────────────────
-let currentSubtab = 'vendor';
+let currentSubtab = 'branch';
 let currentRecordType = 'purchase'; // 'purchase'(입고) | 'usage'(사용)
 let currentTrendMode = 'monthly'; // 'monthly'(월별 추이) | 'compare'(구간 비교)
 
