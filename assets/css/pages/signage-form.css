@@ -81,6 +81,7 @@
   gap: 12px;
   flex: 1;
   min-width: 0;
+  flex-wrap: wrap;
 }
 .signage-upload-row .photo-file-name {
   flex: 1;
@@ -89,6 +90,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* equipment-form.css의 .photo-file-name이 min-width:220px로 고정되어 있는데,
+     flex:1만으로는 이 min-width를 덮어쓰지 못해 모바일 좁은 화면에서
+     버튼+박스 합이 화면 폭을 넘어 잘리는 문제가 있었음 — 명시적으로 해제. */
+  min-width: 0;
 }
 
 .signage-file-list { display: flex; flex-direction: column; gap: 6px; }
@@ -216,6 +221,26 @@
   .signage-np-detail-grid { grid-template-columns: 1fr; }
   .signage-np-img { max-height: 200px; }
   .signage-np-layout-img { max-width: 100%; max-height: 180px; }
+
+  /* 파일첨부 행 — 모바일에서 "파일 선택" 버튼과 파일명 박스가 한 줄에
+     억지로 들어가며 잘리던 문제 수정: 세로로 쌓이게 전환. */
+  .signage-upload-row {
+    flex-wrap: wrap;
+  }
+  .signage-upload-row .photo-file-control {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .signage-upload-row .photo-file-name {
+    white-space: normal;
+    word-break: break-all;
+    width: 100%;
+  }
+  .signage-upload-row .photo-file-trigger {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* ── 명판 타입 미선택 플레이스홀더 ── */
