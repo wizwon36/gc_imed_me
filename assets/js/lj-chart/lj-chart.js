@@ -78,10 +78,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       .then(r => Array.isArray(r.data) ? r.data : [])
       .catch(() => null);
 
-    // admin이면 org 데이터도 병렬 로드
-    const orgPromise = isAdmin
-      ? apiGet('getOrgData', {}).catch(() => null)
-      : Promise.resolve(null);
+    // 조회범위 세분화(2026-06) — RLS가 이미 DB 레벨에서 scope(all/clinic/team)에
+    // 맞는 행만 내려주므로, 필터 UI도 admin 한정이 아니라 모든 사용자가 호출해
+    // scope에 맞게 보여줄지/고정할지를 결정한다. 기존엔 isAdmin일 때만 org
+    // 데이터를 가져와 필터 select를 보여줬는데, 그 결과 일반 사용자는 필터
+    // 자체가 없는 채로 "받은 데이터를 그냥 다 보여주는" 화면이었다(RLS 적용
+    // 전이라 전체 데이터가 다 내려왔으니 필터가 없어도 문제가 안 됐던 것).
+    const orgPromise = apiGet('getScopedOrgOptions', { request_user_email: user.email, app_id: APP_ID })
+      .catch(() => null);
 
     const [hasAccess, groupsResult, itemsResult, orgResult] = await Promise.all([permissionPromise, groupsPromise, itemsPromise, orgPromise]);
 
@@ -100,10 +104,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       state.orgData = orgResult.data;
       const clinics = orgResult.data.clinics || [];
       const teams   = orgResult.data.teams   || [];
+      const scope   = orgResult.data.scope; // 'all' | 'clinic' | 'team' | null(admin)
       const clinicSel = $('clinicFilterSelect');
       const teamSel   = $('teamFilterSelect');
 
-      if (clinicSel && clinics.length > 0) {
+      if (scope === 'team') {
+        // 소속 의원 + 소속 부서만: 선택지가 어차피 1개뿐이라 필터 자체가
+        // 무의미하므로 행을 숨긴다(기존엔 일반 사용자에게 필터가 전혀
+        // 없었던 것과 동일한 모양이 되지만, 이제는 RLS가 실제로 그 범위로
+        // 데이터를 제한해 줘서 의미가 같다).
+        if ($('deptFilterRow')) $('deptFilterRow').style.display = 'none';
+
+      } else if (clinicSel && clinics.length > 0) {
         $('deptFilterRow').style.display = 'flex';
 
         const updateTeams = (clinicCode) => {
@@ -115,9 +127,20 @@ document.addEventListener('DOMContentLoaded', async () => {
           teamSel.disabled = !clinicCode;
         };
 
-        clinicSel.innerHTML = '<option value="">전체 의원</option>' +
-          clinics.map(c => `<option value="${escHtml(c.code_value)}">${escHtml(c.code_name)}</option>`).join('');
-        updateTeams('');
+        if (scope === 'clinic') {
+          // 소속 의원 + 전체 부서: 의원은 본인 소속 1개로 고정, 팀은 그
+          // 의원 산하 전체 중 자유 선택
+          clinicSel.innerHTML = clinics.map(c => `<option value="${escHtml(c.code_value)}">${escHtml(c.code_name)}</option>`).join('');
+          clinicSel.value = clinics[0]?.code_value || '';
+          clinicSel.disabled = true;
+          updateTeams(clinicSel.value);
+        } else {
+          // scope === 'all'(또는 admin=null): 기존처럼 전체 의원 자유 선택
+          clinicSel.disabled = false;
+          clinicSel.innerHTML = '<option value="">전체 의원</option>' +
+            clinics.map(c => `<option value="${escHtml(c.code_value)}">${escHtml(c.code_name)}</option>`).join('');
+          updateTeams('');
+        }
 
         clinicSel.addEventListener('change', () => {
           updateTeams(clinicSel.value);
