@@ -17,6 +17,25 @@
   padding: 20px;
 }
 
+/* 권한 없는 앱 비활성 카드(2026-06) — 클릭은 막되 어떤 앱이 있는지는
+   보여줘서 사용자가 관리자에게 권한 요청을 할 수 있게 한다. */
+.portal-app-card--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.portal-app-card--disabled:hover {
+  transform: none !important;
+  box-shadow: var(--shadow-card) !important;
+  border-color: var(--border-card) !important;
+}
+
+.portal-app-badge--locked {
+  background: #f1f3f5 !important;
+  color: #868e96 !important;
+}
+
 /* 기존 줄 제거: 제목 바깥 래퍼 쪽만 제거 */
 .portal-section-head--compact,
 .portal-section-head--compact > div {
