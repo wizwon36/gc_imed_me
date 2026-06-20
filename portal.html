@@ -35,6 +35,16 @@
       </div>
     </section>
 
+    <section class="portal-section portal-notice-section" id="portalNoticeSection" style="display:none;">
+      <div class="portal-section-head portal-section-head--compact">
+        <div>
+          <h2 class="section-title portal-section-title">공지사항</h2>
+        </div>
+      </div>
+
+      <div id="portalNoticeGrid" class="portal-notice-grid"></div>
+    </section>
+
     <section class="portal-section portal-apps-section portal-apps-section-compact">
       <div class="portal-section-head portal-section-head--compact">
         <div>
@@ -48,6 +58,18 @@
         사용 가능한 앱이 없습니다.
       </div>
     </section>
+
+    <!-- 공지사항 상세 모달 (2026-06) -->
+    <div id="noticeDetailModal" class="notice-modal" style="display:none;">
+      <div class="notice-modal__backdrop" id="noticeModalBackdrop"></div>
+      <div class="notice-modal__box">
+        <div class="notice-modal__head">
+          <strong id="noticeModalTitle"></strong>
+          <button type="button" id="noticeModalCloseBtn" class="notice-modal__close" aria-label="닫기">×</button>
+        </div>
+        <div class="notice-modal__body" id="noticeModalContent"></div>
+      </div>
+    </div>
   </div>
 
   <script src="./assets/js/core/config.js"></script>
