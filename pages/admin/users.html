@@ -1008,13 +1008,40 @@
     .permission-card {
       display: grid;
       grid-template-columns: 1fr auto;
+      grid-template-areas: "head perm" "scope scope";
       align-items: center;
-      gap: 16px;
+      gap: 6px 16px;
       padding: 11px 16px;
       border-bottom: 1px solid rgba(148,163,184,0.12);
       border-right: 1px solid rgba(148,163,184,0.12);
       background: #fff;
       transition: background 0.12s;
+    }
+
+    /* scope 블록이 없는 카드(has_scope=false인 앱)는 1행으로 충분하므로
+       빈 grid-area가 공간을 차지하지 않도록 자동으로 처리됨(내용 없는 영역은 0 높이) */
+    .permission-card-head { grid-area: head; }
+    .perm-radio-group { grid-area: perm; }
+
+    .perm-scope-group {
+      grid-area: scope;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+      border-top: 1px dashed rgba(148,163,184,0.2);
+    }
+
+    .perm-scope-group--disabled { opacity: 0.4; }
+    .perm-scope-group--disabled .perm-opt input[type=radio] + label { cursor: not-allowed; }
+
+    .permission-scope-label {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-subtle);
+      flex-shrink: 0;
     }
 
     .permission-card:nth-child(even) { border-right: none; }
