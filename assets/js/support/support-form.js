@@ -15,7 +15,7 @@
 
     try {
       showGlobalLoading('화면을 준비하는 중...');
-      await loadAppList();
+      await loadAppList(user.email);
       const sk   = document.getElementById('formSkeleton');
       const form = document.getElementById('supportForm');
       if (sk)   sk.style.display   = 'none';
@@ -30,24 +30,15 @@
     document.getElementById('supportForm')?.addEventListener('submit', handleSubmit);
   });
 
-  // ── 기본 앱 목록 폴백 ───────────────────────────────────────────
-  const DEFAULT_APPS = [
-    { app_id: 'equipment',    app_name: '의료장비 관리'   },
-    { app_id: 'signage',      app_name: '사인물 신청'     },
-    { app_id: 'lj_chart',     app_name: '정도관리 시스템' },
-    { app_id: 'task_manager', app_name: '업무일정 관리'   }
-  ];
-
-  async function loadAppList() {
-    const result     = await apiGet('getSupportAppList');
-    let apps         = result?.data?.apps       || [];
+  // 단일 진실 소스화(2026-06) — 11개 앱 정보가 GAS(SUPPORT_APP_LIST) +
+  // 여기 DEFAULT_APPS + support-list.js + support-admin.js 4곳에 서로
+  // 다른 개수로 어긋난 채 흩어져 있었음. GAS의 getSupportAppList API가
+  // 이제 app_registry(단일 진실 소스) 기반으로 동적 + 사용자 권한 필터링된
+  // 목록을 안정적으로 내려주므로, 이 폴백 하드코딩은 더 이상 필요 없어 제거.
+  async function loadAppList(userEmail) {
+    const result     = await apiGet('getSupportAppList', { request_user_email: userEmail });
+    const apps       = Array.isArray(result?.data?.apps) ? result.data.apps : [];
     const categories = result?.data?.categories || [];
-
-    DEFAULT_APPS.forEach(function (def) {
-      if (!apps.some(function (a) { return a.app_id === def.app_id; })) {
-        apps = apps.concat([def]);
-      }
-    });
 
     const appSel = document.getElementById('appId');
     apps.forEach(function (a) {
