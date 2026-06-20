@@ -51,10 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
 
     const appList = Array.isArray(registryResult.data) ? registryResult.data : [];
-    const APP_MAP = {};
-    appList.forEach(app => { APP_MAP[app.app_id] = app; });
     // app_registry는 이미 sort_order로 정렬되어 내려오므로 그 순서를 그대로 표시 순서로 사용
-    const APP_ORDER = appList.map(app => app.app_id);
 
     const permissions = Array.isArray(permissionResult.data) ? [...permissionResult.data] : [];
 
@@ -71,15 +68,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // support / support_admin 은 권한 기반으로만 노출 (강제 노출 제거)
 
-    const visiblePermissions = permissions
-      .filter(item => {
-        if (!item || !item.app_id) return false;
-        if (String(item.active || 'Y').trim().toUpperCase() !== 'Y') return false;
-        return !!APP_MAP[item.app_id];
-      })
-      .sort((a, b) => APP_ORDER.indexOf(a.app_id) - APP_ORDER.indexOf(b.app_id));
+    const grantedAppIds = new Set(
+      permissions
+        .filter(item => item && item.app_id && String(item.active || 'Y').trim().toUpperCase() === 'Y')
+        .map(item => item.app_id)
+    );
 
-    if (!visiblePermissions.length) {
+    // 카드 비활성 표시(2026-06) — 권한이 없는 앱은 기존엔 화면에서 완전히
+    // 안 보였는데, 그러면 사용자가 어떤 앱이 있는지조차 몰라 권한 요청을
+    // 할 수 없었다. admin_auto_grant=false인 일반 앱(의료장비/사인물/
+    // 정도관리/업무일정/월마감/통계/규정/수정요청)은 권한이 없어도 카드를
+    // 보여주되 클릭은 막는다(비활성). admin_auto_grant=true인 관리자 전용
+    // 3개(사용자관리/시스템로그/수정요청관리)는 기존처럼 권한 없으면
+    // 완전히 숨긴다 — 일반 사용자에게 관리 기능 존재 자체를 노출하지 않기 위함.
+    const visibleApps = appList.filter(app => {
+      if (grantedAppIds.has(app.app_id) || isAdmin) return true; // admin은 모든 앱 활성(hasPermission과 동일한 규칙)
+      return !app.admin_auto_grant; // 관리자 전용이 아닌 일반 앱은 비활성 카드로라도 노출
+    });
+
+    if (!visibleApps.length) {
       if (gridEl) gridEl.innerHTML = '';
       if (emptyEl) emptyEl.style.display = 'block';
       await delayUntilMinimum(startedAt, 400);
@@ -89,14 +96,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (emptyEl) emptyEl.style.display = 'none';
 
     if (gridEl) {
-      gridEl.innerHTML = visiblePermissions.map(item => {
-        const app = APP_MAP[item.app_id];
-        const permissionLabel =
-          item.permission === 'admin' ? '관리자' :
+      gridEl.innerHTML = visibleApps.map(app => {
+        const item = permissions.find(p => p.app_id === app.app_id);
+        const isGranted = isAdmin || (item && grantedAppIds.has(app.app_id));
+        const permissionLabel = !isGranted ? '' :
+          isAdmin ? '관리자' :
+          item.permission === 'admin'   ? '관리자' :
           item.permission === 'manager' ? '팀장'   :
-          item.permission === 'edit'  ? '편집'   :
-          item.permission === 'view'  ? '조회'   :
+          item.permission === 'edit'    ? '편집'   :
+          item.permission === 'view'    ? '조회'   :
           (item.permission || '');
+
+        if (!isGranted) {
+          return `
+            <div class="portal-app-card portal-app-card--disabled" title="권한이 없습니다. 관리자에게 권한을 요청해 주세요.">
+              <div class="portal-app-icon">${escapeHtml(app.app_icon)}</div>
+              <div class="portal-app-body">
+                <div class="portal-app-title-row">
+                  <strong class="portal-app-title">${escapeHtml(app.app_name)}</strong>
+                  <span class="portal-app-badge portal-app-badge--locked">권한없음</span>
+                </div>
+                <div class="portal-app-desc">${escapeHtml(app.app_desc)}</div>
+              </div>
+            </div>
+          `;
+        }
 
         return `
           <a class="portal-app-card" href="${CONFIG.SITE_BASE_URL}${app.app_url}">
