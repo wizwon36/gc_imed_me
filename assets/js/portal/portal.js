@@ -33,104 +33,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const isAdmin = String(user.role || '').trim().toLowerCase() === 'admin';
 
-  const APP_MAP = {
-    equipment: {
-      title: '의료장비 관리',
-      desc: '장비 등록, 조회, 이력 관리',
-      icon: '🩺',
-      url: `${CONFIG.SITE_BASE_URL}/pages/equipment/dashboard.html`
-    },
-    signage: {
-      title: '사인물 신청',
-      desc: '사인물 / 명판 제작 요청',
-      icon: '🪧',
-      url: `${CONFIG.SITE_BASE_URL}/pages/signage/signage-form.html`
-    },
-    lj_chart: {
-      title: '정도관리 시스템',
-      desc: 'QC 데이터 관리',
-      icon: '📈',
-      url: `${CONFIG.SITE_BASE_URL}/pages/lj-chart/lj-chart.html`
-    },
-    task_manager: {
-      title: '업무일정 관리',
-      desc: '일별 업무 등록 · 주간업무일지 작성',
-      icon: '📋',
-      url: `${CONFIG.SITE_BASE_URL}/pages/task-manager/task-manager.html`
-    },
-    // ── 월마감(구매) ──────────────────────────────────────────────
-    closing: {
-      title: '월마감(구매)',
-      desc: 'Raw 데이터 → 산출물 엑셀 자동 생성',
-      icon: '📊',
-      url: `${CONFIG.SITE_BASE_URL}/pages/closing/closing.html`
-    },
-    // ── 구매·사용 통계 (신규) ────────────────────────────────────
-    statistics: {
-      title: '구매·사용 통계',
-      desc: '과거 입고·사용현황 데이터 업로드 및 통계 조회',
-      icon: '📈',
-      url: `${CONFIG.SITE_BASE_URL}/pages/statistics/statistics.html`
-    },    
-    // ── 규정 및 가이드라인: 권한 있는 규정 목록 표시 ──────────────
-    regulation: {
-      title: '규정 및 가이드라인',
-      desc: '사내 규정, 지침, 가이드라인 조회',
-      icon: '📚',
-      url: `${CONFIG.SITE_BASE_URL}/pages/regulation/regulation-list.html`
-    },
-
-    support: {
-      title: '프로그램 수정요청',
-      desc: '불편사항·기능 개선 요청',
-      icon: '🛠️',
-      url: `${CONFIG.SITE_BASE_URL}/pages/support/support-form.html`
-    },
-    users_admin: {
-      title: '사용자 관리',
-      desc: '사용자 등록 및 권한 관리',
-      icon: '👤',
-      url: `${CONFIG.SITE_BASE_URL}/pages/admin/users.html`
-    },
-    logs: {
-      title: '시스템 로그',
-      desc: '작업 이력과 기록 조회',
-      icon: '🧾',
-      url: `${CONFIG.SITE_BASE_URL}/pages/admin/logs.html`
-    },
-    // ── 관리자: 수정요청 관리 ──────────────────────────────────────
-    support_admin: {
-      title: '수정요청 관리',
-      desc: '접수된 수정요청 처리',
-      icon: '⚙️',
-      url: `${CONFIG.SITE_BASE_URL}/pages/admin/support-admin.html`
-    }
-  };
-
   const startedAt = Date.now();
 
   try {
     showGlobalLoading('앱 목록 불러오는 중...');
 
-    const result = await apiGet('getUserPermissions', {
-      user_email: user.email,
-      request_user_email: user.email
-    });
+    // 단일 진실 소스화(2026-06) — 11개 앱의 이름/설명/아이콘/URL/표시순서를
+    // 여기 APP_MAP에 하드코딩하고 있었는데, 같은 정보가 users.html의 정적
+    // 라디오 버튼 마크업과 user_app_permissions DB의 CHECK 제약에도 각각
+    // 따로 하드코딩되어 있어 앱 하나 추가할 때마다 3곳을 사람이 맞춰
+    // 고쳐야 했다. app_registry 테이블(GAS의 getAppRegistry API)을 단일
+    // 진실 소스로 두고 동적으로 가져온다 — 이제 앱 추가는 그 테이블에
+    // 행 하나 넣는 것으로 끝나고, 이 파일은 손댈 필요가 없다.
+    const [registryResult, permissionResult] = await Promise.all([
+      apiGet('getAppRegistry', { request_user_email: user.email }),
+      apiGet('getUserPermissions', { user_email: user.email, request_user_email: user.email })
+    ]);
 
-    const permissions = Array.isArray(result.data) ? [...result.data] : [];
+    const appList = Array.isArray(registryResult.data) ? registryResult.data : [];
+    const APP_MAP = {};
+    appList.forEach(app => { APP_MAP[app.app_id] = app; });
+    // app_registry는 이미 sort_order로 정렬되어 내려오므로 그 순서를 그대로 표시 순서로 사용
+    const APP_ORDER = appList.map(app => app.app_id);
 
-    // 관리자 전용 앱 자동 추가 (admin 역할이면 항상 접근 가능)
+    const permissions = Array.isArray(permissionResult.data) ? [...permissionResult.data] : [];
+
+    // 관리자 전용 앱 자동 추가 (admin_auto_grant=true인 앱은 admin 역할이면 항상 접근 가능)
     if (isAdmin) {
-      ['users_admin', 'logs', 'support_admin'].forEach(appId => {
-        if (!permissions.some(item => item.app_id === appId)) {
-          permissions.push({ app_id: appId, permission: 'admin', active: 'Y' });
-        }
-      });
+      appList
+        .filter(app => app.admin_auto_grant)
+        .forEach(app => {
+          if (!permissions.some(item => item.app_id === app.app_id)) {
+            permissions.push({ app_id: app.app_id, permission: 'admin', active: 'Y' });
+          }
+        });
     }
 
     // support / support_admin 은 권한 기반으로만 노출 (강제 노출 제거)
-
-    const APP_ORDER = Object.keys(APP_MAP);
 
     const visiblePermissions = permissions
       .filter(item => {
@@ -160,14 +99,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           (item.permission || '');
 
         return `
-          <a class="portal-app-card" href="${app.url}">
-            <div class="portal-app-icon">${escapeHtml(app.icon)}</div>
+          <a class="portal-app-card" href="${CONFIG.SITE_BASE_URL}${app.app_url}">
+            <div class="portal-app-icon">${escapeHtml(app.app_icon)}</div>
             <div class="portal-app-body">
               <div class="portal-app-title-row">
-                <strong class="portal-app-title">${escapeHtml(app.title)}</strong>
+                <strong class="portal-app-title">${escapeHtml(app.app_name)}</strong>
                 <span class="portal-app-badge">${escapeHtml(permissionLabel)}</span>
               </div>
-              <div class="portal-app-desc">${escapeHtml(app.desc)}</div>
+              <div class="portal-app-desc">${escapeHtml(app.app_desc)}</div>
             </div>
           </a>
         `;
