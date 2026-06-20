@@ -138,6 +138,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await delayUntilMinimum(startedAt, 400);
+
+    // 공지사항은 앱 카드와 독립적인 영역이라 실패해도 앱 카드 표시에
+    // 영향을 주지 않도록 별도로 감싼다.
+    try {
+      await loadPortalNotices(user.email);
+    } catch (noticeError) {
+      console.error('공지사항을 불러오지 못했습니다.', noticeError);
+    }
   } catch (error) {
     if (gridEl) {
       gridEl.innerHTML = `
@@ -181,3 +189,107 @@ window.addEventListener('pageshow', (event) => {
     } catch (e) {}
   }
 });
+
+// ─────────────────────────────────────────────
+// 공지사항(2026-06)
+// ─────────────────────────────────────────────
+
+const NOTICE_DISMISS_STORAGE_KEY = 'portal_notice_dismissed';
+
+/**
+ * "오늘 하루 안 보임" 상태를 localStorage에 보관한다. 서버에 사용자별
+ * 상태 테이블을 두지 않는 가벼운 방식 — 날짜가 바뀌면 자동으로 무효화된다.
+ * 형태: { [notice_id]: 'yyyy-mm-dd' }
+ */
+function getDismissedNoticeMap() {
+  try {
+    return JSON.parse(localStorage.getItem(NOTICE_DISMISS_STORAGE_KEY) || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function todayDateString() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function isDismissedToday(noticeId) {
+  const map = getDismissedNoticeMap();
+  return map[noticeId] === todayDateString();
+}
+
+function dismissNoticeForToday(noticeId) {
+  const map = getDismissedNoticeMap();
+  map[noticeId] = todayDateString();
+  try {
+    localStorage.setItem(NOTICE_DISMISS_STORAGE_KEY, JSON.stringify(map));
+  } catch (e) {}
+}
+
+async function loadPortalNotices(userEmail) {
+  const sectionEl = document.getElementById('portalNoticeSection');
+  const gridEl = document.getElementById('portalNoticeGrid');
+  if (!sectionEl || !gridEl) return;
+
+  const result = await apiGet('getActiveNotices', { request_user_email: userEmail });
+  const allNotices = Array.isArray(result.data) ? result.data : [];
+  const notices = allNotices.filter(n => !isDismissedToday(n.notice_id));
+
+  if (!notices.length) {
+    sectionEl.style.display = 'none';
+    return;
+  }
+
+  sectionEl.style.display = '';
+  gridEl.innerHTML = notices.map(n => `
+    <div class="portal-notice-card${n.is_pinned ? ' portal-notice-card--pinned' : ''}" data-notice-id="${escapeHtml(n.notice_id)}">
+      ${n.is_pinned ? '<span class="portal-notice-pin">📌 고정</span>' : ''}
+      <button type="button" class="portal-notice-close" data-close-notice="${escapeHtml(n.notice_id)}" aria-label="오늘 하루 안 보임">×</button>
+      <div class="portal-notice-card__title" data-open-notice="${escapeHtml(n.notice_id)}">${escapeHtml(n.title)}</div>
+      <div class="portal-notice-card__date">${escapeHtml(n.created_at.slice(0, 10))}</div>
+    </div>
+  `).join('');
+
+  gridEl.querySelectorAll('[data-open-notice]').forEach(el => {
+    el.addEventListener('click', () => {
+      const notice = notices.find(n => n.notice_id === el.dataset.openNotice);
+      if (notice) openNoticeModal(notice);
+    });
+  });
+
+  gridEl.querySelectorAll('[data-close-notice]').forEach(el => {
+    el.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const noticeId = el.dataset.closeNotice;
+      dismissNoticeForToday(noticeId);
+      const card = gridEl.querySelector(`[data-notice-id="${noticeId}"]`);
+      if (card) card.remove();
+      if (!gridEl.querySelector('.portal-notice-card')) {
+        sectionEl.style.display = 'none';
+      }
+    });
+  });
+}
+
+function openNoticeModal(notice) {
+  const modal = document.getElementById('noticeDetailModal');
+  const titleEl = document.getElementById('noticeModalTitle');
+  const contentEl = document.getElementById('noticeModalContent');
+  if (!modal || !titleEl || !contentEl) return;
+
+  titleEl.textContent = notice.title;
+  // 공지 내용은 관리자(admin)만 작성 가능한 신뢰된 입력이지만, 그래도
+  // 줄바꿈만 허용하고 나머지는 escapeHtml로 이스케이프해 XSS를 방지한다.
+  contentEl.innerHTML = escapeHtml(notice.content).replace(/\n/g, '<br>');
+  modal.style.display = '';
+}
+
+function closeNoticeModal() {
+  const modal = document.getElementById('noticeDetailModal');
+  if (modal) modal.style.display = 'none';
+}
+
+document.getElementById('noticeModalCloseBtn')?.addEventListener('click', closeNoticeModal);
+document.getElementById('noticeModalBackdrop')?.addEventListener('click', closeNoticeModal);
