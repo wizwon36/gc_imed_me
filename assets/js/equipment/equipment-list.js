@@ -517,36 +517,45 @@ async function initListFilters() {
   teamEl = document.getElementById('team_code');
 
   if (window.orgSelect && clinicEl && teamEl) {
+    // scope='all' 분기에서 getFilteredTeams/bindClinicTeamSelects가 내부
+    // orgDataCache(이 호출이 채움)에 의존하므로 그대로 유지한다.
     await window.orgSelect.loadOrgData();
 
-    var userClinicCode = equipmentListState.userClinicCode;
-    var isAdmin = equipmentListState.isAdmin;
+    // 조회범위 세분화(2026-06) — RLS가 이미 DB 레벨에서 scope(all/clinic/team)에
+    // 맞는 행만 내려주므로, select UI도 "어차피 결과가 0건일 선택지"를 보여주지
+    // 않도록 getScopedOrgOptions API로 동적으로 좁힌다. 기존엔 admin 여부만
+    // 보고 이진법(전체 자유선택 vs 의원고정+팀자유선택)으로 나눴는데, scope가
+    // all/clinic/team 3단계가 된 지금은 그 가정이 맞지 않는다.
+    var scopedResult = await apiGet('getScopedOrgOptions', {
+      request_user_email: equipmentListState.user?.email || equipmentListState.user?.user_email,
+      app_id: 'equipment'
+    });
+    var scopedData = scopedResult?.data || { clinics: [], teams: [], scope: null };
+    var scope = scopedData.scope; // 'all' | 'clinic' | 'team' | null(admin은 'all'로 내려옴)
 
-    if (!isAdmin && userClinicCode) {
-      // ★ 일반 user: 의원은 본인 소속으로 고정(disabled)
-      var userClinic = window.orgSelect.getClinics().filter(function(c) {
-        return c.code_value === userClinicCode;
-      });
-      window.orgSelect.fillSelectOptions(clinicEl, userClinic, {
-        emptyText: ''
-      });
-      clinicEl.value = userClinicCode;
+    if (scope === 'team') {
+      // 소속 의원 + 소속 부서만: 의원/팀 둘 다 고정(disabled), 선택지도 1개뿐
+      window.orgSelect.fillSelectOptions(clinicEl, scopedData.clinics, { emptyText: '' });
+      clinicEl.value = equipmentListState.userClinicCode;
       clinicEl.disabled = true;
 
-      // 팀: 소속 의원 하위 팀 전체 표시
-      // URL params(dashboard 클릭 등)에 team_code가 있으면 우선 적용, 없으면 본인 팀으로 세팅
-      var userTeamCode = equipmentListState.userTeamCode;
-      window.orgSelect.fillSelectOptions(
-        teamEl,
-        window.orgSelect.getFilteredTeams(userClinicCode),
-        { emptyText: '전체 팀' }
-      );
-      teamEl.value = query.team_code || userTeamCode || '';
+      window.orgSelect.fillSelectOptions(teamEl, scopedData.teams, { emptyText: '' });
+      teamEl.value = equipmentListState.userTeamCode;
+      teamEl.disabled = true;
+
+    } else if (scope === 'clinic') {
+      // 소속 의원 + 전체 부서: 의원은 고정, 팀은 소속 의원 산하 전체 중 자유 선택
+      window.orgSelect.fillSelectOptions(clinicEl, scopedData.clinics, { emptyText: '' });
+      clinicEl.value = equipmentListState.userClinicCode;
+      clinicEl.disabled = true;
+
+      window.orgSelect.fillSelectOptions(teamEl, scopedData.teams, { emptyText: '전체 팀' });
+      teamEl.value = query.team_code || equipmentListState.userTeamCode || '';
       teamEl.disabled = false;
 
     } else {
-      // admin: 전체 의원 선택 가능
-      window.orgSelect.fillSelectOptions(clinicEl, window.orgSelect.getClinics(), {
+      // scope === 'all'(admin 포함): 전체 의원 자유 선택
+      window.orgSelect.fillSelectOptions(clinicEl, scopedData.clinics, {
         emptyText: '전체 의원'
       });
       window.orgSelect.bindClinicTeamSelects({
