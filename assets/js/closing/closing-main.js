@@ -211,6 +211,11 @@ function prog(pct, label) {
   document.getElementById('progressPct').textContent = pct + '%';
   document.getElementById('progressLabel').textContent = label;
 }
+// 속도 개선 점검(2026-06) — 아래 sleep 호출들은 파싱/집계 같은 클라이언트
+// 동기 연산 사이에 진행률 단계 전환을 보여주기 위한 순수 UX 장식이었음
+// (실제 처리 시간과 무관). 원래 150~300ms씩 박혀 있어 화면 하나에서만
+// 2초 이상 순수 대기가 발생했던 것을 발견, 단계 전환은 느껴지되 체감
+// 지연은 거의 없는 수준(20ms)으로 축소.
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // ═══════════════════════════════════════════════════════════
@@ -428,7 +433,7 @@ async function runProcessing() {
   const account = '11301101'; // 계정코드 고정값
 
   try {
-    clog('처리를 시작합니다...', 'info'); await sleep(150);
+    clog('처리를 시작합니다...', 'info'); await sleep(20);
 
     // 거래처/자재 로드가 안 된 경우 재시도 (초기화 타임아웃 대비)
     if (!App.vendors.length) {
@@ -445,12 +450,12 @@ async function runProcessing() {
     App.ipgoData    = ipgoData;
     clog(`입고 ${ipgoData.length}건 파싱 완료 (소계행 자동 제거)`, 'ok');
 
-    await sleep(150); prog(22, '사용현황 파싱 중...');
+    await sleep(20); prog(22, '사용현황 파싱 중...');
     const usageData = parseUsage(App.usageRaw.wb);
     App.usageData   = usageData;
     clog(`사용현황 ${usageData.length}건 파싱 완료`, 'ok');
 
-    await sleep(150); prog(38, 'GC케어 / 아이메드 분류 중...');
+    await sleep(20); prog(38, 'GC케어 / 아이메드 분류 중...');
     const gcIpgo    = ipgoData.filter(r => r['구분'] === 'GC케어');
     const imedIpgo  = ipgoData.filter(r => r['구분'] === '아이메드');
     const usageSiyak   = usageData.filter(r => String(r['자재구분'] || '').trim() === '시약');
@@ -460,7 +465,7 @@ async function runProcessing() {
     clog(`입고 GC케어:${gcIpgo.length}건 / 아이메드:${imedIpgo.length}건`, 'ok');
     clog(`사용 GC케어(시약+소모품):${usageGC.length}건 / 아이메드(의약품):${usageImed.length}건`, 'ok');
 
-    await sleep(150); prog(55, '집계 중...');
+    await sleep(20); prog(55, '집계 중...');
     const gcVendors        = byVendor(gcIpgo);
     const imedVendors      = byVendor(imedIpgo);
     const gcDepts   = byDeptIpgoFull(gcIpgo, usageGC);
@@ -552,7 +557,7 @@ async function runProcessing() {
     const imedDrugPivot    = byDeptUsage(usageImed);
     clog('집계 완료', 'ok');
 
-    await sleep(150); prog(70, 'SAP 양식 생성 중...');
+    await sleep(20); prog(70, 'SAP 양식 생성 중...');
     // 거래처 맵 (서버 데이터 우선)
     const vendorMap = {};
     App.vendors.forEach(v => { vendorMap[v.vendor_name] = v; });
@@ -573,7 +578,7 @@ async function runProcessing() {
     });
     clog(`SAP 양식 ${sapRows.length}건 생성`, 'ok');
 
-    await sleep(150); prog(85, '수불 집계 중...');
+    await sleep(20); prog(85, '수불 집계 중...');
 
     // item_master 기반으로 초기 map 구성 (사용 상태만)
     const subulMap = {};
@@ -658,7 +663,7 @@ async function runProcessing() {
               sapRows, subulMap, vendorMap, unregItems, unregVendors, y, m: mi, branch, cc, account };
 
     // 수불부: Drive 파일 로드 + JSZip으로 당월 시트 삽입 → 메모리 보관
-    await sleep(150); prog(88, '수불부 준비 중...');
+    await sleep(20); prog(88, '수불부 준비 중...');
     const user = window.auth?.getSession?.();
     try {
       const fidRes = await apiGet('closingGetSubulFileId', {
@@ -704,7 +709,7 @@ async function runProcessing() {
     }
 
     clog('모든 처리 완료!', 'ok');
-    await sleep(300); prog(100, '완료!');
+    await sleep(20); prog(100, '완료!');
 
     // 자동 이동 대신 버튼 활성화
     const btnGo = document.getElementById('btnGoResult');
@@ -1248,14 +1253,14 @@ async function downloadAll() {
     writeDataSheet(wb1.addWorksheet('아이메드 입고분'), ic, R.imedIpgo.map(d => ic.map(c => d[c] || '')), in_, iw);
     writePivotDept(wb1.addWorksheet('아이메드 마감요약'), R.imedDeptsRaw.filter(d => d.공급가액 || d.부가세 || d.합계금액));
     await saveWb(wb1, `${R.y.slice(2)}년 ${R.m}월 입고 - ${R.branch}.xlsx`);
-    await sleep(200);
+    await sleep(20);
 
     // 나머지는 개별 함수 재사용 (각 함수 내부 스피너는 hideGlobalLoading 하지 않도록 플래그 없이 직접 호출)
     await hideGlobalLoading();
-    await dlUsage();   await sleep(200);
-    await dlGCReport(); await sleep(200);
-    await dlImedReport(); await sleep(200);
-    await dlSAP();     await sleep(200);
+    await dlUsage();   await sleep(20);
+    await dlGCReport(); await sleep(20);
+    await dlImedReport(); await sleep(20);
+    await dlSAP();     await sleep(20);
     await dlSubul();
   } catch(e) {
     await hideGlobalLoading();
