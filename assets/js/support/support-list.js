@@ -33,24 +33,16 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
   });
 
-  // ── 기본 앱 목록 (API 응답에 없을 경우 폴백) ──────────────────────
-  const DEFAULT_APPS = [
-    { app_id: 'equipment', app_name: '의료장비 관리' },
-    { app_id: 'signage',   app_name: '사인물 신청'   },
-    { app_id: 'lj_chart',  app_name: '정도관리 시스템' },
-    { app_id: 'task_manager',  app_name: '업무일정 관리' }
-  ];
-
+  // 단일 진실 소스화(2026-06) — DEFAULT_APPS 폴백(app_registry 도입 전
+  // getSupportAppList 응답이 불완전할 가능성에 대비한 보완용)이 다른
+  // 3곳(GAS, support-form.js, support-admin.js)과 서로 다른 개수로
+  // 어긋난 채 흩어져 있었음. GAS가 이제 app_registry 기반으로 안정적인
+  // 목록을 내려주므로 제거.
   async function loadMeta() {
-    const result = await apiGet('getSupportAppList');
+    const user  = window.auth?.getSession?.() || {};
+    const email = user.user_email || user.email || '';
+    const result = await apiGet('getSupportAppList', { request_user_email: email });
     appList = result?.data?.apps || [];
-
-    // API 응답에 lj_chart 가 없으면 DEFAULT_APPS 에서 보완
-    DEFAULT_APPS.forEach(function (def) {
-      if (!appList.some(function (a) { return a.app_id === def.app_id; })) {
-        appList = appList.concat([def]);
-      }
-    });
 
     const appSel = document.getElementById('filterApp');
     appList.forEach(function (a) {
