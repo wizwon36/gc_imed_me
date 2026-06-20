@@ -220,6 +220,13 @@ async function initializeOrgData() {
  * data-app-id/value 속성에만 의존하므로, 마크업을 동적으로 그려도 기존
  * 로직이 그대로 동작한다(별도 수정 불필요).
  */
+/**
+ * 조회범위 세분화(2026-06) — equipment/lj_chart처럼 app_registry.has_scope가
+ * true인 앱은 "권한 등급" 라디오 외에 "조회범위"(전체/소속의원/소속부서) 라디오를
+ * 추가로 보여준다. 권한이 '없음'이면 scope는 의미가 없으므로 같이 비활성화한다.
+ */
+const SCOPE_LABELS = { all: '전체 의원·부서', clinic: '소속 의원 전체', team: '소속 의원·부서만' };
+
 async function renderPermissionCards() {
   const gridEl = document.getElementById('permissionGrid');
   if (!gridEl) return;
@@ -239,6 +246,18 @@ async function renderPermissionCards() {
           `<label for="${id}">${label}</label></span>`;
       }).join('');
 
+      const scopeBlock = app.has_scope ? `
+          <div class="perm-scope-group" data-scope-for="${escapeHtml(app.app_id)}">
+            <p class="permission-scope-label">조회범위</p>
+            ${['all', 'clinic', 'team'].map((value) => {
+              const id = `scope-${app.app_id.replace(/_/g, '-')}-${value}`;
+              return `<span class="perm-opt">` +
+                `<input type="radio" class="app-scope" id="${id}" name="scope-${app.app_id.replace(/_/g, '-')}" ` +
+                `data-app-id="${escapeHtml(app.app_id)}" value="${value}">` +
+                `<label for="${id}">${escapeHtml(SCOPE_LABELS[value])}</label></span>`;
+            }).join('')}
+          </div>` : '';
+
       return `
         <div class="permission-card">
           <div class="permission-card-head">
@@ -246,12 +265,35 @@ async function renderPermissionCards() {
             <p class="permission-desc">${escapeHtml(app.app_desc)}</p>
           </div>
           <div class="perm-radio-group">${radios}</div>
+          ${scopeBlock}
         </div>
       `;
     }).join('');
+
+    bindScopeVisibilityToggles();
   } catch (error) {
     gridEl.innerHTML = `<p class="form-help" style="color:#dc2626">앱 목록을 불러오지 못했습니다: ${escapeHtml(error.message || '')}</p>`;
   }
+}
+
+/**
+ * 권한이 '없음'이면 scope 라디오 그룹을 비활성화(흐리게) 처리해
+ * 의미 없는 선택을 막는다. 권한 라디오가 바뀔 때마다 다시 평가한다.
+ */
+function bindScopeVisibilityToggles() {
+  document.querySelectorAll('.perm-scope-group').forEach((scopeGroup) => {
+    const appId = scopeGroup.dataset.scopeFor;
+    const update = () => {
+      const checked = document.querySelector(`input.app-permission[data-app-id="${appId}"]:checked`);
+      const hasPermission = !!(checked && checked.value);
+      scopeGroup.classList.toggle('perm-scope-group--disabled', !hasPermission);
+      scopeGroup.querySelectorAll('input.app-scope').forEach((el) => { el.disabled = !hasPermission; });
+    };
+    document.querySelectorAll(`input.app-permission[data-app-id="${appId}"]`).forEach((el) => {
+      el.addEventListener('change', update);
+    });
+    update();
+  });
 }
 
 function buildDepartmentText(clinicName, teamName) {
@@ -313,11 +355,22 @@ function collectPermissions() {
 
     if (!permission) return; // 권한 없음은 제외
 
-    permissions.push({
-      app_id: appId,
-      permission,
-      active: 'Y'
-    });
+    // 조회범위 세분화(2026-06) — has_scope 앱은 scope 라디오도 같이 수집한다.
+    // 이 카드에 .app-scope 요소가 있다는 것 자체가 has_scope=true라는 뜻이므로
+    // app_registry를 다시 조회할 필요 없이 DOM 존재 여부로 판단한다.
+    const scopeEls = document.querySelectorAll(`input.app-scope[data-app-id="${appId}"]`);
+    let scope;
+    if (scopeEls.length > 0) {
+      const scopeChecked = document.querySelector(`input.app-scope[data-app-id="${appId}"]:checked`);
+      scope = scopeChecked ? normalize(scopeChecked.value) : '';
+      if (!scope) {
+        throw new Error(`${appId}의 조회범위(전체/소속의원/소속부서)를 선택해 주세요.`);
+      }
+    }
+
+    const item = { app_id: appId, permission, active: 'Y' };
+    if (scope) item.scope = scope;
+    permissions.push(item);
   });
 
   return permissions;
@@ -944,10 +997,12 @@ function clearUserForm() {
 
 function setPermissionValues(permissions = []) {
   const permissionMap = {};
+  const scopeMap = {};
 
   permissions.forEach((item) => {
     if (item?.app_id && normalize(item.active || 'Y') === 'Y') {
       permissionMap[item.app_id] = item.permission || '';
+      if (item.scope) scopeMap[item.app_id] = item.scope;
     }
   });
 
@@ -968,6 +1023,22 @@ function setPermissionValues(permissions = []) {
         if (noneRadio) noneRadio.checked = true;
       }
     }
+  });
+
+  // 조회범위 세분화(2026-06) — 기존 scope 값을 복원한다.
+  document.querySelectorAll('input.app-scope').forEach((el) => {
+    const appId = normalize(el.dataset.appId);
+    if (!appId) return;
+    const targetScope = scopeMap[appId] || '';
+    el.checked = (normalize(el.value) === targetScope);
+  });
+
+  // 방금 채운 권한/범위 값에 맞춰 scope 그룹의 활성/비활성 상태를 다시 평가
+  document.querySelectorAll('.perm-scope-group').forEach((scopeGroup) => {
+    const appId = scopeGroup.dataset.scopeFor;
+    const hasPermission = !!permissionMap[appId];
+    scopeGroup.classList.toggle('perm-scope-group--disabled', !hasPermission);
+    scopeGroup.querySelectorAll('input.app-scope').forEach((el) => { el.disabled = !hasPermission; });
   });
 }
 
