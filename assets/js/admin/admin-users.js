@@ -199,6 +199,59 @@ async function initializeOrgData() {
     clinicSelect: document.getElementById('clinic_code'),
     teamSelect: document.getElementById('team_code')
   });
+
+  await renderPermissionCards();
+}
+
+// 권한 표시 라벨(value -> 화면 표시 텍스트). app_registry.permission_levels는
+// 'view'/'edit'/'manager'/'admin' 같은 원시 값만 담고 있어, 라디오 버튼
+// 라벨은 그 값을 그대로 보여준다(기존 정적 마크업도 동일하게 'view'/'edit'/
+// 'admin' 원문을 라벨로 썼음 — portal.js의 관리자/팀장/편집/조회 한글 라벨은
+// 카드가 아니라 부여된 뱃지 표시용이라 여기엔 적용하지 않는다).
+
+/**
+ * 단일 진실 소스화(2026-06) — app_registry(getAppRegistry API)에서 앱 목록을
+ * 가져와 권한 카드를 동적으로 그린다. 기존엔 11개 앱의 카드(이름/설명/등급별
+ * 라디오 버튼)가 users.html에 정적으로 하드코딩되어 있어 앱 하나 추가할
+ * 때마다 이 파일을 포함해 3곳을 사람이 맞춰 고쳐야 했다. 이제 앱 추가는
+ * app_registry 테이블에 행 하나 넣는 것으로 끝나고, 이 함수는 손댈 필요가 없다.
+ *
+ * collectPermissions()/setPermissionValues()는 .app-permission 클래스와
+ * data-app-id/value 속성에만 의존하므로, 마크업을 동적으로 그려도 기존
+ * 로직이 그대로 동작한다(별도 수정 불필요).
+ */
+async function renderPermissionCards() {
+  const gridEl = document.getElementById('permissionGrid');
+  if (!gridEl) return;
+
+  try {
+    const result = await apiGet('getAppRegistry', { request_user_email: currentSessionUser?.email || currentSessionUser?.user_email });
+    const apps = Array.isArray(result.data) ? result.data : [];
+
+    gridEl.innerHTML = apps.map((app) => {
+      const radios = ['', ...(app.permission_levels || [])].map((value) => {
+        const isNone = value === '';
+        const id = `perm-${app.app_id.replace(/_/g, '-')}-${isNone ? 'none' : value}`;
+        const label = isNone ? '없음' : escapeHtml(value);
+        return `<span class="perm-opt${isNone ? ' perm-opt-none' : ''}">` +
+          `<input type="radio" class="app-permission" id="${id}" name="perm-${app.app_id.replace(/_/g, '-')}" ` +
+          `data-app-id="${escapeHtml(app.app_id)}" value="${escapeHtml(value)}"${isNone ? ' checked' : ''}>` +
+          `<label for="${id}">${label}</label></span>`;
+      }).join('');
+
+      return `
+        <div class="permission-card">
+          <div class="permission-card-head">
+            <p class="permission-title">${escapeHtml(app.app_name)}</p>
+            <p class="permission-desc">${escapeHtml(app.app_desc)}</p>
+          </div>
+          <div class="perm-radio-group">${radios}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (error) {
+    gridEl.innerHTML = `<p class="form-help" style="color:#dc2626">앱 목록을 불러오지 못했습니다: ${escapeHtml(error.message || '')}</p>`;
+  }
 }
 
 function buildDepartmentText(clinicName, teamName) {
