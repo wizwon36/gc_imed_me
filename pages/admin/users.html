@@ -1248,99 +1248,15 @@
                 <div class="form-section">
                   <div class="form-section-label">앱별 권한 <span class="field-badge optional" style="text-transform:none;letter-spacing:0">선택</span></div>
                   <p class="form-help" style="margin-bottom:14px">권한을 선택하지 않으면 해당 앱에 접근할 수 없습니다.</p>
-                  <div class="permission-grid">
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">의료장비 관리</p><p class="permission-desc">장비 조회, 등록, 수정, 이력 및 재고조사</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-equipment-none" name="perm-equipment" data-app-id="equipment" value="" checked><label for="perm-equipment-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-equipment-view" name="perm-equipment" data-app-id="equipment" value="view"><label for="perm-equipment-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-equipment-edit" name="perm-equipment" data-app-id="equipment" value="edit"><label for="perm-equipment-edit">edit</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-equipment-admin" name="perm-equipment" data-app-id="equipment" value="admin"><label for="perm-equipment-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">사인물 신청</p><p class="permission-desc">사인물, 명판 신청기능</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-signage-none" name="perm-signage" data-app-id="signage" value="" checked><label for="perm-signage-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-signage-view" name="perm-signage" data-app-id="signage" value="view"><label for="perm-signage-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-signage-admin" name="perm-signage" data-app-id="signage" value="admin"><label for="perm-signage-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">정도관리 시스템</p><p class="permission-desc">QC 데이터 관리 및 Westgard 규칙 분석</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-lj-chart-none" name="perm-lj-chart" data-app-id="lj_chart" value="" checked><label for="perm-lj-chart-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-lj-chart-view" name="perm-lj-chart" data-app-id="lj_chart" value="view"><label for="perm-lj-chart-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-lj-chart-edit" name="perm-lj-chart" data-app-id="lj_chart" value="edit"><label for="perm-lj-chart-edit">edit</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-lj-chart-admin" name="perm-lj-chart" data-app-id="lj_chart" value="admin"><label for="perm-lj-chart-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">업무일지관리</p><p class="permission-desc">업무일지 작성 및 일정관리</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-task-manager-none" name="perm-task-manager" data-app-id="task_manager" value="" checked><label for="perm-task-manager-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-task-manager-edit" name="perm-task-manager" data-app-id="task_manager" value="edit"><label for="perm-task-manager-edit">edit</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-task-manager-manager" name="perm-task-manager" data-app-id="task_manager" value="manager"><label for="perm-task-manager-manager">manager</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-task-manager-admin" name="perm-task-manager" data-app-id="task_manager" value="admin"><label for="perm-task-manager-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">'월마감(구매)'</p><p class="permission-desc">Raw 데이터 → 산출물 엑셀 자동 생성 및 거래처 관리</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-closing-none" name="perm-closing" data-app-id="closing" value="" checked><label for="perm-closing-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-closing-view" name="perm-closing" data-app-id="closing" value="view"><label for="perm-closing-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-closing-edit" name="perm-closing" data-app-id="closing" value="edit"><label for="perm-closing-edit">edit</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-closing-admin" name="perm-closing" data-app-id="closing" value="admin"><label for="perm-closing-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">구매·사용 통계</p><p class="permission-desc">과거 입고·사용현황 데이터 업로드 및 통계 조회</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-statistics-none" name="perm-statistics" data-app-id="statistics" value="" checked><label for="perm-statistics-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-statistics-view" name="perm-statistics" data-app-id="statistics" value="view"><label for="perm-statistics-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-statistics-edit" name="perm-statistics" data-app-id="statistics" value="edit"><label for="perm-statistics-edit">edit</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-statistics-admin" name="perm-statistics" data-app-id="statistics" value="admin"><label for="perm-statistics-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">규정 및 가이드라인</p><p class="permission-desc">사내 규정, 지침, 가이드라인 조회</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-regulation-none" name="perm-regulation" data-app-id="regulation" value="" checked><label for="perm-regulation-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-regulation-view" name="perm-regulation" data-app-id="regulation" value="view"><label for="perm-regulation-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-regulation-admin" name="perm-regulation" data-app-id="regulation" value="admin"><label for="perm-regulation-admin">admin</label></span>
-                      </div>
-                    </div>                  
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">프로그램 수정요청</p><p class="permission-desc">불편사항·기능 개선 요청 제출</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-support-none" name="perm-support" data-app-id="support" value="" checked><label for="perm-support-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-support-view" name="perm-support" data-app-id="support" value="view"><label for="perm-support-view">view</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">수정요청 관리</p><p class="permission-desc">접수된 수정요청 처리 및 답변</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-support-admin-none" name="perm-support-admin" data-app-id="support_admin" value="" checked><label for="perm-support-admin-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-support-admin-view" name="perm-support-admin" data-app-id="support_admin" value="view"><label for="perm-support-admin-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-support-admin-admin" name="perm-support-admin" data-app-id="support_admin" value="admin"><label for="perm-support-admin-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">로그 조회</p><p class="permission-desc">시스템 작업 로그 및 변경 이력 확인</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-logs-none" name="perm-logs" data-app-id="logs" value="" checked><label for="perm-logs-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-logs-view" name="perm-logs" data-app-id="logs" value="view"><label for="perm-logs-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-logs-admin" name="perm-logs" data-app-id="logs" value="admin"><label for="perm-logs-admin">admin</label></span>
-                      </div>
-                    </div>
-                    <div class="permission-card">
-                      <div class="permission-card-head"><p class="permission-title">사용자 관리</p><p class="permission-desc">사용자 등록, 권한 관리, 비밀번호 초기화</p></div>
-                      <div class="perm-radio-group">
-                        <span class="perm-opt perm-opt-none"><input type="radio" class="app-permission" id="perm-users-admin-none" name="perm-users-admin" data-app-id="users_admin" value="" checked><label for="perm-users-admin-none">없음</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-users-admin-view" name="perm-users-admin" data-app-id="users_admin" value="view"><label for="perm-users-admin-view">view</label></span>
-                        <span class="perm-opt"><input type="radio" class="app-permission" id="perm-users-admin-admin" name="perm-users-admin" data-app-id="users_admin" value="admin"><label for="perm-users-admin-admin">admin</label></span>
-                      </div>
-                    </div>
+                  <div class="permission-grid" id="permissionGrid">
+                    <!-- 단일 진실 소스화(2026-06) — 11개 앱 권한 카드(이름/설명/등급별
+                         라디오 버튼)를 여기 정적 마크업으로 하드코딩하고 있었는데, 같은
+                         정보가 portal.js의 APP_MAP에도 따로 있고 user_app_permissions
+                         DB의 CHECK 제약에도 11개 앱이 하드코딩되어 있어 앱 하나
+                         추가할 때마다 3곳을 사람이 맞춰 고쳐야 했다. app_registry
+                         테이블(GAS의 getAppRegistry API)을 단일 진실 소스로 두고
+                         admin-users.js가 동적으로 채운다 — 카드 추가는 이제 그
+                         테이블에 행 하나 넣는 것으로 끝난다. -->
                   </div>
                 </div>
 
