@@ -46,24 +46,15 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
   });
 
-  // ── 기본 앱 목록 (API 응답에 없을 경우 폴백) ──────────────────────
-  const DEFAULT_APPS = [
-    { app_id: 'equipment', app_name: '의료장비 관리' },
-    { app_id: 'signage',   app_name: '사인물 신청'   },
-    { app_id: 'lj_chart',  app_name: '정도관리 시스템' }
-  ];
-
-  // ── 메타 로드 ─────────────────────────────────────────────────────
+  // 단일 진실 소스화(2026-06) — DEFAULT_APPS 폴백(3개, task_manager도 빠진
+  // 채로 다른 3곳과 어긋나 있었음)을 제거. 이 화면은 위에서 role=admin만
+  // 통과시키므로, GAS의 getSupportAppList가 admin 분기로 노출 대상
+  // 전체(app_registry.support_target=true인 7개)를 그대로 내려준다.
   async function loadMeta() {
-    const result = await apiGet('getSupportAppList');
-    let apps   = result?.data?.apps || [];
-
-    // API 응답에 lj_chart 가 없으면 DEFAULT_APPS 에서 보완
-    DEFAULT_APPS.forEach(function (def) {
-      if (!apps.some(function (a) { return a.app_id === def.app_id; })) {
-        apps = apps.concat([def]);
-      }
-    });
+    const sessionUser = window.auth?.getSession?.() || {};
+    const email = sessionUser.email || sessionUser.user_email || '';
+    const result = await apiGet('getSupportAppList', { request_user_email: email });
+    const apps = result?.data?.apps || [];
 
     const appSel = document.getElementById('filterApp');
     apps.forEach(function (a) {
