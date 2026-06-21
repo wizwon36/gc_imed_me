@@ -219,7 +219,7 @@ window.addEventListener('pageshow', (event) => {
 const NOTICE_DISMISS_STORAGE_KEY = 'portal_notice_dismissed';
 
 /**
- * "오늘 하루 안 보임" 상태를 localStorage에 보관한다. 서버에 사용자별
+ * "오늘 하루 안 보기" 상태를 localStorage에 보관한다. 서버에 사용자별
  * 상태 테이블을 두지 않는 가벼운 방식 — 날짜가 바뀌면 자동으로 무효화된다.
  * 형태: { [notice_id]: 'yyyy-mm-dd' }
  *
@@ -282,7 +282,7 @@ function buildNoticeRowHtml(n) {
         <span class="portal-notice-row__title">${escapeHtml(n.title)}</span>
         <span class="portal-notice-row__date">${escapeHtml(n.created_at.slice(0, 10))}</span>
       </div>
-      <button type="button" class="portal-notice-row__close" data-close-notice="${escapeHtml(n.notice_id)}" aria-label="오늘 하루 안 보임" title="오늘 하루 안 보임">×</button>
+      <button type="button" class="portal-notice-row__close" data-close-notice="${escapeHtml(n.notice_id)}" aria-label="오늘 하루 안 보기" title="오늘 하루 안 보기">×</button>
     </div>
   `;
 }
@@ -358,7 +358,7 @@ async function loadPortalNotices(userEmail) {
 
 /**
  * 카드 목록에서 해당 공지 행을 제거하고, 더 이상 보일 공지가 없으면
- * 섹션 전체를 숨긴다(카드 닫기 버튼과 모달의 "오늘 하루 안 보임" 둘 다
+ * 섹션 전체를 숨긴다(카드 닫기 버튼과 모달의 "오늘 하루 안 보기" 둘 다
  * 이 함수를 공유한다).
  */
 function dismissNoticeRow(noticeId) {
@@ -407,7 +407,7 @@ function closeNoticeModal() {
   const modal = document.getElementById('noticeDetailModal');
   if (!modal) return;
 
-  // 모달 안의 "오늘 하루 안 보임" 체크박스가 켜져 있으면, 모달을 닫을 때
+  // 모달 안의 "오늘 하루 안 보기" 체크박스가 켜져 있으면, 모달을 닫을 때
   // 카드 목록에서도 함께 제거한다(닫기 버튼/배경 클릭/체크박스 직접
   // 클릭 중 어떤 경로로 모달이 닫히든 동일하게 처리).
   const dismissCheckbox = document.getElementById('noticeModalDismissToday');
