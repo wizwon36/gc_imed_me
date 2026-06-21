@@ -71,7 +71,7 @@
         <tr>
           <td>${n.is_pinned ? '<span class="pin-badge">📌 고정</span>' : ''}</td>
           <td class="notice-title-cell" title="${escapeHtml(n.title)}">${escapeHtml(n.title)}</td>
-          <td>${escapeHtml(period)}</td>
+          <td class="notice-period-cell">${escapeHtml(period)}</td>
           <td>${escapeHtml((n.created_by || '').split('@')[0])}</td>
           <td>
             <div class="row-actions">
