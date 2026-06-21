@@ -95,9 +95,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const workApps = appList.filter(app => !app.admin_auto_grant);
     const adminApps = appList.filter(app => app.admin_auto_grant);
 
-    const visibleWorkApps = workApps; // 업무 도구는 권한 없어도 비활성 카드로 항상 노출
-    const visibleAdminApps = adminApps.filter(app => grantedAppIds.has(app.app_id) || isAdmin);
-
     function isAppGranted(app) {
       return isAdmin || grantedAppIds.has(app.app_id);
     }
@@ -123,6 +120,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         </a>
       `;
     }
+
+    // 정렬(2026-06) — 기존엔 sort_order 그대로라 권한 있는 앱과 없는(비활성)
+    // 앱이 뒤섞여 보였다. admin은 전체가 다 보이니 체감이 안 됐지만, 일반
+    // 사용자에게는 권한 있는 앱이 먼저 와야 더 쓰기 편하다는 피드백에 따라
+    // "권한 있음" 그룹을 앞으로 정렬한다. Array.sort는 ES2019부터 안정
+    // 정렬이 표준이라, 같은 그룹 안에서는 기존 sort_order 순서가 유지된다.
+    const sortByGrantedFirst = (a, b) => (isAppGranted(b) ? 1 : 0) - (isAppGranted(a) ? 1 : 0);
+
+    const visibleWorkApps = [...workApps].sort(sortByGrantedFirst); // 업무 도구는 권한 없어도 비활성 카드로 항상 노출
+    const visibleAdminApps = adminApps.filter(app => grantedAppIds.has(app.app_id) || isAdmin);
 
     if (!visibleWorkApps.length && !visibleAdminApps.length) {
       if (gridEl) gridEl.innerHTML = '';
