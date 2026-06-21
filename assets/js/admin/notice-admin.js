@@ -1,6 +1,8 @@
 (function () {
   let allNotices = [];
   let editingNoticeId = null;
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
 
   document.addEventListener('DOMContentLoaded', async () => {
     const user = window.auth?.requireAuth?.();
@@ -42,6 +44,7 @@
     clearMessage();
     const result = await apiGet('listNotices', { request_user_email: getRequestUserEmail() });
     allNotices = Array.isArray(result.data) ? result.data : [];
+    currentPage = 1;
     renderTable();
   }
 
@@ -51,10 +54,18 @@
 
     if (!allNotices.length) {
       tbody.innerHTML = '<tr class="empty-row"><td colspan="5">등록된 공지사항이 없습니다.</td></tr>';
+      renderPagination(0);
       return;
     }
 
-    tbody.innerHTML = allNotices.map(n => {
+    const totalPages = Math.max(1, Math.ceil(allNotices.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allNotices.slice(start, start + PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map(n => {
       const period = n.end_date ? `${n.start_date} ~ ${n.end_date}` : `${n.start_date} ~ 무기한`;
       return `
         <tr>
@@ -82,6 +93,71 @@
     tbody.querySelectorAll('[data-delete]').forEach(el => {
       el.addEventListener('click', () => handleDelete(el.dataset.delete));
     });
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    const wrap = document.getElementById('noticePagination');
+    if (!wrap) return;
+
+    if (totalPages <= 1) {
+      wrap.innerHTML = '';
+      return;
+    }
+
+    const goTo = (page) => {
+      if (page < 1 || page > totalPages || page === currentPage) return;
+      currentPage = page;
+      renderTable();
+    };
+
+    const buttons = [];
+
+    buttons.push(`<button type="button" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`);
+
+    const pageNumbers = getPageNumbers(currentPage, totalPages);
+    pageNumbers.forEach(p => {
+      if (p === '...') {
+        buttons.push('<span class="pagination-ellipsis">…</span>');
+      } else {
+        buttons.push(`<button type="button" data-page="${p}" class="${p === currentPage ? 'is-active' : ''}">${p}</button>`);
+      }
+    });
+
+    buttons.push(`<button type="button" data-page="next" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`);
+
+    wrap.innerHTML = buttons.join('');
+
+    wrap.querySelectorAll('button[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.dataset.page;
+        if (val === 'prev') goTo(currentPage - 1);
+        else if (val === 'next') goTo(currentPage + 1);
+        else goTo(Number(val));
+      });
+    });
+  }
+
+  function getPageNumbers(current, total) {
+    const delta = 1;
+    const range = [];
+    const result = [];
+    let last = null;
+
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+        range.push(i);
+      }
+    }
+
+    range.forEach(i => {
+      if (last !== null && i - last > 1) result.push('...');
+      result.push(i);
+      last = i;
+    });
+
+    return result;
   }
 
   function openForm(notice) {
