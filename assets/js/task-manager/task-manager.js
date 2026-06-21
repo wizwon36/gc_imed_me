@@ -1053,7 +1053,7 @@
     const teamBanner = (teamViewEnabled && teamWeeklyTasks.length > 0)
       ? `<div class="team-view-banner">
            <span class="team-view-banner-icon">👥</span>
-           <span>부서원 업무 보기 활성 — 타인의 업무는 <strong>읽기 전용</strong>입니다.</span>
+           <span class="team-view-banner-text">부서원 업무는 <strong>읽기 전용</strong>입니다.</span>
          </div>`
       : '';
 
