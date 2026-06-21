@@ -99,7 +99,6 @@
 
     table.notice-table {
       width: 100%;
-      table-layout: fixed;
       border-collapse: collapse;
       font-size: 13px;
     }
@@ -107,7 +106,7 @@
     table.notice-table th,
     table.notice-table td {
       text-align: left;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--line-soft);
       vertical-align: middle;
     }
@@ -119,12 +118,9 @@
     }
 
     .notice-title-cell {
+      max-width: 360px;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .notice-period-cell {
       white-space: nowrap;
     }
 
@@ -137,68 +133,14 @@
       color: #c2410c;
       font-size: 11px;
       font-weight: 700;
-      white-space: nowrap;
     }
 
-    .row-actions { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-
-    .row-actions .btn {
-      height: 24px !important;
-      padding: 0 8px !important;
-      font-size: 11.5px !important;
-      border-radius: 6px !important;
-      font-weight: 600 !important;
-    }
+    .row-actions { display: flex; gap: 6px; white-space: nowrap; }
 
     .empty-row td {
       text-align: center;
       color: var(--text-subtle);
       padding: 32px 0;
-    }
-
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      margin-top: 16px;
-    }
-
-    .pagination button {
-      min-width: 30px;
-      height: 30px;
-      padding: 0 8px;
-      border-radius: 8px;
-      border: 1px solid var(--line-soft);
-      background: #fff;
-      color: var(--text-strong);
-      font-size: 12.5px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .pagination button:hover:not(:disabled):not(.is-active) {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-    }
-
-    .pagination button.is-active {
-      background: var(--primary-color);
-      border-color: var(--primary-color);
-      color: #fff;
-      cursor: default;
-    }
-
-    .pagination button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .pagination .pagination-ellipsis {
-      width: 24px;
-      text-align: center;
-      color: var(--text-subtle);
-      font-size: 12.5px;
     }
 
     /* ── 모달 ── */
@@ -292,7 +234,7 @@
       .page-header #btnNewNotice { width: 100%; }
 
       .card { padding: 14px; overflow-x: auto; }
-      table.notice-table { min-width: 600px; }
+      table.notice-table { min-width: 480px; }
     }
 
   </style>
@@ -327,18 +269,17 @@
       <table class="notice-table">
         <thead>
           <tr>
-            <th style="width:6%;">고정</th>
-            <th style="width:36%;">제목</th>
-            <th style="width:24%;">노출기간</th>
-            <th style="width:14%;">작성자</th>
-            <th style="width:20%;">작업</th>
+            <th style="width:60px;">고정</th>
+            <th>제목</th>
+            <th style="width:180px;">노출기간</th>
+            <th style="width:110px;">작성자</th>
+            <th style="width:160px;">작업</th>
           </tr>
         </thead>
         <tbody id="noticeTableBody">
           <tr class="empty-row"><td colspan="5">불러오는 중...</td></tr>
         </tbody>
       </table>
-      <div class="pagination" id="noticePagination"></div>
     </div>
   </div>
 
