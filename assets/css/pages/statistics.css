@@ -312,7 +312,8 @@
   .stat-filter-bar { padding: 14px; }
   .stat-filter-field { flex: 1 1 140px; }
   .stat-filter-field--search { flex: 1 1 100%; }
-  .stat-filter-advanced { flex: 1 1 100%; justify-content: center; }
+  .stat-filter-advanced { flex: 1 1 calc(50% - 4px); justify-content: center; }
+  .stat-filter-bar > .btn:not(.stat-filter-advanced):not(.stat-filter-submit) { flex: 1 1 calc(50% - 4px); }
   .stat-filter-submit { width: 100%; }
 }
 
@@ -475,9 +476,19 @@
 .stat-table-wrap {
   border: 1px solid var(--border-card, #e2e8f0);
   border-radius: var(--radius-md, 16px);
-  overflow: hidden;
+  /* 가로 스크롤 허용(2026-06) — 기존엔 overflow: hidden이라 표 폭이
+     컨테이너에 강제로 맞춰지면서, 좁은 화면에서 "강남"/"강북" 같은
+     의원명이 세로로 줄바꿈되는 문제가 있었다(사용자 확인). 세로는 그대로
+     hidden(모서리 둥글게 깎기 유지), 가로만 스크롤 가능하게 분리한다. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
-.stat-table { width: 100%; border-collapse: collapse; }
+.stat-table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+}
 .stat-table thead th {
   background: var(--surface-soft, #f8fafc);
   text-align: left;
@@ -487,6 +498,7 @@
   font-weight: 700;
   color: var(--text-secondary, #5f6b7a);
   text-transform: uppercase;
+  white-space: nowrap;
   letter-spacing: .4px;
 }
 .stat-table thead th + th { border-left: 1px solid var(--border-soft, #eaeff5); }
@@ -497,6 +509,7 @@
   border-bottom: 1px solid var(--border-soft, #eaeff5);
   border-left: 1px solid transparent;
   vertical-align: middle;
+  white-space: nowrap;
 }
 .stat-table td + td { border-left: 1px solid var(--border-soft, #eaeff5); }
 .stat-table tbody tr:last-child td { border-bottom: none; }
