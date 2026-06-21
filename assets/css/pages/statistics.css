@@ -420,9 +420,12 @@
   .stat-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .stat-summary-card:nth-child(2n) { border-right: none; }
   .stat-summary-card:nth-child(n+3) { border-top: 1px solid var(--border-soft, #eaeff5); }
-  .stat-summary-card { padding: 14px 16px 12px 18px; }
-  .stat-summary-value { font-size: 16px; }
-  .stat-summary-value.small { font-size: 13px; }
+  .stat-summary-card { padding: 12px 10px 10px 14px; }
+  .stat-summary-value {
+    font-size: 14px;
+    word-break: keep-all;
+  }
+  .stat-summary-value.small { font-size: 12px; }
 }
 .stat-summary-card {
   position: relative;
