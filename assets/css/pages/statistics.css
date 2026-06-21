@@ -99,7 +99,28 @@
   border-bottom-color: var(--blue, #2f6df6);
 }
 @media (max-width: 720px) {
-  .stat-subtab-underline { gap: 18px; overflow-x: auto; }
+  .stat-subtab-underline {
+    gap: 18px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* 가로 스크롤이 있다는 걸 시각적으로 알림(2026-06) — 기존엔 스크롤
+       가능 여부를 알 만한 힌트가 전혀 없어 5개 서브탭 중 일부가 화면
+       밖에 가려진 걸 사용자가 인지하지 못할 수 있었다. */
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+  }
+  .stat-subtab-underline-btn {
+    flex-shrink: 0;
+  }
+
+  .stat-scope-panel {
+    padding: 16px 14px;
+  }
+
+  .stat-seg-toggle-btn {
+    padding: 7px 12px;
+    font-size: 12.5px;
+  }
 }
 
 /* ── 기간 비교: 모드 토글(세그먼트는 .stat-seg-toggle 공용 클래스 사용) + 비교 구간 컨트롤 ── */
@@ -289,7 +310,9 @@
 }
 @media (max-width: 720px) {
   .stat-filter-bar { padding: 14px; }
-  .stat-filter-field, .stat-filter-field--search { flex: 1 1 140px; }
+  .stat-filter-field { flex: 1 1 140px; }
+  .stat-filter-field--search { flex: 1 1 100%; }
+  .stat-filter-advanced { flex: 1 1 100%; justify-content: center; }
   .stat-filter-submit { width: 100%; }
 }
 
@@ -621,4 +644,14 @@
 @media (max-width: 720px) {
   .stat-modal-overlay { padding: 8px; }
   .stat-modal-dialog { max-height: 92vh; }
+}
+
+/* 모바일 최적화(2026-06) — 데이터 업로드는 파일을 다루는 작업이라 모바일
+   환경에 적합하지 않다고 판단해, edit 권한자도 모바일에서는 탭 자체를
+   완전히 숨긴다(사용자 확인). 탭 버튼이 안 보이므로 그 탭으로 진입할
+   방법이 없어 콘텐츠(tabUploadContent)는 그대로 둬도 노출되지 않는다. */
+@media (max-width: 720px) {
+  #tabUpload {
+    display: none;
+  }
 }
