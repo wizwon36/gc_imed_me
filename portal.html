@@ -72,9 +72,13 @@
       <div class="notice-modal__backdrop" id="noticeModalBackdrop"></div>
       <div class="notice-modal__box">
         <div class="notice-modal__head">
-          <strong id="noticeModalTitle"></strong>
+          <div class="notice-modal__head-main">
+            <span class="notice-modal__head-icon" aria-hidden="true">📢</span>
+            <strong id="noticeModalTitle"></strong>
+          </div>
           <button type="button" id="noticeModalCloseBtn" class="notice-modal__close" aria-label="닫기">×</button>
         </div>
+        <div class="notice-modal__meta" id="noticeModalMeta"></div>
         <div class="notice-modal__body" id="noticeModalContent"></div>
         <div class="notice-modal__footer">
           <label class="notice-modal__dismiss">
