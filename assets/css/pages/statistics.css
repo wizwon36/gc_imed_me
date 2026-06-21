@@ -101,6 +101,9 @@
 @media (max-width: 720px) {
   .stat-subtab-underline {
     gap: 18px;
+    margin-top: 6px;
+    padding-top: 6px;
+    padding-bottom: 0;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     /* 가로 스크롤이 있다는 걸 시각적으로 알림(2026-06) — 기존엔 스크롤
@@ -112,6 +115,7 @@
   .stat-subtab-underline-btn {
     flex-shrink: 0;
     font-size: 12px;
+    padding-bottom: 6px;
   }
   .stat-subtab-underline-btn.active {
     font-size: 12px;
@@ -696,8 +700,6 @@
   .stat-scope-panel { padding: 12px 14px; margin-top: 4px; margin-bottom: 12px; }
   .stat-filter-bar { margin-bottom: 12px; }
   .stat-summary-grid { margin-bottom: 10px; }
-  .stat-subtab-underline { margin-top: 10px; padding-top: 10px; padding-bottom: 0; }
-  .stat-subtab-underline-btn { padding-bottom: 8px; }
   .stat-result-panel { padding: 12px; }
   .stat-vat-note { margin-bottom: 8px; }
 }
