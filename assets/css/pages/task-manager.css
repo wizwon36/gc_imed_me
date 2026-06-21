@@ -1800,7 +1800,7 @@ input[type="date"].form-input {
 /* 팀뷰 활성 안내 배너 */
 .team-view-banner {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 9px 18px;
   background: #eff6ff;
@@ -1811,6 +1811,11 @@ input[type="date"].form-input {
 .team-view-banner-icon {
   font-size: 15px;
   flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.team-view-banner-text {
+  line-height: 1.4;
 }
 
 /* 날짜 헤더 — 부서원 N 칩 */
