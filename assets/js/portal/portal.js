@@ -216,7 +216,7 @@ window.addEventListener('pageshow', (event) => {
 // 공지사항(2026-06)
 // ─────────────────────────────────────────────
 
-const NOTICE_DISMISS_STORAGE_KEY = 'portal_notice_dismissed';
+const NOTICE_DISMISS_STORAGE_KEY_PREFIX = 'portal_notice_dismissed';
 
 /**
  * "오늘 하루 안 보기" 상태를 localStorage에 보관한다. 서버에 사용자별
@@ -226,10 +226,21 @@ const NOTICE_DISMISS_STORAGE_KEY = 'portal_notice_dismissed';
  * (2026-06: "다시 보지 않음"(영구)으로 바꿨다가 사용자 확인 결과 원래
  * 의도가 "오늘 하루만"이 맞아 되돌림. 카드의 닫기뿐 아니라 상세 모달에도
  * 같은 옵션을 추가함 — 기존엔 모달에는 닫기 수단이 전혀 없었음.)
+ *
+ * (2026-06 추가 수정) — localStorage는 사용자가 아니라 브라우저 단위라,
+ * A 계정에서 공지를 닫으면 같은 브라우저에서 로그아웃 후 B 계정으로
+ * 로그인해도 그 공지가 안 보이는 문제가 있었다(사용자 확인). 키에 현재
+ * 로그인 이메일을 포함시켜 계정별로 닫음 상태를 분리한다.
  */
+function getNoticeDismissStorageKey() {
+  const user = window.auth?.getSession?.();
+  const email = (user && user.email) ? user.email.toLowerCase() : 'anonymous';
+  return `${NOTICE_DISMISS_STORAGE_KEY_PREFIX}::${email}`;
+}
+
 function getDismissedNoticeMap() {
   try {
-    return JSON.parse(localStorage.getItem(NOTICE_DISMISS_STORAGE_KEY) || '{}');
+    return JSON.parse(localStorage.getItem(getNoticeDismissStorageKey()) || '{}');
   } catch (e) {
     return {};
   }
@@ -250,7 +261,7 @@ function dismissNoticeForToday(noticeId) {
   const map = getDismissedNoticeMap();
   map[noticeId] = todayDateString();
   try {
-    localStorage.setItem(NOTICE_DISMISS_STORAGE_KEY, JSON.stringify(map));
+    localStorage.setItem(getNoticeDismissStorageKey(), JSON.stringify(map));
   } catch (e) {}
 }
 
@@ -266,7 +277,7 @@ function pruneDismissedNoticeMap(activeNoticeIds) {
     if (map[id]) next[id] = map[id];
   });
   try {
-    localStorage.setItem(NOTICE_DISMISS_STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(getNoticeDismissStorageKey(), JSON.stringify(next));
   } catch (e) {}
 }
 
