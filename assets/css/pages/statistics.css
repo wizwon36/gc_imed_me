@@ -419,6 +419,9 @@
   .stat-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .stat-summary-card:nth-child(2n) { border-right: none; }
   .stat-summary-card:nth-child(n+3) { border-top: 1px solid var(--border-soft, #eaeff5); }
+  .stat-summary-card { padding: 14px 16px 12px 18px; }
+  .stat-summary-value { font-size: 16px; }
+  .stat-summary-value.small { font-size: 13px; }
 }
 .stat-summary-card {
   position: relative;
@@ -653,5 +656,20 @@
 @media (max-width: 720px) {
   #tabUpload {
     display: none;
+  }
+}
+
+/* 모바일 스크롤바 숨김(2026-06) — 콘텐츠가 뷰포트보다 살짝 넘쳐 미세하게
+   스크롤되는데, 짧게 끊긴 스크롤바가 시각적으로 어색하다는 지적(사용자
+   확인). 스크롤 기능은 그대로 유지하고 스크롤바만 안 보이게 한다.
+   body 자체는 여러 페이지가 공유하므로, 이 페이지의 루트 컨테이너에만
+   적용해 다른 화면에 영향이 가지 않게 한다. */
+@media (max-width: 720px) {
+  html, body {
+    scrollbar-width: none; /* Firefox */
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
   }
 }
