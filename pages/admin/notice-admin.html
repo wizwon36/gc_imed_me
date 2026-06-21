@@ -223,6 +223,19 @@
       color: var(--text-subtle);
     }
 
+    /* 모바일 반응형(2026-06) — 다른 admin 페이지(logs.html, support-admin.html)와
+       동일한 breakpoint(760px), 동일한 page-header 세로배치 패턴으로 통일.
+       표는 가로 스크롤이 가능하도록 감싸는 컨테이너에 overflow-x 처리.
+       (사용자 확인: 처음 만들 때 이 페이지만 누락됐던 부분) */
+    @media (max-width: 760px) {
+      .notice-admin-page { padding: 20px 14px 34px; }
+
+      .page-header { flex-direction: column; }
+      .page-header #btnNewNotice { width: 100%; }
+
+      .card { padding: 14px; overflow-x: auto; }
+      table.notice-table { min-width: 480px; }
+    }
 
   </style>
 </head>
