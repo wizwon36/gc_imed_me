@@ -105,6 +105,7 @@
     padding-top: 6px;
     padding-bottom: 0;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     /* 가로 스크롤이 있다는 걸 시각적으로 알림(2026-06) — 기존엔 스크롤
        가능 여부를 알 만한 힌트가 전혀 없어 5개 서브탭 중 일부가 화면
