@@ -322,6 +322,11 @@
   transform: translateY(-1px);
 }
 
+.portal-app-card-compact:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 .portal-app-card-compact__icon {
   flex-shrink: 0;
   width: 40px;
@@ -440,5 +445,12 @@
     overflow: visible;
     text-overflow: clip;
     line-height: 1.25;
+  }
+
+  /* 즐겨찾기 별표는 기본적으로 카드 hover 시에만 보이는데(opacity:0),
+     터치 기기에는 진짜 hover가 없어 버튼이 거의 안 보이는 문제가 있었다.
+     모바일에서는 항상 옅게라도 보이게 한다. */
+  .portal-app-card-compact__fav {
+    opacity: 0.5;
   }
 }
