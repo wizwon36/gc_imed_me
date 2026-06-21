@@ -106,9 +106,10 @@
     table.notice-table th,
     table.notice-table td {
       text-align: left;
-      padding: 10px 12px;
+      padding: 8px 12px;
       border-bottom: 1px solid var(--line-soft);
       vertical-align: middle;
+      white-space: nowrap;
     }
 
     table.notice-table th {
@@ -136,6 +137,11 @@
     }
 
     .row-actions { display: flex; gap: 6px; white-space: nowrap; }
+    .row-actions .btn {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
 
     .empty-row td {
       text-align: center;
@@ -271,7 +277,7 @@
           <tr>
             <th style="width:60px;">고정</th>
             <th>제목</th>
-            <th style="width:180px;">노출기간</th>
+            <th style="width:210px;">노출기간</th>
             <th style="width:110px;">작성자</th>
             <th style="width:160px;">작업</th>
           </tr>
