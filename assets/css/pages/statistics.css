@@ -176,6 +176,9 @@
   color: var(--text-muted, #9aa5b1);
   margin: 0 0 12px;
 }
+.stat-result-panel {
+  padding: 16px;
+}
 .cl-upload-zone--disabled {
   opacity: .5;
   cursor: not-allowed;
@@ -420,7 +423,9 @@
   .stat-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .stat-summary-card:nth-child(2n) { border-right: none; }
   .stat-summary-card:nth-child(n+3) { border-top: 1px solid var(--border-soft, #eaeff5); }
-  .stat-summary-card { padding: 12px 10px 10px 14px; }
+  .stat-summary-card { padding: 9px 10px 8px 14px; }
+  .stat-summary-card::before { top: 8px; bottom: 8px; }
+  .stat-summary-label { margin-bottom: 4px; }
   .stat-summary-value {
     font-size: 14px;
     word-break: keep-all;
@@ -673,4 +678,21 @@
   #tabUpload {
     display: none;
   }
+}
+
+/* 세로 스크롤 제거(2026-06) — 콘텐츠 전체 높이가 모바일 뷰포트를 살짝
+   넘쳐 스크롤바가 짧게 끊긴 것처럼 보이는데, iOS Safari는 스크롤바를
+   CSS로 숨길 수 없어(::-webkit-scrollbar 미지원) 스크롤 자체를 없애는
+   방향으로 간다(사용자 확인). 각 영역의 세로 여백을 압축해 전체 높이를
+   줄인다. #appBody .cl-tabs는 closing.css(공용 파일)의 24px margin을
+   더 구체적인 셀렉터로 덮어쓴다. */
+@media (max-width: 720px) {
+  #appBody .cl-tabs { margin-bottom: 14px; }
+  .stat-scope-panel { padding: 12px 14px; margin-top: 4px; margin-bottom: 12px; }
+  .stat-filter-bar { margin-bottom: 12px; }
+  .stat-summary-grid { margin-bottom: 10px; }
+  .stat-subtab-underline { margin-top: 10px; padding-top: 10px; padding-bottom: 0; }
+  .stat-subtab-underline-btn { padding-bottom: 8px; }
+  .stat-result-panel { padding: 12px; }
+  .stat-vat-note { margin-bottom: 8px; }
 }
