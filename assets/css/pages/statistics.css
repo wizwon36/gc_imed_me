@@ -696,3 +696,14 @@
   .stat-result-panel { padding: 12px; }
   .stat-vat-note { margin-bottom: 8px; }
 }
+
+/* 통계 페이지 전용 헤더 압축(2026-06) — common.css의 .top-brand-bar는
+   전역 공유 스타일이라 함부로 못 줄이므로, 이 페이지에서만 더 구체적인
+   셀렉터(.container.page-shell .top-brand-bar)로 마진만 추가 압축한다.
+   모바일에서 헤더가 세로 배치(display:block)로 바뀌며 높이가 커지는
+   걸 보완. */
+@media (max-width: 768px) {
+  .container.page-shell .top-brand-bar {
+    margin-bottom: 10px;
+  }
+}
