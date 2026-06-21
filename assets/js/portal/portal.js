@@ -390,12 +390,23 @@ function dismissNoticeRow(noticeId) {
 function openNoticeModal(notice) {
   const modal = document.getElementById('noticeDetailModal');
   const titleEl = document.getElementById('noticeModalTitle');
+  const metaEl = document.getElementById('noticeModalMeta');
   const contentEl = document.getElementById('noticeModalContent');
   const dismissCheckbox = document.getElementById('noticeModalDismissToday');
   if (!modal || !titleEl || !contentEl) return;
 
   modal.dataset.noticeId = notice.notice_id;
   titleEl.textContent = notice.title;
+
+  if (metaEl) {
+    const authorName = notice.created_by_name || notice.created_by || '';
+    const writtenAt = (notice.created_at || '').replace(/-/g, '.').slice(0, 16);
+    metaEl.innerHTML = `
+      <span class="notice-modal__meta-item"><i class="ti ti-user" aria-hidden="true"></i>${escapeHtml(authorName)}</span>
+      <span class="notice-modal__meta-item"><i class="ti ti-clock" aria-hidden="true"></i>${escapeHtml(writtenAt)}</span>
+    `;
+  }
+
   // 공지 내용은 관리자(admin)만 작성 가능한 신뢰된 입력이지만, 그래도
   // 줄바꿈만 허용하고 나머지는 escapeHtml로 이스케이프해 XSS를 방지한다.
   contentEl.innerHTML = escapeHtml(notice.content).replace(/\n/g, '<br>');
