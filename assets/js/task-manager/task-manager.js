@@ -1198,10 +1198,11 @@
       <div class="task-item${isDone ? ' is-done' : ''}" onclick="TASK_APP.openEditModal('${esc(t.task_id)}')">
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
-          <div class="task-item-title">${esc(t.title)}${endTag}</div>
+          <div class="task-item-title">${esc(t.title)}</div>
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
             <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
+            ${endTag}
             ${t.description ? `<span class="task-item-desc">${esc(t.description)}</span>` : ''}
           </div>
         </div>
@@ -1233,9 +1234,6 @@
     const ownerBadge = clinicName
       ? `<span class="task-owner-tag">${clinicName} · ${ownerName}</span>`
       : `<span class="task-owner-tag">${ownerName}</span>`;
-    const endTag = !isSingleDay
-      ? `<span class="task-period-end">~ ${esc(t.end_date ? t.end_date.substring(5).replace('-', '/') : '')}</span>`
-      : '';
 
     return `
       <div class="task-item task-item--readonly${isDone ? ' is-done' : ''}"
@@ -1244,12 +1242,12 @@
         <span class="task-priority-dot ${priorityCls}"></span>
         <div class="task-item-body">
           <div class="task-item-title">
-            ${esc(t.title)}${endTag}
-            ${ownerBadge}
+            ${esc(t.title)}
           </div>
           <div class="task-item-meta">
             <span class="task-badge badge-category">${esc(CATEGORY_LABELS[t.category] || t.category)}</span>
             <span class="task-badge ${statusCls}">${esc(displayStatus)}</span>
+            ${ownerBadge}
             ${!isSingleDay
               ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.start_date ? t.start_date.substring(5) : '')} ~ ${esc(t.end_date ? t.end_date.substring(5) : '')}</span>`
               : ''}
