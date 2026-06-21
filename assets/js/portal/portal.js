@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const subEl = document.getElementById('portalUserSub');
   const gridEl = document.getElementById('portalAppGrid');
   const emptyEl = document.getElementById('portalEmpty');
+  const favSectionEl = document.getElementById('portalFavoritesSection');
+  const favGridEl = document.getElementById('portalFavoritesGrid');
+  const adminSectionEl = document.getElementById('portalAdminAppsSection');
+  const adminGridEl = document.getElementById('portalAdminAppGrid');
   const logoutBtn = document.getElementById('logoutBtn');
 
   logoutBtn?.addEventListener('click', () => {
@@ -79,14 +83,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 할 수 없었다. admin_auto_grant=false인 일반 앱(의료장비/사인물/
     // 정도관리/업무일정/월마감/통계/규정/수정요청)은 권한이 없어도 카드를
     // 보여주되 클릭은 막는다(비활성). admin_auto_grant=true인 관리자 전용
-    // 3개(사용자관리/시스템로그/수정요청관리)는 기존처럼 권한 없으면
-    // 완전히 숨긴다 — 일반 사용자에게 관리 기능 존재 자체를 노출하지 않기 위함.
-    const visibleApps = appList.filter(app => {
-      if (grantedAppIds.has(app.app_id) || isAdmin) return true; // admin은 모든 앱 활성(hasPermission과 동일한 규칙)
-      return !app.admin_auto_grant; // 관리자 전용이 아닌 일반 앱은 비활성 카드로라도 노출
-    });
+    // 4개(사용자관리/시스템로그/수정요청관리/공지사항관리)는 기존처럼 권한
+    // 없으면 완전히 숨긴다 — 일반 사용자에게 관리 기능 존재 자체를 노출하지 않기 위함.
+    //
+    // 컴팩트 재설계(2026-06) — 앱이 11개를 넘어가며 한 줄짜리 큰 카드가
+    // 화면을 너무 많이 차지했다. 노션 스타일의 작은 정사각형 카드(아이콘
+    // 칩 + 제목만, 설명문 생략)로 바꾸고, admin_auto_grant 플래그를 그대로
+    // "업무 도구" / "관리자" 두 섹션 구분에 재사용한다(별도 category 컬럼
+    // 추가 없이 기존 데이터로 충분). 즐겨찾기는 서버에 사용자별 테이블을
+    // 새로 두지 않고 localStorage로 가볍게 구현한다.
+    const workApps = appList.filter(app => !app.admin_auto_grant);
+    const adminApps = appList.filter(app => app.admin_auto_grant);
 
-    if (!visibleApps.length) {
+    const visibleWorkApps = workApps; // 업무 도구는 권한 없어도 비활성 카드로 항상 노출
+    const visibleAdminApps = adminApps.filter(app => grantedAppIds.has(app.app_id) || isAdmin);
+
+    function isAppGranted(app) {
+      return isAdmin || grantedAppIds.has(app.app_id);
+    }
+
+    function buildAppCard(app, options = {}) {
+      const granted = isAppGranted(app);
+      const muted = options.muted ? ' portal-app-card-compact--muted' : '';
+
+      if (!granted) {
+        return `
+          <div class="portal-app-card-compact portal-app-card-compact--disabled" title="권한이 없습니다. 관리자에게 권한을 요청해 주세요.">
+            <div class="portal-app-card-compact__icon">${escapeHtml(app.app_icon)}</div>
+            <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
+          </div>
+        `;
+      }
+
+      return `
+        <a class="portal-app-card-compact${muted}" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}">
+          <button type="button" class="portal-app-card-compact__fav" data-fav-toggle="${escapeHtml(app.app_id)}" aria-label="즐겨찾기 토글">★</button>
+          <div class="portal-app-card-compact__icon">${escapeHtml(app.app_icon)}</div>
+          <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
+        </a>
+      `;
+    }
+
+    if (!visibleWorkApps.length && !visibleAdminApps.length) {
       if (gridEl) gridEl.innerHTML = '';
       if (emptyEl) emptyEl.style.display = 'block';
       await delayUntilMinimum(startedAt, 400);
@@ -96,46 +134,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (emptyEl) emptyEl.style.display = 'none';
 
     if (gridEl) {
-      gridEl.innerHTML = visibleApps.map(app => {
-        const item = permissions.find(p => p.app_id === app.app_id);
-        const isGranted = isAdmin || (item && grantedAppIds.has(app.app_id));
-        const permissionLabel = !isGranted ? '' :
-          isAdmin ? '관리자' :
-          item.permission === 'admin'   ? '관리자' :
-          item.permission === 'manager' ? '팀장'   :
-          item.permission === 'edit'    ? '편집'   :
-          item.permission === 'view'    ? '조회'   :
-          (item.permission || '');
-
-        if (!isGranted) {
-          return `
-            <div class="portal-app-card portal-app-card--disabled" title="권한이 없습니다. 관리자에게 권한을 요청해 주세요.">
-              <div class="portal-app-icon">${escapeHtml(app.app_icon)}</div>
-              <div class="portal-app-body">
-                <div class="portal-app-title-row">
-                  <strong class="portal-app-title">${escapeHtml(app.app_name)}</strong>
-                  <span class="portal-app-badge portal-app-badge--locked">권한없음</span>
-                </div>
-                <div class="portal-app-desc">${escapeHtml(app.app_desc)}</div>
-              </div>
-            </div>
-          `;
-        }
-
-        return `
-          <a class="portal-app-card" href="${CONFIG.SITE_BASE_URL}${app.app_url}">
-            <div class="portal-app-icon">${escapeHtml(app.app_icon)}</div>
-            <div class="portal-app-body">
-              <div class="portal-app-title-row">
-                <strong class="portal-app-title">${escapeHtml(app.app_name)}</strong>
-                <span class="portal-app-badge">${escapeHtml(permissionLabel)}</span>
-              </div>
-              <div class="portal-app-desc">${escapeHtml(app.app_desc)}</div>
-            </div>
-          </a>
-        `;
-      }).join('');
+      gridEl.innerHTML = visibleWorkApps.map(app => buildAppCard(app)).join('');
     }
+
+    if (adminGridEl && adminSectionEl) {
+      if (visibleAdminApps.length) {
+        adminSectionEl.style.display = '';
+        adminGridEl.innerHTML = visibleAdminApps.map(app => buildAppCard(app, { muted: true })).join('');
+      } else {
+        adminSectionEl.style.display = 'none';
+      }
+    }
+
+    // 즐겨찾기(localStorage) — 클릭 가능한 앱(granted) 중 즐겨찾기로
+    // 등록된 것만 모아 별도 섹션 맨 위에 보여준다.
+    renderFavoritesSection([...workApps, ...adminApps].filter(isAppGranted));
+    bindFavoriteToggles();
 
     await delayUntilMinimum(startedAt, 400);
 
@@ -293,3 +307,103 @@ function closeNoticeModal() {
 
 document.getElementById('noticeModalCloseBtn')?.addEventListener('click', closeNoticeModal);
 document.getElementById('noticeModalBackdrop')?.addEventListener('click', closeNoticeModal);
+
+// ─────────────────────────────────────────────
+// 즐겨찾기(2026-06)
+// ─────────────────────────────────────────────
+
+const FAVORITE_APPS_STORAGE_KEY = 'portal_favorite_apps';
+
+function getFavoriteAppIds() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FAVORITE_APPS_STORAGE_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function setFavoriteAppIds(ids) {
+  try {
+    localStorage.setItem(FAVORITE_APPS_STORAGE_KEY, JSON.stringify(ids));
+  } catch (e) {}
+}
+
+function isFavoriteApp(appId) {
+  return getFavoriteAppIds().includes(appId);
+}
+
+function toggleFavoriteApp(appId) {
+  const ids = getFavoriteAppIds();
+  const idx = ids.indexOf(appId);
+  if (idx > -1) {
+    ids.splice(idx, 1);
+  } else {
+    ids.push(appId);
+  }
+  setFavoriteAppIds(ids);
+}
+
+/**
+ * grantedApps(클릭 가능한 앱 전체) 중 즐겨찾기로 등록된 것만 모아
+ * portalFavoritesSection에 렌더링한다. 즐겨찾기가 비어 있으면 섹션 자체를
+ * 숨긴다.
+ */
+function renderFavoritesSection(grantedApps) {
+  const sectionEl = document.getElementById('portalFavoritesSection');
+  const gridEl = document.getElementById('portalFavoritesGrid');
+  if (!sectionEl || !gridEl) return;
+
+  const favoriteIds = getFavoriteAppIds();
+  const favoriteApps = grantedApps.filter(app => favoriteIds.includes(app.app_id));
+
+  if (!favoriteApps.length) {
+    sectionEl.style.display = 'none';
+    gridEl.innerHTML = '';
+    return;
+  }
+
+  sectionEl.style.display = '';
+  gridEl.innerHTML = favoriteApps.map(app => `
+    <a class="portal-app-card-compact" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}">
+      <button type="button" class="portal-app-card-compact__fav portal-app-card-compact__fav--active" data-fav-toggle="${escapeHtml(app.app_id)}" aria-label="즐겨찾기 해제">★</button>
+      <div class="portal-app-card-compact__icon">${escapeHtml(app.app_icon)}</div>
+      <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
+    </a>
+  `).join('');
+}
+
+/**
+ * 이벤트 위임(2026-06) — 처음엔 그리드를 다시 그릴 때마다
+ * querySelectorAll('[data-fav-toggle]').forEach(... addEventListener ...)로
+ * 매번 새 리스너를 추가했는데, innerHTML로 그려진 새 버튼에는 리스너가
+ * 없는 게 아니라 같은 버튼이 여러 번 다시 그려질 때마다(즐겨찾기 토글 →
+ * 재렌더링 → 그 안의 버튼에 또 바인딩) 핸들러가 계속 누적되는 구조적
+ * 결함이 있었다. document에 한 번만 위임 리스너를 걸어 해결한다.
+ */
+let favoriteTogglesBound = false;
+function bindFavoriteToggles() {
+  if (favoriteTogglesBound) return;
+  favoriteTogglesBound = true;
+
+  document.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-fav-toggle]');
+    if (!btn) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const appId = btn.dataset.favToggle;
+    toggleFavoriteApp(appId);
+    btn.classList.toggle('portal-app-card-compact__fav--active', isFavoriteApp(appId));
+
+    const grantedApps = [
+      ...document.querySelectorAll('#portalAppGrid a[data-app-id], #portalAdminAppGrid a[data-app-id]')
+    ].map(el => ({
+      app_id: el.dataset.appId,
+      app_icon: el.querySelector('.portal-app-card-compact__icon')?.textContent || '',
+      app_name: el.querySelector('.portal-app-card-compact__title')?.textContent || '',
+      app_url: el.getAttribute('href').replace(CONFIG.SITE_BASE_URL, '')
+    }));
+    renderFavoritesSection(grantedApps);
+  });
+}
