@@ -262,6 +262,23 @@ function pruneDismissedNoticeMap(activeNoticeIds) {
   } catch (e) {}
 }
 
+// 기본으로 펼쳐서 보여줄 일반(고정 아님) 공지 개수. 고정 공지는 이 제한과
+// 무관하게 항상 전부 펼쳐서 보여준다(2026-06, 사용자 확인).
+const NOTICE_DEFAULT_VISIBLE_COUNT = 3;
+
+function buildNoticeRowHtml(n) {
+  return `
+    <div class="portal-notice-row${n.is_pinned ? ' portal-notice-row--pinned' : ''}" data-notice-id="${escapeHtml(n.notice_id)}">
+      ${n.is_pinned ? '<span class="portal-notice-pin">📌</span>' : ''}
+      <div class="portal-notice-row__main" data-open-notice="${escapeHtml(n.notice_id)}">
+        <span class="portal-notice-row__title">${escapeHtml(n.title)}</span>
+        <span class="portal-notice-row__date">${escapeHtml(n.created_at.slice(0, 10))}</span>
+      </div>
+      <button type="button" class="portal-notice-row__close" data-close-notice="${escapeHtml(n.notice_id)}" aria-label="오늘 하루 안 보임" title="오늘 하루 안 보임">×</button>
+    </div>
+  `;
+}
+
 async function loadPortalNotices(userEmail) {
   const sectionEl = document.getElementById('portalNoticeSection');
   const gridEl = document.getElementById('portalNoticeGrid');
@@ -281,19 +298,40 @@ async function loadPortalNotices(userEmail) {
   }
 
   sectionEl.style.display = '';
-  // 카드 그리드(2026-06) — 공지가 1~2개뿐일 때 auto-fill 그리드가 빈
-  // 칸을 어색하게 남기는 문제가 있었음(사용자 피드백). 가로로 쌓이는
-  // 줄(배너) 형태로 바꿔 개수와 무관하게 항상 자연스럽게 채워지도록 함.
-  gridEl.innerHTML = notices.map(n => `
-    <div class="portal-notice-row${n.is_pinned ? ' portal-notice-row--pinned' : ''}" data-notice-id="${escapeHtml(n.notice_id)}">
-      ${n.is_pinned ? '<span class="portal-notice-pin">📌</span>' : ''}
-      <div class="portal-notice-row__main" data-open-notice="${escapeHtml(n.notice_id)}">
-        <span class="portal-notice-row__title">${escapeHtml(n.title)}</span>
-        <span class="portal-notice-row__date">${escapeHtml(n.created_at.slice(0, 10))}</span>
-      </div>
-      <button type="button" class="portal-notice-row__close" data-close-notice="${escapeHtml(n.notice_id)}" aria-label="오늘 하루 안 보임" title="오늘 하루 안 보임">×</button>
-    </div>
-  `).join('');
+
+  // 공지가 많아지면 화면 상단이 길게 늘어져 업무 도구 카드가 아래로 밀려나는
+  // 문제(2026-06, 사용자 확인)를 막기 위해 일정 개수 넘으면 접는다. 서버가
+  // is_pinned desc, created_at desc로 정렬해 내려주므로(고정 먼저, 그 안에서
+  // 최신순), 고정 공지는 항상 모두 보여주고 일반 공지만 개수 제한을 둔다.
+  const pinnedNotices = notices.filter(n => n.is_pinned);
+  const normalNotices = notices.filter(n => !n.is_pinned);
+
+  const visibleNormal = normalNotices.slice(0, NOTICE_DEFAULT_VISIBLE_COUNT);
+  const hiddenNormal = normalNotices.slice(NOTICE_DEFAULT_VISIBLE_COUNT);
+
+  const rowsHtml = [...pinnedNotices, ...visibleNormal].map(buildNoticeRowHtml).join('');
+  const hiddenRowsHtml = hiddenNormal.map(buildNoticeRowHtml).join('');
+
+  const toggleHtml = hiddenNormal.length
+    ? `<button type="button" class="portal-notice-toggle" id="portalNoticeToggle">공지 ${hiddenNormal.length}건 더보기 ▾</button>`
+    : '';
+
+  gridEl.innerHTML = rowsHtml +
+    (hiddenRowsHtml ? `<div id="portalNoticeHidden" class="portal-notice-hidden" style="display:none;">${hiddenRowsHtml}</div>` : '') +
+    toggleHtml;
+
+  document.getElementById('portalNoticeToggle')?.addEventListener('click', (event) => {
+    const hiddenEl = document.getElementById('portalNoticeHidden');
+    const toggleBtn = event.currentTarget;
+    if (!hiddenEl) return;
+
+    const isExpanded = hiddenEl.style.display !== 'none';
+    hiddenEl.style.display = isExpanded ? 'none' : '';
+    const remainingCount = hiddenEl.querySelectorAll('.portal-notice-row').length;
+    toggleBtn.textContent = isExpanded
+      ? `공지 ${remainingCount}건 더보기 ▾`
+      : '접기 ▴';
+  });
 
   gridEl.querySelectorAll('[data-open-notice]').forEach(el => {
     el.addEventListener('click', () => {
@@ -319,8 +357,23 @@ function dismissNoticeRow(noticeId) {
   dismissNoticeForToday(noticeId);
   const gridEl = document.getElementById('portalNoticeGrid');
   const sectionEl = document.getElementById('portalNoticeSection');
+  const hiddenEl = document.getElementById('portalNoticeHidden');
+  const toggleBtn = document.getElementById('portalNoticeToggle');
   const row = gridEl?.querySelector(`[data-notice-id="${noticeId}"]`);
   if (row) row.remove();
+
+  // 숨김 영역(더보기로 접힌 공지)이 전부 닫혀 비었으면 토글 버튼 자체를
+  // 제거한다 — "공지 0건 더보기"라는 어색한 문구가 남는 것을 방지.
+  if (hiddenEl && !hiddenEl.querySelector('.portal-notice-row')) {
+    hiddenEl.remove();
+    toggleBtn?.remove();
+  } else if (toggleBtn && hiddenEl) {
+    const isExpanded = hiddenEl.style.display !== 'none';
+    toggleBtn.textContent = isExpanded
+      ? '접기 ▴'
+      : `공지 ${hiddenEl.querySelectorAll('.portal-notice-row').length}건 더보기 ▾`;
+  }
+
   if (gridEl && !gridEl.querySelector('.portal-notice-row')) {
     if (sectionEl) sectionEl.style.display = 'none';
   }
