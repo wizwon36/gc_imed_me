@@ -121,12 +121,8 @@
     font-size: 12px;
   }
 
-  .stat-scope-panel {
-    padding: 16px 14px;
-  }
-
   .stat-seg-toggle-btn {
-    padding: 5px 10px;
+    padding: 4px 10px;
     font-size: 12px;
   }
 }
@@ -697,7 +693,7 @@
 @media (max-width: 720px) {
   #appBody .cl-tabs { margin-bottom: 14px; }
   #appBody .cl-tab { padding: 6px 14px; font-size: 12px; }
-  .stat-scope-panel { padding: 12px 14px; margin-top: 4px; margin-bottom: 12px; }
+  .stat-scope-panel { padding: 8px 14px; margin-top: 2px; margin-bottom: 8px; }
   .stat-filter-bar { margin-bottom: 12px; }
   .stat-summary-grid { margin-bottom: 10px; }
   .stat-result-panel { padding: 12px; }
