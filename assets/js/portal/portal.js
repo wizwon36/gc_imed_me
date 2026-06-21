@@ -448,11 +448,22 @@ document.getElementById('noticeModalBackdrop')?.addEventListener('click', closeN
 // 즐겨찾기(2026-06)
 // ─────────────────────────────────────────────
 
-const FAVORITE_APPS_STORAGE_KEY = 'portal_favorite_apps';
+const FAVORITE_APPS_STORAGE_KEY_PREFIX = 'portal_favorite_apps';
+
+/**
+ * 계정별 분리(2026-06) — localStorage는 브라우저 단위라, A 계정에서 등록한
+ * 즐겨찾기가 같은 브라우저의 B 계정에도 그대로 보이는 문제가 있었다(공지
+ * 사항 닫기와 동일한 원인). 키에 현재 로그인 이메일을 포함시켜 분리한다.
+ */
+function getFavoriteAppsStorageKey() {
+  const user = window.auth?.getSession?.();
+  const email = (user && user.email) ? user.email.toLowerCase() : 'anonymous';
+  return `${FAVORITE_APPS_STORAGE_KEY_PREFIX}::${email}`;
+}
 
 function getFavoriteAppIds() {
   try {
-    const raw = JSON.parse(localStorage.getItem(FAVORITE_APPS_STORAGE_KEY) || '[]');
+    const raw = JSON.parse(localStorage.getItem(getFavoriteAppsStorageKey()) || '[]');
     return Array.isArray(raw) ? raw : [];
   } catch (e) {
     return [];
@@ -461,7 +472,7 @@ function getFavoriteAppIds() {
 
 function setFavoriteAppIds(ids) {
   try {
-    localStorage.setItem(FAVORITE_APPS_STORAGE_KEY, JSON.stringify(ids));
+    localStorage.setItem(getFavoriteAppsStorageKey(), JSON.stringify(ids));
   } catch (e) {}
 }
 
