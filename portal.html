@@ -45,18 +45,23 @@
       <div id="portalNoticeGrid" class="portal-notice-grid"></div>
     </section>
 
-    <section class="portal-section portal-apps-section portal-apps-section-compact">
-      <div class="portal-section-head portal-section-head--compact">
-        <div>
-          <h2 class="section-title portal-section-title">사용 가능한 앱</h2>
-        </div>
-      </div>
+    <section class="portal-section portal-favorites-section" id="portalFavoritesSection" style="display:none;">
+      <p class="portal-group-label">즐겨찾기</p>
+      <div id="portalFavoritesGrid" class="portal-app-grid-compact"></div>
+    </section>
 
-      <div id="portalAppGrid" class="portal-app-grid"></div>
+    <section class="portal-section portal-apps-section-compact">
+      <p class="portal-group-label">업무 도구</p>
+      <div id="portalAppGrid" class="portal-app-grid-compact"></div>
 
       <div id="portalEmpty" class="empty-box" style="display:none;">
         사용 가능한 앱이 없습니다.
       </div>
+    </section>
+
+    <section class="portal-section portal-admin-apps-section" id="portalAdminAppsSection" style="display:none;">
+      <p class="portal-group-label">관리자</p>
+      <div id="portalAdminAppGrid" class="portal-app-grid-compact portal-app-grid-compact--admin"></div>
     </section>
 
     <!-- 공지사항 상세 모달 (2026-06) -->
