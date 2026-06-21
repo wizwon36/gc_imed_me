@@ -111,6 +111,10 @@
   }
   .stat-subtab-underline-btn {
     flex-shrink: 0;
+    font-size: 12px;
+  }
+  .stat-subtab-underline-btn.active {
+    font-size: 12px;
   }
 
   .stat-scope-panel {
@@ -118,8 +122,8 @@
   }
 
   .stat-seg-toggle-btn {
-    padding: 7px 12px;
-    font-size: 12.5px;
+    padding: 5px 10px;
+    font-size: 12px;
   }
 }
 
@@ -688,6 +692,7 @@
    더 구체적인 셀렉터로 덮어쓴다. */
 @media (max-width: 720px) {
   #appBody .cl-tabs { margin-bottom: 14px; }
+  #appBody .cl-tab { padding: 6px 14px; font-size: 12px; }
   .stat-scope-panel { padding: 12px 14px; margin-top: 4px; margin-bottom: 12px; }
   .stat-filter-bar { margin-bottom: 12px; }
   .stat-summary-grid { margin-bottom: 10px; }
