@@ -26,6 +26,11 @@
     document.getElementById('noticeCancelBtn')?.addEventListener('click', closeForm);
     document.getElementById('noticeFormBackdrop')?.addEventListener('click', closeForm);
     document.getElementById('noticeSaveBtn')?.addEventListener('click', saveNotice);
+
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      showGlobalLoading('로그아웃 중...');
+      window.auth.logout();
+    });
   });
 
   function getRequestUserEmail() {
