@@ -214,6 +214,10 @@ const NOTICE_DISMISS_STORAGE_KEY = 'portal_notice_dismissed';
  * "오늘 하루 안 보임" 상태를 localStorage에 보관한다. 서버에 사용자별
  * 상태 테이블을 두지 않는 가벼운 방식 — 날짜가 바뀌면 자동으로 무효화된다.
  * 형태: { [notice_id]: 'yyyy-mm-dd' }
+ *
+ * (2026-06: "다시 보지 않음"(영구)으로 바꿨다가 사용자 확인 결과 원래
+ * 의도가 "오늘 하루만"이 맞아 되돌림. 카드의 닫기뿐 아니라 상세 모달에도
+ * 같은 옵션을 추가함 — 기존엔 모달에는 닫기 수단이 전혀 없었음.)
  */
 function getDismissedNoticeMap() {
   try {
@@ -242,6 +246,22 @@ function dismissNoticeForToday(noticeId) {
   } catch (e) {}
 }
 
+/**
+ * 서버가 더 이상 내려주지 않는(노출기간이 끝났거나 삭제된) 공지 ID는
+ * localStorage에 남겨둘 필요가 없으므로, 매번 서버 응답 기준으로 정리해
+ * 무한히 쌓이는 것을 방지한다.
+ */
+function pruneDismissedNoticeMap(activeNoticeIds) {
+  const map = getDismissedNoticeMap();
+  const next = {};
+  activeNoticeIds.forEach(id => {
+    if (map[id]) next[id] = map[id];
+  });
+  try {
+    localStorage.setItem(NOTICE_DISMISS_STORAGE_KEY, JSON.stringify(next));
+  } catch (e) {}
+}
+
 async function loadPortalNotices(userEmail) {
   const sectionEl = document.getElementById('portalNoticeSection');
   const gridEl = document.getElementById('portalNoticeGrid');
@@ -249,6 +269,10 @@ async function loadPortalNotices(userEmail) {
 
   const result = await apiGet('getActiveNotices', { request_user_email: userEmail });
   const allNotices = Array.isArray(result.data) ? result.data : [];
+
+  // 서버가 더 이상 내려주지 않는 공지 ID는 dismiss 기록에서 정리한다.
+  pruneDismissedNoticeMap(allNotices.map(n => n.notice_id));
+
   const notices = allNotices.filter(n => !isDismissedToday(n.notice_id));
 
   if (!notices.length) {
@@ -257,12 +281,17 @@ async function loadPortalNotices(userEmail) {
   }
 
   sectionEl.style.display = '';
+  // 카드 그리드(2026-06) — 공지가 1~2개뿐일 때 auto-fill 그리드가 빈
+  // 칸을 어색하게 남기는 문제가 있었음(사용자 피드백). 가로로 쌓이는
+  // 줄(배너) 형태로 바꿔 개수와 무관하게 항상 자연스럽게 채워지도록 함.
   gridEl.innerHTML = notices.map(n => `
-    <div class="portal-notice-card${n.is_pinned ? ' portal-notice-card--pinned' : ''}" data-notice-id="${escapeHtml(n.notice_id)}">
-      ${n.is_pinned ? '<span class="portal-notice-pin">📌 고정</span>' : ''}
-      <button type="button" class="portal-notice-close" data-close-notice="${escapeHtml(n.notice_id)}" aria-label="오늘 하루 안 보임">×</button>
-      <div class="portal-notice-card__title" data-open-notice="${escapeHtml(n.notice_id)}">${escapeHtml(n.title)}</div>
-      <div class="portal-notice-card__date">${escapeHtml(n.created_at.slice(0, 10))}</div>
+    <div class="portal-notice-row${n.is_pinned ? ' portal-notice-row--pinned' : ''}" data-notice-id="${escapeHtml(n.notice_id)}">
+      ${n.is_pinned ? '<span class="portal-notice-pin">📌</span>' : ''}
+      <div class="portal-notice-row__main" data-open-notice="${escapeHtml(n.notice_id)}">
+        <span class="portal-notice-row__title">${escapeHtml(n.title)}</span>
+        <span class="portal-notice-row__date">${escapeHtml(n.created_at.slice(0, 10))}</span>
+      </div>
+      <button type="button" class="portal-notice-row__close" data-close-notice="${escapeHtml(n.notice_id)}" aria-label="오늘 하루 안 보임" title="오늘 하루 안 보임">×</button>
     </div>
   `).join('');
 
@@ -276,33 +305,57 @@ async function loadPortalNotices(userEmail) {
   gridEl.querySelectorAll('[data-close-notice]').forEach(el => {
     el.addEventListener('click', (event) => {
       event.stopPropagation();
-      const noticeId = el.dataset.closeNotice;
-      dismissNoticeForToday(noticeId);
-      const card = gridEl.querySelector(`[data-notice-id="${noticeId}"]`);
-      if (card) card.remove();
-      if (!gridEl.querySelector('.portal-notice-card')) {
-        sectionEl.style.display = 'none';
-      }
+      dismissNoticeRow(event.currentTarget.dataset.closeNotice);
     });
   });
+}
+
+/**
+ * 카드 목록에서 해당 공지 행을 제거하고, 더 이상 보일 공지가 없으면
+ * 섹션 전체를 숨긴다(카드 닫기 버튼과 모달의 "오늘 하루 안 보임" 둘 다
+ * 이 함수를 공유한다).
+ */
+function dismissNoticeRow(noticeId) {
+  dismissNoticeForToday(noticeId);
+  const gridEl = document.getElementById('portalNoticeGrid');
+  const sectionEl = document.getElementById('portalNoticeSection');
+  const row = gridEl?.querySelector(`[data-notice-id="${noticeId}"]`);
+  if (row) row.remove();
+  if (gridEl && !gridEl.querySelector('.portal-notice-row')) {
+    if (sectionEl) sectionEl.style.display = 'none';
+  }
 }
 
 function openNoticeModal(notice) {
   const modal = document.getElementById('noticeDetailModal');
   const titleEl = document.getElementById('noticeModalTitle');
   const contentEl = document.getElementById('noticeModalContent');
+  const dismissCheckbox = document.getElementById('noticeModalDismissToday');
   if (!modal || !titleEl || !contentEl) return;
 
+  modal.dataset.noticeId = notice.notice_id;
   titleEl.textContent = notice.title;
   // 공지 내용은 관리자(admin)만 작성 가능한 신뢰된 입력이지만, 그래도
   // 줄바꿈만 허용하고 나머지는 escapeHtml로 이스케이프해 XSS를 방지한다.
   contentEl.innerHTML = escapeHtml(notice.content).replace(/\n/g, '<br>');
+  if (dismissCheckbox) dismissCheckbox.checked = false;
   modal.style.display = '';
 }
 
 function closeNoticeModal() {
   const modal = document.getElementById('noticeDetailModal');
-  if (modal) modal.style.display = 'none';
+  if (!modal) return;
+
+  // 모달 안의 "오늘 하루 안 보임" 체크박스가 켜져 있으면, 모달을 닫을 때
+  // 카드 목록에서도 함께 제거한다(닫기 버튼/배경 클릭/체크박스 직접
+  // 클릭 중 어떤 경로로 모달이 닫히든 동일하게 처리).
+  const dismissCheckbox = document.getElementById('noticeModalDismissToday');
+  const noticeId = modal.dataset.noticeId;
+  if (dismissCheckbox?.checked && noticeId) {
+    dismissNoticeRow(noticeId);
+  }
+
+  modal.style.display = 'none';
 }
 
 document.getElementById('noticeModalCloseBtn')?.addEventListener('click', closeNoticeModal);
