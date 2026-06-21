@@ -165,7 +165,7 @@
 .notice-modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.6);
 }
 
 .notice-modal__box {
@@ -174,9 +174,10 @@
   max-height: 80vh;
   overflow-y: auto;
   background: #fff;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card-hover);
-  padding: 20px 24px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+  padding: 24px 26px;
 }
 
 .notice-modal__head {
@@ -184,42 +185,53 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-card);
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #fde68a;
 }
 
 .notice-modal__head strong {
-  font-size: 18px;
+  font-size: 19px;
+  font-weight: 800;
   line-height: 1.4;
+  color: #1f2937;
 }
 
+/* 닫기 버튼(2026-06) — 기존엔 투명 배경 + 회색 글자로 존재감이 너무 약해
+   "닫기 버튼이 없다"는 지적을 받았다. 명확한 원형 배경+테두리로 항상
+   눈에 띄게 만든다. */
 .notice-modal__close {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-card);
+  background: #f8fafc;
+  font-size: 18px;
+  line-height: 1;
   cursor: pointer;
-  color: #6b7280;
-  border-radius: 6px;
+  color: #4b5563;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .notice-modal__close:hover {
-  background: rgba(0,0,0,0.06);
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1f2937;
 }
 
 .notice-modal__body {
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 14.5px;
+  line-height: 1.75;
   color: #374151;
   word-break: break-word;
 }
 
 .notice-modal__footer {
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
   border-top: 1px solid var(--border-card);
   display: flex;
   justify-content: flex-end;
@@ -275,9 +287,10 @@
 .portal-app-card-compact {
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 30px 16px 18px;
   border-radius: var(--radius-md, 12px);
   border: 1px solid var(--border-card, rgba(148, 163, 184, 0.22));
   background: #fff;
@@ -294,20 +307,20 @@
 }
 
 .portal-app-card-compact__icon {
-  font-size: 22px;
+  flex-shrink: 0;
+  font-size: 26px;
   line-height: 1;
 }
 
 .portal-app-card-compact__title {
-  font-size: 13px;
+  min-width: 0;
+  font-size: 15px;
   font-weight: 700;
   color: #1f2937;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
 }
 
 /* 관리자 섹션 카드는 한 톤 낮춰 업무 도구 카드와 구분 */
