@@ -152,6 +152,29 @@
   color: #4b5563;
 }
 
+.portal-notice-hidden {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.portal-notice-toggle {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.portal-notice-toggle:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
 /* 공지 상세 모달 */
 .notice-modal {
   position: fixed;
