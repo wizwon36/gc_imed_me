@@ -113,11 +113,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       return `
-        <a class="portal-app-card-compact${muted}" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}" data-app-icon="${escapeHtml(app.app_icon)}">
+        <div class="portal-app-card-compact${muted}" role="link" tabindex="0" data-app-id="${escapeHtml(app.app_id)}" data-app-icon="${escapeHtml(app.app_icon)}" data-app-url="${escapeHtml(app.app_url)}">
           <button type="button" class="portal-app-card-compact__fav" data-fav-toggle="${escapeHtml(app.app_id)}" aria-label="즐겨찾기 토글">★</button>
           <div class="portal-app-card-compact__icon"><i class="${escapeHtml(app.app_icon)}" aria-hidden="true"></i></div>
           <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
-        </a>
+        </div>
       `;
     }
 
@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 등록된 것만 모아 별도 섹션 맨 위에 보여준다.
     renderFavoritesSection([...workApps, ...adminApps].filter(isAppGranted));
     bindFavoriteToggles();
+    bindAppCardNavigation();
 
     await delayUntilMinimum(startedAt, 400);
 
@@ -478,11 +479,11 @@ function renderFavoritesSection(grantedApps) {
 
   sectionEl.style.display = '';
   gridEl.innerHTML = favoriteApps.map(app => `
-    <a class="portal-app-card-compact" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}" data-app-icon="${escapeHtml(app.app_icon)}">
+    <div class="portal-app-card-compact" role="link" tabindex="0" data-app-id="${escapeHtml(app.app_id)}" data-app-icon="${escapeHtml(app.app_icon)}" data-app-url="${escapeHtml(app.app_url)}">
       <button type="button" class="portal-app-card-compact__fav portal-app-card-compact__fav--active" data-fav-toggle="${escapeHtml(app.app_id)}" aria-label="즐겨찾기 해제">★</button>
       <div class="portal-app-card-compact__icon"><i class="${escapeHtml(app.app_icon)}" aria-hidden="true"></i></div>
       <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
-    </a>
+    </div>
   `).join('');
 }
 
@@ -510,13 +511,50 @@ function bindFavoriteToggles() {
     btn.classList.toggle('portal-app-card-compact__fav--active', isFavoriteApp(appId));
 
     const grantedApps = [
-      ...document.querySelectorAll('#portalAppGrid a[data-app-id], #portalAdminAppGrid a[data-app-id]')
+      ...document.querySelectorAll('#portalAppGrid [data-app-id], #portalAdminAppGrid [data-app-id]')
     ].map(el => ({
       app_id: el.dataset.appId,
       app_icon: el.dataset.appIcon || '',
       app_name: el.querySelector('.portal-app-card-compact__title')?.textContent || '',
-      app_url: el.getAttribute('href').replace(CONFIG.SITE_BASE_URL, '')
+      app_url: el.dataset.appUrl || ''
     }));
     renderFavoritesSection(grantedApps);
+  });
+}
+
+/**
+ * 카드 클릭/Enter키로 앱 페이지 이동(2026-06) — 기존엔 카드 자체가
+ * <a href="..."> 였고 즐겨찾기 별표 <button>이 그 안에 중첩되어 있었다.
+ * <a> 안에 <button>을 넣는 건 HTML5에서 인터랙티브 콘텐츠 중첩으로
+ * 허용되지 않으며, 모바일 브라우저(특히 iOS Safari)는 이런 구조에서
+ * 첫 탭을 hover 진입으로만 처리하고 실제 이동은 두 번째 탭에서야
+ * 일어나는 경우가 있어 "한 번에 안 눌리는" 증상의 원인이 됐다(사용자
+ * 확인). 카드를 <div role="link">로 바꾸고, 별표 클릭은 이동을 막고
+ * 토글만 처리, 그 외 카드 영역 클릭/Enter키는 이동을 처리하도록 분리.
+ */
+let appCardNavigationBound = false;
+function bindAppCardNavigation() {
+  if (appCardNavigationBound) return;
+  appCardNavigationBound = true;
+
+  function navigateIfCard(target) {
+    const card = target.closest('.portal-app-card-compact[role="link"]');
+    if (!card) return;
+    const appUrl = card.dataset.appUrl;
+    if (appUrl) location.href = `${CONFIG.SITE_BASE_URL}${appUrl}`;
+  }
+
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('[data-fav-toggle]')) return; // 별표는 별도 핸들러가 처리
+    navigateIfCard(event.target);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (event.target.closest('[data-fav-toggle]')) return;
+    const card = event.target.closest('.portal-app-card-compact[role="link"]');
+    if (!card) return;
+    event.preventDefault();
+    navigateIfCard(event.target);
   });
 }
