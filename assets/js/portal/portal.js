@@ -109,16 +109,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!granted) {
         return `
           <div class="portal-app-card-compact portal-app-card-compact--disabled" title="권한이 없습니다. 관리자에게 권한을 요청해 주세요.">
-            <div class="portal-app-card-compact__icon">${escapeHtml(app.app_icon)}</div>
+            <div class="portal-app-card-compact__icon"><i class="${escapeHtml(app.app_icon)}" aria-hidden="true"></i></div>
             <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
           </div>
         `;
       }
 
       return `
-        <a class="portal-app-card-compact${muted}" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}">
+        <a class="portal-app-card-compact${muted}" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}" data-app-icon="${escapeHtml(app.app_icon)}">
           <button type="button" class="portal-app-card-compact__fav" data-fav-toggle="${escapeHtml(app.app_id)}" aria-label="즐겨찾기 토글">★</button>
-          <div class="portal-app-card-compact__icon">${escapeHtml(app.app_icon)}</div>
+          <div class="portal-app-card-compact__icon"><i class="${escapeHtml(app.app_icon)}" aria-hidden="true"></i></div>
           <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
         </a>
       `;
@@ -471,9 +471,9 @@ function renderFavoritesSection(grantedApps) {
 
   sectionEl.style.display = '';
   gridEl.innerHTML = favoriteApps.map(app => `
-    <a class="portal-app-card-compact" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}">
+    <a class="portal-app-card-compact" href="${CONFIG.SITE_BASE_URL}${app.app_url}" data-app-id="${escapeHtml(app.app_id)}" data-app-icon="${escapeHtml(app.app_icon)}">
       <button type="button" class="portal-app-card-compact__fav portal-app-card-compact__fav--active" data-fav-toggle="${escapeHtml(app.app_id)}" aria-label="즐겨찾기 해제">★</button>
-      <div class="portal-app-card-compact__icon">${escapeHtml(app.app_icon)}</div>
+      <div class="portal-app-card-compact__icon"><i class="${escapeHtml(app.app_icon)}" aria-hidden="true"></i></div>
       <span class="portal-app-card-compact__title">${escapeHtml(app.app_name)}</span>
     </a>
   `).join('');
@@ -506,7 +506,7 @@ function bindFavoriteToggles() {
       ...document.querySelectorAll('#portalAppGrid a[data-app-id], #portalAdminAppGrid a[data-app-id]')
     ].map(el => ({
       app_id: el.dataset.appId,
-      app_icon: el.querySelector('.portal-app-card-compact__icon')?.textContent || '',
+      app_icon: el.dataset.appIcon || '',
       app_name: el.querySelector('.portal-app-card-compact__title')?.textContent || '',
       app_url: el.getAttribute('href').replace(CONFIG.SITE_BASE_URL, '')
     }));
