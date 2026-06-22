@@ -179,6 +179,21 @@ async function getSuggestionsFor(type) {
       // 거래처 마스터(StatsApp.vendors)가 아닌, 실제 거래 데이터의 distinct 값을 사용
       // — 마스터에 등록 안 된 거래처도 통계 표/검색에는 나타날 수 있어 마스터만 쓰면 자동완성이 비어 보이는 문제가 있었음
       values = await window.statsClient.getDistinctValues('vendor_name');
+
+      // 상호 변경 대응(2026-06) — 같은 사업자번호로 여러 이름이 등록된 경우
+      // (예: "GC메디아이"/"주식회사 유비케어"), 자동완성에 둘 다 따로 보이면
+      // 사용자가 둘 중 하나만 골라 검색해 데이터가 쪼개져 보이는 문제가
+      // 있었다(실측 확인). 마스터에 등록된 구 상호명(is_current!=='Y')은
+      // 목록에서 제외해 대표 이름(현재 상호) 하나만 보이게 한다. 마스터에
+      // 없는 거래처는 그대로 노출(기존 동작 유지).
+      const outdatedNames = new Set(
+        (window.StatsApp?.vendors || [])
+          .filter(v => v.biz_no && v.is_current !== 'Y')
+          .map(v => v.vendor_name)
+      );
+      if (outdatedNames.size) {
+        values = values.filter(v => !outdatedNames.has(v));
+      }
     } else if (type === 'dept') {
       values = await window.statsClient.getDistinctValues('dept');
     } else if (type === 'itemType') {
