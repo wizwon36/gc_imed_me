@@ -64,6 +64,38 @@ function searchFieldToColumn_(type) {
   return null;
 }
 
+/**
+ * 거래처 상호 변경 대응(2026-06) — vendor_master에 같은 사업자번호로
+ * 여러 이름이 등록된 경우(예: "GC메디아이"/"주식회사 유비케어", 둘 다
+ * 201-81-55688), 검색구분=업체명으로 한쪽 이름만 검색하면 다른 이름으로
+ * 저장된 과거 거래 데이터가 결과에서 빠지는 문제가 있었다(실측 확인).
+ * window.StatsApp.vendors(페이지 로드 시 항상 채워짐, loadVendorsFromServer)
+ * 를 사업자번호 기준으로 그룹화해, 검색어가 그 그룹의 어느 이름과든
+ * 일치하면 그룹 전체의 이름 집합을 반환한다 — 매칭 안 되면 빈 배열.
+ */
+function getVendorNameGroupForKeyword_(keyword) {
+  const vendors = window.StatsApp?.vendors || [];
+  if (!vendors.length || !keyword) return [];
+
+  const kw = keyword.trim().toLowerCase();
+
+  // 사업자번호별로 이름들을 모은다.
+  const namesByBizNo = {};
+  vendors.forEach(v => {
+    if (!v.biz_no) return;
+    if (!namesByBizNo[v.biz_no]) namesByBizNo[v.biz_no] = [];
+    namesByBizNo[v.biz_no].push(v.vendor_name);
+  });
+
+  // 검색어와 부분 일치하는 이름을 가진 사업자번호 그룹을 찾는다.
+  for (const bizNo in namesByBizNo) {
+    const names = namesByBizNo[bizNo];
+    const matched = names.some(n => String(n || '').toLowerCase().includes(kw));
+    if (matched && names.length > 1) return names; // 그룹(이름 2개 이상)일 때만 의미가 있음
+  }
+  return [];
+}
+
 // ── 기본 검색(구분+키워드, LIKE) + 상세검색(다중 조건, AND/OR) 클라이언트 필터링 ──
 // basicSearch: { type, keyword } | null
 // advancedConditions: [{ field, keyword, combinator }]  combinator는 그 조건이 "앞 조건과" 어떻게 결합되는지 (첫 행은 무시)
@@ -74,7 +106,17 @@ function applyClientSideSearch_(rows, basicSearch, advancedConditions) {
     const col = searchFieldToColumn_(basicSearch.type);
     const kw = basicSearch.keyword.trim().toLowerCase();
     if (col) {
-      result = result.filter(r => String(r[col] || '').toLowerCase().includes(kw));
+      if (basicSearch.type === 'vendor') {
+        const groupNames = getVendorNameGroupForKeyword_(basicSearch.keyword);
+        if (groupNames.length) {
+          const groupNamesLower = groupNames.map(n => String(n).toLowerCase());
+          result = result.filter(r => groupNamesLower.includes(String(r[col] || '').toLowerCase()));
+        } else {
+          result = result.filter(r => String(r[col] || '').toLowerCase().includes(kw));
+        }
+      } else {
+        result = result.filter(r => String(r[col] || '').toLowerCase().includes(kw));
+      }
     }
   }
 
@@ -87,7 +129,20 @@ function applyClientSideSearch_(rows, basicSearch, advancedConditions) {
         valid.forEach((cond, idx) => {
           const col = searchFieldToColumn_(cond.field);
           const kw = cond.keyword.trim().toLowerCase();
-          const matched = col ? String(row[col] || '').toLowerCase().includes(kw) : false;
+          let matched = false;
+          if (col) {
+            if (cond.field === 'vendor') {
+              const groupNames = getVendorNameGroupForKeyword_(cond.keyword);
+              if (groupNames.length) {
+                const groupNamesLower = groupNames.map(n => String(n).toLowerCase());
+                matched = groupNamesLower.includes(String(row[col] || '').toLowerCase());
+              } else {
+                matched = String(row[col] || '').toLowerCase().includes(kw);
+              }
+            } else {
+              matched = String(row[col] || '').toLowerCase().includes(kw);
+            }
+          }
           if (idx === 0) {
             acc = matched;
           } else if (cond.combinator === 'OR') {
