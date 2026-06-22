@@ -101,25 +101,38 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
+      table-layout: fixed;  /* 컬럼 너비 고정 */
     }
 
     table.notice-table th,
     table.notice-table td {
-      text-align: left;
-      padding: 8px 12px;
+      padding: 6px 12px;      /* ★ 위아래 패딩 축소: 8px → 6px */
       border-bottom: 1px solid var(--line-soft);
       vertical-align: middle;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    table.notice-table th {
+    /* 제목 열만 좌측 정렬, 나머지는 가운데 정렬 */
+    table.notice-table th { 
       color: var(--text-subtle);
       font-weight: 700;
       font-size: 12px;
+      text-align: center;   /* ★ 헤더 가운데 정렬 */
+    }
+
+    table.notice-table th:nth-child(2),
+    table.notice-table td:nth-child(2) {
+      text-align: left;     /* ★ 제목 열만 좌측 유지 */
+    }
+
+    table.notice-table td {
+      text-align: center;   /* ★ 내용 가운데 정렬 */
     }
 
     .notice-title-cell {
-      max-width: 360px;
+      text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -136,11 +149,17 @@
       font-weight: 700;
     }
 
-    .row-actions { display: flex; gap: 6px; white-space: nowrap; }
+    .row-actions {
+      display: inline-flex;   /* ★ inline-flex로 셀 가운데 정렬과 어울리게 */
+      gap: 6px;
+      white-space: nowrap;
+    }
+
     .row-actions .btn {
-      height: 28px;
+      height: 26px;           /* ★ 버튼 높이 축소: 28px → 26px */
       padding: 0 10px;
       font-size: 12px;
+      border-radius: 8px;     /* ★ 작은 버튼에 맞게 radius도 축소 */
     }
 
     .empty-row td {
@@ -229,10 +248,6 @@
       color: var(--text-subtle);
     }
 
-    /* 모바일 반응형(2026-06) — 다른 admin 페이지(logs.html, support-admin.html)와
-       동일한 breakpoint(760px), 동일한 page-header 세로배치 패턴으로 통일.
-       표는 가로 스크롤이 가능하도록 감싸는 컨테이너에 overflow-x 처리.
-       (사용자 확인: 처음 만들 때 이 페이지만 누락됐던 부분) */
     @media (max-width: 760px) {
       .notice-admin-page { padding: 20px 14px 34px; }
 
@@ -275,11 +290,11 @@
       <table class="notice-table">
         <thead>
           <tr>
-            <th style="width:60px;">고정</th>
+            <th style="width:80px;">고정</th>
             <th>제목</th>
-            <th style="width:210px;">노출기간</th>
-            <th style="width:110px;">작성자</th>
-            <th style="width:160px;">작업</th>
+            <th style="width:200px;">노출기간</th>
+            <th style="width:100px;">작성자</th>
+            <th style="width:130px;">작업</th>
           </tr>
         </thead>
         <tbody id="noticeTableBody">
