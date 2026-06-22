@@ -711,3 +711,15 @@
     margin-bottom: 10px;
   }
 }
+
+/* 탭/토글 아이콘(2026-06) — 이모지를 Tabler 아이콘으로 교체하면서 텍스트와의
+   간격이 좁아 보이지 않도록 보강. 영향 범위를 이 페이지로 한정하기 위해
+   statistics.css(이 페이지 전용)에 둔다(cl-tab/stat-seg-toggle-btn/
+   stat-subtab-underline-btn은 closing.css 등 공용 파일에 정의됨). */
+#appBody .cl-tab i,
+.stat-seg-toggle-btn i,
+.stat-subtab-underline-btn i {
+  margin-right: 5px;
+  font-size: 14px;
+  vertical-align: -1px;
+}
