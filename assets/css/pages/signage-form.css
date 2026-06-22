@@ -12,7 +12,7 @@
 .signage-req { color: #dc2626; font-weight: 700; }
 .signage-badge-note { font-size: 12px; font-weight: 400; color: #dc2626; margin-left: 3px; }
 
-/* required 표기: equipment-form.css 패턴과 동일하게 :: after 사용 */
+/* required 표기 */
 .signage-form-page .form-label.required::after {
   content: " *";
   color: #2563eb;
@@ -50,52 +50,56 @@
 .signage-type-desc { font-size: 13px; color: #6b7280; line-height: 1.5; }
 
 /* ── 파일 업로드 미리보기 영역 ── */
-/*
- * equipment-form.css의 .form-photo-preview는
- *   display: flex; align-items: center; justify-content: center; min-height: 220px
- * 로 정의되어 있음.
- * 파일이 없을 때: previewEmpty가 센터에 표시되어 큰 박스처럼 보임 (정상)
- * 파일이 있을 때: previewEmpty가 숨겨지고 fileList만 남아야 하는데
- *   기존 .signage-file-preview { display: block; min-height: 80px } 이
- *   flex를 깨뜨리고 높이를 줄여서 리스트만 딱 붙어 보이는 문제 발생
- *
- * 수정: display/flex 속성은 equipment-form.css에 위임하고,
- *       파일 있을 때만 min-height를 자연스럽게 줄이도록 처리
- */
 .signage-file-preview {
-  /* display, align-items, justify-content는 equipment-form.css 그대로 상속 */
-  padding: 14px 16px;
-  min-height: 220px;        /* 빈 상태와 동일하게 유지 */
-  align-items: flex-start;  /* 파일 목록은 위쪽 정렬 */
+  display: flex;
   flex-direction: column;
+  align-items: stretch;
   justify-content: center;
+  min-height: 220px;
+  padding: 14px 16px;
+  gap: 8px;
 }
 
-/* 파일이 하나라도 있으면 (fileList가 비어있지 않으면) 높이를 줄여도 됨 */
-.signage-file-preview:has(.signage-file-item) {
+/* 파일이 하나라도 추가되면 빈 박스 높이 해제 */
+.signage-file-preview.has-files {
   min-height: unset;
   justify-content: flex-start;
 }
 
-/* 빈 상태 텍스트: 기존 equipment-form.css의 .photo-preview-empty 스타일과 동일하게 */
-.signage-file-preview .photo-preview-empty {
-  width: 100%;
-  min-height: unset;  /* 부모가 이미 min-height를 가지므로 중복 제거 */
-}
-
 .signage-file-list { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 
+/* ── 파일 아이템 (공통 행) ── */
 .signage-file-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 12px; border-radius: 10px;
-  background: #f1f5f9; font-size: 13px; gap: 8px;
+  background: #f1f5f9; font-size: 13px; gap: 10px;
   border: 1px solid #e2e8f0;
 }
-.signage-file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; }
+.signage-file-item-name {
+  flex: 1; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; color: #334155;
+}
 .signage-file-item-status { font-weight: 700; white-space: nowrap; font-size: 12px; }
 .signage-file-item.is-uploading .signage-file-item-status { color: #2563eb; }
 .signage-file-item.is-done .signage-file-item-status { color: #16a34a; }
 .signage-file-item.is-error .signage-file-item-status { color: #dc2626; }
+
+/* ── 이미지 썸네일 (이미지 파일만) ── */
+.signage-file-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+
+/* 썸네일 있는 아이템은 행 높이 확보 */
+.signage-file-item.has-thumb {
+  padding: 6px 12px;
+  align-items: center;
+}
 
 /* ── 명판 타입 카드 ── */
 .signage-np-type-grid {
