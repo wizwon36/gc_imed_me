@@ -24,12 +24,10 @@ let isSubmitting = false;
 // 초기화
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  // ★ 수정: 스피너는 HTML 인라인 스크립트에서 이미 표시 중
-  //         여기서는 showGlobalLoading() 재호출 불필요
+  // 스피너는 HTML 인라인 스크립트에서 이미 표시 중
 
   const user = window.auth?.requireAuth?.();
   if (!user) {
-    // ★ 수정: 인증 실패 시에도 반드시 스피너 해제
     hideGlobalLoading();
     return;
   }
@@ -52,7 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     showMessage(err.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
-    // ★ 수정: 성공/실패 무관하게 항상 스피너 해제
     hideGlobalLoading();
   }
 });
@@ -174,12 +171,12 @@ function bindNameplateTypeSelector() {
 // 드래그 앤 드롭
 // ─────────────────────────────────────────────
 function bindFileDropzones() {
-  bindDrop(null, 'file_main',      'main',      'fileList_main');
-  bindDrop(null, 'file_location',  'location',  'fileList_location');
-  bindDrop(null, 'file_reference', 'reference', 'fileList_reference');
+  bindDrop('file_main',      'main',      'fileList_main');
+  bindDrop('file_location',  'location',  'fileList_location');
+  bindDrop('file_reference', 'reference', 'fileList_reference');
 }
 
-function bindDrop(zoneId, inputId, key, listId) {
+function bindDrop(inputId, key, listId) {
   const input = document.getElementById(inputId);
   if (!input) return;
 
@@ -194,7 +191,7 @@ function bindDrop(zoneId, inputId, key, listId) {
           : files.length + '개 파일 선택됨';
       }
     }
-    processFiles(Array.from(e.target.files), key, listId);
+    processFiles(files, key, listId);
     input.value = '';
   });
 }
@@ -211,11 +208,21 @@ function getTotalUploadedBytes() {
 }
 
 function formatFileSize(bytes) {
-  if (bytes < 1024)        return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024)         return bytes + ' B';
+  if (bytes < 1024 * 1024)  return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
+// ─────────────────────────────────────────────
+// 이미지 파일 여부 판별
+// ─────────────────────────────────────────────
+function isImageFile(file) {
+  return file.type.startsWith('image/');
+}
+
+// ─────────────────────────────────────────────
+// 파일 처리 + 업로드
+// ─────────────────────────────────────────────
 async function processFiles(files, key, listId) {
   const user      = window.auth?.getSession?.() || {};
   const createdBy = user.user_email || user.email || '';
@@ -244,18 +251,45 @@ async function processFiles(files, key, listId) {
     const itemId = 'fi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     const listEl = document.getElementById(listId);
 
+    // ── 썸네일 또는 파일 아이콘 결정 ──
+    const isImg = isImageFile(file);
+    const thumbHtml = isImg
+      ? `<img class="signage-file-thumb" id="thumb_${itemId}" src="" alt="" />`
+      : `<span class="signage-file-item-icon">${getFileIcon(file.name)}</span>`;
+
     if (listEl) {
       listEl.insertAdjacentHTML('beforeend',
-        `<div class="signage-file-item is-uploading" id="${itemId}">
+        `<div class="signage-file-item ${isImg ? 'has-thumb' : ''} is-uploading" id="${itemId}">
+          ${thumbHtml}
           <span class="signage-file-item-name">${escapeHtml(file.name)}</span>
           <span class="signage-file-item-status">업로드 중...</span>
         </div>`
       );
+
+      // 이미지면 FileReader로 썸네일 즉시 표시
+      if (isImg) {
+        const thumbEl = document.getElementById('thumb_' + itemId);
+        if (thumbEl) {
+          const reader = new FileReader();
+          reader.onload = (ev) => { thumbEl.src = ev.target.result; };
+          reader.readAsDataURL(file);
+        }
+      }
     }
+
+    // 첫 파일 추가 시 빈 상태 텍스트 숨기고 has-files 클래스 부여
+    const previewEl = listEl?.closest('.signage-file-preview');
+    const emptyEl   = document.getElementById('previewEmpty_' + key);
+    if (emptyEl)   emptyEl.style.display = 'none';
+    if (previewEl) previewEl.classList.add('has-files');
 
     try {
       const base64 = await toBase64(file);
-      const res    = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
+      const res    = await apiPost('uploadSignageFile', {
+        file_base64: base64,
+        file_name:   file.name,
+        created_by:  createdBy
+      });
 
       uploadedFileIds[key].push(res.data.file_id);
       uploadedFileSizes[key].push(file.size);
@@ -263,11 +297,9 @@ async function processFiles(files, key, listId) {
       const el = document.getElementById(itemId);
       if (el) {
         el.classList.replace('is-uploading', 'is-done');
-        el.querySelector('.signage-file-item-status').textContent = `✓ 완료 (${formatFileSize(file.size)})`;
+        el.querySelector('.signage-file-item-status').textContent =
+          `✓ 완료 (${formatFileSize(file.size)})`;
       }
-
-      const emptyEl = document.getElementById('previewEmpty_' + key);
-      if (emptyEl) emptyEl.style.display = 'none';
     } catch (err) {
       const el = document.getElementById(itemId);
       if (el) {
@@ -279,6 +311,13 @@ async function processFiles(files, key, listId) {
       pendingUploads--;
     }
   }
+}
+
+// 확장자 기반 파일 아이콘 이모지
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const map = { pdf: '📄', ai: '🎨', psd: '🎨', dwg: '📐' };
+  return map[ext] || '📎';
 }
 
 function toBase64(file) {
@@ -303,7 +342,6 @@ async function handleSubmit(e) {
     return;
   }
 
-  // 제출 시점 최종 용량 체크
   const totalBytes = getTotalUploadedBytes();
   if (totalBytes > MAX_TOTAL_BYTES) {
     showMessage(
@@ -319,7 +357,6 @@ async function handleSubmit(e) {
 
   const submitBtn = document.getElementById('submitBtn');
 
-  // ★ 수정: try/catch/finally 분리 → 성공 시 finally가 스피너를 끄지 않도록
   try {
     isSubmitting = true;
     setLoading(submitBtn, true, '신청 중...');
@@ -327,20 +364,16 @@ async function handleSubmit(e) {
 
     await apiPost('createSignageRequest', payload);
 
-    // 성공: 스피너를 유지한 채로 페이지 이동 (해제하지 않음)
+    // 성공: 스피너 유지한 채로 페이지 이동
     alert('신청이 완료되었습니다.\n담당자(gcjwchoi3@gccorp.com)에게 알림이 전송되었습니다.');
     location.href = '../../portal.html';
 
   } catch (err) {
-    // ★ 수정: 실패 시에만 스피너 해제 + 버튼 복원 + isSubmitting 리셋
     showMessage(err.message || '신청 중 오류가 발생했습니다.', 'error');
     hideGlobalLoading();
     setLoading(submitBtn, false);
     isSubmitting = false;
   }
-  // ★ 수정: finally 블록 제거
-  //    - 성공 경로: location.href 이후 브라우저가 페이지를 벗어나므로 스피너 해제 불필요
-  //    - 실패 경로: catch에서 직접 처리
 }
 
 // ─────────────────────────────────────────────
@@ -424,8 +457,8 @@ function fail(msg, focusId) {
 // ─────────────────────────────────────────────
 // 헬퍼
 // ─────────────────────────────────────────────
-function getValue(id) { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
-function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
-function showEl(id) { const el = document.getElementById(id); if (el) el.style.display = ''; }
-function hideEl(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
-function setRequired(id, v) { const el = document.getElementById(id); if (el) el.required = v; }
+function getValue(id)      { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+function setVal(id, val)   { const el = document.getElementById(id); if (el) el.value = val; }
+function showEl(id)        { const el = document.getElementById(id); if (el) el.style.display = ''; }
+function hideEl(id)        { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function setRequired(id,v) { const el = document.getElementById(id); if (el) el.required = v; }
