@@ -54,15 +54,21 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: center;
-  min-height: 220px;
+  justify-content: flex-start;
+  min-height: unset;      /* 빈 상태에서도 큰 박스 없음 */
   padding: 14px 16px;
   gap: 8px;
 }
 
-/* 파일이 하나라도 추가되면 빈 박스 높이 해제 */
-.signage-file-preview.has-files {
+/* equipment-form.css의 .form-photo-preview min-height 덮어쓰기 */
+.form-photo-preview.signage-file-preview {
+  min-height: unset !important;
+}
+
+/* 빈 상태 텍스트도 큰 박스 없이 한 줄로 */
+.signage-file-preview .photo-preview-empty {
   min-height: unset;
+  padding: 2px 0;
   justify-content: flex-start;
 }
 
