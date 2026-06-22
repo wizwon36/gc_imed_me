@@ -423,3 +423,14 @@
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* 탭/토글 아이콘(2026-06) — 이모지를 Tabler 아이콘으로 교체하면서 텍스트와의
+   간격이 좁아 보이지 않도록 보강. closing.html/statistics.html 둘 다 이
+   파일을 로드하므로 여기 한 곳에만 정의한다. */
+#appBody .cl-tab i,
+.stat-seg-toggle-btn i,
+.stat-subtab-underline-btn i {
+  margin-right: 5px;
+  font-size: 14px;
+  vertical-align: -1px;
+}
