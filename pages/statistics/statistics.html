@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../../assets/css/common.css" />
   <link rel="stylesheet" href="../../assets/css/pages/closing.css" />
   <link rel="stylesheet" href="../../assets/css/pages/statistics.css" />
+  <link rel="stylesheet" href="../../assets/font/tabler-icons/tabler-icons.min.css" />
 </head>
 <body class="portal-page">
   <div class="container page-shell">
@@ -43,9 +44,9 @@
 
       <!-- 탭 -->
       <div class="cl-tabs">
-        <button class="cl-tab active" id="tabDashboard" onclick="switchStatsTab('dashboard')">📊 통계 조회</button>
-        <button class="cl-tab" id="tabUpload" onclick="switchStatsTab('upload')">📤 데이터 업로드</button>
-        <button class="cl-tab" id="tabVendor" onclick="switchStatsTab('vendor')">🏢 거래처 관리</button>
+        <button class="cl-tab active" id="tabDashboard" onclick="switchStatsTab('dashboard')"><i class="ti ti-chart-bar" aria-hidden="true"></i> 통계 조회</button>
+        <button class="cl-tab" id="tabUpload" onclick="switchStatsTab('upload')"><i class="ti ti-upload" aria-hidden="true"></i> 데이터 업로드</button>
+        <button class="cl-tab" id="tabVendor" onclick="switchStatsTab('vendor')"><i class="ti ti-building-store" aria-hidden="true"></i> 거래처 관리</button>
       </div>
 
       <!-- ══════════════════════════════════════════════════ -->
@@ -117,15 +118,15 @@
         <!-- 입고/사용 구분 + 관점 서브탭 + 기간비교 전용 컨트롤 (하나의 패널로 묶어 위계를 시각적으로 구분) -->
         <div class="stat-scope-panel">
           <div class="stat-seg-toggle">
-            <button class="stat-seg-toggle-btn active" id="recordTypePurchase" onclick="switchRecordType('purchase')">📥 입고조회</button>
-            <button class="stat-seg-toggle-btn" id="recordTypeUsage" onclick="switchRecordType('usage')">📋 사용조회</button>
+            <button class="stat-seg-toggle-btn active" id="recordTypePurchase" onclick="switchRecordType('purchase')"><i class="ti ti-truck-delivery" aria-hidden="true"></i> 입고조회</button>
+            <button class="stat-seg-toggle-btn" id="recordTypeUsage" onclick="switchRecordType('usage')"><i class="ti ti-clipboard-check" aria-hidden="true"></i> 사용조회</button>
           </div>
           <div class="stat-subtab-underline">
-            <button class="stat-subtab-underline-btn active" id="subtabBranch" onclick="switchStatsSubtab('branch')">🏥 의원별</button>
-            <button class="stat-subtab-underline-btn" id="subtabVendor" onclick="switchStatsSubtab('vendor')">🏢 거래처별</button>
-            <button class="stat-subtab-underline-btn" id="subtabDept" onclick="switchStatsSubtab('dept')">🏬 부서별</button>
-            <button class="stat-subtab-underline-btn" id="subtabItem" onclick="switchStatsSubtab('item')">🧪 품목별</button>
-            <button class="stat-subtab-underline-btn" id="subtabTrend" onclick="switchStatsSubtab('trend')">📅 기간 비교</button>
+            <button class="stat-subtab-underline-btn active" id="subtabBranch" onclick="switchStatsSubtab('branch')"><i class="ti ti-building-hospital" aria-hidden="true"></i> 의원별</button>
+            <button class="stat-subtab-underline-btn" id="subtabVendor" onclick="switchStatsSubtab('vendor')"><i class="ti ti-building-store" aria-hidden="true"></i> 거래처별</button>
+            <button class="stat-subtab-underline-btn" id="subtabDept" onclick="switchStatsSubtab('dept')"><i class="ti ti-building" aria-hidden="true"></i> 부서별</button>
+            <button class="stat-subtab-underline-btn" id="subtabItem" onclick="switchStatsSubtab('item')"><i class="ti ti-flask" aria-hidden="true"></i> 품목별</button>
+            <button class="stat-subtab-underline-btn" id="subtabTrend" onclick="switchStatsSubtab('trend')"><i class="ti ti-calendar-stats" aria-hidden="true"></i> 기간 비교</button>
           </div>
 
           <!-- 기간 비교 전용 컨트롤 (기간비교 서브탭에서만 표시) -->
@@ -218,7 +219,7 @@
               ondragleave="statsDragLeave('zone-purchase')"
               ondrop="statsDropFile(event,'purchase')">
               <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'purchase')">
-              <div class="cl-upload-icon">📥</div>
+              <div class="cl-upload-icon"><i class="ti ti-truck-delivery" aria-hidden="true"></i></div>
               <div class="cl-upload-label">입고(구매) 파일</div>
               <div class="cl-upload-hint">예: 26년 1월 입고 - 강남.xlsx</div>
               <div class="cl-upload-status" id="status-purchase"></div>
@@ -228,7 +229,7 @@
               ondragleave="statsDragLeave('zone-usage')"
               ondrop="statsDropFile(event,'usage')">
               <input type="file" accept=".xlsx,.xls" onchange="statsHandleFile(this,'usage')">
-              <div class="cl-upload-icon">📋</div>
+              <div class="cl-upload-icon"><i class="ti ti-clipboard-check" aria-hidden="true"></i></div>
               <div class="cl-upload-label">사용현황 파일</div>
               <div class="cl-upload-hint">예: 26년 1월 사용현황 - 강남.xlsx</div>
               <div class="cl-upload-status" id="status-usage"></div>
