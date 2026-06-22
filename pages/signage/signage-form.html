@@ -290,13 +290,16 @@
     </div>
   </div>
 
-  <!-- ★ 수정: 스크립트 로드 전 스피너를 즉시 표시 -->
+  <!-- ★ 수정: 스크립트 로드 전 스피너를 즉시 표시 (showGlobalLoading과 동일하게 is-open 클래스 사용) -->
   <script>
     (function () {
       var el = document.getElementById('globalLoading');
       var txt = document.getElementById('globalLoadingText');
-      if (el)  el.style.display  = '';
-      if (txt) txt.textContent   = '화면을 준비하는 중...';
+      if (el) {
+        el.classList.add('is-open');
+        el.setAttribute('aria-hidden', 'false');
+      }
+      if (txt) txt.textContent = '화면을 준비하는 중...';
     })();
   </script>
 
