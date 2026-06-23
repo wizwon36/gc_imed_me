@@ -1304,8 +1304,9 @@ async function loadBranchOptions(user) {
     clinics = [{ value: fallback, label: fallback }];
   }
 
-  // 소속 의원 기본 선택
-  const defaultBranch = user?.clinic_name || clinics[0]?.value || '';
+  // 첫 번째 의원을 기본 선택 (소속 의원으로 자동 고정하면 다른 의원 마감 시
+  // 드롭다운이 소속 의원으로 덮어씌워지는 문제가 있어 제거)
+  const defaultBranch = clinics[0]?.value || '';
   sel.innerHTML = clinics.map(c =>
     `<option value="${c.value}"${c.value === defaultBranch ? ' selected' : ''}>${c.label}</option>`
   ).join('');
