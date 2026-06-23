@@ -425,8 +425,14 @@ function byItem(data, codeKey, nameKey, qtyKey, amtKey) {
 // 8. 메인 처리
 // ═══════════════════════════════════════════════════════════
 async function runProcessing() {
-  const branch  = document.getElementById('inputBranch').value.trim() || '서울숲';
+  const branch  = document.getElementById('inputBranch').value.trim();
   const ym      = document.getElementById('inputMonth').value;
+
+  if (!branch) {
+    showMessage('의원을 선택해주세요.', 'error');
+    goStep(2);
+    return;
+  }
   const [y, m]  = ym.split('-');
   const mi      = parseInt(m);
   const cc      = document.getElementById('inputCC').value.trim();
