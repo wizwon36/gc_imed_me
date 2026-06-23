@@ -1292,7 +1292,8 @@ async function loadBranchOptions(user) {
       ? data
           .filter(c => String(c.use_yn || 'Y').toUpperCase() === 'Y')
           .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
-          .map(c => ({ value: c.code_name, label: c.code_name }))
+          // code_value(GN/GB/SS 등)도 보존해 clinic_code 기반 매칭에 사용
+          .map(c => ({ value: c.code_name, label: c.code_name, code_value: c.code_value }))
       : [];
   } catch (e) {
     clinics = [];
@@ -1300,13 +1301,22 @@ async function loadBranchOptions(user) {
 
   // API 실패 또는 목록 없으면 소속 의원만 표시
   if (!clinics.length) {
-    const fallback = user?.clinic_name || user?.org_name || '서울숲의원';
-    clinics = [{ value: fallback, label: fallback }];
+    const fallback = user?.clinic_name || user?.org_name || '';
+    clinics = [{ value: fallback, label: fallback, code_value: user?.clinic_code || '' }];
   }
 
-  // 첫 번째 의원을 기본 선택 (소속 의원으로 자동 고정하면 다른 의원 마감 시
-  // 드롭다운이 소속 의원으로 덮어씌워지는 문제가 있어 제거)
-  const defaultBranch = clinics[0]?.value || '';
+  // 소속 의원 기본 선택:
+  //   1순위 — 세션의 clinic_name이 있으면 그대로 매칭
+  //   2순위 — clinic_name이 없거나 매칭 실패 시 clinic_code로 매칭
+  //           (Supabase 이관 후 resolveOrgFields_ 조인 실패 시 clinic_name이
+  //            빈 문자열로 내려오는 경우 대비)
+  //   3순위 — 둘 다 실패 시 sort_order 첫 번째 의원
+  const userClinicName = user?.clinic_name || '';
+  const userClinicCode = user?.clinic_code || '';
+  const defaultBranch =
+    (userClinicName && clinics.find(c => c.value === userClinicName)?.value) ||
+    clinics.find(c => c.code_value === userClinicCode)?.value ||
+    clinics[0]?.value || '';
   sel.innerHTML = clinics.map(c =>
     `<option value="${c.value}"${c.value === defaultBranch ? ' selected' : ''}>${c.label}</option>`
   ).join('');
