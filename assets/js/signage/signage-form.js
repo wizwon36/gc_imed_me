@@ -75,28 +75,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
-  // ── 권한 확인 (signage 앱) ──────────────────────────────────────
-  const ok = await window.appPermission?.requirePermission?.('signage', ['view', 'admin']);
-  if (!ok) return;
-
-  const isHistAdmin = await window.appPermission?.hasPermission?.('signage', ['admin'])
-    || String(user.role || '').trim().toLowerCase() === 'admin';
-
-  // admin이면 이력 탭 설명 변경
-  if (isHistAdmin) {
-    const heroDesc = document.getElementById('historyHeroDesc');
-    if (heroDesc) heroDesc.textContent = '전체 사인물 제작 신청 내역을 조회합니다.';
-  }
-
-  // ── 폼 데이터 초기화 (스피너는 여기서만 — 버튼 바인딩 전에 완료) ──
+  // ── 권한 확인 + 폼 초기화를 하나의 스피너 블록으로 묶음 ──────────
+  // requirePermission이 API를 호출하는 동안 스피너 없이 화면이 노출되면
+  // 유저가 카드 클릭 시 바인딩 전이라 무반응 버그가 발생함 — 스피너를 먼저 띄움
+  let isHistAdmin = false;
   try {
     showGlobalLoading('화면을 준비하는 중...');
+
+    const ok = await window.appPermission?.requirePermission?.('signage', ['view', 'admin']);
+    if (!ok) return;
+
+    isHistAdmin = await window.appPermission?.hasPermission?.('signage', ['admin'])
+      || String(user.role || '').trim().toLowerCase() === 'admin';
+
     await window.orgSelect.loadOrgData();
     prefillUserInfo(user);
   } catch (err) {
     showMessage(err.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
     await hideGlobalLoading();
+  }
+
+  // admin이면 이력 탭 설명 변경
+  if (isHistAdmin) {
+    const heroDesc = document.getElementById('historyHeroDesc');
+    if (heroDesc) heroDesc.textContent = '전체 사인물 제작 신청 내역을 조회합니다.';
   }
 
   // ── 폼 이벤트 바인딩 (스피너 해제 후 등록 — 스피너가 클릭을 막는 현상 방지) ──
