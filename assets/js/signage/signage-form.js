@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
 
-  const isHistAdmin = String(user.role || '').trim().toLowerCase() === 'admin'
-    || user.team_code === 'SS_MSO';
+  const isHistAdmin = await window.appPermission?.hasPermission?.('signage', ['admin'])
+    || String(user.role || '').trim().toLowerCase() === 'admin';
 
   // admin이면 이력 탭 설명 변경
   if (isHistAdmin) {
