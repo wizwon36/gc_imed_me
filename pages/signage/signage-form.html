@@ -12,7 +12,7 @@
   <div class="container page-shell equipment-form-shell">
 
     <!-- 헤더 -->
-    <section class="top-brand-bar portal-topbar portal-hero-card equipment-form-topbar">
+    <section class="top-brand-bar portal-topbar equipment-form-topbar signage-topbar">
       <div class="top-brand-left">
         <div class="top-brand-logo">✦</div>
         <div class="top-brand-texts">
@@ -26,6 +26,8 @@
         <a class="portal-header-btn portal-header-btn--secondary" href="../../portal.html">HOME</a>
       </div>
     </section>
+
+
 
     <!-- ══════════════════════════════════════ -->
     <!-- 탭 A: 신청 폼                          -->
@@ -80,18 +82,24 @@
           </div>
         </div>
         <div class="form-grid two-col">
+          <!-- 제목: 타입에 따라 placeholder 변경 (JS에서 처리) -->
+          <label class="form-field full-col">
+            <span class="form-label required">제목</span>
+            <input type="text" id="request_title" class="input"
+              placeholder="제작 종류를 선택하면 입력 안내가 표시됩니다." required />
+          </label>
           <label class="form-field">
-            <span class="form-label required">요청 의원</span>
+            <span class="form-label required">의원명</span>
             <input type="text" id="clinic_name_display" class="input" readonly placeholder="로그인 정보에서 자동 입력" />
             <input type="hidden" id="clinic_code" />
           </label>
           <label class="form-field">
-            <span class="form-label required">요청 팀</span>
+            <span class="form-label required">부서</span>
             <input type="text" id="team_name_display" class="input" readonly placeholder="로그인 정보에서 자동 입력" />
             <input type="hidden" id="team_code" />
           </label>
           <label class="form-field">
-            <span class="form-label required">요청자명</span>
+            <span class="form-label required">이름</span>
             <input type="text" id="requester_name" class="input" placeholder="이름을 입력하세요" required />
           </label>
           <label class="form-field">
@@ -100,7 +108,7 @@
           </label>
           <label class="form-field">
             <span class="form-label required">수량</span>
-            <input type="number" id="quantity" class="input" min="1" value="1" required />
+            <input type="number" id="quantity" class="input" min="1" step="1" value="1" required />
           </label>
           <label class="form-field">
             <span class="form-label required">긴급 여부</span>
@@ -113,27 +121,15 @@
             <span class="form-label required">긴급 사유</span>
             <input type="text" id="urgent_reason" class="input" placeholder="긴급 처리가 필요한 사유를 입력하세요" />
           </label>
-          <label class="form-field full-col">
-            <span class="form-label required">문구 (텍스트)</span>
-            <textarea id="text_content" class="input textarea" rows="3" placeholder="제작에 들어갈 문구를 입력하세요" required></textarea>
+          <label class="form-field full-col signage-draft-confirm-row">
+            <span class="form-label">시안 컨펌 요청</span>
+            <label class="signage-checkbox-label">
+              <input type="checkbox" id="draft_confirm" class="signage-checkbox-input" />
+              <span class="signage-checkbox-box"></span>
+              <span class="signage-checkbox-text">시안 제작 후 요청자 확인을 받고 싶습니다</span>
+            </label>
+            <p class="signage-checkbox-help">체크 시 담당자가 시안 파일을 먼저 공유하여 확인 후 제작에 들어갑니다.</p>
           </label>
-          <div class="form-field full-col">
-            <span class="form-label">시안 파일 첨부</span>
-            <div class="photo-upload-box">
-              <div class="form-photo-preview signage-file-preview" id="preview_main">
-                <div class="photo-preview-empty" id="previewEmpty_main">첨부된 파일이 없습니다.</div>
-                <div class="signage-file-list" id="fileList_main"></div>
-              </div>
-              <div class="photo-upload-actions">
-                <div class="photo-file-control">
-                  <input type="file" id="file_main" class="photo-file-input" multiple accept="image/*,.pdf,.ai,.psd" />
-                  <label for="file_main" class="photo-file-trigger">파일 선택</label>
-                  <div id="fileName_main" class="photo-file-name">선택된 파일 없음</div>
-                </div>
-                <div class="photo-upload-help">이미지, PDF, AI, PSD 파일을 첨부해 주세요.</div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -146,6 +142,10 @@
           </div>
         </div>
         <div class="form-grid two-col">
+          <label class="form-field full-col">
+            <span class="form-label required">상세내역</span>
+            <textarea id="text_content" class="input textarea" rows="4" placeholder="제작에 들어갈 문구 및 상세 내용을 입력하세요" required></textarea>
+          </label>
           <label class="form-field">
             <span class="form-label required">사이즈</span>
             <input type="text" id="sign_size" class="input" placeholder="예: 900 × 600 × 5 mm" />
@@ -167,36 +167,17 @@
             <input type="text" id="install_location" class="input" placeholder="예: 1층 로비 입구 우측" />
           </label>
           <div class="form-field full-col">
-            <span class="form-label required">설치 위치 사진 <span class="signage-badge-note">(필수 첨부)</span></span>
-            <div class="photo-upload-box">
-              <div class="form-photo-preview signage-file-preview" id="preview_location">
-                <div class="photo-preview-empty" id="previewEmpty_location">첨부된 사진이 없습니다.</div>
-                <div class="signage-file-list" id="fileList_location"></div>
-              </div>
-              <div class="photo-upload-actions">
+            <span class="form-label required">첨부파일 <span class="signage-badge-note">(설치위치 사진, 참고자료 등)</span></span>
+            <div class="signage-upload-flat">
+              <div class="signage-file-list" id="fileList_location"></div>
+              <div class="signage-upload-row">
                 <div class="photo-file-control">
-                  <input type="file" id="file_location" class="photo-file-input" multiple accept="image/*" />
-                  <label for="file_location" class="photo-file-trigger">사진 선택</label>
+                  <input type="file" id="file_location" class="photo-file-input" multiple accept="image/*,.pdf,.ai,.dwg" />
+                  <label for="file_location" class="photo-file-trigger">파일 선택</label>
                   <div id="fileName_location" class="photo-file-name">선택된 파일 없음</div>
                 </div>
-                <div class="photo-upload-help">설치 위치가 잘 보이는 사진을 올려주세요.</div>
-              </div>
-            </div>
-          </div>
-          <div class="form-field full-col">
-            <span class="form-label required">참고 자료 <span class="signage-badge-note">(도면 또는 레퍼런스 이미지)</span></span>
-            <div class="photo-upload-box">
-              <div class="form-photo-preview signage-file-preview" id="preview_reference">
-                <div class="photo-preview-empty" id="previewEmpty_reference">첨부된 파일이 없습니다.</div>
-                <div class="signage-file-list" id="fileList_reference"></div>
-              </div>
-              <div class="photo-upload-actions">
-                <div class="photo-file-control">
-                  <input type="file" id="file_reference" class="photo-file-input" multiple accept="image/*,.pdf,.ai,.dwg" />
-                  <label for="file_reference" class="photo-file-trigger">파일 선택</label>
-                  <div id="fileName_reference" class="photo-file-name">선택된 파일 없음</div>
-                </div>
-                <div class="photo-upload-help">도면, 레퍼런스 이미지, PDF, AI, DWG 파일을 첨부해 주세요.</div>
+                <div class="photo-upload-help">설치 위치 사진, 도면, 레퍼런스 이미지 등을 함께 첨부해 주세요.</div>
+                <div class="photo-upload-limit">📎 파일당 최대 10MB · 전체 합계 20MB 이하</div>
               </div>
             </div>
           </div>
@@ -212,6 +193,7 @@
           </div>
         </div>
 
+        <!-- 명판 타입 선택 (A~D) -->
         <div class="form-field" style="margin-bottom:20px;">
           <span class="form-label required">명판 타입 선택</span>
           <div class="signage-np-type-grid">
@@ -242,41 +224,114 @@
           </div>
         </div>
 
-        <!-- 항상 2컬럼 고정: 왼쪽=타입 디자인(미선택시 안내문구), 오른쪽=레이아웃 -->
-        <div class="signage-np-detail-grid" style="margin-bottom:20px;">
-          <!-- 왼쪽: 타입 미선택 시 안내, 선택 시 이미지 -->
+        <!-- 제작 방식 선택 (필수) -->
+        <div class="form-field" style="margin-bottom:20px;">
+          <span class="form-label required">제작 방식</span>
+          <div class="signage-method-grid">
+            <label class="signage-method-card" id="methodCard_NEW">
+              <input type="radio" name="nameplate_method" value="NEW" class="signage-sr-only" />
+              <span class="signage-method-icon">🆕</span>
+              <span class="signage-method-title">명판 신규 제작</span>
+              <span class="signage-method-desc">아크릴 등 명판 전체를 새로 제작합니다</span>
+            </label>
+            <label class="signage-method-card" id="methodCard_REUSE">
+              <input type="radio" name="nameplate_method" value="REUSE" class="signage-sr-only" />
+              <span class="signage-method-icon">♻️</span>
+              <span class="signage-method-title">기존 명판 활용</span>
+              <span class="signage-method-desc">기존 명판에 스티커만 교체하여 부착합니다</span>
+            </label>
+          </div>
+          <p class="signage-method-help">💡 안내: 팀 내에 보관 중인 동일한 모양과 크기의 명판이 있다면, <strong>'기존 명판 활용'</strong>을 선택해 주시기 바랍니다.</p>
+        </div>
+
+        <!-- 세부 디자인 선택 (타입 선택 후 동적 생성) -->
+        <div class="form-field" id="npSubtypeSection" style="display:none; margin-bottom:20px;">
+          <span class="form-label required">세부 디자인 선택</span>
+          <div class="signage-np-type-grid" id="npSubtypeGrid">
+            <!-- JS에서 동적 생성 -->
+          </div>
+        </div>
+
+        <!-- 레이아웃 선택 (세부 디자인 선택 후 동적 생성) -->
+        <div class="form-field" id="npLayoutSection" style="display:none; margin-bottom:20px;">
+          <span class="form-label required">문구 레이아웃 선택</span>
+          <p class="sub-text" style="margin-bottom:10px;">명판에 들어갈 문구 배열 형태를 선택하세요.</p>
+          <div class="signage-np-layout-grid" id="npLayoutGrid">
+            <!-- JS에서 동적 생성 -->
+          </div>
+        </div>
+
+        <!-- 디자인 이미지 미리보기 -->
+        <div class="signage-np-detail-grid" id="npDesignPreviewArea" style="display:none; margin-bottom:20px;">
           <div class="signage-np-detail-col">
             <span class="form-label">선택한 타입 디자인</span>
-            <div id="npDesignPlaceholder" class="signage-np-placeholder">
+            <div id="npDesignPlaceholder" class="signage-np-placeholder" style="display:none;">
               <span class="signage-np-placeholder-icon">🏷</span>
               <span class="signage-np-placeholder-text">위에서 명판 타입을 선택해 주세요</span>
             </div>
             <img id="nameplateDesignImg" src="" alt="명판 디자인" class="signage-np-img" style="display:none;" />
-            <div class="signage-np-size-badge" id="selectedSizeText" style="display:none;"></div>
+            <div class="signage-np-size-badge" id="selectedSizeText" style="display:none; text-align:center;"></div>
           </div>
-          <!-- 오른쪽: 항상 레이아웃 이미지 -->
           <div class="signage-np-detail-col">
             <span class="form-label">문구 레이아웃 안내</span>
-            <img id="layoutImg" src="" alt="문구 레이아웃" class="signage-np-img" />
-            <p class="sub-text" style="margin-top:6px;">위 레이아웃(ㄱ/ㄴ/ㄷ) 중 원하시는 형태를 아래 문구 상세에 기재해 주세요.</p>
+            <img id="layoutImg" src="" alt="문구 레이아웃" class="signage-np-img" style="display:none;" />
+            <div id="layoutPlaceholder" class="signage-np-placeholder">
+              <span class="signage-np-placeholder-icon">📐</span>
+              <span class="signage-np-placeholder-text">타입 선택 시 레이아웃 안내가 표시됩니다</span>
+            </div>
+            <p class="signage-np-size-badge" style="text-align:center;">위 레이아웃 중 원하는 타입을 선택하세요.</p>
           </div>
         </div>
 
-        <div class="form-grid two-col">
-          <label class="form-field full-col">
-            <span class="form-label required">설치 환경</span>
-            <select id="install_env_nameplate" class="input">
-              <option value="">선택하세요</option>
-              <option value="INDOOR">실내</option>
-              <option value="OUTDOOR">실외</option>
-            </select>
-          </label>
-          <label class="form-field full-col">
-            <span class="form-label required">명판 문구 상세</span>
-            <textarea id="nameplate_text" class="input textarea" rows="5"
-              placeholder="예)&#10;레이아웃: ㄴ형&#10;성함: 홍길동&#10;직함: MD / G.D&#10;부서: 내과" required></textarea>
-          </label>
+        <!-- 명판 문구 입력 (레이아웃 선택 후 표시) -->
+        <div id="npTextSection" style="display:none;">
+          <div class="signage-np-text-divider">
+            <span>명판 문구 입력</span>
+          </div>
+          <div class="form-grid two-col" id="npTextFields">
+            <!-- JS에서 레이아웃에 따라 동적 생성 -->
+          </div>
+
+          <!-- 자석 유무 -->
+          <div class="form-field" id="magnetField" style="margin-top:16px;">
+            <span class="form-label required">자석 부착</span>
+            <div class="signage-magnet-grid">
+              <label class="signage-magnet-card" id="magnetCard_Y">
+                <input type="radio" name="magnet_yn" value="Y" class="signage-sr-only" />
+                <span class="signage-magnet-icon">🧲</span>
+                <span class="signage-magnet-title">자석 있음</span>
+                <span class="signage-magnet-desc">탈부착 가능</span>
+              </label>
+              <label class="signage-magnet-card" id="magnetCard_N">
+                <input type="radio" name="magnet_yn" value="N" class="signage-sr-only" />
+                <span class="signage-magnet-icon">📌</span>
+                <span class="signage-magnet-title">자석 없음</span>
+                <span class="signage-magnet-desc">고정 부착</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 명판 예시 파일 첨부 -->
+          <div class="form-field" style="margin-top:16px;">
+            <span class="form-label">명판 예시 첨부 <span class="signage-badge-note">(선택)</span></span>
+            <div class="signage-upload-flat">
+              <div class="signage-file-list" id="fileList_main"></div>
+              <div class="signage-upload-row">
+                <div class="photo-file-control">
+                  <input type="file" id="file_main" class="photo-file-input" multiple accept="image/*,.pdf,.ai,.psd" />
+                  <label for="file_main" class="photo-file-trigger">파일 선택</label>
+                  <div id="fileName_main" class="photo-file-name">선택된 파일 없음</div>
+                </div>
+                <div class="photo-upload-help">참고할 명판 예시 이미지나 파일을 첨부해 주세요.</div>
+                <div class="photo-upload-limit">📎 파일당 최대 10MB · 전체 합계 20MB 이하</div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <!-- hidden: 최종 조합 저장용 -->
+        <input type="hidden" id="nameplate_text" />
+        <input type="hidden" id="install_env_nameplate" value="INDOOR" />
       </div>
 
       <!-- 신청 버튼 -->
@@ -321,7 +376,7 @@
           </label>
         </div>
 
-        <!-- 2행: 의원 / 부서 (admin만 표시) -->
+        <!-- 2행: 의원 / 부서 -->
         <div class="form-grid two-col" style="margin-bottom:12px;">
           <label class="form-field" id="histFilterClinicWrap">
             <span class="form-label">의원</span>
@@ -357,7 +412,7 @@
           </label>
         </div>
 
-        <!-- 4행: 시작일 / 종료일 -->
+        <!-- 4행: 시작일 / 종료일 + 조회 버튼 -->
         <div class="form-grid two-col" style="align-items:flex-end;">
           <label class="form-field">
             <span class="form-label">시작일</span>
@@ -394,7 +449,7 @@
                 <th style="width:140px; text-align:center;">소속 부서</th>
                 <th style="width:90px;  text-align:center;">신청인</th>
                 <th style="width:70px;  text-align:center;">수량</th>
-                <th>신청 내용</th>
+                <th>신청 제목</th>
               </tr>
             </thead>
             <tbody id="histTableBody">
@@ -427,6 +482,7 @@
   </div>
 
   <style>
+    /* ── 탭 네비게이션 ── */
     /* ── 탭 패널 ── */
     .signage-tab-pane { display: none; }
     .signage-tab-pane.is-active { display: block; }
@@ -440,7 +496,12 @@
       border-bottom: 1px solid rgba(148, 163, 184, 0.16);
       margin-bottom: 0;
     }
-    .hist-list-count { font-size: 13px; font-weight: 700; color: #64748b; }
+
+    .hist-list-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+    }
 
     /* ── 테이블 래퍼 ── */
     .hist-table-wrap {
@@ -449,60 +510,169 @@
       border: 1px solid rgba(148, 163, 184, 0.18);
       margin-top: 14px;
     }
-    .hist-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .hist-table thead tr { background: #f8fafc; border-bottom: 1px solid rgba(148, 163, 184, 0.20); }
-    .hist-table th { padding: 11px 13px; text-align: left; font-size: 12px; font-weight: 800; color: #64748b; letter-spacing: 0.02em; white-space: nowrap; }
-    .hist-table tbody tr { border-bottom: 1px solid rgba(148, 163, 184, 0.10); cursor: pointer; transition: background 0.11s ease; }
+
+    .hist-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .hist-table thead tr {
+      background: #f8fafc;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.20);
+    }
+
+    .hist-table th {
+      padding: 11px 13px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 800;
+      color: #64748b;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .hist-table tbody tr {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+      cursor: pointer;
+      transition: background 0.11s ease;
+    }
+
     .hist-table tbody tr:last-child { border-bottom: none; }
     .hist-table tbody tr:hover { background: rgba(37, 99, 235, 0.03); }
-    .hist-table td { padding: 11px 13px; color: #0f172a; vertical-align: middle; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+
+    .hist-table td {
+      padding: 11px 13px;
+      color: #0f172a;
+      vertical-align: middle;
+      white-space: nowrap;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .hist-table td.wrap { white-space: normal; word-break: break-all; }
 
     /* 유형 뱃지 */
-    .hist-badge { display: inline-flex; align-items: center; min-height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .hist-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
     .hist-badge-NAMEPLATE { background: rgba(99,102,241,.10); color: #4338ca; }
-    .hist-badge-SIGN      { background: rgba(14,165,233,.10); color: #0369a1; }
-    .hist-badge-urgent    { background: rgba(220,38,38,.10);  color: #b91c1c; }
+    .hist-badge-SIGN      { background: rgba(14,165,233,.10);  color: #0369a1; }
+    .hist-badge-urgent    { background: rgba(220,38,38,.10);   color: #b91c1c; }
 
     /* ── 빈 상태 ── */
-    .hist-table-empty { padding: 36px 20px; text-align: center; color: #64748b; font-size: 14px; line-height: 1.7; }
+    .hist-table-empty {
+      padding: 36px 20px;
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
     .hist-table-empty-icon { font-size: 34px; margin-bottom: 10px; }
 
     /* ── 이력 상세 모달 ── */
     .signage-hist-modal-backdrop {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(11, 31, 68, 0.45); backdrop-filter: blur(4px);
-      align-items: center; justify-content: center; padding: 20px;
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(11, 31, 68, 0.45);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
+
     .signage-hist-modal-backdrop.is-open { display: flex; }
+
     .signage-hist-modal {
-      background: #fff; border-radius: 22px; width: 100%; max-width: 620px;
-      max-height: 88vh; overflow-y: auto;
+      background: #fff;
+      border-radius: 22px;
+      width: 100%;
+      max-width: 620px;
+      max-height: 88vh;
+      overflow-y: auto;
       box-shadow: 0 24px 64px rgba(11, 31, 68, 0.22);
       animation: shmIn 0.2s ease;
     }
-    @keyframes shmIn { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+    @keyframes shmIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     .signage-hist-modal-head {
-      display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-      padding: 20px 22px 16px; border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-      position: sticky; top: 0; background: #fff; z-index: 2; border-radius: 22px 22px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 2;
+      border-radius: 22px 22px 0 0;
     }
-    .signage-hist-modal-title { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+
+    .signage-hist-modal-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
     .signage-hist-modal-close {
-      width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(148, 163, 184, 0.26);
-      background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 16px; color: #64748b; flex-shrink: 0; transition: background 0.12s;
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      background: #f8fafc;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #64748b; flex-shrink: 0;
+      transition: background 0.12s;
     }
+
     .signage-hist-modal-close:hover { background: #e2e8f0; }
     .signage-hist-modal-body { padding: 20px 22px 26px; }
+
     .shm-section { margin-bottom: 20px; }
     .shm-section:last-child { margin-bottom: 0; }
-    .shm-section-title { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 0.07em; text-transform: uppercase; margin: 0 0 10px; }
+
+    .shm-section-title {
+      font-size: 11px; font-weight: 800; color: #94a3b8;
+      letter-spacing: 0.07em; text-transform: uppercase; margin: 0 0 10px;
+    }
+
     .shm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .shm-grid.single { grid-template-columns: 1fr; }
-    .shm-item { padding: 10px 13px; background: #f8fafc; border-radius: 11px; border: 1px solid rgba(148, 163, 184, 0.13); }
+
+    .shm-item {
+      padding: 10px 13px; background: #f8fafc;
+      border-radius: 11px; border: 1px solid rgba(148, 163, 184, 0.13);
+    }
+
     .shm-item-label { font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 3px; }
-    .shm-item-value { font-size: 13px; font-weight: 600; color: #0f172a; word-break: break-all; white-space: pre-wrap; line-height: 1.55; }
+
+    .shm-item-value {
+      font-size: 13px; font-weight: 600; color: #0f172a;
+      word-break: break-all; white-space: pre-wrap; line-height: 1.55;
+    }
+
+    /* ── 반응형 ── */
+    @media (max-width: 760px) {
+      .signage-tab-btn { padding: 9px 14px; font-size: 13px; }
+    }
   </style>
 
   <!-- 전역 로딩 -->
@@ -515,9 +685,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../../assets/js/core/config.js"></script>
+  <script src="../../assets/js/core/api.js"></script>
   <script src="../../assets/js/core/utils.js"></script>
   <script src="../../assets/js/core/auth.js"></script>
-  <script src="../../assets/js/core/api.js"></script>
+  <script src="../../assets/js/core/app-permission.js"></script>
   <script src="../../assets/js/core/org-select.js"></script>
   <script src="../../assets/js/signage/nameplate-images.js"></script>
   <script src="../../assets/js/signage/signage-form.js"></script>
