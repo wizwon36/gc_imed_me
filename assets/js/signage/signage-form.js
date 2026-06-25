@@ -10,15 +10,63 @@ const NAMEPLATE_SIZES = {
   D: '높이 2.5cm (20cm)'
 };
 
+const NAMEPLATE_SUBTYPES = {
+  A: ['1', '2', '3', '4'],
+  B: ['1', '2', '3', '4'],
+  C: ['1', '2', '3', '4'],
+  D: ['1', '2', '3', '4']
+};
+
+/**
+ * 레이아웃 정의
+ * ㄱ : 이름 + 영문이름
+ * ㄴ : 이름 + 영문이름 + 직함
+ * ㄷ : 이름 + 영문이름 + 직함 + 진료과
+ */
+const NAMEPLATE_LAYOUTS = [
+  {
+    id: 'ga',
+    label: 'ㄱ 형',
+    shape: 'ㄱ',
+    desc: '이름 · 영문이름',
+    fields: ['name_kor', 'name_eng']
+  },
+  {
+    id: 'na',
+    label: 'ㄴ 형',
+    shape: 'ㄴ',
+    desc: '이름 · 영문이름 · 직함',
+    fields: ['name_kor', 'name_eng', 'title']
+  },
+  {
+    id: 'da',
+    label: 'ㄷ 형',
+    shape: 'ㄷ',
+    desc: '이름 · 영문이름 · 직함 · 진료과',
+    fields: ['name_kor', 'name_eng', 'title', 'dept']
+  }
+];
+
+const NP_FIELD_META = {
+  name_kor: { label: '이름 (한글)', placeholder: '예: 홍길동',        required: true },
+  name_eng: { label: '영문 이름',   placeholder: '예: Hong Gil-dong', required: true },
+  title:    { label: '직함',        placeholder: '예: MD / G.D',      required: true },
+  dept:     { label: '진료과',      placeholder: '예: 내과',           required: true }
+};
+
 const MAX_SINGLE_FILE_MB = 10;
 const MAX_TOTAL_FILE_MB  = 20;
 const MAX_SINGLE_BYTES   = MAX_SINGLE_FILE_MB * 1024 * 1024;
 const MAX_TOTAL_BYTES    = MAX_TOTAL_FILE_MB  * 1024 * 1024;
 
-const uploadedFileIds   = { main: [], location: [], reference: [] };
-const uploadedFileSizes = { main: [], location: [], reference: [] };
-let pendingUploads = 0;
-let isSubmitting = false;
+// 로컬 보관용 (서버 업로드는 제출 시)
+const pendingFiles = { main: [], location: [], reference: [] }; // [{ file, itemId }]
+let pendingUploads = 0; // 미사용, 호환성 유지
+let isSubmitting   = false;
+
+let currentNpType    = '';
+let currentNpSubtype = '';
+let currentLayout    = null;
 
 // ─────────────────────────────────────────────
 // 초기화
@@ -26,6 +74,10 @@ let isSubmitting = false;
 document.addEventListener('DOMContentLoaded', async () => {
   const user = window.auth?.requireAuth?.();
   if (!user) return;
+
+  // ── 권한 확인 (signage 앱) ──────────────────────────────────────
+  const ok = await window.appPermission?.requirePermission?.('signage', ['view', 'admin']);
+  if (!ok) return;
 
   const isHistAdmin = await window.appPermission?.hasPermission?.('signage', ['admin'])
     || String(user.role || '').trim().toLowerCase() === 'admin';
@@ -36,22 +88,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (heroDesc) heroDesc.textContent = '전체 사인물 제작 신청 내역을 조회합니다.';
   }
 
-  // ── 폼 데이터 초기화
-  // 스피너는 여기서만 — 버튼 바인딩 전에 완료해야 스피너가 클릭을 막는 버그 방지
+  // ── 폼 데이터 초기화 (스피너는 여기서만 — 버튼 바인딩 전에 완료) ──
   try {
     showGlobalLoading('화면을 준비하는 중...');
-
     await window.orgSelect.loadOrgData();
     prefillUserInfo(user);
-
-    if (typeof NAMEPLATE_IMAGES !== 'undefined') {
-      const el = document.getElementById('layoutImg');
-      if (el) el.src = NAMEPLATE_IMAGES.layout || '';
-    }
   } catch (err) {
     showMessage(err.message || '초기화 중 오류가 발생했습니다.', 'error');
   } finally {
-    hideGlobalLoading();
+    await hideGlobalLoading();
   }
 
   // ── 폼 이벤트 바인딩 (스피너 해제 후 등록 — 스피너가 클릭을 막는 현상 방지) ──
@@ -59,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindUrgentToggle();
   bindFileDropzones();
   bindNameplateTypeSelector();
-  document.getElementById('signageForm').addEventListener('submit', handleSubmit);
+  document.getElementById('signageForm')?.addEventListener('submit', handleSubmit);
 
   // ── 탭 전환 (topbar 버튼) ──────────────────────────────────────
   function switchTab(tab) {
@@ -68,6 +113,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnHistory) btnHistory.style.display = tab === 'form'    ? '' : 'none';
     if (btnForm)    btnForm.style.display    = tab === 'history' ? '' : 'none';
+
+    // 버튼 가시성 변경 후 topbar 열 수 재계산
+    if (typeof applyTopActionsColClass === 'function') applyTopActionsColClass();
 
     document.querySelectorAll('.signage-tab-pane').forEach(p => p.classList.remove('is-active'));
     document.getElementById(tab === 'form' ? 'tabPaneForm' : 'tabPaneHistory').classList.add('is-active');
@@ -79,14 +127,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('tabBtnForm')?.addEventListener('click',    () => switchTab('form'));
 
   // ── 이력 탭 초기화 ─────────────────────────────────────────────
-  const today   = histTodayYmd();
-  const weekAgo = histDateOffset(-7);
-  const fromEl  = document.getElementById('histFilterDateFrom');
-  const toEl    = document.getElementById('histFilterDateTo');
+  const today    = histTodayYmd();
+  const weekAgo  = histDateOffset(-7);
+  const fromEl   = document.getElementById('histFilterDateFrom');
+  const toEl     = document.getElementById('histFilterDateTo');
   if (fromEl) { fromEl.value = weekAgo; fromEl.max = today; }
   if (toEl)   { toEl.value   = today;   toEl.max   = today; }
 
-  // 의원·팀 필터: admin이 아닌 경우 숨김
+  // 의원·팀 필터: admin이 아닌 경우(view 권한) 숨김
   const clinicWrap = document.getElementById('histFilterClinicWrap');
   const teamWrap   = document.getElementById('histFilterTeamWrap');
   if (!isHistAdmin) {
@@ -108,6 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     clinicSel.addEventListener('change', () => {
       const code = clinicSel.value;
+      // 팀 목록 갱신
       while (teamSel.options.length > 1) teamSel.remove(1);
       if (code) {
         const teams = (window.orgSelect?.getTeams?.() || [])
@@ -129,8 +178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('histSearchBtn')?.addEventListener('click', histFetchList);
   document.getElementById('histExportBtn')?.addEventListener('click', histExportExcel);
 
-  ['histFilterKeyword', 'histFilterType', 'histFilterUrgent',
-   'histFilterClinic', 'histFilterTeam', 'histFilterDateFrom', 'histFilterDateTo']
+  ['histFilterKeyword','histFilterType','histFilterUrgent',
+   'histFilterClinic','histFilterTeam','histFilterDateFrom','histFilterDateTo']
     .forEach(id => {
       document.getElementById(id)?.addEventListener('keydown', e => {
         if (e.key === 'Enter') histFetchList();
@@ -143,13 +192,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('histModalClose')?.addEventListener('click', histCloseModal);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') histCloseModal(); });
 
-  // ── 이력: 상태 변수 ────────────────────────────────────────────
+  // ── 이력: 데이터 조회 ───────────────────────────────────────────
   const HIST_PAGE_SIZE = 20;
   let histAllRows  = [];
   let histLoaded   = false;
   let histCurPage  = 1;
   let histTotPages = 1;
 
+  // 페이지네이션 버튼 이벤트
   document.getElementById('histPrevBtn')?.addEventListener('click', () => {
     if (histCurPage > 1) { histCurPage--; histRenderPage(); }
   });
@@ -157,7 +207,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (histCurPage < histTotPages) { histCurPage++; histRenderPage(); }
   });
 
-  // ── 이력: 데이터 조회 ───────────────────────────────────────────
   async function histFetchList() {
     const email    = (user.user_email || user.email || '').trim().toLowerCase();
     const keyword  = histGetVal('histFilterKeyword');
@@ -176,12 +225,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     histClearMsg();
 
     const params = { request_user_email: email, date_from: dateFrom, date_to: dateTo };
-    if (!isHistAdmin) params.target_user_email = email;
-    if (keyword) params.keyword     = keyword;
-    if (type)    params.type        = type;
-    if (urgent)  params.is_urgent   = urgent;
-    if (clinic)  params.clinic_code = clinic;
-    if (team)    params.team_code   = team;
+    if (!isHistAdmin) params.target_user_email = email;  // view: 본인만 / admin: 전체
+    if (keyword) params.keyword      = keyword;
+    if (type)    params.type         = type;
+    if (urgent)  params.is_urgent    = urgent;
+    if (clinic)  params.clinic_code  = clinic;
+    if (team)    params.team_code    = team;
 
     const searchBtn = document.getElementById('histSearchBtn');
     try {
@@ -202,7 +251,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // ── 이력: 페이지 렌더링 ─────────────────────────────────────────
+  // ── 이력: 페이지 렌더링 (페이지네이션 포함) ─────────────────────
   function histRenderPage() {
     const rows      = histAllRows;
     const total     = rows.length;
@@ -215,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (exportBtn) exportBtn.style.display = (isHistAdmin && total) ? '' : 'none';
 
     if (!total) {
-      if (countEl) countEl.textContent = histLoaded ? '조회된 신청 내역이 없습니다.' : '조회 버튼을 눌러 주세요.';
+      if (countEl)  countEl.textContent = histLoaded ? '조회된 신청 내역이 없습니다.' : '조회 버튼을 눌러 주세요.';
       [prevBtn, nextBtn, pageInfo].forEach(el => { if (el) el.style.display = 'none'; });
       histRenderTable([]);
       return;
@@ -223,6 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (countEl) countEl.textContent = `총 ${total.toLocaleString()}건 (${histCurPage} / ${histTotPages} 페이지)`;
 
+    // 페이지네이션 컨트롤
     const showPaging = histTotPages > 1;
     [prevBtn, nextBtn, pageInfo].forEach(el => { if (el) el.style.display = showPaging ? '' : 'none'; });
     if (prevBtn)  prevBtn.disabled  = histCurPage <= 1;
@@ -260,7 +310,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function histBuildRow(row) {
     const typeLabel = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type;
-    const content = row.text_content || row.nameplate_text || '-';
+    const title = row.request_title ||
+      (row.type === 'NAMEPLATE'
+        ? `[${row.nameplate_type || '-'} 타입] ${row.sign_size || ''}`.trim()
+        : ([row.sign_type, row.sign_size].filter(Boolean).join(' · ') || typeLabel));
+
     return `
       <tr data-id="${hesc(row.request_id)}">
         <td style="text-align:center; font-size:12px; color:#64748b; font-weight:700;">${hesc(row.request_id)}</td>
@@ -270,23 +324,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td style="text-align:center;">${hesc(row.team_name || row.department || '-')}</td>
         <td style="text-align:center;">${hesc(row.requester_name || '-')}</td>
         <td style="text-align:center;">${hesc(String(row.quantity || 1))}</td>
-        <td class="wrap">${hesc(content)}</td>
+        <td class="wrap">${hesc(title)}</td>
       </tr>`;
   }
 
   // ── 이력: 모달 ──────────────────────────────────────────────────
   function histOpenModal(row) {
     const ENV    = { INDOOR: '실내', OUTDOOR: '실외' };
+    const MAGNET = { Y: '있음 (탈부착)', N: '없음 (고정)' };
     const typeLabel = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' }[row.type] || row.type;
 
     const commonHtml = `
       <div class="shm-section">
         <p class="shm-section-title">📋 신청 정보</p>
+        <div class="shm-grid single" style="margin-bottom:8px;">
+          <div class="shm-item"><div class="shm-item-label">제목</div><div class="shm-item-value">${hesc(row.request_title || '-')}</div></div>
+        </div>
         <div class="shm-grid">
           <div class="shm-item"><div class="shm-item-label">신청번호</div><div class="shm-item-value">${hesc(row.request_id)}</div></div>
           <div class="shm-item"><div class="shm-item-label">제작 종류</div><div class="shm-item-value">${hesc(typeLabel)}</div></div>
           <div class="shm-item"><div class="shm-item-label">긴급 여부</div><div class="shm-item-value">${row.is_urgent === 'Y' ? '🚨 긴급' + (row.urgent_reason ? ' — ' + hesc(row.urgent_reason) : '') : '일반'}</div></div>
-          <div class="shm-item"><div class="shm-item-label">부서</div><div class="shm-item-value">${hesc(row.team_name || row.department || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">시안 컨펌</div><div class="shm-item-value">${row.draft_confirm === 'Y' ? '✅ 요청함' : '필요 없음'}</div></div>
+          <div class="shm-item"><div class="shm-item-label">부서</div><div class="shm-item-value">${hesc(row.department || '-')}</div></div>
           <div class="shm-item"><div class="shm-item-label">요청자</div><div class="shm-item-value">${hesc(row.requester_name || '-')}</div></div>
           <div class="shm-item"><div class="shm-item-label">연락처</div><div class="shm-item-value">${hesc(row.contact || '-')}</div></div>
           <div class="shm-item"><div class="shm-item-label">수량</div><div class="shm-item-value">${hesc(String(row.quantity || 1))}개</div></div>
@@ -295,22 +354,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const detailHtml = row.type === 'NAMEPLATE' ? `
       <div class="shm-section">
-        <p class="shm-section-title">🏷 명판 상세</p>
+        <p class="shm-section-title">🪧 명판 상세</p>
         <div class="shm-grid">
           <div class="shm-item"><div class="shm-item-label">명판 타입</div><div class="shm-item-value">${hesc(row.nameplate_type || '-')} 타입</div></div>
-          <div class="shm-item"><div class="shm-item-label">설치 환경</div><div class="shm-item-value">${hesc(ENV[row.install_env] || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">규격 사이즈</div><div class="shm-item-value">${hesc(row.sign_size || '-')}</div></div>
+          <div class="shm-item"><div class="shm-item-label">제작 방식</div><div class="shm-item-value">${row.nameplate_method === 'NEW' ? '명판 신규 제작' : row.nameplate_method === 'REUSE' ? '기존 명판 활용' : '-'}</div></div>
+          <div class="shm-item"><div class="shm-item-label">자석 부착</div><div class="shm-item-value">${hesc(MAGNET[row.magnet_yn] || '-')}</div></div>
         </div>
         ${row.nameplate_text ? `<div class="shm-grid single" style="margin-top:8px;"><div class="shm-item"><div class="shm-item-label">명판 문구</div><div class="shm-item-value">${hesc(row.nameplate_text)}</div></div></div>` : ''}
       </div>` : `
       <div class="shm-section">
-        <p class="shm-section-title">🪧 사인물 상세</p>
+        <p class="shm-section-title">🖼️ 사인물 상세</p>
         <div class="shm-grid">
           <div class="shm-item"><div class="shm-item-label">사이즈</div><div class="shm-item-value">${hesc(row.sign_size || '-')}</div></div>
           <div class="shm-item"><div class="shm-item-label">형태/종류</div><div class="shm-item-value">${hesc(row.sign_type || '-')}</div></div>
           <div class="shm-item"><div class="shm-item-label">설치 환경</div><div class="shm-item-value">${hesc(ENV[row.install_env] || '-')}</div></div>
           <div class="shm-item"><div class="shm-item-label">설치 위치</div><div class="shm-item-value">${hesc(row.install_location || '-')}</div></div>
         </div>
-        ${row.text_content ? `<div class="shm-grid single" style="margin-top:8px;"><div class="shm-item"><div class="shm-item-label">문구</div><div class="shm-item-value">${hesc(row.text_content)}</div></div></div>` : ''}
+        ${row.text_content ? `<div class="shm-grid single" style="margin-top:8px;"><div class="shm-item"><div class="shm-item-label">상세 내역</div><div class="shm-item-value">${hesc(row.text_content)}</div></div></div>` : ''}
       </div>`;
 
     const metaHtml = `
@@ -333,18 +394,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.style.overflow = '';
   }
 
-  // ── 이력: 엑셀 내보내기 (admin 전용) ────────────────────────────
+  // ── 이력: 엑셀 내보내기 ─────────────────────────────────────────
   function histExportExcel() {
-    if (!window.XLSX) { alert('엑셀 라이브러리를 불러오지 못했습니다.'); return; }
-    if (!histAllRows.length) { alert('다운로드할 데이터가 없습니다.'); return; }
+    if (!window.XLSX) {
+      alert('엑셀 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    if (!histAllRows.length) {
+      alert('다운로드할 데이터가 없습니다.');
+      return;
+    }
 
     const exportBtn = document.getElementById('histExportBtn');
+
     try {
       if (exportBtn) { exportBtn.disabled = true; exportBtn.textContent = '다운로드 중...'; }
 
       const TYPE_LABEL = { NAMEPLATE: '규격 명판', SIGN: '일반 사인물' };
-      const headers = ['신청번호', '신청일자', '종류', '소속 의원', '소속 부서', '신청인', '수량', '신청 내용'];
 
+      // 그리드와 동일한 8개 컬럼
+      const headers = ['신청번호', '신청일자', '종류', '소속 의원', '소속 부서', '신청인', '수량', '신청 제목'];
+
+      const COL_DATE   = new Set([1]);
+      const COL_NUM    = new Set([6]);
+
+      const rowData = histAllRows.map(r => {
+        const title = r.request_title ||
+          (r.type === 'NAMEPLATE'
+            ? `[${r.nameplate_type || '-'} 타입] ${r.sign_size || ''}`.trim()
+            : ([r.sign_type, r.sign_size].filter(Boolean).join(' · ') || TYPE_LABEL[r.type] || r.type));
+        return [
+          r.request_id     || '',
+          String(r.created_at || '').slice(0, 10),
+          TYPE_LABEL[r.type] || r.type || '',
+          r.clinic_name    || '',
+          r.team_name      || r.department || '',
+          r.requester_name || '',
+          Number(r.quantity || 1),
+          title
+        ];
+      });
+
+      // ── 장비대장과 동일한 스타일 ─────────────────────────────────
       const FONT_BASE   = { name: '맑은 고딕', sz: 10 };
       const FONT_HEADER = { name: '맑은 고딕', sz: 10, bold: true, color: { rgb: '1F3864' } };
       const FILL_HEADER = { patternType: 'solid', fgColor: { rgb: 'B8CCE4' } };
@@ -356,23 +447,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
       const ALIGN_LEFT   = { horizontal: 'left',   vertical: 'center' };
       const ALIGN_CENTER = { horizontal: 'center', vertical: 'center' };
-
-      const COL_DATE = new Set([1]);
-      const COL_NUM  = new Set([6]);
-
-      const rowData = histAllRows.map(r => {
-        const content = r.text_content || r.nameplate_text || '';
-        return [
-          r.request_id     || '',
-          String(r.created_at || '').slice(0, 10),
-          TYPE_LABEL[r.type] || r.type || '',
-          r.clinic_name    || '',
-          r.team_name      || r.department || '',
-          r.requester_name || '',
-          Number(r.quantity || 1),
-          content
-        ];
-      });
+      const FMT_DATE = 'yyyy-mm-dd';
 
       const ws = {};
       const totalCols = headers.length;
@@ -390,16 +465,17 @@ document.addEventListener('DOMContentLoaded', async () => {
           const isDate = COL_DATE.has(c);
           const isNum  = COL_NUM.has(c);
           const cell = {
-            v: val, t: isNum ? 'n' : 's',
+            v: val,
+            t: isNum ? 'n' : 's',
             s: { font: FONT_BASE, border: BORDER, alignment: (isDate || isNum) ? ALIGN_CENTER : ALIGN_LEFT }
           };
-          if (isDate && val) { cell.z = 'yyyy-mm-dd'; }
+          if (isDate && val) { cell.z = FMT_DATE; cell.s.numFmt = FMT_DATE; }
           ws[window.XLSX.utils.encode_cell({ r: r + 1, c })] = cell;
         });
       });
 
       ws['!ref']  = window.XLSX.utils.encode_range({ r: 0, c: 0 }, { r: totalRows - 1, c: totalCols - 1 });
-      ws['!cols'] = [{ wch: 16 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 18 }, { wch: 10 }, { wch: 8 }, { wch: 40 }];
+      ws['!cols'] = [{ wch: 16 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 18 }, { wch: 10 }, { wch: 8 }, { wch: 36 }];
       ws['!rows'] = Array(totalRows).fill({ hpt: 18 });
 
       const wb = window.XLSX.utils.book_new();
@@ -410,6 +486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         String(now.getMonth() + 1).padStart(2, '0') +
         String(now.getDate()).padStart(2, '0');
       window.XLSX.writeFile(wb, `사인물신청이력_${dateStr}.xlsx`);
+
     } catch (err) {
       alert(err.message || '엑셀 다운로드 중 오류가 발생했습니다.');
     } finally {
@@ -420,26 +497,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── 이력: 유틸 ──────────────────────────────────────────────────
   function hesc(v) {
     return String(v == null ? '' : v)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
   function histGetVal(id) { return (document.getElementById(id)?.value || '').trim(); }
   function histTodayYmd() {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
   function histDateOffset(days) {
     const d = new Date(); d.setDate(d.getDate() + days);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
   function histShowMsg(msg, type) {
-    const box = document.getElementById('historyMsgBox');
+    const box = document.getElementById('historyMsgBox') || document.getElementById('histMsgBox');
     if (!box) return;
     box.className = `message-box ${type}`;
     box.textContent = msg;
     box.style.display = 'block';
   }
   function histClearMsg() {
-    const box = document.getElementById('historyMsgBox');
+    const box = document.getElementById('historyMsgBox') || document.getElementById('histMsgBox');
     if (!box) return;
     box.style.display = 'none';
     box.textContent = '';
@@ -452,17 +529,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 function prefillUserInfo(user) {
   setVal('clinic_code', user.clinic_code || '');
   setVal('team_code',   user.team_code   || '');
-
   const clinics = window.orgSelect.getClinics();
   const teams   = window.orgSelect.getTeams();
-
-  const clinicName = resolveOrgName(user.clinic_name, user.clinic_code, clinics);
-  const teamName   = resolveOrgName(user.team_name,   user.team_code,   teams);
-
-  setVal('clinic_name_display', clinicName);
-  setVal('team_name_display',   teamName);
-  setVal('requester_name', user.name      || user.user_name  || '');
-  setVal('contact',        user.phone     || '');
+  setVal('clinic_name_display', resolveOrgName(user.clinic_name, user.clinic_code, clinics));
+  setVal('team_name_display',   resolveOrgName(user.team_name,   user.team_code,   teams));
+  setVal('requester_name', user.name  || user.user_name || '');
+  setVal('contact',        user.phone || '');
 }
 
 function resolveOrgName(sessionName, code, list) {
@@ -485,12 +557,41 @@ function bindTypeSelector() {
 
 function handleTypeChange(e) {
   const type = e.target.value;
-
   document.querySelectorAll('.signage-type-card').forEach(c => c.classList.remove('is-selected'));
   document.getElementById('typeCard_' + type)?.classList.add('is-selected');
-
   showEl('sectionCommon');
   showEl('formActions');
+
+  // 제목 placeholder 타입별 전환
+  const titleEl = document.getElementById('request_title');
+  if (titleEl) {
+    if (type === 'SIGN') {
+      titleEl.placeholder = '예: [A3 포맥스], [바닥 스티커], [화살표 스티커], [바닥 유도선] 등 제작 품목명을 상세히 입력해 주세요.';
+    } else {
+      titleEl.placeholder = '예: [명패] MD / 홍길동 / 부인과 : 명패 당사자의 직함 / 성함 / 부서를 순서대로 입력해 주세요.';
+    }
+  }
+
+  // 타입 전환 시 업로드 파일 상태 초기화 (이전 타입에서 올린 파일 ID가 잘못 포함되는 것 방지)
+  // 제작 방식 선택 초기화
+  document.querySelectorAll('.signage-method-card').forEach(c => c.classList.remove('is-selected'));
+  document.querySelectorAll('input[name="nameplate_method"]').forEach(r => r.checked = false);
+  pendingFiles.main      = [];
+  pendingFiles.location  = [];
+  pendingFiles.reference = [];
+  ['fileList_main', 'fileList_location'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+  ['fileName_main', 'fileName_location'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '선택된 파일 없음';
+  });
+
+  // 명판 선택 상태 초기화
+  currentNpType    = '';
+  currentNpSubtype = '';
+  currentLayout    = null;
 
   if (type === 'SIGN') {
     showEl('sectionSign');
@@ -499,8 +600,7 @@ function handleTypeChange(e) {
     setRequired('sign_type', true);
     setRequired('install_env', true);
     setRequired('install_location', true);
-    setRequired('install_env_nameplate', false);
-    setRequired('nameplate_text', false);
+    setRequired('text_content', true);
   } else {
     hideEl('sectionSign');
     showEl('sectionNameplate');
@@ -508,8 +608,7 @@ function handleTypeChange(e) {
     setRequired('sign_type', false);
     setRequired('install_env', false);
     setRequired('install_location', false);
-    setRequired('install_env_nameplate', true);
-    setRequired('nameplate_text', true);
+    setRequired('text_content', false);
   }
 
   setTimeout(() => {
@@ -530,73 +629,200 @@ function bindUrgentToggle() {
 }
 
 // ─────────────────────────────────────────────
-// 명판 타입 선택 → 디자인 이미지 표시
+// 명판 타입 선택 (A~D)
 // ─────────────────────────────────────────────
 function bindNameplateTypeSelector() {
   document.querySelectorAll('input[name="nameplate_type"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
-      const type = e.target.value;
+      currentNpType    = e.target.value;
+      currentNpSubtype = '';
+      currentLayout    = null;
 
       document.querySelectorAll('.signage-np-card').forEach(c => c.classList.remove('is-selected'));
-      document.getElementById('npCard_' + type)?.classList.add('is-selected');
+      document.getElementById('npCard_' + currentNpType)?.classList.add('is-selected');
 
-      if (typeof NAMEPLATE_IMAGES !== 'undefined') {
-        const designImg = document.getElementById('nameplateDesignImg');
-        if (designImg) designImg.src = NAMEPLATE_IMAGES[type] || '';
-      }
+      renderSubtypeGrid(currentNpType);
+      hideEl('npLayoutSection');
+      hideEl('npTextSection');
 
+      // 사이즈 텍스트
       const sizeText = document.getElementById('selectedSizeText');
       if (sizeText) {
-        sizeText.textContent = type + ' 타입 — ' + (NAMEPLATE_SIZES[type] || '');
+        sizeText.textContent = currentNpType + ' 타입 — ' + (NAMEPLATE_SIZES[currentNpType] || '');
         sizeText.style.display = '';
       }
 
+      // 타입 선택 즉시 디자인 이미지 + 미리보기 영역 표시
+      const designImg   = document.getElementById('nameplateDesignImg');
       const placeholder = document.getElementById('npDesignPlaceholder');
-      const designImg = document.getElementById('nameplateDesignImg');
-      if (placeholder) placeholder.style.display = 'none';
-      if (designImg) designImg.style.display = '';
+      const layoutImg   = document.getElementById('layoutImg');
+      const layoutPh    = document.getElementById('layoutPlaceholder');
+
+      if (typeof NAMEPLATE_IMAGES !== 'undefined' && NAMEPLATE_IMAGES[currentNpType]) {
+        if (designImg)   { designImg.src = NAMEPLATE_IMAGES[currentNpType]; designImg.style.display = ''; }
+        if (placeholder) placeholder.style.display = 'none';
+      } else {
+        if (designImg)   designImg.style.display = 'none';
+        if (placeholder) placeholder.style.display = '';
+      }
+
+      // 레이아웃 이미지는 타입 선택 시점에 바로 함께 표시
+      if (typeof NAMEPLATE_IMAGES !== 'undefined' && NAMEPLATE_IMAGES.layout) {
+        if (layoutImg) { layoutImg.src = NAMEPLATE_IMAGES.layout; layoutImg.style.display = ''; }
+        if (layoutPh)  layoutPh.style.display = 'none';
+      }
+
+      showEl('npDesignPreviewArea');
     });
   });
 }
 
 // ─────────────────────────────────────────────
-// 드래그 앤 드롭 / 파일 업로드
+// 세부 디자인 그리드
 // ─────────────────────────────────────────────
-function bindFileDropzones() {
-  bindDrop(null, 'file_main',      'main',      'fileList_main');
-  bindDrop(null, 'file_location',  'location',  'fileList_location');
-  bindDrop(null, 'file_reference', 'reference', 'fileList_reference');
-}
+function renderSubtypeGrid(type) {
+  const section = document.getElementById('npSubtypeSection');
+  const grid    = document.getElementById('npSubtypeGrid');
+  if (!section || !grid) return;
 
-function bindDrop(zoneId, inputId, key, listId) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
+  const subtypes = NAMEPLATE_SUBTYPES[type] || [];
+  grid.innerHTML = subtypes.map(sub => `
+    <label class="signage-np-card" id="npSubCard_${type}_${sub}">
+      <input type="radio" name="nameplate_subtype" value="${sub}" class="signage-sr-only" />
+      <div class="signage-np-badge">${type}-${sub}</div>
+    </label>
+  `).join('');
+  section.style.display = '';
 
-  input.addEventListener('change', e => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      const fileNameKey = inputId.replace('file_', '');
-      const fileNameEl = document.getElementById('fileName_' + fileNameKey);
-      if (fileNameEl) {
-        fileNameEl.textContent = files.length === 1
-          ? files[0].name
-          : files.length + '개 파일 선택됨';
-      }
-    }
-    processFiles(Array.from(e.target.files), key, listId);
-    input.value = '';
+  grid.querySelectorAll('input[name="nameplate_subtype"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      currentNpSubtype = e.target.value;
+      currentLayout    = null;
+
+      grid.querySelectorAll('.signage-np-card').forEach(c => c.classList.remove('is-selected'));
+      document.getElementById('npSubCard_' + type + '_' + currentNpSubtype)?.classList.add('is-selected');
+
+      renderLayoutGrid();
+      hideEl('npTextSection');
+    });
   });
 }
 
 // ─────────────────────────────────────────────
-// 전체 업로드 용량 합산
+// 레이아웃 선택 그리드
 // ─────────────────────────────────────────────
+function renderLayoutGrid() {
+  const section = document.getElementById('npLayoutSection');
+  const grid    = document.getElementById('npLayoutGrid');
+  if (!section || !grid) return;
+
+  grid.innerHTML = NAMEPLATE_LAYOUTS.map(layout => `
+    <label class="signage-layout-card" id="layoutCard_${layout.id}">
+      <input type="radio" name="nameplate_layout" value="${layout.id}" class="signage-sr-only" />
+      <div class="signage-layout-shape">${layout.shape}</div>
+      <div class="signage-layout-label">${layout.label}</div>
+      <div class="signage-layout-desc">${layout.desc}</div>
+    </label>
+  `).join('');
+  section.style.display = '';
+
+  grid.querySelectorAll('input[name="nameplate_layout"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const layoutId = e.target.value;
+      currentLayout  = NAMEPLATE_LAYOUTS.find(l => l.id === layoutId) || null;
+
+      grid.querySelectorAll('.signage-layout-card').forEach(c => c.classList.remove('is-selected'));
+      document.getElementById('layoutCard_' + layoutId)?.classList.add('is-selected');
+
+      renderTextFields(currentLayout);
+      showEl('npTextSection');
+    });
+  });
+}
+
+// ─────────────────────────────────────────────
+// 레이아웃 이미지 업데이트
+// ─────────────────────────────────────────────
+function updateLayoutImage(layoutId) {
+  const layoutImg = document.getElementById('layoutImg');
+  const layoutPh  = document.getElementById('layoutPlaceholder');
+  if (!layoutImg) return;
+
+  if (typeof NAMEPLATE_IMAGES !== 'undefined') {
+    const src = NAMEPLATE_IMAGES['layout_' + layoutId] || NAMEPLATE_IMAGES.layout || '';
+    if (src) {
+      layoutImg.src = src;
+      layoutImg.style.display = '';
+      if (layoutPh) layoutPh.style.display = 'none';
+      return;
+    }
+  }
+  layoutImg.style.display = 'none';
+  if (layoutPh) layoutPh.style.display = '';
+}
+
+// ─────────────────────────────────────────────
+// 레이아웃 문구 입력 필드 렌더링
+// ─────────────────────────────────────────────
+function renderTextFields(layout) {
+  const container = document.getElementById('npTextFields');
+  if (!container || !layout) return;
+
+  container.innerHTML = layout.fields.map(fieldKey => {
+    const meta = NP_FIELD_META[fieldKey];
+    if (!meta) return '';
+    return `
+      <label class="form-field">
+        <span class="form-label ${meta.required ? 'required' : ''}">${meta.label}</span>
+        <input type="text" id="np_field_${fieldKey}" class="input"
+          placeholder="${meta.placeholder}"
+          data-field="${fieldKey}"
+          ${meta.required ? 'required' : ''} />
+      </label>
+    `;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// 명판 문구 조합
+// ─────────────────────────────────────────────
+function buildNameplateText() {
+  if (!currentLayout) return '';
+  const parts = currentLayout.fields.map(fieldKey => {
+    const meta = NP_FIELD_META[fieldKey];
+    const val  = getValue('np_field_' + fieldKey);
+    return `${meta.label}: ${val}`;
+  });
+  return `레이아웃: ${currentLayout.label}\n` + parts.join('\n');
+}
+
+// ─────────────────────────────────────────────
+// 파일 업로드
+// ─────────────────────────────────────────────
+function bindFileDropzones() {
+  bindDrop('file_main',     'main',     'fileList_main');
+  bindDrop('file_location', 'location', 'fileList_location');
+}
+
+function bindDrop(inputId, key, listId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.addEventListener('change', e => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const fileNameEl = document.getElementById('fileName_' + key);
+      if (fileNameEl) {
+        fileNameEl.textContent = files.length === 1 ? files[0].name : files.length + '개 파일 선택됨';
+      }
+    }
+    processFiles(files, key, listId);
+    input.value = '';
+  });
+}
+
 function getTotalUploadedBytes() {
-  return [
-    ...uploadedFileSizes.main,
-    ...uploadedFileSizes.location,
-    ...uploadedFileSizes.reference
-  ].reduce((acc, size) => acc + size, 0);
+  return [...pendingFiles.main, ...pendingFiles.location, ...pendingFiles.reference]
+    .reduce((acc, f) => acc + f.file.size, 0);
 }
 
 function formatFileSize(bytes) {
@@ -605,70 +831,44 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-async function processFiles(files, key, listId) {
-  const user      = window.auth?.getSession?.() || {};
-  const createdBy = user.user_email || user.email || '';
-
+// 파일 선택 시 로컬에만 추가 (서버 업로드는 제출 시)
+function processFiles(files, key, listId) {
   for (const file of files) {
     if (file.size > MAX_SINGLE_BYTES) {
-      showMessage(
-        `파일 용량 초과: "${file.name}" (${formatFileSize(file.size)}) — 개별 파일은 ${MAX_SINGLE_FILE_MB}MB 이하만 가능합니다.`,
-        'error'
-      );
+      showMessage(`파일 용량 초과: "${file.name}" (${formatFileSize(file.size)}) — 개별 파일은 ${MAX_SINGLE_FILE_MB}MB 이하만 가능합니다.`, 'error');
       continue;
     }
-
     const currentTotal = getTotalUploadedBytes();
     if (currentTotal + file.size > MAX_TOTAL_BYTES) {
-      showMessage(
-        `전체 첨부 용량 초과 — 현재 ${formatFileSize(currentTotal)}, 추가 시 ${formatFileSize(currentTotal + file.size)} (최대 ${MAX_TOTAL_FILE_MB}MB)`,
-        'error'
-      );
+      showMessage(`전체 첨부 용량 초과 — 현재 ${formatFileSize(currentTotal)}, 최대 ${MAX_TOTAL_FILE_MB}MB`, 'error');
       continue;
     }
 
-    pendingUploads++;
     const itemId = 'fi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-    const listEl = document.getElementById(listId);
+    pendingFiles[key].push({ file, itemId });
 
+    const listEl = document.getElementById(listId);
     if (listEl) {
       listEl.insertAdjacentHTML('beforeend',
-        `<div class="signage-file-item is-uploading" id="${itemId}">
+        `<div class="signage-file-item is-done" id="${itemId}">
           <span class="signage-file-item-name">${escapeHtml(file.name)}</span>
-          <span class="signage-file-item-status">업로드 중...</span>
+          <span class="signage-file-item-status">${formatFileSize(file.size)}</span>
+          <button type="button" class="signage-file-item-remove" title="파일 제거">✕</button>
         </div>`
       );
+      document.getElementById(itemId)
+        ?.querySelector('.signage-file-item-remove')
+        ?.addEventListener('click', () => {
+          const idx = pendingFiles[key].findIndex(f => f.itemId === itemId);
+          if (idx !== -1) pendingFiles[key].splice(idx, 1);
+          document.getElementById(itemId)?.remove();
+          const emptyEl = document.getElementById('previewEmpty_' + key);
+          if (emptyEl && pendingFiles[key].length === 0) emptyEl.style.display = '';
+        });
     }
 
-    try {
-      const base64 = await toBase64(file);
-      const res    = await apiPost('uploadSignageFile', {
-        file_base64: base64,
-        file_name:   file.name,
-        created_by:  createdBy
-      });
-      const fileId = res?.data?.file_id;
-      uploadedFileIds[key].push(fileId);
-      uploadedFileSizes[key].push(file.size);
-
-      const itemEl = document.getElementById(itemId);
-      if (itemEl) {
-        itemEl.classList.replace('is-uploading', 'is-done');
-        itemEl.querySelector('.signage-file-item-status').textContent = `✓ ${formatFileSize(file.size)}`;
-      }
-    } catch (err) {
-      const itemEl = document.getElementById(itemId);
-      if (itemEl) {
-        itemEl.classList.replace('is-uploading', 'is-error');
-        itemEl.querySelector('.signage-file-item-status').textContent = '업로드 실패';
-      }
-      showMessage(`"${file.name}" 업로드 실패: ${err.message || '오류'}`, 'error');
-    } finally {
-      pendingUploads--;
-    }
-
-    const previewEmpty = document.getElementById('previewEmpty_' + key);
-    if (previewEmpty) previewEmpty.style.display = 'none';
+    const emptyEl = document.getElementById('previewEmpty_' + key);
+    if (emptyEl) emptyEl.style.display = 'none';
   }
 }
 
@@ -688,16 +888,36 @@ async function handleSubmit(e) {
   e.preventDefault();
   clearMessage();
   if (isSubmitting) return;
-  if (pendingUploads > 0) { showMessage('파일 업로드가 진행 중입니다. 잠시 후 다시 시도해 주세요.', 'error'); return; }
+  const totalBytes = getTotalUploadedBytes();
+  if (totalBytes > MAX_TOTAL_BYTES) { showMessage(`전체 첨부 용량(${formatFileSize(totalBytes)})이 최대 ${MAX_TOTAL_FILE_MB}MB를 초과했습니다.`, 'error'); return; }
 
   const payload = buildPayload();
   if (!payload) return;
+  if (!validatePayload(payload)) return;
 
   const submitBtn = document.getElementById('submitBtn');
+  const createdBy = (window.auth?.getSession?.() || {}).user_email || '';
   try {
     isSubmitting = true;
     setLoading(submitBtn, true, '신청 중...');
     showGlobalLoading('사인물 신청을 처리하는 중...');
+
+    // 파일 업로드 (제출 시점)
+    async function uploadGroup(key) {
+      const ids = [];
+      for (const { file, itemId } of pendingFiles[key]) {
+        const el = document.getElementById(itemId);
+        if (el) { el.classList.replace('is-done', 'is-uploading'); el.querySelector('.signage-file-item-status').textContent = '업로드 중...'; }
+        const base64 = await toBase64(file);
+        const res = await apiPost('uploadSignageFile', { file_base64: base64, file_name: file.name, created_by: createdBy });
+        ids.push(res.data.file_id);
+        if (el) { el.classList.replace('is-uploading', 'is-done'); el.querySelector('.signage-file-item-status').textContent = `✓ ${formatFileSize(file.size)}`; }
+      }
+      return ids;
+    }
+    payload.file_ids          = await uploadGroup('main');
+    payload.location_file_ids = await uploadGroup('location');
+    payload.reference_file_ids = await uploadGroup('reference');
 
     const res = await apiPost('createSignageRequest', payload);
     const notifyEmail = res.data?.notify_email || '';
@@ -728,62 +948,95 @@ function buildPayload() {
     return null;
   }
 
-  const clinicCode = getValue('clinic_code');
-  const teamCode   = getValue('team_code');
-  const requesterName = getValue('requester_name');
-  const contact    = getValue('contact');
-  const quantity   = parseInt(getValue('quantity'), 10) || 1;
-  const isUrgent   = getValue('is_urgent') || 'N';
-  const urgentReason = getValue('urgent_reason');
-  const textContent  = getValue('text_content');
+  let nameplateType   = '';
+  let nameplateText   = '';
+  let nameplateMethod = '';
+  let magnetYn        = 'N'; // 자석 부착 미사용 — 기본값 N 고정
+  const draftConfirm = document.getElementById('draft_confirm')?.checked ? 'Y' : 'N';
 
-  if (!clinicCode)    return fail('의원 정보가 없습니다. 다시 로그인해 주세요.', null);
-  if (!teamCode)      return fail('팀 정보가 없습니다. 다시 로그인해 주세요.', null);
-  if (!requesterName) return fail('요청자명을 입력해 주세요.', 'requester_name');
-  if (!contact)       return fail('연락처를 입력해 주세요.', 'contact');
-  if (quantity < 1)   return fail('수량을 1 이상 입력해 주세요.', 'quantity');
-  if (isUrgent === 'Y' && !urgentReason) return fail('긴급 사유를 입력해 주세요.', 'urgent_reason');
-  if (!textContent)   return fail('문구(텍스트)를 입력해 주세요.', 'text_content');
-
-  if (type === 'SIGN') {
-    if (!getValue('sign_size'))        return fail('사이즈를 입력해 주세요.', 'sign_size');
-    if (!getValue('sign_type'))        return fail('형태/종류를 입력해 주세요.', 'sign_type');
-    if (!getValue('install_env'))      return fail('설치 환경을 선택해 주세요.', 'install_env');
-    if (!getValue('install_location')) return fail('설치 위치를 입력해 주세요.', 'install_location');
-  } else {
-    if (!document.querySelector('input[name="nameplate_type"]:checked')) return fail('명판 타입을 선택해 주세요.', null);
-    if (!getValue('install_env_nameplate')) return fail('설치 환경을 선택해 주세요.', 'install_env_nameplate');
-    if (!getValue('nameplate_text'))        return fail('명판 문구 상세를 입력해 주세요.', 'nameplate_text');
+  if (type === 'NAMEPLATE') {
+    nameplateType   = currentNpSubtype ? `${currentNpType}-${currentNpSubtype}` : currentNpType;
+    nameplateText   = buildNameplateText();
+    nameplateMethod = document.querySelector('input[name="nameplate_method"]:checked')?.value || '';
+    // magnet_yn: 기본값 N 고정 (UI 미사용)
+    setVal('nameplate_text', nameplateText);
   }
+
+  const textContent = type === 'SIGN' ? getValue('text_content') : nameplateText;
 
   return {
     type,
-    clinic_code:      clinicCode,
-    team_code:        teamCode,
-    requester_name:   requesterName,
-    contact,
-    quantity,
-    text_content:     textContent,
-    is_urgent:        isUrgent,
-    urgent_reason:    urgentReason,
-    file_ids:         uploadedFileIds.main,
-    location_file_ids: uploadedFileIds.location,
-    reference_file_ids: uploadedFileIds.reference,
-    sign_size:        getValue('sign_size'),
-    sign_type:        getValue('sign_type'),
-    install_location: getValue('install_location'),
-    install_env:      type === 'SIGN' ? getValue('install_env') : getValue('install_env_nameplate'),
-    nameplate_type:   document.querySelector('input[name="nameplate_type"]:checked')?.value || '',
-    nameplate_text:   getValue('nameplate_text'),
-    created_by:       user.user_email || user.email || ''
+    request_title:      getValue('request_title'),
+    clinic_code:        getValue('clinic_code'),
+    team_code:          getValue('team_code'),
+    requester_name:     getValue('requester_name'),
+    contact:            getValue('contact'),
+    quantity:           Math.floor(Number(getValue('quantity') || 1)),
+    text_content:       textContent,
+    is_urgent:          getValue('is_urgent') || 'N',
+    urgent_reason:      getValue('urgent_reason'),
+    draft_confirm:      draftConfirm,
+    file_ids:           [], // 제출 시 채워짐
+    location_file_ids:  [], // 제출 시 채워짐
+    reference_file_ids: [],
+    sign_size:          getValue('sign_size'),
+    sign_type:          getValue('sign_type'),
+    install_location:   getValue('install_location'),
+    install_env:        type === 'SIGN' ? getValue('install_env') : 'INDOOR',
+    nameplate_type:     nameplateType,
+    nameplate_text:     nameplateText,
+    nameplate_method:   nameplateMethod,
+    magnet_yn:          magnetYn,
+    created_by:         user.user_email || user.email || ''
   };
+}
+
+// ─────────────────────────────────────────────
+// 유효성 검증
+// ─────────────────────────────────────────────
+function validatePayload(p) {
+  if (!p.clinic_code)      return fail('의원 정보가 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.team_code)        return fail('팀 정보가 없습니다. 다시 로그인해 주세요.', null);
+  if (!p.request_title)    return fail('제목을 입력해 주세요.', 'request_title');
+  if (!p.requester_name)   return fail('요청자명을 입력해 주세요.', 'requester_name');
+  if (!p.contact)        return fail('연락처를 입력해 주세요.', 'contact');
+  if (!p.quantity || p.quantity < 1) return fail('수량을 1 이상 입력해 주세요.', 'quantity');
+  if (!Number.isInteger(p.quantity))  return fail('수량은 정수로 입력해 주세요.', 'quantity');
+  if (p.is_urgent === 'Y' && !p.urgent_reason) return fail('긴급 사유를 입력해 주세요.', 'urgent_reason');
+  if (!p.created_by)     return fail('로그인 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', null);
+
+  if (p.type === 'SIGN') {
+    if (!p.text_content)     return fail('상세내역을 입력해 주세요.', 'text_content');
+    if (!p.sign_size)        return fail('사이즈를 입력해 주세요.', 'sign_size');
+    if (!p.sign_type)        return fail('형태/종류를 입력해 주세요.', 'sign_type');
+    if (!p.install_env)      return fail('설치 환경을 선택해 주세요.', 'install_env');
+    if (!p.install_location) return fail('설치 위치를 입력해 주세요.', 'install_location');
+    if (pendingFiles.location.length === 0) return fail('설치 위치 사진 또는 참고자료를 첨부해 주세요.', null);
+  }
+
+  if (p.type === 'NAMEPLATE') {
+    if (!currentNpType)    return fail('명판 타입을 선택해 주세요.', null);
+    if (!p.nameplate_method) return fail('제작 방식을 선택해 주세요.', null);
+    if (!currentNpSubtype) return fail('세부 디자인을 선택해 주세요.', null);
+    if (!currentLayout)    return fail('문구 레이아웃을 선택해 주세요.', null);
+    // if (!p.magnet_yn) return fail('자석 부착 여부를 선택해 주세요.', null); // 미사용
+
+    for (const fieldKey of currentLayout.fields) {
+      const meta = NP_FIELD_META[fieldKey];
+      if (meta?.required && !getValue('np_field_' + fieldKey)) {
+        return fail(`${meta.label}을(를) 입력해 주세요.`, 'np_field_' + fieldKey);
+      }
+    }
+  }
+
+  return true;
 }
 
 function fail(msg, focusId) {
   showMessage(msg, 'error');
   if (focusId) document.getElementById(focusId)?.focus();
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  return null;
+  return false;
 }
 
 // ─────────────────────────────────────────────
@@ -794,3 +1047,19 @@ function setVal(id, val)    { const el = document.getElementById(id); if (el) el
 function showEl(id)         { const el = document.getElementById(id); if (el) el.style.display = ''; }
 function hideEl(id)         { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 function setRequired(id, v) { const el = document.getElementById(id); if (el) el.required = v; }
+
+// ─────────────────────────────────────────────
+// 자석 카드 선택 표시 (JS 바인딩)
+// — 두 번째 DOMContentLoaded 제거: bindNameplateTypeSelector 렌더링 후
+//   npTextSection 노출 시점에 magnet_yn 카드도 함께 바인딩되므로 이벤트 위임으로 처리
+// ─────────────────────────────────────────────
+document.addEventListener('change', (e) => {
+  if (e.target.name === 'magnet_yn') {
+    document.querySelectorAll('.signage-magnet-card').forEach(c => c.classList.remove('is-selected'));
+    e.target.closest('.signage-magnet-card')?.classList.add('is-selected');
+  }
+  if (e.target.name === 'nameplate_method') {
+    document.querySelectorAll('.signage-method-card').forEach(c => c.classList.remove('is-selected'));
+    e.target.closest('.signage-method-card')?.classList.add('is-selected');
+  }
+});
