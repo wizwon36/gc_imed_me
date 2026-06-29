@@ -1,6 +1,6 @@
 const CONFIG = {
   APP_NAME: 'MSO관리팀 업무지원 시스템',
-  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbwTAZvXeT5rwXyB8HnwypmiLIuGag85HoUj0uRRpw6c7LoAOQYDUWl09d_yU3mWMp50/exec',
+  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxQQPMKNuG0MsrJdf3ZeAvvKodm5ajd8h4R2bZMPJfNpc8aR4Of47qViqzAKiLNH15s/exec',
 
   // SITE_BASE_URL — 저장소 이름에 관계없이 현재 접속 URL에서 자동으로 결정
   // 운영(gc_imed_me):     https://wizwon36.github.io/gc_imed_me
