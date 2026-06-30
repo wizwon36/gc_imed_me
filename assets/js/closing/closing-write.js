@@ -1208,17 +1208,23 @@ function writeWonjaeryo(ws, R, prevStockData, label) {
   const totalBase = prevHasNoDept ? toN(prevDeptStockFinal['_total||' + targetType]) : 0;
 
   const isImedOnlyDept = k => /의료공통|의료 공통/i.test(k.split('||')[0]);
-  const deptKeys = (masterDepts.length
-    ? [...new Set([...masterDepts, ...dataDeptKeys])].sort((a, b) => {
-        const ai = masterDepts.indexOf(a);
-        const bi = masterDepts.indexOf(b);
-        if (ai >= 0 && bi >= 0) return ai - bi;
-        if (ai >= 0) return -1;
-        if (bi >= 0) return 1;
-        return a.localeCompare(b, 'ko');
-      })
-    : dataDeptKeys.sort((a, b) => a.localeCompare(b, 'ko'))
-  ).filter(k => isGC || !isImedOnlyDept(k));
+  // ⚠️ 정책 변경 (2026-06): "마스터에 등록됐는지"와 무관하게, 이번 달 실제 데이터
+  // (입고/사용/기초)가 있는 부서만 표기한다. 과거에는 masterDepts(현재 CLOSING_DEPT
+  // 마스터 전체)를 무조건 합집합으로 끼워넣어서, 이번 달 거래가 0건인 마스터 등록
+  // 부서까지 0원 행으로 같이 노출되는 문제가 있었다. 이제는 dataDeptKeys(실제 데이터
+  // 존재 부서)만 표기 대상으로 삼되, 정렬은 기존처럼 마스터에 sort_order가 있는
+  // 부서는 그 순서를 따르고, 마스터에 없는(=조직도 변경/구버전 표기 등) 부서는
+  // 뒤쪽에 가나다순으로 붙인다.
+  const deptKeys = dataDeptKeys
+    .sort((a, b) => {
+      const ai = masterDepts.indexOf(a);
+      const bi = masterDepts.indexOf(b);
+      if (ai >= 0 && bi >= 0) return ai - bi;
+      if (ai >= 0) return -1;
+      if (bi >= 0) return 1;
+      return a.localeCompare(b, 'ko');
+    })
+    .filter(k => isGC || !isImedOnlyDept(k));
 
   // 납품처 구분 텍스트 (GC케어만)
   const vendorLabel = `납품처\n${R.branch}`;
