@@ -564,6 +564,23 @@
     white-space: nowrap;
   }
 
+  /* 포트폴리오 상세 */
+  .pf-card { align-items: flex-start; margin-bottom: 10px; }
+  .pf-meta { font-size: 11px; color: var(--accent-light); font-weight: 500; margin-bottom: 8px; }
+  .pf-stack { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 8px; }
+  .pf-stack span { font-size: 10.5px; color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.10); border-radius: 4px; padding: 2px 7px; }
+  .pf-list { list-style: none; padding: 0; margin: 6px 0 0; }
+  .pf-list li { position: relative; padding-left: 12px; font-size: 11.5px; line-height: 1.6; color: rgba(255,255,255,0.75); font-weight: 300; margin-bottom: 3px; }
+  .pf-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+  .pf-note { font-size: 11px; color: var(--text-muted); font-weight: 300; margin-top: 2px; }
+  .pf-card { break-inside: avoid; page-break-inside: avoid; }
+  body.bw-mode .pf-meta, body.bw-mode .pf-stack span, body.bw-mode .pf-list li { color: #ddd !important; }
+  body.bw-mode .pf-list li::before { background: #fff !important; }
+  @media print and (monochrome) {
+    .pf-meta, .pf-stack span, .pf-list li { color: #ddd !important; }
+    .pf-list li::before { background: #fff !important; }
+  }
+
   /* Personality */
   .strength-grid {
     display: grid;
@@ -1540,16 +1557,42 @@
       <!-- PORTFOLIO -->
       <div class="section">
         <div class="section-title">개발 포트폴리오</div>
-        <div class="portfolio-card">
+        <div class="portfolio-card pf-card">
           <div class="portfolio-icon">
             <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           </div>
           <div class="portfolio-info">
             <div class="portfolio-title">MSO관리팀 업무지원시스템</div>
-            <div class="portfolio-desc">Claude API를 활용해 기획부터 개발·배포까지 1인으로 구축. 대내 업무지원 + 환자용 정보제공 앱을 포함한 실제 운영 서비스입니다.</div>
+            <div class="pf-meta">2025 ~ 운영 중 · 1인 기획·설계·개발·배포·운영</div>
+            <div class="portfolio-desc">여러 의원의 의료장비·계약·재고·업무일정·설문·신청 업무를 하나로 묶은 사내 웹 시스템입니다. 12개 메뉴, 약 40개 화면과 모바일 전용 화면, 환자 정보제공 화면을 포함하며 현업에서 매일 사용하고 있습니다.</div>
+            <div class="pf-stack">
+              <span>JavaScript</span><span>HTML/CSS</span><span>AG Grid</span><span>Chart.js</span><span>Supabase</span><span>PostgreSQL</span><span>Edge Function</span><span>pg_cron</span><span>Cloudflare Pages</span><span>Gemini API</span><span>PWA</span><span>Claude</span>
+            </div>
+            <ul class="pf-list">
+              <li>5단계 권한 체계를 DB 행 단위 보안(RLS) 정책 약 260개로 구현, 화면을 우회한 요청도 권한 밖 데이터는 차단</li>
+              <li>매일 새벽 만료 임박 계약·장비, 유지보수 미설정 장비, 재고 과다를 자동으로 찾아 로그인 팝업·알림 메일로 전달, 업무일정과 연동</li>
+              <li>Gemini 함수 호출 기반 AI 어시스턴트: 자연어 조회 후 해당 화면으로 바로 이동, 한도 초과 시 다음 모델로 자동 전환</li>
+              <li>배포 빌드 자동화와 파일별 캐시 번호 부여로 첫 화면 로딩 단축, 로그 장기 보관에 대비한 인덱스 선제 설계</li>
+              <li>사내 물리서버 이관 설계: 자체 호스팅 DB, 사내 인증서 기반 HTTPS, RAID 1 이중화, 3-2-1 자동 백업</li>
+            </ul>
           </div>
-          <a href="https://mso-manage.pages.dev/" class="portfolio-url" target="_blank">↗ 바로가기</a>
         </div>
+        <div class="portfolio-card pf-card">
+          <div class="portfolio-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/></svg>
+          </div>
+          <div class="portfolio-info">
+            <div class="portfolio-title">통합 업무지원 패키지 (확장 개발)</div>
+            <div class="pf-meta">2026 ~ 개발 중</div>
+            <div class="portfolio-desc">위 시스템을 다른 의료기관에서도 쓸 수 있도록 범용 패키지로 확장하고 있습니다.</div>
+            <ul class="pf-list">
+              <li>전자결재·연차관리·메신저·인사정보·자원예약 기능 추가, 구버전 기능을 새 화면 구조로 재구성</li>
+              <li>한 기관 안에서도 의원별 데이터를 서로 볼 수 없게 격리하고, 기관마다 독립 환경으로 배포하는 구조로 설계</li>
+              <li>사인물 신청을 양식 기반으로 개편: 양식을 골라 그대로 또는 수정해 신청, 수정 가능 위치를 미리보기에 표시</li>
+            </ul>
+          </div>
+        </div>
+        <div class="pf-note">※ 사내 시스템으로 외부 접속 주소는 제공하지 않습니다.</div>
       </div>
 
       <!-- STRENGTHS -->
