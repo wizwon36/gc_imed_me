@@ -1636,6 +1636,10 @@
 
 <!-- PRINT BUTTON -->
 <div class="print-btn-wrap">
+  <a class="print-btn" href="portfolio.html" style="text-decoration:none; background:#c8922a; color:#0f2040;">
+    <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+    개발 포트폴리오 보기
+  </a>
   <div class="print-hint" id="printHint">컬러 프린터: 배경 그래픽 옵션 켜기 권장</div>
   <button class="print-btn" id="bwToggle" onclick="toggleBW()" style="background:#6b6b6b; font-size:13px; padding:10px 18px;">
     <svg viewBox="0 0 24 24">
@@ -1684,40 +1688,6 @@ function handlePrint() {
 }
 </script>
 
-
-<!-- PRINT BUTTON -->
-<div class="print-btn-wrap">
-  <a class="print-btn" href="portfolio.html" style="text-decoration:none; background:#c8922a; color:#0f2040;">
-    <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-    개발 포트폴리오 보기
-  </a>
-  <div class="print-hint" id="printHint">컬러 프린터: 배경 그래픽 옵션 켜기 권장</div>
-  <button class="print-btn" id="bwToggle" onclick="toggleBW()" style="background:#6b6b6b; font-size:13px; padding:10px 18px;">
-    <svg viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"></circle>
-      <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" stroke="none"></path>
-    </svg>
-    흑백으로 미리보기
-  </button>
-  <button class="print-btn" onclick="handlePrint()">
-    <svg viewBox="0 0 24 24">
-      <polyline points="6 9 6 2 18 2 18 9"></polyline>
-      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-      <rect x="6" y="14" width="12" height="8"></rect>
-    </svg>
-    이력서 인쇄 / PDF 저장
-  </button>
-</div>
-
-<script>
-function handlePrint() {
-  const hint = document.querySelector('.print-hint');
-  hint.style.opacity = '0';
-  hint.style.transition = 'opacity 0.3s';
-  setTimeout(() => { window.print(); }, 100);
-  setTimeout(() => { hint.style.opacity = '1'; }, 1500);
-}
-</script>
 
 </body>
 </html>
